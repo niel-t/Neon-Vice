@@ -752,6 +752,7 @@ const WD={
  /* Nine of Nine exclusives: base = the stock weapon whose animation, gore and sounds they borrow */
  goldak:{name:'GOLDEN AK-47',base:'m16',excl:true,ammo:40,cd:0.09,pel:1,spr:0.03,mv:0.08,bloom:0.02,bloomMax:0.16,ecd:0.2,burst:5,loud:15,pierce:2,len:0.62,snd:'rifle',kick:0.12,spd:0.94,two:true},
  golddeagle:{name:'GOLDEN DEAGLES',base:'dual',excl:true,ammo:16,cd:0.16,pel:1,spr:0.03,mv:0.07,bloom:0.05,bloomMax:0.2,ecd:0.5,loud:16,pierce:3,len:0.26,snd:'revolver',kick:0.24},
+ goldgl:{name:'GOLD GRENADE LAUNCHER',base:'shotgun',excl:true,nade:true,ammo:6,cd:0.8,pel:1,spr:0.02,mv:0.04,bloom:0,ecd:1.6,loud:17,len:0.62,snd:'double',kick:0.5,spd:0.93,two:true},
  katana:{name:'KATANA',base:'machete',excl:true,melee:true,range:1.5,cd:0.26,kill:true,len:0.8,snd:'swing_machete',arc:1.35},
 };
 const BT=t=>(WD[t]&&WD[t].base)||t;
@@ -821,11 +822,95 @@ const LEVELS=[
  "========================================",
  "======P==================C==============",
  "========================================"]},
+ {name:'VICE MARINA',act:2,wall:6,sofa:0x2a9ea3,from:'McWEY',hawaii:true,legend:{'o':{w:39,h:0.02,top:39,water:1},'Y':{w:39,h:0.02,top:39,water:1}},
+  brief:"Lex Sterling's money comes in by sea, through Vice Marina. Knock-off gold, undercutting your corners. Sink his boats.",map:[
+ "oooooooooooooooooooooooooooooooooooooooo",
+ "ooYooooooooooYooooooooooooYoooooooooYooo",
+ "oooooooooooooooooooooooooooooooooooooooo",
+ "oo_____oooo_____oooooo_____oooooo_____oo",
+ "oo__s__oooo_g___oooooo__u__oooooo_d___oo",
+ "oo_____oooo_____oooooo_____oooooo_____oo",
+ "________________________________________",
+ "#####D######__U__Z___g____Z___#####D####",
+ "#..g...*..#______________1____#..*...u.#",
+ "#.UZ...b..D____x______U_______D....ZZ..#",
+ "#..ZZ..4..#__Z____m______i____#..g..U.6#",
+ "####.######___________________#####.####",
+ "========================================",
+ "===P==================C=================",
+ "========================================"]},
+ {name:'STARLIGHT ARCADE',act:2,wall:25,floor:23,sofa:0xe0459a,from:'McWEY',legend:{'.':{f:23},'c':{f:23},'a':{f:23}},
+  brief:"Lex washes his money through the Starlight Arcade on the beach. Quarters in, clean dollars out. Unplug it.",map:[
+ "########################################",
+ "#c.c.c.c.c..#..u........g.....#c.c.c.c##",
+ "#...........#....aa....aa.....#.......##",
+ "#.g...*.....D....aa....aa.....D...s...##",
+ "#...........#.........x.......#.......##",
+ "#c.c.c..u...#..b....*....i....#c.c.c..##",
+ "######D######.....aa....aa....####D#####",
+ "#BBB..k.....#.....aa....aa....#.......##",
+ "#...........D..g...........m..D..cc.g.##",
+ "#.T...*..3..#.......4.........#..cc...##",
+ "#.T.....d...#cccc.......cccccc#....5..##",
+ "######.##########......##########.######",
+ "========================================",
+ "====P=================C=================",
+ "========================================"]},
+ {name:'OCEAN VIEW MALL',act:2,wall:33,floor:14,sofa:0xffffff,from:'McWEY',legend:{'.':{f:14},'n':{f:14},'e':{f:14}},
+  brief:"Take the night off. Ocean View Mall, my treat. What's the worst that could happen?",map:[
+ "#########################################",
+ "#n.n.n..#..g...p......p...g...#..n.n.n.##",
+ "#.......D.....................D........##",
+ "#..u....#..ee......*......ee..#....s...##",
+ "#n.n.n..#..ee...x.....b...ee..#..n.n.n.##",
+ "#####D###.....................###D#######",
+ "#..g....D..p..T.T...m.T.T..p..D.....g..##",
+ "#K.KK...#.....................#..n.n..u##",
+ "#.......#..ee.....i.......ee..#........##",
+ "#..6..d.#..ee..g.......4..ee..#.n.n.7..##",
+ "####.######################.#####.#######",
+ "=========================================",
+ "=====P===================C===============",
+ "========================================="]},
+ {name:'THE RECORDING STUDIO',act:2,wall:6,floor:43,sofa:0x3a3a44,from:'McWEY',legend:{'.':{f:43},'%':{f:43},'!':{f:43}},
+  brief:"Lex is financing a terrible pop album. Crash the session and make the singer tell you where Lex is hiding.",map:[
+ "######################################",
+ "#..g..%....u.....%.....s....%...d...F#",
+ "#.....%..........%..........%.......##",
+ "#KKK..D...KKK....D...!......D..KKKK.##",
+ "#.....%..........%..........%.......##",
+ "#..b..%%%%..%%%%%%%%%..%%%%%%..u....##",
+ "#.........................x.........##",
+ "#..m..%%%%..%%%%%%%%%..%%%%%%....g..##",
+ "#.....%...........%.........%.......##",
+ "#.5...%..g..KKK...%...i..3..%..KK...##",
+ "#.....D...........D.........D.....8.##",
+ "####.###########################.#####",
+ "======================================",
+ "===P================C=================",
+ "======================================"]},
+ {name:'THE ROYAL FLUSH',act:2,wall:33,sofa:0xe8dcc0,from:'McWEY',legend:{'o':{w:39,h:0.02,top:39,water:1},'y':{f:39}},boss:{name:'LEX "SILKS" STERLING',look:()=>Object.assign(LEXLOOK(),{bw:1.04,bd:1.0}),weapon:'goldgl',hp:22,lex:true},
+  brief:"Lex is on his yacht, the Royal Flush, two miles out. Glass dance floor over a shark tank. Bring me the yacht. Lex is optional.",map:[
+ "oooooooooooooooooooooooooooooooooooooooooo",
+ "oooooo##############################oooooo",
+ "oooo##____g_____#yyyyyyyyy#___u______##ooo",
+ "ooo#______Z_____#yyyyyyyyy#_____Z______#oo",
+ "oo#___s_________DyyyyXyyyyD______g______#o",
+ "oo#_____________#yyyyyyyyy#_____________#o",
+ "ooo#___u___Z____#yyyyyyyyy#___Z___d____#oo",
+ "oooo##___________###D####___________##oooo",
+ "oooooo###___i____________m______###ooooooo",
+ "oooooooo####__________________####oooooooo",
+ "oooooooooooo########D#########oooooooooooo",
+ "oooooooooooooooooo_____ooooooooooooooooooo",
+ "==========================================",
+ "=====P===================C================",
+ "=========================================="]},
 ];
 /*END*/
 const NEON=[[1,0.25,0.7],[0.2,0.85,1],[0.65,0.3,1],[1,0.55,0.2]];
 const TIPS=['Red laser = a gunman is aiming at you. Break line of sight.','Stand still for accurate shots. Running throws your aim off.','Silenced guns barely make a sound. Loud ones wake up the whole floor.','Swing a door into someone to knock them flat.','Downed enemies get back up. Hit them again to finish the job.','Bar counters and kitchen counters stop bullets. Use them.','Out of ammo? Attack again to throw the gun. It knocks people down.','Throw a knife and it kills.','Sprinting is fast but loud - guards hear your footsteps.','Hold F to look further ahead.'];
-const BRIEF_FLOOR=(i)=>'FLOOR '+(i+1)+' / '+LEVELS.length+' — '+LEVELS[i].name;
+const BRIEF_FLOOR=(i)=>(i<3?'ACT 1 · FLOOR '+(i+1)+' / 3':'ACT 2 · FLOOR '+(i-2)+' / 5')+' — '+LEVELS[i].name;
 
 /* ---- bespoke melee + dual audio ---- */
 function mkWhoosh(len,f0,f1,q,amp){const sr=AC.sampleRate,L=Math.floor(sr*len),b=AC.createBuffer(1,L,sr),d=b.getChannelData(0);let y1=0,y2=0;
@@ -863,9 +948,12 @@ function saveProg(){try{localStorage.setItem('nb86prog',JSON.stringify(PROG));}c
 const SUITS={default:{name:'SIGNATURE',lvl:1,perk:{},desc:'Your own look'},
  pinstripe:{name:'PINSTRIPE',lvl:3,perk:{tough:1},desc:'+1 hit you can take'},
  camo:{name:'JUNGLE CAMO',lvl:6,perk:{fleet:1,sense:1},desc:'Move 6% faster, guards react 15% slower'},
- pink:{name:'HOT PINK',lvl:10,perk:{adren:1,shark:1},desc:'Combos last 0.75s longer, +15% kill money'}};
+ pink:{name:'HOT PINK',lvl:10,perk:{adren:1,shark:1},desc:'Combos last 0.75s longer, +15% kill money'},
+ power:{name:'POWER SUIT',lvl:1,act2:1,perk:{tough:1,shark:1},desc:'Charcoal, double-breasted. +1 hit, +15% kill money'},
+ linen:{name:'MIAMI LINEN',lvl:1,act2:1,perk:{fleet:1,adren:1},desc:'Ivory linen, sleeves up. Faster, longer combos'}};
+const suitOK=(p,k)=>!!(p&&SUITS[k])&&(SUITS[k].act2?!!p.suits2:p.lvl>=SUITS[k].lvl);
 const SUITKEYS=Object.keys(SUITS);
-const mySuit=()=>{const p=myProg();return SUITS[p.suit]&&p.lvl>=SUITS[p.suit].lvl?p.suit:'default';};
+const mySuit=()=>{const p=myProg();return suitOK(p,p.suit)?p.suit:'default';};
 const myProg=()=>PROG[CHARS[selIdx].id];const pk=k=>(myProg().perks[k]||0)+((SUITS[mySuit()].perk[k])||0);const xpNeed=l=>400+l*300;const ROMAN=['','I','II','III'];
 let pendingPerks=0,perkReturn=null;
 function awardXP(n){const p=myProg();p.xp+=n;let ups=0;while(p.lvl<30&&p.xp>=xpNeed(p.lvl)){p.xp-=xpNeed(p.lvl);p.lvl++;ups++;}saveProg();pendingPerks+=ups;return ups;}
@@ -878,8 +966,8 @@ function showPerkPick(ret){perkReturn=ret;state='perk';const p=myProg();const op
  show('sPerk');sfx('clear');}
 function choosePerk(k){if(!k||state!=='perk')return;const p=myProg();p.perks[k]=(p.perks[k]||0)+1;saveProg();pendingPerks--;sfx('pick');
  if(pendingPerks>0){showPerkPick(perkReturn);return;}const r=perkReturn;perkReturn=null;if(r==='dead'){state='dead';show('sDead');}else{state='results';show('sResults');}}
-const LEVEL_TRACKS=[['game','n_nightdrive','n_haze','n_concrete'],['n_crystal','n_overdrive','n_nightdrive','n_haze'],['n_redtide','n_rampage','n_concrete','n_overdrive']];
-const RUNTRACK=[0,0,0];
+const LEVEL_TRACKS=[['game','n_nightdrive','n_haze','n_concrete'],['n_crystal','n_overdrive','n_nightdrive','n_haze'],['n_redtide','n_rampage','n_concrete','n_overdrive'],['n_nightdrive','n_crystal'],['n_overdrive','n_crystal'],['n_haze','n_redtide'],['n_rampage','n_overdrive'],['n_redtide','n_rampage']];
+const RUNTRACK=[0,0,0,0,0,0,0,0];
 
 /* ================= STATE ================= */
 let G=null,state='title',selIdx=2,levelIdx=0,totalScore=0,totalKills=0,totalTime=0,touchMode=false;
@@ -950,7 +1038,7 @@ function thugLook(kind,bodyOverride,lvl){
  if(body==='fat'){L.bw=1.5;L.bd=1.42;L.bh=0.98;L.belly=true;}else if(body==='thin'){L.bw=0.7;L.bd=0.76;L.bh=1.13;}else if(body==='big'){L.bw=1.2;L.bd=1.12;L.bh=1.1;}
  if(['bruiser','biker','butcher','bouncer'].includes(an)&&Math.random()<0.7)L.stubble=true;if(an==='bruiser'&&Math.random()<0.6)L.scar=true;if(an==='bouncer'||an==='bruiser')L.wraps=Math.random()<0.6;
  L.body=body;return L;}
-const BOSSNAME="VICTOR 'THE SHARK' MOREAU";
+const BOSSNAME="VICTOR 'THE SHARK' MOREAU";const bossName=()=>(G&&G.def&&G.def.boss&&G.def.boss.name)||BOSSNAME;
 const BOSSLOOK=()=>({skin:hex(0xd9a37c),jacket:hex(0xf2e6c8),shirt:hex(0xc0182a),pants:hex(0xf2e6c8),shoes:hex(0x5a3a22),hair:hex(0x101010),hs:'slick',stache:true,shades:true,chain:true,cigar:true,watch:true,bw:1.35,bd:1.3,bh:1.0,belly:true});
 function isW(c){return c==='#'||c===' ';}
 function loadLevel(i,dOver){
@@ -979,8 +1067,8 @@ function loadLevel(i,dOver){
   else if(c==='@'){g.disco={x:cx,z:cz};}
   else if(c==='*'){g.lights.push({x:cx,y:1.6,z:cz,r:5.5,c:NEON[g.lights.length%4]});}
   else if(c==='D'){const sx=isW(ch(x-1,z))&&isW(ch(x+1,z));g.doors.push(sx?{hx:x,hz:cz,base:0,th:0,w:0,pusher:''}:{hx:cx,hz:z,base:Math.PI/2,th:0,w:0,pusher:''});}
-  else if(c in EKIND||c==='X'){const boss=c==='X';const k=boss?'m16':EKIND[c];const mel=!k||WD[k].melee;const L0=boss?BOSSLOOK():thugLook(k,null,i);const body=boss?'boss':L0.body;
-   const e=makeChar(cx,cz,L0,false);e.body=body;e.hp=(body==='fat'||body==='big')?2:boss?Math.round(16*(SET.diff==='hard'?1.25:1)):1;e.maxhp=e.hp;e.spd=body==='fat'?0.72:body==='big'?0.92:body==='thin'?1.25:boss?0.7:1;e.rmul=body==='thin'?0.8:1;if(body==='fat')e.r=0.36;if(body==='thin')e.r=0.24;if(body==='big')e.r=0.33;if(boss){e.boss=true;e.sc=1.3;e.r=0.42;g.boss=e;}e.weapon=k?{type:k,ammo:99}:null;e.a=pick([0,Math.PI/2,Math.PI,-Math.PI/2]);
+  else if(c in EKIND||c==='X'){const boss=c==='X';const k=boss?((def.boss&&def.boss.weapon)||'m16'):EKIND[c];const mel=!k||WD[k].melee;const L0=boss?(def.boss?def.boss.look():BOSSLOOK()):thugLook(k,null,i);const body=boss?(def.boss?'normal':'boss'):L0.body;if(!boss&&def.hawaii){const hc=hex(pick([0xff6fae,0x2de2e6,0xffd36b,0x7dff9a,0xff8a3a]));L0.shirt=hc;L0.jacket=hc;L0.tee=true;L0.torsoTile=29;}
+   const e=makeChar(cx,cz,L0,false);e.body=body;e.hp=(body==='fat'||body==='big')?2:boss?Math.round(((def.boss&&def.boss.hp)||16)*(SET.diff==='hard'?1.25:1)):1;e.maxhp=e.hp;e.spd=body==='fat'?0.72:body==='big'?0.92:body==='thin'?1.25:boss?0.7:1;e.rmul=body==='thin'?0.8:1;if(body==='fat')e.r=0.36;if(body==='thin')e.r=0.24;if(body==='big')e.r=0.33;if(boss){e.boss=true;e.sc=def.boss?1.12:1.3;e.r=0.42;g.boss=e;if(def.boss)e.lex=!!def.boss.lex;}e.weapon=k?{type:k,ammo:99}:null;e.a=pick([0,Math.PI/2,Math.PI,-Math.PI/2]);
    const melee=!k||WD[k].melee;e.state=Math.random()<(melee?0.6:0.3)?'patrol':'idle';e.pa=e.a;e.ta=e.a;e.turnT=rnd(1,4);e.pauseT=0;e.react=0;e.wind=0;e.id=g.enemies.length;e.pers=pick(['rush','careful','flank','flank']);e.seeT=99;e.lkx=cx;e.lkz=cz;e.burst=0;e.searchT=0;g.enemies.push(e);}
   else if(c in IKIND){const t=IKIND[c];g.items.push({x:cx,z:cz,type:t,ammo:WD[t].ammo||0,vx:0,vz:0,rot:rnd(0,TAU),flying:false,fresh:true,flyT:0});}
  }
@@ -1151,7 +1239,7 @@ function dropWeapon(c,dir,fresh){if(!c.weapon)return;G.items.push({x:c.x,z:c.z,t
 function addKillScore(e,type){const g=G;g.combo++;g.cpulse=1;g.comboT=g.comboMax=3.5+0.75*pk('adren');g.maxCombo=Math.max(g.maxCombo,g.combo);let pts=(KILLPTS[type]||300)*Math.min(g.combo,8);if(CHARS[selIdx].id==='money')pts=Math.round(pts*1.25);pts=Math.round(pts*Dd().mult*(1+0.15*pk('shark')));g.score+=pts;
  popup(e.x,e.z,'+$'+fmt(pts)+(g.combo>1?'  x'+g.combo:''),g.combo>2?'#ff5fb8':'#7dff9a');}
 const GUNS=['dual','pistol','silenced','revolver','smg','m16','shotgun','double','goldak','golddeagle'];
-function killEnemy(e,type,dir){type=BT(type);if(!e.alive)return;const g=G;e.alive=false;e.down=0;e.wind=0;dropWeapon(e,dir,true);
+function killEnemy(e,type,dir){type=BT(type);if(!e.alive)return;const g=G;e.alive=false;if(e.lex&&!g.fin)g.fin={t:0,e,dir,ph:'fin',step:-1,line:null};e.down=0;e.wind=0;dropWeapon(e,dir,true);
  const sh=type==='shotgun'||type==='double';e.a=Math.atan2(-dir[0],-dir[1]);launchBody(e,type,dir);
  const n=(GORE()?1.6:1)*(sh?75:type==='exec'?90:['bat','knife','machete'].includes(type)?45:40);bloodBurst(e.x,0.65,e.z,dir,n,sh?7:4.5);
  addFloorDecal(e.x+dir[0]*0.3,e.z+dir[1]*0.3,rnd(0.9,1.3),rnd(0,TAU),8,bloodTint());
@@ -1168,8 +1256,8 @@ function stagger(e,dir){e.vx+=dir[0]*3;e.vz+=dir[1]*3;e.hitT=0.12;e.wind=0;e.cd=
 function hitEnemy(e,type,dir,dmg){type=BT(type);if(!e.alive)return;if(e.boss)G.bossSeen=true;if((e.hp||1)>dmg){e.hp-=dmg;e.hitT=0.12;bloodBurst(e.x,0.7,e.z,dir,e.boss?14:10,3);addFloorDecal(e.x+dir[0]*0.4,e.z+dir[1]*0.4,rnd(0.3,0.6),rnd(0,TAU),10,bloodTint());
  const kb=e.boss?0.8:2.5;e.vx+=dir[0]*kb;e.vz+=dir[1]*kb;if(GUNS.includes(type)){e.wounds.push([rnd(-0.14,0.14),rnd(0.48,0.74)]);G.hits++;}sfx('punch');rumble(0.2,0.4,60);G.hitT=0.12;
  if(!e.boss&&!e.toughShown){e.toughShown=true;popup(e.x,e.z,archLabel(e)+'!','#ffd36b');}if(e.state!=='chase'){e.state='chase';e.react=0.3;e.seeT=0;}return;}killEnemy(e,type,dir);}
-function knockdown(e,dir){if(!e.alive)return;if(e.boss){stagger(e,dir);hitEnemy(e,'door',dir,1);return;}e.down=3.0;e.fall=0;e.vx=dir[0]*4;e.vz=dir[1]*4;dropWeapon(e,dir,true);e.a=Math.atan2(dir[0],dir[1]);e.state='chase';e.wind=0;e.seeT=0;sfx('hit_fists');bloodBurst(e.x,0.9,e.z,dir,6,2);}
-const DEATHNAME={dual:'DOUBLE-TAPPED, TWICE',boss:'FLATTENED BY THE SHARK',fists:'BEATEN TO DEATH',bat:'BATTED INTO THE NEXT LIFE',knife:'STABBED',machete:'HACKED APART',pistol:'SHOT WITH A 9MM',silenced:'SILENCED',revolver:'SHOT WITH A .357',shotgun:'BLASTED WITH A SHOTGUN',double:'BOTH BARRELS',smg:'RIDDLED BY AN UZI',m16:'GUNNED DOWN BY AN M16'};
+function knockdown(e,dir){if(!e.alive)return;if(!e.boss&&G.hockey&&G.hockey.some(h=>Math.hypot(h.x-e.x,h.z-e.z)<1.5)){G.score+=500;popup(e.x,e.z,'AIR HOCKEY SLAM! +$500','#2de2e6');sfx('thud');shake(0.4);killEnemy(e,'door',dir);return;}if(e.boss){stagger(e,dir);hitEnemy(e,'door',dir,1);return;}e.down=3.0;e.fall=0;e.vx=dir[0]*4;e.vz=dir[1]*4;dropWeapon(e,dir,true);e.a=Math.atan2(dir[0],dir[1]);e.state='chase';e.wind=0;e.seeT=0;sfx('hit_fists');bloodBurst(e.x,0.9,e.z,dir,6,2);}
+const DEATHNAME={grenade:'BLOWN UP BY A GOLD GRENADE',dual:'DOUBLE-TAPPED, TWICE',boss:'FLATTENED BY THE SHARK',fists:'BEATEN TO DEATH',bat:'BATTED INTO THE NEXT LIFE',knife:'STABBED',machete:'HACKED APART',pistol:'SHOT WITH A 9MM',silenced:'SILENCED',revolver:'SHOT WITH A .357',shotgun:'BLASTED WITH A SHOTGUN',double:'BOTH BARRELS',smg:'RIDDLED BY AN UZI',m16:'GUNNED DOWN BY AN M16'};
 function hurtPlayer(dir,type){const g=G,p=g.player;if(!p.alive||p.armorT>0)return;g.taken=(g.taken||0)+1;
  if(p.armor>0){p.armor--;p.armorT=0.9;p.lastHurt=g.time;shake(0.45);g.flash=0.35;g.flashC=[1,1,1];rumble(0.9,0.9,250);sfx('vest');popup(p.x,p.z,'VEST HIT!','#ffd36b');bloodBurst(p.x,0.7,p.z,dir,8,2);return;}
  if(p.hp>1){p.hp--;p.armorT=1.1;p.lastHurt=g.time;shake(0.45);g.flash=0.45;g.flashC=[0.9,0,0.05];g.hurtT=0.7;rumble(0.9,0.9,260);sfx('vest');popup(p.x,p.z,p.hp===1?'LAST HIT!':'HIT!','#ff4a5a');bloodBurst(p.x,0.7,p.z,dir,14,3);addFloorDecal(p.x,p.z,rnd(0.4,0.7),rnd(0,TAU),10,bloodTint());p.vx+=dir[0]*5;p.vz+=dir[1]*5;return;}
@@ -1179,7 +1267,7 @@ function hurtPlayer(dir,type){const g=G,p=g.player;if(!p.alive||p.armorT>0)retur
  rumble(1,1,550);sfx('splat');sfx('die');g.flash=0.5;g.flashC=[0.8,0,0.05];shake(0.6);g.combo=0;g.comboT=0;}
 function alertNoise(x,z,r){if(r<1)return;let any=false;for(const e of G.enemies){if(!e.alive||e.down>0||e.state==='chase')continue;if(Math.hypot(e.x-x,e.z-z)<r){any=true;e.state='search';e.sx=x;e.sz=z;e.searchT=0;e.qT=1.2;}}
  if(any){G.nx=x;G.nz=z;bfs(G.nflow,Math.floor(x),Math.floor(z));}}
-function fireGun(c,w,isP){const g=G,wd=WD[w.type];w.ammo--;if(w.type==='shotgun'){c.pumpAt=g.T;const cc=c;setTimeout(()=>{if(G===g){const s2=Math.sin(cc.a),c2=Math.cos(cc.a);gib(cc.x+c2*0.15,0.75,cc.z-s2*0.15,c2*rnd(1.5,2.5),rnd(2,3),-s2*rnd(1.5,2.5),[0.04,0.04,0.08],[0.8,0.15,0.15],true);}},380);}c.cd=isP?wd.cd:(wd.burst?0.1:wd.ecd*Dd().ecd);c.atkT=c.atkDur=0.08;
+function fireGun(c,w,isP){const g=G,wd=WD[w.type];w.ammo--;if(wd.nade){throwNade(c,isP?'p':'e');sfx(wd.snd);alertNoise(c.x,c.z,wd.loud);return;}if(w.type==='shotgun'){c.pumpAt=g.T;const cc=c;setTimeout(()=>{if(G===g){const s2=Math.sin(cc.a),c2=Math.cos(cc.a);gib(cc.x+c2*0.15,0.75,cc.z-s2*0.15,c2*rnd(1.5,2.5),rnd(2,3),-s2*rnd(1.5,2.5),[0.04,0.04,0.08],[0.8,0.15,0.15],true);}},380);}c.cd=isP?wd.cd:(wd.burst?0.1:wd.ecd*Dd().ecd);c.atkT=c.atkDur=0.08;
  const sa=Math.sin(c.a),ca=Math.cos(c.a);let spr;
  if(isP){const mv=Math.min(1,Math.hypot(c.vx,c.vz)/3.5);spr=(wd.spr+mv*wd.mv+c.bloom+(c.sprinting?0.08:0))*(1-0.18*pk('steady'));c.bloom=Math.min(c.bloom+wd.bloom,wd.bloomMax||0.18);g.shots++;}
  else spr=wd.spr+Dd().espr;
@@ -1267,11 +1355,12 @@ function update(dt){const g=G;if(g.def.hub){updateHub(dt);return;}
  {const tgt=g.combo>=6?3:g.combo>=4?2:g.combo>=2?1:0;if(tgt>g.lv){g.lv=tgt;g.lvT=2;}else if(g.lv>tgt){g.lvT-=dt;if(g.lvT<=0){g.lv--;g.lvT=1.2;}}}
  if(g.freeze>0){g.freeze-=dt;return;}
  if(g.cameo){updateCameo(dt);updateFX(dt);updateCamera(dt);return;}
+ if(g.fin){const fe=g.fin.e;updateFin(dt);updateFX(dt);bodyPhysics();for(const e of g.enemies)if(!e.alive)slideBody(e,dt);const k=1-Math.exp(-dt*3);g.cam.x+=(fe.x-g.cam.x)*k;g.cam.z+=(fe.z-g.cam.z)*k;return;}
  if(g.player.alive&&!g.done)g.time+=dt;
  if(g.comboT>0){g.comboT-=dt;if(g.comboT<=0)g.combo=0;}
  if(g.hitT>0)g.hitT-=dt;if(g.np)g.np.t+=dt;
  g.flowT-=dt;if(g.flowT<=0){computeFlow();g.flowT=0.25;}
- updatePlayer(dt);updateHazards(dt);if(g.player.ex){if(g.player.alive)updateExec(g.player,dt);else g.player.ex=null;}for(const e of g.enemies)updateEnemy(e,dt);separate();bodyPhysics();updateDoors(dt);updateBullets(dt);updateItems(dt);updateCash(dt);updateFX(dt);
+ updatePlayer(dt);updateHazards(dt);if(g.player.ex){if(g.player.alive)updateExec(g.player,dt);else g.player.ex=null;}for(const e of g.enemies)updateEnemy(e,dt);separate();bodyPhysics();updateDoors(dt);updateBullets(dt);updateNades(dt);updateAct2(dt);updateItems(dt);updateCash(dt);updateFX(dt);
  if(!g.cleared&&g.enemies.every(e=>!e.alive)){g.cleared=true;banner('FLOOR CLEAR','Get back to the car');sfx('clear');}
  if(g.cleared&&g.player.alive&&!g.done&&Math.hypot(g.player.x-g.car.x,g.player.z-g.car.z)<1.8){g.done=true;finishLevel();}
  if(!g.player.alive){g.deadT+=dt;if(g.deadT>1&&state==='play')showDead();}
@@ -1324,11 +1413,11 @@ function bodyPhysics(){const g=G,bs=g.enemies.filter(e=>!e.alive);if(!g.player.a
  const p=g.player;if(p.alive)for(const b of bs){const dx=b.x-p.x,dz=b.z-p.z,d=Math.hypot(dx,dz);if(d<p.r+b.r*0.8&&d>1e-4){const pv=(p.vx*dx+p.vz*dz)/d;if(pv>0.5){b.vx+=dx/d*pv*0.5/massOf(b);b.vz+=dz/d*pv*0.5/massOf(b);}}}}
 function shootCorpse(b){for(const e of G.enemies){if(e.alive||b.hit.includes(e))continue;const tx=e.x-Math.sin(e.a)*0.45,tz=e.z-Math.cos(e.a)*0.45;
  if(Math.min(Math.hypot(e.x-b.x,e.z-b.z),Math.hypot(tx-b.x,tz-b.z))<e.r+0.05){b.hit.push(e);const f=(FORCE[b.type]||4)*0.45/massOf(e);e.vx+=b.dx*f;e.vz+=b.dz*f;e.spin=(e.spin||0)+rnd(-2,2);bloodBurst(tx,0.2,tz,[b.dx,b.dz],8,2.5);addFloorDecal(tx+b.dx*0.4,tz+b.dz*0.4,rnd(0.3,0.5),rnd(0,TAU),10,bloodTint());}}}
-function bossAI(e,dt,dist,dx,dz,ang){const enr=e.hp<=e.maxhp/2;e.aiming=dist>=1.3;e.react-=dt;let tvx=0,tvz=0;const d=dist||1;
+function bossAI(e,dt,dist,dx,dz,ang){if(e.lex)return lexAI(e,dt,dist,dx,dz,ang);const enr=e.hp<=e.maxhp/2;e.aiming=dist>=1.3;e.react-=dt;let tvx=0,tvz=0;const d=dist||1;
  if(dist>3){tvx=dx/d*2.3;tvz=dz/d*2.3;}else if(dist<1.35&&e.cd<=0){e.cd=1.0;e.atkT=e.atkDur=0.25;sfx('punch');hurtPlayer([dx/d,dz/d],'boss');shake(0.5);}
  if(dist>=1.35&&e.react<=0&&e.cd<=0&&Math.abs(angDiff(e.a,ang))<0.3){e.weapon.ammo=99;fireGun(e,e.weapon,false);e.burst=(e.burst||0)+1;if(e.burst<(enr?8:5))e.cd=0.085;else{e.burst=0;e.cd=(enr?0.85:1.4)*Dd().ecd;}}
  if(enr&&!e.enraged){e.enraged=true;popup(e.x,e.z,'HE IS PISSED','#ff2a3a');sfx('boss');}return[tvx,tvz];}
-function spot(e){if(e.boss&&!G.bossSeen){G.bossSeen=true;banner(BOSSNAME,'He takes a lot of hits. Keep moving, use cover.');sfx('boss');}if(e.state!=='chase'){e.alertT=0.9;sfx('alert');for(const o of G.enemies){if(o!==e&&o.alive&&!(o.down>0)&&o.state!=='chase'&&Math.hypot(o.x-e.x,o.z-e.z)<5){o.state='search';o.sx=G.player.x;o.sz=G.player.z;o.searchT=0;o.qT=1;G.nx=o.sx;G.nz=o.sz;bfs(G.nflow,Math.floor(o.sx),Math.floor(o.sz));}}}}
+function spot(e){if(e.boss&&!G.bossSeen){G.bossSeen=true;banner(bossName(),G.def.boss?'Gold grenades. Keep moving and never stand still.':'He takes a lot of hits. Keep moving, use cover.');sfx('boss');}if(e.state!=='chase'){e.alertT=0.9;sfx('alert');for(const o of G.enemies){if(o!==e&&o.alive&&!(o.down>0)&&o.state!=='chase'&&Math.hypot(o.x-e.x,o.z-e.z)<5){o.state='search';o.sx=G.player.x;o.sz=G.player.z;o.searchT=0;o.qT=1;G.nx=o.sx;G.nz=o.sz;bfs(G.nflow,Math.floor(o.sx),Math.floor(o.sz));}}}}
 function updateEnemy(e,dt){const g=G,p=g.player;
  if(e.hitT>0)e.hitT-=dt;if(e.alertT>0)e.alertT-=dt;if(e.qT>0)e.qT-=dt;
  if(!e.alive){slideBody(e,dt);return;}
@@ -1376,6 +1465,7 @@ function updateDoors(dt){const g=G;for(const d of g.doors){d.th+=d.w*dt;d.w*=Mat
  if(Math.abs(d.w)>3&&d.pusher==='p'){const e2=doorEnd(d);for(const e of g.enemies){if(!e.alive||e.down>0)continue;if(segDist(e.x,e.z,d.hx,d.hz,e2[0],e2[1])<e.r+0.1){const a=d.base+d.th,s=Math.sign(d.w);knockdown(e,[-Math.sin(a)*s,Math.cos(a)*s]);rumble(0.5,0.3,100);sfx('door');popup(e.x,e.z,'DOOR SLAM!','#ffd36b');shake(0.25);d.w*=0.4;}}}}}
 function updateBullets(dt){const g=G;for(const b of g.bullets){const dist=b.sp*dt,steps=Math.ceil(dist/0.2),st=dist/steps;
  for(let s=0;s<steps&&b.life>0;s++){const nx=b.x+b.dx*st,nz=b.z+b.dz*st;const ncx=Math.floor(nx),ncz=Math.floor(nz);
+  if(G.glassSet&&b.own==='p'&&hitGlass(ncx,ncz)){b.x=nx;b.z=nz;continue;}
   if(isCover(ncx,ncz)){const wall=isSolid(ncx,ncz);const ocx=Math.floor(b.x),ocz=Math.floor(b.z);let wx,wz,nrx=0,nrz=0;
    if(ncx!==ocx){wx=ncx>ocx?ncx:ocx;nrx=ncx>ocx?-1:1;wz=b.z+(wx-b.x)/b.dx*b.dz;}else{wz=ncz>ocz?ncz:ocz;nrz=ncz>ocz?-1:1;wx=b.x+(wz-b.z)/b.dz*b.dx;}
    if(wall){sparks(wx+nrx*0.05,0.74,wz+nrz*0.05);addWallDecal(wx,0.74+rnd(-0.08,0.08),wz,nrx,nrz,0.09,10,[0.15,0.13,0.13]);}else{sparks(wx+nrx*0.05,0.9,wz+nrz*0.05,[0.7,0.5,0.3]);if(Math.random()<0.3)sfx('thud');}
@@ -1436,6 +1526,7 @@ const WPARTS={
 };
 WPARTS.goldak=[[0,0.04,0.12,0.042,0.06,0.36,GOLD],[0,0.045,0.38,0.018,0.018,0.18,GOLD],[0,-0.06,0.15,0.032,0.12,0.05,GOLD],[0,-0.12,0.19,0.03,0.06,0.045,GOLD],[0,0.02,-0.15,0.04,0.07,0.21,WOOD],[0,-0.03,0,0.03,0.08,0.04,GOLD]];
 WPARTS.golddeagle=[[0,0.05,0.08,0.042,0.058,0.25,GOLD],[0,-0.03,0,0.036,0.11,0.055,GOLD],[0,0.08,0.08,0.012,0.008,0.22,hex(0xfff0b0)]];
+WPARTS.goldgl=[[0,0.05,0.16,0.05,0.07,0.42,GOLD],[0,0.05,0.4,0.075,0.075,0.08,GOLD],[0,0.0,0.05,0.1,0.1,0.12,hex(0xb8902e)],[0,-0.05,0.02,0.03,0.11,0.05,DARK],[0,0.02,-0.15,0.04,0.07,0.2,GOLD]];
 WPARTS.katana=[[0,0,0.06,0.026,0.03,0.17,DARK],[0,0,0.16,0.075,0.014,0.055,GOLD],[0,0.008,0.52,0.008,0.042,0.7,STEEL]];
 WPARTS.dual=WPARTS.pistol.map(q=>[q[0]-0.07,...q.slice(1)]).concat(WPARTS.pistol.map(q=>[q[0]+0.07,...q.slice(1)]));
 const CB=c=>Math.hypot(c.x-G.cam.x,c.z-G.cam.z)<11?IBhi:IBlo;const FAB=()=>TUV[44],SKN=()=>TUV[45],MET=()=>TUV[46];
@@ -1712,7 +1803,7 @@ function loadHub(name,mode){HUBMODE=mode||'in';const d=HUBS[name];loadLevel(leve
  const own=hubModeSetup(name);$('bSkip').innerHTML=(HUBMODE==='home'?'LEAVE FOR McWEY':HUBMODE==='in'?'SKIP TO McWEY':'SKIP TO YOUR CAR')+'<span class="kbhint"> (TAB)</span><span class="padhint"> (Y)</span>';if(own)return;
  if(name==='drive')banner('OCEAN DRIVE, MIAMI',touchMode?'Left thumb steers &amp; drives · push to the edge for turbo':padMode?'Left stick steers &amp; drives · LB turbo':'W/S gas &amp; brake · A/D steer · Shift turbo');
  else if(name==='lobby')banner('McWEY TOWER','Take the elevator to the 52nd floor');}
-function goDrive(){startCine();}
+function goDrive(){const p=PROG[rideId()];if(p&&p.heli){loadHub('lobby');banner('BY HELICOPTER','Landed on McWey Tower · take the elevator up');return;}startCine();}
 let fading=false;function fadeTo(fn){if(fading)return;fading=true;$('fade').classList.add('on');setTimeout(()=>{try{fn();}finally{setTimeout(()=>{$('fade').classList.remove('on');fading=false;},60);}},380);}
 function onHubTrigger(t){if(t==='leave'){sfx('blip');fadeTo(goDrive);return;}if(t==='exit'){sfx('blip');fadeTo(()=>loadHub('drive','parked'));return;}if(t==='tower'){sfx('blip');fadeTo(()=>loadHub('lobby'));}else if(t==='elevator'){sfx('ding');fadeTo(enterElevator);}else if(t==='mcwey'){fadeTo(talkMcWey);}}
 function updateHub(dt){const g=G;g.T+=dt;g.time+=dt;if(g.np)g.np.t+=dt;
@@ -1751,13 +1842,13 @@ function updateDrive(dt){const g=G,c=g.pcar,p=g.player;let thr=0,st=0,turbo=fals
  if(turbo&&Math.random()<dt*25)g.parts.push({t:'s',x:c.x-fx*1.2,y:0.3,z:c.z-fz*1.2,vx:-fx*2+rnd(-0.5,0.5),vy:rnd(0,0.5),vz:-fz*2+rnd(-0.5,0.5),s:0.06,c:[1,0.4,0.9],life:0.3});
  engineRev(c.v,turbo);p.x=c.x;p.z=c.z;p.vx=fx*c.v;p.vz=fz*c.v;p.a=c.h;g.turbo=turbo;}
 function drawHubDyn(B,O){const g=G;
- if(g.def.hub==='drive'){const c=g.pcar;drawRide(B,c.x,c.z,1,c.h-Math.PI/2,null,c.wr||0);if(g.parked&&g.player)drawChar(IBhi,g.player);if(g.doorT>0&&rideId()==='money'&&myCar()==='sig')drawCarDoor(B,c.x,c.z,1,c.h-Math.PI/2,g.doorT*1.1);for(const t of g.traffic)drawCar(B,t.x,t.z,t.col,t.dir,t.wr||0);
+ if(g.def.hub==='drive'){const c=g.pcar;if(g.parked&&myProg().heli)drawHeli(B,c.x,c.z,0,g.T);else drawRide(B,c.x,c.z,1,c.h-Math.PI/2,null,c.wr||0);if(myProg().boat){const T0=g.tower||g.car;drawSpeedboat(B,T0.x+1,14.3+Math.sin(g.T*1.5)*0.05,0,[1,0.3,0.75]);}if(g.parked&&g.player)drawChar(IBhi,g.player);if(g.doorT>0&&rideId()==='money'&&myCar()==='sig')drawCarDoor(B,c.x,c.z,1,c.h-Math.PI/2,g.doorT*1.1);for(const t of g.traffic)drawCar(B,t.x,t.z,t.col,t.dir,t.wr||0);
   if(g.car){const T0=g.tower||g.car,pcx=T0.x+4.3,pcz=T0.z+0.7;drawLambo(B,pcx,pcz,1,0,[0.82,0.04,0.08],0);for(const sz of [-0.36,0.36])B.box(TRS(pcx,0.14,pcz+sz,0,2.3,0.035,0.05),GOLD,true);B.box(TRS(pcx,0.05,pcz,0,2.5,0.02,0.92),[0.95,0.72,0.25],true);}
   for(const n of g.npcs)drawChar(IBhi,n);
   if(g.cine&&g.cine.shot===1){const e=g.cine.eye,tg=g.cine.tgt,zz=g.H+3.9,k=(zz-e[2])/(tg[2]-e[2]);drawRetroSun(B,e[0]+(tg[0]-e[0])*k+1.5,2.2,zz,2.0,-0.9,0.9);}
 if(!g.cine){const y=2.4+Math.sin(g.T*4)*0.2;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.45,0.45,0.45))),GOLD,true);
   for(let i=0;i<6;i++)B.box(TRS(g.car.x+Math.sin(g.T*2+i)*0.9,0.02,g.car.z+Math.cos(g.T*2+i)*0.9,0,0.25,0.01,0.25),[1,0.85,0.3],true);}}
- else{for(const n of g.npcs)drawChar(IBhi,n);if(g.player)drawChar(IBhi,g.player);if(g.park)drawRide(B,g.park.x,g.park.z,1,0);if(g.def===HUBS.bunker)drawBunker(B,g);if(g.slots)drawHome(B,g);
+ else{for(const n of g.npcs)drawChar(IBhi,n);if(g.player)drawChar(IBhi,g.player);if(g.park){if(myProg().heli)drawHeli(B,g.park.x,g.park.z,0,g.T);else drawRide(B,g.park.x,g.park.z,1,0);}if(g.def===HUBS.bunker)drawBunker(B,g);if(g.slots)drawHome(B,g);
   if(g.tankB){const t=g.tankB;drawTankLife(B,g.T,t.x0,t.x1,(t.z0+t.z1)/2,0.08,1.35,0.35,0.9,0.4,2.15);}
   if(g.fount)drawFountainWater(B,g.fount,g.T);
   const y=1.6+Math.sin(g.T*4)*0.12;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.22,0.22,0.22))),GOLD,true);}
@@ -1784,7 +1875,7 @@ function hubModeSetup(name){const g=G,p=g.player;if(HUBMODE==='home'){homeSetup(
  return false;}
 function parkedStreet(dt){const g=G,p=g.player;for(const t of g.traffic){t.x+=t.dir*t.sp*dt;if(t.x>g.W+2)t.x=-2;if(t.x<-2)t.x=g.W+2;
   if(p&&Math.abs(p.x-t.x)<1.6&&Math.abs(p.z-t.z)<0.8){p.z+=Math.sign(p.z-t.z||-1)*0.12;if(!(t.honk>0)){t.honk=1.5;sfx('horn');popup(t.x,t.z,pick(['HEY!','*HONK*','WATCH IT!']),'#ffd36b');}}if(t.honk>0)t.honk-=dt;}}
-function hubTargets(g){const t=[];if(g.slots){const o=g.slots.o;if(o)t.push({k:'catalog',x:o.x,z:o.z,r:1.9,lbl:'FURNITURE CATALOG'});const f=homeFurn();if(g.home===1&&f.hifi&&g.slots.b)t.push({k:'hifi',x:g.slots.b.x-0.4,z:g.slots.b.z+0.3,r:1.9,lbl:'HI-FI · CHANGE TRACK'});return t;}const car=g.park||(g.parked?g.pcar:null);if(car)t.push({k:'car',x:car.x,z:car.z,r:2.3,lbl:'YOUR CAR'});const n=g.npcs.find(q=>q.kind==='nine');if(n)t.push({k:'nine',x:n.x,z:n.z,r:2.7,lbl:'NINE OF NINE'});return t;}
+function hubTargets(g){const t=[];if(g.slots){const o=g.slots.o;if(o)t.push({k:'catalog',x:o.x,z:o.z,r:1.9,lbl:'FURNITURE CATALOG'});const f=homeFurn();if(g.home===1&&f.hifi&&g.slots.b)t.push({k:'hifi',x:g.slots.b.x-0.4,z:g.slots.b.z+0.3,r:1.9,lbl:'HI-FI · CHANGE TRACK'});return t;}const car=g.park||(g.parked?g.pcar:null);if(car)t.push({k:'car',x:car.x,z:car.z,r:2.3,lbl:myProg().heli?'YOUR CHOPPER':'YOUR CAR'});const n=g.npcs.find(q=>q.kind==='nine');if(n)t.push({k:'nine',x:n.x,z:n.z,r:2.7,lbl:'NINE OF NINE'});return t;}
 function hubInteract(){const g=G,p=g.player;if(!p||g.hubDone)return;const ts=hubTargets(g);let best=null,bd=1e9;
  for(const t of ts){const d=Math.hypot(t.x-p.x,t.z-p.z);if(d<t.r&&d<bd){bd=d;best=t;}}g.ia=best;let go=null;
  if(pressed.grab&&best){go=best;pressed.grab=false;}
@@ -1795,7 +1886,8 @@ function arm(){const p=myProg();if(typeof p.wallet!=='number')p.wallet=0;if(p.de
 function wallet(){arm();return myProg().wallet;}
 let LASTPAY=null;function cutOf(take){const p=myProg();arm();return p.debt>0?Math.min(p.debt,Math.ceil(take*MC_CUT)):0;}
 function payout(){if(!G||G.paid||!G.take)return;G.paid=1;const a=arm(),p=myProg(),cut=cutOf(G.take),before=p.debt;p.debt-=cut;p.wallet+=G.take-cut;
- p.couchBlood=0;if(levelIdx===2)p.sharkDead=1;LASTPAY={take:G.take,cut,debt:p.debt,before,squared:false};if(p.debt<=0&&!p.paid){p.paid=true;LASTPAY.squared=true;}a.mags=0;a.vest=0;a.jobs++;saveProg();}
+ p.couchBlood=0;if(levelIdx===2)p.sharkDead=1;LASTPAY={take:G.take,cut,debt:p.debt,before,squared:false,lvl:levelIdx};
+ if(levelIdx===3)p.boat=1;if(levelIdx===4){p.suits2=1;p.suit='power';PS2C.applySuit(rideId());}if(levelIdx===5)p.heli=1;if(levelIdx===7){p.lexDead=1;p.respect=1;LASTPAY.yacht=true;LASTPAY.cleared=p.debt;p.debt=0;p.paid=true;}else if(p.debt<=0&&!p.paid){p.paid=true;LASTPAY.squared=true;}a.mags=0;a.vest=0;a.jobs++;saveProg();}
 function applyLoadout(){const a=arm(),p=G&&G.player;if(!p)return;const w=a.eq&&WD[a.eq];
  if(w)p.weapon={type:a.eq,ammo:w.melee?0:Math.round((w.ammo||0)*(1+a.mags))};else if(a.mags&&p.weapon&&WD[p.weapon.type].ammo)p.weapon.ammo+=WD[p.weapon.type].ammo*a.mags;
  if(a.vest)p.armor=(p.armor||0)+1;}
@@ -1842,12 +1934,12 @@ const NINE_HI=["Ah, my friend returns! Capitalism is beautiful, da?","From Lenin
 const NINE_BUY=["Excellent choice. Very ballistic.","Da! Treat her well, she is temperamental.","You have taste. Dangerous taste.","Pleasure doing business. Mostly the pleasure is mine."];
 const NINE_EXCL="Ah... you choose the exclusive. This one, I smuggle through three borders and one very angry customs officer.";
 const NINE_POOR="My friend, this costs more money than you have. Is simple arithmetic.";
-const SHOPP={pistol:1500,silenced:2200,revolver:2800,dual:3200,smg:3500,shotgun:3800,double:4200,m16:5200,bat:600,knife:500,machete:900,katana:7500,golddeagle:12000,goldak:15000};
+const SHOPP={pistol:1500,silenced:2200,revolver:2800,dual:3200,smg:3500,shotgun:3800,double:4200,m16:5200,bat:600,knife:500,machete:900,katana:7500,golddeagle:12000,goldak:15000,goldgl:20000};
 const WDESC={pistol:'Reliable. Boring. Like a Swiss watch.',silenced:'For conversations nobody hears.',revolver:'Six chances. Goes through three men.',dual:'Two pistols, twice the opinions.',smg:'Sprays the room like cologne.',shotgun:'Seven pellets of diplomacy.',double:'Two shells. One argument.',m16:'Three-round bursts, through walls.',bat:'Silent. Swings. Home run.',knife:'Close, quiet, personal.',machete:'For cutting through the paperwork.',
- katana:'Folded nine hundred times. By me. On a Tuesday.',golddeagle:'Two solid-gold hand cannons. Through walls, through men.',goldak:'Solid gold. Fully automatic. Zero subtlety.'};
+ katana:'Folded nine hundred times. By me. On a Tuesday.',goldgl:'I acquire it from a very wet gentleman. Six gold grenades.',golddeagle:'Two solid-gold hand cannons. Through walls, through men.',goldak:'Solid gold. Fully automatic. Zero subtlety.'};
 const EXCL=['goldak','golddeagle','katana'],SHOP_AMMO=800,SHOP_VEST=2500,MAX_MAGS=3;
 let shopSayT=null,shopDone=null;
-function rollStock(a){const pool=Object.keys(SHOPP).filter(k=>!EXCL.includes(k)).sort(()=>Math.random()-0.5),st=pool.slice(0,3);if(Math.random()<0.35)st[Math.random()*3|0]=pick(EXCL);a.stock=st;a.key=a.jobs;}
+function rollStock(a){const ex=EXCL.concat(myProg().lexDead?['goldgl']:[]),pool=Object.keys(SHOPP).filter(k=>!ex.includes(k)&&k!=='goldgl').sort(()=>Math.random()-0.5),st=pool.slice(0,3);if(Math.random()<(myProg().lexDead?0.5:0.35))st[Math.random()*3|0]=pick(ex);a.stock=st;a.key=a.jobs;}
 function shopReady(){return !$('shCards').classList.contains('hid');}
 function shopType(t,done){clearInterval(shopSayT);const el=$('shSay');let i=0;el.textContent='';shopDone=done||null;
  const fin=()=>{clearInterval(shopSayT);nineTalk=false;el.textContent=t;const f=shopDone;shopDone=null;if(f)f();};el.onclick=fin;
@@ -1904,6 +1996,67 @@ function nineView(asp){let eye=[-0.35,1.6,2.75],tgt=[-1.05,1.3,0];if(asp<1){eye=
  return{eye,tgt,lights:[{x:0,y:2.5,z:0.4,r:3.2,c:[1.25*fl,0.95*fl,0.65*fl]},{x:-2.2,y:1.6,z:0.2,r:3.4,c:[1,0.15,0.3]},{x:2,y:2.0,z:-0.6,r:3.6,c:[1,0.3,0.75]},{x:1.2,y:1.5,z:1.8,r:3.6,c:[0.35,0.8,1.2]}]};}
 function drawNineDyn(B,P){B.reset();P.reset();if(!nineChar)return;PS2C.add(nineChar,'menu',1,menuT,IBhi,'nine');
  const ex=arm().stock.find(k=>WD[k]&&WD[k].excl);if(ex)drawWeapon(B,A.mul(A.mul(A.mul(A.T(0.5,0.95,0.62),A.RY(0.5+Math.sin(menuT*0.8)*0.4)),A.RZ(Math.PI/2)),A.S(1.15,1.15,1.15)),ex);}
+/* ================= ACT 2: HOSTILE TAKEOVER ================= */
+function act2Setup(g,i){g.nades=[];if(!(i>=3))return;const W=g.W,cells=ch=>{const o=[];for(let z=0;z<g.H;z++)for(let x=0;x<W;x++)if(g.rows[z][x]===ch)o.push({x:x+0.5,z:z+0.5,ix:x,iz:z});return o;};
+ const sol=a=>{for(const q of a)g.solid[q.iz*W+q.ix]=1;};
+ if(i===3){g.boats=cells('Y');}
+ if(i===4){g.cabs=cells('c');sol(g.cabs);const hk=cells('a');sol(hk);g.hockey=hk;}
+ if(i===5){g.manq=cells('n').map((q,k)=>{const m=makeChar(q.x,q.z,{skin:[0.9,0.88,0.84],jacket:hex(pick([0xff9ec7,0x9ae3e6,0xffe39a,0xffffff,0xc9b6f2])),shirt:[0.96,0.96,0.96],pants:hex(pick([0xf2f2f2,0x2a2030,0x9ad8e0])),shoes:[0.9,0.9,0.9],hs:null,bw:1,bd:1,bh:1},false);m.a=pick([0,Math.PI,Math.PI/2,-Math.PI/2]);m.kind='manq';return m;});
+  const el=cells('e');sol(el);g.elev=el;g.wreck=1;setTimeout(()=>{if(G===g&&state==='play')banner("THEY TRASHED YOUR "+carName(myCar()),"Lex's goons hit your ride while you shopped. Now it's personal.");},2600);}
+ if(i===6){g.panes=cells('%');sol(g.panes);g.glassSet=new Set(g.panes.map(q=>q.iz*W+q.ix));const c=cells('!')[0];g.studioC=c;}
+ if(i===7){const y=cells('y');if(y.length){const xs=y.map(q=>q.ix),zs=y.map(q=>q.iz);g.tank={x0:Math.min(...xs),x1:Math.max(...xs)+1,z0:Math.min(...zs),z1:Math.max(...zs)+1};}}}
+function updateAct2(dt){const g=G;
+ if(g.studioC&&AC&&!MUS.muffled){const p=g.player,d=Math.hypot(p.x-g.studioC.x,p.z-g.studioC.z),k=clamp(1-d/16,0,1);g.mT=(g.mT||0)-dt;if(g.mT<=0){g.mT=0.2;mFilt.frequency.setTargetAtTime(lerp(700,18000,k*k),AC.currentTime,0.3);}}
+ if(g.wreck&&Math.random()<dt*30){g.parts.push({t:'s',x:g.car.x+rnd(-0.8,0.8),y:0.6,z:g.car.z+rnd(-0.4,0.4),vx:rnd(-0.2,0.2),vy:rnd(0.8,1.8),vz:rnd(-0.2,0.2),s:0.07,c:Math.random()<0.5?[1,0.55,0.1]:[0.2,0.18,0.18],life:0.7});}}
+/* breakable studio glass: a bullet shatters the pane and carries on */
+function hitGlass(ix,iz){const g=G;if(!g.glassSet)return false;const k=iz*g.W+ix;if(!g.glassSet.has(k))return false;g.glassSet.delete(k);g.solid[k]=0;g.panes=g.panes.filter(q=>q.iz*g.W+q.ix!==k);
+ for(let n=0;n<16;n++)g.parts.push({t:'s',x:ix+0.5+rnd(-0.4,0.4),y:rnd(0.3,1.6),z:iz+0.5+rnd(-0.4,0.4),vx:rnd(-2,2),vy:rnd(0,2),vz:rnd(-2,2),s:0.05,c:[0.75,0.95,1],life:0.7});sfx('ric');alertNoise(ix+0.5,iz+0.5,6);g.glassBroken=(g.glassBroken||0)+1;return true;}
+/* gold grenades: Lex lobs them, and so can you once Nine sells his launcher */
+function throwNade(c,own,tx,tz){const g=G;if(!g.nades)g.nades=[];if(tx===undefined){const sa=Math.sin(c.a),ca=Math.cos(c.a);let d=6;if(own==='p'&&g.aimX!==undefined){d=clamp(Math.hypot(g.aimX-c.x,g.aimZ-c.z),1.5,8);}tx=c.x+sa*d;tz=c.z+ca*d;}
+ const dist=Math.hypot(tx-c.x,tz-c.z);g.nades.push({sx:c.x,sz:c.z,x:c.x,z:c.z,y:0.9,tx,tz,t:0,dur:clamp(dist/8,0.45,1.0),own,spin:rnd(0,TAU)});sfx('throw');}
+function updateNades(dt){const g=G;if(!g.nades||!g.nades.length)return;for(const n of g.nades){n.t+=dt;const k=Math.min(1,n.t/n.dur);n.x=lerp(n.sx,n.tx,k);n.z=lerp(n.sz,n.tz,k);n.y=0.15+Math.sin(k*Math.PI)*1.5+(1-k)*0.6;n.spin+=dt*12;if(k>=1)explode(n);}g.nades=g.nades.filter(n=>!n.done);}
+function explode(n){const g=G,p=g.player;n.done=true;sfx('double');sfx('crash');shake(0.7);rumble(0.9,0.9,260);g.flash=0.35;g.flashC=[1,0.55,0.15];alertNoise(n.x,n.z,14);
+ for(let i=0;i<30;i++){const a=rnd(0,TAU),v=rnd(1.5,5);g.parts.push({t:'s',x:n.x,y:0.4,z:n.z,vx:Math.cos(a)*v,vy:rnd(1,4),vz:Math.sin(a)*v,s:rnd(0.06,0.14),c:Math.random()<0.6?[1,rnd(0.45,0.8),0.1]:[0.25,0.22,0.22],life:rnd(0.35,0.8)});}
+ addFloorDecal(n.x,n.z,1.6,rnd(0,TAU),47,[0.12,0.1,0.1]);const R=2.2;
+ if(p.alive&&n.own!=='p'){const d=Math.hypot(p.x-n.x,p.z-n.z);if(d<R*0.9){const dir=[(p.x-n.x)/(d||1),(p.z-n.z)/(d||1)];hurtPlayer(dir,'grenade');}}
+ for(const e of g.enemies){if(!e.alive)continue;const d=Math.hypot(e.x-n.x,e.z-n.z);if(d>R)continue;const dir=[(e.x-n.x)/(d||1),(e.z-n.z)/(d||1)];if(e.boss){if(n.own==='p')hitEnemy(e,'shotgun',dir,3);}else killEnemy(e,'shotgun',dir);}
+ if(g.glassSet)for(const q of g.panes.slice())if(Math.hypot(q.x-n.x,q.z-n.z)<R)hitGlass(q.ix,q.iz);}
+function lexAI(e,dt,dist,dx,dz,ang){const enr=e.hp<=e.maxhp/2;e.aiming=dist>=1.3;e.react-=dt;const d=dist||1;let tvx=0,tvz=0;
+ if(dist>6.5){tvx=dx/d*2.2;tvz=dz/d*2.2;}else if(dist<3.2){tvx=-dx/d*1.9;tvz=-dz/d*1.9;}else{tvx=-dz/d*1.2;tvz=dx/d*1.2;}
+ if(dist<1.35&&e.cd<=0){e.cd=1.0;e.atkT=e.atkDur=0.25;sfx('punch');hurtPlayer([dx/d,dz/d],'boss');shake(0.5);}
+ else if(e.react<=0&&e.cd<=0&&dist<11&&los(e.x,e.z,G.player.x,G.player.z)){throwNade(e,'e',G.player.x+rnd(-0.7,0.7),G.player.z+rnd(-0.7,0.7));e.atkT=e.atkDur=0.3;e.cd=(enr?1.05:1.75)*Dd().ecd;if(Math.random()<0.25)popup(e.x,e.z,pick(['"Catch, pal!"','"Solid gold, baby!"','"This suit is linen!"','"You can\'t afford me!"']),'#ffa6c9');}
+ if(enr&&!e.enraged){e.enraged=true;popup(e.x,e.z,'"MY SUIT! THIS IS LINEN!"','#ffa6c9');sfx('boss');}return[tvx,tvz];}
+/* the finisher on Lex: each one pays off his Act 1 insult */
+const FIN={consigliere:[['LEX "SILKS" STERLING',"Wait — wait! I can pay you! I've got a Testarossa!"],['P',"You wanted to talk family names, Silks? Here's your ledger."],['P',"Go fetch."]],
+ money:[['LEX "SILKS" STERLING',"Wait — wait! I can pay you! I've got a Testarossa!"],['P',"*stuffs a stack of hundreds into his mouth*"],['P',"Keep the change."]],
+ don:[['LEX "SILKS" STERLING',"Wait — wait! I can pay you! I've got a Testarossa!"],['P',"Pure gold tie, huh?"],['P',"...Funny. It's leaving a green mark."]]};
+function updateFin(dt){const g=G,f=g.fin,id=rideId(),L=FIN[id]||FIN.don,e=f.e,p=g.player;f.t+=dt;g.T+=dt;
+ const next=()=>{f.step++;if(f.step>=L.length){g.fin=null;banner('LEX "SILKS" STERLING IS DONE','Clear the yacht, then back to the car');return;}const q=L[f.step];f.line={who:q[0]==='P'?CHARS[selIdx].name:q[0],txt:q[1],t:0};f.lineT=1.2+q[1].length*0.045;
+  if(f.step===1){if(id==='money'){for(let i=0;i<40;i++)g.parts.push({t:'s',x:e.x,y:0.7,z:e.z,vx:rnd(-2,2),vy:rnd(0.5,3),vz:rnd(-2,2),s:0.08,c:[0.35,0.8,0.4],life:1.2});sfx('cash');}
+   if(id==='consigliere'){for(let i=0;i<16;i++)g.parts.push({t:'s',x:e.x,y:1.0,z:e.z,vx:rnd(-1,1)+(f.dir?f.dir[0]*4:0),vy:rnd(1,3),vz:rnd(-1,1)+(f.dir?f.dir[1]*4:0),s:0.07,c:[0.95,0.93,0.85],life:1.3});sfx('throw');}
+   if(id==='don'){for(let i=0;i<14;i++)g.parts.push({t:'s',x:e.x,y:1.3,z:e.z,vx:rnd(-1,1),vy:rnd(0,1.5),vz:rnd(-1,1),s:0.04,c:[1,0.85,0.3],life:0.9});}}
+  if(f.step===2){if(id==='money'){e.sunk=true;for(let i=0;i<20;i++)g.parts.push({t:'s',x:e.x,y:0.1,z:e.z,vx:rnd(-2,2),vy:rnd(1,3),vz:rnd(-2,2),s:0.06,c:[0.75,0.95,1],life:0.8});sfx('ric');shake(0.4);}
+   if(id==='consigliere'){const dir=f.dir||[0,1];e.vx=dir[0]*9;e.vz=dir[1]*9;e.vy=3;e.y=0.01;sfx('throw');setTimeout(()=>{if(G===g)e.sunk=true;},700);}
+   if(id==='don'){popup(e.x,e.z,'GREEN MARK','#7dff9a');sfx('punch');}}};
+ if(f.step<0){if(f.t>0.9)next();}else if(f.line){f.line.t+=dt;if(f.line.t>f.lineT)next();}
+ if(f.t>1.2&&(pressed.perk||pressed.grab||mouse.down||keys.Enter)){mouse.down=false;keys.Enter=false;while(g.fin)next();}}
+/* Act 2 props */
+function drawSpeedboat(B,x,z,a,col){const {P}=rideKit(B,x,z,1,a),W1=[0.96,0.96,0.97],D1=[0.1,0.1,0.12];P(0,0.16,0,0,2.4,0.24,0.86,W1);P(1.35,0.17,0,0,0.5,0.18,0.56,W1);P(1.62,0.16,0,0,0.2,0.12,0.3,W1);
+ for(const sd of [-1,1])P(0.1,0.2,sd*0.435,0,2.3,0.06,0.01,col,null,1);P(-0.05,0.38,0,0,0.6,0.18,0.7,[0.55,0.8,0.95]);P(-0.6,0.33,0,0,0.6,0.1,0.72,D1);P(-1.3,0.26,0,0,0.22,0.32,0.5,D1);P(-1.3,0.44,0,0,0.24,0.06,0.52,col,null,1);}
+function drawHeli(B,x,z,a,T){const {P}=rideKit(B,x,z,1,a),D1=[0.1,0.1,0.13];P(0,0.6,0,0,1.6,0.78,0.95,D1);P(0.78,0.62,0,0,0.5,0.6,0.86,[0.5,0.75,0.95]);P(-1.4,0.8,0,0,1.7,0.16,0.16,D1);P(-2.2,1.0,0,0,0.26,0.5,0.05,D1);P(-2.2,0.85,0.12,0,0.3,0.06,0.25,D1);
+ for(const sd of [-1,1]){P(0,0.08,sd*0.46,0,1.8,0.05,0.05,[0.65,0.65,0.7]);P(0.4,0.22,sd*0.42,0,0.05,0.28,0.04,[0.65,0.65,0.7]);P(-0.4,0.22,sd*0.42,0,0.05,0.28,0.04,[0.65,0.65,0.7]);P(0,0.5,sd*0.48,0,1.5,0.06,0.01,GOLD);}
+ P(0,1.02,0,0,0.12,0.12,0.12,D1);for(let i=0;i<2;i++)B.box(A.mul(A.mul(A.T(x,1.08,z),A.RY(T*14+i*Math.PI/2)),A.S(3.8,0.03,0.14)),[0.15,0.15,0.17]);}
+function drawAct2(B,g){const T=g.T,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,ry||0,sx,sy,sz),c,!!em);
+ if(g.nades)for(const n of g.nades){B.box(A.mul(A.mul(A.T(n.x,n.y,n.z),A.RY(n.spin)),A.S(0.13,0.13,0.17)),GOLD,true);}
+ if(g.boats)g.boats.forEach((q,i)=>drawSpeedboat(B,q.x,q.z,i%2?Math.PI:0,[[1,0.3,0.75],[0.2,0.9,1],[1,0.8,0.2]][i%3]));
+ if(g.cabs)g.cabs.forEach((q,i)=>{bx(q.x,0.8,q.z,0.7,1.6,0.6,[0.12,0.05,0.2]);const cc=[[1,0.3,0.75],[0.3,0.9,1],[1,0.85,0.3],[0.5,1,0.5]][(i+Math.floor(T*2))%4];bx(q.x,1.05,q.z+0.31,0.5,0.4,0.01,cc,true);bx(q.x,1.55,q.z+0.31,0.6,0.12,0.01,[1,0.3,0.75],true);bx(q.x,0.75,q.z+0.33,0.55,0.08,0.1,[0.3,0.3,0.35]);});
+ if(g.hockey)g.hockey.forEach((q,i)=>{bx(q.x,0.45,q.z,1.0,0.9,1.0,[0.12,0.1,0.18]);bx(q.x,0.905,q.z,0.96,0.02,0.96,[0.92,0.95,1]);bx(q.x,0.93,q.z,1.0,0.04,0.04,[0.3,0.9,1],true);if(i%4===0){const px=q.x+0.5+Math.sin(T*3+i)*0.6,pz=q.z+0.5+Math.cos(T*2.3+i)*0.6;bx(px,0.93,pz,0.12,0.03,0.12,[1,0.3,0.6],true);}});
+ if(g.manq)for(const m of g.manq)drawChar(CB(m),m);
+ if(g.elev)g.elev.forEach((q,i)=>{bx(q.x,1.3,q.z,0.06,2.6,0.06,GOLD);bx(q.x,0.05+((Math.sin(T*0.6+i)+1)*0.9),q.z,0.9,0.08,0.9,[0.75,0.9,1],true);bx(q.x,2.55,q.z,1.0,0.06,1.0,GOLD);});
+ if(g.panes)for(const q of g.panes){const h=g.rows[q.iz][q.ix-1]==='%'||g.rows[q.iz][q.ix+1]==='%';bx(q.x,0.95,q.z,h?1.0:0.1,1.9,h?0.1:1.0,[0.6,0.85,1]);bx(q.x,1.92,q.z,h?1.0:0.14,0.05,h?0.14:1.0,[0.25,0.25,0.3]);}
+ if(g.studioC){const c=g.studioC;bx(c.x,0.06,c.z,1.6,0.04,1.6,[1,0.3,0.75],true);bx(c.x,1.0,c.z,0.05,2.0,0.05,[0.4,0.4,0.45]);bx(c.x,1.6,c.z+0.15,0.14,0.2,0.1,[0.15,0.15,0.17]);for(let i=0;i<8;i++){const h=0.1+Math.abs(Math.sin(T*8+i))*0.5;bx(c.x-0.7+i*0.2,0.1+h/2,c.z-0.9,0.12,h,0.06,[0.3,1,0.6],true);}}
+ if(g.tank){const t=g.tank;drawTankLife(B,T,t.x0,t.x1,(t.z0+t.z1)/2,(t.z1-t.z0)*0.3,0.08,0.03,1.1,0.06,0.3);}
+ if(g.wreck){for(let i=0;i<5;i++)bx(g.car.x-0.9+i*0.45,0.55,g.car.z+((i*37)%3-1)*0.2,0.3,0.04,0.3,[0.05,0.05,0.05]);}}
 /* ---- safehouses: Room 14, the Ocean Drive studio, the Coral Tower penthouse ---- */
 const HOMEDEF=[{name:'ROOM 14 · SUNSET MOTEL',price:0,desc:'The gutter. Orange neon through cheap blinds.'},{name:'OCEAN DRIVE STUDIO',price:12000,desc:'The come-up. Pastel walls, glass blocks, sirens and surf.'},{name:'CORAL TOWER PENTHOUSE',price:40000,needs:'sharkDead',desc:"The kingpin. Moreau's old place, black marble and gold."}];
 const FURN_CAT=[
@@ -2006,7 +2159,7 @@ function updateCameo(dt){const g=G,c=g.cameo,lx=g.lex,p=g.player,id=CHARS[selIdx
  if(c.coin){const q=c.coin;q.t+=dt;q.x+=q.vx*dt;q.z+=q.vz*dt;q.vy-=9.8*dt;q.y+=q.vy*dt;if(q.y<0.05){q.y=0.05;q.vx=q.vz=0;q.vy=0;if(!q.landed){q.landed=1;sfx('click');}}g.parts.push({t:'s',x:q.x,y:q.y,z:q.z,vx:0,vy:0,vz:0,s:0.05,c:[0.85,0.88,0.95],life:0.04});}
  if(c.t>0.6&&(pressed.perk||pressed.grab||mouse.down||keys.Enter)){mouse.down=false;keys.Enter=false;endCameo();}}
 function endCameo(){const g=G;g.cameo=null;g.lex=null;banner('FLOOR 2: '+LEVELS[1].name,'Lex went to the VIP lounge. Clear the floor.');}
-function drawCameo(c){const g=G,cm=g.cameo,u=Math.max(1,Math.min(vw,vh)/400),bh=Math.round(vh*0.1);c.fillStyle='#000';c.fillRect(0,0,vw,bh);c.fillRect(0,vh-bh,vw,bh);
+function drawCameo(c){const g=G,cm=g.cameo||g.fin,u=Math.max(1,Math.min(vw,vh)/400),bh=Math.round(vh*0.1);c.fillStyle='#000';c.fillRect(0,0,vw,bh);c.fillRect(0,vh-bh,vw,bh);
  c.textBaseline='top';c.font=PXF(6*u);txt(c,'SPACE / CLICK / (A) TO SKIP',vw-12*u,bh-12*u,'#c9a8e8','right',6*u);
  if(g.lex&&cm.ph==='in'&&cm.t<2.5){const s=project(g.lex.x,2.0,g.lex.z);if(s){c.font=PXF(8*u);txt(c,'LEX "SILKS" STERLING',s[0],s[1]-14*u,'#ffa6c9','center',8*u);}}
  const L=cm.line;if(!L)return;const n=Math.min(L.txt.length,Math.floor(L.t*48)),shown=L.txt.slice(0,n);
@@ -2039,13 +2192,23 @@ const MC_FIRST=["There he is. Sit, sit. Don't mind the shark — he's only eaten
 const MC_BRIEF=[
  ["Some out-of-town crew moved into the Sunset Motel on Route 1. They're dealing on our streets.","Nobody does business in Miami without asking McWey first. Go make it clear."],
  ["The motel was a front. The money runs through Club Flamingo on the strip.","VIP lounge in the back, lots of guards, lots of doors. Shut it down. Permanently."],
- ["Now the big fish. Victor 'The Shark' Moreau, top floor of Coral Tower.","Two sharks in one town is one too many. Bring me his watch — I want to know what time it was."]];
+ ["Now the big fish. Victor 'The Shark' Moreau, top floor of Coral Tower.","Two sharks in one town is one too many. Bring me his watch — I want to know what time it was."],
+ ["Lex says his marina deliveries are clean. Funny — your corners are suddenly drowning in fake gold.","I can't be seen touching my golden boy. You, on the other hand, were never here. Vice Marina. Sink his boats."],
+ ["Lex washes his money through the Starlight Arcade on the beach. Quarters in, clean dollars out.","Unplug it. Every cabinet. And if somebody needs a lesson, there's always the air hockey tables."],
+ ["You've been working too hard. Go shopping — Ocean View Mall, my treat.","Relax. What's the worst that could happen?"],
+ ["Lex is hiding. His only friend left is a pop singer he's paying to make a terrible album.","Sunset Sound, the big room. Crash the session and make the singer tell you where Lex sleeps."],
+ ["Lex is on his yacht, the Royal Flush, two miles off the coast.","Glass dance floor over a shark tank, and Lex with a gold grenade launcher. Bring me the yacht. Lex is optional."]];
 const MC_DEBRIEF=[
  ["The motel's quiet. The news is calling it a 'gas leak'. I love the news."],
  ["Club Flamingo is closed for... renovations. Beautiful work."],
- ["Moreau's done. Every corner of Miami answers to the Family now."]];
+ ["Moreau's done. Every corner of Miami answers to the Family now."],
+ ["Lex's boats are at the bottom of the marina. He called me crying. I told him the sea is a dangerous place."],
+ ["The Starlight Arcade is closed. Game over, as the kids say."],
+ ["Lex hit your ride. You hit his whole mall. I'd call that an even trade, but you'd disagree."],
+ ["The singer sang. The album is still terrible."],
+ ["Lex is fish food and the Royal Flush is anchored in my harbor."]];
 const MC_GRADE={S:"Clean. Fast. Not a hair out of place. That's how McWey likes it.",'A+':"Sharp work. You've got style, kid.",A:"Sharp work. You've got style, kid.",B:"Solid. Could've been faster, but I'm not complaining.",C:"Messy. But messy pays the same.",D:"Sloppy. Next time, less mess and more finesse."};
-const MC_QUOTE=["In Miami, gold doesn't lie. People do.","Loyalty is like gold, kid. Heavy, rare — and it looks good on you.","Sharks don't sleep. Neither does McWey.","Everybody wants a crown. Few want to wear the weight."];
+const MC_QUOTE=["In Miami, gold doesn't lie. People do.","Loyalty is like gold, kid. Heavy, rare — and it looks good on you.","Sharks don't sleep. Neither does McWey.","Gold sinks. Remember that.","Everybody launders. The trick is not getting caught in the dryer.","Revenge is a dish best served at the food court.","Every song ends. Make sure his ends tonight.","On the water, the biggest fish eats first.","Everybody wants a crown. Few want to wear the weight."];
 /* debrief lines per playstyle (clean / gore / ruthless / mixed), indexed by floor */
 const DEB_STYLE={clean:[["Not one scratch on you, and the motel never saw it coming. Quiet work. I like quiet."],["Club Flamingo closed without a siren. Nobody even spilled a drink. Beautiful."],["Moreau's gone and you didn't leave a mark on Coral Tower. Who taught you to be that tidy?"]],
  gore:[["The motel looks like a slaughterhouse. The news has no idea what to call it. I do, and I love it."],["Club Flamingo's a crime scene now. They'll be scrubbing those walls till spring. Good."],["Coral Tower's lobby is wallpaper now. Moreau's people are going to need a bigger mop."]],
@@ -2055,21 +2218,25 @@ const DEB_STYLE={clean:[["Not one scratch on you, and the motel never saw it com
 const END_STYLE={clean:{title:'THE QUIET HAND',line:"Tidy, quiet, and nobody saw your face. That's how the Family stays on top.",quote:"Quiet men hold the most keys."},
  gore:{title:'THE RED TIDE',line:"Half of Miami is still talking about the blood. Fear is the cheapest security there is.",quote:"Blood makes the best receipts."},
  ruthless:{title:'NO WITNESSES',line:"Nobody left in this city will say your name twice. That's the job done right.",quote:"Mercy is for people who can afford it."},
- mixed:{title:'STEADY HANDS',line:"You kept it steady all the way up. The Family likes steady.",quote:MC_QUOTE[3]}};
-const REPLY={don:["Consider it done.","This city answers to one family.","He'll be swimming with the fishes. Not yours, of course."],consigliere:["I'll give them some advice.","My knuckles will do the talking.","Then let's go have a word with him."],money:["What's my cut?","Everybody has a price. I'll find theirs.","His watch, his wallet — same thing."]};
+ mixed:{title:'STEADY HANDS',line:"You kept it steady all the way up. The Family likes steady.",quote:MC_QUOTE[8]}};
+const REPLY={don:["Consider it done.","This city answers to one family.","He'll be swimming with the fishes. Not yours, of course.","Then let's sink his boats.","Game over, Silks.","Shopping. Sure.","I'll make the singer sing.","Tell the shark I'm coming."],consigliere:["I'll give them some advice.","My knuckles will do the talking.","Then let's go have a word with him.","I'll give his boats some advice.","I'll pull the plug myself.","I could use a new tie.","Let's hear the album.","Time for Lex to take a swim."],money:["What's my cut?","Everybody has a price. I'll find theirs.","His watch, his wallet — same thing.","Fake gold? That's just insulting.","Clean money, my foot.","Finally. Retail therapy.","I'll pay the singer double.","Keep the change, Silks."]};
 const FINALE=["You know what? Keep the Lambo. And take this — solid gold. You earned it.","Now get out of my office before I start getting sentimental."];
 const MC_LOAN=12000,MC_CUT=0.6;
-const MC_KID={hi:["Come in, kid. Wipe your feet, that carpet cost more than your car.","There's my favourite employee. Still employed, I see."],open:["Here's how you start paying off that car, kid.","You want to own that heap? Then you go where I point.","Moreau. You do this, kid, and we're close to square."],
+const MC_KID={hi:["Come in, kid. Wipe your feet, that carpet cost more than your car.","There's my favourite employee. Still employed, I see."],open:["Here's how you start paying off that car, kid.","You want to own that heap? Then you go where I point.","Moreau. You do this, kid, and we're close to square.","Favor time, kid. The kind I deny later.","Clean money is still money, kid. Go make it dirty.","Take the night off, kid.","One more song, kid.","This is the one, kid. Finish him."],
  finale:["The car's nearly yours. Don't make me come collecting.","And take this — solid gold. You earned it.","Now get out of my office before I start getting sentimental."]};
-const MC_PARTNER={hi:["Partner. Sit — no, the good chair.","There he is. Drink? I'm pouring either way."],open:["Favor to ask. Your old neighbours at the Sunset are back.","I need a favor. Club Flamingo. You can say no.","Moreau. I'm not ordering you. I'm asking, one businessman to another."],
+const MC_PARTNER={hi:["Partner. Sit — no, the good chair.","There he is. Drink? I'm pouring either way."],open:["Favor to ask. Your old neighbours at the Sunset are back.","I need a favor. Club Flamingo. You can say no.","Moreau. I'm not ordering you. I'm asking, one businessman to another.","Partner. I need a favor I can deny.","Partner, the arcade. You know what to do.","Partner. Take the night off. Go shopping.","One more stop, partner.","Partner. Finish it."],
  finale:["Keep the car — it was always yours.","And take this. Solid gold.","Now get out of my office before I start getting sentimental."]};
 const MC_SQUARE=["That's the last of it. The car's yours. God help you, it's yours.","No more 'kid'. Kids owe people. You don't owe anybody. Not even me.","So from now on I don't give orders. I ask for favors. And you can say no.","...Nobody says no."];
 const SQUARE_REPLY={don:"Then we understand each other.",consigliere:"Free advice, then: don't forget it.",money:"Best investment I ever made."};
-function mcPayday(m,pp,pid){const L=LASTPAY;LASTPAY=null;if(!L){return;}
+const ACT2_REPLY={don:"Lex Sterling. The guy with no socks.",consigliere:"The man who insulted my family name.",money:"The guy who tossed me a quarter."};
+const UNLOCK_LINE={3:"Lex's best speedboat didn't sink. It's docked under your window now. Call it a souvenir.",4:"And get out of those street clothes. My tailor dressed you — power suits, on the house.",5:"Lex torched your ride, so you're flying from now on. There's a helicopter waiting for you."};
+function mcPayday(m,pp,pid){const L=LASTPAY;LASTPAY=null;if(!L){return;}if(UNLOCK_LINE[L.lvl])setTimeout(()=>{},0);
+ if(L.yacht){m("Your take: $"+fmt(L.take)+". All of it. And the yacht.");m("No more 'kid'. Whatever you owed me — "+(L.cleared>0?'$'+fmt(L.cleared)+', ':'')+"it's gone.");m("You don't work for me anymore. You work with me.");return;}
+ const ul=UNLOCK_LINE[L.lvl];const done=()=>{if(ul)m(ul);};
  if(L.cut>0&&!L.squared){m("Your take: $"+fmt(L.take)+". My cut: $"+fmt(L.cut)+". You still owe me $"+fmt(L.debt)+". Count it in front of me.");
-  if(L.debt<=MC_LOAN*0.25)m("One more good night, kid, and we're square.");else if(L.before>MC_LOAN/2&&L.debt<=MC_LOAN/2)m("Halfway there. Keep this up and that "+carName('beater')+"'s yours outright.");return;}
- if(L.squared){m("Your take: $"+fmt(L.take)+". My cut: $"+fmt(L.cut)+". And that...");MC_SQUARE.slice(0,3).forEach(m);pp(SQUARE_REPLY[pid]||SQUARE_REPLY.don);m(MC_SQUARE[3]);return;}
- m("Your cut: $"+fmt(L.take)+". All of it. Count it in front of me anyway — I like the sound.");}
+  if(L.debt<=MC_LOAN*0.25)m("One more good night, kid, and we're square.");else if(L.before>MC_LOAN/2&&L.debt<=MC_LOAN/2)m("Halfway there. Keep this up and that "+carName('beater')+"'s yours outright.");done();return;}
+ if(L.squared){m("Your take: $"+fmt(L.take)+". My cut: $"+fmt(L.cut)+". And that...");MC_SQUARE.slice(0,3).forEach(m);pp(SQUARE_REPLY[pid]||SQUARE_REPLY.don);m(MC_SQUARE[3]);done();return;}
+ m("Your cut: $"+fmt(L.take)+". All of it. Count it in front of me anyway — I like the sound.");done();}
 function mcReact(m){const p=myProg(),sn=p.seen||(p.seen={}),V=p.paid?MC_PARTNER:MC_KID;
  if(p.jewel&&(p.jewel.watch||p.jewel.chain||p.jewel.rings)&&!sn.mcJewel){sn.mcJewel=1;m(p.paid?"Look at you. Gold suits you, partner. Heavy, rare.":"Nice gold. You know where it'd look nicer? In my ledger.");}
  if(p.car!=='beater'&&!sn['mcCar_'+p.car]){sn['mcCar_'+p.car]=1;m(p.paid?"You drove that up my driveway? Now you're making me jealous.":"New wheels before you've paid for the old ones? Bold, kid.");}
@@ -2088,7 +2255,7 @@ function talkMcWey(){state='brief';show('sBrief');sfx('ring');engineOn(false);co
  arm();const pr=myProg(),MV=pr.paid?MC_PARTNER:MC_KID;
  const vi=VISIT;if(vi.debrief===null&&HUBFIRST)MC_FIRST.forEach(m);if(!pr.seen.loan){pr.seen.loan=1;saveProg();m("That "+carName('beater')+" the valet parked for you? It's ugly, it's yours, and it costs twelve grand.");m("I'll take it out of your cuts, kid. Sixty percent, every job, till we're square.");}else if(vi.debrief===null&&HUBFIRST)m(pick(MV.hi));
  if(vi.next==='end'){let best=vi.style||'mixed';for(const k in runStyle)if(runStyle[k]>(runStyle[best]||0))best=k;RUNEND=END_STYLE[best];}
- if(vi.debrief!==null){(DEB_STYLE[vi.style||'mixed']||MC_DEBRIEF)[vi.debrief].forEach(m);m((MC_GRADE[vi.grade]||MC_GRADE.B).replace('kid',pr.paid?'partner':'kid'));mcPayday(m,pp,pid);}mcReact(m);const MV2=myProg().paid?MC_PARTNER:MC_KID;
+ if(vi.debrief!==null){(((DEB_STYLE[vi.style||'mixed']||MC_DEBRIEF)[vi.debrief])||MC_DEBRIEF[vi.debrief]).forEach(m);m((MC_GRADE[vi.grade]||MC_GRADE.B).replace('kid',pr.paid?'partner':'kid'));mcPayday(m,pp,pid);if(vi.debrief===2&&vi.next===3){const ph=(myProg().homes||[]).includes(2);m("Moreau's gone. Which means Coral Tower needs a new man in charge.");m("I'm giving it to Lex Sterling. Clean money. Corporate. The future.");m(ph?"You've got Moreau's penthouse. Enjoy the view.":"You? Moreau's penthouse is on the market. I'll make you a price.");pp(ACT2_REPLY[pid]||ACT2_REPLY.don);m("Don't look at me like that. Business is business.");}}mcReact(m);const MV2=myProg().paid?MC_PARTNER:MC_KID;
  if(vi.next!=='end'){m(MV2.open[vi.next]);MC_BRIEF[vi.next].forEach(m);pp(REPLY[pid][vi.next]);m(MC_QUOTE[vi.next]);}else{m(RUNEND.line);MV2.finale.forEach(m);pp(REPLY[pid][2]);m(RUNEND.quote);}
  HUBFIRST=false;CHAT={q,i:0,phase:'idle',tm:null,done:false};$('chat').innerHTML='';$('bGo').style.visibility='hidden';$('chatTap').style.visibility='visible';
  $('brFrom').textContent=vi.next==='end'?'McWEY TOWER · FINAL DEBRIEF':vi.debrief!==null?'McWEY TOWER · DEBRIEF':'McWEY TOWER · 52ND FLOOR';
@@ -2763,10 +2930,12 @@ function bloodify(key,lvl,c){const C=CH[key];if(!C||!C.bc)return;C.dirty=true;co
 function buildLook(key,c){const Lk=c.look,bt=c.boss?'boss':(c.body||Lk.body);const cfg=lookCfg(Lk,bt);
  const ht=paintHeadP(Lk),btx=paintBodyP(Lk);MODELS[key]=[upload(buildBody(cfg.B),mkTex(btx)),upload(buildHead(cfg.B),mkTex(ht))];CH[key]={scale:cfg.scale,npc:true,bc:btx,hc:ht};}
 function freeLooks(){for(const k in MODELS)if(CH[k]&&CH[k].npc){for(const m of MODELS[k]){for(const b of ['p','n','t','bi','bw','i'])gl.deleteBuffer(m[b]);gl.deleteTexture(m.tex);}delete MODELS[k];delete CH[k];}}
-function applySuit(id){const C=CH[id];if(!ready||!C||!C.bcBase||!MODELS[id])return;const sk=PROG[id]&&SUITS[PROG[id].suit]&&PROG[id].lvl>=SUITS[PROG[id].suit].lvl?PROG[id].suit:'default';if(C.suitOn===sk)return;C.suitOn=sk;
+function applySuit(id){const C=CH[id];if(!ready||!C||!C.bcBase||!MODELS[id])return;const sk=suitOK(PROG[id],PROG[id]&&PROG[id].suit)?PROG[id].suit:'default';if(C.suitOn===sk)return;C.suitOn=sk;
  const x=C.bc0.getContext('2d');x.globalCompositeOperation='source-over';x.globalAlpha=1;x.drawImage(C.bcBase,0,0);
  if(sk!=='default'){const zones=[[0,0,200,290],[312,0,200,290],[0,290,512,90],[0,440,512,72]];x.save();x.beginPath();for(const z of zones)x.rect(...z);x.clip();
-  if(sk==='pinstripe'){x.fillStyle='rgba(20,16,36,.30)';x.fillRect(0,0,512,512);x.fillStyle='rgba(235,230,255,.55)';for(let i=0;i<512;i+=9)x.fillRect(i,0,1.6,512);}
+  if(sk==='power'){x.fillStyle='rgba(38,38,50,.84)';x.fillRect(0,0,512,512);x.fillStyle='rgba(210,210,235,.25)';for(let i=0;i<512;i+=12)x.fillRect(i,0,1.2,512);}
+  else if(sk==='linen'){x.fillStyle='rgba(246,238,220,.82)';x.fillRect(0,0,512,512);x.fillStyle='rgba(160,140,110,.12)';for(let i=0;i<512;i+=3)x.fillRect(0,i,512,1);}
+  else if(sk==='pinstripe'){x.fillStyle='rgba(20,16,36,.30)';x.fillRect(0,0,512,512);x.fillStyle='rgba(235,230,255,.55)';for(let i=0;i<512;i+=9)x.fillRect(i,0,1.6,512);}
   else if(sk==='camo'){x.fillStyle='rgba(70,82,48,.78)';x.fillRect(0,0,512,512);const cols=['rgba(38,46,26,.8)','rgba(122,112,72,.75)','rgba(26,28,20,.8)'];let sd=7;const r=()=>(sd=(sd*16807)%2147483647)/2147483647;for(let i=0;i<150;i++){x.fillStyle=cols[i%3];x.beginPath();x.ellipse(r()*512,r()*512,10+r()*26,6+r()*14,r()*3,0,6.3);x.fill();}}
   else{x.fillStyle='rgba(255,70,170,.62)';x.fillRect(0,0,512,512);x.fillStyle='rgba(255,210,235,.35)';for(let i=0;i<512;i+=14)x.fillRect(0,i,512,2);x.fillStyle='rgba(60,0,40,.18)';x.fillRect(0,0,512,512);}
   x.restore();}
@@ -3058,11 +3227,11 @@ function drawHazards(B,g){if(!g.fans)return;const DK=hex(0x1a1820),W=g.W;
 function buildDynamic(){const g=G,B=dynB,O=ovB;B.reset();O.reset();if(g.def.hub){drawHubDyn(B,O);return;}if(ENH())drawMotes(g.cam.x,g.cam.z,levelIdx>=1,g.T);
  for(const d of g.doors){const a=d.base+d.th,e=doorEnd(d);B.box(A.mul(A.mul(A.T((d.hx+e[0])/2,0.55,(d.hz+e[1])/2),A.RY(-a)),A.S(0.98,1.1,0.07)),[0.95,0.9,0.9],false,TUV[4]);
   const kx=d.hx+Math.cos(a)*0.82,kz=d.hz+Math.sin(a)*0.82;B.box(TRS(kx,0.55,kz,-a,0.05,0.05,0.12),GOLD);}
- drawRide(B,g.car.x,g.car.z,1,0);if(g.oldCar)drawBeater(B,g.oldCar.x,g.oldCar.z,1,g.oldCar.a,rideId());drawDisco(B,g);drawHazards(B,g);
+ drawRide(B,g.car.x,g.car.z,1,0);drawAct2(B,g);if(g.oldCar)drawBeater(B,g.oldCar.x,g.oldCar.z,1,g.oldCar.a,rideId());drawDisco(B,g);drawHazards(B,g);
  if(g.cleared){const y=1.5+Math.sin(g.T*5)*0.15;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.3,0.3,0.3))),[1,0.3,0.75],true);}
  const p=g.player;const near=p.alive?nearItem(p):null;
  for(const it of g.items)drawItem(B,it,it===near);
- for(const e of g.enemies)if(!e.alive)drawChar(CB(e),e);if(!p.alive)drawChar(CB(p),p);
+ for(const e of g.enemies)if(!e.alive&&!e.sunk)drawChar(CB(e),e);if(!p.alive)drawChar(CB(p),p);
  for(const e of g.enemies)if(e.alive)drawChar(CB(e),e);if(g.lex)drawChar(IBhi,g.lex);if(p.alive&&!(p.armorT>0&&Math.floor(g.T*20)%2))drawChar(IBhi,p);
  for(const e of g.enemies){if(!e.alive||!e.aiming||!p.alive)continue;const sa=Math.sin(e.a),ca=Math.cos(e.a);const h=rayWall(e.x,e.z,sa,ca,14,true);const len=h?h.d:14;const st=0.55,rem=Math.max(0,len-st);
   const flick=e.react<0.15?(Math.floor(g.T*30)%2?1:0.4):0.75;B.box(TRS(e.x+sa*(st+rem/2)+ca*0.17,0.74,e.z+ca*(st+rem/2)-sa*0.17,e.a,0.018,0.018,rem),[flick,0.05,0.08],true);}
@@ -3095,6 +3264,7 @@ const WICON={
  goldak:[[0,2,5,3],[5,1,12,3],[17,2,7,1],[9,4,3,2],[10,6,3,2],[6,4,2,2]],
  golddeagle:[[0,0,11,2],[1,2,3,4],[12,3,12,2],[13,5,3,3]],
  katana:[[0,3,6,2],[6,2,1,4],[7,3,17,1],[7,4,15,1]],
+ goldgl:[[0,3,6,3],[6,1,14,4],[20,2,4,2],[9,0,6,1],[10,5,4,3]],
 };
 function drawIcon(c,type,x,y,s,col){const r=WICON[type]||WICON.fists;c.fillStyle='rgba(0,0,0,.8)';for(const q of r)c.fillRect(x+q[0]*s+s*0.6,y+q[1]*s+s*0.6,q[2]*s,q[3]*s);c.fillStyle=col;for(const q of r)c.fillRect(x+q[0]*s,y+q[1]*s,q[2]*s,q[3]*s);}
 function drawRadar(c,cx,cy,R){const g=G,p=g.player,s=R/8;
@@ -3110,7 +3280,7 @@ function drawRadar(c,cx,cy,R){const g=G,p=g.player,s=R/8;
  c.save();c.translate(cx,cy);c.rotate(-p.a+Math.PI);c.fillStyle='#fff';c.strokeStyle='#000';c.lineWidth=2;c.beginPath();c.moveTo(0,-7);c.lineTo(5,5);c.lineTo(0,2);c.lineTo(-5,5);c.closePath();c.stroke();c.fill();c.restore();
  c.strokeStyle='#000';c.lineWidth=5;c.beginPath();c.arc(cx,cy,R,0,TAU);c.stroke();c.strokeStyle='#2de2e6';c.lineWidth=2.5;c.stroke();
  c.font=PXF(Math.max(8,R*0.16));txt(c,'N',cx,cy-R-2-Math.max(8,R*0.16),'#fff','center',8);}
-function drawHUD(){if(G&&G.cameo&&state==='play'){const c=hctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,vw,vh);drawCameo(c);return;}drawHUD0();}
+function drawHUD(){if(G&&(G.cameo||G.fin)&&state==='play'){const c=hctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,vw,vh);drawCameo(c);return;}drawHUD0();}
 function drawHUD0(){const c=hctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,vw,vh);
  if(!G||!(state==='play'||state==='dead'||state==='pause'))return;const g=G,p=g.player,u=Math.max(1,Math.min(vw,vh)/400);c.textBaseline='top';const m=12*u;if(g.def.hub){drawHubHUD(c,g,u,m);return;}
  const alive=g.enemies.filter(e=>e.alive).length,tot=g.enemies.length;
@@ -3144,7 +3314,7 @@ function drawHUD0(){const c=hctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0
  c.font=PXF(12*u);for(const e of g.enemies){if(!e.alive)continue;if(e.alertT>0||e.qT>0){const s=project(e.x,1.35,e.z);if(s)txt(c,e.alertT>0?'!':'?',s[0],s[1]-14*u,e.alertT>0?'#ff2a3a':'#ffd36b','center',12*u);}}
  /* popups */
  c.font=PXF(8*u);for(const pp of g.popups){const s=project(pp.x,1.3+pp.t*0.9,pp.z);if(!s)continue;c.globalAlpha=clamp(1.6-pp.t*1.3,0,1);txt(c,pp.txt,s[0],s[1],pp.col,'center',8*u);}c.globalAlpha=1;
- if(g.boss&&g.boss.alive&&g.bossSeen){const bw2=Math.min(vw*0.42,420*u),bx=vw/2-bw2/2,byy=touchMode?m+46*u:m+52*u;c.fillStyle='rgba(0,0,0,.8)';c.fillRect(bx-3,byy-3,bw2+6,20*u+6);c.fillStyle='#3a0010';c.fillRect(bx,byy,bw2,20*u);c.fillStyle=g.boss.hitT>0?'#fff':(g.boss.enraged&&Math.sin(g.T*12)>0?'#ff7a2a':'#ff2a3a');c.fillRect(bx,byy,bw2*g.boss.hp/g.boss.maxhp,20*u);c.font=PXF(7*u);txt(c,BOSSNAME,vw/2,byy+6*u,'#fff','center',7*u);}
+ if(g.boss&&g.boss.alive&&g.bossSeen){const bw2=Math.min(vw*0.42,420*u),bx=vw/2-bw2/2,byy=touchMode?m+46*u:m+52*u;c.fillStyle='rgba(0,0,0,.8)';c.fillRect(bx-3,byy-3,bw2+6,20*u+6);c.fillStyle='#3a0010';c.fillRect(bx,byy,bw2,20*u);c.fillStyle=g.boss.hitT>0?'#fff':(g.boss.enraged&&Math.sin(g.T*12)>0?'#ff7a2a':'#ff2a3a');c.fillRect(bx,byy,bw2*g.boss.hp/g.boss.maxhp,20*u);c.font=PXF(7*u);txt(c,bossName(),vw/2,byy+6*u,'#fff','center',7*u);}
  if(g.np&&g.np.t>=0&&g.np.t<3.2){c.globalAlpha=clamp(Math.min(g.np.t*4,(3.2-g.np.t)*2),0,1);c.font=VTF(18*u);const ny=touchMode?m+72*u:(g.boss&&g.boss.alive&&g.bossSeen?m+80*u:m+52*u);const lbl='\u266A NOW PLAYING: '+g.np.txt;const tw=c.measureText(lbl).width;c.fillStyle='rgba(12,4,22,.8)';c.fillRect(vw/2-tw/2-10*u,ny,tw+20*u,24*u);txt(c,lbl,vw/2,ny+3*u,'#2de2e6','center',18*u);c.globalAlpha=1;}
  /* health */
  {const hx=touchMode?rcx-R:px2,hy=touchMode?rcy+R+28*u:py2-40*u,s=2.6*u;const HP=[[1,0],[2,0],[4,0],[5,0],[0,1],[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[0,2],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[1,3],[2,3],[3,3],[4,3],[5,3],[2,4],[3,4],[4,4],[3,5]];
@@ -3174,18 +3344,18 @@ let bannerT=null;function banner(a,b){const el=$('banner');el.innerHTML='<div cl
 function updateSelect(){const c=CHARS[selIdx];const gb=$('cBig');gb.textContent=c.name;gb.dataset.t=c.name;$('cQuote').textContent=c.quote;$('cPerk').innerHTML=c.perk;
  $('cDiff').innerHTML='<span>DIFFICULTY</span>'+Object.entries(DIFF).map(([k,d])=>`<button data-d="${k}" class="${SET.diff===k?'on':''}">${d.name}</button>`).join('');$('cDiffD').textContent=Dd().desc;
  $('cStats').innerHTML=Object.entries(c.stats).map(([k,v])=>`<span>${k}</span><div class="bar"><i style="width:${v*20}%"></i></div>`).join('')+`<span>STARTS WITH</span><span style="color:#ffd36b">${c.start}</span>`+xpBarHTML()+`<span>PERKS</span><span style="color:#7dff9a;font-size:.85em">${perkList()}</span>`+suitHTML();PS2C.applySuit(c.id);}
-function suitHTML(){const p=myProg(),cur=mySuit();return '<span>SUIT</span><div class="suits" style="display:flex;gap:4px;flex-wrap:wrap;grid-column:1/-1">'+SUITKEYS.map(k=>{const S=SUITS[k],ok=p.lvl>=S.lvl;return `<button data-suit="${k}" class="${cur===k?'on':''}" ${ok?'':'disabled'} style="font-size:.7em;padding:4px 7px;opacity:${ok?1:.45}">${ok?S.name:S.name+' · LV '+S.lvl}</button>`;}).join('')+'</div><span style="color:#ffd36b;font-size:.8em;grid-column:1/-1">'+SUITS[cur].desc+'</span>';}
+function suitHTML(){const p=myProg(),cur=mySuit();return '<span>SUIT</span><div class="suits" style="display:flex;gap:4px;flex-wrap:wrap;grid-column:1/-1">'+SUITKEYS.map(k=>{const S=SUITS[k],ok=suitOK(p,k);return `<button data-suit="${k}" class="${cur===k?'on':''}" ${ok?'':'disabled'} style="font-size:.7em;padding:4px 7px;opacity:${ok?1:.45}">${ok?S.name:S.name+(S.act2?' · ACT 2':' · LV '+S.lvl)}</button>`;}).join('')+'</div><span style="color:#ffd36b;font-size:.8em;grid-column:1/-1">'+SUITS[cur].desc+'</span>';}
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-suit]');if(!b||b.disabled)return;const p=myProg();p.suit=b.dataset.suit;saveProg();sfx('pick');updateSelect();});
 let typeT=null,typeFull='',typeI=0;
 function showBrief(i){levelIdx=i;state='brief';show('sBrief');$('brFrom').textContent='INCOMING CALL · '+BRIEF_FLOOR(i);$('brFloor').textContent=BRIEF_FLOOR(i);typeFull=LEVELS[i].brief;typeI=0;$('brMsg').textContent='';sfx('ring');
  clearInterval(typeT);typeT=setInterval(()=>{typeI++;$('brMsg').textContent=typeFull.slice(0,typeI);if(typeI%2===0)sfx('type');if(typeI>=typeFull.length)clearInterval(typeT);},28);}
-function startLevel(i){clearInterval(typeT);levelIdx=i;HUBMODE='in';loadLevel(i);applyLoadout();if(i===0&&myCar()!=='beater')placeOldCar();G.track=LEVEL_TRACKS[i][RUNTRACK[i]%LEVEL_TRACKS[i].length];if(MUS.track!==G.track){MUS.track='';MUS.pending=null;}state='play';show(null);
- banner('FLOOR '+(i+1)+': '+LEVELS[i].name,padMode?'Clear the floor · A grabs weapons · Get back to the car':touchMode?'Left thumb moves · right thumb aims &amp; attacks':'Clear the floor · E grabs weapons · Get back to the car');
+function startLevel(i){clearInterval(typeT);levelIdx=i;HUBMODE='in';loadLevel(i);applyLoadout();act2Setup(G,i);if(i===0&&myCar()!=='beater')placeOldCar();G.track=LEVEL_TRACKS[i][RUNTRACK[i]%LEVEL_TRACKS[i].length];if(MUS.track!==G.track){MUS.track='';MUS.pending=null;}state='play';show(null);
+ banner(i===3?'ACT 2: HOSTILE TAKEOVER':(i<3?'FLOOR '+(i+1):'FLOOR '+(i-2))+': '+LEVELS[i].name,i===3?'Floor 1: Vice Marina · Lex Sterling\'s smuggling hub':padMode?'Clear the floor · A grabs weapons · Get back to the car':touchMode?'Left thumb moves · right thumb aims &amp; attacks':'Clear the floor · E grabs weapons · Get back to the car');
  if(i===1&&!LEXMET)startCameo();}
 function showDead(){G.cameo=null;G.lex=null;if(!G.def.hub){arm();myProg().couchBlood=1;saveProg();}state='dead';const k=G.killedBy;$('deadCause').textContent=DEATHNAME[k]||'KILLED';$('deadTip').textContent='TIP: '+pick(TIPS);
  let xp=0;if(!G.xpGiven){G.xpGiven=1;xp=runXP(G,false);awardXP(xp);}const pr=myProg();$('deadXP').innerHTML=(xp?'+'+xp+' XP · ':'')+'LEVEL '+pr.lvl+' <span style="opacity:.7">('+pr.xp+'/'+xpNeed(pr.lvl)+')</span>';
  if(pendingPerks>0)showPerkPick('dead');else show('sDead');}
-const KNAME={goldak:'Golden AK',golddeagle:'Golden Deagles',katana:'Katana',dual:'Dual pistols',fists:'Fists',bat:'Bat',knife:'Knife',machete:'Machete',exec:'Execution',door:'Door slam',throw:'Thrown',pistol:'Pistol',silenced:'Silenced',revolver:'.357',smg:'Uzi',m16:'M16',shotgun:'Shotgun',double:'Double barrel'};
+const KNAME={goldgl:'Gold launcher',goldak:'Golden AK',golddeagle:'Golden Deagles',katana:'Katana',dual:'Dual pistols',fists:'Fists',bat:'Bat',knife:'Knife',machete:'Machete',exec:'Execution',door:'Door slam',throw:'Thrown',pistol:'Pistol',silenced:'Silenced',revolver:'.357',smg:'Uzi',m16:'M16',shotgun:'Shotgun',double:'Double barrel'};
 function finishLevel(){const g=G;state='results';const tb=Math.max(0,Math.round((150-g.time)*25));const total=g.score+tb;g.take=total;totalScore+=total;totalKills+=g.kills;totalTime+=g.time;
  const ratio=total/(g.enemies.length*700);const gr=ratio>3?'S':ratio>2.2?'A+':ratio>1.6?'A':ratio>1.1?'B':ratio>0.7?'C':'D';const rsty=g.execs>=2?'ruthless':g.heads>=2?'gore':(!g.taken&&g.shots&&g.hits/g.shots>=0.6)?'clean':'mixed';g.style=rsty;runStyle[rsty]=(runStyle[rsty]||0)+1;
  const acc=g.shots?Math.round(Math.min(1,g.hits/g.shots)*100)+'%':'—';
