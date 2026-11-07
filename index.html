@@ -851,7 +851,13 @@ const PERKS={
  medic:{name:'STREET MEDIC',max:2,desc:'Heal 2s sooner out of fire (Easy/Normal)'}};
 const PROG=(()=>{let o={};try{o=JSON.parse(localStorage.getItem('nb86prog')||'{}');}catch(e){}for(const c of CHARS)if(!o[c.id])o[c.id]={lvl:1,xp:0,perks:{}};return o;})();
 function saveProg(){try{localStorage.setItem('nb86prog',JSON.stringify(PROG));}catch(e){}}
-const myProg=()=>PROG[CHARS[selIdx].id];const pk=k=>myProg().perks[k]||0;const xpNeed=l=>400+l*300;const ROMAN=['','I','II','III'];
+const SUITS={default:{name:'SIGNATURE',lvl:1,perk:{},desc:'Your own look'},
+ pinstripe:{name:'PINSTRIPE',lvl:3,perk:{tough:1},desc:'+1 hit you can take'},
+ camo:{name:'JUNGLE CAMO',lvl:6,perk:{fleet:1,sense:1},desc:'Move 6% faster, guards react 15% slower'},
+ pink:{name:'HOT PINK',lvl:10,perk:{adren:1,shark:1},desc:'Combos last 0.75s longer, +15% kill money'}};
+const SUITKEYS=Object.keys(SUITS);
+const mySuit=()=>{const p=myProg();return SUITS[p.suit]&&p.lvl>=SUITS[p.suit].lvl?p.suit:'default';};
+const myProg=()=>PROG[CHARS[selIdx].id];const pk=k=>(myProg().perks[k]||0)+((SUITS[mySuit()].perk[k])||0);const xpNeed=l=>400+l*300;const ROMAN=['','I','II','III'];
 let pendingPerks=0,perkReturn=null;
 function awardXP(n){const p=myProg();p.xp+=n;let ups=0;while(p.lvl<30&&p.xp>=xpNeed(p.lvl)){p.xp-=xpNeed(p.lvl);p.lvl++;ups++;}saveProg();pendingPerks+=ups;return ups;}
 function runXP(g,done,grade){const gb={'S':600,'A+':450,'A':350,'B':250,'C':150,'D':80}[grade]||0;return Math.round((g.kills*100+g.execs*60+g.maxCombo*40+(done?300+gb:0))*({easy:1,normal:1.3,hard:1.7}[SET.diff]||1));}
@@ -2315,7 +2321,7 @@ async function init(){try{
  for(const n of ['uVP','uB','uPL','uPC','uAmb','uLD','uLC','uCam','uFog','uFogC','uTex'])Lc[n]=gl.getUniformLocation(P,n);for(const n of ['aP','aN','aT','aBi','aBw'])Lc[n]=gl.getAttribLocation(P,n);
  const pais=await loadImg(ART.pais);
  for(const id in CH){const C=CH[id],face=await loadImg(ART[C.face]);const ht=paintHead(face,C.F);const shirt=C.B.shirt==='pais'?pais:C.B.shirt==='tropical'?tropicalCanvas():shirtCanvas(C.B.shirt);const bt=paintBody(shirt,Object.assign({shirtScale:C.B.shirt==='pais'?0.26:C.B.shirt==='tropical'?0.45:1},C.B));
-  MODELS[id]=[upload(buildBody(C.B),mkTex(bt)),upload(buildHead(C.B),mkTex(ht))];const cp=cv=>{const k=document.createElement('canvas');k.width=cv.width;k.height=cv.height;k.getContext('2d').drawImage(cv,0,0);return k;};C.bc=bt;C.hc=ht;C.bc0=cp(bt);C.hc0=cp(ht);}
+  MODELS[id]=[upload(buildBody(C.B),mkTex(bt)),upload(buildHead(C.B),mkTex(ht))];const cp=cv=>{const k=document.createElement('canvas');k.width=cv.width;k.height=cv.height;k.getContext('2d').drawImage(cv,0,0);return k;};C.bc=bt;C.hc=ht;C.bcBase=cp(bt);C.bc0=cp(bt);C.hc0=cp(ht);}
  gl.bindTexture(gl.TEXTURE_2D,atlasTex);ready=true;}catch(e){console.error('PS2C',e);}}
 const RW=mir(WR),ADR=[-AD[0],AD[1],0],LW=WR,ADL=[AD[0],AD[1],0];
 function handFrame(Wm,left,sw,base){const Mh=Wm[left?BI.handL:BI.handR],w=left?LW:RW,a=left?ADL:ADR,pm=left?V.norm(V.cross(a,Z)).map(v=>v):V.norm(V.cross(a,Z)).map(v=>-v);
@@ -2386,9 +2392,17 @@ function bloodify(key,lvl,c){const C=CH[key];if(!C||!C.bc)return;C.dirty=true;co
 function buildLook(key,c){const Lk=c.look,bt=c.boss?'boss':(c.body||Lk.body);const cfg=lookCfg(Lk,bt);
  const ht=paintHeadP(Lk),btx=paintBodyP(Lk);MODELS[key]=[upload(buildBody(cfg.B),mkTex(btx)),upload(buildHead(cfg.B),mkTex(ht))];CH[key]={scale:cfg.scale,npc:true,bc:btx,hc:ht};}
 function freeLooks(){for(const k in MODELS)if(CH[k]&&CH[k].npc){for(const m of MODELS[k]){for(const b of ['p','n','t','bi','bw','i'])gl.deleteBuffer(m[b]);gl.deleteTexture(m.tex);}delete MODELS[k];delete CH[k];}}
+function applySuit(id){const C=CH[id];if(!ready||!C||!C.bcBase||!MODELS[id])return;const sk=PROG[id]&&SUITS[PROG[id].suit]&&PROG[id].lvl>=SUITS[PROG[id].suit].lvl?PROG[id].suit:'default';if(C.suitOn===sk)return;C.suitOn=sk;
+ const x=C.bc0.getContext('2d');x.globalCompositeOperation='source-over';x.globalAlpha=1;x.drawImage(C.bcBase,0,0);
+ if(sk!=='default'){const zones=[[0,0,200,290],[312,0,200,290],[0,290,512,90],[0,440,512,72]];x.save();x.beginPath();for(const z of zones)x.rect(...z);x.clip();
+  if(sk==='pinstripe'){x.fillStyle='rgba(20,16,36,.30)';x.fillRect(0,0,512,512);x.fillStyle='rgba(235,230,255,.55)';for(let i=0;i<512;i+=9)x.fillRect(i,0,1.6,512);}
+  else if(sk==='camo'){x.fillStyle='rgba(70,82,48,.78)';x.fillRect(0,0,512,512);const cols=['rgba(38,46,26,.8)','rgba(122,112,72,.75)','rgba(26,28,20,.8)'];let sd=7;const r=()=>(sd=(sd*16807)%2147483647)/2147483647;for(let i=0;i<150;i++){x.fillStyle=cols[i%3];x.beginPath();x.ellipse(r()*512,r()*512,10+r()*26,6+r()*14,r()*3,0,6.3);x.fill();}}
+  else{x.fillStyle='rgba(255,70,170,.62)';x.fillRect(0,0,512,512);x.fillStyle='rgba(255,210,235,.35)';for(let i=0;i<512;i+=14)x.fillRect(0,i,512,2);x.fillStyle='rgba(60,0,40,.18)';x.fillRect(0,0,512,512);}
+  x.restore();}
+ C.bc.getContext('2d').drawImage(C.bc0,0,0);gl.bindTexture(gl.TEXTURE_2D,MODELS[id][0].tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,C.bc);gl.generateMipmap(gl.TEXTURE_2D);gl.bindTexture(gl.TEXTURE_2D,atlasTex);}
 function resetMain(){for(const id in CH){const C=CH[id];if(C.npc||!C.bc0||!C.dirty)continue;C.dirty=false;C.bc.getContext('2d').drawImage(C.bc0,0,0);C.hc.getContext('2d').drawImage(C.hc0,0,0);
   for(const [cv,tex] of [[C.bc,MODELS[id][0].tex],[C.hc,MODELS[id][1].tex]]){gl.bindTexture(gl.TEXTURE_2D,tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cv);gl.generateMipmap(gl.TEXTURE_2D);}}gl.bindTexture(gl.TEXTURE_2D,atlasTex);}
-function levelCheck(){if(G!==lastG){lastG=G;freeLooks();resetMain();}}
+function levelCheck(){if(G!==lastG){lastG=G;freeLooks();resetMain();applySuit(CHARS[selIdx].id);}}
 function ensureLook(c){levelCheck();const k=lookKey(c);if(!k)return null;if(MODELS[k])return k;
  const now=performance.now();if(now-lastFrameT>8){lastFrameT=now;buildsThisFrame=0;}if(buildsThisFrame>=1)return null;buildsThisFrame++;try{buildLook(k,c);}catch(e){console.error('PS2 look',e);return null;}return k;}
 
@@ -2433,7 +2447,7 @@ function flush(VPm,u){if(!ready||!queue.length||!u){queue.length=0;return;}gl.us
   const at=(n,b,s)=>{const l=Lc[n];if(l<0)return;gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.vertexAttribPointer(l,s,gl.FLOAT,false,0,0);};
   at('aP',mm.p,3);at('aN',mm.n,3);at('aT',mm.t,2);at('aBi',mm.bi,4);at('aBw',mm.bw,4);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,mm.i);gl.drawElements(gl.TRIANGLES,mm.n_i,gl.UNSIGNED_SHORT,0);}}
  for(const kk of ['aP','aN','aT','aBi','aBw']){const l=Lc[kk];if(l>=0)gl.disableVertexAttribArray(l);}gl.disable(gl.CULL_FACE);gl.bindTexture(gl.TEXTURE_2D,atlasTex);queue.length=0;}
-return{init,add,flush,has,get ready(){return ready;}};})();
+return{init,add,flush,has,applySuit,get ready(){return ready;}};})();
 PS2C.init();
 
 /* ================= MIAMI VICE CUTSCENE ================= */
@@ -2750,7 +2764,9 @@ function show(id){SCREENS.forEach(s=>$(s).classList.toggle('on',s===id));if(id)$
 let bannerT=null;function banner(a,b){const el=$('banner');el.innerHTML='<div class="b1">'+a+'</div>'+(b?'<div class="b2">'+b+'</div>':'');el.classList.add('on');clearTimeout(bannerT);bannerT=setTimeout(()=>el.classList.remove('on'),2400);}
 function updateSelect(){const c=CHARS[selIdx];const gb=$('cBig');gb.textContent=c.name;gb.dataset.t=c.name;$('cQuote').textContent=c.quote;$('cPerk').innerHTML=c.perk;
  $('cDiff').innerHTML='<span>DIFFICULTY</span>'+Object.entries(DIFF).map(([k,d])=>`<button data-d="${k}" class="${SET.diff===k?'on':''}">${d.name}</button>`).join('');$('cDiffD').textContent=Dd().desc;
- $('cStats').innerHTML=Object.entries(c.stats).map(([k,v])=>`<span>${k}</span><div class="bar"><i style="width:${v*20}%"></i></div>`).join('')+`<span>STARTS WITH</span><span style="color:#ffd36b">${c.start}</span>`+xpBarHTML()+`<span>PERKS</span><span style="color:#7dff9a;font-size:.85em">${perkList()}</span>`;}
+ $('cStats').innerHTML=Object.entries(c.stats).map(([k,v])=>`<span>${k}</span><div class="bar"><i style="width:${v*20}%"></i></div>`).join('')+`<span>STARTS WITH</span><span style="color:#ffd36b">${c.start}</span>`+xpBarHTML()+`<span>PERKS</span><span style="color:#7dff9a;font-size:.85em">${perkList()}</span>`+suitHTML();PS2C.applySuit(c.id);}
+function suitHTML(){const p=myProg(),cur=mySuit();return '<span>SUIT</span><div class="suits" style="display:flex;gap:4px;flex-wrap:wrap;grid-column:1/-1">'+SUITKEYS.map(k=>{const S=SUITS[k],ok=p.lvl>=S.lvl;return `<button data-suit="${k}" class="${cur===k?'on':''}" ${ok?'':'disabled'} style="font-size:.7em;padding:4px 7px;opacity:${ok?1:.45}">${ok?S.name:S.name+' · LV '+S.lvl}</button>`;}).join('')+'</div><span style="color:#ffd36b;font-size:.8em;grid-column:1/-1">'+SUITS[cur].desc+'</span>';}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-suit]');if(!b||b.disabled)return;const p=myProg();p.suit=b.dataset.suit;saveProg();sfx('pick');updateSelect();});
 let typeT=null,typeFull='',typeI=0;
 function showBrief(i){levelIdx=i;state='brief';show('sBrief');$('brFrom').textContent='INCOMING CALL · '+BRIEF_FLOOR(i);$('brFloor').textContent=BRIEF_FLOOR(i);typeFull=LEVELS[i].brief;typeI=0;$('brMsg').textContent='';sfx('ring');
  clearInterval(typeT);typeT=setInterval(()=>{typeI++;$('brMsg').textContent=typeFull.slice(0,typeI);if(typeI%2===0)sfx('type');if(typeI>=typeFull.length)clearInterval(typeT);},28);}
