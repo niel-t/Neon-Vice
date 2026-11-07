@@ -778,6 +778,7 @@ const WD={
  smg:{name:'UZI',ammo:32,cd:0.07,pel:1,spr:0.06,mv:0.08,bloom:0.025,bloomMax:0.22,ecd:0.12,burst:4,loud:13,len:0.26,snd:'smg',kick:0.08},
  dual:{name:'DUAL 9MMs',ammo:26,cd:0.1,pel:1,spr:0.05,mv:0.08,bloom:0.02,bloomMax:0.16,ecd:0.35,burst:6,loud:13,len:0.2,snd:'dual',kick:0.08},
  m16:{name:'M16',ammo:30,cd:0.32,pel:1,spr:0.015,mv:0.09,bloom:0.02,ecd:0.9,burst3:true,loud:15,pierce:2,len:0.66,snd:'rifle',kick:0.14,spd:0.92,two:true},
+ tknife:{name:'THROWING KNIVES',toss:true,ammo:4,cd:0.3,loud:0,len:0.27,snd:'throw'},
  /* Nine of Nine exclusives: base = the stock weapon whose animation, gore and sounds they borrow */
  goldak:{name:'GOLDEN AK-47',base:'m16',excl:true,ammo:40,cd:0.09,pel:1,spr:0.03,mv:0.08,bloom:0.02,bloomMax:0.16,ecd:0.2,burst:5,loud:15,pierce:2,len:0.62,snd:'rifle',kick:0.12,spd:0.94,two:true},
  golddeagle:{name:'GOLDEN DEAGLES',base:'dual',excl:true,ammo:16,cd:0.16,pel:1,spr:0.03,mv:0.07,bloom:0.05,bloomMax:0.2,ecd:0.5,loud:16,pierce:3,len:0.26,snd:'revolver',kick:0.24},
@@ -1296,7 +1297,7 @@ function hurtPlayer(dir,type){const g=G,p=g.player;if(!p.alive||p.armorT>0)retur
  rumble(1,1,550);sfx('splat');sfx('die');g.flash=0.5;g.flashC=[0.8,0,0.05];shake(0.6);g.combo=0;g.comboT=0;}
 function alertNoise(x,z,r){if(r<1)return;let any=false;for(const e of G.enemies){if(!e.alive||e.down>0||e.state==='chase')continue;if(Math.hypot(e.x-x,e.z-z)<r){any=true;e.state='search';e.sx=x;e.sz=z;e.searchT=0;e.qT=1.2;}}
  if(any){G.nx=x;G.nz=z;bfs(G.nflow,Math.floor(x),Math.floor(z));}}
-function fireGun(c,w,isP){const g=G,wd=WD[w.type];w.ammo--;if(wd.nade){throwNade(c,isP?'p':'e');sfx(wd.snd);alertNoise(c.x,c.z,wd.loud);return;}if(w.type==='shotgun'){c.pumpAt=g.T;const cc=c;setTimeout(()=>{if(G===g){const s2=Math.sin(cc.a),c2=Math.cos(cc.a);gib(cc.x+c2*0.15,0.75,cc.z-s2*0.15,c2*rnd(1.5,2.5),rnd(2,3),-s2*rnd(1.5,2.5),[0.04,0.04,0.08],[0.8,0.15,0.15],true);}},380);}c.cd=isP?wd.cd:(wd.burst?0.1:wd.ecd*Dd().ecd);c.atkT=c.atkDur=0.08;
+function fireGun(c,w,isP){const g=G,wd=WD[w.type];w.ammo--;if(wd.nade){throwNade(c,isP?'p':'e');sfx(wd.snd);alertNoise(c.x,c.z,wd.loud);return;}if(wd.toss){const sa=Math.sin(c.a),ca=Math.cos(c.a);g.items.push({x:c.x+sa*0.3,z:c.z+ca*0.3,type:'knife',ammo:0,vx:sa*21,vz:ca*21,rot:c.a,flying:true,fresh:false,flyT:0});sfx('throw');c.cd=wd.cd;c.atkT=c.atkDur=0.15;if(isP&&w.ammo<=0)c.weapon=null;return;}if(w.type==='shotgun'){c.pumpAt=g.T;const cc=c;setTimeout(()=>{if(G===g){const s2=Math.sin(cc.a),c2=Math.cos(cc.a);gib(cc.x+c2*0.15,0.75,cc.z-s2*0.15,c2*rnd(1.5,2.5),rnd(2,3),-s2*rnd(1.5,2.5),[0.04,0.04,0.08],[0.8,0.15,0.15],true);}},380);}c.cd=isP?wd.cd:(wd.burst?0.1:wd.ecd*Dd().ecd);c.atkT=c.atkDur=0.08;
  const sa=Math.sin(c.a),ca=Math.cos(c.a);let spr;
  if(isP){const mv=Math.min(1,Math.hypot(c.vx,c.vz)/3.5);spr=(wd.spr+mv*wd.mv+c.bloom+(c.sprinting?0.08:0))*(1-0.18*pk('steady'));c.bloom=Math.min(c.bloom+wd.bloom,wd.bloomMax||0.18);g.shots++;}
  else spr=wd.spr+Dd().espr;
@@ -1557,6 +1558,7 @@ WPARTS.goldak=[[0,0.04,0.12,0.042,0.06,0.36,GOLD],[0,0.045,0.38,0.018,0.018,0.18
 WPARTS.golddeagle=[[0,0.05,0.08,0.042,0.058,0.25,GOLD],[0,-0.03,0,0.036,0.11,0.055,GOLD],[0,0.08,0.08,0.012,0.008,0.22,hex(0xfff0b0)]];
 WPARTS.goldgl=[[0,0.05,0.16,0.05,0.07,0.42,GOLD],[0,0.05,0.4,0.075,0.075,0.08,GOLD],[0,0.0,0.05,0.1,0.1,0.12,hex(0xb8902e)],[0,-0.05,0.02,0.03,0.11,0.05,DARK],[0,0.02,-0.15,0.04,0.07,0.2,GOLD]];
 WPARTS.katana=[[0,0,0.06,0.026,0.03,0.17,DARK],[0,0,0.16,0.075,0.014,0.055,GOLD],[0,0.008,0.52,0.008,0.042,0.7,STEEL]];
+WPARTS.tknife=[-0.035,0,0.035].flatMap(ox=>[[ox,0,0.02,0.02,0.025,0.07,DARK],[ox,0.004,0.11,0.008,0.03,0.12,STEEL]]);
 WPARTS.dual=WPARTS.pistol.map(q=>[q[0]-0.07,...q.slice(1)]).concat(WPARTS.pistol.map(q=>[q[0]+0.07,...q.slice(1)]));
 const CB=c=>Math.hypot(c.x-G.cam.x,c.z-G.cam.z)<11?IBhi:IBlo;const FAB=()=>TUV[44],SKN=()=>TUV[45],MET=()=>TUV[46];
 function drawWeapon(B,m,type){const ps=WPARTS[type];if(!ps)return;const pr=B.r,pt=B.tp,pu=B.uv;B.r=0.18;B.tp=0;B.uv=MET();for(const q of ps)B.box(A.mul(A.mul(m,A.T(q[0],q[1],q[2])),A.S(q[3],q[4],q[5])),q[6]);B.r=pr;B.tp=pt;B.uv=pu;}
@@ -1972,8 +1974,8 @@ const NINE_HI=["Ah, my friend returns! Capitalism is beautiful, da?","From Lenin
 const NINE_BUY=["Excellent choice. Very ballistic.","Da! Treat her well, she is temperamental.","You have taste. Dangerous taste.","Pleasure doing business. Mostly the pleasure is mine."];
 const NINE_EXCL="Ah... you choose the exclusive. This one, I smuggle through three borders and one very angry customs officer.";
 const NINE_POOR="My friend, this costs more money than you have. Is simple arithmetic.";
-const SHOPP={pistol:1500,silenced:2200,revolver:2800,dual:3200,smg:3500,shotgun:3800,double:4200,m16:5200,bat:600,knife:500,machete:900,katana:7500,golddeagle:12000,goldak:15000,goldgl:20000};
-const WDESC={pistol:'Reliable. Boring. Like a Swiss watch.',silenced:'For conversations nobody hears.',revolver:'Six chances. Goes through three men.',dual:'Two pistols, twice the opinions.',smg:'Sprays the room like cologne.',shotgun:'Seven pellets of diplomacy.',double:'Two shells. One argument.',m16:'Three-round bursts, through walls.',bat:'Silent. Swings. Home run.',knife:'Close, quiet, personal.',machete:'For cutting through the paperwork.',
+const SHOPP={pistol:1500,silenced:2200,revolver:2800,dual:3200,smg:3500,shotgun:3800,double:4200,m16:5200,bat:600,knife:500,machete:900,katana:7500,tknife:1100,golddeagle:12000,goldak:15000,goldgl:20000};
+const WDESC={pistol:'Reliable. Boring. Like a Swiss watch.',silenced:'For conversations nobody hears.',revolver:'Six chances. Goes through three men.',dual:'Two pistols, twice the opinions.',smg:'Sprays the room like cologne.',shotgun:'Seven pellets of diplomacy.',double:'Two shells. One argument.',m16:'Three-round bursts, through walls.',bat:'Silent. Swings. Home run.',knife:'Close, quiet, personal.',tknife:'Four blades. Silent across the room. Go pick them up after.',machete:'For cutting through the paperwork.',
  katana:'Folded nine hundred times. By me. On a Tuesday.',goldgl:'I acquire it from a very wet gentleman. Six gold grenades.',golddeagle:'Two solid-gold hand cannons. Through walls, through men.',goldak:'Solid gold. Fully automatic. Zero subtlety.'};
 const EXCL=['goldak','golddeagle','katana'],SHOP_AMMO=800,SHOP_VEST=2500,MAX_MAGS=3;
 let shopSayT=null,shopDone=null;
@@ -3561,6 +3563,7 @@ const WICON={
  goldak:[[0,2,5,3],[5,1,12,3],[17,2,7,1],[9,4,3,2],[10,6,3,2],[6,4,2,2]],
  golddeagle:[[0,0,11,2],[1,2,3,4],[12,3,12,2],[13,5,3,3]],
  katana:[[0,3,6,2],[6,2,1,4],[7,3,17,1],[7,4,15,1]],
+ tknife:[[0,0,4,2],[4,0,9,2],[3,3,4,2],[7,3,9,2],[6,6,4,2],[10,6,9,2]],
  goldgl:[[0,3,6,3],[6,1,14,4],[20,2,4,2],[9,0,6,1],[10,5,4,3]],
 };
 function drawIcon(c,type,x,y,s,col){const r=WICON[type]||WICON.fists;c.fillStyle='rgba(0,0,0,.8)';for(const q of r)c.fillRect(x+q[0]*s+s*0.6,y+q[1]*s+s*0.6,q[2]*s,q[3]*s);c.fillStyle=col;for(const q of r)c.fillRect(x+q[0]*s,y+q[1]*s,q[2]*s,q[3]*s);}
