@@ -1809,12 +1809,12 @@ function loadHub(name,mode){HUBMODE=mode||'in';const d=HUBS[name];loadLevel(leve
  if(name==='drive')banner('OCEAN DRIVE, MIAMI',touchMode?'Left thumb steers &amp; drives · push to the edge for turbo':padMode?'Left stick steers &amp; drives · LB turbo':'W/S gas &amp; brake · A/D steer · Shift turbo');
  else if(name==='lobby')banner('McWEY TOWER','Take the elevator to the 52nd floor');}
 function goDrive(){const p=PROG[rideId()];if(p&&p.heli){loadHub('lobby');banner('BY HELICOPTER','Landed on McWey Tower · take the elevator up');return;}startCine();}
-let fading=false;function fadeTo(fn){if(fading)return;fading=true;$('fade').classList.add('on');setTimeout(()=>{try{fn();}finally{setTimeout(()=>{$('fade').classList.remove('on');fading=false;},60);}},380);}
-function onHubTrigger(t){if(t==='leave'){sfx('blip');fadeTo(goDrive);return;}if(t==='exit'){sfx('blip');fadeTo(()=>loadHub('drive','parked'));return;}if(t==='tower'){sfx('blip');fadeTo(()=>loadHub('lobby'));}else if(t==='elevator'){sfx('ding');fadeTo(enterElevator);}else if(t==='mcwey'){fadeTo(talkMcWey);}}
+let fading=false;function fadeTo(fn){if(fading)return false;fading=true;$('fade').classList.add('on');setTimeout(()=>{try{fn();}finally{setTimeout(()=>{$('fade').classList.remove('on');fading=false;},60);}},380);return true;}
+function onHubTrigger(t){if(fading)return false;if(t==='leave'){sfx('blip');return fadeTo(goDrive);}if(t==='exit'){sfx('blip');return fadeTo(()=>loadHub('drive','parked'));}if(t==='tower'){sfx('blip');return fadeTo(()=>loadHub('lobby'));}else if(t==='elevator'){sfx('ding');return fadeTo(enterElevator);}else if(t==='mcwey'){return fadeTo(talkMcWey);}return true;}
 function updateHub(dt){const g=G;g.T+=dt;g.time+=dt;if(g.np)g.np.t+=dt;
  if(g.cine)updateCine(dt);else if(g.def.hub==='drive'&&!g.parked)updateDrive(dt);else{hubInteract();updatePlayer(dt);blingTick(dt);npcStep(dt);if(g.parked)parkedStreet(dt);if(g.slots)homeTick(dt);if(g.club)clubTick(dt);}
  updateFX(dt);
- if(!g.hubDone&&!g.cine){const p=g.def.hub==='drive'?g.pcar:g.player,rr2=g.def.hub==='drive'?1.7:0.75;for(const t of g.trigs){if(!trigOn(t))continue;if(Math.hypot(t.x-p.x,t.z-p.z)<rr2){g.hubDone=true;onHubTrigger(t.t);break;}}}
+ if(!g.hubDone&&!g.cine){const p=g.def.hub==='drive'?g.pcar:g.player,rr2=g.def.hub==='drive'?1.7:0.75;for(const t of g.trigs){if(!trigOn(t))continue;if(Math.hypot(t.x-p.x,t.z-p.z)<rr2){g.hubDone=onHubTrigger(t.t)!==false;break;}}}
  updateCamera(dt);}
 function npcStep(dt){const g=G,p=g.player;if(g.talkT>0)g.talkT-=dt;const vi=Math.min(3,VISIT.debrief===null?0:VISIT.debrief+1);
  for(const n of g.npcs){if(n.kind==='guest'&&g.club){clubWalk(n,dt,g,p);}else if(n.kind==='guest'||n.kind==='pgirl')guestStep(n,dt,g,p);if(n.kind==='dancer'||n.kind==='sdancer'||n.kind==='patron')continue;const dx=p.x-n.x,dz=p.z-n.z,d=Math.hypot(dx,dz);
@@ -1903,10 +1903,10 @@ function loadoutTxt(){const a=arm();return 'LOADOUT: '+(a.eq?WD[a.eq].name:'YOUR
 function openCarMenu(){if(state!=='play'||!G)return;sfx('blip');state='carmenu';$('carWallet').textContent='WALLET $'+fmt(wallet())+(myProg().debt>0?'  ·  OWED TO McWEY $'+fmt(myProg().debt):'')+'  ·  RIDE: '+carName(myCar());$('carLoad').textContent=loadoutTxt();
  $('bCarJob').innerHTML='NEXT JOB: '+LEVELS[NEXTJOB].name+'<span class="kbhint"> (ENTER)</span><span class="padhint"> (A)</span>';$('bCarShop').style.display=G.def===HUBS.bunker?'none':'';$('bCarClub').style.display=G.def===HUBS.club?'none':'';show('sCar');}
 function closeCarMenu(){if(state!=='carmenu')return;sfx('blip');state='play';show(null);}
-$('bCarJob').onclick=()=>{if(state!=='carmenu')return;sfx('pick');state='play';show(null);fadeTo(()=>startLevel(NEXTJOB));};
-$('bCarShop').onclick=()=>{if(state!=='carmenu')return;sfx('pick');state='play';show(null);fadeTo(()=>loadHub('bunker'));};
+$('bCarJob').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);fadeTo(()=>startLevel(NEXTJOB));};
+$('bCarShop').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);fadeTo(()=>loadHub('bunker'));};
 $('bCarBack').onclick=()=>closeCarMenu();
-$('bCarClub').onclick=()=>{if(state!=='carmenu')return;sfx('pick');state='play';show(null);fadeTo(()=>loadHub('club'));};
+$('bCarClub').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);fadeTo(()=>loadHub('club'));};
 $('bCarStore').onclick=()=>{if(state!=='carmenu')return;sfx('pick');openStore();};
 const JEWEL={watch:{name:'GOLD WATCH',price:2500,desc:'Tells time. Mostly tells people you have money.'},chain:{name:'GOLD CHAIN',price:6000,desc:'Real gold. No green marks on this neck.'},rings:{name:'PINKY RINGS',price:9000,desc:'Two rings. One on each hand that matters.'}};
 let storeFocus=0,storeMode='shop';
@@ -2301,7 +2301,7 @@ function buildElev(){const B=elevB;B.reset();B.round=0.45;
  B.upload(true);elevBuilt=true;}
 let ELEVDOWN=false;function enterElevator(down){ELEVDOWN=down===true;if(!elevBuilt)buildElev();state='elev';elevT=0;elevLast=0;show('sElev');document.querySelector('#sElev .elN span').innerHTML=ELEVDOWN?'&#9660;':'&#9650;';$('elFloor').textContent=ELEVDOWN?'52':'01';const ch=CHARS[selIdx];elevChar=makeChar(0,-0.3,LOOKS[ch.id],false);elevChar.pose='stand';elevChar.splat=VISIT.debrief!==null&&menuChars?menuChars[selIdx].splat:{torso:[],legs:[],face:[]};elevChar.a=0.25;}
 let elevLast=0;function updateElev(dt){const nw=performance.now();if(elevLast&&nw-elevLast<300)dt=(nw-elevLast)/1000;elevLast=nw;elevT+=dt;const k=clamp(elevT/ELEV_DUR,0,1),e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;$('elFloor').textContent=String(Math.max(1,Math.round(ELEVDOWN?52-51*e:1+51*e))).padStart(2,'0');
- if(elevT>=ELEV_DUR&&!elevChar.done){elevChar.done=true;sfx('ding');fadeTo(()=>ELEVDOWN?loadHub('lobby','out'):loadHub('office'));}}
+ if(elevT>=ELEV_DUR&&!elevChar.done){elevChar.done=fadeTo(()=>ELEVDOWN?loadHub('lobby','out'):loadHub('office'));if(elevChar.done)sfx('ding');}}
 function skipElev(){if(state==='elev'&&!elevChar.done){elevT=ELEV_DUR;}}
 function elevView(asp){let eye=[0.45,1.55,3.0],tgt=[0.05,1.15,-0.7];if(asp<1){eye=[0.2,1.6,4.2];}return{eye,tgt,lights:[{x:0,y:2.4,z:0,r:3.2,c:[1.1,0.95,0.8]},{x:0,y:1.2,z:1.6,r:2.6,c:[0.6,0.5,0.7]},{x:-0.8,y:1.6,z:-2,r:3,c:[1,0.3,0.75]}]};}
 function drawElevDyn(B,P){B.reset();P.reset();if(!ENH())floorQuad(P,elevChar.x,elevChar.z,0.9,0,TUV[16],[1,1,1],0.012);hdChar(IBhi,elevChar,menuT);
@@ -2408,7 +2408,7 @@ TRACKS.muzak=theme({title:'NINE (LOBBY VERSION)',bpm:96,dist:1.0,cut:5200,prog:T
  bass:[0,null,null,7,null,null,12,null,0,null,null,7,null,null,5,null],bassLen:1.5,bv:0.3,arp:[0,2,4,2],arpV:'bell',av:0.025,pad:true,pcut:1500,pv:0.03,lead:'bell',mv:0.06,melSec:0,mo:-12});
 const ARCH_LABEL={bruiser:'BRUISER',bouncer:'BRAWLER',bodyguard:'BODYGUARD',butcher:'BUTCHER',biker:'HEAVY BIKER',disco:'HEAVYWEIGHT',merc:'MERC',mobster:'MOBSTER',dealer:'DEALER',punk:'PUNK',hitman:'HITMAN'};
 const archLabel=e=>e.boss?'THE SHARK':(ARCH_LABEL[e.look&&e.look.arch]||'BRUISER');
-function hubSkip(){if(!(G&&G.def.hub&&state==='play'))return;if(HUBMODE==='home'){if(!G.hubDone){G.hubDone=true;fadeTo(goDrive);}return;}if(HUBMODE==='parked'||HUBMODE==='bunker'){openCarMenu();return;}if(HUBMODE==='out'){if(G.hubDone)return;G.hubDone=true;fadeTo(()=>{loadHub('drive','parked');openCarMenu();});return;}if(!G.hubDone){G.hubDone=true;fadeTo(talkMcWey);}}
+function hubSkip(){if(!(G&&G.def.hub&&state==='play'))return;if(HUBMODE==='home'){if(!G.hubDone)G.hubDone=fadeTo(goDrive);return;}if(HUBMODE==='parked'||HUBMODE==='bunker'){openCarMenu();return;}if(HUBMODE==='out'){if(G.hubDone)return;G.hubDone=fadeTo(()=>{loadHub('drive','parked');openCarMenu();});return;}if(!G.hubDone)G.hubDone=fadeTo(talkMcWey);}
 const SIGN_STROKES={M:[[0,0,0,1],[0,1,0.5,0.45],[0.5,0.45,1,1],[1,1,1,0]],c:[[0.6,0.55,0,0.55],[0,0.55,0,0],[0,0,0.6,0]],W:[[0,1,0.25,0],[0.25,0,0.5,0.6],[0.5,0.6,0.75,0],[0.75,0,1,1]],E:[[0,0,0,1],[0,1,0.8,1],[0,0.5,0.6,0.5],[0,0,0.8,0]],Y:[[0,1,0.5,0.5],[1,1,0.5,0.5],[0.5,0.5,0.5,0]]};
 function strokeBox(B,x0,y0,x1,y1,z,t,col){const dx=x1-x0,dy=y1-y0,L=Math.hypot(dx,dy)||0.01,a=Math.atan2(dy,dx);B.box(A.mul(A.mul(A.T((x0+x1)/2,(y0+y1)/2,z),A.RZ(a)),A.S(L+t,t,t)),col,true);}
 function drawSign(B,cx,z){B.quad([[cx-1.4,4.62,z-1.6],[cx+1.4,4.62,z-1.6],[cx+1.4,4.62,z-4.4],[cx-1.4,4.62,z-4.4]],0,1,0,TUV[36],[1,1,1]);B.box(TRS(cx,4.0,z-0.02,0,4.6,0.95,0.08),hex(0x120e16));B.box(TRS(cx,4.5,z+0.03,0,4.7,0.05,0.05),[1,0.3,0.75],true);B.box(TRS(cx,3.5,z+0.03,0,4.7,0.05,0.05),[1,0.3,0.75],true);
@@ -3137,8 +3137,8 @@ function updateCine(dt0){const g=G,cn=g.cine,c=g.pcar,T=g.car,now=performance.no
   if(d>0.06){const sp=Math.min(d,3.4*dt);V.x+=dx/d*sp;V.z+=dz/d*sp;V.a=Math.atan2(dx,dz);}
   else{V.arrived=true;V.a=Math.atan2(T.x-V.x,T.z+0.5-V.z);V.said=true;popup(V.x,V.z,'Welcome back, sir. Your car is spotless.','#ffe9a8');}}
  if(V&&V.arrived)g.doorT=Math.min(1,(g.doorT||0)+dt*1.8);
- if(t>10.8&&!cn.done){cn.done=true;fadeTo(()=>loadHub('lobby'));}}
-function cineSkip(){if(G&&G.cine&&!G.cine.done){G.cine.done=true;fadeTo(()=>loadHub('lobby'));}}
+ if(t>10.8&&!cn.done){cn.done=fadeTo(()=>loadHub('lobby'));}}
+function cineSkip(){if(G&&G.cine&&!G.cine.done){G.cine.done=fadeTo(()=>loadHub('lobby'));}}
 function drawBill(B,m){const u=TUV[11],mu=(u[0]+u[2])/2;B.box(A.mul(m,A.mul(A.mul(A.T(-0.034,0.006,0),A.RZ(0.32)),A.S(0.07,0.004,0.07))),[1,1,1],false,[u[0],u[1],mu,u[3]]);B.box(A.mul(m,A.mul(A.mul(A.T(0.034,0.006,0),A.RZ(-0.32)),A.S(0.07,0.004,0.07))),[1,1,1],false,[mu,u[1],u[2],u[3]]);}
 
 /* ================= RENDER ================= */
