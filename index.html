@@ -1360,7 +1360,7 @@ function update(dt){const g=G;if(g.def.hub){updateHub(dt);return;}
  if(g.comboT>0){g.comboT-=dt;if(g.comboT<=0)g.combo=0;}
  if(g.hitT>0)g.hitT-=dt;if(g.np)g.np.t+=dt;
  g.flowT-=dt;if(g.flowT<=0){computeFlow();g.flowT=0.25;}
- updatePlayer(dt);updateHazards(dt);if(g.player.ex){if(g.player.alive)updateExec(g.player,dt);else g.player.ex=null;}for(const e of g.enemies)updateEnemy(e,dt);separate();bodyPhysics();updateDoors(dt);updateBullets(dt);updateNades(dt);updateAct2(dt);updateItems(dt);updateCash(dt);updateFX(dt);
+ updatePlayer(dt);blingTick(dt);updateHazards(dt);if(g.player.ex){if(g.player.alive)updateExec(g.player,dt);else g.player.ex=null;}for(const e of g.enemies)updateEnemy(e,dt);separate();bodyPhysics();updateDoors(dt);updateBullets(dt);updateNades(dt);updateAct2(dt);updateItems(dt);updateCash(dt);updateFX(dt);
  if(!g.cleared&&g.enemies.every(e=>!e.alive)){g.cleared=true;banner('FLOOR CLEAR','Get back to the car');sfx('clear');}
  if(g.cleared&&g.player.alive&&!g.done&&Math.hypot(g.player.x-g.car.x,g.player.z-g.car.z)<1.8){g.done=true;finishLevel();}
  if(!g.player.alive){g.deadT+=dt;if(g.deadT>1&&state==='play')showDead();}
@@ -1812,7 +1812,7 @@ function goDrive(){const p=PROG[rideId()];if(p&&p.heli){loadHub('lobby');banner(
 let fading=false;function fadeTo(fn){if(fading)return;fading=true;$('fade').classList.add('on');setTimeout(()=>{try{fn();}finally{setTimeout(()=>{$('fade').classList.remove('on');fading=false;},60);}},380);}
 function onHubTrigger(t){if(t==='leave'){sfx('blip');fadeTo(goDrive);return;}if(t==='exit'){sfx('blip');fadeTo(()=>loadHub('drive','parked'));return;}if(t==='tower'){sfx('blip');fadeTo(()=>loadHub('lobby'));}else if(t==='elevator'){sfx('ding');fadeTo(enterElevator);}else if(t==='mcwey'){fadeTo(talkMcWey);}}
 function updateHub(dt){const g=G;g.T+=dt;g.time+=dt;if(g.np)g.np.t+=dt;
- if(g.cine)updateCine(dt);else if(g.def.hub==='drive'&&!g.parked)updateDrive(dt);else{hubInteract();updatePlayer(dt);npcStep(dt);if(g.parked)parkedStreet(dt);if(g.slots)homeTick(dt);if(g.club)clubTick(dt);}
+ if(g.cine)updateCine(dt);else if(g.def.hub==='drive'&&!g.parked)updateDrive(dt);else{hubInteract();updatePlayer(dt);blingTick(dt);npcStep(dt);if(g.parked)parkedStreet(dt);if(g.slots)homeTick(dt);if(g.club)clubTick(dt);}
  updateFX(dt);
  if(!g.hubDone&&!g.cine){const p=g.def.hub==='drive'?g.pcar:g.player,rr2=g.def.hub==='drive'?1.7:0.75;for(const t of g.trigs){if(!trigOn(t))continue;if(Math.hypot(t.x-p.x,t.z-p.z)<rr2){g.hubDone=true;onHubTrigger(t.t);break;}}}
  updateCamera(dt);}
@@ -1859,7 +1859,7 @@ if(!g.cine){const y=2.4+Math.sin(g.T*4)*0.2;B.box(A.mul(A.mul(A.T(g.car.x,y,g.ca
   const y=1.6+Math.sin(g.T*4)*0.12;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.22,0.22,0.22))),GOLD,true);}
  for(const q of g.parts)B.box(A.mul(A.T(q.x,q.y,q.z),A.S(q.s,q.s,q.s)),q.c,q.t==='s');}
 function drawHubHUD(c,g,u,m){if(g.cine)return;const d=g.def;c.font=PXF(7*u);txt(c,d.where,m,m,'#ffd36b','left',7*u);c.font=VTF(22*u);txt(c,g.obj||d.obj,m,m+10*u,'#fff','left',22*u);
- c.font=PXF(13*u);txt(c,'$'+fmt(wallet()),vw-m,m,'#7dff9a','right',13*u);if(myProg().debt>0){c.font=VTF(15*u);txt(c,'OWED TO McWEY $'+fmt(myProg().debt),vw-m,m+38*u,'#ff8a95','right',15*u);}c.font=VTF(16*u);txt(c,CHARS[selIdx].name+' LV'+myProg().lvl,vw-m,m+20*u,'#e9c7ff','right',16*u);
+ c.font=PXF(13*u);txt(c,'$'+fmt(wallet()),vw-m,m,'#7dff9a','right',13*u);if(myProg().debt>0){c.font=VTF(15*u);txt(c,'OWED TO McWEY $'+fmt(myProg().debt),vw-m,m+38*u,'#ff8a95','right',15*u);}c.font=VTF(16*u);txt(c,CHARS[selIdx].name+' LV'+myProg().lvl,vw-m,m+20*u,'#e9c7ff','right',16*u);{const j=myProg().jewel||{},w=[j.watch&&'GOLD WATCH',j.chain&&'GOLD CHAIN',j.rings&&'GOLD RINGS'].filter(Boolean);if(w.length){c.font=VTF(14*u);txt(c,'WEARING: '+w.join(' · '),vw-m,m+(myProg().debt>0?56:38)*u,'#ffd36b','right',14*u);}}
  const R=Math.max(44,Math.min(vw,vh)*0.13),rcx=m+R,rcy=touchMode?m+62*u+R:vh-m-R;drawRadar(c,rcx,rcy,R);
  if(d.hub==='drive'&&!g.parked){const c2=g.pcar,mph=Math.round(Math.abs(c2.v)*9);c.font=PXF(26*u);txt(c,String(mph),vw-m,vh-m-58*u,g.turbo?'#ff5fb8':'#ffd36b','right',26*u);c.font=PXF(8*u);txt(c,'MPH',vw-m,vh-m-26*u,'#e9c7ff','right',8*u);
   const bw=110*u;c.fillStyle='rgba(0,0,0,.7)';c.fillRect(vw-m-bw,vh-m-12*u,bw,6*u);c.fillStyle='#ff5fb8';c.fillRect(vw-m-bw,vh-m-12*u,bw*c2.boost,6*u);c.font=PXF(6*u);txt(c,'TURBO',vw-m-bw,vh-m-24*u,'#ff5fb8','left',6*u);}
@@ -2068,6 +2068,12 @@ function drawAct2(B,g){const T=g.T,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,
  if(g.studioC){const c=g.studioC;bx(c.x,0.06,c.z,1.6,0.04,1.6,[1,0.3,0.75],true);bx(c.x,1.0,c.z,0.05,2.0,0.05,[0.4,0.4,0.45]);bx(c.x,1.6,c.z+0.15,0.14,0.2,0.1,[0.15,0.15,0.17]);for(let i=0;i<8;i++){const h=0.1+Math.abs(Math.sin(T*8+i))*0.5;bx(c.x-0.7+i*0.2,0.1+h/2,c.z-0.9,0.12,h,0.06,[0.3,1,0.6],true);}}
  if(g.tank){const t=g.tank;drawTankLife(B,T,t.x0,t.x1,(t.z0+t.z1)/2,(t.z1-t.z0)*0.3,0.08,0.03,1.1,0.06,0.3);}
  if(g.wreck){for(let i=0;i<5;i++)bx(g.car.x-0.9+i*0.45,0.55,g.car.z+((i*37)%3-1)*0.2,0.3,0.04,0.3,[0.05,0.05,0.05]);}}
+/* gold glints so bought jewelry reads at game-camera distance */
+function blingTick(dt){const g=G,p=g&&g.player;if(!p||p.alive===false)return;const j=myProg().jewel||{};const spots=[];
+ const sc=(PS2C.scaleOf?PS2C.scaleOf(rideId()):1)||1;
+ if(j.chain)spots.push([0,1.47*sc,0.06]);if(j.watch)spots.push([0.2,0.95*sc,0]);if(j.rings)spots.push([-0.2,0.92*sc,0.05]);if(!spots.length)return;
+ p._bl=(p._bl||0)-dt;if(p._bl>0)return;p._bl=rnd(0.18,0.45);const q=pick(spots),ca=Math.cos(p.a||0),sa=Math.sin(p.a||0);
+ const x=p.x+q[0]*ca+q[2]*sa,z=p.z-q[0]*sa+q[2]*ca;g.parts.push({t:'s',x,y:q[1],z,vx:0,vy:0.25,vz:0,s:0.055,c:[1,0.92,0.45],life:0.35});}
 /* ---- Velvet Palms: stage, dancers, Tony at the bar ---- */
 const DANCER_NAMES=['CHERRY','DESTINY','CRYSTAL','ROXANNE','STARR','MONIQUE','JADE','BAMBI'];
 const STAGE_FITS=[[0xff2d95,0xffd36b],[0x2de2e6,0xffffff],[0xc9b6f2,0xff6fae],[0xffd36b,0x1a1a22],[0x7dff9a,0xff2d95]];
@@ -2788,6 +2794,8 @@ function buildBody(B){const M=newMesh(),X=[1,0,0],Y=[0,1,0],Z=[0,0,1];
   for(let k=0;k<2;k++){const a=ids[k*2],b=ids[k*2+1],c=ids[k*2+3],d=ids[k*2+2];tri(M,a,b,c,[0,0,1]);tri(M,a,c,d,[0,0,1]);}}
  /* open shirt collar band standing around the back of the neck */
  loft(M,[{c:[0,1.49,-0.012],rx:0.1,rz:0.094},{c:[0,1.535,-0.02],rx:0.096,rz:0.09}].map((r,k)=>Object.assign(r,{s:X,f:Z,w:W2(BI.chest,BI.neck,0.4),v:(ROW.c0+2+k*15)/512,mod:(p,ph)=>{if(Math.cos(ph)>0.55)p[1]-=(Math.cos(ph)-0.55)*0.09*(k);return p;}})),12,{u0:0,u1:1});
+ if(B.chain){const gv=SW.gold[1];loft(M,[{c:[0,1.462,-0.006],rx:0.132,rz:0.122},{c:[0,1.492,-0.012],rx:0.124,rz:0.114}].map(r=>Object.assign(r,{s:X,f:Z,w:W2(BI.chest,BI.neck,0.3),v:gv})),14,{uvf:(u)=>[150/512+u*140/512,gv]});
+  loft(M,[{c:[0,1.36,0.118],rx:0.03,rz:0.012},{c:[0,1.42,0.112],rx:0.034,rz:0.012}].map(r=>Object.assign(r,{s:X,f:[0,1,0],w:W1(BI.chest),v:gv})),8,{uvf:()=>[0.36,gv]});}
  /* arms */
  for(const s of [1,-1]){const v0=M.p.length/3;const sh=s>0?SH:mir(SH),el=s>0?EL:mir(EL),wr=s>0?WR:mir(WR),ad=[AD[0]*s,AD[1],0],side=V.norm(V.cross(ad,Z)).map(v=>-v*s),fwd=Z;
   const ua=BI[s>0?'uarmL':'uarmR'],fa=BI[s>0?'farmL':'farmR'],hb=BI[s>0?'handL':'handR'];const sv=t=>(ROW.s0+t*(ROW.s1-ROW.s0))/512;
@@ -2796,10 +2804,10 @@ function buildBody(B){const M=newMesh(),X=[1,0,0],Y=[0,1,0],Z=[0,0,1];
    {c:el,rx:0.068,rz:0.07,v:sv(0.55),w:W2(ua,fa,0.5)},{c:at(el,ad,0.1),rx:0.064,rz:0.064,v:sv(0.72),w:W1(fa)},{c:at(wr,ad,-0.02),rx:0.056,rz:0.057,v:sv(0.98),w:W1(fa)}].map(r=>Object.assign(r,{s:side,f:fwd})),8,{u0:0,u1:1});
   loft(M,[{c:at(wr,ad,-0.035),rx:0.05,rz:0.051,v:(ROW.c0+1)/512,w:W1(fa)},{c:at(wr,ad,0.012),rx:0.049,rz:0.05,v:(ROW.c1-1)/512,w:W2(fa,hb,0.3)}].map(r=>Object.assign(r,{s:side,f:fwd})),8,{u0:0,u1:1});
   if(!B.nowatch&&s===(B.watch||1)){/* gold watch: link bracelet, raised case with bezel, champagne dial, crown */
-   const gv=SW.gold[1];loft(M,[{c:at(wr,ad,-0.064),rx:0.058,rz:0.059},{c:at(wr,ad,-0.034),rx:0.058,rz:0.059}].map(r=>Object.assign(r,{s:side,f:fwd,w:W1(fa),v:gv})),12,{uvf:(u,r)=>[150/512+u*140/512,r===undefined?gv:gv]});
-   const cc=at(at(wr,ad,-0.049),side,0.058),ax=V.norm(ad),bx=fwd;
-   loft(M,[{c:cc,rx:0.029,rz:0.029},{c:at(cc,side,0.013),rx:0.029,rz:0.029},{c:at(cc,side,0.015),rx:0.025,rz:0.025}].map(r=>Object.assign(r,{s:ax,f:bx,w:W1(fa),v:gv})),12,{uvf:()=>[0.36,gv]});
-   disc(M,at(cc,side,0.0155),side,ax,bx,0.023,14,SW.dial,16/512,W1(fa));
+   const gv=SW.gold[1];loft(M,[{c:at(wr,ad,-0.074),rx:0.066,rz:0.067},{c:at(wr,ad,-0.026),rx:0.066,rz:0.067}].map(r=>Object.assign(r,{s:side,f:fwd,w:W1(fa),v:gv})),12,{uvf:(u,r)=>[150/512+u*140/512,r===undefined?gv:gv]});
+   const cc=at(at(wr,ad,-0.05),side,0.064),ax=V.norm(ad),bx=fwd;
+   loft(M,[{c:cc,rx:0.043,rz:0.043},{c:at(cc,side,0.018),rx:0.043,rz:0.043},{c:at(cc,side,0.021),rx:0.037,rz:0.037}].map(r=>Object.assign(r,{s:ax,f:bx,w:W1(fa),v:gv})),12,{uvf:()=>[0.36,gv]});
+   disc(M,at(cc,side,0.0215),side,ax,bx,0.034,14,SW.dial,16/512,W1(fa));
    loft(M,[{c:at(at(cc,side,0.006),bx,0.028),rx:0.005,rz:0.005},{c:at(at(cc,side,0.006),bx,0.036),rx:0.004,rz:0.004}].map(r=>Object.assign(r,{s:ax,f:side,w:W1(fa),v:gv})),6,{uvf:()=>[0.36,gv],capB:{dir:bx,uv:[0.36,gv]}});}
   {/* fist: palm block, four curled fingers, thumb across the front; gold knuckle duster rings around the fingers */
    const pm=V.mul(side,-1),Zv=[0,0,1],hw=W1(hb),sk=()=>SW.skin,gv=SW.gold[1],gu=()=>[0.36,gv];
@@ -2810,7 +2818,7 @@ function buildBody(B){const M=newMesh(),X=[1,0,0],Y=[0,1,0],Z=[0,0,1];
     loft(M,[{c:P(0.1,-0.016,fz),rx:r0,rz:r0*0.92},{c:P(0.104,0.03,fz),rx:r0,rz:r0*0.92}].map(r=>Object.assign(r,{s:ad,f:Zv,w:hw,v:SW.skin[1]})),6,{uvf:sk,capA:{dir:V.mul(pm,-1),uv:sk(),lift:0.006},capB:{dir:pm,uv:sk(),lift:0.006}});
     loft(M,[{c:P(0.104,0.034,fz),rx:r0*0.95,rz:r0*0.9},{c:P(0.066,0.036,fz),rx:r0*0.85,rz:r0*0.85}].map(r=>Object.assign(r,{s:pm,f:Zv,w:hw,v:SW.skin[1]})),6,{uvf:sk,capB:{dir:V.mul(ad,-1),uv:sk(),lift:0.005}});
     /* duster finger ring: open band around the finger */
-    if(B.rings&&(fz===FZ[2]||fz===FZ[1]&&B.rings>1))loft(M,[{c:P(0.1,0.004,fz),rx:0.0128,rz:0.0122},{c:P(0.1,0.014,fz),rx:0.0128,rz:0.0122}].map(r=>Object.assign(r,{s:ad,f:Zv,w:hw,v:gv})),8,{uvf:gu});
+    if(B.rings)loft(M,[{c:P(0.1,0.0,fz),rx:0.0152,rz:0.0146},{c:P(0.1,0.017,fz),rx:0.0152,rz:0.0146}].map(r=>Object.assign(r,{s:ad,f:Zv,w:hw,v:gv})),8,{uvf:gu});
     if(B.dusters)loft(M,[{c:P(0.1,-0.006,fz),rx:0.0158,rz:0.0128},{c:P(0.1,0.012,fz),rx:0.0158,rz:0.0128}].map(r=>Object.assign(r,{s:ad,f:Zv,w:hw,v:gv})),10,{uvf:gu});
     /* spike on the punching face */
     if(B.dusters)loft(M,[{c:P(0.117,0.003,fz),rx:0.0055,rz:0.0055},{c:P(0.133,0.003,fz),rx:0.001,rz:0.001}].map(r=>Object.assign(r,{s:pm,f:Zv,w:hw,v:gv})),5,{uvf:gu});}
