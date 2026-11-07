@@ -126,8 +126,9 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <div id="sDead" class="screen dim"><div class="big red">YOU'RE DEAD</div><div class="hint" id="deadCause" style="color:#ffb3bd"></div><div class="hint" id="deadXP" style="color:#ffd36b"></div><div class="hint" id="deadTip"></div><div class="rowc"><button class="btn" id="bRetry">RETRY<span class="kbhint"> (R)</span><span class="padhint"> (A)</span></button><button class="btn alt" id="bDeadQuit">QUIT<span class="padhint"> (B)</span></button></div></div>
 <div id="sResults" class="screen dim"><div class="logo2" id="rTitle">FLOOR CLEAR</div><div class="stats" id="rStats"></div><div class="grade" id="rGrade">A</div><div class="rowc"><button class="btn alt" id="bRetryLvl">RETRY<span class="padhint"> (X)</span></button><button class="btn" id="bNextLvl">NEXT FLOOR</button></div></div>
 <div id="sPerk" class="screen dim"><div class="logo2">LEVEL UP!</div><div class="hint" id="pkLvl"></div><div class="rowc" id="pkCards"></div></div>
-<div id="sCar" class="screen dim"><div class="logo2">YOUR RIDE</div><div class="hint" id="carWallet" style="color:#7dff9a"></div><div class="hint" id="carLoad" style="color:#ffd36b;margin-top:4px"></div><div style="display:flex;flex-direction:column;align-items:center;margin-top:10px"><button class="btn" id="bCarJob">NEXT JOB</button><button class="btn alt" id="bCarShop">NINE OF NINE'S &middot; GUN SHOP<span class="kbhint"> (G)</span><span class="padhint"> (X)</span></button><button class="btn alt" id="bCarBack">NOT YET<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div>
+<div id="sCar" class="screen dim"><div class="logo2">YOUR RIDE</div><div class="hint" id="carWallet" style="color:#7dff9a"></div><div class="hint" id="carLoad" style="color:#ffd36b;margin-top:4px"></div><div style="display:flex;flex-direction:column;align-items:center;margin-top:10px"><button class="btn" id="bCarJob">NEXT JOB</button><button class="btn alt" id="bCarShop">NINE OF NINE'S &middot; GUN SHOP<span class="kbhint"> (G)</span><span class="padhint"> (X)</span></button><button class="btn alt" id="bCarStore">OCEAN DRIVE SHOPPING &middot; CARS &amp; GOLD<span class="kbhint"> (S)</span><span class="padhint"> (Y)</span></button><button class="btn alt" id="bCarBack">NOT YET<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div>
 <div id="sShop" class="screen"><div class="shop"><div class="shHead"><div><div class="shT">NINE OF NINE'S</div><div class="shS">EXOTIC MACHINERY OF DEATH &middot; 3 PIECES TODAY</div></div><div class="shW" id="shWallet"></div></div><div class="shSay" id="shSay"></div><div class="rowc" id="shCards"></div><div class="shX" id="shExtra"></div><div class="shF"><span id="shLoad"></span><button class="btn" id="bShopLeave">LEAVE<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div></div>
+<div id="sStore" class="screen dim"><div class="shop"><div class="shHead"><div><div class="shT">OCEAN DRIVE SHOPPING</div><div class="shS">CARS &middot; GOLD &middot; NO REFUNDS</div></div><div><div class="shW" id="stWallet"></div><div class="shS" id="stOwed" style="color:#ff8a95;text-align:right"></div></div></div><div class="shS" style="margin-top:12px;align-self:flex-start">MIAMI MOTORS</div><div class="rowc" id="stCars"></div><div class="shS" style="margin-top:6px;align-self:flex-start">GOLD COAST JEWELERS</div><div class="rowc" id="stGold"></div><div class="shF"><span id="stMsg"></span><button class="btn" id="bStoreLeave">LEAVE<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div></div>
 <div id="sEnd" class="screen dim"><div class="logo" style="font-size:clamp(20px,5vw,44px)">THE FAMILY<br>RUNS MIAMI</div><div class="stats" id="eStats"></div><button class="btn" id="bAgain">PLAY AGAIN<span class="padhint"> (A)</span></button></div>
 <div id="sPause" class="screen dim"><div class="logo2">PAUSED</div><div class="col" style="margin-top:8px">
   <button class="btn" id="bResume">RESUME<span class="padhint"> (START)</span></button><button class="btn alt" id="bPRestart">RESTART FLOOR<span class="padhint"> (BACK)</span></button>
@@ -910,7 +911,8 @@ function padMenus(dt){if(!PAD.on)return;PAD.navT-=dt;const ax=PAD.gp.axes[0]||0;
   case 'dead':if(pdown(0)||pdown(8))restart();else if(pdown(1))$('bDeadQuit').click();break;
   case 'results':if(pdown(0))$('bNextLvl').click();else if(pdown(2)||pdown(8))restart();break;
   case 'end':if(pdown(0))$('bAgain').click();break;
-  case 'carmenu':if(pdown(0))$('bCarJob').click();else if(pdown(2)&&$('bCarShop').style.display!=='none')$('bCarShop').click();else if(pdown(1))closeCarMenu();break;
+  case 'store':storePad(dir);break;
+  case 'carmenu':if(pdown(3)){$('bCarStore').click();break;}if(pdown(0))$('bCarJob').click();else if(pdown(2)&&$('bCarShop').style.display!=='none')$('bCarShop').click();else if(pdown(1))closeCarMenu();break;
   case 'shop':{if(pdown(1)){closeShop();break;}if(!shopReady()){if(pdown(0))$('shSay').click();break;}const a=arm(),i=pdown(4)?0:pdown(0)?1:pdown(5)?2:-1;if(i>=0&&a.stock[i])shopPick(a.stock[i]);else if(pdown(2))shopExtra('ammo');else if(pdown(3))shopExtra('vest');}break;
   case 'perk':{const cs=document.querySelectorAll('.pcard');const i=pdown(4)?0:pdown(0)?1:pdown(5)?2:-1;if(i>=0&&cs[i])choosePerk(cs[i].dataset.k);}break;
   case 'pause':if(pdown(9)||pdown(1))togglePause();else if(pdown(8))restart();else if(pdown(3))$('bQuit').click();break;
@@ -1738,7 +1740,7 @@ function updateDrive(dt){const g=G,c=g.pcar,p=g.player;let thr=0,st=0,turbo=fals
  if(turbo&&Math.random()<dt*25)g.parts.push({t:'s',x:c.x-fx*1.2,y:0.3,z:c.z-fz*1.2,vx:-fx*2+rnd(-0.5,0.5),vy:rnd(0,0.5),vz:-fz*2+rnd(-0.5,0.5),s:0.06,c:[1,0.4,0.9],life:0.3});
  engineRev(c.v,turbo);p.x=c.x;p.z=c.z;p.vx=fx*c.v;p.vz=fz*c.v;p.a=c.h;g.turbo=turbo;}
 function drawHubDyn(B,O){const g=G;
- if(g.def.hub==='drive'){const c=g.pcar;drawRide(B,c.x,c.z,1,c.h-Math.PI/2,null,c.wr||0);if(g.parked&&g.player)drawChar(IBhi,g.player);if(g.doorT>0&&!['don','consigliere'].includes(rideId()))drawCarDoor(B,c.x,c.z,1,c.h-Math.PI/2,g.doorT*1.1);for(const t of g.traffic)drawCar(B,t.x,t.z,t.col,t.dir,t.wr||0);
+ if(g.def.hub==='drive'){const c=g.pcar;drawRide(B,c.x,c.z,1,c.h-Math.PI/2,null,c.wr||0);if(g.parked&&g.player)drawChar(IBhi,g.player);if(g.doorT>0&&rideId()==='money'&&myCar()==='sig')drawCarDoor(B,c.x,c.z,1,c.h-Math.PI/2,g.doorT*1.1);for(const t of g.traffic)drawCar(B,t.x,t.z,t.col,t.dir,t.wr||0);
   if(g.car){const T0=g.tower||g.car,pcx=T0.x+4.3,pcz=T0.z+0.7;drawLambo(B,pcx,pcz,1,0,[0.82,0.04,0.08],0);for(const sz of [-0.36,0.36])B.box(TRS(pcx,0.14,pcz+sz,0,2.3,0.035,0.05),GOLD,true);B.box(TRS(pcx,0.05,pcz,0,2.5,0.02,0.92),[0.95,0.72,0.25],true);}
   for(const n of g.npcs)drawChar(IBhi,n);
   if(g.cine&&g.cine.shot===1){const e=g.cine.eye,tg=g.cine.tgt,zz=g.H+3.9,k=(zz-e[2])/(tg[2]-e[2]);drawRetroSun(B,e[0]+(tg[0]-e[0])*k+1.5,2.2,zz,2.0,-0.9,0.9);}
@@ -1750,7 +1752,7 @@ if(!g.cine){const y=2.4+Math.sin(g.T*4)*0.2;B.box(A.mul(A.mul(A.T(g.car.x,y,g.ca
   const y=1.6+Math.sin(g.T*4)*0.12;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.22,0.22,0.22))),GOLD,true);}
  for(const q of g.parts)B.box(A.mul(A.T(q.x,q.y,q.z),A.S(q.s,q.s,q.s)),q.c,q.t==='s');}
 function drawHubHUD(c,g,u,m){if(g.cine)return;const d=g.def;c.font=PXF(7*u);txt(c,d.where,m,m,'#ffd36b','left',7*u);c.font=VTF(22*u);txt(c,g.obj||d.obj,m,m+10*u,'#fff','left',22*u);
- c.font=PXF(13*u);txt(c,'$'+fmt(wallet()),vw-m,m,'#7dff9a','right',13*u);c.font=VTF(16*u);txt(c,CHARS[selIdx].name+' LV'+myProg().lvl,vw-m,m+20*u,'#e9c7ff','right',16*u);
+ c.font=PXF(13*u);txt(c,'$'+fmt(wallet()),vw-m,m,'#7dff9a','right',13*u);if(myProg().debt>0){c.font=VTF(15*u);txt(c,'OWED TO McWEY $'+fmt(myProg().debt),vw-m,m+38*u,'#ff8a95','right',15*u);}c.font=VTF(16*u);txt(c,CHARS[selIdx].name+' LV'+myProg().lvl,vw-m,m+20*u,'#e9c7ff','right',16*u);
  const R=Math.max(44,Math.min(vw,vh)*0.13),rcx=m+R,rcy=touchMode?m+62*u+R:vh-m-R;drawRadar(c,rcx,rcy,R);
  if(d.hub==='drive'&&!g.parked){const c2=g.pcar,mph=Math.round(Math.abs(c2.v)*9);c.font=PXF(26*u);txt(c,String(mph),vw-m,vh-m-58*u,g.turbo?'#ff5fb8':'#ffd36b','right',26*u);c.font=PXF(8*u);txt(c,'MPH',vw-m,vh-m-26*u,'#e9c7ff','right',8*u);
   const bw=110*u;c.fillStyle='rgba(0,0,0,.7)';c.fillRect(vw-m-bw,vh-m-12*u,bw,6*u);c.fillStyle='#ff5fb8';c.fillRect(vw-m-bw,vh-m-12*u,bw*c2.boost,6*u);c.font=PXF(6*u);txt(c,'TURBO',vw-m-bw,vh-m-24*u,'#ff5fb8','left',6*u);}
@@ -1778,20 +1780,46 @@ function hubInteract(){const g=G,p=g.player;if(!p||g.hubDone)return;const ts=hub
  if(g.click){const cx=g.click[0],cy=g.click[1];g.click=null;for(const t of ts){const s=project(t.x,0.8,t.z);if(s&&Math.hypot(s[0]-cx,s[1]-cy)<80){if(Math.hypot(t.x-p.x,t.z-p.z)<t.r+3)go=t;else popup(p.x,p.z,'GET CLOSER','#ffd36b');break;}}}
  if(go){mouse.down=false;if(go.k==='car')openCarMenu();else openShop();}}
 /* wallet + armory, saved per character next to lvl/xp/perks */
-function arm(){const p=myProg();if(typeof p.wallet!=='number')p.wallet=0;if(!p.arm)p.arm={owned:[],eq:null,mags:0,vest:0,stock:[],key:-1,met:false,jobs:0};return p.arm;}
+function arm(){const p=myProg();if(typeof p.wallet!=='number')p.wallet=0;if(p.debt===undefined){p.debt=MC_LOAN;p.paid=false;p.cars=['beater'];p.car='beater';p.jewel=p.jewel||{};p.seen={};}if(!p.arm)p.arm={owned:[],eq:null,mags:0,vest:0,stock:[],key:-1,met:false,jobs:0};return p.arm;}
 function wallet(){arm();return myProg().wallet;}
-function payout(){if(!G||G.paid||!G.take)return;G.paid=1;const a=arm();myProg().wallet+=G.take;a.mags=0;a.vest=0;a.jobs++;saveProg();}
+let LASTPAY=null;function cutOf(take){const p=myProg();arm();return p.debt>0?Math.min(p.debt,Math.ceil(take*MC_CUT)):0;}
+function payout(){if(!G||G.paid||!G.take)return;G.paid=1;const a=arm(),p=myProg(),cut=cutOf(G.take),before=p.debt;p.debt-=cut;p.wallet+=G.take-cut;
+ LASTPAY={take:G.take,cut,debt:p.debt,before,squared:false};if(p.debt<=0&&!p.paid){p.paid=true;LASTPAY.squared=true;}a.mags=0;a.vest=0;a.jobs++;saveProg();}
 function applyLoadout(){const a=arm(),p=G&&G.player;if(!p)return;const w=a.eq&&WD[a.eq];
  if(w)p.weapon={type:a.eq,ammo:w.melee?0:Math.round((w.ammo||0)*(1+a.mags))};else if(a.mags&&p.weapon&&WD[p.weapon.type].ammo)p.weapon.ammo+=WD[p.weapon.type].ammo*a.mags;
  if(a.vest)p.armor=(p.armor||0)+1;}
 function loadoutTxt(){const a=arm();return 'LOADOUT: '+(a.eq?WD[a.eq].name:'YOUR USUAL')+(a.mags?' · +'+a.mags+' MAG'+(a.mags>1?'S':''):'')+(a.vest?' · BODY ARMOUR':'');}
 /* the car menu */
-function openCarMenu(){if(state!=='play'||!G)return;sfx('blip');state='carmenu';$('carWallet').textContent='WALLET $'+fmt(wallet());$('carLoad').textContent=loadoutTxt();
+function openCarMenu(){if(state!=='play'||!G)return;sfx('blip');state='carmenu';$('carWallet').textContent='WALLET $'+fmt(wallet())+(myProg().debt>0?'  ·  OWED TO McWEY $'+fmt(myProg().debt):'')+'  ·  RIDE: '+carName(myCar());$('carLoad').textContent=loadoutTxt();
  $('bCarJob').innerHTML='NEXT JOB: '+LEVELS[NEXTJOB].name+'<span class="kbhint"> (ENTER)</span><span class="padhint"> (A)</span>';$('bCarShop').style.display=HUBMODE==='bunker'?'none':'';show('sCar');}
 function closeCarMenu(){if(state!=='carmenu')return;sfx('blip');state='play';show(null);}
 $('bCarJob').onclick=()=>{if(state!=='carmenu')return;sfx('pick');state='play';show(null);fadeTo(()=>startLevel(NEXTJOB));};
 $('bCarShop').onclick=()=>{if(state!=='carmenu')return;sfx('pick');state='play';show(null);fadeTo(()=>loadHub('bunker'));};
 $('bCarBack').onclick=()=>closeCarMenu();
+$('bCarStore').onclick=()=>{if(state!=='carmenu')return;sfx('pick');openStore();};
+const JEWEL={watch:{name:'GOLD WATCH',price:2500,desc:'Tells time. Mostly tells people you have money.'},chain:{name:'GOLD CHAIN',price:6000,desc:'Real gold. No green marks on this neck.'},rings:{name:'PINKY RINGS',price:9000,desc:'Two rings. One on each hand that matters.'}};
+let storeFocus=0;
+function openStore(){state='store';show('sStore');renderStore('');}
+function closeStore(){if(state!=='store')return;sfx('blip');openCarMenuForce();}
+function openCarMenuForce(){state='play';openCarMenu();}
+function renderStore(msg){arm();const p=myProg(),id=rideId();$('stWallet').textContent='$'+fmt(p.wallet);$('stOwed').textContent=p.debt>0?'OWED TO McWEY $'+fmt(p.debt):'DEBT CLEARED';
+ $('stCars').innerHTML=['beater','mid','sig'].map((k,i)=>{const c=CARS[k],own=p.cars.includes(k),cur=p.car===k,lock=c.needs&&!p.cars.includes(c.needs);const act=cur?'DRIVING':own?'DRIVE IT':lock?'NEEDS THE '+carName(c.needs):'BUY $'+fmt(c.price);
+  return `<button class="scard${cur?' on':''}" data-car="${k}"${lock?' style="opacity:.55"':''}><div class="pn">${carName(k)}</div><div class="pd">${c.desc}</div><div class="sp">${act}<span class="kbhint"> (${i+1})</span></div></button>`;}).join('');
+ $('stGold').innerHTML=Object.keys(JEWEL).map((k,i)=>{const j=JEWEL[k],own=!!p.jewel[k];return `<button class="scard${own?' on':''}" data-jw="${k}"><div class="pn">${j.name}</div><div class="pd">${j.desc}</div><div class="sp">${own?'WEARING IT':'BUY $'+fmt(j.price)}<span class="kbhint"> (${i+4})</span></div></button>`;}).join('');
+ $('stMsg').textContent=msg||'';const cs=document.querySelectorAll('#sStore .scard');cs.forEach((b,i)=>b.style.outline=padMode&&i===storeFocus?'3px solid #ffd36b':'');}
+function buyCar(k){const p=myProg(),c=CARS[k];if(p.car===k)return renderStore('You are already driving it.');
+ if(p.cars.includes(k)){p.car=k;saveProg();sfx('pick');return renderStore('Keys in hand: '+carName(k)+'.');}
+ if(c.needs&&!p.cars.includes(c.needs))return renderStore('Buy the '+carName(c.needs)+' first.');if(p.wallet<c.price){sfx('blip');return renderStore('Not enough cash. Come back richer.');}
+ p.wallet-=c.price;p.cars.push(k);p.car=k;saveProg();sfx('cash');renderStore('SOLD: '+carName(k)+'. The '+carName('beater')+' goes back to the Sunset Motel lot.');}
+function buyJewel(k){const p=myProg(),j=JEWEL[k];if(p.jewel[k])return renderStore('Already wearing it.');if(p.wallet<j.price){sfx('blip');return renderStore('Not enough cash. Come back richer.');}
+ p.wallet-=j.price;p.jewel[k]=true;saveProg();sfx('cash');applyJewelLooks();PS2C.rebuild(rideId());renderStore('SOLD: '+j.name+'. Wear it well.');}
+$('sStore').addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(!b)return;if(b.id==='bStoreLeave'){closeStore();return;}if(b.dataset.car)buyCar(b.dataset.car);else if(b.dataset.jw)buyJewel(b.dataset.jw);});
+function storeKey(e){const c=e.code,m=/^Digit([1-6])$/.exec(c);if(c==='Escape'||c==='Backspace'){closeStore();return;}if(m){const i=+m[1];if(i<=3)buyCar(['beater','mid','sig'][i-1]);else buyJewel(Object.keys(JEWEL)[i-4]);}}
+function storePad(dir){const cs=document.querySelectorAll('#sStore .scard');if(dir){storeFocus=(storeFocus+dir+cs.length)%cs.length;renderStore($('stMsg').textContent);}if(pdown(0)&&cs[storeFocus])cs[storeFocus].click();else if(pdown(1))closeStore();}
+/* jewelry flags for the low-poly fallback looks; the PS2 models read PROG directly when rebuilt */
+function applyJewelLooks(){for(const c of CHARS){const j=(PROG[c.id]&&PROG[c.id].jewel)||{},L=LOOKS[c.id];if(!L)continue;L.watch=!!j.watch;L.chain=!!j.chain;}}
+function placeOldCar(){const g=G,free=(x,z)=>{for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=0;dz++){const ix=Math.floor(x+dx),iz=Math.floor(z+dz);if(ix<1||iz<1||ix>=g.W-1||iz>=g.H-1||g.solid[iz*g.W+ix]||g.furn[iz*g.W+ix])return false;}return true;};
+ for(const [ox,oz] of [[-3,0],[3,0],[0,2.2],[0,-2.2],[-3,2],[3,2]]){const x=g.car.x+ox,z=g.car.z+oz;if(free(x,z)&&Math.hypot(x-g.player.x,z-g.player.z)>2){g.oldCar={x,z,a:0};return;}}}
 /* Nine of Nine */
 const NINE_INTRO="Hello my Friend, you may call me Nine, last name of Nine. I have come from the far east and bring you exotic machinery of death. Only at Nine of Nines can you get this ludicrous and exotic killing machines.";
 const NINE_HI=["Ah, my friend returns! Capitalism is beautiful, da?","From Leningrad, Lagos, Lisbon. Every piece I calibrate personally. With mathematics.","Is not a gun. Is a statement, written in lead.","Nine guns of ten are boring. I sell you the tenth.","Today's selection is very ludicrous. I am proud."];
@@ -1830,7 +1858,7 @@ function shopExtra(t){if(state!=='shop'||!shopReady())return;const a=arm(),pr=my
  saveProg();sfx('cash');renderShop();shopType(t==='ammo'?'Fresh rounds. Still warm from the factory. Which factory, I do not say.':'Kevlar. It stops one bullet. After that, it is just a nice shirt.');}
 $('sShop').addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(!b)return;if(b.id==='bShopLeave'){closeShop();return;}
  if(b.dataset.k)shopPick(b.dataset.k);else if(b.dataset.x)shopExtra(b.dataset.x);else if(b.dataset.e){const a=arm();a.eq=b.dataset.e;saveProg();sfx('pick');renderShop();}else if(b.dataset.u){arm().eq=null;saveProg();sfx('blip');renderShop();}});
-function menuKey(e){const c=e.code;
+function menuKey(e){const c=e.code;if(state==='store'){storeKey(e);return;}if(state==='carmenu'&&c==='KeyS'){$('bCarStore').click();return;}
  if(state==='carmenu'){if(c==='Enter'||c==='Space')$('bCarJob').click();else if((c==='KeyG'||c==='Digit2')&&$('bCarShop').style.display!=='none')$('bCarShop').click();else if(c==='Escape'||c==='Backspace')closeCarMenu();return;}
  if(c==='Escape'){closeShop();return;}if(!shopReady()){if(c==='Space'||c==='Enter'||c==='KeyE')$('shSay').click();return;}
  const a=arm(),m=/^Digit([1-5])$/.exec(c);if(m){const i=+m[1];if(i<=3&&a.stock[i-1])shopPick(a.stock[i-1]);else if(i===4)shopExtra('ammo');else if(i===5)shopExtra('vest');}else if(c==='Enter')closeShop();}
@@ -1939,6 +1967,22 @@ const END_STYLE={clean:{title:'THE QUIET HAND',line:"Tidy, quiet, and nobody saw
  mixed:{title:'STEADY HANDS',line:"You kept it steady all the way up. The Family likes steady.",quote:MC_QUOTE[3]}};
 const REPLY={don:["Consider it done.","This city answers to one family.","He'll be swimming with the fishes. Not yours, of course."],consigliere:["I'll give them some advice.","My knuckles will do the talking.","Then let's go have a word with him."],money:["What's my cut?","Everybody has a price. I'll find theirs.","His watch, his wallet — same thing."]};
 const FINALE=["You know what? Keep the Lambo. And take this — solid gold. You earned it.","Now get out of my office before I start getting sentimental."];
+const MC_LOAN=12000,MC_CUT=0.6;
+const MC_KID={hi:["Come in, kid. Wipe your feet, that carpet cost more than your car.","There's my favourite employee. Still employed, I see."],open:["Here's how you start paying off that car, kid.","You want to own that heap? Then you go where I point.","Moreau. You do this, kid, and we're close to square."],
+ finale:["The car's nearly yours. Don't make me come collecting.","And take this — solid gold. You earned it.","Now get out of my office before I start getting sentimental."]};
+const MC_PARTNER={hi:["Partner. Sit — no, the good chair.","There he is. Drink? I'm pouring either way."],open:["Favor to ask. Your old neighbours at the Sunset are back.","I need a favor. Club Flamingo. You can say no.","Moreau. I'm not ordering you. I'm asking, one businessman to another."],
+ finale:["Keep the car — it was always yours.","And take this. Solid gold.","Now get out of my office before I start getting sentimental."]};
+const MC_SQUARE=["That's the last of it. The car's yours. God help you, it's yours.","No more 'kid'. Kids owe people. You don't owe anybody. Not even me.","So from now on I don't give orders. I ask for favors. And you can say no.","...Nobody says no."];
+const SQUARE_REPLY={don:"Then we understand each other.",consigliere:"Free advice, then: don't forget it.",money:"Best investment I ever made."};
+function mcPayday(m,pp,pid){const L=LASTPAY;LASTPAY=null;if(!L){return;}
+ if(L.cut>0&&!L.squared){m("Your take: $"+fmt(L.take)+". My cut: $"+fmt(L.cut)+". You still owe me $"+fmt(L.debt)+". Count it in front of me.");
+  if(L.debt<=MC_LOAN*0.25)m("One more good night, kid, and we're square.");else if(L.before>MC_LOAN/2&&L.debt<=MC_LOAN/2)m("Halfway there. Keep this up and that "+carName('beater')+"'s yours outright.");return;}
+ if(L.squared){m("Your take: $"+fmt(L.take)+". My cut: $"+fmt(L.cut)+". And that...");MC_SQUARE.slice(0,3).forEach(m);pp(SQUARE_REPLY[pid]||SQUARE_REPLY.don);m(MC_SQUARE[3]);return;}
+ m("Your cut: $"+fmt(L.take)+". All of it. Count it in front of me anyway — I like the sound.");}
+function mcReact(m){const p=myProg(),sn=p.seen||(p.seen={}),V=p.paid?MC_PARTNER:MC_KID;
+ if(p.jewel&&(p.jewel.watch||p.jewel.chain||p.jewel.rings)&&!sn.mcJewel){sn.mcJewel=1;m(p.paid?"Look at you. Gold suits you, partner. Heavy, rare.":"Nice gold. You know where it'd look nicer? In my ledger.");}
+ if(p.car!=='beater'&&!sn['mcCar_'+p.car]){sn['mcCar_'+p.car]=1;m(p.paid?"You drove that up my driveway? Now you're making me jealous.":"New wheels before you've paid for the old ones? Bold, kid.");}
+ saveProg();}
 let CHAT={q:[],i:0,phase:'idle',tm:null,done:false,onGo:null};
 function chatClearTimers(){clearTimeout(CHAT.tm);clearInterval(typeT);}
 function chatPush(who,cls){const box=$('chat');const b=document.createElement('div');b.className='bub'+(cls?' '+cls:'');b.innerHTML='<div class="who">'+who+'</div><div class="txt"></div>';box.appendChild(b);while(box.children.length>(vh<520?2:4))box.removeChild(box.firstChild);return b;}
@@ -1950,10 +1994,11 @@ function chatType(){const C=CHAT.cur;CHAT.phase='typing';C.tx.textContent='';if(
 function chatRead(){const C=CHAT.cur;CHAT.phase='read';C.tx.textContent=C.t;typeI=typeFull.length;CHAT.tm=setTimeout(chatNext,900+C.t.length*28);}
 function chatTap(){if(state!=='brief')return;if(CHAT.phase==='done'){$('bGo').click();return;}if(CHAT.phase==='dots'){chatClearTimers();chatType();return;}if(CHAT.phase==='typing'){clearInterval(typeT);chatRead();return;}if(CHAT.phase==='read'){chatNext();}}
 function talkMcWey(){state='brief';show('sBrief');sfx('ring');engineOn(false);const pid=CHARS[selIdx].id,q=[],m=t=>q.push({who:'m',t}),pp=t=>q.push({who:'p',t});
- const vi=VISIT;if(vi.debrief===null&&HUBFIRST)MC_FIRST.forEach(m);
+ arm();const pr=myProg(),MV=pr.paid?MC_PARTNER:MC_KID;
+ const vi=VISIT;if(vi.debrief===null&&HUBFIRST)MC_FIRST.forEach(m);if(!pr.seen.loan){pr.seen.loan=1;saveProg();m("That "+carName('beater')+" the valet parked for you? It's ugly, it's yours, and it costs twelve grand.");m("I'll take it out of your cuts, kid. Sixty percent, every job, till we're square.");}else if(vi.debrief===null&&HUBFIRST)m(pick(MV.hi));
  if(vi.next==='end'){let best=vi.style||'mixed';for(const k in runStyle)if(runStyle[k]>(runStyle[best]||0))best=k;RUNEND=END_STYLE[best];}
- if(vi.debrief!==null){(DEB_STYLE[vi.style||'mixed']||MC_DEBRIEF)[vi.debrief].forEach(m);m(MC_GRADE[vi.grade]||MC_GRADE.B);m("Your cut: $"+fmt(vi.take)+". Count it in front of me — I like the sound.");}
- if(vi.next!=='end'){MC_BRIEF[vi.next].forEach(m);pp(REPLY[pid][vi.next]);m(MC_QUOTE[vi.next]);}else{m(RUNEND.line);FINALE.forEach(m);pp(REPLY[pid][2]);m(RUNEND.quote);}
+ if(vi.debrief!==null){(DEB_STYLE[vi.style||'mixed']||MC_DEBRIEF)[vi.debrief].forEach(m);m((MC_GRADE[vi.grade]||MC_GRADE.B).replace('kid',pr.paid?'partner':'kid'));mcPayday(m,pp,pid);}mcReact(m);const MV2=myProg().paid?MC_PARTNER:MC_KID;
+ if(vi.next!=='end'){m(MV2.open[vi.next]);MC_BRIEF[vi.next].forEach(m);pp(REPLY[pid][vi.next]);m(MC_QUOTE[vi.next]);}else{m(RUNEND.line);MV2.finale.forEach(m);pp(REPLY[pid][2]);m(RUNEND.quote);}
  HUBFIRST=false;CHAT={q,i:0,phase:'idle',tm:null,done:false};$('chat').innerHTML='';$('bGo').style.visibility='hidden';$('chatTap').style.visibility='visible';
  $('brFrom').textContent=vi.next==='end'?'McWEY TOWER · FINAL DEBRIEF':vi.debrief!==null?'McWEY TOWER · DEBRIEF':'McWEY TOWER · 52ND FLOOR';
  $('brQuote').textContent='"'+(vi.next==='end'?RUNEND.quote:MC_QUOTE[vi.next])+'"';
@@ -2034,7 +2079,29 @@ function drawCar(B,x,z,col,dir,spin){const {P,W}=rideKit(B,x,z,1,(dir||1)<0?Math
   P(1.16,0.37,sd*0.36,0,0.02,0.07,0.2,LENS_W,null,1);P(-1.16,0.38,sd*0.34,0,0.02,0.07,0.24,LENS_R,null,1);
   W(0.72,sd*0.47,0.19,0.15,[0.78,0.78,0.8],sp,{lite:true});W(-0.74,sd*0.47,0.19,0.15,[0.78,0.78,0.8],sp,{lite:true});}}
 function rideId(){return (CHARS[selIdx]||{}).id||'money';}
-function drawRide(B,x,z,s,a,id,spin){id=id||rideId();const r0=B.round;B.round=0.5;
+function myCar(){const p=PROG[rideId()];return (p&&p.car)||'beater';}
+const CARS={beater:{name:{consigliere:'PINTO',money:'DATSUN',don:'CAPRICE'},price:0,desc:'The loaner. Ugly, slow and yours.'},
+ mid:{name:'SUNRUNNER COUPE',price:18000,desc:'Pop-up lights, gold rims, a stripe that means business.'},
+ sig:{name:{consigliere:'ESCALADE',money:'COUNTACH',don:'ROLLS'},price:45000,needs:'mid',desc:'Your signature ride. Everyone in Miami knows whose it is.'}};
+function carName(k,id){const n=CARS[k].name;return typeof n==='string'?n:n[id||rideId()];}
+/* the starter beaters and the mid-range coupe: one parametric 70s-80s body */
+function drawSedan(B,x,z,s,a,o,spin){const {P,W}=rideKit(B,x,z,s,a),C=o.col,L=o.L||2.3,Wd=o.w||1.04,H=o.h||0.3,cx=o.cx||-0.12,cab=o.cab||0.9,PT=TUV[56],GL=TUV[57],CH=TUV[58],Gc=[1,1,1],sp=spin||0,hw=Wd/2,R=o.R||0.19;
+ P(0,0.18+H/2,0,0,L,H,Wd,C,PT);P(L*0.34,0.2+H+0.005,0,o.hoodTilt||0,L*0.31,0.05,Wd*0.96,C,PT);P(-L*0.37,0.21+H,0,0,L*0.24,0.06,Wd*0.96,C,PT);
+ P(cx,0.34+H,0,0,cab,0.24,Wd*0.94,Gc,GL);P(cx,0.475+H,0,0,cab*0.96,0.04,Wd*0.96,o.roof||C,PT);P(cx+cab/2+0.08,0.34+H,0,-0.7,0.3,0.03,Wd*0.92,Gc,GL);P(cx-cab/2-0.08,0.34+H,0,0.7,0.26,0.03,Wd*0.92,Gc,GL);
+ P(L/2+0.02,0.24,0,0,0.05,0.07,Wd*1.02,o.bump||CHR,CH);P(-L/2-0.02,0.24,0,0,0.05,0.07,Wd*1.02,o.bump||CHR,CH);P(L/2+0.01,0.37,0,0,0.02,0.07,0.36,Gc,TUV[60]);
+ for(const sd of [-1,1]){P(cx,0.34+H,sd*(hw*0.94-0.004),0,0.05,0.24,0.012,C,PT);P(0,0.42,sd*(hw+0.002),0,L*0.86,0.02,0.006,o.trim||CHR,CH);
+  P(L/2+0.01,0.37,sd*(hw*0.68),0,0.02,0.07,0.2,LENS_W,null,1);P(-L/2-0.01,0.38,sd*(hw*0.64),0,0.02,0.07,0.24,LENS_R,null,1);
+  W(L*0.31,sd*(hw-0.05),R,0.15,o.rim||[0.78,0.78,0.8],sp,{lite:!o.rimFull});W(-L*0.32,sd*(hw-0.05),R,0.15,(o.oddRim&&sd>0)?[0.3,0.3,0.32]:(o.rim||[0.78,0.78,0.8]),sp,{lite:!o.rimFull});}
+ if(o.primer)P(cx+0.05,0.18+H/2+0.02,hw+0.006,0,cab*0.62,H*0.8,0.01,[0.52,0.52,0.54],PT);
+ if(o.rust)for(const [rx,ry,rz] of o.rust)P(rx,ry,rz,0,0.12,0.06,0.012,[0.42,0.2,0.1],PT);
+ if(o.stripe)for(const sd of [-1,1])P(0,0.2+H*0.62,sd*(hw+0.004),0,L*0.9,0.05,0.008,o.stripe,null,1);
+ if(o.spoiler){P(-L/2+0.12,0.36+H,0,0,0.12,0.03,Wd*0.9,C,PT);for(const sd of [-1,1])P(-L/2+0.12,0.28+H,sd*hw*0.8,0,0.05,0.12,0.04,C,PT);}}
+const BEATER={consigliere:{col:[0.82,0.44,0.16],L:2.2,w:0.98,cab:0.95,roof:[0.6,0.3,0.12],primer:true,rust:[[0.8,0.3,0.5],[-0.7,0.26,-0.5]],oddRim:true},
+ money:{col:[0.78,0.72,0.3],L:2.25,w:1.0,h:0.27,cab:0.82,rust:[[0.6,0.28,-0.51],[-0.4,0.3,0.51],[-0.9,0.26,0.5]],oddRim:true},
+ don:{col:[0.4,0.28,0.18],L:2.85,w:1.16,h:0.32,cab:1.15,roof:[0.78,0.7,0.55],R:0.21,primer:true,rust:[[1.0,0.3,0.59]],oddRim:true}};
+const MIDCAR={col:[0.94,0.94,0.96],L:2.5,w:1.06,h:0.26,cab:0.8,cx:-0.2,roof:[0.1,0.1,0.12],rim:[0.95,0.8,0.42],rimFull:true,stripe:[0.2,0.85,0.9],spoiler:true,trim:[0.95,0.8,0.42]};
+function drawBeater(B,x,z,s,a,id,spin){const r0=B.round;B.round=0.5;drawSedan(B,x,z,s,a,BEATER[id]||BEATER.money,spin);B.round=r0;}
+function drawRide(B,x,z,s,a,id,spin){const r0=B.round;if(!id){const mc=myCar();if(mc==='beater'){drawBeater(B,x,z,s,a,rideId(),spin);return;}if(mc==='mid'){B.round=0.5;drawSedan(B,x,z,s,a,MIDCAR,spin);B.round=r0;return;}}id=id||rideId();B.round=0.5;
  if(id==='don')drawRolls(B,x,z,s,a,spin);else if(id==='consigliere')drawEscalade(B,x,z,s,a,spin);else drawLambo(B,x,z,s,a,null,spin);B.round=r0;}
 
 /* The Money Man — Countach-style wedge, built as a low-poly hull (PS2 style) */
@@ -2354,7 +2421,7 @@ function buildBody(B){const M=newMesh(),X=[1,0,0],Y=[0,1,0],Z=[0,0,1];
   loft(M,[{c:V.add(at(sh,ad,0.0),[-s*0.012,-0.012,0]),rx:0.074,rz:0.08,v:sv(0),w:[[ua,0.6],[BI.chest,0.4]]},{c:at(sh,ad,0.06),rx:0.082,rz:0.084,v:sv(0.15),w:W1(ua)},{c:at(sh,ad,0.2),rx:0.076,rz:0.078,v:sv(0.4),w:W1(ua)},
    {c:el,rx:0.068,rz:0.07,v:sv(0.55),w:W2(ua,fa,0.5)},{c:at(el,ad,0.1),rx:0.064,rz:0.064,v:sv(0.72),w:W1(fa)},{c:at(wr,ad,-0.02),rx:0.056,rz:0.057,v:sv(0.98),w:W1(fa)}].map(r=>Object.assign(r,{s:side,f:fwd})),8,{u0:0,u1:1});
   loft(M,[{c:at(wr,ad,-0.035),rx:0.05,rz:0.051,v:(ROW.c0+1)/512,w:W1(fa)},{c:at(wr,ad,0.012),rx:0.049,rz:0.05,v:(ROW.c1-1)/512,w:W2(fa,hb,0.3)}].map(r=>Object.assign(r,{s:side,f:fwd})),8,{u0:0,u1:1});
-  if(s===(B.watch||1)){/* gold watch: link bracelet, raised case with bezel, champagne dial, crown */
+  if(!B.nowatch&&s===(B.watch||1)){/* gold watch: link bracelet, raised case with bezel, champagne dial, crown */
    const gv=SW.gold[1];loft(M,[{c:at(wr,ad,-0.064),rx:0.058,rz:0.059},{c:at(wr,ad,-0.034),rx:0.058,rz:0.059}].map(r=>Object.assign(r,{s:side,f:fwd,w:W1(fa),v:gv})),12,{uvf:(u,r)=>[150/512+u*140/512,r===undefined?gv:gv]});
    const cc=at(at(wr,ad,-0.049),side,0.058),ax=V.norm(ad),bx=fwd;
    loft(M,[{c:cc,rx:0.029,rz:0.029},{c:at(cc,side,0.013),rx:0.029,rz:0.029},{c:at(cc,side,0.015),rx:0.025,rz:0.025}].map(r=>Object.assign(r,{s:ax,f:bx,w:W1(fa),v:gv})),12,{uvf:()=>[0.36,gv]});
@@ -2529,9 +2596,12 @@ async function init(){try{
  P=gl.createProgram();gl.attachShader(P,sh(gl.VERTEX_SHADER,VS));gl.attachShader(P,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(P);if(!gl.getProgramParameter(P,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(P));
  for(const n of ['uVP','uB','uPL','uPC','uAmb','uLD','uLC','uCam','uFog','uFogC','uTex'])Lc[n]=gl.getUniformLocation(P,n);for(const n of ['aP','aN','aT','aBi','aBw'])Lc[n]=gl.getAttribLocation(P,n);
  const pais=await loadImg(ART.pais);
- for(const id in CH){const C=CH[id],face=await loadImg(ART[C.face]);const ht=paintHead(face,C.F);if(C.F.smile)paintSmile(ht,C.F);const shirt=C.B.shirt==='pais'?pais:C.B.shirt==='tropical'?tropicalCanvas():shirtCanvas(C.B.shirt);const bt=paintBody(shirt,Object.assign({shirtScale:C.B.shirt==='pais'?0.26:C.B.shirt==='tropical'?0.45:1},C.B));if(C.B.dolphin)dolphinPrint(bt.getContext('2d'));
-  MODELS[id]=[upload(buildBody(C.B),mkTex(bt)),upload(buildHead(C.B),mkTex(ht))];const cp=cv=>{const k=document.createElement('canvas');k.width=cv.width;k.height=cv.height;k.getContext('2d').drawImage(cv,0,0);return k;};C.bc=bt;C.hc=ht;C.bcBase=cp(bt);C.bc0=cp(bt);C.hc0=cp(ht);}
+ PAIS=pais;for(const id in CH){const C=CH[id];C.img=await loadImg(ART[C.face]);buildCH(id);}
  gl.bindTexture(gl.TEXTURE_2D,atlasTex);ready=true;}catch(e){console.error('PS2C',e);}}
+ let PAIS=null;function jewelB(id,B){const p=PROG[id];if(!p||!CHARS.some(c=>c.id===id))return;const j=p.jewel||{};B.nowatch=!j.watch;B.chain=!!j.chain;B.rings=j.rings?2:0;}
+ function buildCH(id){const C=CH[id],face=C.img,pais=PAIS;jewelB(id,C.B);const ht=paintHead(face,C.F);if(C.F.smile)paintSmile(ht,C.F);const shirt=C.B.shirt==='pais'?pais:C.B.shirt==='tropical'?tropicalCanvas():shirtCanvas(C.B.shirt);const bt=paintBody(shirt,Object.assign({shirtScale:C.B.shirt==='pais'?0.26:C.B.shirt==='tropical'?0.45:1},C.B));if(C.B.dolphin)dolphinPrint(bt.getContext('2d'));
+  MODELS[id]=[upload(buildBody(C.B),mkTex(bt)),upload(buildHead(C.B),mkTex(ht))];const cp=cv=>{const k=document.createElement('canvas');k.width=cv.width;k.height=cv.height;k.getContext('2d').drawImage(cv,0,0);return k;};C.bc=bt;C.hc=ht;C.bcBase=cp(bt);C.bc0=cp(bt);C.hc0=cp(ht);}
+ function rebuild(id){if(!ready||!CH[id]||!CH[id].img)return;if(MODELS[id])for(const m of MODELS[id]){for(const b of ['p','n','t','bi','bw','i'])gl.deleteBuffer(m[b]);gl.deleteTexture(m.tex);}buildCH(id);CH[id].suitOn=null;applySuit(id);gl.bindTexture(gl.TEXTURE_2D,atlasTex);}
 const RW=mir(WR),ADR=[-AD[0],AD[1],0],LW=WR,ADL=[AD[0],AD[1],0];
 function handFrame(Wm,left,sw,base){const Mh=Wm[left?BI.handL:BI.handR],w=left?LW:RW,a=left?ADL:ADR,pm=left?V.norm(V.cross(a,Z)).map(v=>v):V.norm(V.cross(a,Z)).map(v=>-v);
  const O=M4.ap(Mh,V.add(w,V.mul(a,0.065))),dz=V.norm(V.sub(M4.ap(Mh,V.add(w,a)),M4.ap(Mh,w))),dy=V.norm(V.sub(M4.ap(Mh,V.add(w,Z)),M4.ap(Mh,w))),dx=V.norm(V.cross(dy,dz)),dy2=V.cross(dz,dx);
@@ -2657,7 +2727,8 @@ function flush(VPm,u){if(!ready||!queue.length||!u){queue.length=0;return;}gl.us
   const at=(n,b,s)=>{const l=Lc[n];if(l<0)return;gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.vertexAttribPointer(l,s,gl.FLOAT,false,0,0);};
   at('aP',mm.p,3);at('aN',mm.n,3);at('aT',mm.t,2);at('aBi',mm.bi,4);at('aBw',mm.bw,4);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,mm.i);gl.drawElements(gl.TRIANGLES,mm.n_i,gl.UNSIGNED_SHORT,0);}}
  for(const kk of ['aP','aN','aT','aBi','aBw']){const l=Lc[kk];if(l>=0)gl.disableVertexAttribArray(l);}gl.disable(gl.CULL_FACE);gl.bindTexture(gl.TEXTURE_2D,atlasTex);queue.length=0;}
-return{init,add,flush,has,applySuit,get ready(){return ready;}};})();
+return{init,add,flush,has,applySuit,rebuild,get ready(){return ready;}};})();
+applyJewelLooks();
 PS2C.init();
 
 /* ================= MIAMI VICE CUTSCENE ================= */
@@ -2896,7 +2967,7 @@ function drawHazards(B,g){if(!g.fans)return;const DK=hex(0x1a1820),W=g.W;
 function buildDynamic(){const g=G,B=dynB,O=ovB;B.reset();O.reset();if(g.def.hub){drawHubDyn(B,O);return;}if(ENH())drawMotes(g.cam.x,g.cam.z,levelIdx>=1,g.T);
  for(const d of g.doors){const a=d.base+d.th,e=doorEnd(d);B.box(A.mul(A.mul(A.T((d.hx+e[0])/2,0.55,(d.hz+e[1])/2),A.RY(-a)),A.S(0.98,1.1,0.07)),[0.95,0.9,0.9],false,TUV[4]);
   const kx=d.hx+Math.cos(a)*0.82,kz=d.hz+Math.sin(a)*0.82;B.box(TRS(kx,0.55,kz,-a,0.05,0.05,0.12),GOLD);}
- drawRide(B,g.car.x,g.car.z,1,0);drawDisco(B,g);drawHazards(B,g);
+ drawRide(B,g.car.x,g.car.z,1,0);if(g.oldCar)drawBeater(B,g.oldCar.x,g.oldCar.z,1,g.oldCar.a,rideId());drawDisco(B,g);drawHazards(B,g);
  if(g.cleared){const y=1.5+Math.sin(g.T*5)*0.15;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.3,0.3,0.3))),[1,0.3,0.75],true);}
  const p=g.player;const near=p.alive?nearItem(p):null;
  for(const it of g.items)drawItem(B,it,it===near);
@@ -3006,7 +3077,7 @@ function drawHUD0(){const c=hctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0
   if(!sticks.L&&!sticks.R&&g.time<6){c.font=VTF(20*u);c.globalAlpha=0.75;txt(c,'◀ MOVE',vw*0.22,vh*0.72,'#2de2e6','center',20*u);txt(c,'AIM + ATTACK ▶',vw*0.78,vh*0.72,'#ff5fb8','center',20*u);c.globalAlpha=1;}}}
 
 /* ================= FLOW ================= */
-const SCREENS=['sElev','sTitle','sHelp','sSelect','sBrief','sDead','sResults','sEnd','sPause','sPerk','sCar','sShop'];
+const SCREENS=['sElev','sTitle','sHelp','sSelect','sBrief','sDead','sResults','sEnd','sPause','sPerk','sCar','sShop','sStore'];
 function show(id){SCREENS.forEach(s=>$(s).classList.toggle('on',s===id));if(id)$('banner').classList.remove('on');}
 let bannerT=null;function banner(a,b){const el=$('banner');el.innerHTML='<div class="b1">'+a+'</div>'+(b?'<div class="b2">'+b+'</div>':'');el.classList.add('on');clearTimeout(bannerT);bannerT=setTimeout(()=>el.classList.remove('on'),2400);}
 function updateSelect(){const c=CHARS[selIdx];const gb=$('cBig');gb.textContent=c.name;gb.dataset.t=c.name;$('cQuote').textContent=c.quote;$('cPerk').innerHTML=c.perk;
@@ -3017,7 +3088,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 let typeT=null,typeFull='',typeI=0;
 function showBrief(i){levelIdx=i;state='brief';show('sBrief');$('brFrom').textContent='INCOMING CALL · '+BRIEF_FLOOR(i);$('brFloor').textContent=BRIEF_FLOOR(i);typeFull=LEVELS[i].brief;typeI=0;$('brMsg').textContent='';sfx('ring');
  clearInterval(typeT);typeT=setInterval(()=>{typeI++;$('brMsg').textContent=typeFull.slice(0,typeI);if(typeI%2===0)sfx('type');if(typeI>=typeFull.length)clearInterval(typeT);},28);}
-function startLevel(i){clearInterval(typeT);levelIdx=i;HUBMODE='in';loadLevel(i);applyLoadout();G.track=LEVEL_TRACKS[i][RUNTRACK[i]%LEVEL_TRACKS[i].length];if(MUS.track!==G.track){MUS.track='';MUS.pending=null;}state='play';show(null);
+function startLevel(i){clearInterval(typeT);levelIdx=i;HUBMODE='in';loadLevel(i);applyLoadout();if(i===0&&myCar()!=='beater')placeOldCar();G.track=LEVEL_TRACKS[i][RUNTRACK[i]%LEVEL_TRACKS[i].length];if(MUS.track!==G.track){MUS.track='';MUS.pending=null;}state='play';show(null);
  banner('FLOOR '+(i+1)+': '+LEVELS[i].name,padMode?'Clear the floor · A grabs weapons · Get back to the car':touchMode?'Left thumb moves · right thumb aims &amp; attacks':'Clear the floor · E grabs weapons · Get back to the car');
  if(i===1&&!LEXMET)startCameo();}
 function showDead(){G.cameo=null;G.lex=null;state='dead';const k=G.killedBy;$('deadCause').textContent=DEATHNAME[k]||'KILLED';$('deadTip').textContent='TIP: '+pick(TIPS);
@@ -3029,7 +3100,7 @@ function finishLevel(){const g=G;state='results';const tb=Math.max(0,Math.round(
  const acc=g.shots?Math.round(Math.min(1,g.hits/g.shots)*100)+'%':'—';
  $('rStats').innerHTML=`DIFFICULTY<b>${Dd().name}</b><br>KILLS<b>${g.kills}</b><br>EXECUTIONS<b>${g.execs}</b><br>BEST COMBO<b>x${g.maxCombo}</b><br>HEADS TAKEN<b>${g.heads}</b><br>STYLE<b>${rsty.toUpperCase()}</b><br>BY WEAPON<b>${Object.entries(g.kb).sort((a,b)=>b[1]-a[1]).map(([k,v])=>(KNAME[k]||k)+' '+v).join(' · ')||'—'}</b><br>ACCURACY<b>${acc}</b><br>TIME<b>${mmss(g.time)}</b><br>KILL MONEY<b>$${fmt(g.score)}</b><br>SPEED BONUS<b>$${fmt(tb)}</b><br>TAKE HOME<b>$${fmt(total)}</b>`;
  let xp=0;if(!g.xpGiven){g.xpGiven=1;xp=runXP(g,true,gr);awardXP(xp);}const pr=myProg();$('rStats').innerHTML+=`<br>XP EARNED<b style="color:#ffd36b">+${xp}</b><br>LEVEL<b style="color:#ffd36b">${pr.lvl}  (${pr.xp}/${xpNeed(pr.lvl)})</b>`;
- {const wl=wallet();$('rStats').innerHTML+=`<br>WALLET<b style="color:#7dff9a">$${fmt(wl)} &rarr; $${fmt(wl+total)}</b>`;}G.grade=gr;$('rGrade').textContent=gr;$('bNextLvl').innerHTML='BACK TO McWEY'+'<span class="padhint"> (A)</span>';if(pendingPerks>0)setTimeout(()=>{if(state==='results')showPerkPick('results');},900);show('sResults');sfx('cash');}
+ {const wl=wallet(),ct=cutOf(total),ow=myProg().debt;$('rStats').innerHTML+=(ct?`<br>McWEY'S CUT<b style="color:#ff8a95">-$${fmt(ct)}</b><br>STILL OWED<b style="color:#ff8a95">$${fmt(ow-ct)}</b>`:'')+`<br>WALLET<b style="color:#7dff9a">$${fmt(wl)} &rarr; $${fmt(wl+total-ct)}</b>`;}G.grade=gr;$('rGrade').textContent=gr;$('bNextLvl').innerHTML='BACK TO McWEY'+'<span class="padhint"> (A)</span>';if(pendingPerks>0)setTimeout(()=>{if(state==='results')showPerkPick('results');},900);show('sResults');sfx('cash');}
 function restart(){if(!G||G.def.hub)return;if(!G.player.alive){RUNTRACK[levelIdx]++;MUS.track='';MUS.pending=null;}if(state==='results'&&G.take){totalScore-=G.take;totalKills-=G.kills;totalTime-=G.time;}startLevel(levelIdx);}
 function togglePause(){if(state==='play'){state='pause';show('sPause');}else if(state==='pause'){state='play';show(null);}}
 function syncSetBtns(){$('bMute').textContent='SOUND: '+(SET.sound?'ON':'OFF');$('bShake').textContent='SCREEN SHAKE: '+(SET.shake?'ON':'OFF');$('bRetro').textContent='GRAPHICS: '+(ENH()?'ENHANCED':'PS1 RETRO');$('bHints').textContent='HINTS: '+(SET.hints?'ON':'OFF');$('bGore').textContent='GORE: '+(SET.gore==='normal'?'NORMAL':'EXTREME');$('bGrain').textContent='FILM GRAIN: '+(SET.grain<=0?'OFF':SET.grain<0.3?'LOW':SET.grain<0.5?'MEDIUM':'HIGH');$('bGlitch').textContent='VHS GLITCH: '+(SET.glitch?'ON':'OFF');}
@@ -3058,7 +3129,7 @@ const tbtn=(id,fn)=>{const el=$(id);el.addEventListener('touchstart',e=>{e.preve
 tbtn('bGrab',()=>pressed.grab=true);tbtn('bPerk',()=>pressed.perk=true);tbtn('bPause',()=>togglePause());tbtn('bRestart',()=>restart());
 
 /* ================= INPUT ================= */
-addEventListener('keydown',e=>{keys[e.code]=true;if(state==='carmenu'||state==='shop'){menuKey(e);e.preventDefault();return;}if((e.code==='Space'||e.code==='Enter')&&state==='play'&&G&&G.cine){cineSkip();e.preventDefault();return;}if(e.code==='Tab'&&state==='play'&&G&&G.def.hub){hubSkip();e.preventDefault();return;}if((e.code==='Enter'||e.code==='Space')&&state==='elev'){skipElev();e.preventDefault();return;}if(state==='perk'&&/^Digit[123]$/.test(e.code)){const cs=document.querySelectorAll('.pcard');const b=cs[+e.code.slice(5)-1];if(b)choosePerk(b.dataset.k);return;}if(padMode&&/^(Key[WASD]|Arrow)/.test(e.code))padMode=false;if(e.code==='KeyR')pressed.restart=true;if(e.code==='KeyE')pressed.grab=true;if(e.code==='Space'||e.code==='KeyQ')pressed.perk=true;if(e.code==='Escape'||e.code==='KeyP')pressed.pause=true;if(e.code==='KeyM')toggleMute();
+addEventListener('keydown',e=>{keys[e.code]=true;if(state==='carmenu'||state==='shop'||state==='store'){menuKey(e);e.preventDefault();return;}if((e.code==='Space'||e.code==='Enter')&&state==='play'&&G&&G.cine){cineSkip();e.preventDefault();return;}if(e.code==='Tab'&&state==='play'&&G&&G.def.hub){hubSkip();e.preventDefault();return;}if((e.code==='Enter'||e.code==='Space')&&state==='elev'){skipElev();e.preventDefault();return;}if(state==='perk'&&/^Digit[123]$/.test(e.code)){const cs=document.querySelectorAll('.pcard');const b=cs[+e.code.slice(5)-1];if(b)choosePerk(b.dataset.k);return;}if(padMode&&/^(Key[WASD]|Arrow)/.test(e.code))padMode=false;if(e.code==='KeyR')pressed.restart=true;if(e.code==='KeyE')pressed.grab=true;if(e.code==='Space'||e.code==='KeyQ')pressed.perk=true;if(e.code==='Escape'||e.code==='KeyP')pressed.pause=true;if(e.code==='KeyM')toggleMute();
  if((e.code==='Enter'||e.code==='Space')&&state==='title'){$('bStart').click();e.preventDefault();return;}
  if((e.code==='Enter'||e.code==='Space')&&state==='brief'){chatTap();e.preventDefault();return;}
  if(e.code==='Enter'&&state==='select'){$('bPlay').click();return;}if(state==='select'&&(e.code==='ArrowLeft'||e.code==='KeyA'))$('bPrev').click();if(state==='select'&&(e.code==='ArrowRight'||e.code==='KeyD'))$('bNext').click();
@@ -3085,7 +3156,7 @@ function frame(now){requestAnimationFrame(frame);qualityTick((now-last)/1000);co
  if(pressed.restart&&(state==='play'||state==='dead'||state==='results'))restart();
  if(G&&(state==='play'||state==='dead')&&!portrait)update(dt);
  if(state==='elev')updateElev(dt);else if(state==='brief')updateBrief(dt);else if(state==='shop')updateNine(dt);else if(state==='title'||state==='select'||state==='help'||!G)updateMenu(dt);
- if(AC){let tr;if(state==='play'||state==='dead'||state==='pause'){if(G&&G.def.hub)tr=G.track;else if(G&&G.cleared)tr='drone';else if(G&&G.boss&&G.boss.alive&&G.bossSeen)tr='boss';else tr=(G&&G.track)||'game';}else if(state==='carmenu'||state==='shop')tr=(G&&G.track)||'n_concrete';else tr=state==='results'?'drone':state==='elev'?'muzak':(state==='brief'&&G&&G.def.hub)?'n_haze':'menu';setTrack(tr);setMuffle(state==='dead'||state==='pause'||state==='brief');}
+ if(AC){let tr;if(state==='play'||state==='dead'||state==='pause'){if(G&&G.def.hub)tr=G.track;else if(G&&G.cleared)tr='drone';else if(G&&G.boss&&G.boss.alive&&G.bossSeen)tr='boss';else tr=(G&&G.track)||'game';}else if(state==='carmenu'||state==='shop'||state==='store')tr=(G&&G.track)||'n_concrete';else tr=state==='results'?'drone':state==='elev'?'muzak':(state==='brief'&&G&&G.def.hub)?'n_haze':'menu';setTrack(tr);setMuffle(state==='dead'||state==='pause'||state==='brief');}
  engineOn(state==='play'&&!!G&&G.def.hub==='drive'&&!G.parked&&SET.sound);$('cine').style.display=(state==='play'&&G&&G.cine)?'block':'none';$('bSkip').style.display=(state==='play'&&G&&G.def.hub)?'block':'none';
  pressed.grab=pressed.perk=pressed.restart=pressed.pause=false;
  const tui=touchMode&&state==='play'&&!(G&&G.def.hub);$('touchUI').style.display=tui?'block':'none';
