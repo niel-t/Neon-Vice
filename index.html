@@ -109,6 +109,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
   <div style="flex:1"></div>
   <button class="btn" id="bStart">PLAY<span class="padhint"> (A)</span></button>
   <button class="btn alt" id="bHelp">HOW TO PLAY<span class="padhint"> (Y)</span></button>
+  <button class="btn alt" id="bSettings">SETTINGS<span class="padhint"> (X)</span></button>
   <div class="hint" style="opacity:.75">Best in landscape · sound on · Xbox controller supported</div>
 </div>
 <div id="sHelp" class="screen dim"><div class="logo2">HOW TO PLAY</div>
@@ -130,10 +131,10 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <div id="sShop" class="screen"><div class="shop"><div class="shHead"><div><div class="shT">NINE OF NINE'S</div><div class="shS">EXOTIC MACHINERY OF DEATH &middot; 3 PIECES TODAY</div></div><div class="shW" id="shWallet"></div></div><div class="shSay" id="shSay"></div><div class="rowc" id="shCards"></div><div class="shX" id="shExtra"></div><div class="shF"><span id="shLoad"></span><button class="btn" id="bShopLeave">LEAVE<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div></div>
 <div id="sStore" class="screen dim"><div class="shop"><div class="shHead"><div><div class="shT">OCEAN DRIVE SHOPPING</div><div class="shS">CARS &middot; GOLD &middot; NO REFUNDS</div></div><div><div class="shW" id="stWallet"></div><div class="shS" id="stOwed" style="color:#ff8a95;text-align:right"></div></div></div><div class="shS" style="margin-top:12px;align-self:flex-start" id="stCarsH">MIAMI MOTORS</div><div class="rowc" id="stCars"></div><div class="shS" style="margin-top:6px;align-self:flex-start" id="stGoldH">GOLD COAST JEWELERS</div><div class="rowc" id="stGold"></div><div class="shS" style="margin-top:6px;align-self:flex-start" id="stHomeH">SUNSHINE REALTY</div><div class="rowc" id="stHome"></div><div class="shF"><span id="stMsg"></span><button class="btn" id="bStoreLeave">LEAVE<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div></div>
 <div id="sEnd" class="screen dim"><div class="logo" style="font-size:clamp(20px,5vw,44px)">THE FAMILY<br>RUNS MIAMI</div><div class="stats" id="eStats"></div><button class="btn" id="bAgain">PLAY AGAIN<span class="padhint"> (A)</span></button></div>
-<div id="sPause" class="screen dim"><div class="logo2">PAUSED</div><div class="col" style="margin-top:8px">
+<div id="sPause" class="screen dim"><div class="logo2" id="pTitle">PAUSED</div><div class="col" style="margin-top:8px">
   <button class="btn" id="bResume">RESUME<span class="padhint"> (START)</span></button><button class="btn alt" id="bPRestart">RESTART FLOOR<span class="padhint"> (BACK)</span></button>
   <button class="btn alt" id="bMute">SOUND: ON</button><button class="btn alt" id="bShake">SCREEN SHAKE: ON</button><button class="btn alt" id="bRetro">GRAPHICS: ENHANCED</button><button class="btn alt" id="bHints">HINTS: ON</button><button class="btn alt" id="bGrain">FILM GRAIN</button><button class="btn alt" id="bGlitch">VHS GLITCH</button><button class="btn alt" id="bGore">GORE</button>
-  <button class="btn alt" id="bQuit">QUIT TO MENU<span class="padhint"> (Y)</span></button></div></div>
+  <button class="btn alt" id="bQuit">QUIT TO MENU<span class="padhint"> (Y)</span></button><button class="btn" id="bSetBack" style="display:none">BACK<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div>
 <div id="rotate" class="screen"><div class="logo2">TURN YOUR PHONE<br>SIDEWAYS</div><div class="hint">Landscape works best for the twin-stick controls</div></div>
 <div id="err" class="screen"><div class="logo2">WebGL isn't available<br>in this browser</div></div>
 <script>
@@ -1018,7 +1019,7 @@ function padMenus(dt){if(!PAD.on)return;PAD.navT-=dt;const ax=PAD.gp.axes[0]||0;
  if(pdown(14))dir=-1;else if(pdown(15))dir=1;else if(Math.abs(ax)>0.6&&PAD.navT<=0)dir=Math.sign(ax);if(dir)PAD.navT=0.32;if(Math.abs(ax)<0.3)PAD.navT=0;
  const skip=()=>chatTap();
  switch(state){
-  case 'title':if(pdown(0)||pdown(9)){initAudio();$('bStart').click();}else if(pdown(3))$('bHelp').click();break;
+  case 'title':if(SETMENU){if(pdown(1)||pdown(9))$('bSetBack').click();break;}if(pdown(0)||pdown(9)){initAudio();$('bStart').click();}else if(pdown(3))$('bHelp').click();else if(pdown(2))$('bSettings').click();break;
   case 'help':if(pdown(0)||pdown(1))$('bHelpBack').click();break;
   case 'select':if(dir<0)$('bPrev').click();else if(dir>0)$('bNext').click();
    if(pdown(3)||pdown(4)||pdown(5)){const ks=Object.keys(DIFF);let i=ks.indexOf(SET.diff);i=(i+(pdown(4)?ks.length-1:1))%ks.length;SET.diff=ks[i];saveSet();updateSelect();sfx('blip');}
@@ -1083,7 +1084,7 @@ function loadLevel(i,dOver){
    g.floorT[ii]=(def.floorFn&&def.floorFn(x,z,W,H))||lg.f||def.floor||1;if(lg.furn)g.furn[ii]=lg.furn;if(lg.rug)g.rug[ii]=1;if(lg.trig)g.trigs.push({x:cx,z:cz,t:lg.trig});
    if(lg.light==='warm')g.lights.push({x:cx,y:1.7,z:cz,r:5,c:[1,0.8,0.55]});else if(lg.light==='neon')g.lights.push({x:cx,y:1.6,z:cz,r:5,c:NEON[g.lights.length%4]});
    if(lg.lamp){g.deco.push({t:'lamp',x,z});g.lights.push({x:cx,y:2.1,z:cz,r:5,c:[1,0.72,0.42]});}
-   if(lg.npc){const n=makeChar(cx,cz,NPCLOOK[lg.npc](),false);n.kind=lg.npc;n.state='idle';n.a=n.a0=0;n.r=0.3;n.body=n.look.body;g.npcs.push(n);}
+   if(lg.npc){const n=makeChar(cx,cz,NPCLOOK[lg.npc](),false);n.kind=lg.npc==='lady'?'guest':lg.npc;n.state='idle';n.a=n.a0=0;n.r=0.3;n.body=n.look.body;g.npcs.push(n);}
    continue;}
   if(isW(c)){g.solid[z*W+x]=1;g.wallT[z*W+x]=c==='#'?def.wall:6;continue;}
   let ft=FLOORCH[c];if(ft===undefined&&def.floor)ft=def.floor;if(ft===undefined){for(const [ox,oz] of [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[1,1],[-2,0],[2,0]]){const f=FLOORCH[ch(x+ox,z+oz)];if(f!==undefined){ft=f;break;}}if(ft===undefined)ft=1;}
@@ -1415,6 +1416,7 @@ function updatePlayer(dt){const g=G,p=g.player,ch=CHARS[selIdx];
  p.cd-=dt;if(p.atkT>0)p.atkT-=dt;if(p.armorT>0)p.armorT-=dt;p.perkCD-=dt;p.bloom=Math.max(0,p.bloom-dt*0.45);if(g.hurtT>0)g.hurtT-=dt;
  {const D=Dd();if(D.regen&&p.hp<p.maxhp&&g.time-p.lastHurt>Math.max(2,D.regen-2*pk('medic'))){p.hp++;p.lastHurt=g.time;popup(p.x,p.z,'+1 HEALTH','#7dff9a');sfx('pick');}}
  if(!p.weapon&&CHARS[selIdx].id!=='consigliere'){for(const it of g.items){if(!it.flying&&(it.age||0)>1&&Math.hypot(it.x-p.x,it.z-p.z)<0.45){g.items.splice(g.items.indexOf(it),1);let ammo=it.ammo;if(it.fresh&&WD[it.type].ammo)ammo=Math.round(ammo*(CHARS[selIdx].id==='don'?1.5:1)*(1+0.25*pk('pockets')));p.weapon={type:it.type,ammo};p.bloom=0;sfx('pick');popup(p.x,p.z,WD[it.type].name,'#ffd36b');break;}}}
+ else if(p.weapon&&!WD[p.weapon.type].melee&&WD[p.weapon.type].ammo){const wt=p.weapon.type,cap=WD[wt].ammo*4;for(const it of g.items){if(it.type!==wt||it.flying||(it.age||0)<=1||!(it.ammo>0)||p.weapon.ammo>=cap||Math.hypot(it.x-p.x,it.z-p.z)>=0.45)continue;g.items.splice(g.items.indexOf(it),1);let ammo=it.ammo;if(it.fresh)ammo=Math.round(ammo*(CHARS[selIdx].id==='don'?1.5:1)*(1+0.25*pk('pockets')));const add=Math.min(ammo,cap-p.weapon.ammo);p.weapon.ammo+=add;sfx('pick');popup(p.x,p.z,'+'+add+' AMMO','#ffd36b');break;}}
  if(p.burstQ>0){p.burstT-=dt;if(p.burstT<=0&&p.weapon&&p.weapon.type==='m16'&&p.weapon.ammo>0){fireGun(p,p.weapon,true);p.burstQ--;p.burstT=0.065;p.cd=WD.m16.cd;}else if(!p.weapon||p.weapon.type!=='m16')p.burstQ=0;}
  if(!g.def.hub){if(attacking&&p.cd<=0&&!(p.exec>0)&&!(p.burstQ>0))playerAttack(p);
  if(pressed.grab)playerGrab(p);if(pressed.perk)playerPerk(p);}
@@ -1728,13 +1730,14 @@ const PASTEL=[[1,0.78,0.86],[0.7,0.95,0.92],[1,0.86,0.7],[0.86,0.78,1],[1,1,0.85
 const MCLOOK=Object.assign({},{skin:hex(0xd9a07a),jacket:hex(0xe4dac6),shirt:hex(0x2a8f8a),pants:hex(0xded4c0),shoes:hex(0x2a1a14),beard:hex(0xa5532a),watch:true,chain:true,medallion:true,bling:true});
 const NPCLOOK={
  guard:()=>({skin:hex(pick([0xd9a37c,0x7a5236,0xf0c8a0])),jacket:hex(0x111116),shirt:hex(0xf0f0f0),tie:hex(0x111116),pants:hex(0x111116),shoes:hex(0x08080a),hs:'buzz',hair:hex(0x101010),shades:true,earpiece:true,bw:1.2,bd:1.12,bh:1.1,body:'big'}),
- recep:()=>({fem:true,calm:1,skin:hex(0xefcaa8),jacket:hex(0xff6fae),shirt:hex(0xffffff),pants:hex(0x2a2030),shoes:hex(0xffffff),hs:'big',hair:hex(0xe8c860),medallion:true,bw:0.85,bd:0.85,bh:1.0}),
+ recep:()=>({fem:true,calm:1,sleeves:true,skirt:0.6,skin:hex(0xefcaa8),jacket:hex(0xff6fae),shirt:hex(0xffffff),pants:hex(0xefcaa8),shoes:hex(0xffffff),hs:'long',hair:hex(0xe8c860),medallion:true,bw:0.85,bd:0.85,bh:1.0}),
  mcwey:()=>Object.assign({},MCLOOK),
  valet:()=>({skin:hex(pick([0xd9a37c,0x8a5a3a,0xefcaa8])),jacket:hex(0xf4efe6),shirt:hex(0xb3221f),pants:hex(0x1d1a24),shoes:hex(0x111111),hs:'slick',hair:hex(0x1a1414),bw:1.0,bd:1.0,bh:1.02}),
  nine:()=>({skin:hex(0xf2cdb4),jacket:hex(0x141419),shirt:hex(0xc8582a),torsoTile:32,pants:hex(0x2a2c3a),shoes:hex(0x1a1414),hs:'slick',hair:hex(0x9a5a2c),beard:hex(0x9a4a22),fluff:true,glasses:true,body:'fat',bw:1.15,bd:1.12,bh:1.0}),
  hguard:()=>NPCLOOK.guard(),
  tony:()=>({skin:hex(0xd9a37c),jacket:hex(0x15121a),shirt:hex(0xf4f4f0),tie:hex(0xc0182a),pants:hex(0x15121a),shoes:hex(0x0a0a0c),hs:'slick',hair:hex(0x1a1410),stache:true,watch:true,bw:1.06,bd:1.04,bh:1.0}),
- guest:()=>({calm:0.8,skin:hex(pick([0xf0c8a0,0xd9a37c,0x8a5a3a,0xefcaa8,0x6b4226])),jacket:hex(pick([0xffffff,0xf4d6e4,0x9ad8e0,0xf6e3b4,0xc9b6f2,0x2a2a33,0xff8fb8])),shirt:hex(pick([0xff6fae,0x2de2e6,0xffffff,0xffd36b,0x1a1a22])),pants:hex(pick([0xf2f2f2,0x2a2030,0xd8d0b8,0x9ad8e0])),shoes:hex(pick([0xffffff,0x2a1a14])),hs:pick(['big','slick','normal','buzz']),hair:hex(pick([0x101010,0xe8c860,0x6a3a1a,0xa5532a,0xd8d8d8])),shades:Math.random()<0.4,glasses:Math.random()<0.15,bw:rnd(0.88,1.05),bd:rnd(0.88,1.08),bh:rnd(0.95,1.05)})};
+ lady:()=>{const sk=hex(pick([0xf0c8a0,0xd9a37c,0x8a5a3a,0xefcaa8,0x6b4226])),dress=Math.random()<0.7;return{fem:true,calm:1,sleeves:Math.random()<0.5,skirt:dress?rnd(0.45,0.62):0,skin:sk,jacket:hex(pick([0xffffff,0xff6fae,0x2de2e6,0xffd36b,0xc9b6f2,0x1a1a22,0xff2d95,0x7dff9a])),shirt:hex(pick([0xffffff,0xffd36b,0x1a1a22,0xff6fae])),pants:dress?sk:hex(pick([0xf2f2f2,0x2a2030,0x9ad8e0])),shoes:hex(pick([0xffffff,0xff2d95,0x1a1a22,0xffd36b])),hs:pick(['long','long','big']),hair:hex(pick([0x101010,0xe8c860,0x6a3a1a,0xa5532a,0x2a1a10])),shades:Math.random()<0.35,medallion:Math.random()<0.3,bw:0.86,bd:0.86,bh:rnd(0.97,1.02)};},
+ guest:()=>Math.random()<0.45?NPCLOOK.lady():({calm:0.8,skin:hex(pick([0xf0c8a0,0xd9a37c,0x8a5a3a,0xefcaa8,0x6b4226])),jacket:hex(pick([0xffffff,0xf4d6e4,0x9ad8e0,0xf6e3b4,0xc9b6f2,0x2a2a33,0xff8fb8])),shirt:hex(pick([0xff6fae,0x2de2e6,0xffffff,0xffd36b,0x1a1a22])),pants:hex(pick([0xf2f2f2,0x2a2030,0xd8d0b8,0x9ad8e0])),shoes:hex(pick([0xffffff,0x2a1a14])),hs:pick(['big','slick','normal','buzz']),hair:hex(pick([0x101010,0xe8c860,0x6a3a1a,0xa5532a,0xd8d8d8])),shades:Math.random()<0.4,glasses:Math.random()<0.15,bw:rnd(0.88,1.05),bd:rnd(0.88,1.08),bh:rnd(0.95,1.05)})};
 const NPCLINES={
  guard:[["Evening, sir. Mr. McWey is expecting you.","Elevator's at the back. Fifty-two floors of class."],["Heard about the motel. Nice work.","Boss is in a good mood. Keep it that way."],["Club Flamingo, huh? The whole strip is talking.","He's waiting upstairs."],["You actually did it. The Shark..."]],
  recep:[["Welcome to McWey Tower. Fifty-second floor, darling."],["Back already? Go on up."],["He ordered champagne. That's a good sign."],["Everyone's talking about you."]],
@@ -1742,7 +1745,7 @@ const NPCLINES={
  nine:[["Psst. My friend. Over here."]],
  tony:[["Hey, pal. What're you drinking?"]],
  mcwey:[["Come in, come in."],["There's my favourite employee."],["Sit. We celebrate."],["The man of the hour."]]};
-const HUBLEG_FOOT={'x':{trig:'exit'},'F':{furn:25},'g':{npc:'guest'},'|':{w:42},'e':{w:40},'v':{trig:'elevator'},'c':{light:'warm'},'n':{npc:'guard'},'q':{npc:'recep'},'f':{furn:23},'k':{furn:24},'M':{npc:'mcwey'},'m':{trig:'mcwey'},'r':{rug:1}};
+const HUBLEG_FOOT={'x':{trig:'exit'},'F':{furn:25},'g':{npc:'guest'},'l':{npc:'lady'},'|':{w:42},'e':{w:40},'v':{trig:'elevator'},'c':{light:'warm'},'n':{npc:'guard'},'q':{npc:'recep'},'f':{furn:23},'k':{furn:24},'M':{npc:'mcwey'},'m':{trig:'mcwey'},'r':{rug:1}};
 const HUBS={
  drive:{name:'OCEAN DRIVE',hub:'drive',wall:33,floor:7,sofa:0xffffff,track:'n_nightdrive',where:'MIAMI · OCEAN DRIVE',obj:'DRIVE TO McWEY TOWER',
   legend:{'b':{w:33,h:'rand',tint:1,top:34},'G':{w:35,h:4.6,top:42,glow:1},'s':{f:37},'l':{f:37,lamp:1},'V':{f:37,trig:'tower'},'y':{f:38},'H':{f:38,furn:8},'o':{w:39,h:0.02,top:39,water:1},'q':{f:7,furn:21},'Q':{f:7,furn:22},'*':{f:37,light:'neon'}},
@@ -1803,7 +1806,7 @@ const HUBS={
   map:["##########################", "#h........d..........l...#", "#*........k.........j...*#", "#........................#", "#..b...........r...c.....#", "#........................#", "#..f......a.......s......#", "#........................#", "#w...q..........p.......w#", "#.......m.....m..........#", "#.....o..............g...#", "#ngt.........P.......g..n#", "############xx############"]},
  club:{name:'VELVET PALMS',hub:'foot',wall:25,floor:7,sofa:0xff6fae,track:'n_overdrive',where:'VELVET PALMS · GENTLEMEN\'S CLUB',obj:'TIP THE DANCERS · TALK TO TONY',
   legend:{'b':{w:33,h:'rand',tint:1,top:34},',':{f:7},'L':{f:7,lamp:1},'.':{f:23},'~':{f:28},'S':{f:19},'j':{f:19},'i':{f:28},'u':{f:28},'y':{f:23},'v':{f:23,npc:'guest'},'T':{f:23,npc:'tony'},'K':{f:23,furn:7},'B':{f:23,furn:2},'*':{f:23,light:'neon'},'w':{f:23,light:'warm'}},
-  map:["bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "b,,,,,,,,,,,,,,,,,,,,,,,,,,,,b", "b,,L,,,,C,,,,,P,,,,,,,,,,,L,,b", "b,,,,,,,,,,,,,,,,,,,,,,,,,,,,b", "#############,,,,#############", "#*..........................*#", "#...~~~~~~~~~~~~~~~..vw......#", "#...~v~~~~~~~~~~~v~.....K..B.#", "#...~~~~~uiuii~~~~~....yK..B.#", "#...~~~~iSSSSSi~~~~..v..K..B.#", "#...~~~~iSjSjSu~~~~....yK.TB.#", "#...~~~~uSSSSSi~~~~.....K..B.#", "#..v~~~~iSSjSSi~~~~....yK..B.#", "#...~~~~iSSSSSi~~~~.....K..B.#", "#...~~~~~iiiiu~~~~~....yK..B.#", "#...~~v~~~~~~~~~~v~.v........#", "#...~~~~~~~~~~~~~~~...w......#", "#*..........................*#", "##############################"]},
+  map:["bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "b,,,,,,,,,,,,,,,,,,,,,,,,,,,,b", "b,,L,,,,C,,,,,P,,,,,,,,,,,L,,b", "b,,,,,,,,,,,,,,,,,,,,,,,,,,,,b", "#############,,,,#############", "#*..........................*#", "#...~~~~~~~~~~~~~~~..vw......#", "#...~v~~~~~~~~~~~v~.....K..B.#", "#...~~~~~uiuii~~~~~....yK..B.#", "#...~~~~iSSSSSi~~~~..v..K..B.#", "#...~~~~iSjSjSu~~~~....yKT.B.#", "#...~~~~uSSSSSi~~~~.....K..B.#", "#..v~~~~iSSjSSi~~~~....yK..B.#", "#...~~~~iSSSSSi~~~~.....K..B.#", "#...~~~~~iiiiu~~~~~....yK..B.#", "#...~~v~~~~~~~~~~v~.v........#", "#...~~~~~~~~~~~~~~~...w......#", "#*..........................*#", "##############################"]},
  bunker:{name:"NINE OF NINE'S",hub:'foot',wall:34,floor:7,sofa:0x3a3a44,track:'n_concrete',where:"NINE OF NINE'S · BUNKER",obj:'SEE NINE · THEN BACK TO YOUR CAR',
    legend:{'b':{w:33,h:'rand',tint:1,top:34},',':{f:7},'L':{f:7,lamp:1},'.':{f:59},'c':{f:59,light:'warm'},'*':{f:59,light:'neon'},'K':{f:59,furn:7},'B':{f:59,furn:2},'T':{f:59,furn:1},'9':{f:59,npc:'nine'}},
    map:[
@@ -2102,8 +2105,8 @@ function drawAct2(B,g){const T=g.T,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,
 const DANCER_NAMES=['CHERRY','DESTINY','CRYSTAL','ROXANNE','STARR','MONIQUE','JADE','BAMBI'];
 const STAGE_FITS=[[0xff2d95,0xffd36b],[0x2de2e6,0xffffff],[0xc9b6f2,0xff6fae],[0xffd36b,0x1a1a22],[0x7dff9a,0xff2d95]];
 function dancerLook(fit,stage){const f=STAGE_FITS[fit%STAGE_FITS.length],sk=hex(pick([0xefcaa8,0xd9a37c,0x8a5a3a,0xf0c8a0,0x6b4226]));
- const L={fem:true,calm:1,skin:sk,jacket:hex(f[0]),shirt:hex(f[1]),pants:hex(f[0]),shoes:hex(f[1]),hs:'big',hair:hex(pick([0xe8c860,0x101010,0x6a3a1a,0xa5532a,0xff6fae])),medallion:true,bw:0.86,bd:0.84,bh:1.02};
- if(stage>=1){L.tee=true;L.shirt=hex(f[0]);L.jacket=hex(f[0]);L.pants=sk;L.chain=true;}return L;}
+ const L={fem:true,calm:1,sleeves:true,skirt:0.52,skin:sk,jacket:hex(f[0]),shirt:hex(f[1]),pants:sk,shoes:hex(f[1]),hs:pick(['long','big']),hair:hex(pick([0xe8c860,0x101010,0x6a3a1a,0xa5532a,0xff6fae])),medallion:true,bw:0.86,bd:0.84,bh:1.02};
+ if(stage>=1){L.sleeves=false;L.skirt=0.34;L.shirt=hex(f[0]);L.chain=true;}return L;}
 function clubSetup(g){const W=g.W,cells=ch=>{const o=[];for(let z=0;z<g.H;z++)for(let x=0;x<W;x++)if(g.rows[z][x]===ch)o.push({x:x+0.5,z:z+0.5});return o;};
  g.park={x:g.car.x,z:g.car.z};const S=cells('S').concat(cells('j'));const xs=S.map(q=>q.x),zs=S.map(q=>q.z);g.stage={x0:Math.min(...xs)-0.5,x1:Math.max(...xs)+0.5,z0:Math.min(...zs)-0.5,z1:Math.max(...zs)+0.5};
  const sc={x:(g.stage.x0+g.stage.x1)/2,z:(g.stage.z0+g.stage.z1)/2};g.disco={x:sc.x,z:sc.z};g.lights.push({x:sc.x,y:2.2,z:sc.z,r:6,c:[1.4,0.3,0.9]});
@@ -2196,7 +2199,7 @@ function homeExtras(g){const f=homeFurn(),S=g.slots,sol=(x0,z0,w,h)=>{for(let z=
  if(f.pole&&S.p&&!g.spawned.pole){g.spawned.pole=1;g.dancer=sp('dancer',{x:S.p.x+0.4,z:S.p.z},GIRLLOOK(true));}
  for(const k of ['dog','cat','iguana','tigerpet'])if(f[k]&&!g.spawned[k]&&S.t){g.spawned[k]=1;g.pets.push({k,x:S.t.x+0.6,z:S.t.z-0.4,a:0,tx:S.t.x,tz:S.t.z,wait:1,step:0});}}
 const BGLOOK=t=>({skin:hex(pick([0xd9a37c,0x7a5236,0xf0c8a0,0x5a3a26])),jacket:hex([0x2a2a33,0xf4f1ec,0x15121a][t]),shirt:hex(pick([0x111116,0xff6fae,0x2de2e6])),pants:hex([0x2a2a33,0xf4f1ec,0x15121a][t]),shoes:hex(0x0a0a0c),hs:'buzz',hair:hex(0x101010),shades:true,earpiece:true,bw:1.18,bd:1.1,bh:1.08,body:'big'});
-const GIRLLOOK=pole=>({fem:true,calm:1,skin:hex(pick([0xefcaa8,0xd9a37c,0x8a5a3a,0xf0c8a0,0x6b4226])),jacket:hex(pick(pole?[0xffd36b,0xff2d95]:[0xff6fae,0x2de2e6,0xffd36b,0xc9b6f2,0x7dff9a])),shirt:hex(pick([0xffffff,0xff2d95,0x2de2e6])),pants:hex(pick([0x1a1a22,0xffffff,0xff6fae])),shoes:hex(pick([0xffffff,0xff2d95,0xffd36b])),hs:'big',hair:hex(pick([0xe8c860,0x101010,0x6a3a1a,0xa5532a,0xff6fae])),medallion:true,shades:Math.random()<0.3,bw:0.86,bd:0.86,bh:1.0});
+const GIRLLOOK=pole=>{const sk=hex(pick([0xefcaa8,0xd9a37c,0x8a5a3a,0xf0c8a0,0x6b4226]));return{fem:true,calm:1,sleeves:!pole&&Math.random()<0.4,skirt:pole?0.34:rnd(0.42,0.55),skin:sk,jacket:hex(pick(pole?[0xffd36b,0xff2d95]:[0xff6fae,0x2de2e6,0xffd36b,0xc9b6f2,0x7dff9a])),shirt:hex(pick([0xffffff,0xff2d95,0x2de2e6])),pants:sk,shoes:hex(pick([0xffffff,0xff2d95,0xffd36b])),hs:pick(['long','big']),hair:hex(pick([0xe8c860,0x101010,0x6a3a1a,0xa5532a,0xff6fae])),medallion:true,shades:Math.random()<0.3,bw:0.86,bd:0.86,bh:1.0};};
 const HOME_NPC_LINES={bguard:["Nobody gets near you, boss.","I took a bullet for a guy once. Don't make it a habit.","Perimeter's clear. The cat isn't.","You pay, I stand here. Simple."],
  pgirl:["Is it true you know McWey?","Ooh, is that real gold?","Put on some Nine, baby. The good one.","This place needs more champagne.","You're cuter than the last guy with a penthouse."],dancer:["Tips go in the jar, sugar.","I danced at Club Flamingo. Before it... closed.","Don't touch the pole. Or the dancer."]};
 function homeTick(dt){const g=G,S=g.slots;if(!S)return;homeLightTick(g);
@@ -2570,13 +2573,13 @@ HUBS.lobby.map=[
  "||||||||eeee||||||||||",
  "|c......vvvv.......c.|",
  "|.H.....n..n.......H.|",
- "|...q.........g..EE..|",
- "|..KKKKK........SSS..|",
- "|...g....FFF.........|",
- "|........FFF.........|",
- "|....c...FFF.....c...|",
+ "|...q.........g..EEl.|",
+ "|..KKKKK.l......SSS..|",
+ "|...g....FFF...l.....|",
+ "|.l......FFF.........|",
+ "|....c...FFF.....c.l.|",
  "|.p......rrrr...g..p.|",
- "|........rrrr........|",
+ "|...l....rrrr........|",
  "|.....n...P...n......|",
  "||||||||xxxxxx||||||||"];
 TRACKS.muzak=theme({title:'NINE (LOBBY VERSION)',bpm:96,dist:1.0,cut:5200,prog:TRACKS.game.prog,mel:TRACKS.game.mel,tr:0,K:'x.......x.......',kv:0.5,S:'................',R:'....x.......x...',H:'..x...x...x...x.',hv:0.03,
@@ -2961,20 +2964,24 @@ function buildBody(B){const M=newMesh(),X=[1,0,0],Y=[0,1,0],Z=[0,0,1];
  /* torso: big frame, chest wider than the hips, padded 80s shoulders, open collar */
  const T=[[0.8,0.206,0.143,0,W1(BI.pelvis)],[0.9,0.207,0.145,0,W1(BI.pelvis)],[1.0,0.2,0.147,0.008,W2(BI.pelvis,BI.spine,0.5)],[1.1,0.21,0.152,0.014,W1(BI.spine)],
   [1.22,0.236,0.158,0.012,W2(BI.spine,BI.chest,0.6)],[1.33,0.252,0.158,0.008,W1(BI.chest)],[1.415,0.24,0.142,-0.004,W1(BI.chest)],[1.465,0.192,0.118,-0.012,W1(BI.chest)],[1.51,0.098,0.092,-0.014,W2(BI.chest,BI.neck,0.3)]];
+ /* women: wide hips, a narrow waist, a soft bust and narrower shoulders (fully clothed) */
+ if(B.fem)T.splice(0,T.length,[0.8,0.232,0.158,0,W1(BI.pelvis)],[0.9,0.238,0.162,0,W1(BI.pelvis)],[1.0,0.2,0.146,0.008,W2(BI.pelvis,BI.spine,0.5)],[1.1,0.15,0.118,0.012,W1(BI.spine)],
+  [1.2,0.18,0.136,0.014,W2(BI.spine,BI.chest,0.6)],[1.28,0.198,0.146,0.016,W1(BI.chest)],[1.36,0.205,0.134,0.006,W1(BI.chest)],[1.42,0.198,0.12,-0.004,W1(BI.chest)],[1.465,0.162,0.104,-0.012,W1(BI.chest)],[1.51,0.082,0.08,-0.014,W2(BI.chest,BI.neck,0.3)]);
+ const BUST={1.2:0.026,1.28:0.072,1.36:0.036};
  const SHx=B.shoulders||0,BEL=B.belly||0;for(const r of T){const y=r[0],up=clamp((y-1.15)/0.25,0,1)*(y>1.48?0.4:1);r[1]*=1+SHx*up;const bb=Math.exp(-Math.pow((y-1.02)/0.14,2));r[2]+=BEL*bb;r[3]+=BEL*0.6*bb;r[1]+=BEL*0.35*bb;}
- loft(M,T.map(r=>({c:[0,r[0],r[3]],s:X,f:Z,rx:r[1],rz:r[2],v:tv(r[0]),w:r[4],mod:(p,ph)=>{if(r[0]>1.44&&r[0]<1.48){p[1]+=0.006*Math.cos(2*ph);}if(Math.cos(ph)>0.2&&r[0]>1.05&&r[0]<1.4)p[2]+=0.008*Math.cos(ph);return p;}})),16,{capA:{dir:[0,-1,0],uv:[0.5,0.555]},capB:{dir:[0,1,0],uv:[0.5,0.002],lift:-0.012}});
+ loft(M,T.map(r=>({c:[0,r[0],r[3]],s:X,f:Z,rx:r[1],rz:r[2],v:tv(r[0]),w:r[4],mod:(p,ph)=>{if(r[0]>1.44&&r[0]<1.48){p[1]+=0.006*Math.cos(2*ph);}if(B.fem){const b=BUST[r[0]];if(b){const c=Math.max(0,Math.cos(ph));p[2]+=b*c*c*Math.exp(-Math.pow((Math.abs(Math.sin(ph))-0.42)/0.3,2));}return p;}if(Math.cos(ph)>0.2&&r[0]>1.05&&r[0]<1.4)p[2]+=0.008*Math.cos(ph);return p;}})),B.fem?20:16,{capA:{dir:[0,-1,0],uv:[0.5,0.555]},capB:{dir:[0,1,0],uv:[0.5,0.002],lift:-0.012}});
  /* lapel ridge: a thin raised strip so the lapels catch light (PS2 games modelled these as a few polys) */
- for(const s of [1,-1]){GRP++;const pts=[];for(const Y of [1.18,1.3,1.45]){const vw=0.012+(Y-1.12)*0.36,xx=s*(vw+0.04),zz=Math.sqrt(Math.max(0,1-Math.pow(xx/(Y>1.38?0.24:0.25),2)))*0.156+0.008+(Y<1.4?0.008:0);pts.push([xx,Y,zz]);}
+ if(!B.fem)for(const s of [1,-1]){GRP++;const pts=[];for(const Y of [1.18,1.3,1.45]){const vw=0.012+(Y-1.12)*0.36,xx=s*(vw+0.04),zz=Math.sqrt(Math.max(0,1-Math.pow(xx/(Y>1.38?0.24:0.25),2)))*0.156+0.008+(Y<1.4?0.008:0);pts.push([xx,Y,zz]);}
   const uvp=p=>[0.5+p[0]*340/512,((TY1-p[1])/(TY1-TY0)*ROW.t)/512];const w=W1(BI.chest),ids=[];for(const p of pts){ids.push(addV(M,V.add(p,[-s*0.03,0,0.004]),uvp(V.add(p,[-s*0.03,0,0])),w),addV(M,V.add(p,[s*0.03,0,0.006]),uvp(V.add(p,[s*0.03,0,0])),w));}
   for(let k=0;k<2;k++){const a=ids[k*2],b=ids[k*2+1],c=ids[k*2+3],d=ids[k*2+2];tri(M,a,b,c,[0,0,1]);tri(M,a,c,d,[0,0,1]);}}
  /* open shirt collar band standing around the back of the neck */
- loft(M,[{c:[0,1.49,-0.012],rx:0.1,rz:0.094},{c:[0,1.535,-0.02],rx:0.096,rz:0.09}].map((r,k)=>Object.assign(r,{s:X,f:Z,w:W2(BI.chest,BI.neck,0.4),v:(ROW.c0+2+k*15)/512,mod:(p,ph)=>{if(Math.cos(ph)>0.55)p[1]-=(Math.cos(ph)-0.55)*0.09*(k);return p;}})),12,{u0:0,u1:1});
+ if(!B.fem)loft(M,[{c:[0,1.49,-0.012],rx:0.1,rz:0.094},{c:[0,1.535,-0.02],rx:0.096,rz:0.09}].map((r,k)=>Object.assign(r,{s:X,f:Z,w:W2(BI.chest,BI.neck,0.4),v:(ROW.c0+2+k*15)/512,mod:(p,ph)=>{if(Math.cos(ph)>0.55)p[1]-=(Math.cos(ph)-0.55)*0.09*(k);return p;}})),12,{u0:0,u1:1});
  /* arms */
  for(const s of [1,-1]){const v0=M.p.length/3;const sh=s>0?SH:mir(SH),el=s>0?EL:mir(EL),wr=s>0?WR:mir(WR),ad=[AD[0]*s,AD[1],0],side=V.norm(V.cross(ad,Z)).map(v=>-v*s),fwd=Z;
   const ua=BI[s>0?'uarmL':'uarmR'],fa=BI[s>0?'farmL':'farmR'],hb=BI[s>0?'handL':'handR'];const sv=t=>(ROW.s0+t*(ROW.s1-ROW.s0))/512;
-  const at=(base,dir,t)=>V.add(base,V.mul(dir,t));
+  const at=(base,dir,t)=>V.add(base,V.mul(dir,t)),aK=B.fem?0.84:1;
   loft(M,[{c:V.add(at(sh,ad,0.0),[-s*0.012,-0.012,0]),rx:0.074,rz:0.08,v:sv(0),w:[[ua,0.6],[BI.chest,0.4]]},{c:at(sh,ad,0.06),rx:0.082,rz:0.084,v:sv(0.15),w:W1(ua)},{c:at(sh,ad,0.2),rx:0.076,rz:0.078,v:sv(0.4),w:W1(ua)},
-   {c:el,rx:0.068,rz:0.07,v:sv(0.55),w:W2(ua,fa,0.5)},{c:at(el,ad,0.1),rx:0.064,rz:0.064,v:sv(0.72),w:W1(fa)},{c:at(wr,ad,-0.02),rx:0.056,rz:0.057,v:sv(0.98),w:W1(fa)}].map(r=>Object.assign(r,{s:side,f:fwd})),8,{u0:0,u1:1});
+   {c:el,rx:0.068,rz:0.07,v:sv(0.55),w:W2(ua,fa,0.5)},{c:at(el,ad,0.1),rx:0.064,rz:0.064,v:sv(0.72),w:W1(fa)},{c:at(wr,ad,-0.02),rx:0.056,rz:0.057,v:sv(0.98),w:W1(fa)}].map(r=>Object.assign(r,{s:side,f:fwd,rx:r.rx*aK,rz:r.rz*aK})),8,{u0:0,u1:1});
   loft(M,[{c:at(wr,ad,-0.035),rx:0.05,rz:0.051,v:(ROW.c0+1)/512,w:W1(fa)},{c:at(wr,ad,0.012),rx:0.049,rz:0.05,v:(ROW.c1-1)/512,w:W2(fa,hb,0.3)}].map(r=>Object.assign(r,{s:side,f:fwd})),8,{u0:0,u1:1});
   if(!B.nowatch&&s===(B.watch||1)){/* gold watch: link bracelet, raised case with bezel, champagne dial, crown */
    const gv=SW.gold[1];loft(M,[{c:at(wr,ad,-0.064),rx:0.058,rz:0.059},{c:at(wr,ad,-0.034),rx:0.058,rz:0.059}].map(r=>Object.assign(r,{s:side,f:fwd,w:W1(fa),v:gv})),12,{uvf:(u,r)=>[150/512+u*140/512,r===undefined?gv:gv]});
@@ -3006,9 +3013,12 @@ function buildBody(B){const M=newMesh(),X=[1,0,0],Y=[0,1,0],Z=[0,0,1];
   {const dx=s*0.215*SHx*0.9;for(let i=v0;i<M.p.length/3;i++)M.p[i*3]+=dx;}
   /* legs */
   const x=0.1*s,th=BI[s>0?'thighL':'thighR'],sn=BI[s>0?'shinL':'shinR'],ft=BI[s>0?'footL':'footR'];const lv=t=>(ROW.p0+t*(ROW.p1-ROW.p0))/512;
-  loft(M,[[0.92,0.1,W2(BI.pelvis,th,0.6)],[0.8,0.095,W1(th)],[0.65,0.083,W1(th)],[0.51,0.07,W2(th,sn,0.5)],[0.36,0.064,W1(sn)],[0.2,0.06,W1(sn)],[0.1,0.065,W1(sn)]].map(r=>({c:[x*(1+(0.92-r[0])*0.12),r[0],0.006],s:X,f:Z,rx:r[1],rz:r[1]*1.04,v:lv((0.92-r[0])/0.82),w:r[2]})),10,{});
+  loft(M,[[0.92,0.1,W2(BI.pelvis,th,0.6)],[0.8,0.095,W1(th)],[0.65,0.083,W1(th)],[0.51,0.07,W2(th,sn,0.5)],[0.36,0.064,W1(sn)],[0.2,0.06,W1(sn)],[0.1,0.065,W1(sn)]].map(r=>({c:[x*(1+(0.92-r[0])*0.12),r[0],0.006],s:X,f:Z,rx:r[1]*(B.fem?(r[0]>0.6?1.06:0.86):1),rz:r[1]*1.04*(B.fem?(r[0]>0.6?1.06:0.86):1),v:lv((0.92-r[0])/0.82),w:r[2]})),10,{});
   /* shoes: loafer shape, leather texture wrapping over the top */
   const sc=(z,w,h,y,t)=>({c:[0.112*s,y,z],s:X,f:Y,rx:w,rz:h,w:W1(ft),t});const sw=SW.shoe[1];
+  if(B.fem&&s>0&&B.skirt){/* skirt: flares from the hips, painted like the dress (bottom of the torso sheet) */
+   const sl=B.skirt,sv2=tv(0.82),sk=(y,r,z)=>({c:[0,y,z],s:X,f:Z,rx:r,rz:r*0.74,v:sv2,w:W1(BI.pelvis)});
+   loft(M,[sk(0.84,0.234,0),sk(0.84-sl*0.45,0.24+sl*0.04,0.004),sk(0.84-sl,0.246+sl*0.08,0.008)],20,{});}
   loft(M,[sc(-0.065,0.05,0.045,0.06,0),sc(-0.02,0.056,0.06,0.07,0.25),sc(0.08,0.058,0.045,0.055,0.6),sc(0.17,0.05,0.032,0.04,0.85),sc(0.205,0.032,0.02,0.035,1)],8,{uvf:(u,r)=>[(332+u*178)/512,(ROW.w0+2+r.t*36)/512],capA:{dir:[0,0,-1],uv:[340/512,(ROW.w0+4)/512]},capB:{dir:[0,0,1],uv:[421/512,(ROW.w1-4)/512]},ph0:Math.PI/8});}
  return M;}
 function buildHead(B){const M=newMesh(),X=[1,0,0],Z=[0,0,1],tv=y=>1-(y-HEAD.neckY)/(HEAD.crownY-HEAD.neckY);
@@ -3019,7 +3029,10 @@ function buildHead(B){const M=newMesh(),X=[1,0,0],Z=[0,0,1],tv=y=>1-(y-HEAD.neck
  loft(M,R.map(r=>({c:[0,r[0],r[3]],s:X,f:Z,rx:r[1],rz:r[2],sq:r[4],v:tv(r[0]),w:r[0]<1.6?W2(BI.neck,BI.head,clamp((r[0]-1.5)/0.1,0,1)):W1(BI.head),
   mod:(p,ph)=>{const c=Math.cos(ph);if(c>0.5){p[2]-=(c-0.5)*0.03;}const k=Math.max(0,c);const key=r[0];p[2]+=((nose[key]||0)*Math.pow(k,24)+(brow[key]||0)*k*k+(chin[key]||0)*Math.pow(k,4));return p;}})),16,{capB:{dir:[0,1,0],uv:[0.5,0.004],lift:0.012}});
  if(B&&B.cigar){const cu=[12/512,3/512],eu=[38/512,3/512],w=W1(BI.head);loft(M,[{c:[0.03,1.64,0.1],rx:0.009,rz:0.009},{c:[0.06,1.632,0.175],rx:0.0095,rz:0.0095}].map(r=>Object.assign(r,{s:[1,0,0],f:[0,1,0],w,v:cu[1]})),6,{uvf:()=>cu});loft(M,[{c:[0.06,1.632,0.175],rx:0.0096,rz:0.0096},{c:[0.062,1.6315,0.185],rx:0.0092,rz:0.0092}].map(r=>Object.assign(r,{s:[1,0,0],f:[0,1,0],w,v:eu[1]})),6,{uvf:()=>eu,capB:{dir:[0,0,1],uv:eu}});}
- if(B&&(B.hs==='normal'||B.hs==='slick'||B.hs==='buzz')){const hu=[144/512,3/512],w=W1(BI.head),th=B.hs==='buzz'?0.004:B.hs==='slick'?0.009:0.014;
+ if(B&&B.hs==='long'){/* long hair: falls behind the head past the shoulders, framing the face */
+  const hu=[144/512,3/512],R=(y,r,rz,z,w)=>({c:[0,y,z],s:[1,0,0],f:[0,0,1],rx:r,rz,w,v:hu[1]});
+  loft(M,[R(1.76,0.12,0.09,-0.035,W1(BI.head)),R(1.66,0.125,0.08,-0.055,W1(BI.head)),R(1.56,0.128,0.068,-0.07,W2(BI.neck,BI.head,0.5)),R(1.46,0.124,0.056,-0.085,W2(BI.chest,BI.neck,0.5)),R(1.38,0.11,0.042,-0.1,W1(BI.chest))],12,{uvf:()=>hu,capB:{dir:[0,1,0],uv:hu},capA:{dir:[0,-1,0],uv:hu}});}
+ if(B&&(B.hs==='normal'||B.hs==='slick'||B.hs==='buzz'||B.hs==='long')){const hu=[144/512,3/512],w=W1(BI.head),th=B.hs==='buzz'?0.004:B.hs==='slick'?0.009:0.014;
   const R=(y,r,z,drop)=>({c:[0,y,z],s:[1,0,0],f:[0,0,1],rx:r+th,rz:r*1.045+th,w,v:hu[1],mod:(p,ph)=>{const back=Math.max(0,-Math.cos(ph));p[1]-=drop*back;if(B.hs==='slick')p[2]-=0.006*Math.max(0,Math.cos(ph));return p;}});
   loft(M,[R(1.765,0.108,-0.004,0.07),R(1.79,0.1,-0.009,0.035),R(1.815,0.084,-0.012,0.012),R(1.834,0.06,-0.014,0),R(1.846,0.03,-0.014,0)],14,{uvf:()=>hu,capB:{dir:[0,1,0],uv:hu}});}
  if(B&&(B.hs==='mohawk'||B.hs==='big')){const hu=[144/512,3/512],w=W1(BI.head);
@@ -3166,7 +3179,7 @@ const C255=c=>(c||[0.5,0.5,0.5]).map(v=>Math.round(v*255));
 const BODYCFG={fat:{scale:[1.22,0.98,1.2],belly:0.12,shoulders:0.08},big:{scale:[1.14,1.06,1.1],shoulders:0.24},thin:{scale:[0.86,1.05,0.86]},slim:{scale:[0.93,1.02,0.93]},stocky:{scale:[1.08,0.96,1.08],shoulders:0.1},boss:{scale:[1.2,1.0,1.18],belly:0.1,shoulders:0.12},normal:{scale:[1,1,1]}};
 function paintHeadP(L){SKIN=C255(L.skin);const W=256,c=document.createElement('canvas');c.width=c.height=W;const x=c.getContext('2d');const out=x.createImageData(W,W),D=out.data;
  const hair=L.hair?C255(L.hair):null,hs=L.hs,beard=L.beard?C255(L.beard):null,hatOn=!!L.hat;
- const hl=hs==='buzz'?1.79:hs==='slick'?1.772:hs==='big'?1.75:1.768;
+ const hl=hs==='buzz'?1.79:hs==='slick'?1.772:hs==='big'||hs==='long'?1.75:1.768;
  for(let V=0;V<W;V++){const t=1-V/(W-1),Y=lerp(HEAD.neckY,HEAD.crownY,t);
   for(let U=0;U<W;U++){const ph=(U/(W-1)-0.5)*2*Math.PI,ap=Math.abs(ph);let base=SKIN.slice();
    if(hair&&hs){const line=hl-0.11*clamp((ap-1.0)/1.0,0,1)-0.03*clamp((ap-2.2)/0.8,0,1);let inH=Y>line;if(hs==='mohawk')inH=Y>1.7&&Math.abs(Math.sin(ph))<0.22;
@@ -3202,6 +3215,13 @@ function paintBodyP(L){const sh=C255(L.shirt),jk=C255(L.jacket),sk=C255(L.skin);
   fab(0,290,512,90,sk);if(L.tee)fab(0,290,512,26,sh);fab(0,381,512,18,sk);
   if(L.tattoo){x.strokeStyle='rgba(30,50,90,.75)';x.lineWidth=2;for(let k=0;k<14;k++){const tx=Math.random()*512,ty2=300+Math.random()*70;x.beginPath();x.arc(tx,ty2,3+Math.random()*6,0,4);x.stroke();}}
   if(L.tank)for(const sx of [96,416]){x.fillStyle=rgb(sk);x.fillRect(sx-34,0,68,26);}}
+ if(L.fem){fab(0,0,512,290,jk);
+  for(const sx of [128,384]){const g=x.createRadialGradient(sx,40,0,sx,40,80);g.addColorStop(0,'rgba(0,0,0,.2)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(sx-80,0,160,120);}
+  x.fillStyle=rgb(sk.map(v=>v*0.92));x.beginPath();x.ellipse(256,0,44,26,0,0,6.3);x.fill();
+  for(const sd of [-1,1]){const g=x.createRadialGradient(256+sd*36,92,4,256+sd*36,100,46);g.addColorStop(0,'rgba(255,255,255,.16)');g.addColorStop(0.6,'rgba(255,255,255,0)');g.addColorStop(0.8,'rgba(0,0,0,.14)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(256+sd*36-50,40,100,110);}
+  x.fillStyle=rgb(sh);x.fillRect(0,180,512,9);
+  if(L.chain||L.medallion){x.strokeStyle='#e8b84a';x.lineWidth=3;x.beginPath();x.moveTo(220,0);x.quadraticCurveTo(256,46,292,0);x.stroke();if(L.medallion){x.fillStyle='#f0c050';x.beginPath();x.arc(256,36,7,0,6.3);x.fill();}}
+  if(L.sleeves)fab(0,290,512,90,jk);else{fab(0,290,512,90,sk);for(const sx of [96,416]){x.fillStyle=rgb(sk);x.fillRect(sx-34,0,68,22);}}fab(0,381,512,18,sk);}
  if(L.vest){const vc=C255(L.vest);fab(0,0,212,290,vc);fab(300,0,212,290,vc);x.strokeStyle='rgba(0,0,0,.5)';x.lineWidth=3;x.strokeRect(212,0,88,290);if(L.pouches){for(const px of [150,330]){x.fillStyle=rgb(vc.map(v=>v*0.8));x.fillRect(px,150,40,46);x.strokeStyle='rgba(0,0,0,.4)';x.strokeRect(px,150,40,46);}}}
  if(L.apron){const ac=C255(L.apron);fab(150,40,212,250,ac);x.strokeStyle=rgb(ac.map(v=>v*0.7));x.lineWidth=3;x.beginPath();x.moveTo(170,40);x.lineTo(220,0);x.moveTo(342,40);x.lineTo(292,0);x.stroke();
   for(let k=0;k<9;k++){x.fillStyle='rgba(130,10,14,.75)';x.beginPath();x.ellipse(170+Math.random()*170,80+Math.random()*190,4+Math.random()*10,3+Math.random()*7,Math.random()*3,0,6.3);x.fill();}}
@@ -3214,7 +3234,7 @@ function paintBodyP(L){const sh=C255(L.shirt),jk=C255(L.jacket),sk=C255(L.skin);
  if(L.gloves){const gc=C255(L.gloves);x.fillStyle=rgb(gc);x.fillRect(0,400,150,40);x.fillRect(0,381,512,18);}
  return c;}
 function lookCfg(L,bodyType){const bt=BODYCFG[bodyType]||BODYCFG[L.body]||BODYCFG.normal;
- return{L,B:{specs:L.glasses?1:0,fluff:!!(L.fluff&&L.beard),hs:(L.hair&&!L.hat)?L.hs:null,watch:L.watch?-1:0,cigar:!!L.cigar,hat:L.hat||null,shoulders:bt.shoulders||0,belly:bt.belly||(L.belly?0.1:0),rings:L.bling?1:0},scale:bt.scale};}
+ return{L,B:{specs:L.glasses?1:0,fluff:!!(L.fluff&&L.beard),hs:(L.hair&&!L.hat)?L.hs:null,watch:L.watch?-1:0,cigar:!!L.cigar,hat:L.hat||null,shoulders:bt.shoulders||0,belly:bt.belly||(L.belly?0.1:0),rings:L.bling?1:0,fem:!!L.fem,skirt:L.fem?(L.skirt||0):0},scale:L.fem?bt.scale.map((v,i)=>v*(i===1?1:0.9)):bt.scale};}
 let LOOKN=0,lastG=null,buildsThisFrame=0,lastFrameT=0;
 function lookKey(c){if(!c.look)return null;if(!c._ps2k){c._ps2k='L'+(++LOOKN);}return c._ps2k;}
 function bloodify(key,lvl,c){const C=CH[key];if(!C||!C.bc)return;C.dirty=true;const paint=(cv,regions,n,big)=>{const x=cv.getContext('2d');for(let i=0;i<n;i++){const r=regions[Math.random()*regions.length|0],px=r[0]+Math.random()*r[2],py=r[1]+Math.random()*r[3],s=(big?8:4)+Math.random()*(big?18:10);
@@ -3646,26 +3666,31 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 let typeT=null,typeFull='',typeI=0;
 function showBrief(i){levelIdx=i;state='brief';show('sBrief');$('brFrom').textContent='INCOMING CALL · '+BRIEF_FLOOR(i);$('brFloor').textContent=BRIEF_FLOOR(i);typeFull=LEVELS[i].brief;typeI=0;$('brMsg').textContent='';sfx('ring');
  clearInterval(typeT);typeT=setInterval(()=>{typeI++;$('brMsg').textContent=typeFull.slice(0,typeI);if(typeI%2===0)sfx('type');if(typeI>=typeFull.length)clearInterval(typeT);},28);}
-function startLevel(i){clearInterval(typeT);levelIdx=i;HUBMODE='in';loadLevel(i);applyLoadout();act2Setup(G,i);if(i===0&&myCar()!=='beater')placeOldCar();G.track=LEVEL_TRACKS[i][RUNTRACK[i]%LEVEL_TRACKS[i].length];if(MUS.track!==G.track){MUS.track='';MUS.pending=null;}state='play';show(null);
+let CARRY=null;/* the weapon the player left the last floor with: {type,ammo,from} */
+function startLevel(i){clearInterval(typeT);levelIdx=i;HUBMODE='in';loadLevel(i);applyLoadout();if(CARRY&&CARRY.from!==i&&WD[CARRY.type]){const p=G.player,w=p.weapon;if(w&&w.type===CARRY.type)w.ammo+=CARRY.ammo;else p.weapon={type:CARRY.type,ammo:CARRY.ammo};}act2Setup(G,i);if(i===0&&myCar()!=='beater')placeOldCar();G.track=LEVEL_TRACKS[i][RUNTRACK[i]%LEVEL_TRACKS[i].length];if(MUS.track!==G.track){MUS.track='';MUS.pending=null;}state='play';show(null);
  banner(i===3?'ACT 2: HOSTILE TAKEOVER':(i<3?'FLOOR '+(i+1):'FLOOR '+(i-2))+': '+LEVELS[i].name,i===3?'Floor 1: Vice Marina · Lex Sterling\'s smuggling hub':padMode?'Clear the floor · A grabs weapons · Get back to the car':touchMode?'Left thumb moves · right thumb aims &amp; attacks':'Clear the floor · E grabs weapons · Get back to the car');
  if(i===1&&!LEXMET)startCameo();}
 function showDead(){G.cameo=null;G.lex=null;if(!G.def.hub){arm();myProg().couchBlood=1;saveProg();}state='dead';const k=G.killedBy;$('deadCause').textContent=DEATHNAME[k]||'KILLED';$('deadTip').textContent='TIP: '+pick(TIPS);
  let xp=0;if(!G.xpGiven){G.xpGiven=1;xp=runXP(G,false);awardXP(xp);}const pr=myProg();$('deadXP').innerHTML=(xp?'+'+xp+' XP · ':'')+'LEVEL '+pr.lvl+' <span style="opacity:.7">('+pr.xp+'/'+xpNeed(pr.lvl)+')</span>';
  if(pendingPerks>0)showPerkPick('dead');else show('sDead');}
 const KNAME={goldgl:'Gold launcher',goldak:'Golden AK',golddeagle:'Golden Deagles',katana:'Katana',dual:'Dual pistols',fists:'Fists',bat:'Bat',knife:'Knife',machete:'Machete',exec:'Execution',door:'Door slam',throw:'Thrown',pistol:'Pistol',silenced:'Silenced',revolver:'.357',smg:'Uzi',m16:'M16',shotgun:'Shotgun',double:'Double barrel'};
-function finishLevel(){const g=G;state='results';const tb=Math.max(0,Math.round((150-g.time)*25));const total=g.score+tb;g.take=total;totalScore+=total;totalKills+=g.kills;totalTime+=g.time;
+function finishLevel(){const g=G;state='results';{const w=g.player.weapon;CARRY=w&&!g.def.hub?{type:w.type,ammo:w.ammo||0,from:levelIdx}:null;}const tb=Math.max(0,Math.round((150-g.time)*25));const total=g.score+tb;g.take=total;totalScore+=total;totalKills+=g.kills;totalTime+=g.time;
  const ratio=total/(g.enemies.length*700);const gr=ratio>3?'S':ratio>2.2?'A+':ratio>1.6?'A':ratio>1.1?'B':ratio>0.7?'C':'D';const rsty=g.execs>=2?'ruthless':g.heads>=2?'gore':(!g.taken&&g.shots&&g.hits/g.shots>=0.6)?'clean':'mixed';g.style=rsty;runStyle[rsty]=(runStyle[rsty]||0)+1;
  const acc=g.shots?Math.round(Math.min(1,g.hits/g.shots)*100)+'%':'—';
  $('rStats').innerHTML=`DIFFICULTY<b>${Dd().name}</b><br>KILLS<b>${g.kills}</b><br>EXECUTIONS<b>${g.execs}</b><br>BEST COMBO<b>x${g.maxCombo}</b><br>HEADS TAKEN<b>${g.heads}</b><br>STYLE<b>${rsty.toUpperCase()}</b><br>BY WEAPON<b>${Object.entries(g.kb).sort((a,b)=>b[1]-a[1]).map(([k,v])=>(KNAME[k]||k)+' '+v).join(' · ')||'—'}</b><br>ACCURACY<b>${acc}</b><br>TIME<b>${mmss(g.time)}</b><br>KILL MONEY<b>$${fmt(g.score)}</b><br>SPEED BONUS<b>$${fmt(tb)}</b><br>TAKE HOME<b>$${fmt(total)}</b>`;
  let xp=0;if(!g.xpGiven){g.xpGiven=1;xp=runXP(g,true,gr);awardXP(xp);}const pr=myProg();$('rStats').innerHTML+=`<br>XP EARNED<b style="color:#ffd36b">+${xp}</b><br>LEVEL<b style="color:#ffd36b">${pr.lvl}  (${pr.xp}/${xpNeed(pr.lvl)})</b>`;
  {const wl=wallet(),ct=cutOf(total),ow=myProg().debt;$('rStats').innerHTML+=(ct?`<br>McWEY'S CUT<b style="color:#ff8a95">-$${fmt(ct)}</b><br>STILL OWED<b style="color:#ff8a95">$${fmt(ow-ct)}</b>`:'')+`<br>WALLET<b style="color:#7dff9a">$${fmt(wl)} &rarr; $${fmt(wl+total-ct)}</b>`;}G.grade=gr;$('rGrade').textContent=gr;$('bNextLvl').innerHTML='BACK TO McWEY'+'<span class="padhint"> (A)</span>';if(pendingPerks>0)setTimeout(()=>{if(state==='results')showPerkPick('results');},900);show('sResults');sfx('cash');}
 function restart(){if(!G||G.def.hub)return;if(!G.player.alive){RUNTRACK[levelIdx]++;MUS.track='';MUS.pending=null;}if(state==='results'&&G.take){totalScore-=G.take;totalKills-=G.kills;totalTime-=G.time;}startLevel(levelIdx);}
-function togglePause(){if(state==='play'){state='pause';show('sPause');}else if(state==='pause'){state='play';show(null);}}
+/* the pause screen doubles as the settings screen on the main menu */
+let SETMENU=false;function setMenuMode(on){SETMENU=on;$('pTitle').textContent=on?'SETTINGS':'PAUSED';for(const id of ['bResume','bPRestart','bQuit'])$(id).style.display=on?'none':'';$('bSetBack').style.display=on?'':'none';}
+function togglePause(){if(state==='play'){setMenuMode(false);state='pause';show('sPause');}else if(state==='pause'){state='play';show(null);}}
 function syncSetBtns(){$('bMute').textContent='SOUND: '+(SET.sound?'ON':'OFF');$('bShake').textContent='SCREEN SHAKE: '+(SET.shake?'ON':'OFF');$('bRetro').textContent='GRAPHICS: '+(ENH()?'ENHANCED':'PS1 RETRO');$('bHints').textContent='HINTS: '+(SET.hints?'ON':'OFF');$('bGore').textContent='GORE: '+(SET.gore==='normal'?'NORMAL':'EXTREME');$('bGrain').textContent='FILM GRAIN: '+(SET.grain<=0?'OFF':SET.grain<0.3?'LOW':SET.grain<0.5?'MEDIUM':'HIGH');$('bGlitch').textContent='VHS GLITCH: '+(SET.glitch?'ON':'OFF');}
 function toggleMute(){SET.sound=!SET.sound;if(master)master.gain.value=SET.sound?0.6:0;saveSet();syncSetBtns();}
 $('bStart').onclick=()=>{initAudio();sfx('blip');state='select';updateSelect();show('sSelect');};
 $('bHelp').onclick=()=>{initAudio();sfx('blip');state='help';show('sHelp');};
 $('bHelpBack').onclick=()=>{sfx('blip');state='title';show('sTitle');};
+$('bSettings').onclick=()=>{initAudio();sfx('blip');syncSetBtns();setMenuMode(true);show('sPause');};
+$('bSetBack').onclick=()=>{sfx('blip');setMenuMode(false);state='title';show('sTitle');};
 $('cDiff').addEventListener('click',e=>{const d=e.target.dataset&&e.target.dataset.d;if(d){SET.diff=d;saveSet();updateSelect();sfx('blip');}});
 $('pkCards').addEventListener('click',e=>{const b=e.target.closest('.pcard');if(b)choosePerk(b.dataset.k);});
 $('bPrev').onclick=()=>{selIdx=(selIdx+2)%3;updateSelect();sfx('blip');};
@@ -3687,7 +3712,7 @@ const tbtn=(id,fn)=>{const el=$(id);el.addEventListener('touchstart',e=>{e.preve
 tbtn('bGrab',()=>pressed.grab=true);tbtn('bPerk',()=>pressed.perk=true);tbtn('bPause',()=>togglePause());tbtn('bRestart',()=>restart());
 
 /* ================= INPUT ================= */
-addEventListener('keydown',e=>{keys[e.code]=true;if(state==='carmenu'||state==='shop'||state==='store'){menuKey(e);e.preventDefault();return;}if((e.code==='Space'||e.code==='Enter')&&state==='play'&&G&&G.cine){cineSkip();e.preventDefault();return;}if(e.code==='Tab'&&state==='play'&&G&&G.def.hub){hubSkip();e.preventDefault();return;}if((e.code==='Enter'||e.code==='Space')&&state==='elev'){skipElev();e.preventDefault();return;}if(state==='perk'&&/^Digit[123]$/.test(e.code)){const cs=document.querySelectorAll('.pcard');const b=cs[+e.code.slice(5)-1];if(b)choosePerk(b.dataset.k);return;}if(padMode&&/^(Key[WASD]|Arrow)/.test(e.code))padMode=false;if(e.code==='KeyR')pressed.restart=true;if(e.code==='KeyE')pressed.grab=true;if(e.code==='Space'||e.code==='KeyQ')pressed.perk=true;if(e.code==='Escape'||e.code==='KeyP')pressed.pause=true;if(e.code==='KeyM')toggleMute();
+addEventListener('keydown',e=>{keys[e.code]=true;if(state==='carmenu'||state==='shop'||state==='store'){menuKey(e);e.preventDefault();return;}if((e.code==='Space'||e.code==='Enter')&&state==='play'&&G&&G.cine){cineSkip();e.preventDefault();return;}if(e.code==='Tab'&&state==='play'&&G&&G.def.hub){hubSkip();e.preventDefault();return;}if((e.code==='Enter'||e.code==='Space')&&state==='elev'){skipElev();e.preventDefault();return;}if(state==='perk'&&/^Digit[123]$/.test(e.code)){const cs=document.querySelectorAll('.pcard');const b=cs[+e.code.slice(5)-1];if(b)choosePerk(b.dataset.k);return;}if(padMode&&/^(Key[WASD]|Arrow)/.test(e.code))padMode=false;if(e.code==='KeyR')pressed.restart=true;if(e.code==='KeyE')pressed.grab=true;if(e.code==='Space'||e.code==='KeyQ')pressed.perk=true;if(e.code==='Escape'||e.code==='KeyP')pressed.pause=true;if(SETMENU&&e.code==='Escape')$('bSetBack').click();if(e.code==='KeyM')toggleMute();
  if((e.code==='Enter'||e.code==='Space')&&state==='title'){$('bStart').click();e.preventDefault();return;}
  if((e.code==='Enter'||e.code==='Space')&&state==='brief'){chatTap();e.preventDefault();return;}
  if(e.code==='Enter'&&state==='select'){$('bPlay').click();return;}if(state==='select'&&(e.code==='ArrowLeft'||e.code==='KeyA'))$('bPrev').click();if(state==='select'&&(e.code==='ArrowRight'||e.code==='KeyD'))$('bNext').click();
