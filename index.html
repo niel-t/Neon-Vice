@@ -2009,6 +2009,9 @@ function updateAct2(dt){const g=G;
  if(g.studioC&&AC&&!MUS.muffled){const p=g.player,d=Math.hypot(p.x-g.studioC.x,p.z-g.studioC.z),k=clamp(1-d/16,0,1);g.mT=(g.mT||0)-dt;if(g.mT<=0){g.mT=0.2;mFilt.frequency.setTargetAtTime(lerp(700,18000,k*k),AC.currentTime,0.3);}}
  if(g.wreck&&Math.random()<dt*30){g.parts.push({t:'s',x:g.car.x+rnd(-0.8,0.8),y:0.6,z:g.car.z+rnd(-0.4,0.4),vx:rnd(-0.2,0.2),vy:rnd(0.8,1.8),vz:rnd(-0.2,0.2),s:0.07,c:Math.random()<0.5?[1,0.55,0.1]:[0.2,0.18,0.18],life:0.7});}}
 /* breakable studio glass: a bullet shatters the pane and carries on */
+function paneH(g,q){return g.rows[q.iz][q.ix-1]==='%'||g.rows[q.iz][q.ix+1]==='%';}
+/* see-through panes: drawn in the blended pool pass with the atlas tile the shader renders at 30% alpha */
+function drawPanes(P){const g=G;if(!g||!g.panes)return;for(const q of g.panes){const h=paneH(g,q);P.box(TRS(q.x,0.97,q.z,0,h?1.0:0.04,1.86,h?0.04:1.0),[0.55,0.85,1],false,TUV[20]);}}
 function hitGlass(ix,iz){const g=G;if(!g.glassSet)return false;const k=iz*g.W+ix;if(!g.glassSet.has(k))return false;g.glassSet.delete(k);g.solid[k]=0;g.panes=g.panes.filter(q=>q.iz*g.W+q.ix!==k);
  for(let n=0;n<16;n++)g.parts.push({t:'s',x:ix+0.5+rnd(-0.4,0.4),y:rnd(0.3,1.6),z:iz+0.5+rnd(-0.4,0.4),vx:rnd(-2,2),vy:rnd(0,2),vz:rnd(-2,2),s:0.05,c:[0.75,0.95,1],life:0.7});sfx('ric');alertNoise(ix+0.5,iz+0.5,6);g.glassBroken=(g.glassBroken||0)+1;return true;}
 /* gold grenades: Lex lobs them, and so can you once Nine sells his launcher */
@@ -2053,7 +2056,7 @@ function drawAct2(B,g){const T=g.T,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,
  if(g.hockey)g.hockey.forEach((q,i)=>{bx(q.x,0.45,q.z,1.0,0.9,1.0,[0.12,0.1,0.18]);bx(q.x,0.905,q.z,0.96,0.02,0.96,[0.92,0.95,1]);bx(q.x,0.93,q.z,1.0,0.04,0.04,[0.3,0.9,1],true);if(i%4===0){const px=q.x+0.5+Math.sin(T*3+i)*0.6,pz=q.z+0.5+Math.cos(T*2.3+i)*0.6;bx(px,0.93,pz,0.12,0.03,0.12,[1,0.3,0.6],true);}});
  if(g.manq)for(const m of g.manq)drawChar(CB(m),m);
  if(g.elev)g.elev.forEach((q,i)=>{bx(q.x,1.3,q.z,0.06,2.6,0.06,GOLD);bx(q.x,0.05+((Math.sin(T*0.6+i)+1)*0.9),q.z,0.9,0.08,0.9,[0.75,0.9,1],true);bx(q.x,2.55,q.z,1.0,0.06,1.0,GOLD);});
- if(g.panes)for(const q of g.panes){const h=g.rows[q.iz][q.ix-1]==='%'||g.rows[q.iz][q.ix+1]==='%';bx(q.x,0.95,q.z,h?1.0:0.1,1.9,h?0.1:1.0,[0.6,0.85,1]);bx(q.x,1.92,q.z,h?1.0:0.14,0.05,h?0.14:1.0,[0.25,0.25,0.3]);}
+ if(g.panes)for(const q of g.panes){const h=paneH(g,q);bx(q.x,1.92,q.z,h?1.0:0.12,0.05,h?0.12:1.0,[0.25,0.25,0.3]);bx(q.x,0.03,q.z,h?1.0:0.12,0.06,h?0.12:1.0,[0.25,0.25,0.3]);}
  if(g.studioC){const c=g.studioC;bx(c.x,0.06,c.z,1.6,0.04,1.6,[1,0.3,0.75],true);bx(c.x,1.0,c.z,0.05,2.0,0.05,[0.4,0.4,0.45]);bx(c.x,1.6,c.z+0.15,0.14,0.2,0.1,[0.15,0.15,0.17]);for(let i=0;i<8;i++){const h=0.1+Math.abs(Math.sin(T*8+i))*0.5;bx(c.x-0.7+i*0.2,0.1+h/2,c.z-0.9,0.12,h,0.06,[0.3,1,0.6],true);}}
  if(g.tank){const t=g.tank;drawTankLife(B,T,t.x0,t.x1,(t.z0+t.z1)/2,(t.z1-t.z0)*0.3,0.08,0.03,1.1,0.06,0.3);}
  if(g.wreck){for(let i=0;i<5;i++)bx(g.car.x-0.9+i*0.45,0.55,g.car.z+((i*37)%3-1)*0.2,0.3,0.04,0.3,[0.05,0.05,0.05]);}}
@@ -3176,7 +3179,7 @@ function render(){resize();const asp=vw/vh;let fovy=asp>=1?50*DEG:Math.min(2*Mat
   for(const cs of g.cash)if(cs.landed)floorQuad(poolB,cs.x,cs.z,0.5,0.4,TUV[11],[1,1,1],0.015);
   if(g.tankB){const t=g.tankB;tankGlass(poolB,t.x0,t.x1,t.z0+0.02,t.z1,0.32,2.35);}
   if(Dd().cones&&g.player.alive)for(const e of g.enemies){if(!e.alive||e.down>0||e.state==='chase')continue;const col=e.state==='search'?[1,0.45,0.12]:e.state==='distract'?[0.4,1,0.5]:[1,0.85,0.3];const R=Dd().vision*0.72,cn=Dd().cone,N=7;let prev=null;for(let i=0;i<=N;i++){const a=e.a-cn+2*cn*i/N,sa=Math.sin(a),ca=Math.cos(a),len=rayLen(e.x,e.z,sa,ca,R),pt=[e.x+sa*len,0.016,e.z+ca*len];if(prev)poolB.quad([[e.x,0.016,e.z],[e.x,0.016,e.z],prev,pt],0,1,0,TUV[20],col);prev=pt;}}
-  const shc=[1,1,1];if(!ENH())for(const e of g.enemies)if(e.alive&&!(e.down>0))floorQuad(poolB,e.x,e.z,0.58,0,TUV[16],shc,0.014);if(g.player.alive&&!ENH())floorQuad(poolB,g.player.x,g.player.z,0.58,0,TUV[16],shc,0.014);
+  const shc=[1,1,1];if(!ENH())for(const e of g.enemies)if(e.alive&&!(e.down>0))floorQuad(poolB,e.x,e.z,0.58,0,TUV[16],shc,0.014);if(g.player.alive&&!ENH())floorQuad(poolB,g.player.x,g.player.z,0.58,0,TUV[16],shc,0.014);drawPanes(poolB);
   poolB.upload();gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);poolB.draw();gl.disable(gl.BLEND);gl.disable(gl.POLYGON_OFFSET_FILL);gl.depthMask(true);
   dynB.draw();drawInst();PS2C.flush(VP,RU);
   if(ovB.n){gl.disable(gl.DEPTH_TEST);ovB.upload();ovB.draw();gl.enable(gl.DEPTH_TEST);}}
