@@ -1134,7 +1134,7 @@ function killEnemy(e,type,dir){if(!e.alive)return;const g=G;e.alive=false;e.down
  if(GUNS.includes(type)){wallSplat(e.x,e.z,dir,sh?3:1);for(let i=0;i<(sh?4:1+(Math.random()*2|0));i++)e.wounds.push([rnd(-0.14,0.14),rnd(0.48,0.74)]);g.hits++;}
  if(type==='knife'||type==='machete'){e.wounds.push([rnd(-0.08,0.08),0.62]);e.wounds.push([rnd(-0.1,0.1),0.55]);}
  const pd=Math.hypot(g.player.x-e.x,g.player.z-e.z);
- if((sh&&pd<4)||(type==='revolver'&&Math.random()<0.3)||(type==='machete'&&Math.random()<0.5)||(type==='bat'&&Math.random()<0.25))headPop(e,dir);if(type!=='exec')dismember(e,type,dir);
+ if((sh&&pd<(GORE()?5:4))||(type==='revolver'&&Math.random()<(GORE()?0.5:0.3))||(type==='machete'&&Math.random()<0.5)||(type==='bat'&&Math.random()<0.25))headPop(e,dir);if(type!=='exec')dismember(e,type,dir);
  for(const q of g.enemies){if(q.alive&&q!==e&&q.state!=='chase'&&Math.hypot(q.x-e.x,q.z-e.z)<4&&los(q.x,q.z,e.x,e.z)){q.state='search';q.sx=e.x;q.sz=e.z;q.searchT=0;q.qT=1.2;q.wary=1;e.found=1;g.nx=e.x;g.nz=e.z;bfs(g.nflow,Math.floor(e.x),Math.floor(e.z));}}
  addPool(e,type==='exec'||sh);rumble(0.35,0.6,90);sfx('splat');g.freeze=0.045;shake(sh?0.4:0.25);g.kills++;g.hitT=0.18;addKillScore(e,type);
  if(e.boss){g.freeze=0.35;headPop(e,dir);bloodBurst(e.x,0.8,e.z,dir,120,6);wallSplat(e.x,e.z,dir,4);const bon=Math.round(5000*Dd().mult);g.score+=bon;popup(e.x,e.z-0.6,'THE SHARK IS DEAD  +$'+fmt(bon),'#ff3fa4');shake(0.8);rumble(1,1,600);sfx('boss');}}
@@ -1198,7 +1198,7 @@ function updateExec(p,dt){const x=p.ex,e=x.e,g=G;x.t+=dt;p.vx=p.vz=0;p.exec=Math
    if(x.kind==='gun'){const w=p.weapon;if(w&&w.ammo>0){w.ammo--;const wd=WD[w.type];sfx(wd.snd);alertNoise(p.x,p.z,wd.loud);g.flashes.push({x:p.x+dir[0]*0.6,y:0.45,z:p.z+dir[1]*0.6,t:0.08,big:true,sil:w.type==='silenced'});if(w.type==='shotgun')p.pumpAt=g.T;}}
    else{sfx('hit_'+(x.kind==='fists'?'fists':x.wt));sfx('splat');}
    if(e.alive){killEnemy(e,'exec',dir);g.execs++;}
-   const pop=x.kind==='gun'||x.kind==='machete'||x.kind==='bat'||(gore&&x.kind!=='knife')||(x.kind==='fists'&&CHARS[selIdx].id==='consigliere');
+   const pop=x.kind==='gun'||x.kind==='machete'||x.kind==='bat'||gore||(x.kind==='fists'&&CHARS[selIdx].id==='consigliere');
    if(pop)headPop(e,dir);bloodBurst(hx,0.3,hz,dir,gore?70:30,4);addFloorDecal(hx,hz,rnd(1.0,1.5),rnd(0,TAU),8,bloodTint());if(x.kind==='gun'||gore)wallSplat(hx,hz,dir,gore?2:1);
    shake(0.45);rumble(0.9,1,200);g.freeze=0.14;}}
  if(x.t>=x.dur){p.ex=null;p.exec=0.05;}}
@@ -2192,6 +2192,9 @@ function buildHead(B){const M=newMesh(),X=[1,0,0],Z=[0,0,1],tv=y=>1-(y-HEAD.neck
  loft(M,R.map(r=>({c:[0,r[0],r[3]],s:X,f:Z,rx:r[1],rz:r[2],sq:r[4],v:tv(r[0]),w:r[0]<1.6?W2(BI.neck,BI.head,clamp((r[0]-1.5)/0.1,0,1)):W1(BI.head),
   mod:(p,ph)=>{const c=Math.cos(ph);if(c>0.5){p[2]-=(c-0.5)*0.03;}const k=Math.max(0,c);const key=r[0];p[2]+=((nose[key]||0)*Math.pow(k,24)+(brow[key]||0)*k*k+(chin[key]||0)*Math.pow(k,4));return p;}})),16,{capB:{dir:[0,1,0],uv:[0.5,0.004],lift:0.012}});
  if(B&&B.cigar){const cu=[12/512,3/512],eu=[38/512,3/512],w=W1(BI.head);loft(M,[{c:[0.03,1.64,0.1],rx:0.009,rz:0.009},{c:[0.06,1.632,0.175],rx:0.0095,rz:0.0095}].map(r=>Object.assign(r,{s:[1,0,0],f:[0,1,0],w,v:cu[1]})),6,{uvf:()=>cu});loft(M,[{c:[0.06,1.632,0.175],rx:0.0096,rz:0.0096},{c:[0.062,1.6315,0.185],rx:0.0092,rz:0.0092}].map(r=>Object.assign(r,{s:[1,0,0],f:[0,1,0],w,v:eu[1]})),6,{uvf:()=>eu,capB:{dir:[0,0,1],uv:eu}});}
+ if(B&&(B.hs==='normal'||B.hs==='slick'||B.hs==='buzz')){const hu=[144/512,3/512],w=W1(BI.head),th=B.hs==='buzz'?0.004:B.hs==='slick'?0.009:0.014;
+  const R=(y,r,z,drop)=>({c:[0,y,z],s:[1,0,0],f:[0,0,1],rx:r+th,rz:r*1.045+th,w,v:hu[1],mod:(p,ph)=>{const back=Math.max(0,-Math.cos(ph));p[1]-=drop*back;if(B.hs==='slick')p[2]-=0.006*Math.max(0,Math.cos(ph));return p;}});
+  loft(M,[R(1.765,0.108,-0.004,0.07),R(1.79,0.1,-0.009,0.035),R(1.815,0.084,-0.012,0.012),R(1.834,0.06,-0.014,0),R(1.846,0.03,-0.014,0)],14,{uvf:()=>hu,capB:{dir:[0,1,0],uv:hu}});}
  if(B&&(B.hs==='mohawk'||B.hs==='big')){const hu=[144/512,3/512],w=W1(BI.head);
   if(B.hs==='big'){const R=(y,r,z)=>({c:[0,y,z],s:[1,0,0],f:[0,0,1],rx:r,rz:r*1.08,w,v:hu[1]});loft(M,[R(1.7,0.112,-0.03),R(1.76,0.135,-0.02),R(1.83,0.138,-0.015),R(1.89,0.115,-0.015),R(1.925,0.06,-0.015)],14,{uvf:()=>hu,capB:{dir:[0,1,0],uv:hu}});}
   else{GRP++;const N=9,ids=[];for(let i=0;i<=N;i++){const a=-1.05+2.1*i/N,cz=Math.sin(a)*0.112-0.004,cy=1.738+Math.cos(a)*0.104,ny=Math.cos(a),nz=Math.sin(a),h=0.07+0.02*Math.sin(i/N*Math.PI);
@@ -2291,7 +2294,7 @@ async function init(){try{
  for(const n of ['uVP','uB','uPL','uPC','uAmb','uLD','uLC','uCam','uFog','uFogC','uTex'])Lc[n]=gl.getUniformLocation(P,n);for(const n of ['aP','aN','aT','aBi','aBw'])Lc[n]=gl.getAttribLocation(P,n);
  const pais=await loadImg(ART.pais);
  for(const id in CH){const C=CH[id],face=await loadImg(ART[C.face]);const ht=paintHead(face,C.F);const shirt=C.B.shirt==='pais'?pais:C.B.shirt==='tropical'?tropicalCanvas():shirtCanvas(C.B.shirt);const bt=paintBody(shirt,Object.assign({shirtScale:C.B.shirt==='pais'?0.26:C.B.shirt==='tropical'?0.45:1},C.B));
-  MODELS[id]=[upload(buildBody(C.B),mkTex(bt)),upload(buildHead(C.B),mkTex(ht))];}
+  MODELS[id]=[upload(buildBody(C.B),mkTex(bt)),upload(buildHead(C.B),mkTex(ht))];const cp=cv=>{const k=document.createElement('canvas');k.width=cv.width;k.height=cv.height;k.getContext('2d').drawImage(cv,0,0);return k;};C.bc=bt;C.hc=ht;C.bc0=cp(bt);C.hc0=cp(ht);}
  gl.bindTexture(gl.TEXTURE_2D,atlasTex);ready=true;}catch(e){console.error('PS2C',e);}}
 const RW=mir(WR),ADR=[-AD[0],AD[1],0],LW=WR,ADL=[AD[0],AD[1],0];
 function handFrame(Wm,left,sw,base){const Mh=Wm[left?BI.handL:BI.handR],w=left?LW:RW,a=left?ADL:ADR,pm=left?V.norm(V.cross(a,Z)).map(v=>v):V.norm(V.cross(a,Z)).map(v=>-v);
@@ -2352,7 +2355,7 @@ function lookCfg(L,bodyType){const bt=BODYCFG[bodyType]||BODYCFG[L.body]||BODYCF
  return{L,B:{hs:(L.hair&&!L.hat)?L.hs:null,watch:L.watch?-1:0,cigar:!!L.cigar,hat:L.hat||null,shoulders:bt.shoulders||0,belly:bt.belly||(L.belly?0.1:0),rings:L.bling?1:0},scale:bt.scale};}
 let LOOKN=0,lastG=null,buildsThisFrame=0,lastFrameT=0;
 function lookKey(c){if(!c.look)return null;if(!c._ps2k){c._ps2k='L'+(++LOOKN);}return c._ps2k;}
-function bloodify(key,lvl,c){const C=CH[key];if(!C||!C.bc)return;const paint=(cv,regions,n,big)=>{const x=cv.getContext('2d');for(let i=0;i<n;i++){const r=regions[Math.random()*regions.length|0],px=r[0]+Math.random()*r[2],py=r[1]+Math.random()*r[3],s=(big?8:4)+Math.random()*(big?18:10);
+function bloodify(key,lvl,c){const C=CH[key];if(!C||!C.bc)return;C.dirty=true;const paint=(cv,regions,n,big)=>{const x=cv.getContext('2d');for(let i=0;i<n;i++){const r=regions[Math.random()*regions.length|0],px=r[0]+Math.random()*r[2],py=r[1]+Math.random()*r[3],s=(big?8:4)+Math.random()*(big?18:10);
   x.fillStyle=`rgba(${100+Math.random()*50|0},${Math.random()*12|0},${10+Math.random()*12|0},${0.75+Math.random()*0.25})`;x.beginPath();x.ellipse(px,py,s,s*(0.6+Math.random()*0.6),Math.random()*3,0,6.3);x.fill();
   for(let k=0;k<5;k++){x.beginPath();x.arc(px+(Math.random()-0.5)*s*3,py+(Math.random()-0.5)*s*3,1+Math.random()*3,0,6.3);x.fill();}if(Math.random()<0.6){x.fillRect(px-1.5,py,3,s*(1+Math.random()*2));}}};
  const front=[[150,30,212,250]],all=[[0,0,512,290],[0,290,512,90],[0,440,512,72]];
@@ -2362,12 +2365,15 @@ function bloodify(key,lvl,c){const C=CH[key];if(!C||!C.bc)return;const paint=(cv
 function buildLook(key,c){const Lk=c.look,bt=c.boss?'boss':(c.body||Lk.body);const cfg=lookCfg(Lk,bt);
  const ht=paintHeadP(Lk),btx=paintBodyP(Lk);MODELS[key]=[upload(buildBody(cfg.B),mkTex(btx)),upload(buildHead(cfg.B),mkTex(ht))];CH[key]={scale:cfg.scale,npc:true,bc:btx,hc:ht};}
 function freeLooks(){for(const k in MODELS)if(CH[k]&&CH[k].npc){for(const m of MODELS[k]){for(const b of ['p','n','t','bi','bw','i'])gl.deleteBuffer(m[b]);gl.deleteTexture(m.tex);}delete MODELS[k];delete CH[k];}}
-function ensureLook(c){if(G!==lastG){lastG=G;freeLooks();}const k=lookKey(c);if(!k)return null;if(MODELS[k])return k;
+function resetMain(){for(const id in CH){const C=CH[id];if(C.npc||!C.bc0||!C.dirty)continue;C.dirty=false;C.bc.getContext('2d').drawImage(C.bc0,0,0);C.hc.getContext('2d').drawImage(C.hc0,0,0);
+  for(const [cv,tex] of [[C.bc,MODELS[id][0].tex],[C.hc,MODELS[id][1].tex]]){gl.bindTexture(gl.TEXTURE_2D,tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cv);gl.generateMipmap(gl.TEXTURE_2D);}}gl.bindTexture(gl.TEXTURE_2D,atlasTex);}
+function levelCheck(){if(G!==lastG){lastG=G;freeLooks();resetMain();}}
+function ensureLook(c){levelCheck();const k=lookKey(c);if(!k)return null;if(MODELS[k])return k;
  const now=performance.now();if(now-lastFrameT>8){lastFrameT=now;buildsThisFrame=0;}if(buildsThisFrame>=1)return null;buildsThisFrame++;try{buildLook(k,c);}catch(e){console.error('PS2 look',e);return null;}return k;}
 
 function has(id){return !!CH[id];}
 /* c: game character; mode: 'menu' | 'game' | 'stand'; returns true when drawn */
-function add(c,mode,scale,t,IB,id){if(!ready)return false;if(id==='look'){id=ensureLook(c);if(!id)return false;}if(!MODELS[id])return false;let anim='idle',jab,arms=null,k=0,gun=null,cash=false,dual=false;const sp=Math.hypot(c.vx||0,c.vz||0);
+function add(c,mode,scale,t,IB,id){if(!ready)return false;if(mode==='game')levelCheck();if(id==='look'){id=ensureLook(c);if(!id)return false;}if(!MODELS[id])return false;let anim='idle',jab,arms=null,k=0,gun=null,cash=false,dual=false;const sp=Math.hypot(c.vx||0,c.vz||0);
  const atk=c.atkT>0?clamp(c.atkT/(c.atkDur||0.2),0,1):0,ap=1-atk;
  if(mode==='menu'){
   if(c.pose==='consigliere'){anim='stance';jab=c.jab>0?Math.sin((1-c.jab/0.24)*Math.PI):undefined;}
@@ -2391,9 +2397,9 @@ function add(c,mode,scale,t,IB,id){if(!ready)return false;if(id==='look'){id=ens
  const cut=[],SEV={armL:['uarmL','farmL','handL'],armR:['uarmR','farmR','handR'],legL:['thighL','shinL','footL'],legR:['thighR','shinR','footR']};
  if(c.sev)for(const l in c.sev)cut.push(SEV[l]);if(c.headless)cut.push(['head']);
  for(const grp of cut){const b0=BI[grp[0]],pv=M4.ap(Wb[b0],BONES[b0][2]);const Z0=[0,0,0,0,0,0,0,0,0,0,0,0,pv[0],pv[1],pv[2],1];for(const nm of grp)Wb[BI[nm]]=Z0;
-  if(IB){const pr=IB.r,pu=IB.uv;IB.r=0.8;IB.uv=null;IB.box(A.mul(A.T(pv[0],pv[1],pv[2]),A.S(0.11*scale,0.11*scale,0.11*scale)),[0.55,0.03,0.06]);IB.box(A.mul(A.T(pv[0],pv[1],pv[2]),A.S(0.05*scale,0.05*scale,0.05*scale)),[0.92,0.85,0.8]);IB.r=pr;IB.uv=pu;}}
+  if(IB){const pr=IB.r,pu=IB.uv;IB.r=0.8;IB.uv=null;IB.box(A.mul(A.T(pv[0],pv[1],pv[2]),A.S(0.11*scale,0.11*scale,0.11*scale)),[0.55,0.03,0.06]);IB.box(A.mul(A.T(pv[0],pv[1],pv[2]),A.S(0.05*scale,0.05*scale,0.05*scale)),[0.92,0.85,0.8]);if(grp[0]==='head'){IB.box(A.mul(A.T(pv[0],pv[1]+0.03*scale,pv[2]),A.S(0.035*scale,0.08*scale,0.035*scale)),[0.95,0.9,0.85]);IB.box(A.mul(A.T(pv[0]+0.03*scale,pv[1]+0.01,pv[2]+0.02*scale),A.S(0.06*scale,0.05*scale,0.05*scale)),[0.7,0.08,0.12]);}IB.r=pr;IB.uv=pu;}}
  for(let i=0;i<NB;i++)B.set(Wb[i],i*16);queue.push({B,id});
- if(mode==='game'&&CH[id].npc){const lvl=!c.alive?(c.execd?3:2):(c.hp<(c.maxhp||1)?1:0);if(lvl>(c._bl||0)){c._bl=lvl;bloodify(id,lvl,c);}}
+ if(mode==='game'&&(CH[id].npc||c.player)){const lvl=!c.alive?(c.execd?3:2):(c.hp<(c.maxhp||1)?1:0);if(lvl>(c._bl||0)){c._bl=lvl;bloodify(id,lvl,c);}}
  if(IB&&gun&&WD[gun]&&!(c.sev&&c.sev.armR)){const sw=1.65*scale;const wm=handFrame(Wb,false,sw);drawWeapon(IB,wm,gun);if(gun==='shotgun'&&!(c.sev&&c.sev.armL)){const fm=handFrame(Wb,true,1);const pr=IB.r,pu=IB.uv;IB.r=0.4;IB.uv=null;IB.box(A.mul(fm,A.mul(A.T(0,0.02,0.03),A.S(0.05*scale,0.05*scale,0.16*scale))),[0.35,0.22,0.12]);IB.r=pr;IB.uv=pu;}c.muzzle=apply(wm,0,0.05,(WD[gun].len||0.2)+0.12);if(dual)drawWeapon(IB,handFrame(Wb,true,sw),gun);}
  if(IB&&cash){const hm=handFrame(Wb,true,1);const pr=IB.r,pu=IB.uv;IB.r=0;for(let i=-2;i<=2;i++){const m=A.mul(A.mul(A.mul(hm,A.T(0,0.03,0.04)),A.RY(i*0.26)),A.T(0,0.004*i,0.085));IB.box(A.mul(m,A.S(0.075,0.004,0.16)),[1,1,1],false,TUV[11]);}IB.r=pr;IB.uv=pu;}
  if(IB&&id==='mcwey'&&!gun){const hm=handFrame(Wb,false,1);const pr=IB.r,pu=IB.uv;IB.r=0.6;IB.uv=null;const cm=A.mul(hm,A.mul(A.T(0,0.035,0.02),A.RX(-0.5)));IB.box(A.mul(cm,A.mul(A.T(0,0,0.06),A.S(0.022,0.022,0.15))),[0.42,0.24,0.12]);IB.box(A.mul(cm,A.mul(A.T(0,0,0.0),A.S(0.024,0.024,0.018))),[0.85,0.65,0.25]);IB.box(A.mul(cm,A.mul(A.T(0,0,0.137),A.S(0.024,0.024,0.008))),[1,0.45,0.15],true);c.cig=apply(cm,0,0,0.145);IB.r=pr;IB.uv=pu;}
