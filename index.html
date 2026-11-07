@@ -129,6 +129,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <div id="sCar" class="screen dim"><div class="logo2">YOUR RIDE</div><div class="hint" id="carWallet" style="color:#7dff9a"></div><div class="hint" id="carLoad" style="color:#ffd36b;margin-top:4px"></div><div style="display:flex;flex-direction:column;align-items:center;margin-top:10px"><button class="btn" id="bCarJob">NEXT JOB</button><button class="btn alt" id="bCarShop">NINE OF NINE'S &middot; GUN SHOP<span class="kbhint"> (G)</span><span class="padhint"> (X)</span></button><button class="btn alt" id="bCarClub">VELVET PALMS &middot; STRIP CLUB<span class="kbhint"> (C)</span><span class="padhint"> (RB)</span></button><button class="btn alt" id="bCarStore">OCEAN DRIVE SHOPPING &middot; CARS &amp; GOLD<span class="kbhint"> (S)</span><span class="padhint"> (Y)</span></button><button class="btn alt" id="bCarHome">BACK TO YOUR PLACE</button><button class="btn alt" id="bCarBack">NOT YET<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div>
 <div id="sShop" class="screen"><div class="shop"><div class="shHead"><div><div class="shT">NINE OF NINE'S</div><div class="shS">EXOTIC MACHINERY OF DEATH &middot; 3 PIECES TODAY</div></div><div class="shW" id="shWallet"></div></div><div class="shSay" id="shSay"></div><div class="rowc" id="shCards"></div><div class="shX" id="shExtra"></div><div class="shF"><span id="shLoad"></span><button class="btn" id="bShopLeave">LEAVE<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div></div>
 <div id="sStore" class="screen dim"><div class="shop"><div class="shHead"><div><div class="shT">OCEAN DRIVE SHOPPING</div><div class="shS">CARS &middot; GOLD &middot; NO REFUNDS</div></div><div><div class="shW" id="stWallet"></div><div class="shS" id="stOwed" style="color:#ff8a95;text-align:right"></div></div></div><div class="shS" style="margin-top:12px;align-self:flex-start" id="stCarsH">MIAMI MOTORS</div><div class="rowc" id="stCars"></div><div class="shS" style="margin-top:6px;align-self:flex-start" id="stGoldH">GOLD COAST JEWELERS</div><div class="rowc" id="stGold"></div><div class="shS" style="margin-top:6px;align-self:flex-start" id="stHomeH">SUNSHINE REALTY</div><div class="rowc" id="stHome"></div><div class="shF"><span id="stMsg"></span><button class="btn" id="bStoreLeave">LEAVE<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div></div>
+<div id="sMorning" class="screen dim"><div class="phone"><div class="hdr"><span id="mnWho"></span><span>THE MORNING AFTER</span></div><div class="msg" id="mnMsg"></div><div class="floor" id="mnFx"></div></div><button class="btn" id="bMorning">HEAD OUT<span class="kbhint"> (ENTER)</span><span class="padhint"> (A)</span></button></div>
 <div id="sEnd" class="screen dim"><div class="logo" style="font-size:clamp(20px,5vw,44px)">THE FAMILY<br>RUNS MIAMI</div><div class="stats" id="eStats"></div><button class="btn" id="bAgain">PLAY AGAIN<span class="padhint"> (A)</span></button></div>
 <div id="sPause" class="screen dim"><div class="logo2">PAUSED</div><div class="col" style="margin-top:8px">
   <button class="btn" id="bResume">RESUME<span class="padhint"> (START)</span></button><button class="btn alt" id="bPRestart">RESTART FLOOR<span class="padhint"> (BACK)</span></button>
@@ -1030,6 +1031,7 @@ function padMenus(dt){if(!PAD.on)return;PAD.navT-=dt;const ax=PAD.gp.axes[0]||0;
   case 'results':if(pdown(0))$('bNextLvl').click();else if(pdown(2)||pdown(8))restart();break;
   case 'end':if(pdown(0))$('bAgain').click();break;
   case 'store':storePad(dir);break;
+  case 'morning':if(pdown(0))$('bMorning').click();break;
   case 'carmenu':if(pdown(3)){$('bCarStore').click();break;}if(pdown(5)&&$('bCarClub').style.display!=='none'){$('bCarClub').click();break;}if(pdown(0))$('bCarJob').click();else if(pdown(2)&&$('bCarShop').style.display!=='none')$('bCarShop').click();else if(pdown(1))closeCarMenu();break;
   case 'shop':{if(pdown(1)){closeShop();break;}if(!shopReady()){if(pdown(0))$('shSay').click();break;}const a=arm(),i=pdown(4)?0:pdown(0)?1:pdown(5)?2:-1;if(i>=0&&a.stock[i])shopPick(a.stock[i]);else if(pdown(2))shopExtra('ammo');else if(pdown(3))shopExtra('vest');}break;
   case 'perk':{const cs=document.querySelectorAll('.pcard');const i=pdown(4)?0:pdown(0)?1:pdown(5)?2:-1;if(i>=0&&cs[i])choosePerk(cs[i].dataset.k);}break;
@@ -1927,11 +1929,12 @@ function arm(){const p=myProg();if(typeof p.wallet!=='number')p.wallet=0;if(p.de
 function wallet(){arm();return myProg().wallet;}
 let LASTPAY=null;function cutOf(take){const p=myProg();arm();return p.debt>0?Math.min(p.debt,Math.ceil(take*MC_CUT)):0;}
 function payout(){if(!G||G.paid||!G.take)return;G.paid=1;const a=arm(),p=myProg(),cut=cutOf(G.take),before=p.debt;p.debt-=cut;p.wallet+=G.take-cut;
- if(G.sjPay)p.wallet+=G.sjPay;if(G.sj)p.sidejob=null;p.couchBlood=0;if(levelIdx===2)p.sharkDead=1;LASTPAY={take:G.take,cut,debt:p.debt,before,squared:false,lvl:levelIdx};
+ if(G.sjPay)p.wallet+=G.sjPay;p.gift=null;if(G.sj)p.sidejob=null;p.couchBlood=0;if(levelIdx===2)p.sharkDead=1;LASTPAY={take:G.take,cut,debt:p.debt,before,squared:false,lvl:levelIdx};
  if(levelIdx===3)p.boat=1;if(levelIdx===4){p.suits2=1;p.suit='power';PS2C.applySuit(rideId());}if(levelIdx===5)p.heli=1;if(levelIdx===7){p.lexDead=1;p.respect=1;LASTPAY.yacht=true;LASTPAY.cleared=p.debt;p.debt=0;p.paid=true;}else if(p.debt<=0&&!p.paid){p.paid=true;LASTPAY.squared=true;}a.mags=0;a.vest=0;a.jobs++;saveProg();}
 function applyLoadout(){const a=arm(),p=G&&G.player;if(!p)return;const w=a.eq&&WD[a.eq];
  if(w)p.weapon={type:a.eq,ammo:w.melee?0:Math.round((w.ammo||0)*(1+a.mags))};else if(a.mags&&p.weapon&&WD[p.weapon.type].ammo)p.weapon.ammo+=WD[p.weapon.type].ammo*a.mags;
- if(a.vest)p.armor=(p.armor||0)+1;}
+ if(a.vest)p.armor=(p.armor||0)+1;
+ const gf=myProg().gift;if(gf&&WD[gf])G.items.push({x:p.x+0.7,z:p.z,type:gf,ammo:WD[gf].ammo||0,vx:0,vz:0,rot:0.6,flying:false,fresh:false,flyT:0});}
 function loadoutTxt(){const a=arm();return 'LOADOUT: '+(a.eq?WD[a.eq].name:'YOUR USUAL')+(a.mags?' · +'+a.mags+' MAG'+(a.mags>1?'S':''):'')+(a.vest?' · BODY ARMOUR':'');}
 /* the car menu */
 function openCarMenu(){if(state!=='play'||!G)return;sfx('blip');state='carmenu';$('carWallet').textContent='WALLET $'+fmt(wallet())+(myProg().debt>0?'  ·  OWED TO McWEY $'+fmt(myProg().debt):'')+'  ·  RIDE: '+carName(myCar());$('carLoad').textContent=loadoutTxt();
@@ -2189,7 +2192,21 @@ function sjState(g){const k=g.sj,bl=(g.kb.knife||0)+(g.kb.machete||0)+(g.kb.thro
 function goHome(){arm();loadHub('home'+(myProg().home||0),'home');}
 const HOME_BED_WORLD=[{x:2.5,z:2.5},{x:19.7,z:9.8},{x:19.5,z:10.3}];
 function homeBedPos(g){return HOME_BED_WORLD[g.home]||HOME_BED_WORLD[0];}
-function goSleep(){if(!G||!G.slots)return;sfx('pick');popup(G.player.x,G.player.z-0.6,'Z Z Z...','#9fd8ff');banner('YOU GET SOME SLEEP','Waking up to a call from McWey...');fadeTo(goDrive);}
+/* morning events: one per job, the first time you sleep after it */
+const MORNING=[
+ {who:'COUSIN PAULIE',msg:"Remember the grand I owed you since '84? Here's fifteen hundred. Interest. Don't tell my wife.",fxt:'+$1,500',fx:p=>{p.wallet+=1500;}},
+ {who:'THE LANDLORD',msg:'Knock knock. The neighbours say they heard "things" last night. Rent just went up. Today.',fxt:'-$500',fx:p=>{p.wallet=Math.max(0,p.wallet-500);}},
+ {who:'A BOX ON THE DOORSTEP',msg:'No return address. Inside, wrapped in the Miami Herald: four throwing knives and a note that just says "quietly".',fxt:'THROWING KNIVES WAITING ON YOUR NEXT FLOOR',fx:p=>{p.gift='tknife';}},
+ {who:'METRO-DADE, OFF THE BOOKS',msg:'A detective slides an envelope under the door. Inside: a vest and a card. "Clean up Miami. We never met."',fxt:'BODY ARMOUR FOR THE NEXT JOB',fx:(p,a)=>{a.vest=1;}},
+ {who:'NINE OF NINE',msg:'Good morning my friend! Free sample, calibrated with mathematics. Is very ludicrous. Tell your friends.',fxt:'+1 SPARE MAG FOR THE NEXT JOB',fx:(p,a)=>{a.mags=(a.mags||0)+1;}},
+ {who:'MRS. ORTEGA, UPSTAIRS',msg:'She brings flan and an envelope. "My nephew had a problem with some men. Now he does not. Thank you."',fxt:'+$700',fx:p=>{p.wallet+=700;}},
+ {who:'AN UNKNOWN CALLER',msg:'"They\'re expecting you loud tonight. Go quiet." Click. There\'s something taped under the phone.',fxt:'SILENCED 9MM WAITING ON YOUR NEXT FLOOR',fx:p=>{p.gift='silenced';}},
+ {who:'PESOS THE DOG',need:()=>homeFurn().dog,msg:'Pesos drags a soggy roll of hundreds out from under the couch. Whose was it? Who cares. Good boy.',fxt:'+$800',fx:p=>{p.wallet+=800;}}];
+function showMorning(ev){state='morning';$('mnWho').textContent=ev.who;$('mnMsg').textContent=ev.msg;$('mnFx').textContent=ev.fxt;show('sMorning');sfx('blip');}
+$('bMorning').onclick=()=>{if(state!=='morning'||fading)return;sfx('pick');fadeTo(()=>{show(null);state='play';goDrive();});};
+function goSleep(){if(!G||!G.slots)return;sfx('pick');popup(G.player.x,G.player.z-0.6,'Z Z Z...','#9fd8ff');
+ {const a=arm(),p=myProg();if(p.mornKey!==a.jobs){p.mornKey=a.jobs;const ev=pick(MORNING.filter(m=>!m.need||m.need()));ev.fx(p,a);saveProg();banner('YOU GET SOME SLEEP','Somebody is at the door...');fadeTo(()=>showMorning(ev));return;}}
+ banner('YOU GET SOME SLEEP','Waking up to a call from McWey...');fadeTo(goDrive);}
 function buyHome(i){const p=myProg(),h=HOMEDEF[i];if(!h)return;p.homes=p.homes||[0];if((p.home||0)===i)return renderStore('You already live there.');
  if(p.homes.includes(i)){p.home=i;saveProg();sfx('pick');return renderStore('Moved back into '+h.name+'. You will wake up there after the next job.');}
  if(h.needs&&!p[h.needs])return renderStore('Moreau is still living in it. Deal with the Shark first.');if(p.wallet<h.price){sfx('blip');return renderStore('Not enough cash. Come back richer.');}
@@ -3658,7 +3675,7 @@ function drawHUD0(){const c=hctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0
   if(!sticks.L&&!sticks.R&&g.time<6){c.font=VTF(20*u);c.globalAlpha=0.75;txt(c,'◀ MOVE',vw*0.22,vh*0.72,'#2de2e6','center',20*u);txt(c,'AIM + ATTACK ▶',vw*0.78,vh*0.72,'#ff5fb8','center',20*u);c.globalAlpha=1;}}}
 
 /* ================= FLOW ================= */
-const SCREENS=['sElev','sTitle','sHelp','sSelect','sBrief','sDead','sResults','sEnd','sPause','sPerk','sCar','sShop','sStore'];
+const SCREENS=['sElev','sTitle','sHelp','sSelect','sBrief','sDead','sResults','sEnd','sPause','sPerk','sCar','sShop','sStore','sMorning'];
 function show(id){SCREENS.forEach(s=>$(s).classList.toggle('on',s===id));if(id)$('banner').classList.remove('on');}
 let bannerT=null;function banner(a,b){const el=$('banner');el.innerHTML='<div class="b1">'+a+'</div>'+(b?'<div class="b2">'+b+'</div>':'');el.classList.add('on');clearTimeout(bannerT);bannerT=setTimeout(()=>el.classList.remove('on'),2400);}
 function updateSelect(){const c=CHARS[selIdx];const gb=$('cBig');gb.textContent=c.name;gb.dataset.t=c.name;$('cQuote').textContent=c.quote;$('cPerk').innerHTML=c.perk;
@@ -3710,7 +3727,7 @@ const tbtn=(id,fn)=>{const el=$(id);el.addEventListener('touchstart',e=>{e.preve
 tbtn('bGrab',()=>pressed.grab=true);tbtn('bPerk',()=>pressed.perk=true);tbtn('bPause',()=>togglePause());tbtn('bRestart',()=>restart());
 
 /* ================= INPUT ================= */
-addEventListener('keydown',e=>{keys[e.code]=true;if(state==='carmenu'||state==='shop'||state==='store'){menuKey(e);e.preventDefault();return;}if((e.code==='Space'||e.code==='Enter')&&state==='play'&&G&&G.cine){cineSkip();e.preventDefault();return;}if(e.code==='Tab'&&state==='play'&&G&&G.def.hub){hubSkip();e.preventDefault();return;}if((e.code==='Enter'||e.code==='Space')&&state==='elev'){skipElev();e.preventDefault();return;}if(state==='perk'&&/^Digit[123]$/.test(e.code)){const cs=document.querySelectorAll('.pcard');const b=cs[+e.code.slice(5)-1];if(b)choosePerk(b.dataset.k);return;}if(padMode&&/^(Key[WASD]|Arrow)/.test(e.code))padMode=false;if(e.code==='KeyR')pressed.restart=true;if(e.code==='KeyE')pressed.grab=true;if(e.code==='Space'||e.code==='KeyQ')pressed.perk=true;if(e.code==='Escape'||e.code==='KeyP')pressed.pause=true;if(e.code==='KeyM')toggleMute();
+addEventListener('keydown',e=>{keys[e.code]=true;if(state==='morning'&&(e.code==='Enter'||e.code==='Space')){$('bMorning').click();e.preventDefault();return;}if(state==='carmenu'||state==='shop'||state==='store'){menuKey(e);e.preventDefault();return;}if((e.code==='Space'||e.code==='Enter')&&state==='play'&&G&&G.cine){cineSkip();e.preventDefault();return;}if(e.code==='Tab'&&state==='play'&&G&&G.def.hub){hubSkip();e.preventDefault();return;}if((e.code==='Enter'||e.code==='Space')&&state==='elev'){skipElev();e.preventDefault();return;}if(state==='perk'&&/^Digit[123]$/.test(e.code)){const cs=document.querySelectorAll('.pcard');const b=cs[+e.code.slice(5)-1];if(b)choosePerk(b.dataset.k);return;}if(padMode&&/^(Key[WASD]|Arrow)/.test(e.code))padMode=false;if(e.code==='KeyR')pressed.restart=true;if(e.code==='KeyE')pressed.grab=true;if(e.code==='Space'||e.code==='KeyQ')pressed.perk=true;if(e.code==='Escape'||e.code==='KeyP')pressed.pause=true;if(e.code==='KeyM')toggleMute();
  if((e.code==='Enter'||e.code==='Space')&&state==='title'){$('bStart').click();e.preventDefault();return;}
  if((e.code==='Enter'||e.code==='Space')&&state==='brief'){chatTap();e.preventDefault();return;}
  if(e.code==='Enter'&&state==='select'){$('bPlay').click();return;}if(state==='select'&&(e.code==='ArrowLeft'||e.code==='KeyA'))$('bPrev').click();if(state==='select'&&(e.code==='ArrowRight'||e.code==='KeyD'))$('bNext').click();
