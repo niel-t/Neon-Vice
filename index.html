@@ -1145,7 +1145,7 @@ function hitEnemy(e,type,dir,dmg){if(!e.alive)return;if(e.boss)G.bossSeen=true;i
  if(!e.boss&&!e.toughShown){e.toughShown=true;popup(e.x,e.z,archLabel(e)+'!','#ffd36b');}if(e.state!=='chase'){e.state='chase';e.react=0.3;e.seeT=0;}return;}killEnemy(e,type,dir);}
 function knockdown(e,dir){if(!e.alive)return;if(e.boss){stagger(e,dir);hitEnemy(e,'door',dir,1);return;}e.down=3.0;e.fall=0;e.vx=dir[0]*4;e.vz=dir[1]*4;dropWeapon(e,dir,true);e.a=Math.atan2(dir[0],dir[1]);e.state='chase';e.wind=0;e.seeT=0;sfx('hit_fists');bloodBurst(e.x,0.9,e.z,dir,6,2);}
 const DEATHNAME={dual:'DOUBLE-TAPPED, TWICE',boss:'FLATTENED BY THE SHARK',fists:'BEATEN TO DEATH',bat:'BATTED INTO THE NEXT LIFE',knife:'STABBED',machete:'HACKED APART',pistol:'SHOT WITH A 9MM',silenced:'SILENCED',revolver:'SHOT WITH A .357',shotgun:'BLASTED WITH A SHOTGUN',double:'BOTH BARRELS',smg:'RIDDLED BY AN UZI',m16:'GUNNED DOWN BY AN M16'};
-function hurtPlayer(dir,type){const g=G,p=g.player;if(!p.alive||p.armorT>0)return;
+function hurtPlayer(dir,type){const g=G,p=g.player;if(!p.alive||p.armorT>0)return;g.taken=(g.taken||0)+1;
  if(p.armor>0){p.armor--;p.armorT=0.9;p.lastHurt=g.time;shake(0.45);g.flash=0.35;g.flashC=[1,1,1];rumble(0.9,0.9,250);sfx('vest');popup(p.x,p.z,'VEST HIT!','#ffd36b');bloodBurst(p.x,0.7,p.z,dir,8,2);return;}
  if(p.hp>1){p.hp--;p.armorT=1.1;p.lastHurt=g.time;shake(0.45);g.flash=0.45;g.flashC=[0.9,0,0.05];g.hurtT=0.7;rumble(0.9,0.9,260);sfx('vest');popup(p.x,p.z,p.hp===1?'LAST HIT!':'HIT!','#ff4a5a');bloodBurst(p.x,0.7,p.z,dir,14,3);addFloorDecal(p.x,p.z,rnd(0.4,0.7),rnd(0,TAU),10,bloodTint());p.vx+=dir[0]*5;p.vz+=dir[1]*5;return;}
  p.alive=false;g.killedBy=type;p.a=Math.atan2(-dir[0],-dir[1]);launchBody(p,type,dir);p.exec=0;bloodBurst(p.x,0.65,p.z,dir,60,5);
@@ -1636,7 +1636,7 @@ const HUBS={
  "|EE......P........H|",
  "|||||||||ee|||||||||"]},
 };
-let VISIT={debrief:null,next:0,grade:null,take:0},HUBFIRST=true;
+let VISIT={debrief:null,next:0,grade:null,take:0,style:null},HUBFIRST=true;let runStyle={},RUNEND=null;
 function hubSetup(g){const d=g.def;g.npcs=g.npcs||[];g.trigs=g.trigs||[];
  if(g.trigs.length){let sx=0,sz=0;for(const t of g.trigs){sx+=t.x;sz+=t.z;}g.car={x:sx/g.trigs.length,z:sz/g.trigs.length};}
  if(g.player){g.player.weapon=null;g.player.hp=g.player.maxhp=99;g.player.armor=0;}
@@ -1736,6 +1736,16 @@ const MC_DEBRIEF=[
  ["Moreau's done. Every corner of Miami answers to the Family now."]];
 const MC_GRADE={S:"Clean. Fast. Not a hair out of place. That's how McWey likes it.",'A+':"Sharp work. You've got style, kid.",A:"Sharp work. You've got style, kid.",B:"Solid. Could've been faster, but I'm not complaining.",C:"Messy. But messy pays the same.",D:"Sloppy. Next time, less mess and more finesse."};
 const MC_QUOTE=["In Miami, gold doesn't lie. People do.","Loyalty is like gold, kid. Heavy, rare — and it looks good on you.","Sharks don't sleep. Neither does McWey.","Everybody wants a crown. Few want to wear the weight."];
+/* debrief lines per playstyle (clean / gore / ruthless / mixed), indexed by floor */
+const DEB_STYLE={clean:[["Not one scratch on you, and the motel never saw it coming. Quiet work. I like quiet."],["Club Flamingo closed without a siren. Nobody even spilled a drink. Beautiful."],["Moreau's gone and you didn't leave a mark on Coral Tower. Who taught you to be that tidy?"]],
+ gore:[["The motel looks like a slaughterhouse. The news has no idea what to call it. I do, and I love it."],["Club Flamingo's a crime scene now. They'll be scrubbing those walls till spring. Good."],["Coral Tower's lobby is wallpaper now. Moreau's people are going to need a bigger mop."]],
+ ruthless:[["Every man in that motel got a personal goodbye. Cold. Efficient. Exactly how I like it."],["You didn't just shoot the VIP room. You finished it, face to face. The Family respects that."],["Moreau begged, and you didn't stop. I won't ask what you did with the watch."]],
+ mixed:MC_DEBRIEF};
+/* ending by dominant playstyle across the run */
+const END_STYLE={clean:{title:'THE QUIET HAND',line:"Tidy, quiet, and nobody saw your face. That's how the Family stays on top.",quote:"Quiet men hold the most keys."},
+ gore:{title:'THE RED TIDE',line:"Half of Miami is still talking about the blood. Fear is the cheapest security there is.",quote:"Blood makes the best receipts."},
+ ruthless:{title:'NO WITNESSES',line:"Nobody left in this city will say your name twice. That's the job done right.",quote:"Mercy is for people who can afford it."},
+ mixed:{title:'STEADY HANDS',line:"You kept it steady all the way up. The Family likes steady.",quote:MC_QUOTE[3]}};
 const REPLY={don:["Consider it done.","This city answers to one family.","He'll be swimming with the fishes. Not yours, of course."],consigliere:["I'll give them some advice.","My knuckles will do the talking.","Then let's go have a word with him."],money:["What's my cut?","Everybody has a price. I'll find theirs.","His watch, his wallet — same thing."]};
 const FINALE=["You know what? Keep the Lambo. And take this — solid gold. You earned it.","Now get out of my office before I start getting sentimental."];
 let CHAT={q:[],i:0,phase:'idle',tm:null,done:false,onGo:null};
@@ -1750,15 +1760,16 @@ function chatRead(){const C=CHAT.cur;CHAT.phase='read';C.tx.textContent=C.t;type
 function chatTap(){if(state!=='brief')return;if(CHAT.phase==='done'){$('bGo').click();return;}if(CHAT.phase==='dots'){chatClearTimers();chatType();return;}if(CHAT.phase==='typing'){clearInterval(typeT);chatRead();return;}if(CHAT.phase==='read'){chatNext();}}
 function talkMcWey(){state='brief';show('sBrief');sfx('ring');engineOn(false);const pid=CHARS[selIdx].id,q=[],m=t=>q.push({who:'m',t}),pp=t=>q.push({who:'p',t});
  const vi=VISIT;if(vi.debrief===null&&HUBFIRST)MC_FIRST.forEach(m);
- if(vi.debrief!==null){MC_DEBRIEF[vi.debrief].forEach(m);m(MC_GRADE[vi.grade]||MC_GRADE.B);m("Your cut: $"+fmt(vi.take)+". Count it in front of me — I like the sound.");}
- if(vi.next!=='end'){MC_BRIEF[vi.next].forEach(m);pp(REPLY[pid][vi.next]);m(MC_QUOTE[vi.next]);}else{FINALE.forEach(m);pp(REPLY[pid][2]);m(MC_QUOTE[3]);}
+ if(vi.next==='end'){let best=vi.style||'mixed';for(const k in runStyle)if(runStyle[k]>(runStyle[best]||0))best=k;RUNEND=END_STYLE[best];}
+ if(vi.debrief!==null){(DEB_STYLE[vi.style||'mixed']||MC_DEBRIEF)[vi.debrief].forEach(m);m(MC_GRADE[vi.grade]||MC_GRADE.B);m("Your cut: $"+fmt(vi.take)+". Count it in front of me — I like the sound.");}
+ if(vi.next!=='end'){MC_BRIEF[vi.next].forEach(m);pp(REPLY[pid][vi.next]);m(MC_QUOTE[vi.next]);}else{m(RUNEND.line);FINALE.forEach(m);pp(REPLY[pid][2]);m(RUNEND.quote);}
  HUBFIRST=false;CHAT={q,i:0,phase:'idle',tm:null,done:false};$('chat').innerHTML='';$('bGo').style.visibility='hidden';$('chatTap').style.visibility='visible';
  $('brFrom').textContent=vi.next==='end'?'McWEY TOWER · FINAL DEBRIEF':vi.debrief!==null?'McWEY TOWER · DEBRIEF':'McWEY TOWER · 52ND FLOOR';
- $('brQuote').textContent='"'+MC_QUOTE[vi.next==='end'?3:vi.next]+'"';
+ $('brQuote').textContent='"'+(vi.next==='end'?RUNEND.quote:MC_QUOTE[vi.next])+'"';
  $('bGo').innerHTML=(vi.next==='end'?'TAKE THE GOLD':'TAKE THE JOB: '+LEVELS[vi.next].name)+'<span class="padhint"> (A)</span>';
  setTimeout(chatNext,500);}
 function chatGo(){if(!CHAT.done)return;chatClearTimers();sfx('pick');if(VISIT.next==='end'){showEnd();return;}const n=VISIT.next;fadeTo(()=>startLevel(n));}
-function showEnd(){state='end';$('eStats').innerHTML=`CREW<b>${CHARS[selIdx].name}</b><br>BODIES<b>${totalKills}</b><br>TIME<b>${mmss(totalTime)}</b><br>TOTAL TAKE<b>$${fmt(totalScore)}</b>`;show('sEnd');}
+function showEnd(){state='end';$('eStats').innerHTML=`CREW<b>${CHARS[selIdx].name}</b><br>BODIES<b>${totalKills}</b><br>TIME<b>${mmss(totalTime)}</b><br>TOTAL TAKE<b>$${fmt(totalScore)}</b>${RUNEND?'<br>ENDING<b>'+RUNEND.title+'</b>':''}`;show('sEnd');}
 HUBLEG_FOOT['.']={};
 {const DW=66,R=(f)=>Array.from({length:DW},(_,x)=>f(x)).join('');const tw=x=>x>=51&&x<=59;
  HUBS.drive.map=[R(x=>tw(x)?'G':'b'),R(x=>tw(x)?'G':'b'),R(x=>tw(x)?'G':'b'),R(x=>tw(x)?'G':'b'),
@@ -2743,8 +2754,9 @@ function showDead(){state='dead';const k=G.killedBy;$('deadCause').textContent=D
  if(pendingPerks>0)showPerkPick('dead');else show('sDead');}
 const KNAME={dual:'Dual pistols',fists:'Fists',bat:'Bat',knife:'Knife',machete:'Machete',exec:'Execution',door:'Door slam',throw:'Thrown',pistol:'Pistol',silenced:'Silenced',revolver:'.357',smg:'Uzi',m16:'M16',shotgun:'Shotgun',double:'Double barrel'};
 function finishLevel(){const g=G;state='results';const tb=Math.max(0,Math.round((150-g.time)*25));const total=g.score+tb;g.take=total;totalScore+=total;totalKills+=g.kills;totalTime+=g.time;
- const ratio=total/(g.enemies.length*700);const gr=ratio>3?'S':ratio>2.2?'A+':ratio>1.6?'A':ratio>1.1?'B':ratio>0.7?'C':'D';const acc=g.shots?Math.round(Math.min(1,g.hits/g.shots)*100)+'%':'—';
- $('rStats').innerHTML=`DIFFICULTY<b>${Dd().name}</b><br>KILLS<b>${g.kills}</b><br>EXECUTIONS<b>${g.execs}</b><br>BEST COMBO<b>x${g.maxCombo}</b><br>HEADS TAKEN<b>${g.heads}</b><br>BY WEAPON<b>${Object.entries(g.kb).sort((a,b)=>b[1]-a[1]).map(([k,v])=>(KNAME[k]||k)+' '+v).join(' · ')||'—'}</b><br>ACCURACY<b>${acc}</b><br>TIME<b>${mmss(g.time)}</b><br>KILL MONEY<b>$${fmt(g.score)}</b><br>SPEED BONUS<b>$${fmt(tb)}</b><br>TAKE HOME<b>$${fmt(total)}</b>`;
+ const ratio=total/(g.enemies.length*700);const gr=ratio>3?'S':ratio>2.2?'A+':ratio>1.6?'A':ratio>1.1?'B':ratio>0.7?'C':'D';const rsty=g.execs>=2?'ruthless':g.heads>=2?'gore':(!g.taken&&g.shots&&g.hits/g.shots>=0.6)?'clean':'mixed';g.style=rsty;runStyle[rsty]=(runStyle[rsty]||0)+1;
+ const acc=g.shots?Math.round(Math.min(1,g.hits/g.shots)*100)+'%':'—';
+ $('rStats').innerHTML=`DIFFICULTY<b>${Dd().name}</b><br>KILLS<b>${g.kills}</b><br>EXECUTIONS<b>${g.execs}</b><br>BEST COMBO<b>x${g.maxCombo}</b><br>HEADS TAKEN<b>${g.heads}</b><br>STYLE<b>${rsty.toUpperCase()}</b><br>BY WEAPON<b>${Object.entries(g.kb).sort((a,b)=>b[1]-a[1]).map(([k,v])=>(KNAME[k]||k)+' '+v).join(' · ')||'—'}</b><br>ACCURACY<b>${acc}</b><br>TIME<b>${mmss(g.time)}</b><br>KILL MONEY<b>$${fmt(g.score)}</b><br>SPEED BONUS<b>$${fmt(tb)}</b><br>TAKE HOME<b>$${fmt(total)}</b>`;
  let xp=0;if(!g.xpGiven){g.xpGiven=1;xp=runXP(g,true,gr);awardXP(xp);}const pr=myProg();$('rStats').innerHTML+=`<br>XP EARNED<b style="color:#ffd36b">+${xp}</b><br>LEVEL<b style="color:#ffd36b">${pr.lvl}  (${pr.xp}/${xpNeed(pr.lvl)})</b>`;
  G.grade=gr;$('rGrade').textContent=gr;$('bNextLvl').innerHTML='BACK TO McWEY'+'<span class="padhint"> (A)</span>';if(pendingPerks>0)setTimeout(()=>{if(state==='results')showPerkPick('results');},900);show('sResults');sfx('cash');}
 function restart(){if(!G||G.def.hub)return;if(!G.player.alive){RUNTRACK[levelIdx]++;MUS.track='';MUS.pending=null;}if(state==='results'&&G.take){totalScore-=G.take;totalKills-=G.kills;totalTime-=G.time;}startLevel(levelIdx);}
@@ -2758,11 +2770,11 @@ $('cDiff').addEventListener('click',e=>{const d=e.target.dataset&&e.target.datas
 $('pkCards').addEventListener('click',e=>{const b=e.target.closest('.pcard');if(b)choosePerk(b.dataset.k);});
 $('bPrev').onclick=()=>{selIdx=(selIdx+2)%3;updateSelect();sfx('blip');};
 $('bNext').onclick=()=>{selIdx=(selIdx+1)%3;updateSelect();sfx('blip');};
-$('bPlay').onclick=()=>{initAudio();totalScore=0;totalKills=0;totalTime=0;sfx('pick');levelIdx=0;VISIT={debrief:null,next:0,grade:null,take:0};HUBFIRST=true;fadeTo(goDrive);};
+$('bPlay').onclick=()=>{initAudio();totalScore=0;totalKills=0;totalTime=0;sfx('pick');levelIdx=0;VISIT={debrief:null,next:0,grade:null,take:0,style:null};HUBFIRST=true;runStyle={};RUNEND=null;fadeTo(goDrive);};
 $('sBrief').onclick=e=>{if(e.target.id==='bGo')return;chatTap();};
 $('sElev').onclick=()=>skipElev();$('cine').onclick=()=>cineSkip();$('bSkip').onclick=()=>hubSkip();
 $('bGo').onclick=()=>chatGo();
-$('bNextLvl').onclick=()=>{if(pendingPerks>0){showPerkPick('results');return;}VISIT={debrief:levelIdx,grade:G.grade,take:G.take,next:levelIdx+1<LEVELS.length?levelIdx+1:'end'};fadeTo(goDrive);};
+$('bNextLvl').onclick=()=>{if(pendingPerks>0){showPerkPick('results');return;}VISIT={debrief:levelIdx,grade:G.grade,take:G.take,style:G.style,next:levelIdx+1<LEVELS.length?levelIdx+1:'end'};fadeTo(goDrive);};
 $('bRetryLvl').onclick=()=>restart();
 $('bAgain').onclick=()=>{state='select';G=null;updateSelect();show('sSelect');};
 $('bRetry').onclick=()=>restart();$('bDeadQuit').onclick=()=>{state='title';G=null;show('sTitle');};
