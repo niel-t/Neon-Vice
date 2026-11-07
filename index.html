@@ -709,8 +709,14 @@ function applyTrack(name,cont){const T=TRACKS[name];if(!T)return;MUS.track=name;
 function setTrack(name){if(!AC||!TRACKS[name])return;if(MUS.track===name){MUS.pending=null;return;}if(MUS.pending===name)return;
  const gm=n=>n&&(n.startsWith('w_')||n.startsWith('n_')||n==='boss'||n==='game');if(gm(name)&&gm(MUS.track)){MUS.pending=name;return;}applyTrack(name,false);}
 function setMuffle(on){if(!AC||MUS.muffled===on)return;MUS.muffled=on;mFilt.frequency.setTargetAtTime(on?420:(MUS.cut||18000),AC.currentTime,on?0.06:0.25);}
+/* adaptive layers: stacked on top of the combat track as the combo climbs (G.lv 0-3) */
+function layerStep(n,t,spb){const g=G;if(!g||g.cleared||g.def.hub||state!=='play')return;const lv=g.lv||0;if(!lv||!/^(game|boss|w_|n_)/.test(MUS.track))return;
+ const T=TRACKS[MUS.track],P=T.prog||TRACKS.game.prog,ch=P[(n>>4)%P.length],root=ch[0]-24,st=n&15;
+ if(lv>=1){if(st%4===0)mKick(t,0.45);if(st%4===2)mHat(t,0.16,true);}
+ if(lv>=2){if(st%2===0)mBass(t,mtof(root+12),spb*0.5,0.22);if(st===4||st===12)mClap(t,0.22);}
+ if(lv>=3){if(st%2===1)VOICE.bell(t,mtof(ch[st%3]+24),spb*0.9,0.03);if(st===2||st===6||st===10||st===14)mSnare(t,0.3);}}
 function schedMusic(){if(!AC||!SET.sound||!MUS.track)return;if(MUS.next<AC.currentTime)MUS.next=AC.currentTime+0.05;
- while(MUS.next<AC.currentTime+0.25){if(MUS.pending&&MUS.total%16===0)applyTrack(MUS.pending,true);const T=TRACKS[MUS.track],spb=60/T.bpm/4;try{T.step(MUS.total,MUS.next,spb);}catch(e){}MUS.next+=spb;MUS.total++;}}
+ while(MUS.next<AC.currentTime+0.25){if(MUS.pending&&MUS.total%16===0)applyTrack(MUS.pending,true);const T=TRACKS[MUS.track],spb=60/T.bpm/4;try{T.step(MUS.total,MUS.next,spb);}catch(e){}try{layerStep(MUS.total,MUS.next,spb);}catch(e){}MUS.next+=spb;MUS.total++;}}
 
 /* ================= DATA ================= */
 const GOLD=hex(0xf2c14e),DARK=hex(0x15121a),BLOODC=hex(0x8a0a10),EMBER=hex(0xff7a2a),CIGAR=hex(0x5a3416);
@@ -932,7 +938,7 @@ function isW(c){return c==='#'||c===' ';}
 function loadLevel(i,dOver){
  const def=dOver||LEVELS[i];let rows=def.map.slice();const W0=Math.max(...rows.map(r=>r.length));
  rows=rows.map(r=>' '+r.padEnd(W0,' ')+' ');const W=W0+2;rows.unshift(' '.repeat(W));rows.push(' '.repeat(W));const H=rows.length;
- const g={def,W,H,rows,solid:new Uint8Array(W*H),furn:new Uint8Array(W*H),floorT:new Int8Array(W*H).fill(-1),wallT:new Int8Array(W*H),enemies:[],items:[],bullets:[],parts:[],gibs:[],decals:[],decalDirty:true,pools:[],doors:[],lights:[],flashes:[],cash:[],popups:[],car:{x:0,z:0},cleared:false,done:false,time:0,score:0,combo:0,comboT:0,maxCombo:0,kills:0,execs:0,shots:0,hits:0,freeze:0,shake:0,flash:0,flashC:[1,0,0],flow:new Int16Array(W*H),nflow:new Int16Array(W*H),flowT:0,deadT:0,aimX:0,aimZ:0,cam:{x:0,z:0,kx:0,kz:0},staticB:Object.assign(new Batch(),{round:0.45}),decalB:new Batch(),T:0,hitT:0,killedBy:'',radar:null,deco:[],rug:new Uint8Array(W*H),wh:new Float32Array(W*H),topT:new Int8Array(W*H),tint:new Int8Array(W*H).fill(-1),glow:new Uint8Array(W*H),npcs:[],trigs:[],hint:null,hurtT:0,kb:{},heads:0,kc:0,cpulse:0};
+ const g={def,W,H,rows,solid:new Uint8Array(W*H),furn:new Uint8Array(W*H),floorT:new Int8Array(W*H).fill(-1),wallT:new Int8Array(W*H),enemies:[],items:[],bullets:[],parts:[],gibs:[],decals:[],decalDirty:true,pools:[],doors:[],lights:[],flashes:[],cash:[],popups:[],car:{x:0,z:0},cleared:false,done:false,time:0,score:0,combo:0,comboT:0,maxCombo:0,kills:0,execs:0,shots:0,hits:0,freeze:0,shake:0,flash:0,flashC:[1,0,0],flow:new Int16Array(W*H),nflow:new Int16Array(W*H),flowT:0,deadT:0,aimX:0,aimZ:0,cam:{x:0,z:0,kx:0,kz:0},staticB:Object.assign(new Batch(),{round:0.45}),decalB:new Batch(),T:0,hitT:0,killedBy:'',radar:null,deco:[],rug:new Uint8Array(W*H),wh:new Float32Array(W*H),topT:new Int8Array(W*H),tint:new Int8Array(W*H).fill(-1),glow:new Uint8Array(W*H),npcs:[],trigs:[],hint:null,hurtT:0,kb:{},heads:0,kc:0,cpulse:0,lv:0,lvT:0};
  G=g;
  const ch=(x,z)=>(x<0||z<0||x>=W||z>=H)?' ':rows[z][x];
  for(let z=0;z<H;z++)for(let x=0;x<W;x++){const c=ch(x,z);
@@ -1239,6 +1245,7 @@ function updateHints(dt){const g=G,p=g.player;if(g.hint){g.hint.t+=dt;if(g.hint.
 function update(dt){const g=G;if(g.def.hub){updateHub(dt);return;}
  if(g.kc>0){g.kc-=dt;dt*=0.3;}if(g.cpulse>0)g.cpulse=Math.max(0,g.cpulse-dt*4);
  g.T+=dt;
+ {const tgt=g.combo>=6?3:g.combo>=4?2:g.combo>=2?1:0;if(tgt>g.lv){g.lv=tgt;g.lvT=2;}else if(g.lv>tgt){g.lvT-=dt;if(g.lvT<=0){g.lv--;g.lvT=1.2;}}}
  if(g.freeze>0){g.freeze-=dt;return;}
  if(g.player.alive&&!g.done)g.time+=dt;
  if(g.comboT>0){g.comboT-=dt;if(g.comboT<=0)g.combo=0;}
