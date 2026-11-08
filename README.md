@@ -22,6 +22,9 @@ Jobs come from **McWey**, from his office on the 52nd floor of McWey Tower, next
 | Grab / throw weapon | E / right-click | A | GRAB button |
 | Cash (Money Man) | Q | X | CASH button |
 | Sprint | Shift | LB / L3 | Push stick to edge |
+| Reload (press again in the green window for an instant reload; a miss jams it) | R | LT | RELOAD button |
+| Switch weapon (two gun slots + melee) | Mouse wheel / Tab, or 1 / 2 / 3 | Y | SWITCH button |
+| Restart floor | Backspace | Back | &#8635; button |
 
 ## Features
 - PS2-style low-poly characters with faces taken from the original artwork, skinned animation and Vice City colour trails.

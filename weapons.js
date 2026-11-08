@@ -97,3 +97,10 @@ function kitBoot(p,charId,nMissions){
  if(p.locker==null)p.locker={v:KIT_V,items:[],lost:[]};
  normKit(p.kit);normLocker(p.locker);
  if(p.run!=null&&!normRun(p.run,nMissions,p.locker.lost))delete p.run;}
+/* ================= RELOAD (W6c): timed top-up from the caliber pool with a Gears-style active window =================
+   One press inside [ar0,ar1] seconds finishes at once; a press anywhere else jams (the rest takes AR_JAM× longer) and locks further tries. */
+const AR_JAM=1.4;
+function reloadNeed(type,mag,pool){const w=WD[type];if(!w||w.melee||!isCal(w.cal))return 0;return Math.max(0,Math.min(w.mag-Math.max(0,mag|0),pool|0));}
+function reloadNew(type){const w=WD[type],d=w.rl||1.5,a=w.ar||[0.5,0.12];return {t:0,dur:d,ar0:a[0]*d,ar1:(a[0]+a[1])*d,tried:false,jam:false};}
+function reloadPress(r){if(r.tried)return 'locked';r.tried=true;if(r.t>=r.ar0&&r.t<=r.ar1)return 'hit';r.jam=true;r.dur=r.t+(r.dur-r.t)*AR_JAM;return 'jam';}
+const stripRoom=(kit,cal)=>isCal(cal)?Math.max(0,capOf(kit,cal)-(kit.pool[cal]|0)):0;

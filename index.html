@@ -64,6 +64,8 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 #touchUI{position:fixed;inset:0;z-index:3;pointer-events:none;display:none}
 .tb{position:absolute;pointer-events:auto;font-family:'Press Start 2P',monospace;font-size:9px;line-height:1.4;text-align:center;color:#fff;background:rgba(255,45,149,.32);border:2px solid rgba(255,255,255,.55);border-radius:50%;width:70px;height:70px;display:flex;align-items:center;justify-content:center;padding:4px}
 #bGrab{right:18px;bottom:calc(50% - 10px)}
+#bReload{right:18px;bottom:calc(50% + 70px);background:rgba(45,226,230,.32)}
+#bSwap{right:100px;bottom:calc(50% - 40px);background:rgba(255,211,107,.3)}
 #bPerk{right:100px;bottom:calc(50% + 40px);background:rgba(60,200,110,.38)}
 #bPause{left:50%;top:6px;margin-left:-50px;width:42px;height:38px;border-radius:8px}
 #bRestart{left:50%;top:6px;margin-left:8px;width:42px;height:38px;border-radius:8px}
@@ -120,7 +122,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <body>
 <canvas id="gl"></canvas><canvas id="hud"></canvas>
 <div id="banner"></div><div id="cine"><div class="lb t"></div><div class="lb b"></div><div id="cineT"><div class="c1"></div><div class="c2"></div></div><div class="skp">TAP TO SKIP</div></div><div id="fade"></div><button class="btn sm" id="bSkip">SKIP TO McWEY<span class="kbhint"> (TAB)</span><span class="padhint"> (Y)</span></button>
-<div id="touchUI"><div class="tb" id="bGrab">GRAB</div><div class="tb" id="bPerk">CASH</div><div class="tb" id="bPause">II</div><div class="tb" id="bRestart">&#8635;</div></div>
+<div id="touchUI"><div class="tb" id="bGrab">GRAB</div><div class="tb" id="bReload">RELOAD</div><div class="tb" id="bSwap">SWITCH</div><div class="tb" id="bPerk">CASH</div><div class="tb" id="bPause">II</div><div class="tb" id="bRestart">&#8635;</div></div>
 <div id="sTitle" class="screen on">
   <div class="logo">NEON VICE</div><div class="logo2">OCEAN DRIVE</div>
   <div style="flex:1"></div>
@@ -130,8 +132,8 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
   <div class="hint" style="opacity:.75">Best in landscape · sound on · Xbox controller supported</div>
 </div>
 <div id="sHelp" class="screen dim"><div class="logo2">HOW TO PLAY</div>
-  <div class="kv"><span>MOVE</span><span>WASD / left thumb</span><span>AIM</span><span>Mouse / right thumb</span><span>ATTACK</span><span>Click / push right thumb</span><span>GRAB / THROW</span><span>E / right-click / GRAB</span><span>PERK</span><span>Space / CASH</span><span>SPRINT</span><span>Shift / LB / push left thumb to the edge</span><span>LOOK AHEAD</span><span>Hold F</span><span>RESTART</span><span>R / &#8635;</span><span>PAUSE</span><span>Esc / II</span></div>
-  <div class="logo2" style="font-size:clamp(10px,2vw,14px);margin-top:4px">XBOX CONTROLLER</div><div class="kv"><span>MOVE</span><span>Left stick</span><span>AIM</span><span>Right stick</span><span>ATTACK</span><span>RT (or RB)</span><span>GRAB / THROW</span><span>A</span><span>CASH PERK</span><span>X</span><span>SPRINT</span><span>Hold LB / click L3</span><span>PAUSE / RESTART</span><span>Start / Back</span></div>
+  <div class="kv"><span>MOVE</span><span>WASD / left thumb</span><span>AIM</span><span>Mouse / right thumb</span><span>ATTACK</span><span>Click / push right thumb</span><span>GRAB / THROW</span><span>E / right-click / GRAB</span><span>PERK</span><span>Space / CASH</span><span>SPRINT</span><span>Shift / LB / push left thumb to the edge</span><span>LOOK AHEAD</span><span>Hold F</span><span>RELOAD</span><span>R / RELOAD (again in the green window: instant)</span><span>SWITCH WEAPON</span><span>Wheel / Tab / 1 2 3 / SWITCH</span><span>RESTART</span><span>Backspace / &#8635;</span><span>PAUSE</span><span>Esc / II</span></div>
+  <div class="logo2" style="font-size:clamp(10px,2vw,14px);margin-top:4px">XBOX CONTROLLER</div><div class="kv"><span>MOVE</span><span>Left stick</span><span>AIM</span><span>Right stick</span><span>ATTACK</span><span>RT (or RB)</span><span>GRAB / THROW</span><span>A</span><span>CASH PERK</span><span>X</span><span>RELOAD</span><span>LT</span><span>SWITCH WEAPON</span><span>Y</span><span>SPRINT</span><span>Hold LB / click L3</span><span>PAUSE / RESTART</span><span>Start / Back</span></div>
   <div class="hint">One hit kills, you included. Red lasers mean a gunman is about to fire.<br>Stand still to shoot straight. Silenced guns don't wake the floor.<br>Slam doors into people. Hit downed enemies to finish them.</div>
   <button class="btn" id="bHelpBack">GOT IT<span class="padhint"> (A)</span></button></div>
 <div id="sSelect" class="screen">
@@ -636,7 +638,7 @@ const RUNTRACK=[0,0,0,0,0,0,0,0];
 /* ================= STATE ================= */
 let G=null,state='title',selIdx=2,levelIdx=0,totalScore=0,totalKills=0,totalTime=0,touchMode=false;
 let VP=null,invVP=null,vw=innerWidth,vh=innerHeight,dpr=1;
-const keys={},mouse={x:0,y:0,down:false,active:false},pressed={grab:false,perk:false,restart:false,pause:false};
+const keys={},mouse={x:0,y:0,down:false,active:false},pressed={grab:false,perk:false,restart:false,pause:false,reload:false,swap:false,slot:0};
 const sticks={L:null,R:null};
 const PAD={on:false,lx:0,ly:0,rx:0,ry:0,rt:0,b:[],pb:[],aim:false,navT:0,gp:null,rearm:false};let padMode=false,inputSuspended=false;
 function pollPad(){if(inputSuspended){PAD.on=false;return;}let gp=null;try{const gps=navigator.getGamepads?navigator.getGamepads():[];for(const q of gps)if(q&&q.connected){gp=q;break;}}catch(e){}
@@ -675,7 +677,7 @@ function padMenus(dt){if(!PAD.on)return;PAD.navT-=dt;const ax=PAD.gp.axes[0]||0;
   case 'shop':{if(pdown(1)){closeShop();break;}if(!shopReady()){if(pdown(0))$('shSay').click();break;}const a=arm(),i=pdown(4)?0:pdown(0)?1:pdown(5)?2:-1;if(i>=0&&a.stock[i])shopPick(a.stock[i]);else if(pdown(2))shopExtra('ammo');else if(pdown(3))shopExtra('vest');}break;
   case 'perk':{const cs=document.querySelectorAll('.pcard');const i=pdown(4)?0:pdown(0)?1:pdown(5)?2:-1;if(i>=0&&cs[i])choosePerk(cs[i].dataset.k);}break;
   case 'pause':if(pdown(9)||pdown(1))togglePause();else if(pdown(8))restart();else if(padWalk())walkAway();else if(pdown(3))$('bQuit').click();break;
-  case 'play':if(G&&G.cine&&(pdown(0)||pdown(2))){cineSkip();break;}if(G&&G.def.hub&&pdown(3)){hubSkip();break;}if(pdown(9))togglePause();else if(pdown(8))restart();else{if(pdown(0))pressed.grab=true;if(pdown(2))pressed.perk=true;}break;}}
+  case 'play':if(G&&G.cine&&(pdown(0)||pdown(2))){cineSkip();break;}if(G&&G.def.hub&&pdown(3)){hubSkip();break;}if(pdown(9))togglePause();else if(pdown(8))restart();else{if(pdown(0))pressed.grab=true;if(pdown(2))pressed.perk=true;if(pdown(3))pressed.swap=true;if(pdown(6))pressed.reload=true;}break;}}
 addEventListener('gamepadconnected',()=>{padMode=true;touchMode=false;mouse.active=false;banner('CONTROLLER CONNECTED','Left stick move · Right stick aim · RT attack · A grab · X cash');});
 
 function isSolid(cx,cz){return WORLD.cell.isSolid(G,cx,cz);}
@@ -940,15 +942,47 @@ function fireGun(c,w,isP){const g=G,wd=WD[w.type];w.ammo--;if(wd.nade){if(isP)g.
  sfx(wd.snd,isP?1:clamp(1.15-Math.hypot(c.x-g.player.x,c.z-g.player.z)/18,0.2,1));
  if(w.type!=='double'&&w.type!=='shotgun')gib(c.x+ca*0.2,0.72,c.z-sa*0.2,ca*rnd(1.5,2.5),rnd(1.5,2.5),-sa*rnd(1.5,2.5),wd.pel>1?[0.04,0.04,0.08]:[0.03,0.03,0.06],wd.pel>1?[0.8,0.15,0.15]:[0.85,0.65,0.25],true);
  if(isP){rumble(wd.pel>1?0.6:0.12,wd.pel>1?0.8:0.35,wd.pel>1?150:60);shake(wd.kick*1.2);g.cam.kx-=sa*wd.kick*0.6;g.cam.kz-=ca*wd.kick*0.6;alertNoise(c.x,c.z,wd.loud);if(wd.loud>=10)g.loudShot=1;}}
-function throwWeapon(p){const w=p.weapon;if(!w)return;p.weapon=null;const sa=Math.sin(p.a),ca=Math.cos(p.a);drawMelee(p);
+function throwWeapon(p){const w=p.weapon;if(!w)return;p.weapon=null;const sa=Math.sin(p.a),ca=Math.cos(p.a);if(kitOn(p)){G.hand=null;p.rl=null;autoDraw(p);}
  G.items.push({x:p.x+sa*0.3,z:p.z+ca*0.3,type:w.type,ammo:w.ammo,vx:sa*15,vz:ca*15,rot:p.a,flying:true,fresh:false,flyT:0});sfx('throw');p.cd=0.25;p.atkT=p.atkDur=0.15;}
-/* interim until W6c slot switching: once the gun leaves your hand, the kit's melee comes out (it is then held, so kitFromPlay keeps it only while you hold it) */
-function drawMelee(p){const L=G.live;if(p!==G.player||!L||!L.melee||p.weapon)return;p.weapon={type:L.melee,ammo:0};L.melee=null;}
-/* the kit's caliber pool (G.live.pool) feeds the gun in hand. Interim instant reload until W6c adds timed and active reloads. */
-function poolReload(p){const w=p.weapon,L=G.live;if(!w||!L)return false;const wd=WD[w.type];if(!wd||wd.melee||!isCal(wd.cal)||w.ammo>0)return false;
- const have=L.pool[wd.cal]|0;if(have<=0)return false;const n=Math.min(have,wd.mag);L.pool[wd.cal]=have-n;w.ammo=n;p.cd=Math.max(p.cd,0.45);p.burstQ=0;popup(p.x,p.z,'RELOAD','#2de2e6');sfx('pick');return true;}
-/* a gun in hand holds one magazine; extra rounds it came with go to the matching pool, up to capacity */
-function takeWeapon(p,type,ammo){const wd=WD[type];p.weapon={type,ammo};p.bloom=0;if(!wd.melee&&wd.mag&&ammo>wd.mag){p.weapon.ammo=wd.mag;if(G.live)poolAdd(G.live,wd.cal,ammo-wd.mag);}}
+/* ================= SLOTS (W6c) =================
+   In a job the held weapon is the truth: its place in G.live (guns[G.hand] or melee) is empty while it is in hand, and holster() puts it back.
+   G.hand = 0|1 (gun slot), 'melee', or null (fists). */
+const kitOn=p=>!!(G&&G.live&&!G.def.hub&&p===G.player);
+function dropAt(p,type,ammo){G.items.push({x:p.x,z:p.z,type,ammo,vx:rnd(-1,1),vz:rnd(-1,1),rot:rnd(0,TAU),flying:false,fresh:false,flyT:0});}
+function holster(p){const L=G.live,h=G.hand,w=p.weapon;p.rl=null;p.burstQ=0;
+ if(w){const wd=WD[w.type];
+  if(wd.melee){if(L.melee)dropAt(p,L.melee,0);L.melee=w.type;}
+  else{const s=typeof h==='number'&&!L.guns[h]?h:!L.guns[L.active]?L.active:!L.guns[1-L.active]?1-L.active:-1;let mag=Math.max(0,w.ammo|0);
+   if(mag>wd.mag){poolAdd(L,wd.cal,mag-wd.mag);mag=wd.mag;}if(s<0)dropAt(p,w.type,mag);else L.guns[s]={type:w.type,mag};}}
+ p.weapon=null;G.hand=null;}
+function drawHand(p,h){const L=G.live;if(h===G.hand)return false;
+ if(h==='melee'?!L.melee:typeof h==='number'?!L.guns[h]:h!==null)return false;
+ holster(p);if(h==='melee'){p.weapon={type:L.melee,ammo:0};L.melee=null;}else if(h!==null){const s=L.guns[h];p.weapon={type:s.type,ammo:s.mag};L.guns[h]=null;L.active=h;}
+ G.hand=h;p.cd=Math.max(p.cd,0.3);p.bloom=0;sfx('blip');popup(p.x,p.z,p.weapon?WD[p.weapon.type].name:'FISTS','#2de2e6');
+ if(p.weapon&&p.weapon.ammo<=0)reloadStart(p);return true;}
+/* what the switch cycles through: gun slots, then melee; bare fists only when there is nothing else to switch to */
+function handOpts(){const L=G.live,o=[];for(const i of [0,1])if(L.guns[i]||G.hand===i)o.push(i);if(L.melee||G.hand==='melee')o.push('melee');if(o.length<2)o.push(null);return o;}
+function cycleHand(p){const o=handOpts();if(o.length<2)return false;return drawHand(p,o[(o.indexOf(G.hand)+1)%o.length]);}
+function slotHand(p,n){const L=G.live;return drawHand(p,n===1?0:n===2?1:L.melee||G.hand==='melee'?'melee':null);}
+/* once the hand is empty (thrown, last knife gone) the next thing in the kit comes out: active gun, other gun, melee */
+function autoDraw(p){const L=G.live;for(const h of [L.active,1-L.active,'melee'])if(h==='melee'?L.melee:L.guns[h]){drawHand(p,h);return true;}return false;}
+/* a gun in hand holds one magazine; extra rounds it came with go to the matching pool, up to capacity.
+   In a job the new weapon takes its kit place: melee replaces melee, a gun takes a free slot or replaces the active gun (the replaced one is dropped). */
+function takeWeapon(p,type,ammo){const wd=WD[type];
+ if(kitOn(p)){const L=G.live;holster(p);let h;
+  if(wd.melee){if(L.melee)dropAt(p,L.melee,0);L.melee=null;h='melee';}
+  else{const a=L.active;h=!L.guns[a]?a:!L.guns[1-a]?1-a:a;if(L.guns[h]){dropAt(p,L.guns[h].type,L.guns[h].mag);L.guns[h]=null;}L.active=h;}
+  G.hand=h;}
+ p.weapon={type,ammo};p.bloom=0;p.rl=null;if(!wd.melee&&wd.mag&&ammo>wd.mag){p.weapon.ammo=wd.mag;if(G.live)poolAdd(G.live,wd.cal,ammo-wd.mag);}}
+/* ================= RELOAD (W6c) =================
+   A reload tops the magazine up from the caliber pool after WD.rl seconds; one press inside the active window (WD.ar) finishes it at once,
+   a press anywhere else jams it (slower) and locks further tries. Attacks wait for it; switching or dropping the gun cancels it. */
+function reloadStart(p){const w=p.weapon,L=G.live;if(!w||!L||p.rl)return false;const wd=WD[w.type];if(!reloadNeed(w.type,w.ammo,L.pool[wd.cal]))return false;
+ p.rl=reloadNew(w.type);p.rl.w=w;p.burstQ=0;sfx('blip');return true;}
+function reloadDone(p){const w=p.rl.w,wd=WD[w.type],L=G.live;p.rl=null;const n=reloadNeed(w.type,w.ammo,L.pool[wd.cal]);L.pool[wd.cal]=(L.pool[wd.cal]|0)-n;w.ammo+=n;p.cd=Math.max(p.cd,0.1);sfx('pick');}
+function reloadTick(p,dt){const r=p.rl;if(!r)return;if(r.w!==p.weapon||!G.live){p.rl=null;return;}r.t+=dt;if(r.t>=r.dur)reloadDone(p);}
+function reloadInput(p){if(p.rl){const res=reloadPress(p.rl);if(res==='hit'){popup(p.x,p.z,'PERFECT','#7dff9a');reloadDone(p);}else if(res==='jam'){popup(p.x,p.z,'JAMMED','#ff8a95');sfx('throw');}return;}
+ const w=p.weapon,wd=w&&WD[w.type];if(!reloadStart(p)&&wd&&!wd.melee&&isCal(wd.cal)&&w.ammo<wd.mag&&!(G.live.pool[wd.cal]>0))popup(p.x,p.z,'NO '+CAL[wd.cal].name,'#ff8a95');}
 /* ================= GORE + REAL EXECUTIONS ================= */
 const GORE=()=>SET.gore!=='normal';
 function limbGib(e,limb,dir){const world=G,L=e.look||{},sc=(e.sc||1)*0.74,sk=L.skin||[0.8,0.6,0.5],arm=limb==='armL'||limb==='armR',sd=(limb==='armL'||limb==='legL')?1:-1;
@@ -985,9 +1019,9 @@ function updateExec(p,dt){const x=p.ex,e=x.e,g=G;x.t+=dt;p.vx=p.vz=0;p.exec=Math
    if(pop)headPop(e,dir);bloodBurst(hx,0.3,hz,dir,gore?70:30,4);addFloorDecal(hx,hz,rnd(1.0,1.5),rnd(0,TAU),8,bloodTint());if(x.kind==='gun'||gore)wallSplat(hx,hz,dir,gore?2:1);
    shake(0.45);rumble(0.9,1,200);g.freeze=0.14;}}
  if(x.t>=x.dur){p.ex=null;p.exec=0.05;}}
-function playerAttack(p){const g=G,w=p.weapon,ch=CHARS[selIdx];if(w&&!WD[w.type].melee&&w.ammo<=0&&poolReload(p))return;{let tg=null,bd=1.15;for(const e of g.enemies){if(e.alive&&e.down>0){const d=Math.hypot(e.x-p.x,e.z-p.z);if(d<bd){bd=d;tg=e;}}}if(tg&&!(w&&!WD[w.type].melee&&w.ammo<=0)){execute(p,tg);return;}}
+function playerAttack(p){const g=G,w=p.weapon,ch=CHARS[selIdx];if(p.rl)return;if(w&&!WD[w.type].melee&&w.ammo<=0&&reloadStart(p))return;{let tg=null,bd=1.15;for(const e of g.enemies){if(e.alive&&e.down>0){const d=Math.hypot(e.x-p.x,e.z-p.z);if(d<bd){bd=d;tg=e;}}}if(tg&&!(w&&!WD[w.type].melee&&w.ammo<=0)){execute(p,tg);return;}}
  if(w&&!WD[w.type].melee){if(w.ammo<=0){throwWeapon(p);return;}const wd=WD[w.type];
-  if(wd.burst3){fireGun(p,w,true);p.burstQ=Math.min(2,w.ammo);p.burstT=0.065;p.cd=wd.cd;}else fireGun(p,w,true);if(w.ammo<=0&&p.weapon===w)poolReload(p);return;}
+  if(wd.burst3){fireGun(p,w,true);p.burstQ=Math.min(2,w.ammo);p.burstT=0.065;p.cd=wd.cd;}else fireGun(p,w,true);if(w.ammo<=0&&p.weapon===w)reloadStart(p);return;}
  const wd=WD[w?w.type:'fists'];let tgt=null,best=1.15;
 
  p.atkT=p.atkDur=w?0.22:0.16;p.cd=wd.cd;if(!w)p.jab=!p.jab;sfx(wd.snd);best=wd.range+0.3+Dd().lunge+0.15*pk('grip')+(p.sprinting?0.4:0);tgt=null;const arc=wd.arc||1.0;
@@ -996,7 +1030,7 @@ function playerAttack(p){const g=G,w=p.weapon,ch=CHARS[selIdx];if(w&&!WD[w.type]
   if(wd.kill||ch.id==='consigliere'){sfx('hit_'+(w?BT(w.type):'fists'));hitEnemy(tgt,w?w.type:'fists',dir,2);}else if(tgt.body==='fat'||tgt.body==='big'||tgt.boss)stagger(tgt,dir);else knockdown(tgt,dir);}}
 function nearItem(p){let best=null,bd=0.95;for(const it of G.items){if(it.flying)continue;const d=Math.hypot(it.x-p.x,it.z-p.z);if(d<bd){bd=d;best=it;}}return best;}
 function playerGrab(p){const g=G;const best=nearItem(p);if(objGrab(p,best))return;
- if(best){if(p.weapon)g.items.push({x:p.x,z:p.z,type:p.weapon.type,ammo:p.weapon.ammo,vx:rnd(-1,1),vz:rnd(-1,1),rot:rnd(0,TAU),flying:false,fresh:false,flyT:0});
+ if(best){if(p.weapon&&!kitOn(p))dropAt(p,p.weapon.type,p.weapon.ammo);
   g.items.splice(g.items.indexOf(best),1);let ammo=best.ammo;if(best.fresh&&WD[best.type].ammo)ammo=Math.round(ammo*(CHARS[selIdx].id==='don'?1.5:1)*(1+0.25*pk('pockets')));takeWeapon(p,best.type,ammo);sfx('pick');}
  else if(p.weapon)throwWeapon(p);}
 function playerPerk(p){if(CHARS[selIdx].id!=='money'||p.perkCD>0)return;const g=G;let d=6;if(!touchMode&&mouse.active)d=clamp(Math.hypot(g.aimX-p.x,g.aimZ-p.z),1.5,7);
@@ -1011,7 +1045,9 @@ function updateHints(dt){const g=G,p=g.player;if(g.hint){g.hint.t+=dt;if(g.hint.
  if(g.enemies.some(e=>e.alive&&e.aiming))hint('laser','RED LASER = he is about to fire. Break his line of sight!');
  if(g.enemies.some(e=>e.alive&&e.down>0))hint('exec','He is down! Attack him again to finish him.');
  if(p.hp<p.maxhp&&Dd().regen)hint('hp','You got hit. Stay out of the fight for a few seconds to heal.');
- if(p.weapon&&!WD[p.weapon.type].melee&&p.weapon.ammo===0)hint('empty','Out of ammo. Attack again to throw the gun - it knocks people down.');
+ if(p.weapon&&!WD[p.weapon.type].melee&&p.weapon.ammo===0&&!p.rl)hint('empty','Out of ammo. Attack again to throw the gun - it knocks people down.');
+ if(p.rl)hint('reload',(padMode?'LT':touchMode?'RELOAD':'R')+' while reloading: hit it in the green window for an instant reload. Miss and it jams.');
+ if(g.live&&(g.live.guns[0]||g.live.guns[1]||g.live.melee))hint('switch',padMode?'Y switches weapons.':touchMode?'SWITCH swaps weapons.':'Mouse wheel / Tab switches weapons; 1 2 3 pick one.');
  if(g.time>2&&nearItemR(p,2.6))hint('grab',padMode?'Weapon nearby. Walk over it, or press A to pick it up.':touchMode?'Weapon nearby. Walk over it to pick it up, or tap GRAB.':'Weapon nearby. Walk over it, or press E to pick it up.');
  if(g.time>3)for(const d of g.doors)if(Math.hypot(d.hx-p.x,d.hz-p.z)<2){hint('door','Run into a door to swing it - it knocks enemies flat.');break;}
  if(g.time>12)hint('sprint',padMode?'Hold LB to sprint. Footsteps are loud though.':touchMode?'Push your left thumb to the edge to sprint.':'Hold Shift to sprint. Guards will hear you.');
@@ -1037,6 +1073,7 @@ function update(dt){const g=G;fountainHum(g.def.hub?g:null);if(g.def.hub){update
 function stickVec(s){let dx=(s.x-s.ox)/55,dy=(s.y-s.oy)/55;const l=Math.hypot(dx,dy);if(l>1){dx/=l;dy/=l;}return[dx,dy];}
 function updatePlayer(dt){const g=G,p=g.player,ch=CHARS[selIdx];
  if(!p.alive){slideBody(p,dt);return;}
+ if(kitOn(p)&&!p.weapon&&g.hand!==null){g.hand=null;autoDraw(p);}
  let mx=0,mz=0;if(keys.KeyW||keys.ArrowUp)mz-=1;if(keys.KeyS||keys.ArrowDown)mz+=1;if(keys.KeyA||keys.ArrowLeft)mx-=1;if(keys.KeyD||keys.ArrowRight)mx+=1;
  if(sticks.L){const v=stickVec(sticks.L);mx+=v[0];mz+=v[1];}if(padMode&&PAD.on){mx+=PAD.lx;mz+=PAD.ly;}const ml=Math.hypot(mx,mz);if(ml>1){mx/=ml;mz/=ml;}
  if(p.exec>0){p.exec-=dt;mx=mz=0;}
@@ -1052,21 +1089,25 @@ function updatePlayer(dt){const g=G,p=g.player,ch=CHARS[selIdx];
    if(ba!==null)a=ba;p.a=a;}if(m>0.55)attacking=true;}
  else if(!touchMode&&mouse.active)p.a=Math.atan2(g.aimX-p.x,g.aimZ-p.z);
  else if(touchMode&&ml>0.2)p.a=Math.atan2(mx,mz);
- p.cd-=dt;if(p.atkT>0)p.atkT-=dt;if(p.armorT>0)p.armorT-=dt;p.perkCD-=dt;p.bloom=Math.max(0,p.bloom-dt*0.45);if(g.hurtT>0)g.hurtT-=dt;
+ p.cd-=dt;if(p.atkT>0)p.atkT-=dt;if(p.armorT>0)p.armorT-=dt;p.perkCD-=dt;p.bloom=Math.max(0,p.bloom-dt*0.45);reloadTick(p,dt);if(g.hurtT>0)g.hurtT-=dt;
  {const D=Dd();if(D.regen&&p.hp<p.maxhp&&g.time-p.lastHurt>Math.max(2,D.regen-2*pk('medic'))){p.hp++;p.lastHurt=g.time;popup(p.x,p.z,'+1 HEALTH','#7dff9a');sfx('pick');}}
- if(!p.weapon&&CHARS[selIdx].id!=='consigliere'){for(const it of g.items){if(!it.flying&&(it.age||0)>1&&Math.hypot(it.x-p.x,it.z-p.z)<0.45){g.items.splice(g.items.indexOf(it),1); let ammo=it.ammo;if(it.fresh&&WD[it.type].ammo)ammo=Math.round(ammo*(CHARS[selIdx].id==='don'?1.5:1)*(1+0.25*pk('pockets')));takeWeapon(p,it.type,ammo);sfx('pick');popup(p.x,p.z,WD[it.type].name,'#ffd36b');break;}}}
-  else if(p.weapon&&!WD[p.weapon.type].melee&&WD[p.weapon.type].ammo){const wt=p.weapon.type,wd=WD[wt],L=g.live;
-   /* walking over a gun strips its rounds into the pool when it shares your caliber; caliber-less guns (knives) only top up their own type */
+ /* on bare fists by choice (kit holstered) walking over weapons leaves them; grab still takes one */
+ const fistsByChoice=kitOn(p)&&g.hand===null&&!!(g.live.guns[0]||g.live.guns[1]||g.live.melee);
+ if(!p.weapon&&!fistsByChoice&&CHARS[selIdx].id!=='consigliere'){for(const it of g.items){if(!it.flying&&(it.age||0)>1&&Math.hypot(it.x-p.x,it.z-p.z)<0.45){g.items.splice(g.items.indexOf(it),1); let ammo=it.ammo;if(it.fresh&&WD[it.type].ammo)ammo=Math.round(ammo*(CHARS[selIdx].id==='don'?1.5:1)*(1+0.25*pk('pockets')));takeWeapon(p,it.type,ammo);sfx('pick');popup(p.x,p.z,WD[it.type].name,'#ffd36b');break;}}}
+  else{const L=kitOn(p)?g.live:null,hw=p.weapon&&WD[p.weapon.type],cals=new Set();
+   if(L){if(hw&&!hw.melee&&isCal(hw.cal))cals.add(hw.cal);for(const s of L.guns)if(s&&isCal(WD[s.type].cal))cals.add(WD[s.type].cal);}
+   /* walking over a gun strips its rounds into the pool when it shares a caliber with any gun in your kit; caliber-less guns (knives) only top up the same type in hand */
    for(const it of g.items){const id=WD[it.type];if(it.flying||(it.age||0)<=1||!(it.ammo>0)||!id||id.melee||Math.hypot(it.x-p.x,it.z-p.z)>=0.45)continue;
-    const shared=L&&isCal(wd.cal)&&id.cal===wd.cal,same=!isCal(wd.cal)&&it.type===wt;if(!shared&&!same)continue;
-    const room=shared?capOf(L,wd.cal)-(L.pool[wd.cal]|0):wd.mag-p.weapon.ammo;if(room<=0)continue;
+    const shared=cals.has(id.cal),same=!shared&&hw&&!hw.melee&&!!hw.ammo&&!isCal(hw.cal)&&it.type===p.weapon.type;if(!shared&&!same)continue;
+    const room=shared?stripRoom(L,id.cal):hw.mag-p.weapon.ammo;if(room<=0)continue;
     let ammo=it.ammo;if(it.fresh)ammo=Math.round(ammo*(CHARS[selIdx].id==='don'?1.5:1)*(1+0.25*pk('pockets')));const add=Math.min(ammo,room);
-    if(shared)L.pool[wd.cal]=(L.pool[wd.cal]|0)+add;else p.weapon.ammo+=add;it.ammo=ammo-add;it.fresh=false;
-    if(same&&it.ammo<=0)g.items.splice(g.items.indexOf(it),1);if(shared&&p.weapon.ammo<=0)poolReload(p);
-    sfx('pick');popup(p.x,p.z,'+'+add+' '+(shared?CAL[wd.cal].name:'AMMO'),'#ffd36b');break;}}
+    if(shared)L.pool[id.cal]=(L.pool[id.cal]|0)+add;else p.weapon.ammo+=add;it.ammo=ammo-add;it.fresh=false;
+    if(same&&it.ammo<=0)g.items.splice(g.items.indexOf(it),1);if(shared&&hw&&hw.cal===id.cal&&p.weapon.ammo<=0)reloadStart(p);
+    sfx('pick');popup(p.x,p.z,'+'+add+' '+(shared?CAL[id.cal].name:'AMMO'),'#ffd36b');break;}}
  if(p.burstQ>0){p.burstT-=dt;if(p.burstT<=0&&p.weapon&&p.weapon.type==='m16'&&p.weapon.ammo>0){fireGun(p,p.weapon,true);p.burstQ--;p.burstT=0.065;p.cd=WD.m16.cd;}else if(!p.weapon||p.weapon.type!=='m16')p.burstQ=0;}
  if(!g.def.hub){if(attacking&&p.cd<=0&&!(p.exec>0)&&!(p.burstQ>0))playerAttack(p);
- if(pressed.grab)playerGrab(p);if(pressed.perk)playerPerk(p);}
+ if(pressed.grab)playerGrab(p);if(pressed.perk)playerPerk(p);
+ if(kitOn(p)&&!(p.exec>0)){if(pressed.swap)cycleHand(p);else if(pressed.slot)slotHand(p,pressed.slot);if(pressed.reload)reloadInput(p);}}
  for(const e of g.enemies){e.pvis=e.alive&&Math.hypot(e.x-p.x,e.z-p.z)<15&&los(p.x,p.z,e.x,e.z);}
  if(ch.id==='don'&&Math.random()<dt*5){const sa=Math.sin(p.a),ca=Math.cos(p.a);g.parts.push({t:'m',x:p.x+ca*0.05+sa*0.24,y:0.87,z:p.z-sa*0.05+ca*0.24,vx:rnd(-0.1,0.1),vy:0,vz:rnd(-0.1,0.1),s:rnd(0.04,0.07),c:[0.75,0.72,0.8],life:1.4});}}
 const FORCE={pistol:4.5,silenced:3.5,revolver:7.5,dual:4,smg:3.5,m16:6,shotgun:9.5,double:13,bat:6.5,knife:2.5,machete:4,fists:5.5,exec:1,throw:5,door:6,boss:6};
@@ -1604,8 +1645,8 @@ function runWalkAway(p){if(!p.run)return false;delete p.run;return true;}
  function kitCommit(){const p=myProg(),r=p.run;if(!G||G.def.hub||!G.live||!r||r.mission!=='c'+levelIdx)return false;
   const m=kitFromPlay();p.kit=m.kit;p.locker.items.push(...(r.stow||[]),...m.stow);delete p.run;saveProg();return true;}
  function applyLoadout(k){const p=G&&G.player;if(!p)return;G.live=kitClone(k);const h=G.hand=handOf(k);
-  if(typeof h==='number'){const s=k.guns[h],wd=WD[s.type];p.weapon={type:s.type,ammo:s.mag};if(s.mag<=0&&isCal(wd.cal)){const n=Math.min(G.live.pool[wd.cal]|0,wd.mag);G.live.pool[wd.cal]-=n;p.weapon.ammo=n;}}
-  else if(h==='melee')p.weapon={type:k.melee,ammo:0};
+  if(typeof h==='number'){const s=k.guns[h],wd=WD[s.type];p.weapon={type:s.type,ammo:s.mag};if(s.mag<=0&&isCal(wd.cal)){const n=Math.min(G.live.pool[wd.cal]|0,wd.mag);G.live.pool[wd.cal]-=n;p.weapon.ammo=n;}G.live.guns[h]=null;}
+  else if(h==='melee'){p.weapon={type:k.melee,ammo:0};G.live.melee=null;}
   p.kitPlates=k.armour?k.armour.plates:0;p.armor=(p.armor||0)+p.kitPlates;
   const gf=myProg().gift;if(gf&&WD[gf])G.items.push({x:p.x+0.7,z:p.z,type:gf,ammo:WD[gf].ammo||0,vx:0,vz:0,rot:0.6,flying:false,fresh:false,flyT:0});}
  function loadoutTxt(){const k=kit(),parts=[];for(const s of k.guns)if(s)parts.push(WD[s.type].name);if(k.melee)parts.push(WD[k.melee].name);
@@ -2896,6 +2937,10 @@ const WICON={
  tknife:[[0,0,4,2],[4,0,9,2],[3,3,4,2],[7,3,9,2],[6,6,4,2],[10,6,9,2]],
  goldgl:[[0,3,6,3],[6,1,14,4],[20,2,4,2],[9,0,6,1],[10,5,4,3]],
 };
+/* reload progress with the active window (green) still to hit; it is gone once you have tried */
+function reloadBar(c,r,x,y,w,h){c.fillStyle='rgba(0,0,0,.75)';c.fillRect(x-1,y-1,w+2,h+2);c.fillStyle='rgba(255,255,255,.16)';c.fillRect(x,y,w,h);
+ if(!r.tried){c.fillStyle='#7dff9a';c.fillRect(x+w*r.ar0/r.dur,y,Math.max(2,w*(r.ar1-r.ar0)/r.dur),h);}
+ const f=clamp(r.t/r.dur,0,1);c.fillStyle=r.jam?'rgba(255,74,90,.6)':'rgba(45,226,230,.45)';c.fillRect(x,y,w*f,h);c.fillStyle='#fff';c.fillRect(x+w*f-1,y-2,2,h+4);}
 function drawIcon(c,type,x,y,s,col){const r=WICON[type]||WICON.fists;c.fillStyle='rgba(0,0,0,.8)';for(const q of r)c.fillRect(x+q[0]*s+s*0.6,y+q[1]*s+s*0.6,q[2]*s,q[3]*s);c.fillStyle=col;for(const q of r)c.fillRect(x+q[0]*s,y+q[1]*s,q[2]*s,q[3]*s);}
 function drawRadar(c,cx,cy,R){const g=G,p=g.player,s=R/8;
  c.save();c.beginPath();c.arc(cx,cy,R,0,TAU);c.closePath();c.fillStyle='rgba(10,4,18,.82)';c.fill();c.clip();
@@ -2936,10 +2981,16 @@ function drawHUD0(){const c=hctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0
   const cap=Math.max(wd.mag||wd.ammo,am);if(cap<=13){const pipW=Math.min(6*u,(pw-20*u)/cap-1*u);for(let i=0;i<cap;i++){c.fillStyle=i<am?'#ffd36b':'rgba(255,255,255,.18)';c.fillRect(px2+10*u+i*(pipW+1.5*u),py2+46*u,pipW,6*u);}}
   else{c.fillStyle='rgba(255,255,255,.18)';c.fillRect(px2+10*u,py2+46*u,pw-20*u,6*u);c.fillStyle='#ffd36b';c.fillRect(px2+10*u,py2+46*u,(pw-20*u)*clamp(am/cap,0,1),6*u);}}
  else{c.font=VTF(16*u);txt(c,'MELEE',px2+pw-8*u,py2+10*u,'#c9a8e8','right',16*u);}
+ if(p.rl){c.fillStyle='rgba(10,4,18,.92)';c.fillRect(px2+8*u,py2+42*u,pw-14*u,13*u);reloadBar(c,p.rl,px2+10*u,py2+46*u,pw-20*u,6*u);c.font=PXF(5*u);txt(c,p.rl.jam?'JAMMED':'RELOADING',px2+pw-8*u,py2+36*u,p.rl.jam?'#ff8a95':'#2de2e6','right',5*u);
+  const s=project(p.x,2.15,p.z);if(s)reloadBar(c,p.rl,s[0]-30*u,s[1],60*u,5*u);}
+ /* holstered kit: what the switch can bring out (1/2 gun slots, 3 melee) */
+ if(G.live){const L=G.live,rows=[];for(const i of [0,1])if(L.guns[i])rows.push([String(i+1),L.guns[i].type,String(L.guns[i].mag)]);if(L.melee)rows.push(['3',L.melee,'']);
+  if(rows.length){const bw=74*u,rh=15*u,bh=rows.length*rh+4*u,bx=px2-bw-5*u,by=py2+ph-bh;c.fillStyle='rgba(10,4,18,.7)';c.fillRect(bx,by,bw,bh);
+   rows.forEach((r,k)=>{const y=by+2*u+k*rh;c.font=PXF(6*u);txt(c,r[0],bx+4*u,y+3*u,'#2de2e6','left',6*u);drawIcon(c,r[1],bx+14*u,y+1*u,1.4*u,'#c9a8e8');txt(c,r[2],bx+bw-4*u,y+3*u,'#fff','right',6*u);});}}
  /* status line under radar / above panel */
  let sub=CHARS[selIdx].name+' LV'+myProg().lvl+'  ·  '+Dd().name;if(CHARS[selIdx].id==='money')sub+=p.perkCD>0?'  ·  CASH '+Math.ceil(p.perkCD)+'s':'  ·  CASH READY';
  c.font=VTF(16*u);if(touchMode)txt(c,sub,rcx-R,rcy+R+8*u,'#e9c7ff','left',16*u);else txt(c,sub,vw-m,py2-18*u,'#e9c7ff','right',16*u);
- if(w&&w.ammo===0&&!wd.melee){c.font=VTF(18*u);txt(c,G.live&&isCal(wd.cal)&&G.live.pool[wd.cal]>0?'EMPTY — ATTACK TO RELOAD':'EMPTY — ATTACK TO THROW',vw/2,vh-m-40*u,'#ff4a5a','center',18*u);}
+ if(w&&w.ammo===0&&!wd.melee&&!p.rl){c.font=VTF(18*u);txt(c,G.live&&isCal(wd.cal)&&G.live.pool[wd.cal]>0?'EMPTY — '+(padMode?'LT':touchMode?'TAP RELOAD':'R')+' TO RELOAD':'EMPTY — ATTACK TO THROW',vw/2,vh-m-40*u,'#ff4a5a','center',18*u);}
  /* context prompt */
  const near=p.alive?nearItem(p):null;if(near){const s=project(near.x,0.9,near.z);if(s){const lbl=(padMode?'(A) ':touchMode?'GRAB: ':'[E] ')+WD[near.type].name+(WD[near.type].ammo!==undefined?' ('+near.ammo+')':'');c.font=VTF(18*u);const tw=c.measureText(lbl).width;c.fillStyle='rgba(10,4,18,.8)';c.fillRect(s[0]-tw/2-6*u,s[1]-22*u,tw+12*u,20*u);txt(c,lbl,s[0],s[1]-20*u,'#fff','center',18*u);}}
  /* enemy alert icons */
@@ -2997,7 +3048,7 @@ function finishLevel(){const g=G;state='results';const tb=timeBonus(g.time,level
  if(g.sj){const s=sjState(g);g.sjPay=s.ok?sjPay(g.sj,levelIdx):0;$('rStats').innerHTML+=`<br>SIDE JOB<b style="color:${s.ok?'#7dff9a':'#ff8a95'}">${SIDEJOBS[g.sj].name} · ${s.ok?'PAID +$'+fmt(g.sjPay)+' (NO CUT)':'FAILED'}</b>`;}{const wl=wallet(),ct=cutOf(total),ow=myProg().debt;$('rStats').innerHTML+=(ct?`<br>McWEY'S CUT<b style="color:#ff8a95">-$${fmt(ct)}</b><br>STILL OWED<b style="color:#ff8a95">$${fmt(ow-ct)}</b>`:'')+`<br>WALLET<b style="color:#7dff9a">$${fmt(wl)} &rarr; $${fmt(wl+total-ct+(g.sjPay||0))}</b>`;}{const nb=recordBest(levelIdx,{g:gr,t:g.time,s:total,c:g.maxCombo,ch:CHARS[selIdx].id,d:SET.diff}),b=JOBS.best[levelIdx];$('rStats').innerHTML+=`<br>PERSONAL BEST<b style="color:#2de2e6">${b.g} · ${mmss(b.t)} · $${fmt(b.s)} · x${b.c}</b>`+(nb.length?`<br>NEW<b style="color:#ff5fb8">${nb.join(' · ')}</b>`:'');}{const cr=checkChallenges(levelIdx,g);$('rStats').innerHTML+='<br>CHALLENGES<b>'+cr.out.map(c=>`<span style="color:${c.ok?'#7dff9a':'#ff8a95'}">${c.ok?'\u2605':'\u2606'} ${c.n}${c.fresh?' +$'+fmt(CH_PAY):''}</span>`).join(' · ')+'</b>'+(cr.pay?`<br>CHALLENGE BONUS<b style="color:#7dff9a">+$${fmt(cr.pay)} TO WALLET</b>`:'');}G.grade=gr;$('rGrade').textContent=gr;$('bNextLvl').innerHTML='BACK TO McWEY'+'<span class="padhint"> (A)</span>';if(pendingPerks>0)setTimeout(()=>{if(state==='results')showPerkPick('results');},900);show('sResults');sfx('cash');}
 /* multi-stage hooks (W14): runStage snapshots what you hold as the new retry point; runRestartMission makes the next retry start from the job's beginning */
 function runStage(id){const p=myProg(),r=p.run;if(!G||G.def.hub||!r||r.mission!=='c'+levelIdx)return false;const m=kitFromPlay();
- r.stage=String(id);r.stageKit=m.kit;G.live=kitClone(m.kit); G.hand=m.hand;if(m.stow.length)r.stow=(r.stow||[]).concat(m.stow);saveProg();return true;}
+ r.stage=String(id);r.stageKit=m.kit;G.live=kitClone(m.kit);G.hand=m.hand;if(typeof m.hand==='number')G.live.guns[m.hand]=null;else if(m.hand==='melee')G.live.melee=null;if(m.stow.length)r.stow=(r.stow||[]).concat(m.stow);saveProg();return true;}
  function runRestartMission(){const p=myProg(),r=p.run;if(!r)return false;r.stage='s0';r.stageKit=kitClone(r.entryKit);delete r.stow;saveProg();return true;}
 /* leave the job: everything you brought comes back as it was when you went in, nothing you found there comes with you */
 function walkAway(){if(!G||G.def.hub||fading||!(state==='dead'||state==='pause'))return;const p=myProg();
@@ -3036,10 +3087,10 @@ $('bGrain').onclick=()=>{const L=[0,0.2,0.35,0.6];SET.grain=L[(L.indexOf(SET.gra
 $('bHints').onclick=()=>{SET.hints=!SET.hints;saveSet();syncSetBtns();};$('bGore').onclick=()=>{SET.gore=SET.gore==='normal'?'extreme':'normal';saveSet();syncSetBtns();};$('bText').onclick=()=>cycleTextSize();
 $('bQuit').onclick=()=>{state='title';G=null;show('sTitle');};
 const tbtn=(id,fn)=>{const el=$(id);el.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();fn();},{passive:false});el.addEventListener('mousedown',e=>{e.stopPropagation();fn();});};
-tbtn('bGrab',()=>pressed.grab=true);tbtn('bPerk',()=>pressed.perk=true);tbtn('bPause',()=>togglePause());tbtn('bRestart',()=>restart());
+tbtn('bGrab',()=>pressed.grab=true);tbtn('bReload',()=>pressed.reload=true);tbtn('bSwap',()=>pressed.swap=true);tbtn('bPerk',()=>pressed.perk=true);tbtn('bPause',()=>togglePause());tbtn('bRestart',()=>restart());
 
 /* ================= INPUT ================= */
-addEventListener('keydown',e=>{if(contextLost)return;keys[e.code]=true;if(state==='morning'&&(e.code==='Enter'||e.code==='Space')){$('bMorning').click();e.preventDefault();return;}if(state==='carmenu'||state==='shop'||state==='store'){menuKey(e);e.preventDefault();return;}if((e.code==='Space'||e.code==='Enter')&&state==='play'&&G&&G.cine){cineSkip();e.preventDefault();return;}if(e.code==='Tab'&&state==='play'&&G&&G.def.hub){hubSkip();e.preventDefault();return;}if((e.code==='Enter'||e.code==='Space')&&state==='elev'){skipElev();e.preventDefault();return;}if(state==='perk'&&/^Digit[123]$/.test(e.code)){const cs=document.querySelectorAll('.pcard');const b=cs[+e.code.slice(5)-1];if(b)choosePerk(b.dataset.k);return;}if(padMode&&/^(Key[WASD]|Arrow)/.test(e.code))padMode=false;if(e.code==='KeyR')pressed.restart=true;if(e.code==='KeyE')pressed.grab=true;if(e.code==='Space'||e.code==='KeyQ')pressed.perk=true;if(e.code==='Escape'||e.code==='KeyP')pressed.pause=true;if(SETMENU&&e.code==='Escape')$('bSetBack').click();if(e.code==='KeyM')toggleMute();
+addEventListener('keydown',e=>{if(contextLost)return;keys[e.code]=true;if(state==='morning'&&(e.code==='Enter'||e.code==='Space')){$('bMorning').click();e.preventDefault();return;}if(state==='carmenu'||state==='shop'||state==='store'){menuKey(e);e.preventDefault();return;}if((e.code==='Space'||e.code==='Enter')&&state==='play'&&G&&G.cine){cineSkip();e.preventDefault();return;}if(e.code==='Tab'&&state==='play'&&G&&G.def.hub){hubSkip();e.preventDefault();return;}if((e.code==='Enter'||e.code==='Space')&&state==='elev'){skipElev();e.preventDefault();return;}if(state==='perk'&&/^Digit[123]$/.test(e.code)){const cs=document.querySelectorAll('.pcard');const b=cs[+e.code.slice(5)-1];if(b)choosePerk(b.dataset.k);return;}if(padMode&&/^(Key[WASD]|Arrow)/.test(e.code))padMode=false;{const inJob=state==='play'&&G&&!G.def.hub;if(e.code==='KeyR'){if(inJob){if(!e.repeat)pressed.reload=true;}else pressed.restart=true;}if(e.code==='Backspace'&&G&&!G.def.hub&&(inJob||state==='dead'||state==='results')){pressed.restart=true;e.preventDefault();}if(e.code==='Tab'&&inJob){pressed.swap=true;e.preventDefault();}const dg=inJob&&/^(?:Digit|Numpad)([123])$/.exec(e.code);if(dg)pressed.slot=+dg[1];}if(e.code==='KeyE')pressed.grab=true;if(e.code==='Space'||e.code==='KeyQ')pressed.perk=true;if(e.code==='Escape'||e.code==='KeyP')pressed.pause=true;if(SETMENU&&e.code==='Escape')$('bSetBack').click();if(e.code==='KeyM')toggleMute();
  if((e.code==='Enter'||e.code==='Space')&&state==='title'){$('bStart').click();e.preventDefault();return;}
  if((e.code==='Enter'||e.code==='Space')&&state==='brief'){chatTap();e.preventDefault();return;}
  if(state==='brief'){if(CHAT.phase==='choose'){const d=/^(?:Digit|Numpad)([1-9])$/.exec(e.code);if(d){chatPick(+d[1]-1);e.preventDefault();return;}
@@ -3053,12 +3104,14 @@ hud.addEventListener('mousedown',e=>{if(e.button===0&&G&&G.def&&G.def.hub&&state
 addEventListener('mouseup',e=>{if(e.button===0)mouse.down=false;});
 addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;if(padMode&&Math.abs(e.movementX||0)+Math.abs(e.movementY||0)<3)return;padMode=false;if(!touchMode)mouse.active=true;});
 hud.addEventListener('contextmenu',e=>e.preventDefault());
+/* one wheel gesture = one switch (trackpads fire a stream of small deltas) */
+let WHEELT=0;hud.addEventListener('wheel',e=>{if(!(state==='play'&&G&&!G.def.hub))return;e.preventDefault();const n=performance.now();if(n-WHEELT>220&&Math.abs(e.deltaY)>4)pressed.swap=true;WHEELT=n;},{passive:false});
 addEventListener('touchstart',()=>{touchMode=true;padMode=false;mouse.active=false;mouse.down=false;},{passive:true,capture:true});
 hud.addEventListener('touchstart',e=>{e.preventDefault();for(const t of e.changedTouches){if(G&&G.def&&G.def.hub&&state==='play')G.click=[t.clientX,t.clientY];if(t.clientX<vw/2&&!sticks.L)sticks.L={id:t.identifier,ox:t.clientX,oy:t.clientY,x:t.clientX,y:t.clientY};else if(t.clientX>=vw/2&&!sticks.R)sticks.R={id:t.identifier,ox:t.clientX,oy:t.clientY,x:t.clientX,y:t.clientY};}},{passive:false});
 hud.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches){for(const k of ['L','R']){const s=sticks[k];if(s&&s.id===t.identifier){s.x=t.clientX;s.y=t.clientY;const dx=s.x-s.ox,dy=s.y-s.oy,l=Math.hypot(dx,dy);if(l>80){s.ox=s.x-dx/l*80;s.oy=s.y-dy/l*80;}}}}},{passive:false});
 const tend=e=>{for(const t of e.changedTouches){for(const k of ['L','R'])if(sticks[k]&&sticks[k].id===t.identifier)sticks[k]=null;}};
 hud.addEventListener('touchend',tend);hud.addEventListener('touchcancel',tend);
-function resetInputs(){for(const k of Object.keys(keys))delete keys[k];mouse.down=false;mouse.active=false;sticks.L=sticks.R=null;for(const k of Object.keys(pressed))pressed[k]=false;if(G)G.click=null;
+function resetInputs(){for(const k of Object.keys(keys))delete keys[k];mouse.down=false;mouse.active=false;sticks.L=sticks.R=null;for(const k of Object.keys(pressed))pressed[k]=false;pressed.slot=0;if(G)G.click=null;
  PAD.on=false;PAD.aim=false;PAD.lx=PAD.ly=PAD.rx=PAD.ry=PAD.rt=PAD.navT=0;PAD.b=[];PAD.pb=[];PAD.rearm=true;}
 function suspendInputs(){inputSuspended=true;resetInputs();if(state==='play')togglePause();}
 addEventListener('blur',suspendInputs);
@@ -3077,7 +3130,7 @@ function frame(now){if(contextLost||gl.isContextLost())return;requestAnimationFr
  if(state==='elev')updateElev(dt);else if(state==='brief')updateBrief(dt);else if(state==='shop')updateNine(dt);else if(state==='title'||state==='select'||state==='help'||!G)updateMenu(dt);
  if(AC){let tr;if(state==='play'||state==='dead'||state==='pause'){if(G&&G.def.hub)tr=G.track;else if(G&&G.cleared)tr='drone';else if(G&&G.boss&&G.boss.alive&&G.bossSeen)tr='boss';else tr=(G&&G.track)||'game';}else if(state==='carmenu'||state==='shop'||state==='store')tr=(G&&G.track)||'n_concrete';else tr=state==='results'?'drone':state==='elev'?'muzak':(state==='brief'&&G&&G.def.hub)?'n_haze':'menu';setTrack(tr);setMuffle(state==='dead'||state==='pause'||state==='brief');}
  engineOn(state==='play'&&!!G&&G.def.hub==='drive'&&!G.parked&&SET.sound);$('cine').style.display=(state==='play'&&G&&G.cine)?'block':'none';$('bSkip').style.display=(state==='play'&&G&&G.def.hub)?'block':'none';
- pressed.grab=pressed.perk=pressed.restart=pressed.pause=false;
+ pressed.grab=pressed.perk=pressed.restart=pressed.pause=pressed.reload=pressed.swap=false;pressed.slot=0;
  const tui=touchMode&&state==='play'&&!(G&&G.def.hub);$('touchUI').style.display=tui?'block':'none';
  if(tui&&G){$('bPerk').style.display=CHARS[selIdx].id==='money'?'flex':'none';const p=G.player,n=p.alive?nearItem(p):null;const lbl=n?'TAKE<br>'+WD[n.type].name.split(' ').pop():p.weapon?'THROW':'GRAB';const b=$('bGrab');if(b.dataset.l!==lbl){b.innerHTML=lbl;b.dataset.l=lbl;}}
  try{render();drawHUD();}catch(err){console.error(err);}}
