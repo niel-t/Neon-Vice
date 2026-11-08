@@ -138,6 +138,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
   <button class="btn alt" id="bQuit">QUIT TO MENU<span class="padhint"> (Y)</span></button><button class="btn" id="bSetBack" style="display:none">BACK<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div>
 <div id="rotate" class="screen"><div class="logo2">TURN YOUR PHONE<br>SIDEWAYS</div><div class="hint">Landscape works best for the twin-stick controls</div></div>
 <div id="err" class="screen"><div class="logo2">WebGL isn't available<br>in this browser</div></div>
+<div id="saveWarning" role="status" style="display:none;position:fixed;bottom:8px;left:8px;right:8px;z-index:1000;padding:8px;background:#24151f;color:#ffd36b;font:12px sans-serif;pointer-events:none"></div>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -150,9 +151,32 @@ const pick=a=>a[Math.random()*a.length|0];
 const mmss=t=>Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0');
 
 /* ================= SETTINGS ================= */
+const saveObject=o=>o!==null&&typeof o==='object'&&!Array.isArray(o);
+const SAVE={blocked:new Set(),errors:new Map()};
+const SAVE_NAMES={nb86:'Settings',nb86prog:'Character progress',nb86jobs:'Floor records'};
+function saveWarning(key,error,blocked=false){
+ if(blocked)SAVE.blocked.add(key);
+ if(!SAVE.errors.has(key))console.error('Could not save/load '+key,error);
+ SAVE.errors.set(key,SAVE_NAMES[key]+(SAVE.blocked.has(key)?': existing save could not be read safely and has not been overwritten. Changes this session will not be saved.':': changes could not be saved. Keep this tab open and check browser storage.'));
+ syncSaveWarning();
+}
+function syncSaveWarning(){const el=$('saveWarning');el.textContent=Array.from(SAVE.errors.values()).join(' ');el.style.display=SAVE.errors.size?'block':'none';}
+function readSave(key){
+ try{const raw=localStorage.getItem(key);if(raw===null)return {};const o=JSON.parse(raw);if(!saveObject(o))throw new Error('Save must be an object');return o;}
+ catch(e){saveWarning(key,e,true);return {};}
+}
+function writeSave(key,o){
+ if(SAVE.blocked.has(key))return false;
+ try{localStorage.setItem(key,JSON.stringify(o));SAVE.errors.delete(key);syncSaveWarning();return true;}
+ catch(e){saveWarning(key,e);return false;}
+}
+function savedField(key,o,k,initial,valid){
+ if(o[k]===undefined||o[k]===null){o[k]=initial;return;}
+ if(!valid(o[k])){saveWarning(key,new Error('Invalid saved field: '+k),true);o[k]=initial;}
+}
 const SET={sound:true,shake:true,retro:true,diff:'easy',hints:true,grain:0.35,glitch:true,gore:'extreme'};
-try{Object.assign(SET,JSON.parse(localStorage.getItem('nb86')||'{}'));}catch(e){}
-function saveSet(){try{localStorage.setItem('nb86',JSON.stringify(SET));}catch(e){}}
+Object.assign(SET,readSave('nb86'));
+function saveSet(){return writeSave('nb86',SET);}
 
 const DIFF={easy:{name:'EASY',hp:3,react:1.9,espr:0.17,ebSpd:15,vision:9,cone:0.85,ecd:1.5,assist:0.3,cones:true,regen:7,lunge:0.6,mult:1,desc:'3 hits, heal when out of fire · slow, sloppy guards · vision cones · aim assist'},
  normal:{name:'NORMAL',hp:2,react:1.35,espr:0.11,ebSpd:18,vision:11,cone:0.95,ecd:1.2,assist:0.16,cones:true,regen:12,lunge:0.4,mult:1.25,desc:'2 hits · sharper guards · vision cones · light aim assist · 1.25x $'},
@@ -946,10 +970,10 @@ const TIPS=['Red laser = a gunman is aiming at you. Break line of sight.','Stand
 const PAR=[60,55,65,60,65,90,65,60];const GRADES=[['S',2.3],['A+',1.8],['A',1.4],['B',1.0],['C',0.65],['D',-1]];
 const parOf=i=>PAR[i]||60;const timeBonus=(t,i)=>Math.round(3750*clamp((2*parOf(i)-t)/(2*parOf(i)),0,1));
 /* floor select + personal bests, saved in localStorage nb86jobs: {top:highest unlocked floor, sel:chosen start floor, best:{i:{g,t,s,c,ch,d}}} */
-const JOBS=(()=>{let o={};try{o=JSON.parse(localStorage.getItem('nb86jobs')||'{}');}catch(e){}if(typeof o.top!=='number')o.top=0;if(typeof o.sel!=='number')o.sel=0;if(!o.best)o.best={};return o;})();
+const JOBS=(()=>{const o=readSave('nb86jobs');if(!Number.isFinite(o.top)){o.top=0;delete o.mig;}o.top=clamp(Math.floor(o.top),0,LEVELS.length-1);o.sel=Number.isFinite(o.sel)?clamp(Math.floor(o.sel),0,o.top):0;savedField('nb86jobs',o,'best',{},saveObject);for(const k of Object.keys(o.best))if(o.best[k]!=null&&!saveObject(o.best[k])){saveWarning('nb86jobs',new Error('Invalid floor record: '+k),true);delete o.best[k];}return o;})();
 /* one-time: unlock floors already beaten in saves from before floor select existed */
-function migJobs(){if(JOBS.mig)return;JOBS.mig=1;for(const k in PROG){const q=PROG[k]||{};JOBS.top=Math.max(JOBS.top,q.lexDead?7:q.heli?6:q.suits2?5:q.boat?4:q.sharkDead?3:0);}JOBS.top=Math.min(JOBS.top,LEVELS.length-1);saveJobs();}
-function saveJobs(){try{localStorage.setItem('nb86jobs',JSON.stringify(JOBS));}catch(e){}}
+function migJobs(){if(JOBS.mig||SAVE.blocked.has('nb86prog'))return;JOBS.mig=1;for(const k of Object.keys(PROG)){const q=PROG[k]||{};JOBS.top=Math.max(JOBS.top,q.lexDead?7:q.heli?6:q.suits2?5:q.boat?4:q.sharkDead?3:0);}JOBS.top=Math.min(JOBS.top,LEVELS.length-1);saveJobs();}
+function saveJobs(){return writeSave('nb86jobs',JOBS);}
 const GRANK=g=>{const i=GRADES.findIndex(q=>q[0]===g);return i<0?99:i;};
 function recordBest(i,r){migJobs();const b=JOBS.best[i],nb=[];if(!b){JOBS.best[i]=Object.assign({},r);nb.push('FIRST CLEAR');}else{
  if(GRANK(r.g)<GRANK(b.g)){b.g=r.g;nb.push('GRADE');}if(r.t<b.t){b.t=r.t;nb.push('TIME');}if(r.s>b.s){b.s=r.s;b.ch=r.ch;b.d=r.d;nb.push('TAKE');}if(r.c>b.c){b.c=r.c;nb.push('COMBO');}}
@@ -990,8 +1014,17 @@ const PERKS={
  sense:{name:'SIXTH SENSE',max:3,desc:'Guards react 15% slower to you'},grip:{name:'LONG ARMS',max:3,desc:'Melee attacks reach further'},
  shark:{name:'LOAN SHARK',max:3,desc:'+15% money from every kill'},adren:{name:'ADRENALINE',max:3,desc:'Combos last 0.75s longer'},
  medic:{name:'STREET MEDIC',max:2,desc:'Heal 2s sooner out of fire (Easy/Normal)'}};
-const PROG=(()=>{let o={};try{o=JSON.parse(localStorage.getItem('nb86prog')||'{}');}catch(e){}for(const c of CHARS)if(!o[c.id])o[c.id]={lvl:1,xp:0,perks:{}};return o;})();
-function saveProg(){try{localStorage.setItem('nb86prog',JSON.stringify(PROG));}catch(e){}}
+const PROG=(()=>{const o=readSave('nb86prog');for(const c of CHARS){
+ savedField('nb86prog',o,c.id,{},saveObject);const p=o[c.id];
+ savedField('nb86prog',p,'lvl',1,n=>Number.isInteger(n)&&n>=1&&n<=30);
+ savedField('nb86prog',p,'xp',0,n=>Number.isFinite(n)&&n>=0);
+ savedField('nb86prog',p,'perks',{},saveObject);
+ for(const k of ['jewel','seen','furn'])if(p[k]!=null)savedField('nb86prog',p,k,{},saveObject);
+ if(p.cars!=null)savedField('nb86prog',p,'cars',['beater'],Array.isArray);
+ if(p.homes!=null)savedField('nb86prog',p,'homes',[0],Array.isArray);
+ if(p.arm!=null){savedField('nb86prog',p,'arm',{},saveObject);for(const k of ['owned','stock'])savedField('nb86prog',p.arm,k,[],Array.isArray);}
+ }return o;})();
+function saveProg(){return writeSave('nb86prog',PROG);}
 const SUITS={default:{name:'SIGNATURE',lvl:1,perk:{},desc:'Your own look'},
  pinstripe:{name:'PINSTRIPE',lvl:3,perk:{tough:1},desc:'+1 hit you can take'},
  camo:{name:'JUNGLE CAMO',lvl:6,perk:{fleet:1,sense:1},desc:'Move 6% faster, guards react 15% slower'},
@@ -1947,7 +1980,9 @@ function hubInteract(){const g=G,p=g.player;if(!p||g.hubDone)return;const ts=hub
  if(g.click){const cx=g.click[0],cy=g.click[1];g.click=null;for(const t of ts){const s=project(t.x,0.8,t.z);if(s&&Math.hypot(s[0]-cx,s[1]-cy)<80){if(Math.hypot(t.x-p.x,t.z-p.z)<t.r+3)go=t;else popup(p.x,p.z,'GET CLOSER','#ffd36b');break;}}}
  if(go){mouse.down=false;if(go.k==='car')openCarMenu();else if(go.k==='catalog')openStore('home');else if(go.k==='bed')goSleep();else if(go.k==='hifi')hifiNext();else if(go.k==='tip')tipDancer(go.d);else if(go.k==='tony')tonyTalk();else if(go.k==='talk')npcTalk(g,go.n);else openShop();}}
 /* wallet + armory, saved per character next to lvl/xp/perks */
-function arm(){const p=myProg();if(typeof p.wallet!=='number')p.wallet=0;if(p.debt===undefined){p.debt=MC_LOAN;p.paid=false;p.cars=['beater'];p.car='beater';p.jewel=p.jewel||{};p.seen={};}if(!p.arm)p.arm={owned:[],eq:null,mags:0,vest:0,stock:[],key:-1,met:false,jobs:0};return p.arm;}
+function arm(){const p=myProg();if(typeof p.wallet!=='number')p.wallet=0;if(p.debt===undefined){p.debt=MC_LOAN;if(p.paid===undefined)p.paid=false;}
+ if(!p.cars)p.cars=['beater'];if(p.car===undefined)p.car='beater';if(!p.jewel)p.jewel={};if(!p.seen)p.seen={};
+ if(!p.arm)p.arm={};const a=p.arm;for(const [k,v] of Object.entries({owned:[],eq:null,mags:0,vest:0,stock:[],key:-1,met:false,jobs:0}))if(a[k]===undefined)a[k]=v;return a;}
 function wallet(){arm();return myProg().wallet;}
 let LASTPAY=null;function cutOf(take){const p=myProg();arm();return p.debt>0?Math.min(p.debt,Math.ceil(take*MC_CUT)):0;}
 function payout(){if(!G||G.paid||!G.take)return;G.paid=1;const a=arm(),p=myProg(),cut=cutOf(G.take),before=p.debt;p.debt-=cut;p.wallet+=G.take-cut;
