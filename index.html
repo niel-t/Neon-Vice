@@ -144,6 +144,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <div id="contextWarning" role="alert" style="display:none;position:fixed;inset:0;z-index:2000;background:#17111f;color:#ffd36b;align-items:center;justify-content:center;flex-direction:column;gap:16px;text-align:center;padding:24px"><div id="contextMessage">Graphics were interrupted. Reload to continue; existing browser saves have not been reset.</div><button id="bContextReload" class="btn" onclick="location.reload()">RELOAD GAME</button></div>
 <div id="audioWarning" role="status" style="display:none;position:fixed;top:48px;left:8px;right:8px;z-index:1000;padding:8px;background:#24151f;color:#ffd36b;font:12px sans-serif;pointer-events:none">Sound could not start. Play silently or try another click, key press or tap.</div>
 <script src="art.js"></script>
+<script src="levels.js"></script>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -828,161 +829,8 @@ const WD={
 };
 const BT=t=>(WD[t]&&WD[t].base)||t;
 const KILLPTS={dual:300,fists:500,bat:450,knife:450,machete:450,exec:800,door:600,throw:550,pistol:300,silenced:400,revolver:350,smg:250,m16:300,shotgun:300,double:300};
-const EKIND={w:'dual',g:'pistol',h:'silenced',s:'shotgun',d:'double',u:'smg',m:'m16',b:'bat',k:'knife',x:'machete',i:null};
-const IKIND={'0':'dual','1':'pistol','2':'shotgun','3':'smg','4':'bat','5':'knife','6':'silenced','7':'m16','8':'double','9':'machete'};
-const FURN={T:1,B:2,S:3,O:4,p:5,W:6,K:7,H:8,F:9,A:10,J:11,Q:12,R:13,G:14,V:15,E:16,L:17,U:18,Z:19,M:20};/* table, bar, sofa, pool, plant, bed, counter */
-const COVER={2:1,7:1,9:1,10:1,11:1,12:1,13:1,14:1,19:1,20:1,21:1,22:1};/* tall furniture stops bullets */
-const FLOORCH={'.':1,',':3,'_':4,':':2,'=':7,'~':14};
-const WALL_H=1.15;
-/*LEVELS*/
-const LEVELS=[
- {name:'MOTEL SUNSET',wall:5,sofa:0x2a9ea3,from:'McWEY',
-  brief:"It's McWey. Some out-of-town crew moved into the Sunset Motel on Route 1 and they're dealing on our streets. Nobody does that without asking. Go make it clear. Car's out front.",map:[
- "##################################",
- "#*....#WW...V#WW...V#...H....F...#",
- "#..g..#WW.b..#WW1.s.#..,rr,,,,,..#",
- "#.rr..#......#......#..,SS,,u,,..#",
- "#L..p.#....UT#*...UT#..,,,,,,,,.E#",
- "##D####D######D######..,,,,,,,,*.#",
- "#Z..............................H#",
- "#..i.........4.........g.....*...#",
- "#H........Z.........L............#",
- "######D########.########D#########",
- "#.6....F#   #Z..#   #V.....L#",
- "#.0TT.k.#   #...#   #..b...E#",
- "#..*...Z#   #.2.#   #.....p.#",
- "####.####   ##.##   ####.####",
- "==================================",
- "===P==========C===================",
- "=================================="]},
- {name:'CLUB FLAMINGO',wall:12,sofa:0xe0459a,from:'McWEY',
-  brief:"The motel was a front. The money runs through Club Flamingo on the strip, VIP lounge in the back. Shut it down. Permanently. Lot of guards tonight, so watch the doors.",map:[
- "######################################",
- "#SSS______H#AA::Q:TTT:Q:::::#BBBBBB.F#",
- "#__h____*__#::::*:::::::*:::#..u..*..#",
- "#__OO______D::::::::g:::::::D........#",
- "#__OOs_rrr_#::::::::::::::::#..TE.T..#",
- "#______p__E#:::b:::::::x::::#...3...J#",
- "######D#####:::::::@::::::::####D#####",
- "#KKK...#Z..#::::::i:::::::::#......AA#",
- "#..k...D.5.D::::::::::::::::D...g....#",
- "#F.*...#..Z#::::::::*:::::::#..TT....#",
- "####.#######H::::::::::::::H#.....d..#",
- "#H........L#######..#########EE......#",
- "#..w.......D.rr.....0....*..D.......H#",
- "#SS........#AA....4........p##########",
- "#####..##############..###############",
- "======================================",
- "===P================C=================",
- "======================================"]},
- {name:'THE PENTHOUSE',wall:13,sofa:0xe8dcc0,from:'McWEY',
-  brief:"The man who owns the club lives on top of Coral Tower. He's got his best people up there with real hardware. Finish this tonight and Miami belongs to the Family.",map:[
- "########################################",
- "#WWL,,,,,,,,V#RRR____7____RRR_#KKK::::U#",
- "#WW,s,,,*,,,,#____u_____*_____D::::w:::#",
- "#,,rrrrrrr,,,D________X_______#:::::::U#",
- "#,,,,,,m,,,,,#____TTTTTT______####D#####",
- "#R,,,,,,,,,E,#E__g_rrrrrr_d___#,,,,,,,V#",
- "#######D######_SSS____________D,,,,x,,,#",
- "#FKK.........#H______________G#,,*,OO,,#",
- "#..h.E*..0...#######__#########,,,,OO,,#",
- "#...TTTT.....D.......*........D,,,,m,,,#",
- "#...TTTT.....#.......8.......L#E,,,,,,H#",
- "#....b.E....H#BBB.b..........H##########",
- "###########.##########..################",
- "========================================",
- "======P==================C==============",
- "========================================"]},
- {name:'VICE MARINA',act:2,wall:6,sofa:0x2a9ea3,from:'McWEY',hawaii:true,legend:{'o':{w:39,h:0.02,top:39,water:1},'Y':{w:39,h:0.02,top:39,water:1}},
-  brief:"Lex Sterling's money comes in by sea, through Vice Marina. Knock-off gold, undercutting your corners. Sink his boats.",map:[
- "oooooooooooooooooooooooooooooooooooooooo",
- "ooYooooooooooYooooooooooooYoooooooooYooo",
- "oooooooooooooooooooooooooooooooooooooooo",
- "oo_____oooo_____oooooo_____oooooo_____oo",
- "oo__s__oooo_g___oooooo__u__oooooo_d___oo",
- "oo_____oooo_____oooooo_____oooooo_____oo",
- "________________________________________",
- "#####D######__U__Z___g____Z___#####D####",
- "#..g...*..#______________1____#..*...u.#",
- "#.UZ...b..D____x______U_______D....ZZ..#",
- "#..ZZ..4..#__Z____m______i____#..g..U.6#",
- "####.######___________________#####.####",
- "========================================",
- "===P==================C=================",
- "========================================"]},
- {name:'STARLIGHT ARCADE',act:2,wall:25,floor:23,sofa:0xe0459a,from:'McWEY',legend:{'.':{f:23},'c':{f:23},'a':{f:23}},
-  brief:"Lex washes his money through the Starlight Arcade on the beach. Quarters in, clean dollars out. Unplug it.",map:[
- "########################################",
- "#c.c.c.c.c..#..u........g.....#c.c.c.c##",
- "#...........#....aa....aa.....#.......##",
- "#.g...*.....D....aa....aa.....D...s...##",
- "#...........#.........x.......#.......##",
- "#c.c.c..u...#..b....*....i....#c.c.c..##",
- "######D######.....aa....aa....####D#####",
- "#BBB..k.....#.....aa....aa....#.......##",
- "#...........D..g...........m..D..cc.g.##",
- "#.T...*..3..#.......4.........#..cc...##",
- "#.T.....d...#cccc.......cccccc#....5..##",
- "######.##########......##########.######",
- "========================================",
- "====P=================C=================",
- "========================================"]},
- {name:'OCEAN VIEW MALL',act:2,wall:33,floor:14,sofa:0xffffff,from:'McWEY',legend:{'.':{f:14},'n':{f:14},'e':{f:14}},
-  brief:"Take the night off. Ocean View Mall, my treat. What's the worst that could happen?",map:[
- "#########################################",
- "#n.n.n..#..g...p......p...g...#..n.n.n.##",
- "#.......D.....................D........##",
- "#..u....#..ee......*......ee..#....s...##",
- "#n.n.n..#..ee...x.....b...ee..#..n.n.n.##",
- "#####D###.....................###D#######",
- "#..g....D..p..T.T...m.T.T..p..D.....g..##",
- "#K.KK...#.....................#..n.n..u##",
- "#.......#..ee.....i.......ee..#........##",
- "#..6..d.#..ee..g.......4..ee..#.n.n.7..##",
- "####.######################.#####.#######",
- "=========================================",
- "=====P===================C===============",
- "========================================="]},
- {name:'THE RECORDING STUDIO',act:2,wall:6,floor:43,sofa:0x3a3a44,from:'McWEY',legend:{'.':{f:43},'%':{f:43},'!':{f:43}},
-  brief:"Lex is financing a terrible pop album. Crash the session and make the singer tell you where Lex is hiding.",map:[
- "######################################",
- "#..g..%....u.....%.....s....%...d...F#",
- "#.....%..........%..........%.......##",
- "#KKK..D...KKK....D...!......D..KKKK.##",
- "#.....%..........%..........%.......##",
- "#..b..%%%%..%%%%%%%%%..%%%%%%..u....##",
- "#.........................x.........##",
- "#..m..%%%%..%%%%%%%%%..%%%%%%....g..##",
- "#.....%...........%.........%.......##",
- "#.5...%..g..KKK...%...i..3..%..KK...##",
- "#.....D...........D.........D.....8.##",
- "####.###########################.#####",
- "======================================",
- "===P================C=================",
- "======================================"]},
- {name:'THE ROYAL FLUSH',act:2,wall:33,sofa:0xe8dcc0,from:'McWEY',legend:{'o':{w:39,h:0.02,top:39,water:1},'y':{f:39}},boss:{name:'LEX "SILKS" STERLING',look:()=>Object.assign(LEXLOOK(),{bw:1.04,bd:1.0}),weapon:'goldgl',hp:22,lex:true},
-  brief:"Lex is on his yacht, the Royal Flush, two miles out. Glass dance floor over a shark tank. Bring me the yacht. Lex is optional.",map:[
- "oooooooooooooooooooooooooooooooooooooooooo",
- "oooooo##############################oooooo",
- "oooo##____g_____#yyyyyyyyy#___u______##ooo",
- "ooo#______Z_____#yyyyyyyyy#_____Z______#oo",
- "oo#___s_________DyyyyXyyyyD______g______#o",
- "oo#_____________#yyyyyyyyy#_____________#o",
- "ooo#___u___Z____#yyyyyyyyy#___Z___d____#oo",
- "oooo##___________###D####___________##oooo",
- "oooooo###___i____________m______###ooooooo",
- "oooooooo####__________________####oooooooo",
- "oooooooooooo########D#########oooooooooooo",
- "oooooooooooooooooo_____ooooooooooooooooooo",
- "==========================================",
- "=====P===================C================",
- "=========================================="]},
-];
-/*END*/
 const NEON=[[1,0.25,0.7],[0.2,0.85,1],[0.65,0.3,1],[1,0.55,0.2]];
 const TIPS=['Red laser = a gunman is aiming at you. Break line of sight.','Stand still for accurate shots. Running throws your aim off.','Silenced guns barely make a sound. Loud ones wake up the whole floor.','Swing a door into someone to knock them flat.','Downed enemies get back up. Hit them again to finish the job.','Bar counters and kitchen counters stop bullets. Use them.','Out of ammo? Attack again to throw the gun. It knocks people down.','Throw a knife and it kills.','Sprinting is fast but loud - guards hear your footsteps.','Hold F to look further ahead.'];
-/* grading: par time per floor (seconds), and grade points that ignore difficulty/perk/character money multipliers */
-const PAR=[60,55,65,60,65,90,65,60];const GRADES=[['S',2.3],['A+',1.8],['A',1.4],['B',1.0],['C',0.65],['D',-1]];
 const parOf=i=>PAR[i]||60;const timeBonus=(t,i)=>Math.round(3750*clamp((2*parOf(i)-t)/(2*parOf(i)),0,1));
 /* floor select + personal bests, saved in localStorage nb86jobs: {top:highest unlocked floor, sel:chosen start floor, best:{i:{g,t,s,c,ch,d}}} */
 const JOBS=(()=>{const o=readSave('nb86jobs');if(!Number.isFinite(o.top)){o.top=0;delete o.mig;}o.top=clamp(Math.floor(o.top),0,LEVELS.length-1);o.sel=Number.isFinite(o.sel)?clamp(Math.floor(o.sel),0,o.top):0;savedField('nb86jobs',o,'best',{},saveObject);for(const k of Object.keys(o.best))if(o.best[k]!=null&&!saveObject(o.best[k])){saveWarning('nb86jobs',new Error('Invalid floor record: '+k),true);delete o.best[k];}return o;})();
@@ -1020,8 +868,6 @@ function chStars(i){let n=0;for(let k=0;k<3;k++)if(chDone(i,k))n++;return n;}
 function chHTML(i){return (CHALLENGES[i]||[]).map((c,k)=>`<span style="color:${chDone(i,k)?'#7dff9a':'#c9a8e8'}">${chDone(i,k)?'\u2605':'\u2606'} ${c.n}</span>`).join('  ')+'  <span style="color:'+(stashDone(i)?'#7dff9a':'#c9a8e8')+'">'+(stashDone(i)?'\u25c6 STASH FOUND':'\u25c7 HIDDEN STASH')+'</span>';}
 function checkChallenges(i,g){if(!JOBS.ch)JOBS.ch={};const out=[];let pay=0;(CHALLENGES[i]||[]).forEach((c,k)=>{const ok=!!c.f(g),was=chDone(i,k);if(ok&&!was){JOBS.ch[i]=(JOBS.ch[i]||0)|(1<<k);pay+=CH_PAY;}out.push({n:c.n,ok,fresh:ok&&!was});});
  if(pay){const p=myProg();arm();p.wallet+=pay;saveProg();}saveJobs();return {out,pay};}
-/* hidden stashes: [map x, map z, hi-fi track unlocked (or null), cash]. Saved in JOBS.stash[floor]=1 */
-const STASH=[[5,4,'n_nightdrive',1500],[29,5,'n_haze',1500],[12,5,'n_concrete',2000],[37,3,'n_redtide',2000],[37,2,'n_overdrive',2000],[38,4,'n_rampage',2000],[29,1,null,4000],[39,4,null,5000]];
 const stashDone=i=>!!((JOBS.stash||{})[i]);
 const tapeOK=t=>t==='n_crystal'||STASH.some((q,i)=>q[2]===t&&stashDone(i));
 function placeStash(g,i){const q=STASH[i];if(g.def.hub||!q||stashDone(i))return;g.stash={x:q[0]+1.5,z:q[1]+1.5,t:0,i,got:false};}
@@ -1117,7 +963,6 @@ function showPerkPick(ret){perkReturn=ret;state='perk';const p=myProg();const op
  show('sPerk');sfx('clear');}
 function choosePerk(k){if(!k||state!=='perk')return;const p=myProg();p.perks[k]=(p.perks[k]||0)+1;saveProg();pendingPerks--;sfx('pick');
  if(pendingPerks>0){showPerkPick(perkReturn);return;}const r=perkReturn;perkReturn=null;if(r==='dead'){state='dead';show('sDead');}else{state='results';show('sResults');}}
-const LEVEL_TRACKS=[['game','n_nightdrive','n_haze','n_concrete'],['n_crystal','n_overdrive','n_nightdrive','n_haze'],['n_redtide','n_rampage','n_concrete','n_overdrive'],['n_nightdrive','n_crystal'],['n_overdrive','n_crystal'],['n_haze','n_redtide'],['n_rampage','n_overdrive'],['n_redtide','n_rampage']];
 const RUNTRACK=[0,0,0,0,0,0,0,0];
 
 /* ================= STATE ================= */
