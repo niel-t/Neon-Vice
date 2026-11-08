@@ -240,7 +240,8 @@ Defaults for circa-1986 Miami. Level docs override per room in their §8.
 | The Penthouse | `docs/levels/penthouse.md` | wave 1 |
 | Vice Marina | `docs/levels/marina.md` | wave 1 |
 | Club Flamingo | `docs/levels/club.md` | wave 1 |
-| Arcade | `docs/levels/arcade.md` | next |
+| Arcade | `docs/levels/arcade.md` | wave 1 |
+| Mall | `docs/levels/mall.md` | next |
 
 ### 7.1 Migration task: `motel-sunset.md`
 
