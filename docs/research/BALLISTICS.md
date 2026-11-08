@@ -110,6 +110,8 @@ observations. W5's Node tests should assert all of them.
 | 12 | .50 BMG passes brick + hollow CMU + ¾″ ply; against a second wall set back-to-back it only chipped the brick veneer, hitting sideways (CAN p. 9) | 66 % after first; stops in second | ◐ partial: CAN's walls touched and only the second veneer was struck; the model needs tumble 2 to stop it |
 | 13 | Repeated .50 hits needed to hole 10″ RC (A Table 7-6) | single .50 stops in rc_wall_20 | ✔ (G-constrained) |
 | 14 | .308 Win FMJ (3 474 J) passes both face shells of a grey hollow block and stops on the brick behind (CAN p. 8) | a 3 474 J, hard 1.0 round keeps 32 % through `cmu_hollow` | ✔ brackets the M43 result (7.62×39: 9 %) |
+| 15 | At 25 m one 7.62 NATO ball round penetrates a 16″ (40.6 cm) log wall (A Table 7-5) and 13″ (33 cm) of pine board (A Table 7-3; 18″ at 100 m, 41″ at 200 m) | `pile` stops a 3 300 J round at 41 cm | ◐ fitted to the log result (`pile` only); the board result is 25 % shorter, and the range dependence is not modelled |
+| 16 | A 16″ log wall: 5.56 needs 1–3 rounds to penetrate, .50 one round (A Tables 7-2, 7-6) | 30 cm `timber_pile`: single 5.56 stops (at 22 cm); .50 BMG keeps 86 % | ◐ single-round model; the 1–3-round 5.56 result needs cumulative damage, which `cellHp` ∞ withholds by design (P) |
 
 ---
 
@@ -145,11 +147,13 @@ stay a pass (see the knife-edge cells in MATERIALS.md §6).
 | `rc_column_40` | stop | stop | stop | stop | stop | stop | stop | stop | stop | stop |
 | `glass_annealed_6` | 93% | 94% | 93% | 95% | 98% | 98% | 98% | 87% | 99% | 100% |
 | `glass_tempered_6` | 93% | 94% | 93% | 95% | 98% | 98% | 98% | 87% | 99% | 100% |
+| `glass_block` | 80% | 84% | 82% | 87% | 95% | 95% | 95% | 67% | 97% | 99% |
 | `glass_lam_windshield` | 53% | 62% | 58% | 69% | 88% | 87% | 89% | 21% | 93% | 99% |
 | `glass_studio` | stop | stop | stop | 10% | 66% | 62% | 67% | stop | 81% | 96% |
 | `door_hollow` | 95% | 96% | 96% | 97% | 99% | 99% | 99% | 92% | 99% | 100% |
 | `door_solid` | 60% | 67% | 64% | 73% | 90% | 89% | 90% | 31% | 94% | 99% |
 | `door_metal` | 27% | 40% | 18% | 45% | 66% | 79% | 86% | stop | 58% | 91% |
+| `door_vault` | stop | stop | stop | stop | stop | stop | stop | stop | stop | 33% |
 | `car_door` | 51% | 60% | 45% | 64% | 77% | 86% | 91% | stop | 72% | 94% |
 | `car_door@reg` | stop | stop | stop | stop | 34% | 61% | 74% | stop | 19% | 84% |
 | `car_engine` | stop | stop | stop | stop | stop | stop | stop | stop | stop | stop |
@@ -159,6 +163,8 @@ stay a pass (see the knife-edge cells in MATERIALS.md §6).
 | `alu_bulkhead` | 15% | 30% | 7% | 37% | 63% | 76% | 84% | stop | 56% | 91% |
 | `joinery_ply` | 73% | 78% | 76% | 82% | 93% | 92% | 93% | 53% | 96% | 99% |
 | `grp_hull` | 76% | 80% | 78% | 84% | 94% | 93% | 94% | 58% | 96% | 99% |
+| `timber_pile` | stop | stop | stop | stop | stop | stop | stop | stop | 30% | 86% |
+| `dock_box` | 84% | 87% | 85% | 89% | 96% | 95% | 96% | 72% | 98% | 100% |
 | `acoustic_double` | 60% | 68% | 64% | 73% | 90% | 89% | 90% | 32% | 94% | 99% |
 | `sofa` | 51% | 60% | 56% | 67% | 88% | 86% | 88% | 16% | 93% | 99% |
 | `mattress` | 78% | 82% | 80% | 85% | 94% | 94% | 95% | 62% | 97% | 99% |
@@ -248,6 +254,11 @@ Known gaps (no source found; values are **P**):
 
 - Hollow-core and solid-core doors, mattresses, sofas, hollow clay tile,
   stucco over CMU, single-shot .50 vs 10–20 cm RC.
+- Glass block: no shooting test found. `glass_block` is two pressed-glass
+  faces of the plain `glass` material, with thickness derived from the block
+  mass (MATERIALS GB1), so every gun passes it (9mm keeps 80 %). Real blocks
+  may deflect or fragment rounds more than flat glass; tune if a test turns
+  up. Being translucent, it blocks sight (MATERIALS §3, coverage).
 - M43 vs CMU: no direct test. CAN p. 8 brackets it: 5.56 (1 735 J) holed only
   the front shell, .308 (3 474 J) passed both. M43 at 2 030 J with a steel
   core sits between, and the model gives a marginal perforation (P).
@@ -257,6 +268,12 @@ Known gaps (no source found; values are **P**):
 - `ply`, `particle`, `plaster`, `stucco`, `glass`, `glass_lam`, `alu`, `grp`
   resistances are estimates bracketed by neighbours.
 - The FBI barrier protocol was seen only via Hornady's implementation (H).
+- `timber` is fitted to pistol JHP and overstates short-range (25 m) rifle
+  penetration of thick wood about 3×; at 200 m A Table 7-3 roughly agrees
+  with it. Thin timber (studs, ply) keeps the same pass/stop outcomes, but a
+  rifle's retained energy after a stud is overstated (≈ 81 % vs ≈ 53 % with
+  `pile`). Thick timber uses `pile` (rifle-fitted, §3 #15). A
+  velocity-dependent wood model is a W5 option.
 
 Contradictions with the roadmap's calibration targets (§2.2):
 

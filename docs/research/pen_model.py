@@ -1,7 +1,7 @@
 # Neon Vice penetration + destruction model (docs/research). Reproduces the tables in
 # BALLISTICS.md §3-§4 and MATERIALS.md §5.  Run: python docs/research/pen_model.py
 import math
-MAT={'gyp':(25,0),'timber':(30,0),'ply':(40,0),'particle':(45,0),'plaster':(60,0),'stucco':(100,0),
+MAT={'gyp':(25,0),'timber':(30,0),'pile':(80,0),'ply':(40,0),'particle':(45,0),'plaster':(60,0),'stucco':(100,0),
  'cmu':(345,1),'grout':(345,1),'brick':(400,1),'clay':(400,1),'concrete':(900,1),
  'glass':(60,0),'glass_lam':(300,0),'steel':(1500,1),'alu':(600,1),'grp':(80,0),
  'foam':(3,0),'mattress':(5,0),'insul':(2,0),'void':(0,0)}
@@ -30,10 +30,12 @@ CON={
  'glass_annealed_6':([('glass',0.6)],None,1),
  'glass_tempered_6':([('glass',0.6)],None,1),
  'glass_lam_windshield':([('glass_lam',0.76)],None,1500),
+ 'glass_block':([('glass',0.8),('void',8.2),('glass',0.8)],None,2000),
  'glass_studio':([('glass_lam',1.2),('void',20),('glass_lam',1.0)],None,6000),
  'door_hollow':([('ply',0.3),('void',2.9),('ply',0.3)],None,300),
  'door_solid':([('ply',0.3),('particle',3.85),('ply',0.3)],None,1500),
  'door_metal':([('steel',0.12),('void',4.2),('steel',0.12)],None,4000),
+ 'door_vault':([('steel',0.95),('void',4),('steel',0.95)],None,math.inf),
  'car_door':([('steel',0.08),('void',10),('steel',0.08)],None,3000),
  'car_door@reg':([('steel',0.08),('steel',0.3),('void',10),('steel',0.08)],None,3000),
  'car_engine':([('steel',6)],None,math.inf),
@@ -43,6 +45,8 @@ CON={
  'alu_bulkhead':([('alu',0.6),('insul',5),('ply',1.2)],None,5000),
  'joinery_ply':([('ply',1.9),('insul',5),('ply',1.2)],None,1200),
  'grp_hull':([('grp',1.5)],None,2500),
+ 'timber_pile':([('pile',30)],None,math.inf),
+ 'dock_box':([('grp',0.5),('void',60),('grp',0.5)],None,800),
  'acoustic_double':([('gyp',3.18),('insul',9),('void',5),('insul',9),('gyp',3.18)],None,3000),
  'sofa':([('foam',60),('timber',2)],None,1500),
  'mattress':([('mattress',22)],None,800),

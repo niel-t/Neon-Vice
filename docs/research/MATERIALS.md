@@ -73,6 +73,7 @@ calibre's hardness factor applies. Debris colours are sRGB hex for W4/W1.
 | `glass_lam` | 300 | 0 | **P** — laminated windshield / studio glass; GLASS gives a ballistic limit for 7.62 AP only | none (retained) | radial cracks, interlayer holds | `vfx_glass_craze` / `sfx_glass_crunch` |
 | `steel` | 1500 | 1 | **D** — A: 5.56 perforates ⅜″ mild steel door (≈19 % left in model); CAR: 9mm passes one car-door skin pair, stops in the next. Per-calibre `metal` factor applies | sparks only | lead splash / bright crater | `vfx_spark` / `sfx_ricochet_metal` |
 | `alu` | 600 | 1 | **P** — ≈ 0.4× mild steel | sparks + flakes, `#c8ccd0` | bright dent hole | `vfx_spark` / `sfx_metal_hit` |
+| `pile` | 80 | 0 | **D** — round pine pile or log, fitted to **rifle** data at 25 m: one 7.62 NATO ball round penetrates a 16″ (40.6 cm) log wall (A Table 7-5) and 13″ (33 cm) of pine board (A Table 7-3); model stop depth 41 cm sits between, at the log end. Use only for thick timber: `timber` (fitted to pistol JHP) overstates short-range rifle penetration about 3× | splinters, `#8a6a45` | splintered gouge | `vfx_splinter` / `sfx_wood_crack` |
 | `grp` | 80 | 0 | **P** — glass-reinforced plastic hull/panels | white fibre fluff, `#f0f0ea` | fuzzy hole | `vfx_fibre` / `sfx_hull_hit` |
 | `foam` | 3 | 0 | **P** — upholstery | foam flecks + fabric | tear | `vfx_stuffing` / `sfx_cloth` |
 | `mattress` | 5 | 0 | **P** — innerspring + batting | stuffing | tear | `vfx_stuffing` / `sfx_cloth` |
@@ -114,11 +115,13 @@ Thickness in cm, outer → inner. "Alt" is the stochastic alternate stack.
 | `rc_column_40` | 40 cm RC column (tower), pier | concrete 40 | 40 | — | ∞ | ∞ (indestructible) | P |
 | `glass_annealed_6` | Old plate glass, jalousie slats, mirrors | glass 0.6 | 0.6 | — | — | 1 (whole pane) | P |
 | `glass_tempered_6` | Storefront doors, sliding patio doors, shower screens | glass 0.6 | 0.6 | — | — | 1 (whole pane, crazes) | P; TEMP |
+| `glass_block` | 8×8×4″ hollow pressed glass block: Deco facade panels, bar and bathroom screens | glass 0.8 · void 8.2 · glass 0.8 | 9.8 | — | — | 2 000 (blocks crack, panel stays) | V GB1 (3⅞″ actual thickness, 5.9 lb per 8×8 block); D (block mass at glass 2.5 g/cm³ gives ≈ 0.7 cm mean shell; 0.8 cm used for the faces); P (`glass` res, cellHp) |
 | `glass_lam_windshield` | Car windshield | glass_lam 0.76 | 0.76 | — | — | 1 500 (crazes, stays) | P; GLASS |
 | `glass_studio` | Studio control-room window: 2 laminated leaves, 20 cm gap | glass_lam 1.2 · void 20 · glass_lam 1.0 | 22.2 | — | — | 6 000 | V S5 (period detail) |
 | `door_hollow` | Hollow-core interior door | ply 0.3 · void 2.9 · ply 0.3 | 3.5 | — | — | 300 (lock: 800, §5) | P |
 | `door_solid` | Solid-core (particle) door — motel guest door, apartment entry | ply 0.3 · particle 3.85 · ply 0.3 | 4.45 | — | — | 1 500 (lock: 3 000, §5) | P (≈1¾″ standard) |
 | `door_metal` | Hollow-metal door — service, stair, shaft, back-of-house | steel 0.12 · void 4.2 · steel 0.12 | 4.44 | — | — | 4 000 (lock/hinge: 6 000, §5) | P (18-gauge skins) |
+| `door_vault` | Panic-room / vault door: two ⅜″ steel skins on a steel frame | steel 0.95 · void 4 · steel 0.95 | 5.9 | — | — | ∞ (no lock breach: opens by script/key only) | P (built from the A ⅜″ plate anchor; G no breach) |
 | `car_door` | 1980s sedan door | steel 0.08 · void 10 · steel 0.08 | 10.2 | window mech 15 %: + steel 0.3 | — | 3 000 | V CAR (qualitative) |
 | `car_engine` | Engine block line through a car | steel 6 | 6 | — | ∞ | ∞ | P; A (engine block is cover) |
 | `steel_3mm` | ⅛″ plate: dumpster, cabinet, shed panel | steel 0.32 | 0.32 | — | ∞ | ∞ | P |
@@ -127,6 +130,8 @@ Thickness in cm, outer → inner. "Alt" is the stochastic alternate stack.
 | `alu_bulkhead` | Yacht aluminium superstructure lined | alu 0.6 · insul 5 · ply 1.2 | 6.8 | — | — | 5 000 | V Y2, Y3; P (dims) |
 | `joinery_ply` | Yacht cabin joinery partition | ply 1.9 · insul 5 · ply 1.2 | 8.1 | — | — | 1 200 | P (Y2, Y3) |
 | `grp_hull` | GRP small boat hull / runabout | grp 1.5 | 1.5 | — | — | 2 500 | P |
+| `timber_pile` | 12″ (30 cm) treated timber mooring pile | pile 30 | 30 | — | — | ∞ | V R3 (timber mooring piles and finger-pier bents exist); P (30 cm diameter); D A Tables 7-2/7-3/7-5/7-6 |
+| `dock_box` | Fibreglass dock box / cooler (prop) | grp 0.5 · void 60 · grp 0.5 | 61 | — | — | 800 | P (R3 lists dock boxes) |
 | `acoustic_double` | Studio double-leaf wall | gyp 3.18 · insul 9 · void 5 · insul 9 · gyp 3.18 | 29.4 | — | — | 3 000 | V S4, S5 (approach); P (dims) |
 | `sofa` | Upholstered sofa / booth seat (prop) | foam 60 · timber 2 | 62 | — | — | 1 500 | P |
 | `mattress` | Mattress on edge (barricade prop) | mattress 22 | 22 | — | — | 800 | P |
@@ -151,7 +156,9 @@ Thickness in cm, outer → inner. "Alt" is the stochastic alternate stack.
 `cov` (full/chest/waist/rail/glass) is the wall's **height** class from the
 roadmap. Build and coverage combine freely: a `cbs_ext` at `waist` is a
 frontage planter wall; a `stud_wood_gyp` at `full` is a bathroom wall;
-`glass_tempered_6` at `full` is a sliding door. A "curtain" open fill (blocks
+`glass_tempered_6` at `full` is a sliding door. `glass_block` is
+translucent, so it is built at `full` (blocks sight like a wall) while
+bullets pass it like glass: concealment, not cover. A "curtain" open fill (blocks
 sight, not bullets: `res` 0, `sight` false) is suggested for W1 for motel
 windows and bead curtains.
 
@@ -165,9 +172,9 @@ level doc.
 | Typology (missions) | Exterior | Room-to-room | Inside a unit | Doors | Glazing | Other |
 |---|---|---|---|---|---|---|
 | **1950s MiMo motel** (Motel Sunset) | `cbs_ext` | `cmu_hollow` (between guest rooms) | `stud_wood_gyp` (bath, closet) | `door_solid` guest; `door_metal` service; `door_hollow` bath | `glass_annealed_6` jalousies; `glass_tempered_6` office storefront | planters `brick_1w`/`cbs_ext` waist; cars |
-| **1930s Deco hotel → nightclub** (Club Flamingo) | `cbs_ext` | `cmu_hollow` or `clay_tile_4` | `plaster_lath`; new club fit-out `stud_steel_gyp` | `door_solid`; `door_metal` back-of-house | `glass_annealed_6` | `counter_cmu` bar die; booths `sofa` |
-| **1980s Brickell tower** (Penthouse) | glazing + `rc_column_40`; spandrel `cbs_ext` | `stud_steel_gyp2` (unit/corridor); `rc_wall_20` core | `stud_steel_gyp` | `door_solid`; `door_metal` stairs/service | `glass_tempered_6` sliding doors; `glass_annealed_6` (P) fixed | `counter_cabinet` kitchen |
-| **Marina** (Marina) | office `cbs_ext`; shed `corrugated` on steel frame | `stud_steel_gyp` | `stud_steel_gyp` | `door_metal`; big shed doors `corrugated` | `glass_annealed_6` | boats `grp_hull`; fuel tanks `steel_3mm`; dock piles `rc_column_40` |
+| **1930s–40s Deco hotel or cafeteria → nightclub** (Club Flamingo) | `cbs_ext` | `cmu_hollow` or `clay_tile_4` | `plaster_lath`; new club fit-out `stud_steel_gyp` | `door_solid`; `door_metal` back-of-house | `glass_annealed_6`; `glass_block` facade panels (`full`, translucent) | `counter_cmu` bar die; booths `sofa` |
+| **1980s Brickell tower** (Penthouse) | glazing + `rc_column_40`; spandrel `cbs_ext` | `stud_steel_gyp2` (unit/corridor); `rc_wall_20` core | `stud_steel_gyp` | `door_solid`; `door_metal` stairs/service | `glass_tempered_6` sliding doors; `glass_annealed_6` (P) fixed | `counter_cabinet` kitchen; panic room `cmu_filled` + `door_vault` (P) |
+| **Marina** (Marina) | office `cbs_ext`; shed `corrugated` on steel frame | `stud_steel_gyp` | `stud_steel_gyp` | `door_metal`; big shed doors `corrugated` | `glass_annealed_6` | boats `grp_hull`; fuel pumps and tanks `steel_3mm`; concrete main-walk piles `rc_column_40`; mooring piles and finger-pier bents `timber_pile`; dock boxes `dock_box` |
 | **Strip centre arcade** (Arcade) | `cbs_ext` or `brick_cmu_ext` | `stud_steel_gyp2` (tenant demising) | `stud_steel_gyp`, `particle_divider` | `door_metal` rear; storefront `glass_tempered_6` | `glass_tempered_6` | arcade cabinets ≈ `counter_cabinet` |
 | **Mall** (Mall) | `rc_wall_20` / `cbs_ext` | `stud_steel_gyp2` | `stud_steel_gyp`, `particle_divider` | storefront `glass_tempered_6`; roll-down grille (rail cov) | `glass_tempered_6` | kiosks `counter_cabinet` |
 | **Recording studio** (Studio) | `cbs_ext` | `acoustic_double` | `stud_steel_gyp` (offices) | `door_solid` ×2 sound lock | `glass_studio` | consoles `counter_cabinet` |
@@ -243,7 +250,7 @@ Rules:
    buck shell) to the door's `lockHp`, not the energy deposited in the leaf.
    That is how real breaching rounds work: they destroy the hardware, not the
    slab. `lockHp` (P): `door_hollow` 800, `door_solid` 3 000, `door_metal`
-   6 000. Hits needed (`pen_model.py`): `door_solid` 1 slug or 2 buck shells
+   6 000; `door_vault` ∞ (opens only by script or key). Hits needed (`pen_model.py`): `door_solid` 1 slug or 2 buck shells
    or ≈7 9mm; `door_metal` 2 slugs or 3 buck shells or ≈13 9mm. Hits on the
    leaf away from hardware use the ordinary energy-deposit rule, so buck
    (which stops in the leaf and deposits everything) chews a hole in a solid
@@ -276,7 +283,7 @@ Removal reach (`Jwall(d) ≥ cellHp`, from `pen_model.py`):
 | `clay_tile_4` | 0.37 m | 1–2 cells | — |
 | `cmu_hollow` / `cbs_ext` | 0.27 m | 1 cell + spall decal around | **G target** |
 | `brick_1w` | 0.25 m | 1 cell only on direct contact | — |
-| `cmu_filled`, `brick_2w`, `brick_cmu_ext`, `rc_wall_20` | never | scorch/crater decal only | **G target** |
+| `cmu_filled`, `brick_2w`, `brick_cmu_ext`, `rc_wall_20`, `door_vault` | never | scorch/crater decal only | **G target** |
 
 **Glass:** every pane within 5 m of the burst shatters (the M406 casualty
 radius, HE), regardless of `Jwall`.
@@ -342,6 +349,7 @@ Steel studs + gypsum were standard commercial/high-rise practice from the
 const MAT = {
   gyp:{res:25,hard:0,debris:0xe8e4dc,vfx:'gyp_plume',sfx:'board_thud'},
   timber:{res:30,hard:0,debris:0xb88a55,vfx:'splinter',sfx:'wood_crack'},
+  pile:{res:80,hard:0,debris:0x8a6a45,vfx:'splinter',sfx:'wood_crack'},
   ply:{res:40,hard:0,debris:0xc49a6c,vfx:'splinter',sfx:'wood_crack'},
   particle:{res:45,hard:0,debris:0xb59a76,vfx:'chipdust',sfx:'board_thud'},
   plaster:{res:60,hard:0,debris:0xefe9df,vfx:'plaster_burst',sfx:'plaster'},
@@ -379,10 +387,12 @@ const BUILD = {
   glass_annealed_6:{layers:[['glass',0.6]],cellHp:1,pane:1},
   glass_tempered_6:{layers:[['glass',0.6]],cellHp:1,pane:1,tempered:1},
   glass_lam_windshield:{layers:[['glass_lam',0.76]],cellHp:1500},
+  glass_block:{layers:[['glass',0.8],['void',8.2],['glass',0.8]],cellHp:2000}, // cov 'full': translucent, blocks sight
   glass_studio:{layers:[['glass_lam',1.2],['void',20],['glass_lam',1]],cellHp:6000},
   door_hollow:{layers:[['ply',0.3],['void',2.9],['ply',0.3]],cellHp:300,lockHp:800},
   door_solid:{layers:[['ply',0.3],['particle',3.85],['ply',0.3]],cellHp:1500,lockHp:3000},
   door_metal:{layers:[['steel',0.12],['void',4.2],['steel',0.12]],cellHp:4000,lockHp:6000},
+  door_vault:{layers:[['steel',0.95],['void',4],['steel',0.95]],cellHp:Infinity,lockHp:Infinity}, // opens by script/key only
   car_door:{layers:[['steel',0.08],['void',10],['steel',0.08]],alt:{p:0.15,layers:[['steel',0.08],['steel',0.3],['void',10],['steel',0.08]]},cellHp:3000},
   car_engine:{layers:[['steel',6]],cellHp:Infinity},
   steel_3mm:{layers:[['steel',0.32]],cellHp:Infinity},
@@ -391,6 +401,8 @@ const BUILD = {
   alu_bulkhead:{layers:[['alu',0.6],['insul',5],['ply',1.2]],cellHp:5000},
   joinery_ply:{layers:[['ply',1.9],['insul',5],['ply',1.2]],cellHp:1200},
   grp_hull:{layers:[['grp',1.5]],cellHp:2500},
+  timber_pile:{layers:[['pile',30]],cellHp:Infinity},
+  dock_box:{layers:[['grp',0.5],['void',60],['grp',0.5]],cellHp:800},
   acoustic_double:{layers:[['gyp',3.18],['insul',9],['void',5],['insul',9],['gyp',3.18]],cellHp:3000},
   sofa:{layers:[['foam',60],['timber',2]],cellHp:1500},
   mattress:{layers:[['mattress',22]],cellHp:800},
@@ -438,6 +450,8 @@ Construction and typology:
 - **P5** Arquitectonica, The Palace (cores, glazing) — <https://architizer.com/projects/the-palace/>
 - **P6** Arquitectonica, The Atlantis — <https://architizer.com/projects/the-atlantis/>
 - **R1** Pan American Seaplane Base designation (steel frame, corrugated hangars) — <https://www.historicpreservationmiami.com/pdfs/Pan%20American%20Seaplane%20Base%20and%20Terminal%20Building.pdf>
+- **GB1** Pittsburgh Glass Block / Mulia glass block brochure: 8×8×4 nominal = 7¾ × 7¾ × 3⅞″, 5.9 lb; thick-face variant 11 lb — <https://www.pittsburghglassblock.com/sites/default/files/userfiles/file/Mulia%20Brochure.pdf>
+- **R3** Dinner Key Marina repairs design criteria (prestressed concrete U-beam walkways on concrete piles; 4 ft timber finger piers on 2-pile timber bents; timber mooring piles; dock boxes) — <https://archive.miamigov.com/MiamiCapital/docs/ProjectPages/ProcurementOpportunities/Dinner_Key_Design_Build_Repairs/Addend2/3DinnerKeyMarina_DesignCriteria.pdf>
 - **S4** Gilby 1984, floating studio floor — <https://www.muzines.co.uk/articles/constructing-a-floating-studio-floor/1339>
 - **S5** Gilby 1984, control-room window — <https://www.muzines.co.uk/articles/building-a-control-room-window/2884?theme=1>
 - **Y2** Lady Sandals (ex-Gallant Lady, 1985) spec: steel hull, aluminium superstructure — <https://www.boatinternational.com/yachts-for-sale/lady-sandals-feadship-1985>

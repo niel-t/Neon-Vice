@@ -239,8 +239,9 @@ E3, E6; W: E4, E5; E: E7, E8). Total **8**.
 
 ### 6.3 Sightlines (W1 query targets)
 
-Eye height is 1.6 m (standing). "Clear" means no `full` or `chest` wall
-blocks it. Parked cars are props and are excluded from the query.
+Eye height is 1.6 m (standing). "Clear" means no `full` wall or closed
+leaf door blocks it (STYLE-LEVELS §3.4; chest walls block only crouched
+sight). Parked cars are props and are excluded from the query.
 
 | # | Stage | From → to | Length | Expected | Intent |
 |---|---|---|---:|---|---|
