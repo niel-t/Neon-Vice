@@ -18,9 +18,7 @@ function checkNavigation() {
     html.match(/const angDiff=[^\r\n]+/)[0],
     section('function flowStep(', '/* ================= GEOMETRY'),
     section('function moveChar(', '/* ================= FX'),
-    section('function bossAI(', 'function spot('),
-    section('function visionHalfAngle(', 'function separate('),
-    section('function lexAI(', '/* the finisher on Lex'),
+    readFileSync(resolve(__dirname, '..', 'ai.js'), 'utf8').replace(/^'use strict';/, ''),
     section('function updateCash(', 'function updateFX(')
   ].join('\n');
   function simulation({ weapon = 'bat', boss = false, lex = false, map, start = [6.5, 4.5], target = [13.5, 4.5], radius = .28, item, cash } = {}) {
