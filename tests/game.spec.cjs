@@ -210,13 +210,13 @@ test('saves: a job in progress resumes from its stage kit as a retry, and walkin
     return { ch: CHARS[selIdx].id, weapon: G.player.weapon, pool: G.live.pool, kit: kit().guns, stage: r.stage, stageGuns: r.stageKit.guns, stow: r.stow }; }))
     .toEqual({ ch: 'money', weapon: { type: 'shotgun', ammo: 4 }, pool: { '12ga': 10 }, kit: entry.guns, stage: 'legacy', stageGuns: stage.guns, stow: [{ type: 'smg', mag: 12 }] });
   // 's0' (the old start id) is the same; only a stage a migrated mission no longer has restarts it from the entry kit
-  expect(await page.evaluate(([e, st]) => { const run = stg => normRun({ mission: 'c1', stage: stg, entryKit: structuredClone(e), stageKit: structuredClone(st), stow: [{ type: 'smg', mag: 12 }] }, missionStage, []);
+  expect(await page.evaluate(([e, st]) => { const run = stg => normRun({ mission: 'c1', stage: stg, entryKit: structuredClone(e), stageKit: structuredClone(st), stow: [{ type: 'smg', mag: 12 }], stageHp: 40, st: { w1: 1 } }, missionStage, []);
     const s0 = run('s0'), stages = MISSIONS.c1.stages;
     MISSIONS.c1.stages = ['legacy', 'yard'];
     try { const gone = run('gone'), yard = run('yard');
-      return { s0: [s0.stage, s0.stageKit.guns, s0.stow.length], gone: [gone.stage, gone.stageKit.guns, gone.stow], yard: [yard.stage, yard.stageKit.guns, yard.stow.length],
+      return { s0: [s0.stage, s0.stageKit.guns, s0.stow.length, s0.stageHp], gone: [gone.stage, gone.stageKit.guns, gone.stow, gone.stageHp, gone.st], yard: [yard.stage, yard.stageKit.guns, yard.stow.length, yard.stageHp],
         bad: normRun({ mission: 'toString', entryKit: e, stageKit: st }, missionStage, []) }; } finally { MISSIONS.c1.stages = stages; } }, [entry, stage]))
-    .toEqual({ s0: ['legacy', stage.guns, 1], gone: ['legacy', entry.guns, undefined], yard: ['yard', stage.guns, 1], bad: null });
+    .toEqual({ s0: ['legacy', stage.guns, 1, 40], gone: ['legacy', entry.guns, undefined, undefined, undefined], yard: ['yard', stage.guns, 1, 40], bad: null });
   expect(await page.evaluate(() => { const f = fadeTo; fadeTo = () => true; try { togglePause(); walkAway(); } finally { fadeTo = f; }
     const s = JSON.parse(localStorage.getItem('nb86prog')).money; return { run: s.run || null, kit: s.kit }; }))
     .toEqual({ run: null, kit: entry });

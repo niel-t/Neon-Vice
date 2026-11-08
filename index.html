@@ -3181,7 +3181,7 @@ function runStage(id){const p=myProg(),r=p.run;if(!G||G.def.hub||!r||r.mission!=
  /* Q-B: rewind to the job's beginning (shown only once a later stage has been reached) */
  function syncRestartJob(){const r=myProg().run,on=!!(G&&!G.def.hub&&r&&r.mission===MISSION&&r.stage!==missionStart(MISSION));for(const id of ['bDeadRestartJob','bPRestartJob'])$(id).style.display=on?'':'none';}
  function restartJob(){if(!G||G.def.hub||fading)return;runRestartMission();restart();}
- function runRestartMission(){const p=myProg(),r=p.run;if(!r)return false;r.stage=missionStart(r.mission);r.stageKit=kitClone(r.entryKit);delete r.stow;saveProg();return true;}
+ function runRestartMission(){const p=myProg(),r=p.run;if(!r)return false;r.stage=missionStart(r.mission);r.stageKit=kitClone(r.entryKit);delete r.stow;delete r.stageHp;delete r.st;saveProg();return true;}
 /* leave the job: everything you brought comes back as it was when you went in, nothing you found there comes with you */
 function walkAway(){if(!G||G.def.hub||fading||!(state==='dead'||state==='pause'))return;const p=myProg();
  if(!G.xpGiven){G.xpGiven=1;awardXP(runXP(G,false));}runWalkAway(p);saveProg();sfx('blip');

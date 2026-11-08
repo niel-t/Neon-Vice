@@ -91,8 +91,9 @@ test('missions: restart from the beginning appears past the first stage and rewi
       G.player.alive = false; restart();
       const retry = { stage: myProg().run.stage, weapon: G.player.weapon && G.player.weapon.type };
       togglePause(); const paused = $('bPRestartJob').style.display;
+      Object.assign(myProg().run, { stageHp: 40, st: { w1: 1 } });
       $('bPRestartJob').click();
-      return { first, shown, retry, paused, stage: myProg().run.stage, weapon: G.player.weapon ? G.player.weapon.type : null, entry };
+      return { first, shown, retry, paused, stage: myProg().run.stage, w1: [myProg().run.stageHp, myProg().run.st], weapon: G.player.weapon ? G.player.weapon.type : null, entry };
     } finally { fadeTo = fade; }
-  })).toEqual({ first: 'none', shown: '', retry: { stage: 'yard', weapon: 'shotgun' }, paused: '', stage: 'legacy', weapon: null, entry: null });
+  })).toEqual({ first: 'none', shown: '', retry: { stage: 'yard', weapon: 'shotgun' }, paused: '', stage: 'legacy', w1: [undefined, undefined], weapon: null, entry: null });
 });
