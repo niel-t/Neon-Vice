@@ -63,12 +63,15 @@ test('UI journey: title/select/intro/elevator/brief/car/mission, spam and held m
   await expect.poll(() => page.evaluate(() => state === 'play' && G.def === HUBS.office && !fading)).toBe(true);
   for (let i = 0; i < 6; i++) await page.keyboard.press('Tab');
   await expect.poll(() => page.evaluate(() => state)).toBe('brief');
-  for (let i = 0; i < 100; i++) {
+  await page.waitForFunction(() => !fading && CHAT.phase !== 'idle', null, { polling: 'raf' });
+  const dialogueSteps = await page.evaluate(() => CHAT.q.length * 3 + 1);
+  for (let i = 0; i < dialogueSteps; i++) {
     if (await page.evaluate(() => CHAT.done)) break;
     await page.keyboard.press('Space');
   }
   await expect.poll(() => page.evaluate(() => CHAT.done)).toBe(true);
-  await page.locator('#bGo').click();
+  // The final Space can also accept a dialogue completed by its read timer.
+  if (await page.evaluate(() => state === 'brief' && !fading)) await page.locator('#bGo').click();
   await expect.poll(() => page.evaluate(() => state)).toBe('elev');
   for (let i = 0; i < 6; i++) await page.keyboard.press('Space');
   await expect.poll(() => page.evaluate(() => state === 'play' && G.def === HUBS.lobby && !fading)).toBe(true);
