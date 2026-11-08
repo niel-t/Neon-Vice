@@ -734,7 +734,7 @@ function loadLevel(i,dOver){
    const melee=!k||WD[k].melee;e.state=Math.random()<(melee?0.6:0.3)?'patrol':'idle';e.pa=e.a;e.ta=e.a;e.turnT=rnd(1,4);e.pauseT=0;e.react=0;e.wind=0;e.id=g.enemies.length;e.pers=pick(['rush','careful','flank','flank']);e.seeT=99;e.lkx=cx;e.lkz=cz;e.burst=0;e.searchT=0;g.enemies.push(e);}
   else if(c in IKIND){const t=IKIND[c];g.items.push({x:cx,z:cz,type:t,ammo:WD[t].ammo||0,vx:0,vz:0,rot:rnd(0,TAU),flying:false,fresh:true,flyT:0});}
  }
- if(!def.hub)addHazards(g,i);
+ markZones(g);if(!def.hub)addHazards(g,i);
  if(def.hub)hubSetup(g);g.lights.push({x:g.car.x,y:0.3,z:g.car.z,r:3,c:[1,0.2,0.7]});dressStreet(g);buildStatic(g);buildRadar(g);g.cam.x=g.player.x;g.cam.z=g.player.z-1;computeFlow();return g;
 }
 function furnBox(B,m,c,uv){B.box(m,c,false,uv);}
@@ -781,6 +781,24 @@ function buildFurn2(B,g,x,z,f,a){const cx=x+0.5,cz=z+0.5,m=A.mul(A.T(cx,0,cz),A.
  else if(f===21){const cols=[0x2050c0,0xe8e4dc,0x202024,0x3aa0a0];drawCar(B,x+1,cz,hex(cols[Math.floor(k*cols.length)]));}}
 /* ================= PROPS & DECOR ================= */
 const hsh=(x,z,k,idx=levelIdx)=>WORLD.hsh(x,z,k,idx);
+const srng=s=>()=>{s=(s+0x6D2B79F5)|0;let t=Math.imul(s^(s>>>15),1|s);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};
+/* Placement zones on the legacy grid. g.out[i]=1 marks open-air floor: street, plus floor reachable from the
+   street or a water/void edge without crossing a door or a narrow building entrance (an opening of <=6 cells
+   that widens beyond). Every other floor cell is a roofed interior. Ceiling and wall decor key off this. */
+function markZones(g){const W=g.W,H=g.H,out=new Uint8Array(W*H),q=[];g.out=out;
+ const open=(x,z)=>x>=0&&z>=0&&x<W&&z<H&&!g.solid[z*W+x];
+ const door=(x,z)=>g.rows[z][x]==='D';
+ const edge=(x,z)=>{for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++){const X=x+dx,Z=z+dz;if(X<0||Z<0||X>=W||Z>=H)return true;const j=Z*W+X;if(g.solid[j]&&(g.rows[Z][X]===' '||g.glow[j]===2))return true;}return false;};
+ const pass=(x,z)=>open(x,z)&&!door(x,z);
+ const run=(x,z,hx)=>{let n=1;for(let s=1;pass(x+(hx?s:0),z+(hx?0:s));s++)n++;for(let s=1;pass(x-(hx?s:0),z-(hx?0:s));s++)n++;return n;};
+ for(let z=0;z<H;z++)for(let x=0;x<W;x++){if(!open(x,z)||door(x,z))continue;if(g.floorT[z*W+x]===7||edge(x,z)){out[z*W+x]=1;q.push(x,z);}}
+ for(let h=0;h<q.length;h+=2){const x=q[h],z=q[h+1];
+  for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){const X=x+dx,Z=z+dz;if(!open(X,Z)||out[Z*W+X]||door(X,Z))continue;
+   const fa=g.floorT[z*W+x],fb=g.floorT[Z*W+X],fn=open(X+dx,Z+dz)?g.floorT[(Z+dz)*W+X+dx]:-1;
+   if(fa!==7&&fb!==7&&fa!==fb)continue;
+   const r=run(X,Z,dz!==0);if(r<=6&&fn>=0&&!(fa===fb&&fb===fn)&&run(X+dx,Z+dz,dz!==0)>r)continue;
+   out[Z*W+X]=1;q.push(X,Z);}}}
+const isOut=(g,x,z)=>!!(g.out&&g.out[z*g.W+x]);
 function rayLen(x,z,dx,dz,max){return WORLD.cell.rayLen(G,x,z,dx,dz,max);}
 function dressStreet(g){const W=g.W,H=g.H;
  const street=(x,z)=>x>=0&&z>=0&&x<W&&z<H&&!g.solid[z*W+x]&&g.floorT[z*W+x]===7;
@@ -792,7 +810,9 @@ function dressStreet(g){const W=g.W,H=g.H;
   if(top&&x%11===8&&!occ(x,z))g.deco.push({t:'hydrant',x,z});
   if(bot&&x%5===1&&!occ(x,z)&&Math.abs(x+0.5-g.car.x)>2.4&&Math.abs(x+0.5-g.player.x)>1.5)g.furn[z*W+x]=8;
   else if(bot&&x%7===4&&!occ(x,z))g.deco.push({t:'bags',x,z});}
- for(let z=H-1;z>=0;z--)for(let x=W-4;x>W/2;x--){if(street(x,z)&&street(x+1,z)&&isSolid(x,z+1)&&isSolid(x+1,z+1)&&!g.furn[z*W+x]&&!g.furn[z*W+x+1]&&!occ(x,z)&&!occ(x+1,z)&&Math.abs(x-g.car.x)>3){g.furn[z*W+x]=21;g.furn[z*W+x+1]=22;return;}}}
+ /* parked car: its body overhangs into the neighbouring kerb cells, so keep x-1..x+2 clear of palms, bags, lamps and other cars */
+ const kerbClear=(x,z)=>{for(let X=x-1;X<=x+2;X++){if(!street(X,z)||g.furn[z*W+X]||occ(X,z))return false;}return !g.deco.some(d=>d.z===z&&d.t!=='dash'&&d.x>=x-1&&d.x<=x+2);};
+ for(let z=H-1;z>=0;z--)for(let x=W-4;x>W/2;x--){if(isSolid(x,z+1)&&isSolid(x+1,z+1)&&kerbClear(x,z)&&Math.hypot(x+1-g.car.x,z+0.5-g.car.z)>4.5){g.furn[z*W+x]=21;g.furn[z*W+x+1]=22;return;}}}
 function drawPalm(B,cx,cz,tall,seedk){const h=tall?2.5:1.5,lean=(hsh(cx|0,cz|0,seedk)-0.5)*0.5;const tr=hex(0x6b4a2a),tr2=hex(0x806040);
  if(!tall){B.box(TRS(cx,0.22,cz,0,0.42,0.44,0.42),hex(0xb85a32));B.box(TRS(cx,0.45,cz,0,0.36,0.03,0.36),hex(0x3a2a1a));}
  const y0=tall?0:0.45,n=6;let px=cx,pz=cz;for(let i=0;i<n;i++){const y=y0+(i+0.5)*(h-y0)/n;px=cx+lean*(i/n)*(i/n);B.box(TRS(px,y,pz,i*0.4,0.17-i*0.012,(h-y0)/n+0.02,0.17-i*0.012),i%2?tr:tr2);}
@@ -805,8 +825,8 @@ function drawDeco(B,g,d){const cx=d.x+0.5,cz=d.z+0.5;
  else if(d.t==='lamp'){const z=d.z+0.12;B.box(TRS(cx,1.05,z,0,0.07,2.1,0.07),hex(0x3a3a44));B.box(TRS(cx,2.1,z+0.22,0,0.07,0.07,0.5),hex(0x3a3a44));B.box(TRS(cx,2.05,z+0.42,0,0.22,0.08,0.3),[1,0.85,0.55],true);}
  else if(d.t==='hydrant'){const z=d.z+0.2;B.box(TRS(cx,0.22,z,0,0.18,0.44,0.18),hex(0xc0202a));B.box(TRS(cx,0.46,z,0,0.13,0.08,0.13),hex(0xd03030));B.box(TRS(cx,0.28,z,0,0.3,0.07,0.07),hex(0xa01a22));}
  else if(d.t==='bags'){for(let i=0;i<3;i++){const u=hsh(d.x,d.z,10+i);B.box(TRS(d.x+0.25+u*0.5,0.17,d.z+0.55+hsh(d.x,d.z,20+i)*0.3,u*3,0.38,0.34,0.34),i===1?hex(0x2a3a2a):hex(0x15151a));}}}
-function clutter(B,g,x,z){if(g.def.hub)return;const ch=g.rows[z][x];if(!(ch in FLOORCH)&&ch!=='r')return;if(hsh(x,z,1)>0.14)return;const st=g.floorT[z*g.W+x]===7;
- const lvl=levelIdx;const pool=st?['can','paper','can','butts']:lvl===1?['bottle','cards','bottle','can','butts','paper','cards']:lvl===2?['cash','paper','bottle','cash','casings','paper']:['bottle','can','paper','pizza','butts','casings','paper'];
+function clutter(B,g,x,z){if(g.def.hub)return;const ch=g.rows[z][x];if(!(ch in FLOORCH)&&ch!=='r')return;if(hsh(x,z,1)>0.14)return;const st=g.floorT[z*g.W+x]===7,out=isOut(g,x,z);
+ const lvl=levelIdx;const pool=st?['can','paper','can','butts']:out?['can','butts','bottle','can','paper']:lvl===1?['bottle','cards','bottle','can','butts','paper','cards']:lvl===2?['cash','paper','bottle','cash','casings','paper']:['bottle','can','paper','pizza','butts','casings','paper'];
  const t=pool[Math.floor(hsh(x,z,2)*pool.length)];const u=x+0.2+hsh(x,z,3)*0.6,v=z+0.2+hsh(x,z,4)*0.6,r=hsh(x,z,5)*TAU;
  if(t==='bottle'){if(hsh(x,z,6)<0.5)B.box(TRS(u,0.09,v,r,0.05,0.18,0.05),hex(0x2f7a3a));else B.box(A.mul(A.mul(A.T(u,0.03,v),A.RY(r)),A.S(0.05,0.05,0.18)),hex(0x8a5a1a));}
  else if(t==='can'){B.box(TRS(u,0.04,v,r,0.05,0.08,0.05),hsh(x,z,6)<0.5?hex(0xc02030):hex(0xb0b4bc));}
@@ -816,16 +836,33 @@ function clutter(B,g,x,z){if(g.def.hub)return;const ch=g.rows[z][x];if(!(ch in F
  else if(t==='cards'){for(let i=0;i<5;i++)B.box(TRS(u+(hsh(x,z,50+i)-0.5)*0.5,0.003,v+(hsh(x,z,60+i)-0.5)*0.5,i*1.3,0.07,0.003,0.1),i%2?[1,1,1]:hex(0xd02030));}
  else if(t==='cash'){for(let i=0;i<4;i++)B.box(A.mul(A.mul(A.T(u+(hsh(x,z,70+i)-0.5)*0.5,0.004,v+(hsh(x,z,80+i)-0.5)*0.5),A.RY(i*1.7)),A.S(0.15,0.004,0.07)),[1,1,1],false,TUV[11]);}
  else if(t==='casings'){for(let i=0;i<5;i++)B.box(TRS(u+(hsh(x,z,90+i)-0.5)*0.5,0.01,v+(hsh(x,z,95+i)-0.5)*0.5,i,0.02,0.02,0.045),hex(0xd0a040));}}
-function wallDecor(B,g,x,z){const r=hsh(x,z,7),ext=g.wallT[z*g.W+x]===6,zf=z+1+0.012;
+/* Wall decor hosts: only the +z face of a full-height wall. Street-facing facades get windows/neon; walls facing
+   docks, decks or yards stay bare; interior walls get art, sconces, and windows only when the wall backs onto the outside.
+   Tall furniture in front of the wall suppresses decor. Returns the decor kind or null. */
+const DECOR_FRONT_OK={1:1,4:1,5:1,17:1};
+/* furniture that reaches head height: palms, vending, arcade cabinets, speakers, bookshelves, floor lamps */
+const TALL_FURN={8:1,9:1,10:1,12:1,13:1,17:1};
+/* level-legend props that act2Setup turns solid after loading: arcade cabinets/hockey, mall elevators/mannequins, studio glass */
+const SET_PIECE='cae%n';
+const setPiece=(g,x,z)=>SET_PIECE.includes(g.rows[z][x]);
+function wallDecorKind(g,x,z){const W=g.W,i=z*W+x,j=i+W;if(z+1>=g.H||g.solid[j]||setPiece(g,x,z+1))return null;
+ if((g.wh[i]||WALL_H)<WALL_H*0.9)return null;const f=g.furn[j];if(f&&!DECOR_FRONT_OK[f])return null;
+ /* a one-cell wall stub between two openings is not a hosting wall; nor is a slot squeezed between tall props */
+ if(x>0&&x<W-1&&!g.solid[i-1]&&!g.solid[i+1])return null;
+ if(x>0&&x<W-1&&TALL_FURN[g.furn[j-1]]&&TALL_FURN[g.furn[j+1]])return null;
+ const r=hsh(x,z,7);
+ if(isOut(g,x,z+1)){if(g.floorT[j]!==7)return null;return r<0.4?'window':r<0.47?'neon':null;}
+ const back=z-1<0||g.rows[z-1][x]===' '||g.glow[i-W]===2||(!g.solid[i-W]&&isOut(g,x,z-1));
+ if(r<0.12)return back?'window':null;
+ if(levelIdx===4&&r<0.31)return r<0.2?'neon':null;
+ if(r<0.25)return'painting';if(r<0.31)return'gilt';if(r<0.37)return'sconce';if(r<0.42&&levelIdx===1)return'neon';return null;}
+function wallDecor(B,g,x,z){const k=wallDecorKind(g,x,z);if(!k)return;const zf=z+1+0.012;
  const wq=(x0,y0,x1,y1,uv,col,em,dz)=>{const zz=zf+(dz||0);B.quad([[x0,y0,zz],[x1,y0,zz],[x1,y1,zz],[x0,y1,zz]],0,0,em?0:1,uv,col);};
- const win=()=>{wq(x+0.1,0.3,x+0.9,1.02,WUV,hex(0x1a1420));wq(x+0.16,0.36,x+0.84,0.96,TUV[21],[1,1,1],true,0.003);B.box(TRS(x+0.5,0.3,zf+0.03,0,0.84,0.04,0.07),hex(0x3a2a40));B.box(TRS(x+0.5,0.66,zf+0.006,0,0.68,0.025,0.01),hex(0x1a1420));};
- const neon=()=>{const c=pick(NEON);B.box(TRS(x+0.5,0.95,zf+0.02,0,0.7,0.04,0.03),c,true);B.box(TRS(x+0.5,0.75,zf+0.02,0,0.45,0.04,0.03),c.map(v=>v*0.8),true);};
- if(ext){if(r<0.4)win();else if(r<0.47)neon();return;}
- if(r<0.12)win();
- else if(r<0.25){wq(x+0.22,0.42,x+0.78,1.02,TUV[hsh(x,z,8)<0.5?22:23],[0.95,0.95,0.95]);}
- else if(r<0.31){wq(x+0.14,0.45,x+0.86,0.98,WUV,GOLD);wq(x+0.19,0.5,x+0.81,0.93,TUV[24],[1,1,1],false,0.003);}
- else if(r<0.37){B.box(TRS(x+0.5,0.92,zf+0.04,0,0.12,0.16,0.08),[1,0.85,0.6],true);B.box(TRS(x+0.5,0.82,zf+0.03,0,0.06,0.06,0.06),GOLD);}
- else if(r<0.42&&levelIdx===1)neon();}
+ if(k==='window'){wq(x+0.1,0.3,x+0.9,1.02,WUV,hex(0x1a1420));wq(x+0.16,0.36,x+0.84,0.96,TUV[21],[1,1,1],true,0.003);B.box(TRS(x+0.5,0.3,zf+0.03,0,0.84,0.04,0.07),hex(0x3a2a40));B.box(TRS(x+0.5,0.66,zf+0.006,0,0.68,0.025,0.01),hex(0x1a1420));}
+ else if(k==='neon'){const c=NEON[Math.floor(hsh(x,z,9)*NEON.length)];B.box(TRS(x+0.5,0.95,zf+0.02,0,0.7,0.04,0.03),c,true);B.box(TRS(x+0.5,0.75,zf+0.02,0,0.45,0.04,0.03),c.map(v=>v*0.8),true);}
+ else if(k==='painting')wq(x+0.22,0.42,x+0.78,1.02,TUV[hsh(x,z,8)<0.5?22:23],[0.95,0.95,0.95]);
+ else if(k==='gilt'){wq(x+0.14,0.45,x+0.86,0.98,WUV,GOLD);wq(x+0.19,0.5,x+0.81,0.93,TUV[24],[1,1,1],false,0.003);}
+ else if(k==='sconce'){B.box(TRS(x+0.5,0.92,zf+0.04,0,0.12,0.16,0.08),[1,0.85,0.6],true);B.box(TRS(x+0.5,0.82,zf+0.03,0,0.06,0.06,0.06),GOLD);}}
 function buildStatic(g){const B=g.staticB;B.reset();const W=g.W,H=g.H;
  const top=[0.13,0.09,0.16];
  for(let z=0;z<H;z++)for(let x=0;x<W;x++){const i=z*W+x;
@@ -2761,11 +2798,23 @@ function rebuildDecals(){const B=G.decalB;B.reset();for(const d of G.decals){if(
  else floorQuad(B,d.x,d.z,d.s,d.r,TUV[d.t],d.c,0.01);}B.upload();}
 /* ---------- environmental hazards: ceiling fans, pool edges, broken glass ---------- */
 function addHazards(g,i){const W=g.W,H=g.H,p=g.player;if(!p)return;g.fans=[];g.pool=new Uint8Array(W*H);g.glass=new Uint8Array(W*H);
- const free=(x,z)=>x>0&&z>0&&x<W-1&&z<H-1&&!g.solid[z*W+x]&&!g.furn[z*W+x]&&g.floorT[z*W+x]>=0&&!g.rug[z*W+x]&&!g.pool[z*W+x]&&!g.glass[z*W+x]&&Math.hypot(x+0.5-p.x,z+0.5-p.z)>4.5&&Math.hypot(x+0.5-g.car.x,z+0.5-g.car.z)>3;
- const spot=()=>{for(let k=0;k<300;k++){const x=1+(Math.random()*(W-2)|0),z=1+(Math.random()*(H-2)|0);if(free(x,z))return [x,z];}return null;};
- for(let k=0;k<(i>0?2:1);k++){const f=spot();if(f)g.fans.push({x:f[0]+0.5,z:f[1]+0.5,ph:Math.random()*TAU,strk:0,cd:rnd(3,6)});}
- {const f=spot();if(f)for(let dz=0;dz<2;dz++)for(let dx=0;dx<2;dx++){const x=f[0]+dx,z=f[1]+dz;if(!g.solid[z*W+x]&&!g.furn[z*W+x])g.pool[z*W+x]=1;}}
- for(let k=0;k<2+(i>1?1:0);k++){const f=spot();if(!f)continue;for(let n=0;n<7;n++){const x=f[0]+(Math.random()*3|0)-1,z=f[1]+(Math.random()*3|0)-1;if(x>0&&z>0&&x<W-1&&z<H-1&&!g.solid[z*W+x]&&!g.pool[z*W+x])g.glass[z*W+x]=1;}}}
+ const R=srng(0x5eed+i*7919),ri=n=>R()*n|0;
+ const free=(x,z)=>x>0&&z>0&&x<W-1&&z<H-1&&!g.solid[z*W+x]&&!g.furn[z*W+x]&&g.floorT[z*W+x]>=0&&!g.rug[z*W+x]&&!g.pool[z*W+x]&&!g.glass[z*W+x]&&g.rows[z][x]!=='D'&&!setPiece(g,x,z)&&Math.hypot(x+0.5-p.x,z+0.5-p.z)>4.5&&Math.hypot(x+0.5-g.car.x,z+0.5-g.car.z)>3;
+ const inside=(x,z)=>!g.solid[z*W+x]&&!isOut(g,x,z)&&!setPiece(g,x,z);
+ /* ceiling fans hang only from a roof: centre and its 3x3 blade sweep must be roofed interior floor */
+ const tall=(x,z)=>x>=0&&z>=0&&x<W&&z<H&&(!!TALL_FURN[g.furn[z*W+x]]||setPiece(g,x,z));
+ const fanOK=(x,z)=>{for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++)if(!inside(x+dx,z+dz)||g.rows[z+dz][x+dx]==='D'||tall(x+dx,z+dz))return false;
+   for(const [dx,dz] of [[2,0],[-2,0],[0,2],[0,-2]]){const X=x+dx,Z=z+dz;if(X<0||Z<0||X>=W||Z>=H||g.solid[Z*W+X])return false;}
+   return g.fans.every(f=>Math.hypot(f.x-x-0.5,f.z-z-0.5)>3);};
+ /* spills take one of a few footprints, on plain matching floor (not the glass tank floor), clear of furniture */
+ const SPILL=[[[0,0],[1,0],[0,1],[1,1]],[[0,0],[1,0],[1,1]],[[0,0],[1,0],[2,0],[1,1]],[[0,0],[0,1],[1,1]],[[0,0],[1,0]]];
+ const shape=SPILL[ri(SPILL.length)];
+ const puddleOK=(x,z)=>{const ft=g.floorT[z*W+x];for(const [dx,dz] of shape){const X=x+dx,Z=z+dz,j=Z*W+X;if(X>=W-1||Z>=H-1||!inside(X,Z)||g.furn[j]||g.rug[j]||g.glow[j]||g.floorT[j]!==ft||ft===39||g.rows[Z][X]==='D')return false;
+   if(tall(X-1,Z)||tall(X+1,Z)||tall(X,Z-1)||tall(X,Z+1))return false;}return true;};
+ const spot=ok=>{for(let k=0;k<400;k++){const x=1+ri(W-2),z=1+ri(H-2);if(free(x,z)&&(!ok||ok(x,z)))return [x,z];}return null;};
+ for(let k=0;k<(i>0?2:1);k++){const f=spot(fanOK);if(f)g.fans.push({x:f[0]+0.5,z:f[1]+0.5,ph:R()*TAU,strk:0,cd:3+R()*3});}
+ {const f=spot(puddleOK);if(f)for(const [dx,dz] of shape)g.pool[(f[1]+dz)*W+f[0]+dx]=1;}
+ for(let k=0;k<2+(i>1?1:0);k++){const f=spot();if(!f)continue;for(let n=0;n<7;n++){const x=f[0]+ri(3)-1,z=f[1]+ri(3)-1;if(x>0&&z>0&&x<W-1&&z<H-1&&!g.solid[z*W+x]&&!g.pool[z*W+x])g.glass[z*W+x]=1;}}}
 function breakLamp(g,d){d.broken=true;const cx=d.x+0.5,cz=d.z+0.5;g.lights=g.lights.filter(L=>!(Math.abs(L.x-cx)<0.01&&Math.abs(L.z-cz)<0.01&&L.y===2.1));
  for(let k=0;k<14;k++)g.parts.push({t:'c',x:cx,y:1.6,z:cz,vx:rnd(-2,2),vy:rnd(0.5,2.5),vz:rnd(-2,2),s:0.05,c:[0.75,0.95,1],life:0.9});
  sfx('ric');popup(cx,cz,'CRASH!','#ffd36b');}
