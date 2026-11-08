@@ -69,6 +69,24 @@ const WORLD=(()=>{
  function collideGrid(g,c){const r=c.r;for(let it=0;it<2;it++){const x0=Math.floor(c.x-r),x1=Math.floor(c.x+r),z0=Math.floor(c.z-r),z1=Math.floor(c.z+r);
   for(let cz=z0;cz<=z1;cz++)for(let cx=x0;cx<=x1;cx++){if(!isBlock(g,cx,cz))continue;const nx=clamp(c.x,cx,cx+1),nz=clamp(c.z,cz,cz+1);const dx=c.x-nx,dz=c.z-nz,d2=dx*dx+dz*dz;
    if(d2<r*r){const d=Math.sqrt(d2);if(d>1e-6){c.x+=dx/d*(r-d);c.z+=dz/d*(r-d);}else{c.x+=(c.x-(cx+0.5))>0?r:-r;}}}}}
+ // Doors are pushed open by movement; this corridor tests static cell obstacles only.
+ function moveClear(g,ax,az,bx,bz,r=0){
+  if(!Number.isFinite(r)||r<0)throw new RangeError('WORLD.cell.moveClear requires a nonnegative radius');
+  if(![ax,az,bx,bz].every(Number.isFinite))throw new TypeError('WORLD.cell.moveClear requires finite coordinates');
+  const nonzero=Math.hypot(bx-ax,bz-az)>1e-12;
+  const overlaps=d=>d<r-1e-9||d<=1e-12;
+  for(let z=Math.floor(Math.min(az,bz)-r);z<=Math.floor(Math.max(az,bz)+r);z++)for(let x=Math.floor(Math.min(ax,bx)-r);x<=Math.floor(Math.max(ax,bx)+r);x++){
+   if(!isBlock(g,x,z))continue;
+   const pointDist=(px,pz)=>Math.hypot(px-clamp(px,x,x+1),pz-clamp(pz,z,z+1));
+   if(overlaps(pointDist(ax,az))||overlaps(pointDist(bx,bz)))return false;
+   if(nonzero){
+    const corners=[[x,z],[x+1,z],[x+1,z+1],[x,z+1]];
+    for(let i=0;i<4;i++){const a=corners[i],b=corners[(i+1)%4];
+     if(segInt(ax,az,bx,bz,...a,...b)||overlaps(segDist(...a,ax,az,bx,bz)))return false;}
+   }
+  }
+  return true;
+ }
  function collideDoors(g,c,isP){let sounds=0;for(const d of g.doors){const e=doorEnd(d),sx=e[0]-d.hx,sz=e[1]-d.hz;let t=((c.x-d.hx)*sx+(c.z-d.hz)*sz)/(sx*sx+sz*sz);t=clamp(t,0,1);
   const px=d.hx+sx*t,pz=d.hz+sz*t,dx=c.x-px,dz=c.z-pz,dist=Math.hypot(dx,dz),rr=c.r+0.06;if(dist>=rr||dist<1e-6)continue;
   const side=Math.sign(sx*(c.z-d.hz)-sz*(c.x-d.hx))||1;const nx=dx/dist,nz=dz/dist,pen=rr-dist;c.x+=nx*pen;c.z+=nz*pen;if(t<0.1)continue;
@@ -76,6 +94,6 @@ const WORLD=(()=>{
   if(Math.abs(d.w)<target||Math.sign(d.w)!==-side){if(isP&&vn>2&&Math.abs(d.w)<2)sounds++;d.w=-side*target;d.pusher=isP?'p':'e';}}return sounds;}
  function bfs(g,f,sx,sz){const W=g.W;f.fill(-1);if(isBlock(g,sx,sz))return;const q=[sz*W+sx];f[q[0]]=0;let h=0;
   while(h<q.length){const i=q[h++];const d=f[i];for(const o of [1,-1,W,-W]){const j=i+o;if(j<0||j>=f.length||g.solid[j]||g.furn[j]||f[j]>=0)continue;f[j]=d+1;q.push(j);}}}
- return Object.freeze({version:1,buildGrid,hsh,cell:Object.freeze({isSolid,isBlock,isCover,rayBlock,doorHit,rayLen,los,rayWall,collideGrid,collideDoors,bfs}),
+ return Object.freeze({version:1,buildGrid,hsh,cell:Object.freeze({isSolid,isBlock,isCover,rayBlock,doorHit,rayLen,los,rayWall,collideGrid,moveClear,collideDoors,bfs}),
   geometry:Object.freeze({doorEnd,segDist,segInt})});
 })();

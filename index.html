@@ -1074,7 +1074,7 @@ function updateEnemy(e,dt){const g=G,p=g.player;
   case 'search':{const dd=Math.hypot(e.sx-e.x,e.sz-e.z);if(dd>0.9){const t=flowStep(g.nflow,e,e.sx,e.sz);if(t){const ddx=t[0]-e.x,ddz=t[1]-e.z,l=Math.hypot(ddx,ddz)||1;tvx=ddx/l*2.6;tvz=ddz/l*2.6;face=Math.atan2(ddx,ddz);}else{e.searchT+=dt;}}
    else{e.searchT+=dt;face=e.a+dt*3;}if(e.searchT>(e.wary?6:3.5)){e.state=e.wary?'idle':'patrol';e.turnT=0;e.searchT=0;}break;}
   case 'chase':{
-   if(!e.weapon){let bi=null,bd=4.5;for(const it of g.items){if(it.flying)continue;const d=Math.hypot(it.x-e.x,it.z-e.z);if(d<bd&&los(e.x,e.z,it.x,it.z)){bd=d;bi=it;}}
+   if(!e.weapon){let bi=null,bd=4.5;for(const it of g.items){if(it.flying)continue;const d=Math.hypot(it.x-e.x,it.z-e.z);if(d<bd&&los(e.x,e.z,it.x,it.z)&&WORLD.cell.moveClear(g,e.x,e.z,it.x,it.z)){bd=d;bi=it;}}
     if(bi&&(dist>2.5||!see)){const ddx=bi.x-e.x,ddz=bi.z-e.z;tvx=ddx/(bd||1)*3.2;tvz=ddz/(bd||1)*3.2;face=Math.atan2(ddx,ddz);if(bd<0.5){e.weapon={type:bi.type,ammo:99};g.items.splice(g.items.indexOf(bi),1);e.react=0.5;}break;}}
    if(see){face=ang;
     if(SET.diff!=='easy'&&!e.boss&&p.weapon&&!WD[p.weapon.type].melee&&dist<10&&!(e.dodgeT>0)&&Math.abs(angDiff(p.a,Math.atan2(-dx,-dz)))<0.09&&Math.random()<dt*(SET.diff==='hard'?1.6:0.7)){e.dodgeT=0.3;e.dodgeD=Math.random()<0.5?-1:1;}
@@ -1086,8 +1086,12 @@ function updateEnemy(e,dt){const g=G,p=g.player;
      const lead=SET.diff==='hard'?0.9:SET.diff==='normal'?0.5:0;if(lead){const tt=dist/Dd().ebSpd;face=Math.atan2(dx+p.vx*tt*lead,dz+p.vz*tt*lead);}
      if(e.react<=0&&e.cd<=0&&Math.abs(angDiff(e.a,face))<0.22){e.weapon.ammo=99;fireGun(e,e.weapon,false);
       if(wd.burst){e.burst++;if(e.burst>=wd.burst){e.burst=0;e.cd=0.9;}}else if(wd.burst3){e.burst++;if(e.burst<3)e.cd=0.08;else{e.burst=0;e.cd=wd.ecd;}}}}}
-   else if(!wd.melee&&e.pers==='careful'&&e.seeT<2.2){face=Math.atan2(e.lkx-e.x,e.lkz-e.z);e.aiming=e.seeT<1.2;e.react=Math.max(e.react,0.2);}
-   else{if(e.seeT<6){const t=flowStep(g.flow,e,p.x,p.z);if(t){const ddx=t[0]-e.x,ddz=t[1]-e.z,dd=Math.hypot(ddx,ddz)||1,sp=wd.melee?3.2:2.6;tvx=ddx/dd*sp;tvz=ddz/dd*sp;face=Math.atan2(ddx,ddz);}}
+   if(see&&tvx*dx+tvz*dz>1e-6&&!WORLD.cell.moveClear(g,e.x,e.z,p.x,p.z,Math.max(0,Math.min(e.r,p.r)-0.02))){
+    const t=flowStep(g.flow,e,p.x,p.z),sp=(tvx*dx+tvz*dz)/dist;
+    if(t){const tx=t[0]-e.x,tz=t[1]-e.z,d=Math.hypot(tx,tz)||1;tvx=tx/d*sp;tvz=tz/d*sp;if(wd.melee)face=Math.atan2(tx,tz);}else{tvx=tvz=0;}
+   }
+   if(!see&&!wd.melee&&e.pers==='careful'&&e.seeT<2.2){face=Math.atan2(e.lkx-e.x,e.lkz-e.z);e.aiming=e.seeT<1.2;e.react=Math.max(e.react,0.2);}
+   else if(!see){if(e.seeT<6){const t=flowStep(g.flow,e,p.x,p.z);if(t){const ddx=t[0]-e.x,ddz=t[1]-e.z,dd=Math.hypot(ddx,ddz)||1,sp=wd.melee?3.2:2.6;tvx=ddx/dd*sp;tvz=ddz/dd*sp;face=Math.atan2(ddx,ddz);}}
     else{e.state='search';e.sx=e.lkx;e.sz=e.lkz;e.searchT=0;e.qT=1;g.nx=e.sx;g.nz=e.sz;bfs(g.nflow,Math.floor(e.sx),Math.floor(e.sz));}e.react=Math.max(e.react,0.35);}
   }break;}
  if(e.wind>0){e.wind-=dt;tvx*=0.3;tvz*=0.3;if(e.wind<=0){e.atkT=e.atkDur=0.2;e.jab=Math.random()<0.5;e.cd=0.8;sfx(wd.snd||'swing_fists',0.8);const d2=Math.hypot(p.x-e.x,p.z-e.z);
@@ -1122,7 +1126,7 @@ function updateItems(dt){const g=G;for(const it of g.items){it.age=(it.age||0)+d
 function updateCash(dt){const g=G;for(const c of g.cash){c.t+=dt;
  if(!c.landed){const k=Math.min(c.t/0.4,1);c.x=lerp(c.sx,c.tx,k);c.z=lerp(c.sz,c.tz,k);c.y=0.6+Math.sin(k*Math.PI)*1.2;
   if(k>=1){c.landed=true;c.y=0.06;sfx('cash');for(let i=0;i<18;i++)g.parts.push({t:'c',x:c.x,y:rnd(0.3,0.9),z:c.z,vx:rnd(-1.2,1.2),vy:rnd(0.5,2),vz:rnd(-1.2,1.2),s:0.07,c:[0.35,0.8,0.4],life:rnd(2,4)});
-   for(const e of g.enemies){if(!e.alive||e.down>0||e.state==='chase')continue;if(Math.hypot(e.x-c.x,e.z-c.z)<9&&los(e.x,e.z,c.x,c.z)){e.state='distract';e.cashT=c;popup(e.x,e.z,'$$$?','#7dff9a');}}}}
+   for(const e of g.enemies){if(!e.alive||e.down>0||e.state==='chase')continue;if(Math.hypot(e.x-c.x,e.z-c.z)<9&&los(e.x,e.z,c.x,c.z)&&WORLD.cell.moveClear(g,e.x,e.z,c.x,c.z)){e.state='distract';e.cashT=c;popup(e.x,e.z,'$$$?','#7dff9a');}}}}
  else c.life-=dt;}
  g.cash=g.cash.filter(c=>c.life>0);}
 function updateFX(dt){const g=G;
