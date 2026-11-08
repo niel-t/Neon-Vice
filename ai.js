@@ -81,7 +81,29 @@ const AI=(()=>{
  function noiseDup(x,z,r,src){const T=G.T||0;if(T!==nzT){nzT=T;nzF.length=0;}
   if(nzF.some(n=>n.src===src&&n.r>=r&&Math.hypot(n.x-x,n.z-z)<.75))return true;nzF.push({x,z,r,src});
   noises.push({x,z,r,t:T});if(noises.length>16)noises.shift();return false;}
- return{SRC,belief,rng,rand,hear,costAt,nav,noises,know,poi,investigate,callout,hurt,witness,seek,search,probe,noiseDup,GRACE,KEEP,
+ // W8b room belief: probability mass over a room graph; index n is "unroomed/outside".
+ // gr={n,area[],cx[],cz[],at(x,z)->i|-1,adj(i)->portal idx[],pa[],pb[] (-1 outside),pw[],px[],pz[],open(k)->bool}
+ const rooms={
+  graph(st,W){W=W||WORLD;const R=st.rooms,Pt=st.portals,n=R.length,m=Pt.length,gr={n,area:new Float64Array(n+1),cx:new Float64Array(n+1),cz:new Float64Array(n+1),
+   pa:new Int16Array(m),pb:new Int16Array(m),pw:new Float64Array(m),px:new Float64Array(m),pz:new Float64Array(m),
+   at:(x,z)=>{const r=W.roomAt(st,x,z);return r?r.idx:-1;},adj:i=>i<n?W.portals(st,i):[],open:k=>W.portalOpen(st,Pt[k],'move')};
+   for(const r of R){gr.area[r.idx]=Math.max(r.area,1);gr.cx[r.idx]=r.centroid[0];gr.cz[r.idx]=r.centroid[1];}gr.area[n]=1e3;
+   for(const p of Pt){gr.pa[p.idx]=p.a;gr.pb[p.idx]=p.b==null?-1:p.b;gr.pw[p.idx]=p.width;gr.px[p.idx]=p.mid[0];gr.pz[p.idx]=p.mid[1];}return gr;},
+  init(gr,x,z,out){const P=out&&out.length===gr.n+1?out.fill(0):new Float32Array(gr.n+1),i=gr.at(x,z);P[i<0?gr.n:i]=1;return P;},
+  // Mass leaks through move-open portals at speed*width/area per second, capped so a room never over-drains.
+  diffuse(gr,P,dt,speed){const n=gr.n,d=new Float64Array(n+1),m=gr.pa.length,deg=new Float64Array(n+1);
+   for(let k=0;k<m;k++){deg[gr.pa[k]]++;deg[gr.pb[k]<0?n:gr.pb[k]]++;}
+   for(let k=0;k<m;k++){if(!gr.open(k))continue;const a=gr.pa[k],b=gr.pb[k]<0?n:gr.pb[k];
+    const fa=P[a]*Math.min(dt*speed*gr.pw[k]/gr.area[a],.9/deg[a]),fb=P[b]*Math.min(dt*speed*gr.pw[k]/gr.area[b],.9/deg[b]);d[a]+=fb-fa;d[b]+=fa-fb;}
+   for(let i=0;i<=n;i++)P[i]=Math.max(0,P[i]+d[i]);return P;},
+  // Negative information: room i was looked at and the player is not there.
+  clear(P,i,f){P[i]*=1-(f==null?1:f);let s=0;for(let j=0;j<P.length;j++)s+=P[j];if(s<1e-6)return false;for(let j=0;j<P.length;j++)P[j]/=s;return true;},
+  pick(gr,P,x,z){let best=-1,bs=1e-4;for(let i=0;i<gr.n;i++){const s=P[i]/(1+.1*Math.hypot(gr.cx[i]-x,gr.cz[i]-z));if(s>bs){bs=s;best=i;}}return best;},
+  // Ambush: cover the own-room portal facing the most likely neighbour, standing back inside the room.
+  ambush(gr,P,mine,back){back=back||1.5;let best=-1,bp=1e-3;for(const k of gr.adj(mine)){if(!gr.open(k))continue;const o=gr.pa[k]===mine?gr.pb[k]:gr.pa[k],q=P[o<0?gr.n:o];if(q>bp){bp=q;best=k;}}
+   if(best<0)return null;const mx=gr.px[best],mz=gr.pz[best],dx=gr.cx[mine]-mx,dz=gr.cz[mine]-mz,l=Math.hypot(dx,dz)||1,s=Math.min(back,l);
+   const x=mx+dx/l*s,z=mz+dz/l*s;return{k:best,x,z,a:Math.atan2(mx-x,mz-z),p:bp};}
+ }; return{SRC,belief,rng,rand,hear,costAt,nav,rooms,noises,know,poi,investigate,callout,hurt,witness,seek,search,probe,noiseDup,GRACE,KEEP,
   debug:typeof location!=='undefined'&&/[?&]ai=1(&|$)/.test(location.search)};
 })();
 function alertNoise(x,z,r,src){const g=G;if(!g||!(r>=1)||AI.noiseDup(x,z,r,src))return;const T=g.T||0,R=r*1.5;

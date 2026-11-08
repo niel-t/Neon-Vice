@@ -89,7 +89,25 @@ function checkAI() {
   g.navVer = 1; g.solid[2*g.W+6] = 0; const fresh = AI.nav.field(g, 2.5, 2.5);
   assert(fresh[2*g.W+6] === 4, 'Geometry version bump rebuilds stale fields');
   assert.equal(AI.nav.field(g, -5, -5), false, 'No free cell near target');
-  console.log('AI: belief, attenuation, callouts, seeded rng and per-target nav fields checked');
+
+  // Room belief (W8b): rooms A|B|C in a row (4x4 m each), B-C door lockable, C opens to the outside.
+  const R = AI.rooms, shut = new Set();
+  const gr = { n: 3, area: [16, 16, 16, 1e3], cx: [2, 6, 10, 0], cz: [2, 2, 2, 0], pa: [0, 1, 2], pb: [1, 2, -1], pw: [1, 1, 1],
+    px: [4, 8, 12], pz: [2, 2, 2], at: (x, z) => x < 0 || x >= 12 ? -1 : Math.floor(x/4), adj: i => [[0], [0, 1], [1, 2]][i] || [], open: k => !shut.has(k) };
+  const sum = P => [...P].reduce((a, v) => a+v, 0);
+  let P = R.init(gr, 1, 1); assert.deepEqual([...P], [1, 0, 0, 0]);
+  for (let i = 0; i < 8; i++) R.diffuse(gr, P, .25, 3);
+  close(sum(P), 1, 1e-5, 'Diffusion conserves mass'); assert(P[0] > P[1] && P[1] > P[2] && P[2] > P[3] && P[3] > 0, 'Mass spreads outward in order');
+  P = R.init(gr, 5, 1); shut.add(1); for (let i = 0; i < 40; i++) R.diffuse(gr, P, .25, 3);
+  assert(P[2] === 0 && P[3] === 0 && P[0] > 0, 'Locked portals stop the spread'); shut.clear();
+  P = Float32Array.from([.5, .5, 0, 0]); assert(R.clear(P, 1)); close(P[0], 1, 1e-6, 'Searched room drops out and mass renormalises');
+  assert(!R.clear(Float32Array.from([1, 0, 0, 0]), 0), 'Clearing the last candidate reports lost');
+  assert.equal(R.pick(gr, Float32Array.from([.2, 0, .8, 0]), 1, 2), 2, 'Likelier room wins');
+  assert.equal(R.pick(gr, Float32Array.from([.5, 0, .5, 0]), 1, 2), 0, 'Ties go to the nearer room');
+  const am = R.ambush(gr, Float32Array.from([0, 0, 1, 0]), 1);
+  assert(am.k === 1 && am.x === 6.5 && am.z === 2 && close(am.a, Math.PI/2) === undefined, 'Ambush covers the likely door from inside');
+  shut.add(1); assert.equal(R.ambush(gr, Float32Array.from([0, 0, 1, 0]), 1), null, 'No ambush on a locked door'); shut.clear();
+  console.log('AI: belief, attenuation, callouts, seeded rng, per-target nav fields and room belief checked');
 }
 
 module.exports = { checkAI };
