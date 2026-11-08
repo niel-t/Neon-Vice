@@ -341,3 +341,65 @@ add dirty-tile invalidation. Private arrays prevent one agent corrupting
 another. Field buffers are reused, but existing scalar geometry helpers still
 allocate temporary candidate arrays; this gate does not claim allocation-free
 runtime queries or enable them in the game's hot path.
+
+## Stage-run envelope v1 (W1eA, no gameplay activation)
+
+`WORLD.stageRun(mission,describe,opts?)` is a pure state machine, not a renderer
+or loader. It does not touch G, kit, HP, storage or the mission table. It accepts
+`mission:{id,stages:[sid,...],start}` and a descriptor resolver. Descriptor shape:
+
+```js
+{
+  id: 'f2', kind: 'grid', rev: 1,
+  arrivals: {up: {at:[2,2], dir:0}},
+  stairs: [{id:'down', to:'f1', at:[5,5], arrive:'down', r:.65}],
+  backdrop: [{stage:'f1', dy:-3.4, dim:.6}]
+}
+```
+
+Descriptors can name `kind:'plan'`; **that does not make a plan playable**.
+The gameplay factory must reject unsupported kinds explicitly until W2b.
+W2 maps `fromPlan` stage/extras into these descriptors; tooling-only `info`
+Maps/functions and compiled geometry are never serialized. Stairs must target
+a known stage/arrival, be paired or `oneWay:true`, and arrivals must be outside
+the target stage's stair trigger radii. Backdrop refs are stage/city descriptors,
+not active worlds; renderer support belongs to W2c.
+
+Manager operations:
+
+| API | Contract |
+|---|---|
+| `describe(sid)` | Immutable normalized descriptor. |
+| `prepare(to,arrive=null)` | Immutable transaction token, arrival and retained snapshot; no mutation or save. |
+| `prepareStair(id)` | Resolve a stair from the active stage, then prepare. |
+| `preview(token,leaving,entry,bag={})` | Validate/copy the prospective save envelope without mutating manager state, before any save writer runs. |
+| `commit(token,leaving,entry,bag={})` | Atomically copy/validate leaving and incoming entry snapshots, retain per-stage state, activate target and set retry entry. Reject stale/foreign/reused tokens. |
+| `retry()` | Current `{sid,snapshot,bag}` entry checkpoint; no live world reference. |
+| `restart()` | Clear all retained stages/checkpoint/bag and return to inactive start. |
+| `encode()` / `decode(saved)` | Plain JSON envelope; decode validates all stage revisions before changing state. |
+| `backdrops(sid)` | Immutable descriptors only; no recursive rendering or simulation. |
+
+Envelope `{v:1,mission,current,states,entry,bag}` belongs under existing `run.st`.
+State entries are `{sid,rev,data}`. Data and mission-stat `bag` are plain finite
+JSON supplied by gameplay capture/hydrate; WORLD does not infer which G fields
+are safe to persist. Default budgets are 16 KiB UTF-8 per stage and 256 KiB per
+run, configurable with `maxStageBytes`/`maxRunBytes`; there is no stage-count cap.
+Circular, non-data and over-budget snapshots throw before changing state.
+Old/future/malformed envelopes and layout revision drift throw, never silently
+overwrite the original save. The gameplay bridge must distinguish explicit
+restart/migration from unreadable-save preservation.
+
+Every activation must build a fresh world/player. Retaining a live G would
+reactivate stale callbacks guarded by `G===g`, and applying loadout to a carried
+player would duplicate armour. Correct transaction order: prepare and capture
+previous world read-only, build detached, validate `preview` before assigning
+prospective `run.st`/HP, then use previous G to call existing `runStage(to)` once.
+Finally activate new G/apply stageKit/set checkpoint HP and commit the manager.
+Factory/preview failure must leave world, run and storage unchanged.
+No separate storage writer belongs in WORLD.
+
+This milestone only verifies the pure transaction/envelope boundary. The
+gameplay bridge, bounded capture/hydrate classification, HP checkpoints and
+two-grid lifecycle integration are W1eB, after W14's mission baseline lands.
+Multi-stage clear/finish/grade policy remains gated; no shipped mission gains
+stages and no plan stage is silently replaced by a legacy map.
