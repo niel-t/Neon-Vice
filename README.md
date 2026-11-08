@@ -2,7 +2,9 @@
 
 A gory, top-down 3D action game in the spirit of Hotline Miami, set in 1986 Miami with a PS2 / Vice City look. It runs entirely in the browser. The whole game is one HTML file, with no build step and no dependencies.
 
-**Play:** open `index.html` in a browser, or enable GitHub Pages for this repo (Settings → Pages → Deploy from branch → `main` / root).
+**Play:** open `index.html` in a WebGL-capable browser, or serve it from any static host.
+The authoritative repository is [GitLab](https://gitlab.com/srk7630145/neon-vice).
+GitLab Pages publishes the checked and browser-tested `public` artifact on the default branch.
 
 ## The crew
 - **The Consigliere**: a big bruiser with gold knuckle dusters. Punches kill outright, and a vest under the suit soaks up one bullet.
@@ -29,4 +31,35 @@ Jobs come from **McWey**, from his office on the 52nd floor of McWey Tower, next
 - Music that changes per level and on every death.
 - Pause menu settings: graphics (enhanced / PS1 retro), film grain, VHS glitch, gore, hints, sound and screen shake.
 
-Progress and settings are saved in your browser.
+Progress and settings are saved locally in your browser (`nb86`, `nb86prog`, `nb86jobs`).
+Different origins, browsers and profiles have separate saves; direct-open and hosted play
+do not share progress. A persistent storage warning means an unreadable save is preserved,
+but changes to that key will not save in the current session. Back up the original key in
+browser developer tools before repairing/removing it and reloading. A write failure warning
+clears after a later successful save; keep the tab open until storage works again.
+
+## Development
+
+Node.js 22 or newer is needed for tooling only, not for playing:
+
+```sh
+npm ci
+npx playwright install chromium
+npm test
+```
+
+`npm run check` compiles the inline script and validates level/loader data without a browser.
+`npm run build` assembles an explicit production allowlist into `public`.
+`npm run test:browser` tests the already assembled artifact using an isolated ephemeral
+localhost server, Chromium/SwiftShader and fresh save contexts; it never uses preview saves.
+Software rendering uses the existing lowest quality lock while retaining the real enhanced
+pipeline; tests assert simulation/frame progress, not GPU performance or pixel fidelity.
+Four compact groups cover boot/settings, one real first-mission UI route, an all-eight-floor
+integration smoke (not a full campaign), and historical/current/corrupt save regressions.
+Only external Google Fonts are replaced with an empty response for deterministic offline tests.
+Failure traces/screenshots are in `test-results`; the HTML report is in `playwright-report`.
+
+GitLab merge-request and default-branch pipelines use matching pinned Playwright package/image
+versions, without blanket retries. Pages downloads the exact tested assembly, never a second
+build. Run the applicable local suite before a direct main merge/push. The published game
+contains no Node packages.
