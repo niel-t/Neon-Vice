@@ -13,8 +13,13 @@ function grid(rows) {
 }
 
 function checkCover() {
-  const { STANCE, coverFind, coverStep, COVER_END, COVER_PEEK } = vm.runInNewContext(`${readFileSync(resolve(__dirname, '..', 'cover.js'), 'utf8')}
-    ;({STANCE, coverFind, coverStep, COVER_END, COVER_PEEK})`, {}, { timeout: 1000 });
+  const calls = [];
+  const sb = { G: null, WORLD: {
+    sight: (...a) => (calls.push(['sight', ...a]), { clear: true }),
+    cell: { los: (g, ...a) => (calls.push(['los', ...a]), true) },
+  } };
+  const { STANCE, coverFind, coverStep, COVER_END, COVER_PEEK, stanceSight, coverShotY, playerSeenBy } = vm.runInNewContext(`${readFileSync(resolve(__dirname, '..', 'cover.js'), 'utf8')}
+    ;({STANCE, coverFind, coverStep, COVER_END, COVER_PEEK, stanceSight, coverShotY, playerSeenBy})`, sb, { timeout: 1000 });
   const step = (cv, q, x, z, m = [0, 0], aim = [0, -1], fired = false) => coverStep(cv, q, x, z, m[0], m[1], aim[0], aim[1], fired, 1 / 60);
 
   // A bar run x=2..4 at z=2 with an open end at x=5 and a wall at x=1.
@@ -68,6 +73,20 @@ function checkCover() {
   assert.equal(step(coverFind(shelf, 2.5, 2.4, 0.28, 0, -1), shelf, 2.5, 2.3).kind, 'high');
   const sofa = grid(['#####', '#.B.#', '#.S.#', '#...#', '#####']);
   assert.equal(coverFind(sofa, 2.5, 3.4, 0.28, 0, -1), null, 'Cannot hug cover through a sofa');
+
+  // W7b stance hooks
+  const crouched = { x: 3, z: 3, stance: 'crouch', eye: { x: 3, z: 3, y: 1 } };
+  assert.equal(coverShotY(1.3, crouched), STANCE.crouch.aim, 'Shots at a crouched target trace low');
+  assert.equal(coverShotY(1.3, { stance: 'stand' }), 1.3, 'Standing targets keep the muzzle height');
+  assert.equal(coverShotY(1.3, null), 1.3, 'No target keeps the muzzle height');
+  stanceSight('st', 1, 1, 1.6, crouched);
+  assert.deepEqual(calls.pop(), ['sight', 'st', 1, 1, 3, 3, 1.6, STANCE.crouch.top], 'Crouched sight uses the crouch top');
+  sb.G = { player: { x: 4, z: 5 } };
+  assert.equal(playerSeenBy({ x: 1, z: 1 }), true);
+  assert.deepEqual(calls.pop(), ['los', 1, 1, 4, 5], 'No eye set: fall back to the body');
+  sb.G.player.eye = { x: 4.5, z: 4.8, y: 1.6 };
+  playerSeenBy({ x: 1, z: 1 });
+  assert.deepEqual(calls.pop(), ['los', 1, 1, 4.5, 4.8], 'Leaning: sight targets the lean eye');
 }
 
 module.exports = { checkCover };

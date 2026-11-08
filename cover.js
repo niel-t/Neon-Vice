@@ -2,7 +2,7 @@
 // Player/enemy cover and stance. DOM/GL-free; gameplay wiring lives in index.html.
 // Cover is an axis-aligned run of cover cells; the player hugs its face. Local frame: u is the
 // normal axis (the cover lies toward +s), v is the tangent axis along the run.
-const STANCE={stand:{eye:1.6,top:1.8},crouch:{eye:1.0,top:1.1}};
+const STANCE={stand:{eye:1.6,top:1.8},crouch:{eye:1.0,top:1.1,aim:0.7}};
 const COVER_REACH=0.85,COVER_HIGH=1.6,COVER_GAP=0.02,COVER_EDGE=0.45,COVER_PEEK=0.22,COVER_POP=0.35,COVER_END=0.12;
 /* legacy bullet-stopping furniture heights (metres): below COVER_HIGH you crouch behind it, else you lean */
 const COVER_FURN_H={2:1.0,7:1.0,9:1.6,10:1.6,11:1.35,12:1.5,13:1.8,14:0.95,19:1.3,20:1.15,21:1.3,22:1.3};
@@ -47,3 +47,12 @@ function coverStep(cv,q,x,z,mx,mz,ax_,az_,fired,dt){
  const vn=Math.max(-4,Math.min(4,(cv.u-u)*10));
  return{kind:high?'high':'low',crouch,lean,eye,t:vt,vn,v:vc,spd:crouch?0.55:0.8};
 }
+/* W7b stance hooks. t is an actor with stance/eye (eye = lean point when leaning). */
+const stanceOf=t=>t&&t.stance==='crouch'?'crouch':'stand';
+/* WORLD.sight from a viewer eye to t's head; a crouched t hides behind chest panels (props never block sight, Q9) */
+function stanceSight(st,ax,az,eyeA,t){const e=t.eye||t;return WORLD.sight(st,ax,az,e.x,e.z,eyeA,STANCE[stanceOf(t)].top);}
+/* trace height for a shot at t: aimed low at a crouched target so its waist-high cover counts */
+function coverShotY(muzzleY,t){return stanceOf(t)==='crouch'?Math.min(muzzleY,STANCE.crouch.aim):muzzleY;}
+/* enemy e (eye at e.x/e.z) sees the player's eye. Legacy cell LOS today: no gameplay WORLD state exists until
+   W1's mutation-sync checkpoint, after which this becomes stanceSight(st,e.x,e.z,STANCE[stanceOf(e)].eye,p). */
+function playerSeenBy(e){const p=G.player,eye=p.eye||p;return WORLD.cell.los(G,e.x,e.z,eye.x,eye.z);}
