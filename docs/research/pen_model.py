@@ -30,6 +30,7 @@ CON={
  'glass_annealed_6':([('glass',0.6)],None,1),
  'glass_tempered_6':([('glass',0.6)],None,1),
  'glass_lam_windshield':([('glass_lam',0.76)],None,1500),
+ 'glass_block':([('glass',0.8),('void',8.2),('glass',0.8)],None,2000),
  'glass_studio':([('glass_lam',1.2),('void',20),('glass_lam',1.0)],None,6000),
  'door_hollow':([('ply',0.3),('void',2.9),('ply',0.3)],None,300),
  'door_solid':([('ply',0.3),('particle',3.85),('ply',0.3)],None,1500),

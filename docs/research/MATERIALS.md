@@ -115,6 +115,7 @@ Thickness in cm, outer → inner. "Alt" is the stochastic alternate stack.
 | `rc_column_40` | 40 cm RC column (tower), pier | concrete 40 | 40 | — | ∞ | ∞ (indestructible) | P |
 | `glass_annealed_6` | Old plate glass, jalousie slats, mirrors | glass 0.6 | 0.6 | — | — | 1 (whole pane) | P |
 | `glass_tempered_6` | Storefront doors, sliding patio doors, shower screens | glass 0.6 | 0.6 | — | — | 1 (whole pane, crazes) | P; TEMP |
+| `glass_block` | 8×8×4″ hollow pressed glass block: Deco facade panels, bar and bathroom screens | glass 0.8 · void 8.2 · glass 0.8 | 9.8 | — | — | 2 000 (blocks crack, panel stays) | V GB1 (3⅞″ actual thickness, 5.9 lb per 8×8 block); D (block mass at glass 2.5 g/cm³ gives ≈ 0.7 cm mean shell; 0.8 cm used for the faces); P (`glass` res, cellHp) |
 | `glass_lam_windshield` | Car windshield | glass_lam 0.76 | 0.76 | — | — | 1 500 (crazes, stays) | P; GLASS |
 | `glass_studio` | Studio control-room window: 2 laminated leaves, 20 cm gap | glass_lam 1.2 · void 20 · glass_lam 1.0 | 22.2 | — | — | 6 000 | V S5 (period detail) |
 | `door_hollow` | Hollow-core interior door | ply 0.3 · void 2.9 · ply 0.3 | 3.5 | — | — | 300 (lock: 800, §5) | P |
@@ -155,7 +156,9 @@ Thickness in cm, outer → inner. "Alt" is the stochastic alternate stack.
 `cov` (full/chest/waist/rail/glass) is the wall's **height** class from the
 roadmap. Build and coverage combine freely: a `cbs_ext` at `waist` is a
 frontage planter wall; a `stud_wood_gyp` at `full` is a bathroom wall;
-`glass_tempered_6` at `full` is a sliding door. A "curtain" open fill (blocks
+`glass_tempered_6` at `full` is a sliding door. `glass_block` is
+translucent, so it is built at `full` (blocks sight like a wall) while
+bullets pass it like glass: concealment, not cover. A "curtain" open fill (blocks
 sight, not bullets: `res` 0, `sight` false) is suggested for W1 for motel
 windows and bead curtains.
 
@@ -169,7 +172,7 @@ level doc.
 | Typology (missions) | Exterior | Room-to-room | Inside a unit | Doors | Glazing | Other |
 |---|---|---|---|---|---|---|
 | **1950s MiMo motel** (Motel Sunset) | `cbs_ext` | `cmu_hollow` (between guest rooms) | `stud_wood_gyp` (bath, closet) | `door_solid` guest; `door_metal` service; `door_hollow` bath | `glass_annealed_6` jalousies; `glass_tempered_6` office storefront | planters `brick_1w`/`cbs_ext` waist; cars |
-| **1930s Deco hotel → nightclub** (Club Flamingo) | `cbs_ext` | `cmu_hollow` or `clay_tile_4` | `plaster_lath`; new club fit-out `stud_steel_gyp` | `door_solid`; `door_metal` back-of-house | `glass_annealed_6` | `counter_cmu` bar die; booths `sofa` |
+| **1930s–40s Deco hotel or cafeteria → nightclub** (Club Flamingo) | `cbs_ext` | `cmu_hollow` or `clay_tile_4` | `plaster_lath`; new club fit-out `stud_steel_gyp` | `door_solid`; `door_metal` back-of-house | `glass_annealed_6`; `glass_block` facade panels (`full`, translucent) | `counter_cmu` bar die; booths `sofa` |
 | **1980s Brickell tower** (Penthouse) | glazing + `rc_column_40`; spandrel `cbs_ext` | `stud_steel_gyp2` (unit/corridor); `rc_wall_20` core | `stud_steel_gyp` | `door_solid`; `door_metal` stairs/service | `glass_tempered_6` sliding doors; `glass_annealed_6` (P) fixed | `counter_cabinet` kitchen; panic room `cmu_filled` + `door_vault` (P) |
 | **Marina** (Marina) | office `cbs_ext`; shed `corrugated` on steel frame | `stud_steel_gyp` | `stud_steel_gyp` | `door_metal`; big shed doors `corrugated` | `glass_annealed_6` | boats `grp_hull`; fuel pumps and tanks `steel_3mm`; concrete main-walk piles `rc_column_40`; mooring piles and finger-pier bents `timber_pile`; dock boxes `dock_box` |
 | **Strip centre arcade** (Arcade) | `cbs_ext` or `brick_cmu_ext` | `stud_steel_gyp2` (tenant demising) | `stud_steel_gyp`, `particle_divider` | `door_metal` rear; storefront `glass_tempered_6` | `glass_tempered_6` | arcade cabinets ≈ `counter_cabinet` |
@@ -384,6 +387,7 @@ const BUILD = {
   glass_annealed_6:{layers:[['glass',0.6]],cellHp:1,pane:1},
   glass_tempered_6:{layers:[['glass',0.6]],cellHp:1,pane:1,tempered:1},
   glass_lam_windshield:{layers:[['glass_lam',0.76]],cellHp:1500},
+  glass_block:{layers:[['glass',0.8],['void',8.2],['glass',0.8]],cellHp:2000}, // cov 'full': translucent, blocks sight
   glass_studio:{layers:[['glass_lam',1.2],['void',20],['glass_lam',1]],cellHp:6000},
   door_hollow:{layers:[['ply',0.3],['void',2.9],['ply',0.3]],cellHp:300,lockHp:800},
   door_solid:{layers:[['ply',0.3],['particle',3.85],['ply',0.3]],cellHp:1500,lockHp:3000},
@@ -446,6 +450,7 @@ Construction and typology:
 - **P5** Arquitectonica, The Palace (cores, glazing) — <https://architizer.com/projects/the-palace/>
 - **P6** Arquitectonica, The Atlantis — <https://architizer.com/projects/the-atlantis/>
 - **R1** Pan American Seaplane Base designation (steel frame, corrugated hangars) — <https://www.historicpreservationmiami.com/pdfs/Pan%20American%20Seaplane%20Base%20and%20Terminal%20Building.pdf>
+- **GB1** Pittsburgh Glass Block / Mulia glass block brochure: 8×8×4 nominal = 7¾ × 7¾ × 3⅞″, 5.9 lb; thick-face variant 11 lb — <https://www.pittsburghglassblock.com/sites/default/files/userfiles/file/Mulia%20Brochure.pdf>
 - **R3** Dinner Key Marina repairs design criteria (prestressed concrete U-beam walkways on concrete piles; 4 ft timber finger piers on 2-pile timber bents; timber mooring piles; dock boxes) — <https://archive.miamigov.com/MiamiCapital/docs/ProjectPages/ProcurementOpportunities/Dinner_Key_Design_Build_Repairs/Addend2/3DinnerKeyMarina_DesignCriteria.pdf>
 - **S4** Gilby 1984, floating studio floor — <https://www.muzines.co.uk/articles/constructing-a-floating-studio-floor/1339>
 - **S5** Gilby 1984, control-room window — <https://www.muzines.co.uk/articles/building-a-control-room-window/2884?theme=1>

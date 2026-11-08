@@ -147,6 +147,7 @@ stay a pass (see the knife-edge cells in MATERIALS.md §6).
 | `rc_column_40` | stop | stop | stop | stop | stop | stop | stop | stop | stop | stop |
 | `glass_annealed_6` | 93% | 94% | 93% | 95% | 98% | 98% | 98% | 87% | 99% | 100% |
 | `glass_tempered_6` | 93% | 94% | 93% | 95% | 98% | 98% | 98% | 87% | 99% | 100% |
+| `glass_block` | 80% | 84% | 82% | 87% | 95% | 95% | 95% | 67% | 97% | 99% |
 | `glass_lam_windshield` | 53% | 62% | 58% | 69% | 88% | 87% | 89% | 21% | 93% | 99% |
 | `glass_studio` | stop | stop | stop | 10% | 66% | 62% | 67% | stop | 81% | 96% |
 | `door_hollow` | 95% | 96% | 96% | 97% | 99% | 99% | 99% | 92% | 99% | 100% |
@@ -253,6 +254,11 @@ Known gaps (no source found; values are **P**):
 
 - Hollow-core and solid-core doors, mattresses, sofas, hollow clay tile,
   stucco over CMU, single-shot .50 vs 10–20 cm RC.
+- Glass block: no shooting test found. `glass_block` is two pressed-glass
+  faces of the plain `glass` material, with thickness derived from the block
+  mass (MATERIALS GB1), so every gun passes it (9mm keeps 80 %). Real blocks
+  may deflect or fragment rounds more than flat glass; tune if a test turns
+  up. Being translucent, it blocks sight (MATERIALS §3, coverage).
 - M43 vs CMU: no direct test. CAN p. 8 brackets it: 5.56 (1 735 J) holed only
   the front shell, .308 (3 474 J) passed both. M43 at 2 030 J with a steel
   core sits between, and the model gives a marginal perforation (P).

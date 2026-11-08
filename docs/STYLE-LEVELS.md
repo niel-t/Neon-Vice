@@ -81,8 +81,8 @@ with the brief. Use these formats exactly.
 - **Wall model.** Walls are zero-thickness lines on room bounds. Every edge
   shared by two rooms with no door on it is a `full` wall unless the doc's
   builds table says otherwise. Plate and terrace edges, fixed glass and
-  rails are walls for movement but not for sight. Closed leaf doors are
-  walls for sight.
+  rails are walls for movement but not for sight (except `glass_block`,
+  §3.4). Closed leaf doors are walls for sight; glass doors (`glass`) are not.
 - **Machine-readable layout.** Each level doc has a sidecar
   `docs/levels/<mission>.layout.json` holding `R` rows
   `[id, name, kind, x0, z0, x1, z1]` and `D` rows
@@ -140,9 +140,13 @@ doorway with no leaf.
 - Points as `room (x, z) → room (x, z)`, standing eye 1.6 m to a standing
   target, unless the row states a stance.
 - **Expected** is `clear` or `blocked` (no third value). For standing
-  sight, only `full` walls and closed leaf doors of any kind block. Chest
+  sight, only `full` walls, closed leaf doors (any kind except `glass`) and
+  `glass_block` windows block. Chest
   (1.2 m) walls block crouched sight only (eye 1.0 m); waist, rail and glass
   never block sight. Props and floor steps never block (user decision Q9).
+- **Translucent glass.** A `W` row of kind `glass_block` blocks sight like
+  a `full` wall but stops bullets only as glass (MATERIALS §3): concealment,
+  not cover. Every other `W` kind is clear glass and never blocks sight.
 - **Doors.** A door leaf is a physical object at whatever angle it is swung
   to (W1b traces it). Opening a door clears the doorway, not the leaf: a
   partly or fully open leaf still blocks any ray that crosses it. A doorway
@@ -235,7 +239,8 @@ Defaults for circa-1986 Miami. Level docs override per room in their §8.
 | Motel Sunset | `docs/levels/motel-sunset.md` | wave 1 |
 | The Penthouse | `docs/levels/penthouse.md` | wave 1 |
 | Vice Marina | `docs/levels/marina.md` | wave 1 |
-| Club | `docs/levels/club.md` | next |
+| Club Flamingo | `docs/levels/club.md` | wave 1 |
+| Arcade | `docs/levels/arcade.md` | next |
 
 ### 7.1 Migration task: `motel-sunset.md`
 
