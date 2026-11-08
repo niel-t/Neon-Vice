@@ -473,28 +473,6 @@ const CHARS=[
  {id:'money',name:'THE MONEY MAN',quote:'"Everybody has a price. I know all of them."',speed:4.5,stats:{SPEED:5,TOUGHNESS:1,FIREPOWER:2},start:'Fists + cash',perk:'<b>MAKE IT RAIN</b> — throw a stack of cash to lure guards away. Tracks every enemy on radar and through walls. +25% $.'},
  {id:'don',name:'THE DON',quote:'"This city answers to one family."',speed:4.2,stats:{SPEED:3,TOUGHNESS:2,FIREPOWER:5},start:'.357 Magnum',perk:'<b>THE BOSS</b> — starts with a .357 that goes through bodies. +50% ammo from pickups. Lightning-fast executions.'},
 ];
-/* weapon defs: spr=base spread(rad) mv=extra spread while moving bloom=added per shot loud=noise radius spd=move mult */
-const WD={
- fists:{name:'FISTS',melee:true,range:0.95,cd:0.3,kill:false,snd:'swing_fists'},
- bat:{name:'BASEBALL BAT',melee:true,range:1.3,cd:0.45,kill:true,len:0.72,snd:'swing_bat',arc:1.1},
- knife:{name:'KNIFE',melee:true,range:1.0,cd:0.25,kill:true,len:0.27,snd:'swing_knife',arc:0.8},
- machete:{name:'MACHETE',melee:true,range:1.2,cd:0.36,kill:true,len:0.57,snd:'swing_machete',arc:1.0},
- pistol:{name:'9MM PISTOL',ammo:13,cd:0.2,pel:1,spr:0.025,mv:0.07,bloom:0.04,ecd:0.8,loud:13,len:0.2,snd:'pistol',kick:0.1},
- silenced:{name:'SILENCED 9MM',ammo:12,cd:0.24,pel:1,spr:0.03,mv:0.07,bloom:0.04,ecd:0.85,loud:2.5,len:0.36,snd:'silenced',kick:0.06},
- revolver:{name:'.357 MAGNUM',ammo:6,cd:0.34,pel:1,spr:0.012,mv:0.06,bloom:0.08,ecd:0.95,loud:15,pierce:3,len:0.24,snd:'revolver',kick:0.2},
- shotgun:{name:'PUMP SHOTGUN',ammo:6,cd:0.75,pel:7,spr:0.26,mv:0.04,bloom:0,ecd:1.2,loud:16,len:0.68,snd:'shotgun',kick:0.4,spd:0.94,two:true},
- double:{name:'DOUBLE BARREL',ammo:2,cd:0.22,pel:10,spr:0.38,mv:0.04,bloom:0,ecd:1.4,loud:17,len:0.6,snd:'double',kick:0.55,spd:0.95,two:true},
- smg:{name:'UZI',ammo:32,cd:0.07,pel:1,spr:0.06,mv:0.08,bloom:0.025,bloomMax:0.22,ecd:0.12,burst:4,loud:13,len:0.26,snd:'smg',kick:0.08},
- dual:{name:'DUAL 9MMs',ammo:26,cd:0.1,pel:1,spr:0.05,mv:0.08,bloom:0.02,bloomMax:0.16,ecd:0.35,burst:6,loud:13,len:0.2,snd:'dual',kick:0.08},
- m16:{name:'M16',ammo:30,cd:0.32,pel:1,spr:0.015,mv:0.09,bloom:0.02,ecd:0.9,burst3:true,loud:15,pierce:2,len:0.66,snd:'rifle',kick:0.14,spd:0.92,two:true},
- tknife:{name:'THROWING KNIVES',toss:true,ammo:4,cd:0.3,loud:0,len:0.27,snd:'throw'},
- /* Nine of Nine exclusives: base = the stock weapon whose animation, gore and sounds they borrow */
- goldak:{name:'GOLDEN AK-47',base:'m16',excl:true,ammo:40,cd:0.09,pel:1,spr:0.03,mv:0.08,bloom:0.02,bloomMax:0.16,ecd:0.2,burst:5,loud:15,pierce:2,len:0.62,snd:'rifle',kick:0.12,spd:0.94,two:true},
- golddeagle:{name:'GOLDEN DEAGLES',base:'dual',excl:true,ammo:16,cd:0.16,pel:1,spr:0.03,mv:0.07,bloom:0.05,bloomMax:0.2,ecd:0.5,loud:16,pierce:3,len:0.26,snd:'revolver',kick:0.24},
- goldgl:{name:'GOLD GRENADE LAUNCHER',base:'shotgun',excl:true,nade:true,ammo:6,cd:0.8,pel:1,spr:0.02,mv:0.04,bloom:0,ecd:1.6,loud:17,len:0.62,snd:'double',kick:0.5,spd:0.93,two:true},
- katana:{name:'KATANA',base:'machete',excl:true,melee:true,range:1.5,cd:0.26,kill:true,len:0.8,snd:'swing_machete',arc:1.35},
-};
-const BT=t=>(WD[t]&&WD[t].base)||t;
 const KILLPTS={dual:300,fists:500,bat:450,knife:450,machete:450,exec:800,door:600,throw:550,pistol:300,silenced:400,revolver:350,smg:250,m16:300,shotgun:300,double:300};
 const NEON=[[1,0.25,0.7],[0.2,0.85,1],[0.65,0.3,1],[1,0.55,0.2]];
 const TIPS=['Red laser = a gunman is aiming at you. Break line of sight.','Stand still for accurate shots. Running throws your aim off.','Silenced guns barely make a sound. Loud ones wake up the whole floor.','Swing a door into someone to knock them flat.','Downed enemies get back up. Hit them again to finish the job.','Bar counters and kitchen counters stop bullets. Use them.','Out of ammo? Attack again to throw the gun. It knocks people down.','Throw a knife and it kills.','Sprinting is fast but loud - guards hear your footsteps.','Hold F to look further ahead.'];
