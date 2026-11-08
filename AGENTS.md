@@ -4,7 +4,7 @@
   App/GitHub metadata can be stale. Do not reset to `origin/main` or rewrite shared checkouts.
 - The game uses `index.html` and ordered classic scripts `art.js`, `levels.js`,
   `world.js`, `missions.js`, `models.js`, `renderer.js`, `weapons.js`, `ai.js`,
-  `dialogue.js` and `overworld.js` (order in `scripts/check.cjs`); no framework or runtime npm dependencies.
+    `cover.js`, `dialogue.js` and `overworld.js` (order in `scripts/check.cjs`); no framework or runtime npm dependencies.
   Coordinate edits to shared globals. Keep broad extraction separate from save/level fixes.
 - Run `npm run check` for classic-script/data changes. Run `npm test` for gameplay,
   save, rendering, input, assembly or test-tooling changes. The all-floor integration
