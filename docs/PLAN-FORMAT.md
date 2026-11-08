@@ -168,6 +168,8 @@ and fixture case and smoke-tests the renderer.
 - Home: keep decor off the gun-locker cells `HOME_LOCKER_WORLD` (16.72, 6.5),
   (20.72, 5.5) and (24.72, 9.5) (W6d).
 - Objective `obj` entries per W14 (2026-11-08), to author with each plan:
+  - Motel (authored): `obj_lab` `target` (required, `need`) and `obj_cash`
+    `use` (optional, sets `wflags.motel_cash`).
   - Marina: `t1`–`t4` `target` (required) and `u` `target` (optional).
   - Arcade: main panel `use` (required) and count-room safe `use` (optional).
   - Club: count-room safe `use` (optional); the boss is the objective.
