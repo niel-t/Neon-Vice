@@ -1,7 +1,7 @@
 # Neon Vice penetration + destruction model (docs/research). Reproduces the tables in
 # BALLISTICS.md §3-§4 and MATERIALS.md §5.  Run: python docs/research/pen_model.py
 import math
-MAT={'gyp':(25,0),'timber':(30,0),'ply':(40,0),'particle':(45,0),'plaster':(60,0),'stucco':(100,0),
+MAT={'gyp':(25,0),'timber':(30,0),'pile':(80,0),'ply':(40,0),'particle':(45,0),'plaster':(60,0),'stucco':(100,0),
  'cmu':(345,1),'grout':(345,1),'brick':(400,1),'clay':(400,1),'concrete':(900,1),
  'glass':(60,0),'glass_lam':(300,0),'steel':(1500,1),'alu':(600,1),'grp':(80,0),
  'foam':(3,0),'mattress':(5,0),'insul':(2,0),'void':(0,0)}
@@ -44,6 +44,8 @@ CON={
  'alu_bulkhead':([('alu',0.6),('insul',5),('ply',1.2)],None,5000),
  'joinery_ply':([('ply',1.9),('insul',5),('ply',1.2)],None,1200),
  'grp_hull':([('grp',1.5)],None,2500),
+ 'timber_pile':([('pile',30)],None,math.inf),
+ 'dock_box':([('grp',0.5),('void',60),('grp',0.5)],None,800),
  'acoustic_double':([('gyp',3.18),('insul',9),('void',5),('insul',9),('gyp',3.18)],None,3000),
  'sofa':([('foam',60),('timber',2)],None,1500),
  'mattress':([('mattress',22)],None,800),

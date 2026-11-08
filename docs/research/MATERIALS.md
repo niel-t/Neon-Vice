@@ -73,6 +73,7 @@ calibre's hardness factor applies. Debris colours are sRGB hex for W4/W1.
 | `glass_lam` | 300 | 0 | **P** — laminated windshield / studio glass; GLASS gives a ballistic limit for 7.62 AP only | none (retained) | radial cracks, interlayer holds | `vfx_glass_craze` / `sfx_glass_crunch` |
 | `steel` | 1500 | 1 | **D** — A: 5.56 perforates ⅜″ mild steel door (≈19 % left in model); CAR: 9mm passes one car-door skin pair, stops in the next. Per-calibre `metal` factor applies | sparks only | lead splash / bright crater | `vfx_spark` / `sfx_ricochet_metal` |
 | `alu` | 600 | 1 | **P** — ≈ 0.4× mild steel | sparks + flakes, `#c8ccd0` | bright dent hole | `vfx_spark` / `sfx_metal_hit` |
+| `pile` | 80 | 0 | **D** — round pine pile or log, fitted to **rifle** data at 25 m: one 7.62 NATO ball round penetrates a 16″ (40.6 cm) log wall (A Table 7-5) and 13″ (33 cm) of pine board (A Table 7-3); model stop depth 41 cm sits between, at the log end. Use only for thick timber: `timber` (fitted to pistol JHP) overstates short-range rifle penetration about 3× | splinters, `#8a6a45` | splintered gouge | `vfx_splinter` / `sfx_wood_crack` |
 | `grp` | 80 | 0 | **P** — glass-reinforced plastic hull/panels | white fibre fluff, `#f0f0ea` | fuzzy hole | `vfx_fibre` / `sfx_hull_hit` |
 | `foam` | 3 | 0 | **P** — upholstery | foam flecks + fabric | tear | `vfx_stuffing` / `sfx_cloth` |
 | `mattress` | 5 | 0 | **P** — innerspring + batting | stuffing | tear | `vfx_stuffing` / `sfx_cloth` |
@@ -128,6 +129,8 @@ Thickness in cm, outer → inner. "Alt" is the stochastic alternate stack.
 | `alu_bulkhead` | Yacht aluminium superstructure lined | alu 0.6 · insul 5 · ply 1.2 | 6.8 | — | — | 5 000 | V Y2, Y3; P (dims) |
 | `joinery_ply` | Yacht cabin joinery partition | ply 1.9 · insul 5 · ply 1.2 | 8.1 | — | — | 1 200 | P (Y2, Y3) |
 | `grp_hull` | GRP small boat hull / runabout | grp 1.5 | 1.5 | — | — | 2 500 | P |
+| `timber_pile` | 12″ (30 cm) treated timber mooring pile | pile 30 | 30 | — | — | ∞ | V R3 (timber mooring piles and finger-pier bents exist); P (30 cm diameter); D A Tables 7-2/7-3/7-5/7-6 |
+| `dock_box` | Fibreglass dock box / cooler (prop) | grp 0.5 · void 60 · grp 0.5 | 61 | — | — | 800 | P (R3 lists dock boxes) |
 | `acoustic_double` | Studio double-leaf wall | gyp 3.18 · insul 9 · void 5 · insul 9 · gyp 3.18 | 29.4 | — | — | 3 000 | V S4, S5 (approach); P (dims) |
 | `sofa` | Upholstered sofa / booth seat (prop) | foam 60 · timber 2 | 62 | — | — | 1 500 | P |
 | `mattress` | Mattress on edge (barricade prop) | mattress 22 | 22 | — | — | 800 | P |
@@ -168,7 +171,7 @@ level doc.
 | **1950s MiMo motel** (Motel Sunset) | `cbs_ext` | `cmu_hollow` (between guest rooms) | `stud_wood_gyp` (bath, closet) | `door_solid` guest; `door_metal` service; `door_hollow` bath | `glass_annealed_6` jalousies; `glass_tempered_6` office storefront | planters `brick_1w`/`cbs_ext` waist; cars |
 | **1930s Deco hotel → nightclub** (Club Flamingo) | `cbs_ext` | `cmu_hollow` or `clay_tile_4` | `plaster_lath`; new club fit-out `stud_steel_gyp` | `door_solid`; `door_metal` back-of-house | `glass_annealed_6` | `counter_cmu` bar die; booths `sofa` |
 | **1980s Brickell tower** (Penthouse) | glazing + `rc_column_40`; spandrel `cbs_ext` | `stud_steel_gyp2` (unit/corridor); `rc_wall_20` core | `stud_steel_gyp` | `door_solid`; `door_metal` stairs/service | `glass_tempered_6` sliding doors; `glass_annealed_6` (P) fixed | `counter_cabinet` kitchen; panic room `cmu_filled` + `door_vault` (P) |
-| **Marina** (Marina) | office `cbs_ext`; shed `corrugated` on steel frame | `stud_steel_gyp` | `stud_steel_gyp` | `door_metal`; big shed doors `corrugated` | `glass_annealed_6` | boats `grp_hull`; fuel tanks `steel_3mm`; dock piles `rc_column_40` |
+| **Marina** (Marina) | office `cbs_ext`; shed `corrugated` on steel frame | `stud_steel_gyp` | `stud_steel_gyp` | `door_metal`; big shed doors `corrugated` | `glass_annealed_6` | boats `grp_hull`; fuel pumps and tanks `steel_3mm`; concrete main-walk piles `rc_column_40`; mooring piles and finger-pier bents `timber_pile`; dock boxes `dock_box` |
 | **Strip centre arcade** (Arcade) | `cbs_ext` or `brick_cmu_ext` | `stud_steel_gyp2` (tenant demising) | `stud_steel_gyp`, `particle_divider` | `door_metal` rear; storefront `glass_tempered_6` | `glass_tempered_6` | arcade cabinets ≈ `counter_cabinet` |
 | **Mall** (Mall) | `rc_wall_20` / `cbs_ext` | `stud_steel_gyp2` | `stud_steel_gyp`, `particle_divider` | storefront `glass_tempered_6`; roll-down grille (rail cov) | `glass_tempered_6` | kiosks `counter_cabinet` |
 | **Recording studio** (Studio) | `cbs_ext` | `acoustic_double` | `stud_steel_gyp` (offices) | `door_solid` ×2 sound lock | `glass_studio` | consoles `counter_cabinet` |
@@ -343,6 +346,7 @@ Steel studs + gypsum were standard commercial/high-rise practice from the
 const MAT = {
   gyp:{res:25,hard:0,debris:0xe8e4dc,vfx:'gyp_plume',sfx:'board_thud'},
   timber:{res:30,hard:0,debris:0xb88a55,vfx:'splinter',sfx:'wood_crack'},
+  pile:{res:80,hard:0,debris:0x8a6a45,vfx:'splinter',sfx:'wood_crack'},
   ply:{res:40,hard:0,debris:0xc49a6c,vfx:'splinter',sfx:'wood_crack'},
   particle:{res:45,hard:0,debris:0xb59a76,vfx:'chipdust',sfx:'board_thud'},
   plaster:{res:60,hard:0,debris:0xefe9df,vfx:'plaster_burst',sfx:'plaster'},
@@ -393,6 +397,8 @@ const BUILD = {
   alu_bulkhead:{layers:[['alu',0.6],['insul',5],['ply',1.2]],cellHp:5000},
   joinery_ply:{layers:[['ply',1.9],['insul',5],['ply',1.2]],cellHp:1200},
   grp_hull:{layers:[['grp',1.5]],cellHp:2500},
+  timber_pile:{layers:[['pile',30]],cellHp:Infinity},
+  dock_box:{layers:[['grp',0.5],['void',60],['grp',0.5]],cellHp:800},
   acoustic_double:{layers:[['gyp',3.18],['insul',9],['void',5],['insul',9],['gyp',3.18]],cellHp:3000},
   sofa:{layers:[['foam',60],['timber',2]],cellHp:1500},
   mattress:{layers:[['mattress',22]],cellHp:800},
@@ -440,6 +446,7 @@ Construction and typology:
 - **P5** Arquitectonica, The Palace (cores, glazing) — <https://architizer.com/projects/the-palace/>
 - **P6** Arquitectonica, The Atlantis — <https://architizer.com/projects/the-atlantis/>
 - **R1** Pan American Seaplane Base designation (steel frame, corrugated hangars) — <https://www.historicpreservationmiami.com/pdfs/Pan%20American%20Seaplane%20Base%20and%20Terminal%20Building.pdf>
+- **R3** Dinner Key Marina repairs design criteria (prestressed concrete U-beam walkways on concrete piles; 4 ft timber finger piers on 2-pile timber bents; timber mooring piles; dock boxes) — <https://archive.miamigov.com/MiamiCapital/docs/ProjectPages/ProcurementOpportunities/Dinner_Key_Design_Build_Repairs/Addend2/3DinnerKeyMarina_DesignCriteria.pdf>
 - **S4** Gilby 1984, floating studio floor — <https://www.muzines.co.uk/articles/constructing-a-floating-studio-floor/1339>
 - **S5** Gilby 1984, control-room window — <https://www.muzines.co.uk/articles/building-a-control-room-window/2884?theme=1>
 - **Y2** Lady Sandals (ex-Gallant Lady, 1985) spec: steel hull, aluminium superstructure — <https://www.boatinternational.com/yachts-for-sale/lady-sandals-feadship-1985>

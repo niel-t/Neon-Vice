@@ -86,8 +86,13 @@ with the brief. Use these formats exactly.
 - **Machine-readable layout.** Each level doc has a sidecar
   `docs/levels/<mission>.layout.json` holding `R` rows
   `[id, name, kind, x0, z0, x1, z1]` and `D` rows
-  `[id, roomA, roomB, axis, wallCoord, centre, width, kind]`. The tables in
-  the doc must match it; the tools read the JSON.
+  `[id, roomA, roomB, axis, wallCoord, centre, width, kind]`. Optional keys:
+  `W` windows (same shape as `D`, kind a glass build; not entrances), `B`
+  large props with roles `[id, role, x0, z0, x1, z1, build]` (e.g. boats) and
+  `S` sightline targets `[id, [x, z], [x, z], "clear"|"blocked"]`. Where two
+  rooms of kind `exterior` or `pier` meet, the shared edge is unwalled and
+  must be covered by `open` `D` rows; their edges against nothing are open
+  (stage edge or a drop to water). Every other room edge is a wall. The tables in the doc must match it; the tools read the JSON.
 
 ### 3.2 Room schedule
 
@@ -229,7 +234,8 @@ Defaults for circa-1986 Miami. Level docs override per room in their §8.
 |---|---|---|
 | Motel Sunset | `docs/levels/motel-sunset.md` | wave 1 |
 | The Penthouse | `docs/levels/penthouse.md` | wave 1 |
-| Marina | `docs/levels/marina.md` | next |
+| Vice Marina | `docs/levels/marina.md` | wave 1 |
+| Club | `docs/levels/club.md` | next |
 
 ### 7.1 Migration task: `motel-sunset.md`
 
