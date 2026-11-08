@@ -141,6 +141,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <div id="err" class="screen"><div class="logo2">WebGL isn't available<br>in this browser</div></div>
 <div id="saveWarning" role="status" style="display:none;position:fixed;bottom:8px;left:8px;right:8px;z-index:1000;padding:8px;background:#24151f;color:#ffd36b;font:12px sans-serif;pointer-events:none"></div>
 <div id="modelWarning" role="status" style="display:none;position:fixed;top:8px;left:8px;right:8px;z-index:1000;padding:8px;background:#24151f;color:#ffd36b;font:12px sans-serif;pointer-events:none">Some character artwork could not load. Simplified characters remain available; reload to retry.</div>
+<div id="contextWarning" role="alert" style="display:none;position:fixed;inset:0;z-index:2000;background:#17111f;color:#ffd36b;align-items:center;justify-content:center;flex-direction:column;gap:16px;text-align:center;padding:24px"><div id="contextMessage">Graphics were interrupted. Reload to continue; existing browser saves have not been reset.</div><button id="bContextReload" class="btn" onclick="location.reload()">RELOAD GAME</button></div>
 <div id="audioWarning" role="status" style="display:none;position:fixed;top:48px;left:8px;right:8px;z-index:1000;padding:8px;background:#24151f;color:#ffd36b;font:12px sans-serif;pointer-events:none">Sound could not start. Play silently or try another click, key press or tap.</div>
 <script src="art.js"></script>
 <script>
@@ -213,6 +214,11 @@ const TRS=(x,y,z,ry,sx,sy,sz)=>A.mul(A.mul(A.T(x,y,z),A.RY(ry)),A.S(sx,sy,sz));
 /* ================= GL ================= */
 const cv=$('gl'), hud=$('hud'), hctx=hud.getContext('2d');
 const gl=cv.getContext('webgl',{antialias:false,alpha:false,depth:true});
+let contextLost=false;
+cv.addEventListener('webglcontextlost',e=>{e.preventDefault();contextLost=true;suspendInputs();if(master)master.gain.value=0;if(musTimer)clearInterval(musTimer);
+ for(const element of document.body.children)if(element.id!=='contextWarning')element.inert=true;
+ $('contextWarning').style.display='flex';$('bContextReload').focus();});
+cv.addEventListener('webglcontextrestored',()=>{$('contextMessage').textContent='Graphics are available again. Reload to rebuild the scene and continue.';});
 const EXT_I=gl&&gl.getExtension('ANGLE_instanced_arrays'),EXT_D=gl&&gl.getExtension('OES_standard_derivatives');
 if(!gl){$('err').classList.add('on');$('sTitle').classList.remove('on');throw new Error('no webgl');}
 function sh(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s;}
@@ -438,7 +444,7 @@ let bloomA=null,bloomB=null,blW=0,blH=0,rtFilt=-1;
 function mkTarget(w,h){const t={fb:gl.createFramebuffer(),tex:gl.createTexture()};gl.bindTexture(gl.TEXTURE_2D,t.tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
  for(const [k,v] of [[gl.TEXTURE_MIN_FILTER,gl.LINEAR],[gl.TEXTURE_MAG_FILTER,gl.LINEAR],[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE]])gl.texParameteri(gl.TEXTURE_2D,k,v);
  gl.bindFramebuffer(gl.FRAMEBUFFER,t.fb);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,t.tex,0);gl.bindFramebuffer(gl.FRAMEBUFFER,null);return t;}
-function setBloom(w,h){w=Math.max(8,w>>2);h=Math.max(8,h>>2);if(w===blW&&h===blH)return;blW=w;blH=h;bloomA=mkTarget(w,h);bloomB=mkTarget(w,h);}
+function setBloom(w,h){w=Math.max(8,w>>2);h=Math.max(8,h>>2);if(w===blW&&h===blH)return;blW=w;blH=h;for(const target of [bloomA,bloomB])if(target){gl.deleteTexture(target.tex);gl.deleteFramebuffer(target.fb);}bloomA=mkTarget(w,h);bloomB=mkTarget(w,h);}
 const ENH=()=>SET.gfx2!==false;
 /* batches */
 const CI=[];for(let i=0;i<8;i++)CI.push([(i&1)?.5:-.5,(i&2)?.5:-.5,(i&4)?.5:-.5]);
@@ -554,9 +560,9 @@ function dripQuad(B,d,len){const tx=-d.nz,tz=d.nx,h=(d.dw||d.w)/2,ox=d.x+d.nx*0.
 let AC=null,master,musicG,sfxG,noiseBuf,musTimer=null,musStep=0,musNext=0,audioFailed=false;
 function audioFailure(e){if(!audioFailed)console.error('Audio recovery failed',e);audioFailed=true;$('audioWarning').style.display='block';}
 function audioRecovered(){if(AC&&AC.state==='running'){audioFailed=false;$('audioWarning').style.display='none';}}
-function resumeAudio(){if(!AC||!SET.sound||!['suspended','interrupted'].includes(AC.state)||navigator.userActivation?.isActive===false)return;
+function resumeAudio(){if(contextLost||!AC||!SET.sound||!['suspended','interrupted'].includes(AC.state)||navigator.userActivation?.isActive===false)return;
  try{AC.resume().then(audioRecovered,audioFailure);}catch(e){audioFailure(e);}}
-function initAudio(){if(AC){resumeAudio();return;}try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){audioFailure(e);return;}
+function initAudio(){if(contextLost)return;if(AC){resumeAudio();return;}try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){audioFailure(e);return;}
  AC.addEventListener('statechange',audioRecovered);
  master=AC.createGain();master.gain.value=SET.sound?0.6:0;master.connect(AC.destination);
  musicG=AC.createGain();musicG.gain.value=0.34;musicG.connect(master);sfxG=AC.createGain();sfxG.gain.value=0.85;sfxG.connect(master);
@@ -636,7 +642,7 @@ Object.assign(SFX,{
  smg:(t,v=1)=>{pb(GB.smg,t,0.7*v,rr(),0.25);if(Math.random()<0.4)pb(GB.tink,t+rnd(0.3,0.6),0.05*v,rr());},
  rifle:(t,v=1)=>{pb(GB.rifle,t,0.85*v,rr(),0.35);pb(GB.tink,t+rnd(0.35,0.6),0.06*v,rr());}});
 
-function sfx(n,v){if(!AC||AC.state!=='running'||!SET.sound)return;try{SFX[n](AC.currentTime,v===undefined?1:v);}catch(e){}}
+function sfx(n,v){if(contextLost||!AC||AC.state!=='running'||!SET.sound)return;try{SFX[n](AC.currentTime,v===undefined?1:v);}catch(e){}}
 const mtof=m=>440*Math.pow(2,(m-69)/12);
 /* ---- music engine: distorted bus, sidechain, delay, reverb ---- */
 let mBus,mDist,mFilt,scBus,bassDist,leadDist,dlyIn,revIn,hissG;
@@ -783,7 +789,7 @@ function layerStep(n,t,spb){const g=G;if(!g||g.cleared||g.def.hub||state!=='play
  if(lv>=1){if(st%4===0)mKick(t,0.45);if(st%4===2)mHat(t,0.16,true);}
  if(lv>=2){if(st%2===0)mBass(t,mtof(root+12),spb*0.5,0.22);if(st===4||st===12)mClap(t,0.22);}
  if(lv>=3){if(st%2===1)VOICE.bell(t,mtof(ch[st%3]+24),spb*0.9,0.03);if(st===2||st===6||st===10||st===14)mSnare(t,0.3);}}
-function schedMusic(){if(!AC||AC.state!=='running'||!SET.sound||!MUS.track)return;if(MUS.next<AC.currentTime)MUS.next=AC.currentTime+0.05;
+function schedMusic(){if(contextLost||!AC||AC.state!=='running'||!SET.sound||!MUS.track)return;if(MUS.next<AC.currentTime)MUS.next=AC.currentTime+0.05;
  while(MUS.next<AC.currentTime+0.25){if(MUS.pending&&MUS.total%16===0)applyTrack(MUS.pending,true);const T=TRACKS[MUS.track],spb=60/T.bpm/4;try{T.step(MUS.total,MUS.next,spb);}catch(e){}try{layerStep(MUS.total,MUS.next,spb);}catch(e){}MUS.next+=spb;MUS.total++;}}
 
 /* ================= DATA ================= */
@@ -1966,7 +1972,7 @@ function loadHub(name,mode){HUBMODE=mode||'in';const d=HUBS[name];loadLevel(leve
  if(name==='drive')banner('OCEAN DRIVE, MIAMI',touchMode?'Left thumb steers &amp; drives · push to the edge for turbo':padMode?'Left stick steers &amp; drives · LB turbo':'W/S gas &amp; brake · A/D steer · Shift turbo');
  else if(name==='lobby')banner('McWEY TOWER','Take the elevator to the 52nd floor');}
 function goDrive(){const p=PROG[rideId()];if(p&&p.heli){loadHub('lobby');banner('BY HELICOPTER','Landed on McWey Tower · take the elevator up');return;}startCine();}
-let fading=false;function fadeTo(fn){if(fading)return false;fading=true;$('fade').classList.add('on');setTimeout(()=>{try{fn();}finally{setTimeout(()=>{$('fade').classList.remove('on');fading=false;},60);}},380);return true;}
+let fading=false;function fadeTo(fn){if(contextLost||fading)return false;fading=true;$('fade').classList.add('on');setTimeout(()=>{try{if(!contextLost)fn();}finally{setTimeout(()=>{$('fade').classList.remove('on');fading=false;},60);}},380);return true;}
 function onHubTrigger(t){if(fading)return false;if(t==='leave'){sfx('blip');return fadeTo(()=>loadHub('drive','parked'));}if(t==='exit'){sfx('blip');return fadeTo(()=>loadHub('drive','parked'));}if(t==='tower'){sfx('blip');return fadeTo(()=>loadHub('lobby'));}else if(t==='elevator'){sfx('ding');return fadeTo(enterElevator);}else if(t==='mcwey'){return fadeTo(talkMcWey);}return true;}
 function updateHub(dt){const g=G;g.T+=dt;g.time+=dt;if(g.np)g.np.t+=dt;
  if(g.cine)updateCine(dt);else if(g.def.hub==='drive'&&!g.parked)updateDrive(dt);else{hubInteract();updatePlayer(dt);if(g.solids&&g.player)for(const s of g.solids)boxPush(s,g.player);npcStep(dt);if(g.mcDesk)officeTick(g,dt);if(g.parked)parkedStreet(dt);if(g.slots)homeTick(dt);if(g.club)clubTick(dt);}
@@ -3424,8 +3430,8 @@ async function init(){const shaders=[];try{
  P=gl.createProgram();for(const [type,source] of [[gl.VERTEX_SHADER,VS],[gl.FRAGMENT_SHADER,FS]]){const s=sh(type,source);shaders.push(s);gl.attachShader(P,s);}gl.linkProgram(P);if(!gl.getProgramParameter(P,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(P));
  for(const n of ['uVP','uB','uPL','uPC','uAmb','uLD','uLC','uCam','uFog','uFogC','uTex'])Lc[n]=gl.getUniformLocation(P,n);for(const n of ['aP','aN','aT','aBi','aBw'])Lc[n]=gl.getAttribLocation(P,n);
  shaderReady=true;
- try{PAIS=await loadImg(ART.pais,'pais');}catch(e){modelFailure('consigliere',e);}
- for(const id of mainIds){if(modelStates[id]==='failed')continue;try{const C=CH[id];C.img=await loadImg(ART[C.face],C.face);buildCH(id);modelStates[id]='ready';C.suitOn=null;applySuit(id);}catch(e){modelFailure(id,e);}finally{gl.bindTexture(gl.TEXTURE_2D,atlasTex);}}
+ try{PAIS=await loadImg(ART.pais,'pais');}catch(e){modelFailure('consigliere',e);}if(contextLost||gl.isContextLost())return;
+ for(const id of mainIds){if(modelStates[id]==='failed')continue;try{const C=CH[id];C.img=await loadImg(ART[C.face],C.face);if(contextLost||gl.isContextLost())return;buildCH(id);modelStates[id]='ready';C.suitOn=null;applySuit(id);}catch(e){modelFailure(id,e);}finally{gl.bindTexture(gl.TEXTURE_2D,atlasTex);}}
  ready=mainIds.every(id=>modelStates[id]==='ready');status=ready?'ready':'degraded';
  }catch(e){shaderReady=false;status='failed';for(const id of mainIds)modelStates[id]='failed';if(P)gl.deleteProgram(P);P=null;$('modelWarning').style.display='block';console.error('PS2C',e);}
  finally{for(const s of shaders)gl.deleteShader(s);gl.bindTexture(gl.TEXTURE_2D,atlasTex);}}
@@ -3729,7 +3735,7 @@ function drawMenuDyn(B,P){B.reset();P.reset();drawRide(B,-4.8,-1.5,1.7,0.3,state
  if(menuFlash>0&&menuChars[2].muzzle){const m=menuChars[2].muzzle;B.box(TRS(m[0],m[1],m[2],rnd(0,TAU),0.3,0.22,0.3),[1,0.95,0.6],true);}
  for(const p of menuParts){if(p.t==='c'){IBlo.r=0;IBlo.tp=0;drawBill(IBlo,A.mul(A.mul(A.T(p.x,p.y,p.z),A.RY(p.ph+menuT)),A.RX(Math.sin(menuT*2+p.ph)*0.5)));}else B.box(A.mul(A.T(p.x,p.y,p.z),A.S(p.s,p.s,p.s)),p.c,p.t==='f'||p.t==='e');}}
 
-function render(){PS2C.beginFrame();resize();const asp=vw/vh;let fovy=asp>=1?50*DEG:Math.min(2*Math.atan(Math.tan(25*DEG)*1.25/asp),82*DEG);if(G&&G.cine&&state==='play')fovy=asp>=1?40*DEG:62*DEG;
+function render(){if(contextLost||gl.isContextLost())return;PS2C.beginFrame();resize();const asp=vw/vh;let fovy=asp>=1?50*DEG:Math.min(2*Math.atan(Math.tan(25*DEG)*1.25/asp),82*DEG);if(G&&G.cine&&state==='play')fovy=asp>=1?40*DEG:62*DEG;
  const menu=state==='title'||state==='select'||state==='help'||state==='brief'||state==='elev'||state==='shop'||!G;let eye,tgt,fogC,fog,amb,ld,lc,lights;
  if(menu){if(!stageBuilt)buildStage();const mv=state==='shop'?(nineBuilt||buildNine(),nineView(asp)):state==='brief'?(briefBuilt||buildBrief(),briefView(asp)):state==='elev'?elevView(asp):menuView(asp);eye=mv.eye;tgt=mv.tgt;lights=mv.lights;MSH=mv.shDir||null;SHL=mv.shl===undefined?-1:mv.shl;
   fogC=[0.05,0.02,0.07];fog=[5,15];amb=[0.2,0.16,0.26];ld=[-0.3,-0.8,-0.5];lc=[0.22,0.18,0.24];}
@@ -3956,7 +3962,7 @@ function restart(){if(!G||G.def.hub)return;if(!G.player.alive){RUNTRACK[levelIdx
 let SETMENU=false;function setMenuMode(on){SETMENU=on;$('pTitle').textContent=on?'SETTINGS':'PAUSED';for(const id of ['bResume','bPRestart','bQuit'])$(id).style.display=on?'none':'';$('bSetBack').style.display=on?'':'none';}
 function togglePause(){if(state==='play'){setMenuMode(false);state='pause';show('sPause');}else if(state==='pause'){state='play';show(null);}}
 function syncSetBtns(){$('bMute').textContent='SOUND: '+(SET.sound?'ON':'OFF');$('bShake').textContent='SCREEN SHAKE: '+(SET.shake?'ON':'OFF');$('bRetro').textContent='GRAPHICS: '+(ENH()?'ENHANCED':'PS1 RETRO');$('bHints').textContent='HINTS: '+(SET.hints?'ON':'OFF');$('bGore').textContent='GORE: '+(SET.gore==='normal'?'NORMAL':'EXTREME');$('bGrain').textContent='FILM GRAIN: '+(SET.grain<=0?'OFF':SET.grain<0.3?'LOW':SET.grain<0.5?'MEDIUM':'HIGH');$('bGlitch').textContent='VHS GLITCH: '+(SET.glitch?'ON':'OFF');}
-function toggleMute(){SET.sound=!SET.sound;if(master)master.gain.value=SET.sound?0.6:0;if(SET.sound)resumeAudio();saveSet();syncSetBtns();}
+function toggleMute(){if(contextLost)return;SET.sound=!SET.sound;if(master)master.gain.value=SET.sound?0.6:0;if(SET.sound)resumeAudio();saveSet();syncSetBtns();}
 $('bStart').onclick=()=>{initAudio();sfx('blip');state='select';updateSelect();show('sSelect');};
 $('bHelp').onclick=()=>{initAudio();sfx('blip');state='help';show('sHelp');};
 $('bHelpBack').onclick=()=>{sfx('blip');state='title';show('sTitle');};
@@ -3984,7 +3990,7 @@ const tbtn=(id,fn)=>{const el=$(id);el.addEventListener('touchstart',e=>{e.preve
 tbtn('bGrab',()=>pressed.grab=true);tbtn('bPerk',()=>pressed.perk=true);tbtn('bPause',()=>togglePause());tbtn('bRestart',()=>restart());
 
 /* ================= INPUT ================= */
-addEventListener('keydown',e=>{keys[e.code]=true;if(state==='morning'&&(e.code==='Enter'||e.code==='Space')){$('bMorning').click();e.preventDefault();return;}if(state==='carmenu'||state==='shop'||state==='store'){menuKey(e);e.preventDefault();return;}if((e.code==='Space'||e.code==='Enter')&&state==='play'&&G&&G.cine){cineSkip();e.preventDefault();return;}if(e.code==='Tab'&&state==='play'&&G&&G.def.hub){hubSkip();e.preventDefault();return;}if((e.code==='Enter'||e.code==='Space')&&state==='elev'){skipElev();e.preventDefault();return;}if(state==='perk'&&/^Digit[123]$/.test(e.code)){const cs=document.querySelectorAll('.pcard');const b=cs[+e.code.slice(5)-1];if(b)choosePerk(b.dataset.k);return;}if(padMode&&/^(Key[WASD]|Arrow)/.test(e.code))padMode=false;if(e.code==='KeyR')pressed.restart=true;if(e.code==='KeyE')pressed.grab=true;if(e.code==='Space'||e.code==='KeyQ')pressed.perk=true;if(e.code==='Escape'||e.code==='KeyP')pressed.pause=true;if(SETMENU&&e.code==='Escape')$('bSetBack').click();if(e.code==='KeyM')toggleMute();
+addEventListener('keydown',e=>{if(contextLost)return;keys[e.code]=true;if(state==='morning'&&(e.code==='Enter'||e.code==='Space')){$('bMorning').click();e.preventDefault();return;}if(state==='carmenu'||state==='shop'||state==='store'){menuKey(e);e.preventDefault();return;}if((e.code==='Space'||e.code==='Enter')&&state==='play'&&G&&G.cine){cineSkip();e.preventDefault();return;}if(e.code==='Tab'&&state==='play'&&G&&G.def.hub){hubSkip();e.preventDefault();return;}if((e.code==='Enter'||e.code==='Space')&&state==='elev'){skipElev();e.preventDefault();return;}if(state==='perk'&&/^Digit[123]$/.test(e.code)){const cs=document.querySelectorAll('.pcard');const b=cs[+e.code.slice(5)-1];if(b)choosePerk(b.dataset.k);return;}if(padMode&&/^(Key[WASD]|Arrow)/.test(e.code))padMode=false;if(e.code==='KeyR')pressed.restart=true;if(e.code==='KeyE')pressed.grab=true;if(e.code==='Space'||e.code==='KeyQ')pressed.perk=true;if(e.code==='Escape'||e.code==='KeyP')pressed.pause=true;if(SETMENU&&e.code==='Escape')$('bSetBack').click();if(e.code==='KeyM')toggleMute();
  if((e.code==='Enter'||e.code==='Space')&&state==='title'){$('bStart').click();e.preventDefault();return;}
  if((e.code==='Enter'||e.code==='Space')&&state==='brief'){chatTap();e.preventDefault();return;}
  if(e.code==='Enter'&&state==='select'){$('bPlay').click();return;}if(state==='select'&&(e.code==='ArrowUp'||e.code==='KeyW'))stepFloor(1);if(state==='select'&&(e.code==='ArrowDown'||e.code==='KeyS'))stepFloor(-1);if(state==='select'&&(e.code==='ArrowLeft'||e.code==='KeyA'))$('bPrev').click();if(state==='select'&&(e.code==='ArrowRight'||e.code==='KeyD'))$('bNext').click();
@@ -4010,7 +4016,7 @@ for(const type of ['pointerdown','pointerup','touchend','click','keydown'])addEv
 
 /* ================= LOOP ================= */
 let last=null;
-function frame(now){requestAnimationFrame(frame);const raw=last===null?null:Math.max(0,(now-last)/1000);qualityTick(raw);const dt=raw===null?0:Math.min(raw,0.05);last=now;menuT+=dt;
+function frame(now){if(contextLost||gl.isContextLost())return;requestAnimationFrame(frame);const raw=last===null?null:Math.max(0,(now-last)/1000);qualityTick(raw);const dt=raw===null?0:Math.min(raw,0.05);last=now;menuT+=dt;
  pollPad();padMenus(dt);document.body.classList.toggle('pad',padMode);document.body.classList.toggle('touch',touchMode);
  const portrait=touchMode&&vh>vw&&(state==='play'||state==='pause');$('rotate').classList.toggle('on',portrait);
  if(pressed.pause&&(state==='play'||state==='pause'))togglePause();
