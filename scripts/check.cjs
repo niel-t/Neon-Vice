@@ -7,7 +7,7 @@ const { files } = require('./build.cjs');
 function gameData() {
   const html = readFileSync(resolve(__dirname, '..', 'index.html'), 'utf8');
   const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
-  const order = ['art.js', 'levels.js', 'models.js', null, 'renderer.js', null];
+  const order = ['art.js', 'levels.js', 'world.js', 'missions.js', 'models.js', null, 'renderer.js', 'weapons.js', 'ai.js', 'dialogue.js', 'overworld.js', null];
   assert.equal(scripts.length, order.length, 'Expected ordered assets followed by the inline classic game script');
   scripts.forEach((script, i) => assert.equal(script[1].trim(), order[i] ? `src="${order[i]}"` : '', 'Scripts must retain synchronous classic loading order'));
   const sources = scripts.map((script, i) => {
@@ -28,6 +28,7 @@ function gameData() {
   assert(sources.slice(1).every(source => !source.includes('const ART=')), 'Embedded artwork must remain in art.js');
   assert(sources[1].includes('/*LEVELS*/') && sources[1].includes('/*END*/'), 'Campaign markers must remain in levels.js');
   vm.runInNewContext(sources[1], {}, { timeout: 1000 });
+  vm.runInNewContext(sources.slice(1, 4).join('\n;\n'), {}, { timeout: 1000 }); // levels, world, missions stay DOM/GL-free
   for (const marker of ['/*LEVELS*/', '/*END*/']) {
     assert.equal(source.split(marker).length, 2, `Missing or duplicate ${marker} data marker`);
   }
