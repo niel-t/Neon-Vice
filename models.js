@@ -183,17 +183,26 @@ function loft(M,rings,segs,o={}){GRP++;const u0=o.u0||0,u1=o.u1===undefined?1:o.
 /* textured disc (watch dial): uv laid out around a centre in the texture */
 function disc(M,c,n,a,b,r,segs,uvc,uvr,w){GRP++;const cc=addV(M,c,uvc,w),rim=[];for(let i=0;i<=segs;i++){const t=i/segs*2*Math.PI;rim.push(addV(M,V.add(c,V.add(V.mul(a,Math.cos(t)*r),V.mul(b,Math.sin(t)*r))),[uvc[0]+Math.cos(t)*uvr,uvc[1]-Math.sin(t)*uvr],w));}for(let i=0;i<segs;i++)tri(M,cc,rim[i],rim[i+1],n);}
 const W1=b=>[[b,1]],W2=(a,b,t)=>[[a,1-t],[b,t]];
-function buildBody(B){const M=newMesh(),X=[1,0,0],Y=[0,1,0],Z=[0,0,1];
+/* body-parameter sets on the shared skeleton and animation set.
+   fem: athletic 80s proportions (not exaggerated): narrower sloped shoulders, defined waist, wider hips, slimmer limbs with a calf,
+   knees slightly in (Q-angle), smaller hands and feet, slimmer neck, a little shorter; walks and stands with the 'fem' gait. */
+const BODYP={
+ male:{torso:null,bust:null,segs:16,arm:[1,1,1,1,1,1],cuff:1,shIn:0,leg:[1,1,1,1,1,1,1],legX:r=>1+(0.92-r)*0.12,footX:0.112,hand:1,foot:1,neck:1,glute:0,gait:'male',scale:[1,1,1]},
+ fem:{torso:[[0.8,0.228,0.156,0],[0.9,0.236,0.16,-0.004],[1.0,0.204,0.146,0.006],[1.1,0.156,0.118,0.012],[1.2,0.178,0.134,0.014],[1.28,0.194,0.144,0.016],[1.36,0.2,0.134,0.006],[1.42,0.19,0.12,-0.004],[1.465,0.15,0.102,-0.012],[1.51,0.078,0.078,-0.014]],
+  bust:{1.2:0.024,1.28:0.066,1.36:0.034},segs:20,arm:[0.86,0.84,0.8,0.78,0.76,0.72],cuff:0.74,shIn:0.022,leg:[1.1,1.06,0.96,0.82,0.92,0.74,0.7],
+  legX:r=>r>0.51?1-(0.92-r)/0.41*0.09:0.91+(0.51-r)/0.41*0.07,footX:0.1,hand:0.86,foot:0.86,neck:0.84,glute:0.018,gait:'fem',scale:[0.9,0.96,0.9]}};
+/* scale vertices [v0,v1) about a point (per-axis factors) */
+function scaleAbout(M,v0,v1,c,k){for(let i=v0;i<v1;i++)for(let a=0;a<3;a++)M.p[i*3+a]=c[a]+(M.p[i*3+a]-c[a])*k[a];}
+function buildBody(B){const M=newMesh(),X=[1,0,0],Y=[0,1,0],Z=[0,0,1],BP=B.fem?BODYP.fem:BODYP.male;
  const tv=y=>((TY1-y)/(TY1-TY0)*ROW.t)/512;
  /* torso: big frame, chest wider than the hips, padded 80s shoulders, open collar */
  const T=[[0.8,0.206,0.143,0,W1(BI.pelvis)],[0.9,0.207,0.145,0,W1(BI.pelvis)],[1.0,0.2,0.147,0.008,W2(BI.pelvis,BI.spine,0.5)],[1.1,0.21,0.152,0.014,W1(BI.spine)],
   [1.22,0.236,0.158,0.012,W2(BI.spine,BI.chest,0.6)],[1.33,0.252,0.158,0.008,W1(BI.chest)],[1.415,0.24,0.142,-0.004,W1(BI.chest)],[1.465,0.192,0.118,-0.012,W1(BI.chest)],[1.51,0.098,0.092,-0.014,W2(BI.chest,BI.neck,0.3)]];
- /* women: wide hips, a narrow waist, a soft bust and narrower shoulders (fully clothed) */
- if(B.fem)T.splice(0,T.length,[0.8,0.232,0.158,0,W1(BI.pelvis)],[0.9,0.238,0.162,0,W1(BI.pelvis)],[1.0,0.2,0.146,0.008,W2(BI.pelvis,BI.spine,0.5)],[1.1,0.15,0.118,0.012,W1(BI.spine)],
-  [1.2,0.18,0.136,0.014,W2(BI.spine,BI.chest,0.6)],[1.28,0.198,0.146,0.016,W1(BI.chest)],[1.36,0.205,0.134,0.006,W1(BI.chest)],[1.42,0.198,0.12,-0.004,W1(BI.chest)],[1.465,0.162,0.104,-0.012,W1(BI.chest)],[1.51,0.082,0.08,-0.014,W2(BI.chest,BI.neck,0.3)]);
- const BUST={1.2:0.026,1.28:0.072,1.36:0.036};
+ /* women: the BODYP.fem torso (wider hips, defined waist, soft bust, narrower sloped shoulders; fully clothed) */
+ if(BP.torso){const tw=y=>y<0.95?W1(BI.pelvis):y<1.05?W2(BI.pelvis,BI.spine,0.5):y<1.15?W1(BI.spine):y<1.25?W2(BI.spine,BI.chest,0.6):y<1.5?W1(BI.chest):W2(BI.chest,BI.neck,0.3);T.splice(0,T.length,...BP.torso.map(r=>[r[0],r[1],r[2],r[3],tw(r[0])]));}
+ const BUST=BP.bust||{};
  const SHx=B.shoulders||0,BEL=B.belly||0;for(const r of T){const y=r[0],up=clamp((y-1.15)/0.25,0,1)*(y>1.48?0.4:1);r[1]*=1+SHx*up;const bb=Math.exp(-Math.pow((y-1.02)/0.14,2));r[2]+=BEL*bb;r[3]+=BEL*0.6*bb;r[1]+=BEL*0.35*bb;}
- loft(M,T.map(r=>({c:[0,r[0],r[3]],s:X,f:Z,rx:r[1],rz:r[2],v:tv(r[0]),w:r[4],mod:(p,ph)=>{if(r[0]>1.44&&r[0]<1.48){p[1]+=0.006*Math.cos(2*ph);}if(B.fem){const b=BUST[r[0]];if(b){const c=Math.max(0,Math.cos(ph));p[2]+=b*c*c*Math.exp(-Math.pow((Math.abs(Math.sin(ph))-0.42)/0.3,2));}return p;}if(Math.cos(ph)>0.2&&r[0]>1.05&&r[0]<1.4)p[2]+=0.008*Math.cos(ph);return p;}})),B.fem?20:16,{capA:{dir:[0,-1,0],uv:[0.5,0.555]},capB:{dir:[0,1,0],uv:[0.5,0.002],lift:-0.012}});
+ loft(M,T.map(r=>({c:[0,r[0],r[3]],s:X,f:Z,rx:r[1],rz:r[2],v:tv(r[0]),w:r[4],mod:(p,ph)=>{if(r[0]>1.44&&r[0]<1.48){p[1]+=0.006*Math.cos(2*ph);}if(B.fem){const b=BUST[r[0]];if(b){const c=Math.max(0,Math.cos(ph));p[2]+=b*c*c*Math.exp(-Math.pow((Math.abs(Math.sin(ph))-0.42)/0.3,2));}if(BP.glute&&r[0]>0.85&&r[0]<0.95){const k=Math.max(0,-Math.cos(ph));p[2]-=BP.glute*k*k;}return p;}if(Math.cos(ph)>0.2&&r[0]>1.05&&r[0]<1.4)p[2]+=0.008*Math.cos(ph);return p;}})),BP.segs,{capA:{dir:[0,-1,0],uv:[0.5,0.555]},capB:{dir:[0,1,0],uv:[0.5,0.002],lift:-0.012}});
  /* lapel ridge: a thin raised strip so the lapels catch light (PS2 games modelled these as a few polys) */
  if(!B.fem)for(const s of [1,-1]){GRP++;const pts=[];for(const Y of [1.18,1.3,1.45]){const vw=0.012+(Y-1.12)*0.36,xx=s*(vw+0.04),zz=Math.sqrt(Math.max(0,1-Math.pow(xx/(Y>1.38?0.24:0.25),2)))*0.156+0.008+(Y<1.4?0.008:0);pts.push([xx,Y,zz]);}
   const uvp=p=>[0.5+p[0]*340/512,((TY1-p[1])/(TY1-TY0)*ROW.t)/512];const w=W1(BI.chest),ids=[];for(const p of pts){ids.push(addV(M,V.add(p,[-s*0.03,0,0.004]),uvp(V.add(p,[-s*0.03,0,0])),w),addV(M,V.add(p,[s*0.03,0,0.006]),uvp(V.add(p,[s*0.03,0,0])),w));}
@@ -203,10 +212,10 @@ function buildBody(B){const M=newMesh(),X=[1,0,0],Y=[0,1,0],Z=[0,0,1];
  /* arms */
  for(const s of [1,-1]){const v0=M.p.length/3;const sh=s>0?SH:mir(SH),el=s>0?EL:mir(EL),wr=s>0?WR:mir(WR),ad=[AD[0]*s,AD[1],0],side=V.norm(V.cross(ad,Z)).map(v=>-v*s),fwd=Z;
   const ua=BI[s>0?'uarmL':'uarmR'],fa=BI[s>0?'farmL':'farmR'],hb=BI[s>0?'handL':'handR'];const sv=t=>(ROW.s0+t*(ROW.s1-ROW.s0))/512;
-  const at=(base,dir,t)=>V.add(base,V.mul(dir,t)),aK=B.fem?0.84:1;
+  const at=(base,dir,t)=>V.add(base,V.mul(dir,t));
   loft(M,[{c:V.add(at(sh,ad,0.0),[-s*0.012,-0.012,0]),rx:0.074,rz:0.08,v:sv(0),w:[[ua,0.6],[BI.chest,0.4]]},{c:at(sh,ad,0.06),rx:0.082,rz:0.084,v:sv(0.15),w:W1(ua)},{c:at(sh,ad,0.2),rx:0.076,rz:0.078,v:sv(0.4),w:W1(ua)},
-   {c:el,rx:0.068,rz:0.07,v:sv(0.55),w:W2(ua,fa,0.5)},{c:at(el,ad,0.1),rx:0.064,rz:0.064,v:sv(0.72),w:W1(fa)},{c:at(wr,ad,-0.02),rx:0.056,rz:0.057,v:sv(0.98),w:W1(fa)}].map(r=>Object.assign(r,{s:side,f:fwd,rx:r.rx*aK,rz:r.rz*aK})),8,{u0:0,u1:1});
-  loft(M,[{c:at(wr,ad,-0.035),rx:0.05,rz:0.051,v:(ROW.c0+1)/512,w:W1(fa)},{c:at(wr,ad,0.012),rx:0.049,rz:0.05,v:(ROW.c1-1)/512,w:W2(fa,hb,0.3)}].map(r=>Object.assign(r,{s:side,f:fwd})),8,{u0:0,u1:1});
+   {c:el,rx:0.068,rz:0.07,v:sv(0.55),w:W2(ua,fa,0.5)},{c:at(el,ad,0.1),rx:0.064,rz:0.064,v:sv(0.72),w:W1(fa)},{c:at(wr,ad,-0.02),rx:0.056,rz:0.057,v:sv(0.98),w:W1(fa)}].map((r,k)=>Object.assign(r,{s:side,f:fwd,rx:r.rx*BP.arm[k],rz:r.rz*BP.arm[k]})),8,{u0:0,u1:1});
+  loft(M,[{c:at(wr,ad,-0.035),rx:0.05,rz:0.051,v:(ROW.c0+1)/512,w:W1(fa)},{c:at(wr,ad,0.012),rx:0.049,rz:0.05,v:(ROW.c1-1)/512,w:W2(fa,hb,0.3)}].map(r=>Object.assign(r,{s:side,f:fwd,rx:r.rx*BP.cuff,rz:r.rz*BP.cuff})),8,{u0:0,u1:1});
   if(!B.nowatch&&s===(B.watch||1)){/* gold watch: link bracelet, raised case with bezel, champagne dial, crown */
    const gv=SW.gold[1];loft(M,[{c:at(wr,ad,-0.064),rx:0.058,rz:0.059},{c:at(wr,ad,-0.034),rx:0.058,rz:0.059}].map(r=>Object.assign(r,{s:side,f:fwd,w:W1(fa),v:gv})),12,{uvf:(u,r)=>[150/512+u*140/512,r===undefined?gv:gv]});
    const cc=at(at(wr,ad,-0.049),side,0.058),ax=V.norm(ad),bx=fwd;
@@ -214,7 +223,7 @@ function buildBody(B){const M=newMesh(),X=[1,0,0],Y=[0,1,0],Z=[0,0,1];
    disc(M,at(cc,side,0.0155),side,ax,bx,0.023,14,SW.dial,16/512,W1(fa));
    loft(M,[{c:at(at(cc,side,0.006),bx,0.028),rx:0.005,rz:0.005},{c:at(at(cc,side,0.006),bx,0.036),rx:0.004,rz:0.004}].map(r=>Object.assign(r,{s:ax,f:side,w:W1(fa),v:gv})),6,{uvf:()=>[0.36,gv],capB:{dir:bx,uv:[0.36,gv]}});}
   {/* fist: palm block, four curled fingers, thumb across the front; gold knuckle duster rings around the fingers */
-   const pm=V.mul(side,-1),Zv=[0,0,1],hw=W1(hb),sk=()=>SW.skin,gv=SW.gold[1],gu=()=>[0.36,gv];
+   const f0=M.p.length/3,pm=V.mul(side,-1),Zv=[0,0,1],hw=W1(hb),sk=()=>SW.skin,gv=SW.gold[1],gu=()=>[0.36,gv];
    const P=(ta,tp,tz)=>V.add(V.add(at(wr,ad,ta),V.mul(pm,tp)),V.mul(Zv,tz));
    loft(M,[[0,0.024,0.038],[0.03,0.026,0.046],[0.07,0.025,0.048],[0.093,0.022,0.046]].map(q=>({c:P(q[0],0,0),s:pm,f:Zv,rx:q[1],rz:q[2],sq:0.6,w:hw,v:SW.skin[1]})),8,{uvf:u=>[0.02+u*0.26,SW.skin[1]],capB:{dir:ad,uv:sk(),lift:0.004}});
    const FZ=[0.034,0.0113,-0.0113,-0.034];
@@ -233,21 +242,23 @@ function buildBody(B){const M=newMesh(),X=[1,0,0],Y=[0,1,0],Z=[0,0,1];
    for(const zz of [0.047,-0.047])loft(M,[{c:P(0.112,0.006,zz),rx:0.006,rz:0.006},{c:P(0.056,0.032,zz),rx:0.006,rz:0.006}].map(r=>Object.assign(r,{s:Zv,f:ad,w:hw,v:gv})),5,{uvf:gu});
    }
    /* thumb wrapped over the front of the curled fingers */
-   loft(M,[{c:P(0.035,0.026,0.044),rx:0.016,rz:0.015},{c:P(0.07,0.044,0.03),rx:0.013,rz:0.012},{c:P(0.088,0.049,0.006),rx:0.011,rz:0.0105}].map(r=>Object.assign(r,{s:ad,f:pm,w:hw,v:SW.skin[1]})),6,{uvf:sk,capB:{dir:V.mul(Zv,-1),uv:sk(),lift:0.006}});}
-  {const dx=s*0.215*SHx*0.9;for(let i=v0;i<M.p.length/3;i++)M.p[i*3]+=dx;}
+   loft(M,[{c:P(0.035,0.026,0.044),rx:0.016,rz:0.015},{c:P(0.07,0.044,0.03),rx:0.013,rz:0.012},{c:P(0.088,0.049,0.006),rx:0.011,rz:0.0105}].map(r=>Object.assign(r,{s:ad,f:pm,w:hw,v:SW.skin[1]})),6,{uvf:sk,capB:{dir:V.mul(Zv,-1),uv:sk(),lift:0.006}});
+   if(BP.hand!==1)scaleAbout(M,f0,M.p.length/3,wr,[BP.hand,BP.hand,BP.hand]);}
+  {const dx=s*(0.215*SHx*0.9-BP.shIn);for(let i=v0;i<M.p.length/3;i++)M.p[i*3]+=dx;}
   /* legs */
   const x=0.1*s,th=BI[s>0?'thighL':'thighR'],sn=BI[s>0?'shinL':'shinR'],ft=BI[s>0?'footL':'footR'];const lv=t=>(ROW.p0+t*(ROW.p1-ROW.p0))/512;
-  loft(M,[[0.92,0.1,W2(BI.pelvis,th,0.6)],[0.8,0.095,W1(th)],[0.65,0.083,W1(th)],[0.51,0.07,W2(th,sn,0.5)],[0.36,0.064,W1(sn)],[0.2,0.06,W1(sn)],[0.1,0.065,W1(sn)]].map(r=>({c:[x*(1+(0.92-r[0])*0.12),r[0],0.006],s:X,f:Z,rx:r[1]*(B.fem?(r[0]>0.6?1.06:0.86):1),rz:r[1]*1.04*(B.fem?(r[0]>0.6?1.06:0.86):1),v:lv((0.92-r[0])/0.82),w:r[2]})),10,{});
+  loft(M,[[0.92,0.1,W2(BI.pelvis,th,0.6)],[0.8,0.095,W1(th)],[0.65,0.083,W1(th)],[0.51,0.07,W2(th,sn,0.5)],[0.36,0.064,W1(sn)],[0.2,0.06,W1(sn)],[0.1,0.065,W1(sn)]].map((r,k)=>({c:[x*BP.legX(r[0]),r[0],0.006],s:X,f:Z,rx:r[1]*BP.leg[k],rz:r[1]*1.04*BP.leg[k],v:lv((0.92-r[0])/0.82),w:r[2]})),10,{});
   /* shoes: loafer shape, leather texture wrapping over the top */
-  const sc=(z,w,h,y,t)=>({c:[0.112*s,y,z],s:X,f:Y,rx:w,rz:h,w:W1(ft),t});const sw=SW.shoe[1];
+  const sc=(z,w,h,y,t)=>({c:[BP.footX*s,y,z],s:X,f:Y,rx:w,rz:h,w:W1(ft),t});const sw=SW.shoe[1];
   if(B.fem&&s>0&&B.skirt){/* skirt: flares from the hips, painted like the dress (bottom of the torso sheet) */
    const sl=B.skirt,sv2=tv(0.82),sk=(y,r,z)=>({c:[0,y,z],s:X,f:Z,rx:r,rz:r*0.74,v:sv2,w:W1(BI.pelvis)});
    loft(M,[sk(0.84,0.234,0),sk(0.84-sl*0.45,0.24+sl*0.04,0.004),sk(0.84-sl,0.246+sl*0.08,0.008)],20,{});}
-  loft(M,[sc(-0.065,0.05,0.045,0.06,0),sc(-0.02,0.056,0.06,0.07,0.25),sc(0.08,0.058,0.045,0.055,0.6),sc(0.17,0.05,0.032,0.04,0.85),sc(0.205,0.032,0.02,0.035,1)],8,{uvf:(u,r)=>[(332+u*178)/512,(ROW.w0+2+r.t*36)/512],capA:{dir:[0,0,-1],uv:[340/512,(ROW.w0+4)/512]},capB:{dir:[0,0,1],uv:[421/512,(ROW.w1-4)/512]},ph0:Math.PI/8});}
+  const s0=M.p.length/3;loft(M,[sc(-0.065,0.05,0.045,0.06,0),sc(-0.02,0.056,0.06,0.07,0.25),sc(0.08,0.058,0.045,0.055,0.6),sc(0.17,0.05,0.032,0.04,0.85),sc(0.205,0.032,0.02,0.035,1)],8,{uvf:(u,r)=>[(332+u*178)/512,(ROW.w0+2+r.t*36)/512],capA:{dir:[0,0,-1],uv:[340/512,(ROW.w0+4)/512]},capB:{dir:[0,0,1],uv:[421/512,(ROW.w1-4)/512]},ph0:Math.PI/8});
+  if(BP.foot!==1)scaleAbout(M,s0,M.p.length/3,[BP.footX*s,0,-0.04],[BP.foot,0.94,BP.foot]);}
  return M;}
-function buildHead(B){const M=newMesh(),X=[1,0,0],Z=[0,0,1],tv=y=>1-(y-HEAD.neckY)/(HEAD.crownY-HEAD.neckY);
+function buildHead(B){const M=newMesh(),X=[1,0,0],Z=[0,0,1],tv=y=>1-(y-HEAD.neckY)/(HEAD.crownY-HEAD.neckY),nk=B&&B.fem?BODYP.fem.neck:1;
  /* rings: neck -> chin -> square jaw -> cheekbones -> brow -> crown */
- const R=[[1.47,0.097,0.094,-0.008,1],[1.52,0.095,0.094,-0.002,1],[1.555,0.09,0.093,0.006,1],[1.585,0.084,0.09,0.012,0.8],[1.605,0.094,0.098,0.02,0.72],[1.628,0.1,0.104,0.02,0.78],[1.652,0.103,0.108,0.016,0.85],[1.677,0.106,0.11,0.011,0.9],
+ const R=[[1.47,0.097*nk,0.094*nk,-0.008,1],[1.52,0.095*nk,0.094*nk,-0.002,1],[1.555,0.09,0.093,0.006,1],[1.585,0.084,0.09,0.012,0.8],[1.605,0.094,0.098,0.02,0.72],[1.628,0.1,0.104,0.02,0.78],[1.652,0.103,0.108,0.016,0.85],[1.677,0.106,0.11,0.011,0.9],
   [1.702,0.108,0.112,0.006,0.92],[1.727,0.109,0.114,0.002,0.95],[1.757,0.107,0.114,-0.004,1],[1.787,0.099,0.107,-0.009,1],[1.812,0.083,0.092,-0.012,1],[1.83,0.058,0.065,-0.014,1]];
  const nose={1.652:0.012,1.677:0.016,1.702:0.006},brow={1.727:0.008},chin={1.605:0.012,1.585:0.006};
  loft(M,R.map(r=>({c:[0,r[0],r[3]],s:X,f:Z,rx:r[1],rz:r[2],sq:r[4],v:tv(r[0]),w:r[0]<1.6?W2(BI.neck,BI.head,clamp((r[0]-1.5)/0.1,0,1)):W1(BI.head),
@@ -306,11 +317,25 @@ const M4={id:()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
 /* ---------------- animation ---------------- */
 
 const X=[1,0,0],Y=[0,1,0],Z=[0,0,1];
-function pose(t,anim,jab,arms,kick){const R={},rot=(b,ax,a)=>{R[b]=M4.mul(M4.R(ax,a),R[b]||M4.id());};let root=[0,0,0];
+function pose(t,anim,jab,arms,kick,gait){const R={},rot=(b,ax,a)=>{R[b]=M4.mul(M4.R(ax,a),R[b]||M4.id());};let root=[0,0,0];const fem=gait==='fem';
  const armHinge=s=>V.norm(V.cross([AD[0]*s,AD[1],0],Z));
  const lower=(s,a)=>rot(s>0?'uarmL':'uarmR',Z,-a*s);
- if(anim==='idle'){const br=Math.sin(t*1.6);lower(1,0.5);lower(-1,0.5);rot('uarmL',X,-0.05);rot('uarmR',X,-0.05);rot('farmL',armHinge(1),0.25);rot('farmR',armHinge(-1),0.25);
+ if(anim==='idle'&&fem){/* contrapposto: weight on the right leg, hip up on that side, left knee eased, shoulders counter-tilted */
+  const br=Math.sin(t*1.6),sw=Math.sin(t*0.45)*0.012;lower(1,0.6);lower(-1,0.58);rot('uarmL',X,-0.04);rot('uarmR',X,-0.08);rot('farmL',armHinge(1),0.3);rot('farmR',armHinge(-1),0.38);
+  rot('pelvis',Z,-0.07-sw);rot('pelvis',Y,0.06);rot('thighR',Z,0.075+sw);rot('thighL',Z,0.03+sw);rot('thighL',X,-0.1);rot('shinL',X,0.2);rot('footL',X,-0.08);rot('thighR',X,0.02);
+  rot('spine',Z,0.05+sw*0.6);rot('chest',Z,0.035);rot('chest',X,-0.02*br);rot('spine',X,0.01);rot('neck',Z,-0.02);rot('neck',Y,Math.sin(t*0.5)*0.06);rot('head',X,Math.sin(t*0.37)*0.05);
+  root=[-0.022,0.003*br-0.004,0];}
+ else if(anim==='idle'){const br=Math.sin(t*1.6);lower(1,0.5);lower(-1,0.5);rot('uarmL',X,-0.05);rot('uarmR',X,-0.05);rot('farmL',armHinge(1),0.25);rot('farmR',armHinge(-1),0.25);
   rot('chest',X,-0.02*br);rot('neck',Y,Math.sin(t*0.5)*0.06);rot('head',X,Math.sin(t*0.37)*0.06);rot('spine',X,0.02);root=[0,0.004*br,0];rot('thighL',Z,0.03);rot('thighR',Z,-0.03);}
+ else if(anim==='walk'&&fem){/* hip-led walk: pelvis shifts over the stance leg and drops on the swing side, feet track a narrow line,
+   smaller arm swing close to the body, upright chest with little counter-rotation, steady head */
+  const w=t*2*Math.PI*0.95,s=Math.sin(w),c=Math.cos(w),roll=-0.07*c,shift=-0.026*c;
+  rot('thighL',X,-0.42*s);rot('thighR',X,0.42*s);rot('shinL',X,0.08+0.72*Math.max(0,Math.sin(w+1.9)));rot('shinR',X,0.08+0.72*Math.max(0,Math.sin(w+1.9+Math.PI)));
+  rot('footL',X,0.28*Math.max(0,-Math.sin(w+0.6)));rot('footR',X,0.28*Math.max(0,Math.sin(w+0.6)));
+  const legZ=(-shift-0.83*roll)/0.83;rot('thighL',Z,legZ-0.05);rot('thighR',Z,legZ+0.05);
+  lower(1,0.6);lower(-1,0.6);rot('uarmL',X,0.3*s);rot('uarmR',X,-0.3*s);rot('farmL',armHinge(1),0.42+0.16*Math.max(0,-s));rot('farmR',armHinge(-1),0.42+0.16*Math.max(0,s));
+  rot('pelvis',Z,roll);rot('pelvis',Y,0.15*s);rot('spine',Z,-roll*1.15);rot('chest',Y,-0.08*s);rot('spine',X,0.02);rot('chest',X,-0.03);rot('neck',Z,roll*0.3);
+  root=[shift,0.016*Math.abs(c)-0.014,0];rot('head',X,-0.02);}
  else if(anim==='walk'){const w=t*2*Math.PI*0.95,s=Math.sin(w),c=Math.cos(w);
   rot('thighL',X,-0.45*s);rot('thighR',X,0.45*s);rot('shinL',X,0.08+0.75*Math.max(0,Math.sin(w+1.9)));rot('shinR',X,0.08+0.75*Math.max(0,Math.sin(w+1.9+Math.PI)));
   rot('footL',X,0.25*Math.max(0,-Math.sin(w+0.6)));rot('footR',X,0.25*Math.max(0,Math.sin(w+0.6)));
@@ -466,7 +491,9 @@ function paintBodyP(L){const sh=C255(L.shirt),jk=C255(L.jacket),sk=C255(L.skin);
  if(L.gloves){const gc=C255(L.gloves);x.fillStyle=rgb(gc);x.fillRect(0,400,150,40);x.fillRect(0,381,512,18);}
  return c;}
 function lookCfg(L,bodyType){const bt=BODYCFG[bodyType]||BODYCFG[L.body]||BODYCFG.normal;
- return{L,B:{specs:L.glasses?1:0,fluff:!!(L.fluff&&L.beard),hs:(L.hair&&!L.hat)?L.hs:null,watch:L.watch?-1:0,cigar:!!L.cigar,hat:L.hat||null,shoulders:bt.shoulders||0,belly:bt.belly||(L.belly?0.1:0),rings:L.bling?1:0,fem:!!L.fem,skirt:L.fem?(L.skirt||0):0},scale:L.fem?bt.scale.map((v,i)=>v*(i===1?1:0.9)):bt.scale};}
+ return{L,B:{specs:L.glasses?1:0,fluff:!!(L.fluff&&L.beard),hs:(L.hair&&!L.hat)?L.hs:null,watch:L.watch?-1:0,cigar:!!L.cigar,hat:L.hat||null,shoulders:bt.shoulders||0,belly:bt.belly||(L.belly?0.1:0),rings:L.bling?1:0,fem:!!L.fem,skirt:L.fem?(L.skirt||0):0},scale:L.fem?bt.scale.map((v,i)=>v*BODYP.fem.scale[i]):bt.scale,gait:(L.fem?BODYP.fem:BODYP.male).gait};}
+/* vertex counts for a look without touching GL (budget checks: female <= 1.25x male) */
+function lookVerts(L,bodyType){const B=lookCfg(L||{},bodyType).B,b=buildBody(B).p.length/3,h=buildHead(B).p.length/3;return{body:b,head:h,total:b+h};}
 let LOOKN=0,lastG=null,buildsThisFrame=0;const failedLooks=new Set();
 function beginFrame(){buildsThisFrame=0;}
 function lookKey(c){if(!c.look)return null;if(!c._ps2k){c._ps2k='L'+(++LOOKN);}return c._ps2k;}
@@ -479,7 +506,7 @@ function bloodify(key,lvl,c){const C=CH[key];if(!C||!C.bc)return;C.dirty=true;co
  const re=(cv,tex)=>{gl.bindTexture(gl.TEXTURE_2D,tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cv);gl.generateMipmap(gl.TEXTURE_2D);};re(C.bc,MODELS[key][0].tex);re(C.hc,MODELS[key][1].tex);gl.bindTexture(gl.TEXTURE_2D,atlasTex);}
 function buildLook(key,c){const Lk=c.look,bt=c.boss?'boss':(c.body||Lk.body);const cfg=lookCfg(Lk,bt);
  const ht=paintHeadP(Lk),btx=paintBodyP(Lk),parts=[];try{parts.push(upload(buildBody(cfg.B),mkTex(btx)));parts.push(upload(buildHead(cfg.B),mkTex(ht)));}catch(e){freeModel(parts);throw e;}
- MODELS[key]=parts;CH[key]={scale:cfg.scale,npc:true,bc:btx,hc:ht};}
+ MODELS[key]=parts;CH[key]={scale:cfg.scale,gait:cfg.gait,npc:true,bc:btx,hc:ht};}
 function freeLooks(){failedLooks.clear();for(const k in MODELS)if(CH[k]&&CH[k].npc){freeModel(MODELS[k]);delete MODELS[k];delete CH[k];}}
 function applySuit(id){const C=CH[id];if(!shaderReady||!C||!C.bcBase||!MODELS[id])return;const sk=suitOK(PROG[id],PROG[id]&&PROG[id].suit)?PROG[id].suit:'default';if(C.suitOn===sk)return;C.suitOn=sk;
  const x=C.bc0.getContext('2d');x.globalCompositeOperation='source-over';x.globalAlpha=1;x.drawImage(C.bcBase,0,0);
@@ -516,7 +543,7 @@ function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game'
  window.PUMP=0;if(gun==='shotgun'&&c.pumpAt!==undefined&&G){const dt2=G.T-c.pumpAt;if(dt2>0.3&&dt2<0.62)window.PUMP=Math.sin((dt2-0.3)/0.32*Math.PI);}
  const tt=anim==='walk'&&mode==='game'?(c.walk||0)/(2*Math.PI*0.95)/2:t;
  const lying=mode==='game'&&(!c.alive||c.down>0);if(lying){arms=null;gun=null;anim='idle';}
- const W=pose(lying?0:tt,anim,jab,arms,k);window.EXLEAN=0;const S=CH[id].scale;
+ const W=pose(lying?0:tt,anim,jab,arms,k,CH[id].gait);window.EXLEAN=0;const S=CH[id].scale;
  let base=M4.mul(M4.T(c.x,c.y||0,c.z),M4.mul(M4.R([0,1,0],c.a||0),[scale*S[0],0,0,0,0,scale*S[1],0,0,0,0,scale*S[2],0,0,0,0,1]));
  if(lying){const fe=c.fall===undefined?1:1-Math.pow(1-c.fall,2);base=M4.mul(base,M4.mul(M4.T(0,0.2*fe,0),M4.R([1,0,0],(c.alive?1:-1)*Math.PI/2*fe)));}
  const Wb=[];const B=new Float32Array(NB*16);for(let i=0;i<NB;i++)Wb[i]=M4.mul(base,W[i]);if(CH[id].neckDrop){const h=BI.head;Wb[h]=M4.mul(base,M4.mul(M4.T(0,-CH[id].neckDrop,0),W[h]));}
@@ -538,4 +565,4 @@ function flush(VPm,u){if(!shaderReady||!queue.length||!u){queue.length=0;return;
   const at=(n,b,s)=>{const l=Lc[n];if(l<0)return;gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.vertexAttribPointer(l,s,gl.FLOAT,false,0,0);};
   at('aP',mm.p,3);at('aN',mm.n,3);at('aT',mm.t,2);at('aBi',mm.bi,4);at('aBw',mm.bw,4);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,mm.i);gl.drawElements(gl.TRIANGLES,mm.n_i,gl.UNSIGNED_SHORT,0);}}
  for(const kk of ['aP','aN','aT','aBi','aBw']){const l=Lc[kk];if(l>=0)gl.disableVertexAttribArray(l);}gl.disable(gl.CULL_FACE);gl.bindTexture(gl.TEXTURE_2D,atlasTex);queue.length=0;}
-return{init,add,flush,has,applySuit,rebuild,beginFrame,modelStatus:id=>modelStates[id],get status(){return status;},get ready(){return ready;}};})();
+return{init,add,flush,has,applySuit,rebuild,beginFrame,lookVerts,modelStatus:id=>modelStates[id],get status(){return status;},get ready(){return ready;}};})();
