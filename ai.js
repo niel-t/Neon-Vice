@@ -104,7 +104,7 @@ function updateEnemy(e,dt){const g=G,p=g.player,T=g.T||0;
  e.cd-=dt;if(e.atkT>0)e.atkT-=dt;if(e.ga===undefined)e.ga=e.a;
  const wd=WD[e.weapon?e.weapon.type:'fists'];const dx=p.x-e.x,dz=p.z-e.z,dist=Math.hypot(dx,dz)||0.001,ang=Math.atan2(dx,dz);
  const chasing=e.state==='chase',look=chasing?e.ga:e.a,half=chasing?Math.max(visionHalfAngle(e),1.4):visionHalfAngle(e);
- let see=false;if(p.alive&&dist<(chasing?13:Dd().vision)){const cone=dist<1.6||Math.abs(angDiff(look,ang))<half;if(cone&&los(e.x,e.z,p.x,p.z))see=true;}
+ let see=false;if(p.alive&&dist<(chasing?13:Dd().vision)){const cone=dist<1.6||Math.abs(angDiff(look,ang))<half;if(cone&&(typeof playerSeenBy==='function'?playerSeenBy(e):los(e.x,e.z,p.x,p.z)))see=true;}
  if(!see&&p.alive){const hear=(p.sprinting?3.2:1.4)*(Math.hypot(p.vx,p.vz)>0.6?1:0);if(dist<hear&&los(e.x,e.z,p.x,p.z)){AI.know(e,AI.belief.make(p.x,p.z,T,'step'));if(!chasing){AI.investigate(e,p.x,p.z,1);e.ta=ang;}}}
  if(!see&&(e.state==='idle'||e.state==='patrol')){for(const o of g.enemies){if(o.alive||o.found||o===e)continue;const bx=o.x-e.x,bz=o.z-e.z,bd2=Math.hypot(bx,bz);if(bd2<Dd().vision*0.8&&Math.abs(angDiff(e.a,Math.atan2(bx,bz)))<Dd().cone&&los(e.x,e.z,o.x,o.z)){o.found=1;e.wary=1;AI.poi(e,o.x,o.z,'body');AI.investigate(e,o.x,o.z,1.4);popup(e.x,e.z,'BODY!','#ffd36b');sfx('alert');
   AI.callout(e,6,q=>{if(q.state==='chase')return;q.wary=1;AI.poi(q,o.x,o.z,'body');AI.investigate(q,o.x,o.z,1);});break;}}}
