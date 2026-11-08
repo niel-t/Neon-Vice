@@ -5,7 +5,8 @@
     "check": "node scripts/check.cjs",
     "build": "node scripts/build.cjs",
     "test": "npm run check && npm run build && npm run test:browser",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "shots": "node scripts/shots.cjs"
   },
   "devDependencies": {
     "@playwright/test": "1.65.0"

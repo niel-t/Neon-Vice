@@ -1,4 +1,12 @@
 const { createHash } = require('node:crypto');
+const { readFileSync } = require('node:fs');
+const { resolve } = require('node:path');
+const vm = require('node:vm');
+
+function worldData() {
+  const source = ['levels.js', 'world.js'].map(file => readFileSync(resolve(__dirname, '..', file), 'utf8')).join('\n');
+  return vm.runInNewContext(`${source}\n({WORLD,LEVELS,FURN,EKIND,IKIND,WALL_H})`, {}, { timeout: 1000 });
+}
 
 function gridSnapshot(g) {
   const arrays = ['solid', 'furn', 'floorT', 'wallT', 'rug', 'wh', 'topT', 'tint', 'glow'];
@@ -63,4 +71,4 @@ function captureLoads(snapshotSource) {
   return records;
 }
 
-module.exports = { gridSnapshot, digest, captureLoads };
+module.exports = { worldData, gridSnapshot, digest, captureLoads };

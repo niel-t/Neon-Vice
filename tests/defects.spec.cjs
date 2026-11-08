@@ -157,27 +157,97 @@ test('audio: gesture recovery surfaces rejection without queuing suspended sound
   } finally {await context.close();}
 });
 
-test('ownership: carry survives floor changes but not a new character run', async ({ openGame }) => {
+test('ownership: the kit carries between jobs, retries rewind and walking away restores what you brought', async ({ openGame }) => {
   const page = await openGame();
   expect(await page.evaluate(() => {
-    startLevel(2);
-    G.player.weapon = { type:'shotgun', ammo:37 };
-    finishLevel();
-    const saved = { ...CARRY };
-    startLevel(3);
-    const carried = { ...G.player.weapon };
-    selIdx = 1;JOBS.sel = 0;
     const fade = fadeTo;
-    try { fadeTo = () => true;$('bPlay').click(); } finally { fadeTo = fade; }
-    const cleared = CARRY;
-    startLevel(0);
-    return { saved, carried, cleared, weapon:G.player.weapon };
+    try {
+      fadeTo = () => true;
+      selIdx = 1;
+      startLevel(2);
+      const bare = G.player.weapon;
+      G.player.weapon = { type:'shotgun', ammo:37 };
+      finishLevel(); pendingPerks = 0; $('bNextLvl').click();
+      const k = kit(), kept = { guns:k.guns, pool:k.pool, run:myProg().run || null };
+      startLevel(3);
+      const carried = { ...G.player.weapon };
+      G.player.weapon = null; G.player.alive = false;
+      restart();
+      const retried = { weapon:{ ...G.player.weapon }, pool:{ ...G.live.pool } };
+      G.player.weapon = { type:'pistol', ammo:9 };
+      togglePause(); walkAway();
+      const stored = JSON.parse(localStorage.getItem('nb86prog')).money;
+      return { bare, kept, carried, retried, walked:{ guns:kit().guns, run:myProg().run || null, stored:stored.kit.guns, storedRun:stored.run || null } };
+    } finally { fadeTo = fade; }
   })).toEqual({
-    saved:{ type:'shotgun',ammo:37,from:2 },
-    carried:{ type:'shotgun',ammo:37 },
-    cleared:null,
-    weapon:null
+    bare:null,
+    kept:{ guns:[{ type:'shotgun', mag:6 }, null], pool:{ '12ga':30 }, run:null },
+    carried:{ type:'shotgun', ammo:6 },
+    retried:{ weapon:{ type:'shotgun', ammo:6 }, pool:{ '12ga':30 } },
+    walked:{ guns:[{ type:'shotgun', mag:6 }, null], run:null, stored:[{ type:'shotgun', mag:6 }, null], storedRun:null }
   });
+});
+
+test('ownership: walking over a gun of your caliber strips its rounds into the pool without taking it', async ({ openGame }) => {
+  const page = await openGame();
+  await page.evaluate(() => {
+    selIdx = 1; startLevel(0); G.freeze = 0;
+    const p = G.player; p.weapon = { type:'silenced', ammo:15 }; G.live.pool = {};
+    G.items.push({ x:p.x, z:p.z, type:'pistol', ammo:13, vx:0, vz:0, rot:0, flying:false, fresh:false, flyT:0, age:2, tag:'w6' });
+  });
+  await expect.poll(() => page.evaluate(() => G.live.pool['9mm'] | 0)).toBe(13);
+  expect(await page.evaluate(() => ({ held:G.player.weapon.type, left:G.items.filter(i => i.tag === 'w6').map(i => i.ammo) })))
+    .toEqual({ held:'silenced', left:[0] });
+});
+
+test('slots: two guns and a melee switch in hand, pickups fill the free slot, reloads draw from the pool', async ({ openGame }) => {
+  const page = await openGame();
+  expect(await page.evaluate(() => {
+    selIdx = 1;
+    myProg().kit = { v:1, guns:[{ type:'pistol', mag:2 }, null], active:0, melee:'bat', armour:null, pool:{ '9mm':20 }, upg:{}, lost:[] };
+    startLevel(0); G.freeze = 0;
+    const p = G.player, L = () => G.live, snap = () => ({ hand:G.hand, w:p.weapon && { ...p.weapon }, guns:L().guns.map(g => g && { ...g }), melee:L().melee });
+    const out = { start:snap() };
+    takeWeapon(p, 'shotgun', 8); out.pick = { ...snap(), pool:{ ...L().pool } };
+    cycleHand(p); out.c1 = snap();
+    cycleHand(p); out.c2 = snap();
+    slotHand(p, 3); slotHand(p, 1); out.direct = snap();
+    p.weapon.ammo = 0; reloadStart(p); p.rl.t = (p.rl.ar0 + p.rl.ar1) / 2; reloadInput(p);
+    out.perfect = { rl:p.rl, ammo:p.weapon.ammo, pool:L().pool['9mm'] };
+    p.weapon.ammo = 10; reloadStart(p); p.rl.t = 0.01; reloadInput(p); const jam = p.rl.jam; reloadInput(p); const stillOn = !!p.rl;
+    reloadTick(p, 10); out.jammed = { jam, stillOn, rl:p.rl, ammo:p.weapon.ammo, pool:L().pool['9mm'] };
+    const k = kitFromPlay().kit; out.kit = { guns:k.guns, melee:k.melee, active:k.active };
+    throwWeapon(p); out.thrown = snap();
+    return out;
+  })).toEqual({
+    start:{ hand:0, w:{ type:'pistol', ammo:2 }, guns:[null, null], melee:'bat' },
+    pick:{ hand:1, w:{ type:'shotgun', ammo:6 }, guns:[{ type:'pistol', mag:2 }, null], melee:'bat', pool:{ '9mm':20, '12ga':2 } },
+    c1:{ hand:'melee', w:{ type:'bat', ammo:0 }, guns:[{ type:'pistol', mag:2 }, { type:'shotgun', mag:6 }], melee:null },
+    c2:{ hand:0, w:{ type:'pistol', ammo:2 }, guns:[null, { type:'shotgun', mag:6 }], melee:'bat' },
+    direct:{ hand:0, w:{ type:'pistol', ammo:2 }, guns:[null, { type:'shotgun', mag:6 }], melee:'bat' },
+    perfect:{ rl:null, ammo:15, pool:5 },
+    jammed:{ jam:true, stillOn:true, rl:null, ammo:15, pool:0 },
+    kit:{ guns:[{ type:'pistol', mag:15 }, { type:'shotgun', mag:6 }], melee:'bat', active:0 },
+    thrown:{ hand:1, w:{ type:'shotgun', ammo:6 }, guns:[null, null], melee:'bat' }
+  });
+});
+
+test('slots: in a job Tab switches and R reloads instead of restarting; Backspace restarts', async ({ openGame }) => {
+  const page = await openGame();
+  await page.evaluate(() => {
+    selIdx = 1;
+    myProg().kit = { v:1, guns:[{ type:'pistol', mag:3 }, { type:'smg', mag:30 }], active:0, melee:null, armour:null, pool:{ '9mm':40 }, upg:{}, lost:[] };
+    startLevel(0); state = 'play'; G.cine = null; window.__w6 = G;
+  });
+  await page.keyboard.press('Tab');
+  await expect.poll(() => page.evaluate(() => [G.hand, G.player.weapon.type])).toEqual([1, 'smg']);
+  await page.keyboard.press('Digit1');
+  await expect.poll(() => page.evaluate(() => G.hand)).toBe(0);
+  await page.keyboard.press('KeyR');
+  await expect.poll(() => page.evaluate(() => !!G.player.rl)).toBe(true);
+  expect(await page.evaluate(() => G === window.__w6)).toBe(true);
+  await page.keyboard.press('Backspace');
+  await expect.poll(() => page.evaluate(() => G !== window.__w6)).toBe(true);
 });
 
 test('ownership: delayed limb blood stays in its originating world', async ({ openGame }) => {
