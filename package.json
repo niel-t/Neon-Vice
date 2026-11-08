@@ -1,0 +1,13 @@
+{
+  "name": "neon-vice",
+  "private": true,
+  "scripts": {
+    "check": "node scripts/check.cjs",
+    "build": "node scripts/build.cjs",
+    "test": "npm run check && npm run build && npm run test:browser",
+    "test:browser": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.0"
+  }
+}

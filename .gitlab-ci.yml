@@ -1,11 +1,51 @@
-# GitLab Pages: publishes index.html as the game site
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS && $CI_PIPELINE_SOURCE == "push"'
+      when: never
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+stages: [build, test, deploy]
+default:
+  image: mcr.microsoft.com/playwright:v1.65.0-noble
+  interruptible: true
+
+assemble:
+  stage: build
+  script:
+    - npm ci --no-audit --no-fund
+    - npm run check
+    - npm run build
+  artifacts:
+    paths: [public/]
+    expire_in: 1 day
+
+browser:
+  stage: test
+  needs: [assemble]
+  script:
+    - npm ci --no-audit --no-fund
+    - npm run test:browser
+  artifacts:
+    when: always
+    paths: [playwright-report/, test-results/]
+    expire_in: 3 days
+
 pages:
   stage: deploy
+  interruptible: false
+  resource_group: pages
+  needs:
+    - job: assemble
+      artifacts: true
+    - job: browser
+      artifacts: false
   script:
-    - mkdir -p public
-    - cp index.html public/
+    - test -f public/index.html
+  pages:
+    publish: public
   artifacts:
-    paths:
-      - public
+    paths: [public/]
+    expire_in: 1 day
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
