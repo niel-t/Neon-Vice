@@ -12,12 +12,18 @@ if(!gl){$('err').classList.add('on');$('sTitle').classList.remove('on');throw ne
 function sh(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s;}
 function prog(vs,fs){const p=gl.createProgram();gl.attachShader(p,sh(gl.VERTEX_SHADER,vs));gl.attachShader(p,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));return p;}
 const NL=8;
+/* atlas layout (see makeAtlas): 1024², 16×16 cells, quadrant-major tile ids */
+const ATLAS=1024,ACELLS=16,TCELL=t=>{const q=t>>6,k=t&63;return[(k&7)+8*(q&1),(k>>3)+8*(q>>1)];};
+const GLASS=TCELL(20).map(v=>[(v/ACELLS).toFixed(6),((v+1)/ACELLS).toFixed(6)]);
 const VS=`
-attribute vec3 aP;attribute vec3 aN;attribute vec2 aT;attribute vec3 aC;
+attribute vec3 aP;attribute vec3 aN;attribute vec2 aT;attribute vec3 aC;attribute vec4 aS;
 uniform mat4 uVP;uniform vec2 uRes;uniform vec3 uLD;uniform vec3 uLC;uniform vec3 uAmb;uniform float uPix;
 uniform vec4 uPL[${NL}];uniform vec3 uPC[${NL}];uniform vec3 uCam;uniform vec2 uFog;
-varying vec3 vC;varying vec3 vT;varying float vF;varying vec3 vW;varying vec3 vN;varying float vE;
+varying vec3 vC;varying vec3 vT;varying float vF;varying vec3 vW;varying vec3 vN;varying float vE;varying vec4 vS;
 void main(){
+ float bid=floor(aS.x*255.0+0.5),bq=floor(bid/64.0),bk=bid-bq*64.0;
+ vec2 bc=vec2(mod(bk,8.0)+8.0*mod(bq,2.0),floor(bk/8.0)+8.0*floor(bq/2.0));
+ vS=vec4((bc-floor(aT*${ACELLS}.0))/${ACELLS}.0,aS.y,floor(aS.z*255.0+0.5));
  vec4 p=uVP*vec4(aP,1.0);
  if(uPix<0.5){vec2 s=uRes*0.5;p.xy=floor(p.xy/p.w*s+0.5)/s*p.w;}
  gl_Position=p;
@@ -37,13 +43,15 @@ precision highp float;
 precision mediump float;
 #endif
 uniform sampler2D uTex;uniform vec3 uFogC;uniform float uPix;uniform vec3 uLD;uniform vec3 uLC;uniform vec3 uAmb;uniform vec4 uPL[${NL}];uniform vec3 uPC[${NL}];uniform vec3 uCam;
-uniform sampler2D uSh;uniform mat4 uLVP;uniform float uShOn;uniform float uHaze;uniform float uBump;uniform float uShL;
-varying vec3 vC;varying vec3 vT;varying float vF;varying vec3 vW;varying vec3 vN;varying float vE;
+uniform sampler2D uSh;uniform mat4 uLVP;uniform float uShOn;uniform float uHaze;uniform float uBump;uniform float uShL;uniform float uBlend;
+varying vec3 vC;varying vec3 vT;varying float vF;varying vec3 vW;varying vec3 vN;varying float vE;varying vec4 vS;
 float unpackD(vec4 c){return dot(c,vec4(1.0,1.0/255.0,1.0/65025.0,1.0/16581375.0));}
 float shadowF(vec3 n){if(uShOn<0.5)return 1.0;vec4 lp=uLVP*vec4(vW+n*0.05,1.0);vec3 s=lp.xyz/lp.w*0.5+0.5;if(s.x<0.01||s.x>0.99||s.y<0.01||s.y>0.99||s.z>1.0)return 1.0;
  float sum=0.0;for(int i=-1;i<=1;i++)for(int j=-1;j<=1;j++){float d=unpackD(texture2D(uSh,s.xy+vec2(float(i),float(j))*0.0016));sum+=(s.z-0.004>d)?0.0:1.0;}return sum/9.0;}
-void main(){float cA=1.0;vec2 uv=vT.xy/vT.z;if(uv.x>0.5&&uv.x<0.625&&uv.y>0.25&&uv.y<0.375){cA=0.3;}
- vec4 t=texture2D(uTex,uv);if(t.a<0.5)discard;vec3 col=t.rgb*vC;
+void main(){float cA=1.0;vec2 uv=vT.xy/vT.z;if(uv.x>${GLASS[0][0]}&&uv.x<${GLASS[0][1]}&&uv.y>${GLASS[1][0]}&&uv.y<${GLASS[1][1]}){cA=0.3;}
+ vec4 t=texture2D(uTex,uv);
+ if(uBlend>0.5){vec4 tb=texture2D(uTex,uv+vS.xy);t=vec4(mix(t.rgb,tb.rgb,vS.z),vS.z<0.5?t.a:tb.a);}
+ if(t.a<0.5)discard;vec3 col=t.rgb*vC;
  if(uPix>0.5&&vE<0.5){vec3 n0=normalize(vN),n=n0;
 #ifdef HAS_D
   float h=dot(t.rgb,vec3(0.3,0.59,0.11));vec3 dpx=dFdx(vW),dpy=dFdy(vW);float dhx=dFdx(h),dhy=dFdy(h);vec3 r1=cross(dpy,n),r2=cross(n,dpx);float det=dot(dpx,r1);
@@ -79,17 +87,23 @@ void main(){vec2 px=floor(vU*uRes);vec2 uv=uEnh>0.5?vU:(px+0.5)/uRes;
  c+=(hs(gl_FragCoord.xy+floor(fract(uTime*7.0)*61.0)*17.0)-0.5)*0.06*uGrain;
  vec2 q=vU-0.5;c*=1.0-dot(q,q)*0.75;gl_FragColor=vec4(clamp(c,0.0,1.0),1.0);}`;
 const P1=prog(VS,FS), P2=prog(PVS,PFS), P3=prog(PVS,BRFS), P4=prog(PVS,BLFS);
-const L={};['aP','aN','aT','aC'].forEach(n=>L[n]=gl.getAttribLocation(P1,n));
-['uVP','uRes','uLD','uLC','uAmb','uPL','uPC','uCam','uFog','uTex','uFogC','uPix'].forEach(n=>L[n]=gl.getUniformLocation(P1,n));
+const L={};['aP','aN','aT','aC','aS'].forEach(n=>L[n]=gl.getAttribLocation(P1,n));
+['uVP','uRes','uLD','uLC','uAmb','uPL','uPC','uCam','uFog','uTex','uFogC','uPix','uBlend'].forEach(n=>L[n]=gl.getUniformLocation(P1,n));
 const L2={aQ:gl.getAttribLocation(P2,'aQ'),uS:gl.getUniformLocation(P2,'uS'),uRes:gl.getUniformLocation(P2,'uRes'),uFlash:gl.getUniformLocation(P2,'uFlash'),uDith:gl.getUniformLocation(P2,'uDith'),uVHS:gl.getUniformLocation(P2,'uVHS'),uTime:gl.getUniformLocation(P2,'uTime'),uB:gl.getUniformLocation(P2,'uB'),uBloom:gl.getUniformLocation(P2,'uBloom'),uEnh:gl.getUniformLocation(P2,'uEnh'),uGrain:gl.getUniformLocation(P2,'uGrain'),uGlitch:gl.getUniformLocation(P2,'uGlitch')};
 const L3={aQ:gl.getAttribLocation(P3,'aQ'),uS:gl.getUniformLocation(P3,'uS')},L4={aQ:gl.getAttribLocation(P4,'aQ'),uS:gl.getUniformLocation(P4,'uS'),uD:gl.getUniformLocation(P4,'uD')};
 const quadBuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,quadBuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,1,1,-1,-1,1,1,-1,1]),gl.STATIC_DRAW);
 
 /* atlas */
 let seed=1337;const srand=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};
+/* 1024² atlas, 16×16 cells of 64px. Quadrant-major ids: legacy ids 0–63 are drawn on a 512² canvas exactly as before
+   (Skia AA differs on larger canvases) and blitted 1:1 to the top-left quadrant; the other quadrants start as mirror
+   copies so mip filtering at x/y=512 matches the old CLAMP_TO_EDGE. Tiles ≥64 are drawn afterwards (srand order). */
+const ATILES=new Set();
 function makeAtlas(){
- const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d');
- const tile=(t,fn)=>{x.save();x.translate((t%8)*64+2,(t/8|0)*64+2);x.scale(60/32,60/32);x.beginPath();x.rect(0,0,32,32);x.clip();fn(x);x.restore();};
+ const c=document.createElement('canvas');c.width=c.height=512;let cv=c,x=c.getContext('2d'),LD0=null;ATILES.clear();
+ const tile=(t,fn)=>{ATILES.add(t);const [cx,cy]=TCELL(t),X=t<64?c.getContext('2d'):x;X.save();X.translate(cx*64+2,cy*64+2);X.scale(60/32,60/32);X.beginPath();X.rect(0,0,32,32);X.clip();fn(X);X.restore();};
+ const gutter=t=>{const [cx,cy]=TCELL(t),ox=cx*64,oy=cy*64;x.drawImage(cv,ox+2,oy,1,64,ox,oy,1,64);x.drawImage(cv,ox+2,oy,1,64,ox+1,oy,1,64);x.drawImage(cv,ox+61,oy,1,64,ox+62,oy,1,64);x.drawImage(cv,ox+61,oy,1,64,ox+63,oy,1,64);
+  x.drawImage(cv,ox,oy+2,64,1,ox,oy,64,1);x.drawImage(cv,ox,oy+2,64,1,ox,oy+1,64,1);x.drawImage(cv,ox,oy+61,64,1,ox,oy+62,64,1);x.drawImage(cv,ox,oy+61,64,1,ox,oy+63,64,1);};
  const speck=(x,n,cols,w=1)=>{x.save();x.globalAlpha=0.45;for(let i=0;i<n;i++){x.fillStyle=cols[srand()*cols.length|0];x.fillRect(srand()*32,srand()*32,w+(srand()*2|0),w);}x.restore();};
  const blob=(x,cx,cy,r)=>{x.beginPath();x.arc(cx,cy,r,0,TAU);x.fill();};
  tile(0,x=>{x.fillStyle='#fff';x.fillRect(0,0,32,32);});
@@ -202,21 +216,32 @@ function makeAtlas(){
   x.filter='blur(1.1px)';x.lineCap='round';for(let k=0;k<3;k++){x.strokeStyle=k<1?'rgba(110,105,115,.32)':'rgba(150,140,140,.2)';x.lineWidth=k<1?1:0.5;x.beginPath();const y0=4+k*11+srand()*4;x.moveTo(-2,y0);x.bezierCurveTo(10,y0+srand()*10-5,20,y0+srand()*10-5,34,y0+srand()*8-4);x.stroke();}x.filter='none';
   x.strokeStyle='rgba(201,162,74,.6)';x.lineWidth=0.4;x.beginPath();x.moveTo(6,33);x.bezierCurveTo(11,22,9,14,19,7);x.lineTo(24,-1);x.stroke();
   x.fillStyle='#c9a24a';x.fillRect(0,0,32,0.8);x.fillRect(0,0,0.8,32);});
- {const id=x.getImageData(0,0,512,512),D=id.data;const T=(t,fn)=>{const ox=(t%8)*64+2,oy=(t/8|0)*64+2;for(let j=0;j<60;j++)for(let i=0;i<60;i++)fn(((oy+j)*512+ox+i)*4,i*32/60,j*32/60);};for(const t of [11,56,57,58,60])T(t,k=>{if(D[k+3]>128)D[k+3]=222;});
+ {/* post-pass touches legacy ids only, which all live in the top-left 512² quadrant */const id=x.getImageData(0,0,512,512),D=id.data;LD0=D;const T=(t,fn)=>{const [cx,cy]=TCELL(t),ox=cx*64+2,oy=cy*64+2;for(let j=0;j<60;j++)for(let i=0;i<60;i++)fn(((oy+j)*512+ox+i)*4,i*32/60,j*32/60);};for(const t of [11,56,57,58,60])T(t,k=>{if(D[k+3]>128)D[k+3]=222;});
   for(const t of [8,9,10,47,49,50,51,52])T(t,k=>{if(D[k+3]>128)D[k+3]=210;});
   for(const t of [5,6,12,13,48,62])T(t,(k,i,j)=>{const g=j>20?(j-20)/11:0,nz=((i*73+j*151)%17)/17;const f=1-g*g*0.6-nz*g*0.15;D[k]*=f;D[k+1]*=f;D[k+2]*=f;});
   x.putImageData(id,0,0);}
- for(let t=0;t<64;t++){const ox=(t%8)*64,oy=(t/8|0)*64;x.drawImage(c,ox+2,oy,1,64,ox,oy,1,64);x.drawImage(c,ox+2,oy,1,64,ox+1,oy,1,64);x.drawImage(c,ox+61,oy,1,64,ox+62,oy,1,64);x.drawImage(c,ox+61,oy,1,64,ox+63,oy,1,64);
-  x.drawImage(c,ox,oy+2,64,1,ox,oy,64,1);x.drawImage(c,ox,oy+2,64,1,ox,oy+1,64,1);x.drawImage(c,ox,oy+61,64,1,ox,oy+62,64,1);x.drawImage(c,ox,oy+61,64,1,ox,oy+63,64,1);}
- return c;
+ for(let t=0;t<64;t++)gutter(t);
+ /* mirror source: the post-pass data with the same gutter copies done in JS (only feeds the mirror quadrants) */
+ const gutD=(d,W,t)=>{const [cx,cy]=TCELL(t),ox=cx*64,oy=cy*64,px=(i,j)=>((oy+j)*W+ox+i)*4,cp=(a,b)=>{d[b]=d[a];d[b+1]=d[a+1];d[b+2]=d[a+2];d[b+3]=d[a+3];};
+  for(let j=0;j<64;j++){cp(px(2,j),px(0,j));cp(px(2,j),px(1,j));cp(px(61,j),px(62,j));cp(px(61,j),px(63,j));}
+  for(let i=0;i<64;i++){cp(px(i,2),px(i,0));cp(px(i,2),px(i,1));cp(px(i,61),px(i,62));cp(px(i,61),px(i,63));}};
+ for(let t=0;t<64;t++)gutD(LD0,512,t);
+ const o=new ImageData(ATLAS,ATLAS),d=o.data,M=ATLAS-1,s=LD0;
+ for(let j=0;j<ATLAS;j++){const sj=j<512?j:M-j;for(let i=0;i<ATLAS;i++){const si=i<512?i:M-i,k=(j*ATLAS+i)*4,l=(sj*512+si)*4;d[k]=s[l];d[k+1]=s[l+1];d[k+2]=s[l+2];d[k+3]=s[l+3];}}
+ const legacy=new Set(ATILES),A=document.createElement('canvas');A.width=A.height=ATLAS;const ax=A.getContext('2d',{willReadFrequently:true});ax.putImageData(o,0,0);cv=A;x=ax;
+ /* tiles ≥64 (W13b+) go here */
+ for(const t of ATILES)if(!legacy.has(t)){gutter(t);const [cx,cy]=TCELL(t),n=ax.getImageData(cx*64,cy*64,64,64).data;for(let j=0;j<64;j++)d.set(n.subarray(j*256,j*256+256),((cy*64+j)*ATLAS+cx*64)*4);}
+ /* the legacy canvas is uploaded over the top-left quadrant exactly as the old 512 atlas was (a canvas readback round
+    trip would shift translucent texels by ±1) */
+ return{img:o,legacy:c};
 }
 const atlasTex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,atlasTex);
-gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,makeAtlas());gl.generateMipmap(gl.TEXTURE_2D);
+{const a=makeAtlas();gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,a.img);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,a.legacy);gl.generateMipmap(gl.TEXTURE_2D);}
 function setAtlasFilter(sm){gl.bindTexture(gl.TEXTURE_2D,atlasTex);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,sm?gl.LINEAR_MIPMAP_LINEAR:gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,sm?gl.LINEAR:gl.NEAREST);}
 gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
 gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
-const TUV=[];for(let t=0;t<64;t++){const tx=t%8,ty=t/8|0,e=2.5/512;TUV.push([tx/8+e,ty/8+e,(tx+1)/8-e,(ty+1)/8-e]);}
-const WUV=[0.03,0.03,0.09,0.09];
+const TUV=[];for(let t=0;t<256;t++){const [tx,ty]=TCELL(t),e=2.5/ATLAS;TUV.push([tx/ACELLS+e,ty/ACELLS+e,(tx+1)/ACELLS-e,(ty+1)/ACELLS-e]);}
+const WUV=[0.03*512/ATLAS,0.03*512/ATLAS,0.09*512/ATLAS,0.09*512/ATLAS];
 
 /* render target */
 let rt=null,rtW=0,rtH=0;
@@ -238,11 +263,16 @@ const ENH=()=>SET.gfx2!==false;
 const CI=[];for(let i=0;i<8;i++)CI.push([(i&1)?.5:-.5,(i&2)?.5:-.5,(i&4)?.5:-.5]);
 const CF=[[[1,0,0],[5,1,3,7]],[[-1,0,0],[0,4,6,2]],[[0,1,0],[6,7,3,2]],[[0,-1,0],[0,1,5,4]],[[0,0,1],[4,5,7,6]],[[0,0,-1],[1,0,2,3]]];
 const Q6=[0,1,2,0,2,3];const SCR=new Float32Array(24);
+/* Vertex format v2 (48 B): pos3 nrm3 uv2 col3 (f32) + aS RGBA8 normalized at byte 44 = (blendTile, blendW, roomId, 0).
+   blendTile/roomId must be constant per triangle (no flat varyings in GLSL ES 1.0). roomId 0 = no room; room r is r+1. */
+const VSTRIDE=12;
 class Batch{
- constructor(){this.f=new Float32Array(11*8000);this.n=0;this.buf=gl.createBuffer();}
- reset(){this.n=0;}
- ensure(k){const need=(this.n+k)*11;if(need>this.f.length){const nf=new Float32Array(Math.max(need,this.f.length*2));nf.set(this.f.subarray(0,this.n*11));this.f=nf;}}
- vtx(x,y,z,nx,ny,nz,u,v,c){const f=this.f,o=this.n*11;f[o]=x;f[o+1]=y;f[o+2]=z;f[o+3]=nx;f[o+4]=ny;f[o+5]=nz;f[o+6]=u;f[o+7]=v;f[o+8]=c[0];f[o+9]=c[1];f[o+10]=c[2];this.n++;}
+ constructor(){this.alloc(8000);this.n=0;this.buf=gl.createBuffer();this.blT=0;this.blW=0;this.room=0;this.bl=false;}
+ alloc(nv,old){const ab=new ArrayBuffer(nv*VSTRIDE*4),u8=new Uint8Array(ab);if(old)u8.set(old.subarray(0,this.n*VSTRIDE*4));this.f=new Float32Array(ab);this.u8=u8;}
+ reset(){this.n=0;this.blT=0;this.blW=0;this.room=0;this.bl=false;}
+ ensure(k){const need=this.n+k,cap=this.f.length/VSTRIDE;if(need>cap)this.alloc(Math.max(need,cap*2),this.u8);}
+ vtx(x,y,z,nx,ny,nz,u,v,c,w){const f=this.f,o=this.n*VSTRIDE,b=o*4+44;f[o]=x;f[o+1]=y;f[o+2]=z;f[o+3]=nx;f[o+4]=ny;f[o+5]=nz;f[o+6]=u;f[o+7]=v;f[o+8]=c[0];f[o+9]=c[1];f[o+10]=c[2];
+  const bw=w===undefined?this.blW:Math.round(clamp(w,0,1)*255);if(bw)this.bl=true;const u8=this.u8;u8[b]=this.blT;u8[b+1]=bw;u8[b+2]=this.room;u8[b+3]=0;this.n++;}
  quad4(P,nx,ny,nz,uv,cs){this.ensure(6);const U=[uv[0],uv[2],uv[2],uv[0]],V=[uv[3],uv[3],uv[1],uv[1]];for(const i of Q6)this.vtx(P[i][0],P[i][1],P[i][2],nx,ny,nz,U[i],V[i],cs[i]);}
  quad(P,nx,ny,nz,uv,c){this.ensure(6);const U=[uv[0],uv[2],uv[2],uv[0]],V=[uv[3],uv[3],uv[1],uv[1]];for(const i of Q6)this.vtx(P[i][0],P[i][1],P[i][2],nx,ny,nz,U[i],V[i],c);}
  box(m,c,em,uv){uv=uv||WUV;this.ensure(36);const T=SCR;
@@ -250,16 +280,19 @@ class Batch{
   const U=[uv[0],uv[2],uv[2],uv[0]],V=[uv[3],uv[3],uv[1],uv[1]];
   for(const [n,ci] of CF){let nx=0,ny=0,nz=0;if(!em){nx=m[0]*n[0]+m[1]*n[1]+m[2]*n[2];ny=m[4]*n[0]+m[5]*n[1]+m[6]*n[2];nz=m[8]*n[0]+m[9]*n[1]+m[10]*n[2];const l=Math.hypot(nx,ny,nz)||1;nx/=l;ny/=l;nz/=l;}
    for(const q of Q6){const k=ci[q]*3;this.vtx(T[k],T[k+1],T[k+2],nx,ny,nz,U[q],V[q],c);}}}
- upload(st){gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);gl.bufferData(gl.ARRAY_BUFFER,this.f.subarray(0,this.n*11),st?gl.STATIC_DRAW:gl.DYNAMIC_DRAW);}
+ upload(st){gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);gl.bufferData(gl.ARRAY_BUFFER,this.f.subarray(0,this.n*VSTRIDE),st?gl.STATIC_DRAW:gl.DYNAMIC_DRAW);}
  draw(){if(!this.n)return;gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);
-  gl.vertexAttribPointer(L.aP,3,gl.FLOAT,false,44,0);gl.vertexAttribPointer(L.aN,3,gl.FLOAT,false,44,12);
-  gl.vertexAttribPointer(L.aT,2,gl.FLOAT,false,44,24);gl.vertexAttribPointer(L.aC,3,gl.FLOAT,false,44,32);gl.drawArrays(gl.TRIANGLES,0,this.n);}
+  gl.vertexAttribPointer(L.aP,3,gl.FLOAT,false,48,0);gl.vertexAttribPointer(L.aN,3,gl.FLOAT,false,48,12);
+  gl.vertexAttribPointer(L.aT,2,gl.FLOAT,false,48,24);gl.vertexAttribPointer(L.aC,3,gl.FLOAT,false,48,32);
+  const s=L.aS;if(s>=0){gl.enableVertexAttribArray(s);gl.vertexAttribPointer(s,4,gl.UNSIGNED_BYTE,true,48,44);}if(this.bl!==Batch.blOn){Batch.blOn=this.bl;gl.uniform1f(L.uBlend,this.bl?1:0);}
+  gl.drawArrays(gl.TRIANGLES,0,this.n);if(s>=0)gl.disableVertexAttribArray(s);}
 }
+Batch.blOn=false;/* cached P1 uBlend (GL default 0) */
 function floorQuad(B,x,z,s,r,uv,c,y){const h=s/2,cc=Math.cos(r)*h,ss=Math.sin(r)*h;
  B.quad([[x-cc-ss,y,z-ss+cc],[x+cc-ss,y,z+ss+cc],[x+cc+ss,y,z+ss-cc],[x-cc+ss,y,z-ss-cc]],0,1,0,uv,c);}
 const dynB=new Batch(), poolB=new Batch(), ovB=new Batch(), stageB=new Batch();
 /* ================= INSTANCED ROUNDED GEOMETRY + SHADOWS ================= */
-const GEOM=`attribute vec3 aP;attribute vec3 aN;attribute vec2 aT;attribute vec4 iR0;attribute vec4 iR1;attribute vec4 iR2;attribute vec4 iC;attribute vec4 iU;attribute vec2 iS;
+const GEOM=`attribute vec3 aP;attribute vec3 aN;attribute vec2 aT;attribute vec4 iR0;attribute vec4 iR1;attribute vec4 iR2;attribute vec4 iC;attribute vec4 iU;attribute vec4 iS;
 vec3 gW;vec3 gN;
 void geom(){vec3 c0=vec3(iR0.x,iR1.x,iR2.x),c1=vec3(iR0.y,iR1.y,iR2.y),c2=vec3(iR0.z,iR1.z,iR2.z),tr=vec3(iR0.w,iR1.w,iR2.w);
  vec3 S=vec3(length(c0),length(c1),length(c2))+vec3(1e-6);float tp=1.0-iS.y*(aP.y+0.5);vec2 tf=iS.y<0.0?vec2(tp,1.0):vec2(tp);
@@ -269,8 +302,8 @@ void geom(){vec3 c0=vec3(iR0.x,iR1.x,iR2.x),c1=vec3(iR0.y,iR1.y,iR2.y),c2=vec3(i
 const VSI=GEOM+`
 uniform mat4 uVP;uniform vec2 uRes;uniform vec3 uLD;uniform vec3 uLC;uniform vec3 uAmb;uniform float uPix;
 uniform vec4 uPL[${NL}];uniform vec3 uPC[${NL}];uniform vec3 uCam;uniform vec2 uFog;
-varying vec3 vC;varying vec3 vT;varying float vF;varying vec3 vW;varying vec3 vN;varying float vE;
-void main(){geom();vec4 p=uVP*vec4(gW,1.0);if(uPix<0.5){vec2 s=uRes*0.5;p.xy=floor(p.xy/p.w*s+0.5)/s*p.w;}gl_Position=p;
+varying vec3 vC;varying vec3 vT;varying float vF;varying vec3 vW;varying vec3 vN;varying float vE;varying vec4 vS;
+void main(){geom();vS=vec4(0.0,0.0,0.0,iS.z);vec4 p=uVP*vec4(gW,1.0);if(uPix<0.5){vec2 s=uRes*0.5;p.xy=floor(p.xy/p.w*s+0.5)/s*p.w;}gl_Position=p;
  vE=iC.w;vN=gN;vW=gW;vec3 l=vec3(1.0);
  if(iC.w<0.5&&uPix<0.5){l=uAmb+uLC*max(dot(gN,-uLD),0.0);for(int i=0;i<${NL};i++){vec3 d=uPL[i].xyz-gW;float dist=length(d);float a=clamp(1.0-dist/max(uPL[i].w,0.001),0.0,1.0);l+=uPC[i]*a*a*max(dot(gN,d/max(dist,0.001))*0.6+0.4,0.0);}}
  vC=iC.rgb*l;vec2 uv=mix(iU.xy,iU.zw,aT);vT=uPix<0.5?vec3(uv*p.w,p.w):vec3(uv,1.0);vF=clamp((length(gW-uCam)-uFog.x)/(uFog.y-uFog.x),0.0,1.0);}`;
@@ -278,7 +311,7 @@ const VSDI=GEOM+`uniform mat4 uLVP;void main(){geom();gl_Position=uLVP*vec4(gW,1
 const VSD=`attribute vec3 aP;uniform mat4 uLVP;void main(){gl_Position=uLVP*vec4(aP,1.0);}`;
 const FSD=`precision highp float;void main(){vec4 e=vec4(1.0,255.0,65025.0,16581375.0)*gl_FragCoord.z;e=fract(e);e-=e.yzww*vec4(1.0/255.0,1.0/255.0,1.0/255.0,0.0);gl_FragColor=e;}`;
 let PI=null,PD=null,PDI=null,LI={},LD={},LDI={};
-const UNAMES=['uShL','uVP','uRes','uLD','uLC','uAmb','uPL','uPC','uCam','uFog','uTex','uFogC','uPix','uSh','uLVP','uShOn','uHaze','uBump'];
+const UNAMES=['uShL','uVP','uRes','uLD','uLC','uAmb','uPL','uPC','uCam','uFog','uTex','uFogC','uPix','uSh','uLVP','uShOn','uHaze','uBump','uBlend'];
 const INAMES=['aP','aN','aT','iR0','iR1','iR2','iC','iU','iS'];
 try{if(EXT_I){PI=prog(VSI,FS);INAMES.forEach(n=>LI[n]=gl.getAttribLocation(PI,n));UNAMES.forEach(n=>LI[n]=gl.getUniformLocation(PI,n));
   PDI=prog(VSDI,FSD);INAMES.forEach(n=>LDI[n]=gl.getAttribLocation(PDI,n));LDI.uLVP=gl.getUniformLocation(PDI,'uLVP');}
@@ -297,15 +330,15 @@ Batch.prototype.rbox=function(m,c,uv,S,r){uv=uv||WUV;this.ensure(CPU_T2.ix.lengt
   return[w,nx/nl,ny/nl,nz/nl,lerp(uv[0],uv[2],t.u),lerp(uv[3],uv[1],t.w)];});
  for(const i of CPU_T2.ix){const o=out[i];this.vtx(o[0][0],o[0][1],o[0][2],o[1],o[2],o[3],o[4],o[5],c);}};
 {const ob=Batch.prototype.box;Batch.prototype.box=function(m,c,em,uv){if(this.round&&!em&&ENH()){const S=[Math.hypot(m[0],m[4],m[8]),Math.hypot(m[1],m[5],m[9]),Math.hypot(m[2],m[6],m[10])],mn=Math.min(S[0],S[1],S[2]);if(mn>0.045){this.rbox(m,c,uv,S,Math.min(0.07,mn*0.5*this.round));return;}}ob.call(this,m,c,em,uv);};}
-Batch.prototype.drawDepth=function(loc){if(!this.n)return;gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,3,gl.FLOAT,false,44,0);gl.drawArrays(gl.TRIANGLES,0,this.n);gl.disableVertexAttribArray(loc);};
-class InstBatch{constructor(N){this.mesh=PI?makeTemplate(N):null;this.f=new Float32Array(24*2048);this.n=0;this.buf=gl.createBuffer();this.r=0.5;this.tp=0;this.uv=null;}
- reset(){this.n=0;this.r=0.5;this.tp=0;this.uv=null;}
+Batch.prototype.drawDepth=function(loc){if(!this.n)return;gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,3,gl.FLOAT,false,48,0);gl.drawArrays(gl.TRIANGLES,0,this.n);gl.disableVertexAttribArray(loc);};
+class InstBatch{constructor(N){this.mesh=PI?makeTemplate(N):null;this.f=new Float32Array(24*2048);this.n=0;this.buf=gl.createBuffer();this.r=0.5;this.tp=0;this.uv=null;this.room=0;}
+ reset(){this.n=0;this.r=0.5;this.tp=0;this.uv=null;this.room=0;}
  box(m,c,em,uv){if(!PI||!ENH()){dynB.box(m,c,em,uv||null);return;}if((this.n+1)*24>this.f.length){const nf=new Float32Array(this.f.length*2);nf.set(this.f);this.f=nf;}const f=this.f,o=this.n*24;
-  for(let k=0;k<12;k++)f[o+k]=m[k];f[o+12]=c[0];f[o+13]=c[1];f[o+14]=c[2];f[o+15]=em?1:0;const U=uv||this.uv||WUV;f[o+16]=U[0];f[o+17]=U[1];f[o+18]=U[2];f[o+19]=U[3];f[o+20]=em?0:this.r;f[o+21]=this.tp;this.n++;}
+  for(let k=0;k<12;k++)f[o+k]=m[k];f[o+12]=c[0];f[o+13]=c[1];f[o+14]=c[2];f[o+15]=em?1:0;const U=uv||this.uv||WUV;f[o+16]=U[0];f[o+17]=U[1];f[o+18]=U[2];f[o+19]=U[3];f[o+20]=em?0:this.r;f[o+21]=this.tp;f[o+22]=this.room;f[o+23]=0;this.n++;}
  upload(){if(!this.n||!PI)return;gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);gl.bufferData(gl.ARRAY_BUFFER,this.f.subarray(0,this.n*24),gl.DYNAMIC_DRAW);}
  draw(Lc){if(!this.n||!PI)return;const M=this.mesh,used=[];const at=(l,sz,st,off,div,buf)=>{if(l<0||l===undefined)return;gl.enableVertexAttribArray(l);gl.vertexAttribPointer(l,sz,gl.FLOAT,false,st,off);EXT_I.vertexAttribDivisorANGLE(l,div);used.push(l);};
   gl.bindBuffer(gl.ARRAY_BUFFER,M.vb);at(Lc.aP,3,32,0,0);at(Lc.aN,3,32,12,0);at(Lc.aT,2,32,24,0);
-  gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);at(Lc.iR0,4,96,0,1);at(Lc.iR1,4,96,16,1);at(Lc.iR2,4,96,32,1);at(Lc.iC,4,96,48,1);at(Lc.iU,4,96,64,1);at(Lc.iS,2,96,80,1);
+  gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);at(Lc.iR0,4,96,0,1);at(Lc.iR1,4,96,16,1);at(Lc.iR2,4,96,32,1);at(Lc.iC,4,96,48,1);at(Lc.iU,4,96,64,1);at(Lc.iS,4,96,80,1);
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,M.ib);EXT_I.drawElementsInstancedANGLE(gl.TRIANGLES,M.count,gl.UNSIGNED_SHORT,0,this.n);
   for(const l of used){EXT_I.vertexAttribDivisorANGLE(l,0);gl.disableVertexAttribArray(l);}}}
 const IBhi=new InstBatch(3),IBlo=new InstBatch(1);
@@ -327,7 +360,7 @@ let RU=null,SHL=-1,MSH=null;
 function drawInst(){if(!PI||!ENH()||(!IBhi.n&&!IBlo.n))return;for(const k of ['aP','aN','aT','aC'])gl.disableVertexAttribArray(L[k]);gl.useProgram(PI);const u=RU;
  gl.uniformMatrix4fv(LI.uVP,false,VP);gl.uniform1f(LI.uPix,1);gl.uniform2f(LI.uRes,rtW,rtH);gl.uniform3fv(LI.uLD,u.ld);gl.uniform3fv(LI.uLC,u.lc);gl.uniform3fv(LI.uAmb,u.amb);gl.uniform3fv(LI.uCam,u.eye);gl.uniform2fv(LI.uFog,u.fog);gl.uniform3fv(LI.uFogC,u.fogC);
  gl.uniform4fv(LI.uPL,LBUF);gl.uniform3fv(LI.uPC,CBUF);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,atlasTex);gl.uniform1i(LI.uTex,0);setFX(LI,u.menu);
- gl.uniform1f(LI.uBump,0.12);IBhi.draw(LI);IBlo.draw(LI);gl.useProgram(P1);for(const k of ['aP','aN','aT','aC'])gl.enableVertexAttribArray(L[k]);}
+ gl.uniform1f(LI.uBump,0.12);gl.uniform1f(LI.uBlend,0);IBhi.draw(LI);IBlo.draw(LI);gl.useProgram(P1);for(const k of ['aP','aN','aT','aC'])gl.enableVertexAttribArray(L[k]);}
 /* quality */
 let QL=0,qlT=0,ftEma=0.016;
 function qualityTick(raw){if(window.QLOCK!==undefined){QL=window.QLOCK;return;}if(raw===null)return;ftEma=ftEma*0.95+Math.min(raw,0.1)*0.05;if(!ENH())return;
