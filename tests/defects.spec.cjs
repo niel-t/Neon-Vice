@@ -1,5 +1,46 @@
 const { test, expect, progressing } = require('./fixtures.cjs');
 
+test('models: one NPC build per render and visible pending combatants', async ({ openGame }) => {
+  const page = await openGame();
+  const result = await page.evaluate(() => {
+    startLevel(0);state='pause';
+    const original=gl.bufferData, clock=performance.now;let count=0,now=0;
+    gl.bufferData=function(target,data,usage){if(target===gl.ELEMENT_ARRAY_BUFFER&&usage===gl.STATIC_DRAW)count++;return original.call(this,target,data,usage);};
+    performance.now=()=>now+=10;
+    const counts=[];
+    try {for(let i=0;i<G.enemies.length+2;i++){count=0;render();counts.push(count/2);}}
+    finally {gl.bufferData=original;performance.now=clock;}
+    const a=makeChar(1,1,G.enemies[0].look,false),b=makeChar(2,2,G.enemies[1].look,false);
+    PS2C.beginFrame();const first=PS2C.add(a,'game',1,0,null,'look'),pending=PS2C.add(b,'game',1,0,null,'look');
+    const before=IBhi.n;drawChar(IBhi,b);const fallback=IBhi.n-before;
+    PS2C.beginFrame();const eventual=PS2C.add(b,'game',1,0,null,'look');
+    return {counts,enemies:G.enemies.length,first,pending,fallback,eventual};
+  });
+  expect(result.counts.every(count=>count<=1)).toBe(true);
+  expect(result.counts.reduce((a,b)=>a+b,0)).toBe(result.enemies);
+  expect(result.enemies).toBeGreaterThan(1);
+  expect(result.first).toBe(true);expect(result.pending).toBe(false);
+  expect(result.fallback).toBeGreaterThan(0);expect(result.eventual).toBe(true);
+});
+
+test('models: failed NPC build does not starve subsequent models', async ({ browser, artifactURL }) => {
+  const { context,page,errors }=await startupPage(browser,artifactURL,'normal');
+  try {
+    await expect.poll(()=>page.evaluate(()=>PS2C.ready)).toBe(true);
+    expect(await page.evaluate(()=>{
+      startLevel(0);state='pause';PS2C.beginFrame();
+      const a=G.enemies[0],b=G.enemies[1],upload=gl.bufferData;let calls=0;
+      gl.bufferData=function(...args){if(++calls===2)throw new Error('Injected NPC failure');return upload.apply(this,args);};
+      let failed;
+      try {failed=PS2C.add(a,'game',1,0,null,'look');}finally{gl.bufferData=upload;}
+      PS2C.beginFrame();const skipped=PS2C.add(a,'game',1,0,null,'look'),next=PS2C.add(b,'game',1,0,null,'look');
+      return {failed,skipped,next};
+    })).toEqual({failed:false,skipped:false,next:true});
+    await progressing(page);
+    expect(errors.length).toBe(1);expect(errors[0]).toContain('PS2 look');
+  }finally{await context.close();}
+});
+
 test('focus: lost releases clear world input and held controller buttons re-arm safely', async ({ openGame }) => {
   const page = await openGame();
   expect(await page.evaluate(() => {

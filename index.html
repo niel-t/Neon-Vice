@@ -3500,7 +3500,8 @@ function paintBodyP(L){const sh=C255(L.shirt),jk=C255(L.jacket),sk=C255(L.skin);
  return c;}
 function lookCfg(L,bodyType){const bt=BODYCFG[bodyType]||BODYCFG[L.body]||BODYCFG.normal;
  return{L,B:{specs:L.glasses?1:0,fluff:!!(L.fluff&&L.beard),hs:(L.hair&&!L.hat)?L.hs:null,watch:L.watch?-1:0,cigar:!!L.cigar,hat:L.hat||null,shoulders:bt.shoulders||0,belly:bt.belly||(L.belly?0.1:0),rings:L.bling?1:0,fem:!!L.fem,skirt:L.fem?(L.skirt||0):0},scale:L.fem?bt.scale.map((v,i)=>v*(i===1?1:0.9)):bt.scale};}
-let LOOKN=0,lastG=null,buildsThisFrame=0,lastFrameT=0;
+let LOOKN=0,lastG=null,buildsThisFrame=0;const failedLooks=new Set();
+function beginFrame(){buildsThisFrame=0;}
 function lookKey(c){if(!c.look)return null;if(!c._ps2k){c._ps2k='L'+(++LOOKN);}return c._ps2k;}
 function bloodify(key,lvl,c){const C=CH[key];if(!C||!C.bc)return;C.dirty=true;const paint=(cv,regions,n,big)=>{const x=cv.getContext('2d');for(let i=0;i<n;i++){const r=regions[Math.random()*regions.length|0],px=r[0]+Math.random()*r[2],py=r[1]+Math.random()*r[3],s=(big?8:4)+Math.random()*(big?18:10);
   x.fillStyle=`rgba(${100+Math.random()*50|0},${Math.random()*12|0},${10+Math.random()*12|0},${0.75+Math.random()*0.25})`;x.beginPath();x.ellipse(px,py,s,s*(0.6+Math.random()*0.6),Math.random()*3,0,6.3);x.fill();
@@ -3510,8 +3511,9 @@ function bloodify(key,lvl,c){const C=CH[key];if(!C||!C.bc)return;C.dirty=true;co
  if(lvl>=2&&!c.headless)paint(C.hc,[[150,150,212,240]],lvl>=3?12:4,false);
  const re=(cv,tex)=>{gl.bindTexture(gl.TEXTURE_2D,tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cv);gl.generateMipmap(gl.TEXTURE_2D);};re(C.bc,MODELS[key][0].tex);re(C.hc,MODELS[key][1].tex);gl.bindTexture(gl.TEXTURE_2D,atlasTex);}
 function buildLook(key,c){const Lk=c.look,bt=c.boss?'boss':(c.body||Lk.body);const cfg=lookCfg(Lk,bt);
- const ht=paintHeadP(Lk),btx=paintBodyP(Lk);MODELS[key]=[upload(buildBody(cfg.B),mkTex(btx)),upload(buildHead(cfg.B),mkTex(ht))];CH[key]={scale:cfg.scale,npc:true,bc:btx,hc:ht};}
-function freeLooks(){for(const k in MODELS)if(CH[k]&&CH[k].npc){for(const m of MODELS[k]){for(const b of ['p','n','t','bi','bw','i'])gl.deleteBuffer(m[b]);gl.deleteTexture(m.tex);}delete MODELS[k];delete CH[k];}}
+ const ht=paintHeadP(Lk),btx=paintBodyP(Lk),parts=[];try{parts.push(upload(buildBody(cfg.B),mkTex(btx)));parts.push(upload(buildHead(cfg.B),mkTex(ht)));}catch(e){freeModel(parts);throw e;}
+ MODELS[key]=parts;CH[key]={scale:cfg.scale,npc:true,bc:btx,hc:ht};}
+function freeLooks(){failedLooks.clear();for(const k in MODELS)if(CH[k]&&CH[k].npc){freeModel(MODELS[k]);delete MODELS[k];delete CH[k];}}
 function applySuit(id){const C=CH[id];if(!shaderReady||!C||!C.bcBase||!MODELS[id])return;const sk=suitOK(PROG[id],PROG[id]&&PROG[id].suit)?PROG[id].suit:'default';if(C.suitOn===sk)return;C.suitOn=sk;
  const x=C.bc0.getContext('2d');x.globalCompositeOperation='source-over';x.globalAlpha=1;x.drawImage(C.bcBase,0,0);
  if(sk!=='default'){const zones=[[0,0,200,290],[312,0,200,290],[0,290,512,90],[0,440,512,72]];x.save();x.beginPath();for(const z of zones)x.rect(...z);x.clip();
@@ -3525,8 +3527,8 @@ function applySuit(id){const C=CH[id];if(!shaderReady||!C||!C.bcBase||!MODELS[id
 function resetMain(){for(const id in CH){const C=CH[id];if(C.npc||!C.bc0||!C.dirty)continue;C.dirty=false;C.bc.getContext('2d').drawImage(C.bc0,0,0);C.hc.getContext('2d').drawImage(C.hc0,0,0);
   for(const [cv,tex] of [[C.bc,MODELS[id][0].tex],[C.hc,MODELS[id][1].tex]]){gl.bindTexture(gl.TEXTURE_2D,tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cv);gl.generateMipmap(gl.TEXTURE_2D);}}gl.bindTexture(gl.TEXTURE_2D,atlasTex);}
 function levelCheck(){if(G!==lastG){lastG=G;freeLooks();resetMain();applySuit(CHARS[selIdx].id);}}
-function ensureLook(c){levelCheck();const k=lookKey(c);if(!k)return null;if(MODELS[k])return k;
- const now=performance.now();if(now-lastFrameT>8){lastFrameT=now;buildsThisFrame=0;}if(buildsThisFrame>=1)return null;buildsThisFrame++;try{buildLook(k,c);}catch(e){console.error('PS2 look',e);return null;}return k;}
+function ensureLook(c){levelCheck();const k=lookKey(c);if(!k||failedLooks.has(k))return null;if(MODELS[k])return k;
+ if(buildsThisFrame>=1)return null;buildsThisFrame++;try{buildLook(k,c);}catch(e){failedLooks.add(k);$('modelWarning').style.display='block';console.error('PS2 look',e);return null;}finally{gl.bindTexture(gl.TEXTURE_2D,atlasTex);}return k;}
 
 function has(id){return !!CH[id];}
 /* c: game character; mode: 'menu' | 'game' | 'stand'; returns true when drawn */
@@ -3569,7 +3571,7 @@ function flush(VPm,u){if(!shaderReady||!queue.length||!u){queue.length=0;return;
   const at=(n,b,s)=>{const l=Lc[n];if(l<0)return;gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.vertexAttribPointer(l,s,gl.FLOAT,false,0,0);};
   at('aP',mm.p,3);at('aN',mm.n,3);at('aT',mm.t,2);at('aBi',mm.bi,4);at('aBw',mm.bw,4);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,mm.i);gl.drawElements(gl.TRIANGLES,mm.n_i,gl.UNSIGNED_SHORT,0);}}
  for(const kk of ['aP','aN','aT','aBi','aBw']){const l=Lc[kk];if(l>=0)gl.disableVertexAttribArray(l);}gl.disable(gl.CULL_FACE);gl.bindTexture(gl.TEXTURE_2D,atlasTex);queue.length=0;}
-return{init,add,flush,has,applySuit,rebuild,modelStatus:id=>modelStates[id],get status(){return status;},get ready(){return ready;}};})();
+return{init,add,flush,has,applySuit,rebuild,beginFrame,modelStatus:id=>modelStates[id],get status(){return status;},get ready(){return ready;}};})();
 applyJewelLooks();
 PS2C.init();
 
@@ -3727,7 +3729,7 @@ function drawMenuDyn(B,P){B.reset();P.reset();drawRide(B,-4.8,-1.5,1.7,0.3,state
  if(menuFlash>0&&menuChars[2].muzzle){const m=menuChars[2].muzzle;B.box(TRS(m[0],m[1],m[2],rnd(0,TAU),0.3,0.22,0.3),[1,0.95,0.6],true);}
  for(const p of menuParts){if(p.t==='c'){IBlo.r=0;IBlo.tp=0;drawBill(IBlo,A.mul(A.mul(A.T(p.x,p.y,p.z),A.RY(p.ph+menuT)),A.RX(Math.sin(menuT*2+p.ph)*0.5)));}else B.box(A.mul(A.T(p.x,p.y,p.z),A.S(p.s,p.s,p.s)),p.c,p.t==='f'||p.t==='e');}}
 
-function render(){resize();const asp=vw/vh;let fovy=asp>=1?50*DEG:Math.min(2*Math.atan(Math.tan(25*DEG)*1.25/asp),82*DEG);if(G&&G.cine&&state==='play')fovy=asp>=1?40*DEG:62*DEG;
+function render(){PS2C.beginFrame();resize();const asp=vw/vh;let fovy=asp>=1?50*DEG:Math.min(2*Math.atan(Math.tan(25*DEG)*1.25/asp),82*DEG);if(G&&G.cine&&state==='play')fovy=asp>=1?40*DEG:62*DEG;
  const menu=state==='title'||state==='select'||state==='help'||state==='brief'||state==='elev'||state==='shop'||!G;let eye,tgt,fogC,fog,amb,ld,lc,lights;
  if(menu){if(!stageBuilt)buildStage();const mv=state==='shop'?(nineBuilt||buildNine(),nineView(asp)):state==='brief'?(briefBuilt||buildBrief(),briefView(asp)):state==='elev'?elevView(asp):menuView(asp);eye=mv.eye;tgt=mv.tgt;lights=mv.lights;MSH=mv.shDir||null;SHL=mv.shl===undefined?-1:mv.shl;
   fogC=[0.05,0.02,0.07];fog=[5,15];amb=[0.2,0.16,0.26];ld=[-0.3,-0.8,-0.5];lc=[0.22,0.18,0.24];}
