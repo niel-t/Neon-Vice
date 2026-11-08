@@ -41,3 +41,66 @@ const ARMOUR={
  vest:{name:'KEVLAR VEST',plates:1,price:2500,repair:900},
  carrier:{name:'PLATE CARRIER',plates:2,price:6000,repair:1600,spd:0.96},
 };
+/* ================= KIT: the persistent inventory (save contract kit/locker/run v1) =================
+   kit    = {v:1, guns:[{type,mag}|null ×2], active:0|1, melee:type|null, armour:{type,plates}|null,
+             pool:{cal:rounds}, upg:{cal:upgrades}, lost:[{item,why}]}
+   locker = {v:1, items:[{type,mag}|{type}|{armour,plates}], lost:[]}
+   run    = {v:1, mission:'c'+levelIdx, stage:'s0', entryKit, stageKit, t, stow?:[locker items set aside at a stage]}  (absent = not on a job)
+   Pure and DOM-free so the save tests and check.cjs can load it. Pool capacity is derived (capOf), never stored. */
+const KIT_V=1,LOCKER_CAP=12;
+const plainObj=o=>!!o&&typeof o==='object'&&!Array.isArray(o);
+const kitInt=(n,lo,hi)=>Number.isFinite(n)?Math.max(lo,Math.min(hi,Math.floor(n))):lo;
+const isGunT=t=>typeof t==='string'&&Object.prototype.hasOwnProperty.call(WD,t)&&!WD[t].melee;
+const isMeleeT=t=>typeof t==='string'&&Object.prototype.hasOwnProperty.call(WD,t)&&!!WD[t].melee&&t!=='fists';
+const isCal=c=>typeof c==='string'&&Object.prototype.hasOwnProperty.call(CAL,c);
+function kitNew(){return {v:KIT_V,guns:[null,null],active:0,melee:null,armour:null,pool:{},upg:{},lost:[]};}
+function kitClone(k){return JSON.parse(JSON.stringify(k));}
+function capOf(kit,cal){const c=CAL[cal];return c?c.cap+kitInt((kit.upg||{})[cal],0,99)*c.up:0;}
+function poolAdd(kit,cal,n){if(!isCal(cal)||!(n>0))return 0;const have=kit.pool[cal]|0,add=Math.max(0,Math.min(Math.floor(n),capOf(kit,cal)-have));if(add)kit.pool[cal]=have+add;return add;}
+/* structural shape checks (Q5 tier 1: failures block nb86prog writes) */
+const kitShape=k=>plainObj(k)&&(k.v===undefined||k.v===KIT_V)&&Array.isArray(k.guns)&&plainObj(k.pool)&&(k.upg===undefined||plainObj(k.upg));
+const lockerShape=l=>plainObj(l)&&(l.v===undefined||l.v===KIT_V)&&Array.isArray(l.items);
+const runShape=r=>plainObj(r)&&(r.v===undefined||r.v===KIT_V);
+/* content normalisation (Q5 tier 2: never blocks; unknown content moves to lost[] so a later build can restore it). Idempotent. */
+function normGun(g,lost,why){if(g==null)return null;if(!plainObj(g)||!isGunT(g.type)){lost.push({item:g,why:why||'unknown gun'});return null;}g.mag=kitInt(g.mag,0,WD[g.type].mag);return g;}
+function normKit(k){k.v=KIT_V;const lost=k.lost=Array.isArray(k.lost)?k.lost:[];
+ const guns=k.guns;k.guns=[normGun(guns[0],lost),normGun(guns[1],lost)];for(const g of guns.slice(2))if(g!=null)lost.push({item:g,why:'third gun slot'});
+ k.active=k.active===1?1:0;
+ if(k.melee==null)k.melee=null;else if(!isMeleeT(k.melee)){lost.push({item:k.melee,why:'unknown melee'});k.melee=null;}
+ if(k.armour==null)k.armour=null;else if(!plainObj(k.armour)||!Object.prototype.hasOwnProperty.call(ARMOUR,k.armour.type)){lost.push({item:k.armour,why:'unknown armour'});k.armour=null;}else k.armour.plates=kitInt(k.armour.plates,0,ARMOUR[k.armour.type].plates);
+ if(!plainObj(k.upg))k.upg={};for(const c of Object.keys(k.upg)){if(!isCal(c)){lost.push({item:{upg:c,n:k.upg[c]},why:'unknown caliber'});delete k.upg[c];}else k.upg[c]=kitInt(k.upg[c],0,99);}
+ for(const c of Object.keys(k.pool)){if(!isCal(c)){lost.push({item:{cal:c,n:k.pool[c]},why:'unknown caliber'});delete k.pool[c];}else k.pool[c]=kitInt(k.pool[c],0,capOf(k,c));}
+ return k;}
+function normLocker(l){l.v=KIT_V;const lost=l.lost=Array.isArray(l.lost)?l.lost:[];
+ l.items=l.items.filter(it=>{if(plainObj(it)&&isGunT(it.type)){it.mag=kitInt(it.mag,0,WD[it.type].mag);return true;}
+  if(plainObj(it)&&isMeleeT(it.type))return true;
+  if(plainObj(it)&&Object.prototype.hasOwnProperty.call(ARMOUR,it.armour)){it.plates=kitInt(it.plates,0,ARMOUR[it.armour].plates);return true;}
+  lost.push({item:it,why:'unknown item'});return false;});
+ return l;}
+/* a run that no longer makes sense (unknown mission, broken snapshots) is dropped = walked away from; the kit itself is untouched during a job */
+function normRun(r,nMissions,lost){const m=/^c(\d+)$/.exec(r.mission);if(!m||+m[1]>=nMissions||!kitShape(r.entryKit)||!kitShape(r.stageKit))return null;
+ r.v=KIT_V;if(typeof r.stage!=='string')r.stage='s0';if(!Number.isFinite(r.t))r.t=0;normKit(r.entryKit);normKit(r.stageKit);
+ if(Array.isArray(r.stow)){const t={items:r.stow,lost:lost||r.entryKit.lost};normLocker(t);r.stow=t.items;}else delete r.stow;return r;}
+/* first kit for a save that predates it: the old armory (arm.eq/owned/mags/vest) becomes kit + locker; arm itself is left as it was */
+function kitFromArm(a,charId){const k=kitNew(),l={v:KIT_V,items:[],lost:[]};a=plainObj(a)?a:{};
+ const eq=typeof a.eq==='string'?a.eq:null,owned=Array.isArray(a.owned)?a.owned:[];
+ if(eq&&isGunT(eq)){const w=WD[eq],tot=Math.round((w.ammo||0)*(1+kitInt(a.mags,0,9)));k.guns[0]={type:eq,mag:Math.min(tot,w.mag)};poolAdd(k,w.cal,tot-k.guns[0].mag);}
+ else if(eq&&isMeleeT(eq))k.melee=eq;else if(eq)k.lost.push({item:eq,why:'unknown weapon'});
+ for(const t of [...new Set(owned)]){if(t===eq)continue;if(isGunT(t))l.items.push({type:t,mag:WD[t].mag});else if(isMeleeT(t))l.items.push({type:t});else k.lost.push({item:t,why:'unknown weapon'});}
+ if(a.vest)k.armour={type:'vest',plates:1};
+ if(charId==='don'&&!k.guns.some(g=>g&&g.type==='revolver')&&!l.items.some(i=>i.type==='revolver')){
+  const s=k.guns.indexOf(null);if(s>=0){k.guns[s]={type:'revolver',mag:WD.revolver.mag};if(!k.guns[k.active])k.active=s;}else l.items.push({type:'revolver',mag:WD.revolver.mag});poolAdd(k,'357',3);}
+ return {kit:k,locker:l};}
+/* boot-time per-character normalisation; called after the structural checks, never writes the save */
+function kitBoot(p,charId,nMissions){
+ if(p.kit==null){const m=kitFromArm(p.arm,charId);p.kit=m.kit;if(p.locker==null)p.locker=m.locker;}
+ if(p.locker==null)p.locker={v:KIT_V,items:[],lost:[]};
+ normKit(p.kit);normLocker(p.locker);
+ if(p.run!=null&&!normRun(p.run,nMissions,p.locker.lost))delete p.run;}
+/* ================= RELOAD (W6c): timed top-up from the caliber pool with a Gears-style active window =================
+   One press inside [ar0,ar1] seconds finishes at once; a press anywhere else jams (the rest takes AR_JAM× longer) and locks further tries. */
+const AR_JAM=1.4;
+function reloadNeed(type,mag,pool){const w=WD[type];if(!w||w.melee||!isCal(w.cal))return 0;return Math.max(0,Math.min(w.mag-Math.max(0,mag|0),pool|0));}
+function reloadNew(type){const w=WD[type],d=w.rl||1.5,a=w.ar||[0.5,0.12];return {t:0,dur:d,ar0:a[0]*d,ar1:(a[0]+a[1])*d,tried:false,jam:false};}
+function reloadPress(r){if(r.tried)return 'locked';r.tried=true;if(r.t>=r.ar0&&r.t<=r.ar1)return 'hit';r.jam=true;r.dur=r.t+(r.dur-r.t)*AR_JAM;return 'jam';}
+const stripRoom=(kit,cal)=>isCal(cal)?Math.max(0,capOf(kit,cal)-(kit.pool[cal]|0)):0;
