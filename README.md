@@ -42,6 +42,11 @@ Title characters wait for their detailed models instead of flashing simplified m
 during loading. If artwork or its shader fails, an explicit warning appears and simplified
 characters remain usable; reload to retry. Other successfully loaded models remain available.
 
+Losing focus pauses play and clears held inputs. Controllers must return to neutral before
+re-arming. Suspended audio retries on browser-supported user interaction; recovery failures
+are visible and silent play remains available. Controller-generated clicks alone may not
+provide the browser permission needed for audio.
+
 ## Development
 
 Node.js 22 or newer is needed for tooling only, not for playing:

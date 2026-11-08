@@ -1,5 +1,69 @@
 const { test, expect, progressing } = require('./fixtures.cjs');
 
+test('focus: lost releases clear world input and held controller buttons re-arm safely', async ({ openGame }) => {
+  const page = await openGame();
+  expect(await page.evaluate(() => {
+    startLevel(0);keys.KeyD=true;mouse.down=true;mouse.active=true;sticks.L={id:1};sticks.R={id:2};
+    for(const k of Object.keys(pressed))pressed[k]=true;G.click=[1,2];
+    const buttons=Array.from({length:16},()=>({pressed:false,value:0}));
+    buttons[9]={pressed:true,value:1};
+    const original=navigator.getGamepads;
+    navigator.getGamepads=()=>[{connected:true,buttons,axes:[0,0,0,0]}];
+    try {
+      dispatchEvent(new Event('blur'));pollPad();
+      const cleared={state,keys:Object.keys(keys).length,mouse:mouse.down,sticks:!!sticks.L||!!sticks.R,pressed:Object.values(pressed).some(Boolean),click:G.click,pad:PAD.on};
+      dispatchEvent(new Event('focus'));pollPad();const held=pdown(9);
+      buttons[9]={pressed:false,value:0};buttons[7]={pressed:false,value:0.4};pollPad();const triggerBlocked=!PAD.on&&PAD.rearm;
+      buttons[7]={pressed:false,value:0};pollPad();
+      buttons[9]={pressed:true,value:1};pollPad();const fresh=pdown(9);
+      resetInputs();
+      return {cleared,held,fresh,triggerBlocked};
+    } finally {navigator.getGamepads=original;}
+  })).toEqual({
+    cleared:{state:'pause',keys:0,mouse:false,sticks:false,pressed:false,click:null,pad:false},
+    held:false,fresh:true,triggerBlocked:true
+  });
+});
+
+test('audio: gesture recovery surfaces rejection without queuing suspended sound effects', async ({ browser, artifactURL }) => {
+  const { context, page, errors } = await startupPage(browser, artifactURL, 'audio');
+  try {
+    await expect.poll(() => page.evaluate(() => PS2C.ready)).toBe(true);
+    await page.evaluate(() => {window.allowAudioActivation=true;});
+    await page.locator('#bStart').click();
+    await expect.poll(() => page.evaluate(() => AC.state)).toBe('running');
+    await page.evaluate(async () => {
+      await AC.suspend();
+      window.allowAudioActivation=false;
+      window.resumeCalls=0;window.nativeResume=AC.resume.bind(AC);
+      AC.resume=()=>{resumeCalls++;return nativeResume();};
+    });
+    await progressing(page);
+    await page.locator('#bPlay').click();
+    expect(await page.evaluate(() => [AC.state,resumeCalls])).toEqual(['suspended',0]);
+    expect(await page.evaluate(() => {
+      let nodes=0;const oscillator=AC.createOscillator,source=AC.createBufferSource;
+      AC.createOscillator=function(...args){nodes++;return oscillator.apply(this,args);};
+      AC.createBufferSource=function(...args){nodes++;return source.apply(this,args);};
+      try {for(let i=0;i<10;i++){sfx('revolver');pb(GB.dual,AC.currentTime,1);tone(AC.currentTime,0.1,'sine',100,100,1);}}
+      finally {AC.createOscillator=oscillator;AC.createBufferSource=source;}
+      return nodes;
+    })).toBe(0);
+    await page.evaluate(() => {allowAudioActivation=true;AC.resume=()=>{resumeCalls++;return Promise.reject(new Error('Injected audio denial'));};});
+    await page.mouse.click(5,5);
+    await expect(page.locator('#audioWarning')).toBeVisible();
+    const calls=await page.evaluate(() => resumeCalls);
+    await progressing(page);
+    expect(await page.evaluate(() => resumeCalls)).toBe(calls);
+    await page.evaluate(() => {AC.resume=()=>{resumeCalls++;return nativeResume();};});
+    await page.mouse.click(5,5);
+    await expect.poll(() => page.evaluate(() => AC.state)).toBe('running');
+    await expect(page.locator('#audioWarning')).toBeHidden();
+    expect(errors.length).toBe(1);
+    expect(errors[0]).toContain('Audio recovery failed');
+  } finally {await context.close();}
+});
+
 test('ownership: carry survives floor changes but not a new character run', async ({ openGame }) => {
   const page = await openGame();
   expect(await page.evaluate(() => {
@@ -58,6 +122,11 @@ async function startupPage(browser, artifactURL, mode) {
     window.QLOCK = 3;
     window.bootSamples = [];
     window.pendingDraws = [];
+    if(mode === 'audio') {
+      window.allowAudioActivation=false;window.audioActivation=false;
+      Object.defineProperty(navigator,'userActivation',{get:()=>({isActive:audioActivation})});
+      for(const type of ['pointerdown','pointerup','touchend','click','keydown'])addEventListener(type,()=>{audioActivation=allowAudioActivation;},{capture:true});
+    }
     const raf = requestAnimationFrame;
     let wrapped = false;
     window.requestAnimationFrame = callback => raf(now => {
