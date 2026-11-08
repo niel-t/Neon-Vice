@@ -87,6 +87,11 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 .dlFoot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 10px;padding-top:.4em;border-top:2px solid rgba(255,45,149,.35)}
 .dlFoot .tapnext{font-size:.62em;margin:0}.dlFoot .btn{margin:4px 0;font-size:clamp(10px,.42em,16px)}
 .dlog.done #chatTap,.dlog.done #bDlSkip,.dlog:not(.done) #bGo{display:none}
+.dlog.choosing #chatTap,.dlog.choosing #bDlSkip,.dlog:not(.choosing) #chatPick{display:none}
+.dlChoices{list-style:none;margin:.2em 0 .1em;padding:0}
+.dlChoices button{display:flex;gap:.5em;width:100%;text-align:left;font:inherit;line-height:1.3;color:#ffd0ea;background:rgba(255,45,149,.08);border:0;border-left:3px solid transparent;padding:.22em .5em;margin:.14em 0;cursor:pointer}
+.dlChoices button b{color:#ff2d95;font-weight:normal}
+.dlChoices button.sel,.dlChoices button:hover{background:rgba(255,45,149,.26);border-left-color:#ff2d95;color:#fff}
 .typing i{display:inline-block;width:7px;height:7px;margin:4px 3px;background:#ffd36b;border-radius:50%;animation:dot 1s infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
 @keyframes dot{0%,60%,100%{transform:translateY(0);opacity:.35}30%{transform:translateY(-5px);opacity:1}}@keyframes pop{from{transform:translateY(12px) scale(.95);opacity:0}to{transform:none;opacity:1}}
 .tapnext{align-self:flex-start;font-size:14px;color:#c9a8e8;opacity:.75;margin-bottom:4px}.briefScr #bGo{align-self:flex-start}
@@ -137,7 +142,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <div id="sBrief" class="screen briefScr"><div class="selHead"><div class="selTop" id="brFrom">McWEY TOWER</div><div class="gname" data-t="McWEY">McWEY</div><div class="quote" id="brQuote"></div></div><div style="flex:1"></div>
  <div class="dlog" id="dlog"><div class="dlHead"><span id="dlogTitle"></span><button id="bDlText" title="Text size">TEXT A&plus;<span class="kbhint"> (T)</span><span class="padhint"> (Y)</span></button></div>
   <div id="dlogScroll"><div class="dlBody"><div id="dlogHist"></div><div id="dlogLines"></div></div></div>
-  <div class="dlFoot"><span class="tapnext" id="chatTap">SPACE / TAP<span class="padhint"> / (A)</span> &middot; NEXT</span><button class="btn alt sm" id="bDlSkip">SKIP<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button><button class="btn" id="bGo">TAKE THE JOB</button></div></div></div>
+  <div class="dlFoot"><span class="tapnext" id="chatTap">SPACE / TAP<span class="padhint"> / (A)</span> &middot; NEXT</span><span class="tapnext" id="chatPick"><span class="kbhint">1&ndash;3 / &uarr;&darr; SPACE</span><span class="padhint">&uarr;&darr; (A)</span> &middot; CHOOSE</span><button class="btn alt sm" id="bDlSkip">SKIP<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button><button class="btn" id="bGo">TAKE THE JOB</button></div></div></div>
 <div id="sElev" class="screen"><div class="elev"><div class="elT">McWEY TOWER</div><div class="elN"><span>&#9650;</span><b id="elFloor">01</b></div><div class="elT2">TAP TO SKIP</div></div></div>
 <div id="sDead" class="screen dim"><div class="big red">YOU'RE DEAD</div><div class="hint" id="deadCause" style="color:#ffb3bd"></div><div class="hint" id="deadXP" style="color:#ffd36b"></div><div class="hint" id="deadTip"></div><div class="rowc"><button class="btn" id="bRetry">RETRY<span class="kbhint"> (R)</span><span class="padhint"> (A)</span></button><button class="btn alt" id="bDeadQuit">QUIT<span class="padhint"> (B)</span></button></div></div>
 <div id="sResults" class="screen dim"><div class="logo2" id="rTitle">FLOOR CLEAR</div><div class="stats" id="rStats"></div><div class="grade" id="rGrade">A</div><div class="rowc"><button class="btn alt" id="bRetryLvl">RETRY<span class="padhint"> (X)</span></button><button class="btn" id="bNextLvl">NEXT FLOOR</button></div></div>
@@ -595,7 +600,7 @@ const PROG=(()=>{const o=readSave('nb86prog');for(const c of CHARS){
  savedField('nb86prog',p,'lvl',1,n=>Number.isInteger(n)&&n>=1&&n<=30);
  savedField('nb86prog',p,'xp',0,n=>Number.isFinite(n)&&n>=0);
  savedField('nb86prog',p,'perks',{},saveObject);
- for(const k of ['jewel','seen','furn'])if(p[k]!=null)savedField('nb86prog',p,k,{},saveObject);
+ for(const k of ['jewel','seen','furn','rel','wflags'])if(p[k]!=null)savedField('nb86prog',p,k,{},saveObject);
  if(p.cars!=null)savedField('nb86prog',p,'cars',['beater'],Array.isArray);
  if(p.homes!=null)savedField('nb86prog',p,'homes',[0],Array.isArray);
  if(p.arm!=null){savedField('nb86prog',p,'arm',{},saveObject);for(const k of ['owned','stock'])savedField('nb86prog',p.arm,k,[],Array.isArray);}
@@ -653,7 +658,8 @@ function padMenus(dt){if(!PAD.on)return;PAD.navT-=dt;const ax=PAD.gp.axes[0]||0;
    if(pdown(0)||pdown(9))$('bPlay').click();else if(pdown(1)){sfx('blip');state='title';show('sTitle');}break;
   case 'elev':if(pdown(0)||pdown(9))skipElev();break;
   case 'brief':if(pdown(0)||pdown(9))skip();else if(pdown(1))chatSkipAll();else if(pdown(3))cycleTextSize();
-   if(PAD.b[12])dlogScrollBy(-700*dt);else if(PAD.b[13])dlogScrollBy(700*dt);else if(Math.abs(PAD.ry)>0.3)dlogScrollBy(PAD.ry*900*dt);break;
+   if(CHAT.phase==='choose'){if(pdown(12))chatSel(CHAT.ch.sel-1);else if(pdown(13))chatSel(CHAT.ch.sel+1);}else if(PAD.b[12])dlogScrollBy(-700*dt);else if(PAD.b[13])dlogScrollBy(700*dt);
+   if(Math.abs(PAD.ry)>0.3)dlogScrollBy(PAD.ry*900*dt);break;
   case 'dead':if(pdown(0)||pdown(8))restart();else if(pdown(1))$('bDeadQuit').click();break;
   case 'results':if(pdown(0))$('bNextLvl').click();else if(pdown(2)||pdown(8))restart();break;
   case 'end':if(pdown(0))$('bAgain').click();break;
@@ -2184,7 +2190,6 @@ const END_STYLE={clean:{title:'THE QUIET HAND',line:"Tidy, quiet, and nobody saw
  gore:{title:'THE RED TIDE',line:"Half of Miami is still talking about the blood. Fear is the cheapest security there is.",quote:"Blood makes the best receipts."},
  ruthless:{title:'NO WITNESSES',line:"Nobody left in this city will say your name twice. That's the job done right.",quote:"Mercy is for people who can afford it."},
  mixed:{title:'STEADY HANDS',line:"You kept it steady all the way up. The Family likes steady.",quote:MC_QUOTE[8]}};
-const REPLY={don:["Consider it done.","This city answers to one family.","He'll be swimming with the fishes. Not yours, of course.","Then let's sink his boats.","Game over, Silks.","Shopping. Sure.","I'll make the singer sing.","Tell the shark I'm coming."],consigliere:["I'll give them some advice.","My knuckles will do the talking.","Then let's go have a word with him.","I'll give his boats some advice.","I'll pull the plug myself.","I could use a new tie.","Let's hear the album.","Time for Lex to take a swim."],money:["What's my cut?","Everybody has a price. I'll find theirs.","His watch, his wallet — same thing.","Fake gold? That's just insulting.","Clean money, my foot.","Finally. Retail therapy.","I'll pay the singer double.","Keep the change, Silks."]};
 const FINALE=["You know what? Keep the Lambo. And take this — solid gold. You earned it.","Now get out of my office before I start getting sentimental."];
 const MC_LOAN=12000,MC_CUT=0.6;
 const MC_KID={hi:["Come in, kid. Wipe your feet, that carpet cost more than your car.","There's my favourite employee. Still employed, I see."],open:["Here's how you start paying off that car, kid.","You want to own that heap? Then you go where I point.","Moreau. You do this, kid, and we're close to square.","Favor time, kid. The kind I deny later.","Clean money is still money, kid. Go make it dirty.","Take the night off, kid.","One more song, kid.","This is the one, kid. Finish him."],
@@ -2192,15 +2197,14 @@ const MC_KID={hi:["Come in, kid. Wipe your feet, that carpet cost more than your
 const MC_PARTNER={hi:["Partner. Sit — no, the good chair.","There he is. Drink? I'm pouring either way."],open:["Favor to ask. Your old neighbours at the Sunset are back.","I need a favor. Club Flamingo. You can say no.","Moreau. I'm not ordering you. I'm asking, one businessman to another.","Partner. I need a favor I can deny.","Partner, the arcade. You know what to do.","Partner. Take the night off. Go shopping.","One more stop, partner.","Partner. Finish it."],
  finale:["Keep the car — it was always yours.","And take this. Solid gold.","Now get out of my office before I start getting sentimental."]};
 const MC_SQUARE=["That's the last of it. The car's yours. God help you, it's yours.","No more 'kid'. Kids owe people. You don't owe anybody. Not even me.","So from now on I don't give orders. I ask for favors. And you can say no.","...Nobody says no."];
-const SQUARE_REPLY={don:"Then we understand each other.",consigliere:"Free advice, then: don't forget it.",money:"Best investment I ever made."};
 const ACT2_REPLY={don:"Lex Sterling. The guy with no socks.",consigliere:"The man who insulted my family name.",money:"The guy who tossed me a quarter."};
 const UNLOCK_LINE={3:"Lex's best speedboat didn't sink. It's docked under your window now. Call it a souvenir.",4:"And get out of those street clothes. My tailor dressed you — power suits, on the house.",5:"Lex torched your ride, so you're flying from now on. There's a helicopter waiting for you."};
-function mcPayday(m,pp,pid){const L=LASTPAY;LASTPAY=null;if(!L){return;}if(UNLOCK_LINE[L.lvl])setTimeout(()=>{},0);
+function mcPayday(m,pp,pid,dq){const L=LASTPAY;LASTPAY=null;if(!L){return;}if(UNLOCK_LINE[L.lvl])setTimeout(()=>{},0);
  if(L.yacht){m("Your take: $"+fmt(L.take)+". All of it. And the yacht.");m("No more 'kid'. Whatever you owed me — "+(L.cleared>0?'$'+fmt(L.cleared)+', ':'')+"it's gone.");m("You don't work for me anymore. You work with me.");return;}
  const ul=UNLOCK_LINE[L.lvl];const done=()=>{if(ul)m(ul);};
  if(L.cut>0&&!L.squared){m("Your take: $"+fmt(L.take)+". My cut: $"+fmt(L.cut)+". You still owe me $"+fmt(L.debt)+". Count it in front of me.");
   if(L.debt<=MC_LOAN*0.25)m("One more good night, kid, and we're square.");else if(L.before>MC_LOAN/2&&L.debt<=MC_LOAN/2)m("Halfway there. Keep this up and that "+carName('beater')+"'s yours outright.");done();return;}
- if(L.squared){m("Your take: $"+fmt(L.take)+". My cut: $"+fmt(L.cut)+". And that...");MC_SQUARE.slice(0,3).forEach(m);pp(SQUARE_REPLY[pid]||SQUARE_REPLY.don);m(MC_SQUARE[3]);done();return;}
+ if(L.squared){m("Your take: $"+fmt(L.take)+". My cut: $"+fmt(L.cut)+". And that...");MC_SQUARE.slice(0,3).forEach(m);dq('square');m(MC_SQUARE[3]);done();return;}
  m("Your cut: $"+fmt(L.take)+". All of it. Count it in front of me anyway — I like the sound.");done();}
 function mcReact(m){const p=myProg(),sn=p.seen||(p.seen={}),V=p.paid?MC_PARTNER:MC_KID;
  if(p.jewel&&(p.jewel.watch||p.jewel.chain||p.jewel.rings)&&!sn.mcJewel){sn.mcJewel=1;m(p.paid?"Look at you. Gold suits you, partner. Heavy, rare.":"Nice gold. You know where it'd look nicer? In my ledger.");}
@@ -2214,22 +2218,35 @@ const MC_HAUL=[null,"See the pallet by my desk? That's the motel money. Every br
 let CHAT={q:[],i:0,phase:'idle',tm:null,done:false,onGo:null};
 function chatClearTimers(){clearTimeout(CHAT.tm);clearInterval(typeT);}
 const chatWho=me=>me?CHARS[selIdx].name:'McWEY';
+const chatName=L=>L.who==='p'?chatWho(true):(L.name&&DLG_WHO[L.name])||chatWho(false);
+// DLG pointers in the queue expand when reached, so choices can splice their branch in.
+function chatExpand(){let L;while((L=CHAT.q[CHAT.i])&&L.dlg&&!L.choose)CHAT.q.splice(CHAT.i,1,...dlgItems(L.dlg,L.n));}
 function chatDone(){CHAT.done=true;CHAT.phase='done';typeFull='';typeI=0;$('dlog').classList.add('done');dlogFollow();}
-function chatNext(){chatClearTimers();if(CHAT.i>=CHAT.q.length){chatDone();return;}
- const L=CHAT.q[CHAT.i++],me=L.who==='p';const tx=dlogLine(chatWho(me),me,L.t);tx.innerHTML='<span class="typing"><i></i><i></i><i></i></span>';CHAT.phase='dots';CHAT.cur={tx,t:L.t,me};typeFull='';typeI=0;
+function chatNext(){chatClearTimers();chatExpand();if(CHAT.i>=CHAT.q.length){chatDone();return;}if(CHAT.q[CHAT.i].choose){chatChoose(CHAT.q[CHAT.i]);return;}
+ const L=CHAT.q[CHAT.i++],me=L.who==='p';const tx=dlogLine(chatName(L),me,L.t);tx.innerHTML='<span class="typing"><i></i><i></i><i></i></span>';CHAT.phase='dots';CHAT.cur={tx,t:L.t,me};typeFull='';typeI=0;
  CHAT.tm=setTimeout(()=>chatType(),me?350:650);}
+function chatChoose(L){CHAT.i++;const opts=L.choose.filter(o=>dlgReqOk(o.req)),own=opts.findIndex(o=>o.tone===CHARS[selIdx].id);
+ CHAT.phase='choose';CHAT.ch={opts,sel:Math.max(0,own),dlg:L.dlg};typeFull='';typeI=0;$('dlog').classList.add('choosing');
+ dlogChoices(opts,CHAT.ch.sel,chatPick,chatSel);}
+function chatSel(k){if(CHAT.phase!=='choose')return;const n=CHAT.ch.opts.length;CHAT.ch.sel=(k%n+n)%n;dlogChoiceSel(CHAT.ch.sel);}
+function chatPick(k){if(state!=='brief'||CHAT.phase!=='choose'||!(k>=0&&k<CHAT.ch.opts.length))return;const o=CHAT.ch.opts[k],d=CHAT.ch.dlg,t=dlgText(o.say||o.t);
+ CHAT.ch=null;CHAT.phase='picked';dlogChoicesClear();$('dlog').classList.remove('choosing');dlogLine(chatWho(true),true,t).textContent=t;
+ dlgApply(o.set);if(o.to)CHAT.q.splice(CHAT.i,0,{dlg:d,n:o.to});sfx('pick');CHAT.tm=setTimeout(chatNext,350);}
 function chatType(){const C=CHAT.cur;CHAT.phase='typing';C.tx.textContent='';if(!C.me){typeFull=C.t;typeI=0;}let i=0;clearInterval(typeT);
  typeT=setInterval(()=>{i++;C.tx.textContent=C.t.slice(0,i);dlogFollow();if(!C.me){typeI=i;if(i%2===0)sfx('type');}if(i>=C.t.length){clearInterval(typeT);chatRead();}},24);}
 function chatRead(){const C=CHAT.cur;CHAT.phase='read';C.tx.textContent=C.t;dlogFollow();typeI=typeFull.length;CHAT.tm=setTimeout(chatNext,900+C.t.length*28);}
-function chatTap(){if(state!=='brief')return;if(CHAT.phase==='done'){$('bGo').click();return;}if(CHAT.phase==='dots'){chatClearTimers();chatType();return;}if(CHAT.phase==='typing'){clearInterval(typeT);chatRead();return;}if(CHAT.phase==='read'){chatNext();}}
-function chatSkipAll(){if(state!=='brief'||CHAT.done)return;chatClearTimers();if(CHAT.cur)CHAT.cur.tx.textContent=CHAT.cur.t;while(CHAT.i<CHAT.q.length){const L=CHAT.q[CHAT.i++],me=L.who==='p';dlogLine(chatWho(me),me,L.t).textContent=L.t;}sfx('blip');chatDone();dlogScrollEnd();}
-function talkMcWey(){if(briefBuilt&&briefKey!==mcHaul()+'|'+briefAct())briefBuilt=false;fountainHum(null);state='brief';show('sBrief');sfx('ring');engineOn(false);const pid=CHARS[selIdx].id,q=[],m=t=>q.push({who:'m',t}),pp=t=>q.push({who:'p',t});
+function chatTap(){if(state!=='brief')return;if(CHAT.phase==='done'){$('bGo').click();return;}if(CHAT.phase==='choose'){chatPick(CHAT.ch.sel);return;}if(CHAT.phase==='dots'){chatClearTimers();chatType();return;}if(CHAT.phase==='typing'){clearInterval(typeT);chatRead();return;}if(CHAT.phase==='read'){chatNext();}}
+// Skip runs to the end of the visit, or stops at the next choice: choices are never made for the player.
+function chatSkipAll(){if(state!=='brief'||CHAT.done||CHAT.phase==='choose')return;chatClearTimers();if(CHAT.cur)CHAT.cur.tx.textContent=CHAT.cur.t;sfx('blip');
+ for(;;){chatExpand();const L=CHAT.q[CHAT.i];if(!L)break;if(L.choose){chatChoose(L);dlogScrollEnd();return;}CHAT.i++;dlogLine(chatName(L),L.who==='p',L.t).textContent=L.t;}
+ chatDone();dlogScrollEnd();}
+function talkMcWey(){if(briefBuilt&&briefKey!==mcHaul()+'|'+briefAct())briefBuilt=false;fountainHum(null);state='brief';show('sBrief');sfx('ring');engineOn(false);const pid=CHARS[selIdx].id,q=[],m=t=>q.push({who:'m',t}),pp=t=>q.push({who:'p',t}),dq=id=>q.push(dlgStart(id));
  arm();const pr=myProg(),MV=pr.paid?MC_PARTNER:MC_KID;
  const vi=VISIT;if(vi.debrief===null&&HUBFIRST)MC_FIRST.forEach(m);if(!pr.seen.loan){pr.seen.loan=1;saveProg();m("That "+carName('beater')+" the valet parked for you? It's ugly, it's yours, and it costs twelve grand.");m("I'll take it out of your cuts, kid. Sixty percent, every job, till we're square.");}else if(vi.debrief===null&&HUBFIRST)m(pick(MV.hi));
  if(vi.next==='end'){let best=vi.style||'mixed';for(const k in runStyle)if(runStyle[k]>(runStyle[best]||0))best=k;RUNEND=END_STYLE[best];}
- if(vi.debrief!==null){(((DEB_STYLE[vi.style||'mixed']||MC_DEBRIEF)[vi.debrief])||MC_DEBRIEF[vi.debrief]).forEach(m);m((MC_GRADE[vi.grade]||MC_GRADE.B).replace('kid',pr.paid?'partner':'kid'));mcPayday(m,pp,pid);if(vi.debrief===2&&vi.next===3){const ph=(myProg().homes||[]).includes(2);m("Moreau's gone. Which means Coral Tower needs a new man in charge.");m("I'm giving it to Lex Sterling. Clean money. Corporate. The future.");m(ph?"You've got Moreau's penthouse. Enjoy the view.":"You? Moreau's penthouse is on the market. I'll make you a price.");pp(ACT2_REPLY[pid]||ACT2_REPLY.don);m("Don't look at me like that. Business is business.");}}mcReact(m);const MV2=myProg().paid?MC_PARTNER:MC_KID;
- if(vi.next!=='end'){m(MV2.open[vi.next]);MC_BRIEF[vi.next].forEach(m);pp(REPLY[pid][vi.next]);m(MC_QUOTE[vi.next]);}else{m(RUNEND.line);MV2.finale.forEach(m);pp(REPLY[pid][2]);m(RUNEND.quote);}
- HUBFIRST=false;chatClearTimers();CHAT={q,i:0,phase:'idle',tm:null,done:false};$('dlog').classList.remove('done');
+ if(vi.debrief!==null){(((DEB_STYLE[vi.style||'mixed']||MC_DEBRIEF)[vi.debrief])||MC_DEBRIEF[vi.debrief]).forEach(m);m((MC_GRADE[vi.grade]||MC_GRADE.B).replace('kid',pr.paid?'partner':'kid'));mcPayday(m,pp,pid,dq);if(vi.debrief===2&&vi.next===3){const ph=(myProg().homes||[]).includes(2);m("Moreau's gone. Which means Coral Tower needs a new man in charge.");m("I'm giving it to Lex Sterling. Clean money. Corporate. The future.");m(ph?"You've got Moreau's penthouse. Enjoy the view.":"You? Moreau's penthouse is on the market. I'll make you a price.");pp(ACT2_REPLY[pid]||ACT2_REPLY.don);m("Don't look at me like that. Business is business.");}}mcReact(m);const MV2=myProg().paid?MC_PARTNER:MC_KID;
+ if(vi.next!=='end'){m(MV2.open[vi.next]);MC_BRIEF[vi.next].forEach(m);dq('reply'+vi.next);m(MC_QUOTE[vi.next]);}else{m(RUNEND.line);MV2.finale.forEach(m);dq('reply2');m(RUNEND.quote);}
+ HUBFIRST=false;chatClearTimers();CHAT={q,i:0,phase:'idle',tm:null,done:false};$('dlog').classList.remove('done','choosing');
  $('brFrom').textContent=vi.next==='end'?'McWEY TOWER · FINAL DEBRIEF':vi.debrief!==null?'McWEY TOWER · DEBRIEF':'McWEY TOWER · 52ND FLOOR';
  dlogBegin(vi.next==='end'?'FINAL DEBRIEF':(vi.debrief!==null?'DEBRIEF · ':'')+LEVELS[vi.next].name);
  $('brQuote').textContent='"'+(vi.next==='end'?RUNEND.quote:MC_QUOTE[vi.next])+'"';
@@ -2931,7 +2948,7 @@ $('pkCards').addEventListener('click',e=>{const b=e.target.closest('.pcard');if(
 $('bPrev').onclick=()=>{selIdx=(selIdx+2)%3;updateSelect();sfx('blip');};
 $('bNext').onclick=()=>{selIdx=(selIdx+1)%3;updateSelect();sfx('blip');};
 $('bPlay').onclick=()=>{const st=Math.min(JOBS.sel,JOBS.top);LEXMET=st>1;initAudio();CARRY=null;totalScore=0;totalKills=0;totalTime=0;sfx('pick');levelIdx=st;VISIT={debrief:null,next:st,grade:null,take:0,style:null};HUBFIRST=true;runStyle={};RUNEND=null;fadeTo(goDrive);};
-$('sBrief').onclick=e=>{if(e.target.closest('#bGo,#bDlSkip,#bDlText,summary,#dlogHist'))return;chatTap();};$('bDlSkip').onclick=()=>chatSkipAll();$('bDlText').onclick=()=>cycleTextSize();
+$('sBrief').onclick=e=>{if(CHAT.phase==='choose'||e.target.closest('#bGo,#bDlSkip,#bDlText,summary,#dlogHist,.dlChoices'))return;chatTap();};$('bDlSkip').onclick=()=>chatSkipAll();$('bDlText').onclick=()=>cycleTextSize();
 $('sElev').onclick=()=>skipElev();$('cine').onclick=()=>cineSkip();$('bSkip').onclick=()=>hubSkip();
 $('bGo').onclick=()=>chatGo();
 $('bNextLvl').onclick=()=>{if(pendingPerks>0){showPerkPick('results');return;}payout();VISIT={debrief:levelIdx,grade:G.grade,take:G.take,style:G.style,next:levelIdx+1<LEVELS.length?levelIdx+1:'end'};fadeTo(goHome);};
@@ -2950,7 +2967,9 @@ tbtn('bGrab',()=>pressed.grab=true);tbtn('bPerk',()=>pressed.perk=true);tbtn('bP
 addEventListener('keydown',e=>{if(contextLost)return;keys[e.code]=true;if(state==='morning'&&(e.code==='Enter'||e.code==='Space')){$('bMorning').click();e.preventDefault();return;}if(state==='carmenu'||state==='shop'||state==='store'){menuKey(e);e.preventDefault();return;}if((e.code==='Space'||e.code==='Enter')&&state==='play'&&G&&G.cine){cineSkip();e.preventDefault();return;}if(e.code==='Tab'&&state==='play'&&G&&G.def.hub){hubSkip();e.preventDefault();return;}if((e.code==='Enter'||e.code==='Space')&&state==='elev'){skipElev();e.preventDefault();return;}if(state==='perk'&&/^Digit[123]$/.test(e.code)){const cs=document.querySelectorAll('.pcard');const b=cs[+e.code.slice(5)-1];if(b)choosePerk(b.dataset.k);return;}if(padMode&&/^(Key[WASD]|Arrow)/.test(e.code))padMode=false;if(e.code==='KeyR')pressed.restart=true;if(e.code==='KeyE')pressed.grab=true;if(e.code==='Space'||e.code==='KeyQ')pressed.perk=true;if(e.code==='Escape'||e.code==='KeyP')pressed.pause=true;if(SETMENU&&e.code==='Escape')$('bSetBack').click();if(e.code==='KeyM')toggleMute();
  if((e.code==='Enter'||e.code==='Space')&&state==='title'){$('bStart').click();e.preventDefault();return;}
  if((e.code==='Enter'||e.code==='Space')&&state==='brief'){chatTap();e.preventDefault();return;}
- if(state==='brief'){const sc={ArrowUp:-60,ArrowDown:60,PageUp:-400,PageDown:400}[e.code];if(sc){dlogScrollBy(sc);e.preventDefault();return;}if(e.code==='Escape'){chatSkipAll();return;}if(e.code==='KeyT'){cycleTextSize();return;}}
+ if(state==='brief'){if(CHAT.phase==='choose'){const d=/^(?:Digit|Numpad)([1-9])$/.exec(e.code);if(d){chatPick(+d[1]-1);e.preventDefault();return;}
+   if(e.code==='ArrowUp'||e.code==='ArrowDown'){chatSel(CHAT.ch.sel+(e.code==='ArrowUp'?-1:1));e.preventDefault();return;}}
+  const sc={ArrowUp:-60,ArrowDown:60,PageUp:-400,PageDown:400}[e.code];if(sc){dlogScrollBy(sc);e.preventDefault();return;}if(e.code==='Escape'){chatSkipAll();return;}if(e.code==='KeyT'){cycleTextSize();return;}}
  if(e.code==='Enter'&&state==='select'){$('bPlay').click();return;}if(state==='select'&&(e.code==='ArrowUp'||e.code==='KeyW'))stepFloor(1);if(state==='select'&&(e.code==='ArrowDown'||e.code==='KeyS'))stepFloor(-1);if(state==='select'&&(e.code==='ArrowLeft'||e.code==='KeyA'))$('bPrev').click();if(state==='select'&&(e.code==='ArrowRight'||e.code==='KeyD'))$('bNext').click();
  if(e.code==='Enter'&&state==='results'){$('bNextLvl').click();return;}
  if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();});
