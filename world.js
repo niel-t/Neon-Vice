@@ -32,14 +32,40 @@ const WORLD=(()=>{
  function isSolid(g,cx,cz){if(!g||cx<0||cz<0||cx>=g.W||cz>=g.H)return true;return g.solid[cz*g.W+cx]===1;}
  function isBlock(g,cx,cz){if(!g||cx<0||cz<0||cx>=g.W||cz>=g.H)return true;const i=cz*g.W+cx;return g.solid[i]===1||g.furn[i]>0;}
  function isCover(g,cx,cz){if(!g||cx<0||cz<0||cx>=g.W||cz>=g.H)return true;const i=cz*g.W+cx;return g.solid[i]===1||COVER[g.furn[i]]===1;}
- function rayLen(g,x,z,dx,dz,max){for(let s=0.25;s<max;s+=0.15){if(isSolid(g,Math.floor(x+dx*s),Math.floor(z+dz*s)))return s;}return max;}
+ // wh=0 is the legacy default height, not a zero-height wall.
+ function rayBlock(g,cx,cz,cover){if(!g||cx<0||cz<0||cx>=g.W||cz>=g.H)return true;const i=cz*g.W+cx;return(g.solid[i]===1&&(g.wh[i]||WALL_H)>=0.6)||(!!cover&&COVER[g.furn[i]]===1);}
+ function doorHit(g,ax,az,bx,bz){
+  const dx=bx-ax,dz=bz-az,len=Math.hypot(dx,dz);if(len<1e-12)return null;
+  let nearest=null;
+  for(const door of g.doors||[]){
+   const angle=door.base+door.th,ux=Math.cos(angle),uz=Math.sin(angle),vx=-uz,vz=ux;
+   const px=ax-door.hx,pz=az-door.hz;
+   let lo=0,hi=1,nx=-dx/len,nz=-dz/len,miss=false;
+   for(const [p,d,min,max,ex,ez] of [[px*ux+pz*uz,dx*ux+dz*uz,0,0.98,ux,uz],[px*vx+pz*vz,dx*vx+dz*vz,-0.035,0.035,vx,vz]]){
+    if(Math.abs(d)<1e-12){if(p<min-1e-12||p>max+1e-12){miss=true;break;}continue;}
+    const t0=(min-p)/d,t1=(max-p)/d,enter=Math.min(t0,t1),exit=Math.max(t0,t1);
+    if(enter>lo){lo=enter;nx=d>0?-ex:ex;nz=d>0?-ez:ez;}
+    hi=Math.min(hi,exit);if(lo>hi){miss=true;break;}
+   }
+   if(!miss&&(!nearest||lo<nearest.t))nearest={x:ax+dx*lo,z:az+dz*lo,nx,nz,t:lo,d:len*lo,door};
+  }
+  return nearest;
+ }
+ function rayLen(g,x,z,dx,dz,max){
+  let len=max;for(let s=0.25;s<max;s+=0.15){if(rayBlock(g,Math.floor(x+dx*s),Math.floor(z+dz*s),false)){len=s;break;}}
+  const hit=doorHit(g,x,z,x+dx*len,z+dz*len);return hit?hit.d:len;
+ }
  function doorEnd(d){const a=d.base+d.th;return[d.hx+Math.cos(a)*0.98,d.hz+Math.sin(a)*0.98];}
  function segDist(px,pz,ax,az,bx,bz){const sx=bx-ax,sz=bz-az;let t=((px-ax)*sx+(pz-az)*sz)/(sx*sx+sz*sz);t=clamp(t,0,1);return Math.hypot(px-ax-sx*t,pz-az-sz*t);}
  function segInt(ax,az,bx,bz,cx,cz,dx,dz){const d=(bx-ax)*(dz-cz)-(bz-az)*(dx-cx);if(Math.abs(d)<1e-9)return false;const t=((cx-ax)*(dz-cz)-(cz-az)*(dx-cx))/d,u=((cx-ax)*(bz-az)-(cz-az)*(bx-ax))/d;return t>0&&t<1&&u>0&&u<1;}
- function los(g,x0,z0,x1,z1){const dx=x1-x0,dz=z1-z0,d=Math.hypot(dx,dz),n=Math.ceil(d/0.15);for(let i=1;i<n;i++){const t=i/n;if(isSolid(g,Math.floor(x0+dx*t),Math.floor(z0+dz*t)))return false;}
-  for(const dr of g.doors){if(Math.abs(dr.th)>0.5)continue;const e=doorEnd(dr);if(segInt(x0,z0,x1,z1,dr.hx,dr.hz,e[0],e[1]))return false;}return true;}
- function rayWall(g,x,z,dx,dz,max,cover){let px=x,pz=z;const test=cover?isCover:isSolid;for(let s=0;s<max;s+=0.05){const nx=x+dx*s,nz=z+dz*s;const cx=Math.floor(nx),cz=Math.floor(nz);
-  if(test(g,cx,cz)){const ocx=Math.floor(px),ocz=Math.floor(pz);if(cx!==ocx){const wx=cx>ocx?cx:ocx;return{x:wx,z:pz,nx:cx>ocx?-1:1,nz:0,d:s};}else{const wz=cz>ocz?cz:ocz;return{x:px,z:wz,nx:0,nz:cz>ocz?-1:1,d:s};}}px=nx;pz=nz;}return null;}
+ function los(g,x0,z0,x1,z1){const dx=x1-x0,dz=z1-z0,d=Math.hypot(dx,dz),n=Math.ceil(d/0.15);for(let i=1;i<n;i++){const t=i/n;if(rayBlock(g,Math.floor(x0+dx*t),Math.floor(z0+dz*t),false))return false;}
+  return !doorHit(g,x0,z0,x1,z1);}
+ function rayCells(g,x,z,dx,dz,max,cover){let px=x,pz=z;for(let s=0;s<max;s+=0.05){const nx=x+dx*s,nz=z+dz*s;const cx=Math.floor(nx),cz=Math.floor(nz);
+  if(rayBlock(g,cx,cz,cover)){const ocx=Math.floor(px),ocz=Math.floor(pz);if(cx!==ocx){const wx=cx>ocx?cx:ocx;return{x:wx,z:pz,nx:cx>ocx?-1:1,nz:0,d:s};}else{const wz=cz>ocz?cz:ocz;return{x:px,z:wz,nx:0,nz:cz>ocz?-1:1,d:s};}}px=nx;pz=nz;}return null;}
+ function rayWall(g,x,z,dx,dz,max,cover){
+  const wall=rayCells(g,x,z,dx,dz,max,cover),door=doorHit(g,x,z,x+dx*max,z+dz*max);
+  return door&&(!wall||door.d<Math.hypot(wall.x-x,wall.z-z))?door:wall;
+ }
  function collideGrid(g,c){const r=c.r;for(let it=0;it<2;it++){const x0=Math.floor(c.x-r),x1=Math.floor(c.x+r),z0=Math.floor(c.z-r),z1=Math.floor(c.z+r);
   for(let cz=z0;cz<=z1;cz++)for(let cx=x0;cx<=x1;cx++){if(!isBlock(g,cx,cz))continue;const nx=clamp(c.x,cx,cx+1),nz=clamp(c.z,cz,cz+1);const dx=c.x-nx,dz=c.z-nz,d2=dx*dx+dz*dz;
    if(d2<r*r){const d=Math.sqrt(d2);if(d>1e-6){c.x+=dx/d*(r-d);c.z+=dz/d*(r-d);}else{c.x+=(c.x-(cx+0.5))>0?r:-r;}}}}}
@@ -50,6 +76,6 @@ const WORLD=(()=>{
   if(Math.abs(d.w)<target||Math.sign(d.w)!==-side){if(isP&&vn>2&&Math.abs(d.w)<2)sounds++;d.w=-side*target;d.pusher=isP?'p':'e';}}return sounds;}
  function bfs(g,f,sx,sz){const W=g.W;f.fill(-1);if(isBlock(g,sx,sz))return;const q=[sz*W+sx];f[q[0]]=0;let h=0;
   while(h<q.length){const i=q[h++];const d=f[i];for(const o of [1,-1,W,-W]){const j=i+o;if(j<0||j>=f.length||g.solid[j]||g.furn[j]||f[j]>=0)continue;f[j]=d+1;q.push(j);}}}
- return Object.freeze({version:1,buildGrid,hsh,cell:Object.freeze({isSolid,isBlock,isCover,rayLen,los,rayWall,collideGrid,collideDoors,bfs}),
+ return Object.freeze({version:1,buildGrid,hsh,cell:Object.freeze({isSolid,isBlock,isCover,rayBlock,doorHit,rayLen,los,rayWall,collideGrid,collideDoors,bfs}),
   geometry:Object.freeze({doorEnd,segDist,segInt})});
 })();
