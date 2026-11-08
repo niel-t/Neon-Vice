@@ -123,6 +123,16 @@ function checkPlans() {
     o.kind = 'lab'; bad(m, /kind must be target/, 'obj kind');
     o.kind = 'target'; o.room = 'nowhere'; bad(m, /not nowhere/, 'obj room must match at');
   }
+  {
+    const m = JSON.parse(JSON.stringify(PLANS.motel));
+    m.stages.lot.spawns.find(s => s.id === 'arr_w').at = [10.4, 13.2]; bad(m, /re-trigger/, 'arrival inside a stair zone');
+  }
+  {
+    const m = JSON.parse(JSON.stringify(PLANS.motel));
+    m.stages.f2.stairs.forEach(s => { s.to = 'lot'; s.oneWay = true; }); m.stages.lot.stairs = [];
+    assert(!PLAN.validate(m).errors.some(e => /return stair/.test(e)), 'oneWay stairs need no pair');
+    m.stages.f2.stairs.forEach(s => delete s.oneWay); bad(m, /no return stair/, 'unpaired stair');
+  }
   const sps = clip.stage.portals || clip.extras.stagePortals;
   assert(sps.every(p => p.open ? Object.keys(p).length === 4 : p.seg && !('walk' in p) && !('kind' in p)), 'strict v3 stage portals');
   const orient = ok(tiny(s => { s.rooms[1].part = 'stud_steel_gyp2'; s.rooms.push({ id: 'a_c', in: 'a', kind: 'closet', rect: [2.5, 2.5, 4, 4] }); s.doors.push({ id: 'd_c', rooms: ['a', 'a_c'], at: [3.25, 4], w: 0.8, kind: 'door_hollow' }); return s; }), 'orient').outs.s.out;

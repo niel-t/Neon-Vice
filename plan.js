@@ -5,7 +5,7 @@ const PLANS={};
 const PLAN=(()=>{
  const EPS=1e-6,TOL=1e-4,SNAP=1e3,PAD=.5;
  const STANCE={standing:[1.6,1.8],crouched:[1,1.1]};
- const SPAWN_KINDS=new Set(['player','enemy','civ','item','exit','arrive']),OBJ_KINDS=new Set(['target','use','exit']);
+ const SPAWN_KINDS=new Set(['player','enemy','civ','item','exit','arrive']),OBJ_KINDS=new Set(['target','use','exit']),STAIR_R=1;
  const W=()=>{if(typeof WORLD==='undefined'||!WORLD.compile)throw new Error('PLAN needs WORLD v2 loaded first');return WORLD;};
  const snap=v=>Math.round(v*SNAP)/SNAP;
  const key=p=>`${snap(p[0])},${snap(p[1])}`;
@@ -477,7 +477,10 @@ const PLAN=(()=>{
     placed([s.x,s.z],`spawn ${s.id}`);if(Wd.move(st,s.x,s.z,.3,1e-3,0).overlap)err(`${where} spawn ${s.id}: overlaps a wall or prop`);}
    for(const s of out.extras.stairs){const id=placed(s.at,`stair ${s.id}`);if(s.room&&id!==s.room)err(`${where} stair ${s.id}: at is in ${id}, not ${s.room}`);
     const to=plan.stages[s.to];if(!to)err(`${where} stair ${s.id}: target stage ${s.to} does not exist`);
-    else if(!(to.spawns||[]).some(x=>x.id===s.arrive&&x.kind==='arrive'))err(`${where} stair ${s.id}: arrive spawn ${s.arrive} missing on ${s.to}`);}
+    else{const arr=(to.spawns||[]).find(x=>x.id===s.arrive&&x.kind==='arrive');
+     if(!arr)err(`${where} stair ${s.id}: arrive spawn ${s.arrive} missing on ${s.to}`);
+     else for(const t of to.stairs||[])if(Math.hypot(arr.at[0]-t.at[0],arr.at[1]-t.at[1])<=(t.r??STAIR_R))err(`${where} stair ${s.id}: arrival ${s.arrive} lies in stair zone ${t.id} on ${s.to} (would re-trigger)`);
+     if(!s.oneWay&&!(to.stairs||[]).some(t=>t.to===sid))err(`${where} stair ${s.id}: no return stair from ${s.to} (pair it or mark oneWay)`);}}
    for(const k of ['obj','stash','items'])for(const o of out.extras[k]){const id=placed(o.at,`${k} ${o.id}`);if(k==='obj'&&id&&o.room!==id)err(`${where} obj ${o.id}: at is in ${id}, not ${o.room}`);}
    for(const o of out.extras.obj)if(!OBJ_KINDS.has(o.kind))err(`${where} obj ${o.id}: kind must be target, use or exit (got ${o.kind})`);
    for(const [id,m2] of Object.entries(T.area||{})){const r=out.info.rooms.get(id);if(!r){err(`${where} area target: unknown room ${id}`);continue;}

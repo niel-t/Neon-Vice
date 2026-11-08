@@ -99,7 +99,10 @@ compiles every stage with `WORLD.compile` and then checks:
 
 - **Structure:** unknown builds and constructions, overlap, children outside
   their parent, a door or window off a shared edge, or at a junction or mitre;
-  drop edges; and stair targets (`to` stage and `arrive` spawn exist).
+  drop edges; and stair targets (`to` stage and `arrive` spawn exist; the arrival lies
+  outside every stair zone on the target stage, radius `r` (default 1 m);
+  each stair has a return stair unless marked `oneWay`), matching W1
+  `stageRun` v1.
 - **Rooms:** every non-`sealed` room has a walkable entrance, and spawns lie
   in rooms.
 - **Reachability:** a 0.25 m raster at pawn radius 0.3, cross-checked
