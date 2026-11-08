@@ -37,11 +37,12 @@ function gameData() {
     assert(match, `Missing ${name} declaration`);
     return `const ${name}=${match[1]};`;
   });
-  const weapons = source.match(/const WD=([\s\S]*?);\s*const BT=/);
-  assert(weapons, 'Missing weapon data boundary');
+  const weaponsSource = sources[order.indexOf('weapons.js')];
+  const weapons = vm.runInNewContext(`${weaponsSource}\n;({WD, BT, CAL, ARMOUR})`, {}, { timeout: 1000 }); // weapon data stays DOM/GL-free
   const levels = source.split('/*LEVELS*/')[1].split('/*END*/')[0];
-  return vm.runInNewContext(`${declarations.join('\n')}\nconst WD=${weapons[1]};\n${levels}
-    ({LEVELS, EKIND, IKIND, FURN, FLOORCH, PAR, LEVEL_TRACKS, WD})`, {}, { timeout: 1000 });
+  const data = vm.runInNewContext(`${declarations.join('\n')}\n${levels}
+    ({LEVELS, EKIND, IKIND, FURN, FLOORCH, PAR, LEVEL_TRACKS})`, {}, { timeout: 1000 });
+  return { ...data, ...weapons };
 }
 
 function expectedMap(def, data) {
@@ -58,7 +59,21 @@ function expectedMap(def, data) {
 
 function check() {
   const data = gameData();
-  const { LEVELS, PAR, LEVEL_TRACKS, WD } = data;
+  const { LEVELS, PAR, LEVEL_TRACKS, WD, CAL, ARMOUR } = data;
+  for (const [id, c] of Object.entries(CAL)) {
+    for (const k of ['box', 'price', 'cap', 'up']) assert(Number.isInteger(c[k]) && c[k] > 0, `Caliber ${id}: invalid ${k}`);
+  }
+  for (const [id, a] of Object.entries(ARMOUR)) {
+    assert(Number.isInteger(a.plates) && a.plates > 0 && a.price > 0 && a.repair > 0, `Armour ${id}: invalid data`);
+  }
+  for (const [type, w] of Object.entries(WD)) {
+    if (w.melee) { assert(w.cal === undefined && w.mag === undefined, `${type}: melee weapons have no ammo`); continue; }
+    assert(Number.isInteger(w.mag) && w.mag > 0, `${type}: invalid magazine`);
+    if (w.toss) { assert(w.cal === null, `${type}: thrown weapons have no caliber`); continue; }
+    assert(CAL[w.cal], `${type}: unknown caliber ${w.cal}`);
+    assert(w.rl > 0 && Array.isArray(w.ar) && w.ar[0] > 0 && w.ar[1] > 0 && w.ar[0] + w.ar[1] < 1, `${type}: invalid reload`);
+    assert(!w.base || WD[w.base], `${type}: unknown base weapon`);
+  }
   const names = ['MOTEL SUNSET', 'CLUB FLAMINGO', 'THE PENTHOUSE', 'VICE MARINA',
     'STARLIGHT ARCADE', 'OCEAN VIEW MALL', 'THE RECORDING STUDIO', 'THE ROYAL FLUSH'];
   assert.equal(LEVELS.length, names.length, 'Review append-only level/save indexes before changing campaign length');
