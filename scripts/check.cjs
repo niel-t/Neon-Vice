@@ -7,7 +7,7 @@ const { files } = require('./build.cjs');
 function gameData() {
   const html = readFileSync(resolve(__dirname, '..', 'index.html'), 'utf8');
   const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
-  const order = ['art.js', 'levels.js', 'world.js', 'missions.js', 'models.js', null, 'renderer.js', 'weapons.js', 'ai.js', 'dialogue.js', 'overworld.js', null];
+  const order = ['art.js', 'levels.js', 'world.js', 'missions.js', 'models.js', null, 'renderer.js', 'weapons.js', 'ai.js', 'cover.js', 'dialogue.js', 'overworld.js', null];
   assert.equal(scripts.length, order.length, 'Expected ordered assets followed by the inline classic game script');
   scripts.forEach((script, i) => assert.equal(script[1].trim(), order[i] ? `src="${order[i]}"` : '', 'Scripts must retain synchronous classic loading order'));
   const sources = scripts.map((script, i) => {
@@ -39,6 +39,8 @@ function gameData() {
   });
   const weaponsSource = sources[order.indexOf('weapons.js')];
   const weapons = vm.runInNewContext(`${weaponsSource}\n;({WD, BT, CAL, ARMOUR})`, {}, { timeout: 1000 }); // weapon data stays DOM/GL-free
+  const cover = vm.runInNewContext(`${sources[order.indexOf('cover.js')]}\n;({STANCE})`, {}, { timeout: 1000 }); // cover logic stays DOM/GL-free
+  assert(cover.STANCE.crouch.eye < cover.STANCE.stand.eye && cover.STANCE.crouch.top < cover.STANCE.stand.top, 'Crouch must lower eye and top');
   const levels = source.split('/*LEVELS*/')[1].split('/*END*/')[0];
   const data = vm.runInNewContext(`${declarations.join('\n')}\n${levels}
     ({LEVELS, EKIND, IKIND, FURN, FLOORCH, PAR, LEVEL_TRACKS})`, {}, { timeout: 1000 });
@@ -63,6 +65,7 @@ function check() {
   require('./missions-check.cjs').checkMissions();
   require('./ai-check.cjs').checkAI();
   require('./dlg-check.cjs').checkDialogue(readFileSync(resolve(__dirname, '..', 'dialogue.js'), 'utf8'));
+  require('./cover-check.cjs').checkCover();
   const data = gameData();
   const { LEVELS, PAR, LEVEL_TRACKS, WD, CAL, ARMOUR } = data;
   for (const [id, c] of Object.entries(CAL)) {

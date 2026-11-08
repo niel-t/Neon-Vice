@@ -406,6 +406,8 @@ function pose(t,anim,jab,arms,kick,gait){const R={},rot=(b,ax,a)=>{R[b]=M4.mul(M
   else if(arms==='melee'){up(-1,-1.0-0.45*k,0.75-1.7*k,1.15-0.95*k);lower(1,0.5);rot('farmL',armHinge(1),0.4);}
   else if(arms==='talk'){const g=Math.sin(t*2.3)*0.22,g2=Math.sin(t*1.7+1)*0.22;up(-1,-0.5+g,0.25,1.2+g2);up(1,-0.55-g2,-0.25,1.1+g);}}
  if(window.EXLEAN){rot('spine',X,0.35*window.EXLEAN);rot('chest',X,0.2*window.EXLEAN);rot('thighL',X,-0.35*window.EXLEAN);rot('thighR',X,-0.1*window.EXLEAN);rot('shinL',X,0.55*window.EXLEAN);rot('shinR',X,0.3*window.EXLEAN);root[1]-=0.08*window.EXLEAN;}
+ if(window.CROUCH){const c=window.CROUCH;/* W7 cover crouch: deep knee bend, feet flat, chest over knees */
+  rot('thighL',X,-1.45*c);rot('thighR',X,-1.3*c);rot('shinL',X,2.2*c);rot('shinR',X,2.05*c);rot('footL',X,-0.75*c);rot('footR',X,-0.75*c);rot('spine',X,0.4*c);rot('chest',X,0.15*c);root[1]-=0.47*c;}
  R.head=M4.mul(M4.R(X,0.06),R.head||M4.id());
  const W=[];for(let i=0;i<NB;i++){const b=BONES[i],pv=b[2],L=M4.mul(M4.mul(M4.T(pv[0],pv[1],pv[2]),R[b[0]]||M4.id()),M4.T(-pv[0],-pv[1],-pv[2]));W[i]=b[1]<0?M4.mul(M4.T(root[0],root[1],root[2]),L):M4.mul(W[b[1]],L);}
  return W;}
@@ -598,11 +600,12 @@ function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game'
   else{gun=wt;k=atk*0.12;arms=BT(wt)==='dual'?'dual':wd.two?'rifle':'aim';dual=BT(wt)==='dual';if(!(c.player||c.kind==='mcwey'||c.state==='chase'||c.aiming||atk>0))arms='low';}
  }
  if(mode==='game'&&c.ex){const kd=c.ex.kind;if(kd==='gun'){arms='execGun';anim='idle';}else if(kd==='fists'){anim='stance';jab=atk>0?Math.sin(ap*Math.PI):0;}window.EXLEAN=1;}else window.EXLEAN=0;
+ window.CROUCH=mode==='game'&&c.alive&&!(c.down>0)?(c.crouchK||0):0;
  window.PUMP=0;if(gun==='shotgun'&&c.pumpAt!==undefined&&G){const dt2=G.T-c.pumpAt;if(dt2>0.3&&dt2<0.62)window.PUMP=Math.sin((dt2-0.3)/0.32*Math.PI);}
  const tt=anim==='walk'&&mode==='game'?(c.walk||0)/(2*Math.PI*0.95)/2:t;
  const lying=mode==='game'&&(!c.alive||c.down>0);if(lying){arms=null;gun=null;anim='idle';}
- const W=pose(lying?0:tt,anim,jab,arms,k,CH[id].gait);window.EXLEAN=0;const S=CH[id].scale;
- let base=M4.mul(M4.T(c.x,c.y||0,c.z),M4.mul(M4.R([0,1,0],c.a||0),[scale*S[0],0,0,0,0,scale*S[1],0,0,0,0,scale*S[2],0,0,0,0,1]));
+ const W=pose(lying?0:tt,anim,jab,arms,k,CH[id].gait);window.EXLEAN=0;window.CROUCH=0;const S=CH[id].scale;
+ let base=M4.mul(M4.T(c.x+(c.lox||0),c.y||0,c.z+(c.loz||0)),M4.mul(M4.R([0,1,0],c.a||0),[scale*S[0],0,0,0,0,scale*S[1],0,0,0,0,scale*S[2],0,0,0,0,1]));
  if(lying){const fe=c.fall===undefined?1:1-Math.pow(1-c.fall,2);base=M4.mul(base,M4.mul(M4.T(0,0.2*fe,0),M4.R([1,0,0],(c.alive?1:-1)*Math.PI/2*fe)));}
  const Wb=[];const B=new Float32Array(NB*16);for(let i=0;i<NB;i++)Wb[i]=M4.mul(base,W[i]);if(CH[id].neckDrop){const h=BI.head;Wb[h]=M4.mul(base,M4.mul(M4.T(0,-CH[id].neckDrop,0),W[h]));}
  const cut=[],SEV={armL:['uarmL','farmL','handL'],armR:['uarmR','farmR','handR'],legL:['thighL','shinL','footL'],legR:['thighR','shinR','footR']};
