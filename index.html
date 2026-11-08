@@ -139,6 +139,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <div id="rotate" class="screen"><div class="logo2">TURN YOUR PHONE<br>SIDEWAYS</div><div class="hint">Landscape works best for the twin-stick controls</div></div>
 <div id="err" class="screen"><div class="logo2">WebGL isn't available<br>in this browser</div></div>
 <div id="saveWarning" role="status" style="display:none;position:fixed;bottom:8px;left:8px;right:8px;z-index:1000;padding:8px;background:#24151f;color:#ffd36b;font:12px sans-serif;pointer-events:none"></div>
+<div id="modelWarning" role="status" style="display:none;position:fixed;top:8px;left:8px;right:8px;z-index:1000;padding:8px;background:#24151f;color:#ffd36b;font:12px sans-serif;pointer-events:none">Some character artwork could not load. Simplified characters remain available; reload to retry.</div>
 <script src="art.js"></script>
 <script>
 'use strict';
@@ -533,7 +534,7 @@ function drawInst(){if(!PI||!ENH()||(!IBhi.n&&!IBlo.n))return;for(const k of ['a
  gl.uniform1f(LI.uBump,0.12);IBhi.draw(LI);IBlo.draw(LI);gl.useProgram(P1);for(const k of ['aP','aN','aT','aC'])gl.enableVertexAttribArray(L[k]);}
 /* quality */
 let QL=0,qlT=0,ftEma=0.016;
-function qualityTick(raw){if(window.QLOCK!==undefined){QL=window.QLOCK;return;}ftEma=ftEma*0.95+Math.min(raw,0.1)*0.05;if(!ENH())return;
+function qualityTick(raw){if(window.QLOCK!==undefined){QL=window.QLOCK;return;}if(raw===null)return;ftEma=ftEma*0.95+Math.min(raw,0.1)*0.05;if(!ENH())return;
  if(ftEma>0.021){qlT+=raw;if(qlT>2.5&&QL<3){QL++;qlT=0;}}else if(ftEma<0.0135){qlT-=raw;if(qlT<-6&&QL>0){QL--;qlT=0;}}else qlT*=0.98;}
 /* motes */
 let MOTES=[];
@@ -2099,7 +2100,7 @@ function updateNine(dt){if(!nineBuilt)buildNine();const c=nineChar;c.talk=nineTa
  nineBlinkT-=dt;if(nineBlinkT<=0){c.blink=0.13;nineBlinkT=rnd(2,4.5);}c.blink-=dt;}
 function nineView(asp){let eye=[-0.35,1.6,2.75],tgt=[-1.05,1.3,0];if(asp<1){eye=[0.2,1.8,3.3];tgt=[0,1.15,0];}const fl=Math.sin(menuT*1.7)>0.96?0.25:1;
  return{eye,tgt,lights:[{x:0,y:2.5,z:0.4,r:3.2,c:[1.25*fl,0.95*fl,0.65*fl]},{x:-2.2,y:1.6,z:0.2,r:3.4,c:[1,0.15,0.3]},{x:2,y:2.0,z:-0.6,r:3.6,c:[1,0.3,0.75]},{x:1.2,y:1.5,z:1.8,r:3.6,c:[0.35,0.8,1.2]}]};}
-function drawNineDyn(B,P){B.reset();P.reset();if(!nineChar)return;PS2C.add(nineChar,'menu',1,menuT,IBhi,'nine');
+function drawNineDyn(B,P){B.reset();P.reset();if(!nineChar)return;if(!PS2C.add(nineChar,'menu',1,menuT,IBhi,'nine')&&PS2C.modelStatus('nine')==='failed')hdChar(B,{...nineChar,pose:'nine'},menuT);
  const ex=arm().stock.find(k=>WD[k]&&WD[k].excl);if(ex)drawWeapon(B,A.mul(A.mul(A.mul(A.T(0.5,0.95,0.62),A.RY(0.5+Math.sin(menuT*0.8)*0.4)),A.RZ(Math.PI/2)),A.S(1.15,1.15,1.15)),ex);}
 /* ================= ACT 2: HOSTILE TAKEOVER ================= */
 function act2Setup(g,i){g.nades=[];if(!(i>=3))return;const W=g.W,cells=ch=>{const o=[];for(let z=0;z<g.H;z++)for(let x=0;x<W;x++)if(g.rows[z][x]===ch)o.push({x:x+0.5,z:z+0.5,ix:x,iz:z});return o;};
@@ -2967,7 +2968,7 @@ const KIDS=BONES.map((_,i)=>BONES.map((b,j)=>b[1]===i?j:-1).filter(j=>j>=0));
 /* ================= TEXTURES (painted at load, PS2-sized) ================= */
 let SKIN=[196,138,102],LAV=[162,132,210],LAVD=[100,76,148],PANTS=[154,126,202],SHD=[40,20,70];
 const rgb=(c,a)=>a===undefined?`rgb(${c[0]|0},${c[1]|0},${c[2]|0})`:`rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a})`;
-function loadImg(src){return new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src=src;});}
+function loadImg(src,name){return new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('Could not load character artwork: '+name));i.src=src;});}
 const HEAD={chinY:1.575,crownY:1.842,neckY:1.47};
 /* head: cylindrical unwrap of the face from the artwork, mirrored from its lit half so the face is straight and symmetric */
 function paintHead(img,F){const W=256,H=256,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
@@ -3284,7 +3285,7 @@ function pose(t,anim,jab,arms,kick){const R={},rot=(b,ax,a)=>{R[b]=M4.mul(M4.R(a
  R.head=M4.mul(M4.R(X,0.06),R.head||M4.id());
  const W=[];for(let i=0;i<NB;i++){const b=BONES[i],pv=b[2],L=M4.mul(M4.mul(M4.T(pv[0],pv[1],pv[2]),R[b[0]]||M4.id()),M4.T(-pv[0],-pv[1],-pv[2]));W[i]=b[1]<0?M4.mul(M4.T(root[0],root[1],root[2]),L):M4.mul(W[b[1]],L);}
  return W;}
-const NB=BONES.length;let ready=false,P=null,MODELS={},Lc={},queue=[];
+const NB=BONES.length;let ready=false,shaderReady=false,status='loading',P=null,MODELS={},Lc={},queue=[];
 const CH={
  consigliere:{face:'face',F:{EM:[190,192],TS:0.158,prof:[[0,0],[53,13],[93,5],[153,0]],skin:[[120,250],[250,250],[186,95],[150,120],[220,120],[186,320]]},
   B:{jacket:[162,132,210],pants:[154,126,202],shirt:'pais',watch:-1,dusters:true,shoe:[42,36,48],shoulders:0.22},scale:[1.14,1.36,1.12],neckDrop:0.04},
@@ -3297,6 +3298,8 @@ const CH={
  mcwey:{face:'mcwey',F:{...FACECFG.mcwey,hl:100,hr:126,beardBot:1.545,skin:[[120,235],[232,235],[176,100],[140,130],[212,130]],beardPt:[130,305],beardTop:1.69},
   B:{jacket:[228,218,198],pants:[222,212,192],shirt:'tropical',deepV:true,chains:true,rings:2,watch:1,shoe:[196,180,156],pin:false,square:'#e8dcc8'},scale:[1.06,1.0,1.06]},
 };
+const mainIds=Object.keys(CH),modelStates=Object.fromEntries(mainIds.map(id=>[id,'loading']));
+function modelFailure(id,e){modelStates[id]='failed';$('modelWarning').style.display='block';console.error('PS2C '+id,e);}
 function paintSmile(cv,F){const x=cv.getContext('2d'),C=256,my=277,hw=36;
  if(F.beard){x.fillStyle=rgb(F.beard);x.fillRect(188,0,24,6);}
  const mouth=()=>{x.beginPath();x.moveTo(C-hw,my-14);x.quadraticCurveTo(C,my,C+hw,my-14);x.quadraticCurveTo(C+hw*0.62,my+19,C,my+20);x.quadraticCurveTo(C-hw*0.62,my+19,C-hw,my-14);x.closePath();};
@@ -3325,22 +3328,28 @@ void main(){mat4 M=uB[int(aBi.x)]*aBw.x+uB[int(aBi.y)]*aBw.y+uB[int(aBi.z)]*aBw.
  l+=pow(1.0-max(dot(n,V),0.0),3.0)*vec3(0.45,0.3,0.6)*0.3;vL=l;vS=sp;vT=aT;vF=clamp((length(uCam-w.xyz)-uFog.x)/(uFog.y-uFog.x),0.0,1.0);gl_Position=uVP*w;}`;
 const FS=`precision highp float;varying vec2 vT;varying vec3 vL;varying float vS;varying float vF;uniform sampler2D uTex;uniform vec3 uFogC;
 void main(){vec3 c=texture2D(uTex,vT).rgb*vL+vec3(vS)*0.5;gl_FragColor=vec4(mix(c,uFogC,vF),1.0);}`;
-function sh(t,src){const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s;}
-function mkTex(cnv){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cnv);gl.generateMipmap(gl.TEXTURE_2D);
- gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return t;}
-function upload(Mh,tex){const mk=d=>{const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,d,gl.STATIC_DRAW);return b;};
- const o={p:mk(new Float32Array(Mh.p)),n:mk(normals(Mh)),t:mk(new Float32Array(Mh.uv)),bi:mk(new Float32Array(Mh.bi)),bw:mk(new Float32Array(Mh.bw)),i:gl.createBuffer(),n_i:Mh.idx.length,tex};
- gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,o.i);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(Mh.idx),gl.STATIC_DRAW);return o;}
-async function init(){try{
- P=gl.createProgram();gl.attachShader(P,sh(gl.VERTEX_SHADER,VS));gl.attachShader(P,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(P);if(!gl.getProgramParameter(P,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(P));
+function sh(t,src){const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){const message=gl.getShaderInfoLog(s);gl.deleteShader(s);throw new Error(message);}return s;}
+function mkTex(cnv){const t=gl.createTexture();try{gl.bindTexture(gl.TEXTURE_2D,t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cnv);gl.generateMipmap(gl.TEXTURE_2D);
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return t;}catch(e){gl.deleteTexture(t);throw e;}}
+function freeModel(parts){for(const m of parts||[]){for(const b of ['p','n','t','bi','bw','i'])if(m[b])gl.deleteBuffer(m[b]);if(m.tex)gl.deleteTexture(m.tex);}}
+function upload(Mh,tex){const o={tex,n_i:Mh.idx.length};const mk=(key,d)=>{const b=o[key]=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,d,gl.STATIC_DRAW);};
+ try{mk('p',new Float32Array(Mh.p));mk('n',normals(Mh));mk('t',new Float32Array(Mh.uv));mk('bi',new Float32Array(Mh.bi));mk('bw',new Float32Array(Mh.bw));o.i=gl.createBuffer();
+ gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,o.i);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(Mh.idx),gl.STATIC_DRAW);return o;}catch(e){freeModel([o]);throw e;}}
+async function init(){const shaders=[];try{
+ P=gl.createProgram();for(const [type,source] of [[gl.VERTEX_SHADER,VS],[gl.FRAGMENT_SHADER,FS]]){const s=sh(type,source);shaders.push(s);gl.attachShader(P,s);}gl.linkProgram(P);if(!gl.getProgramParameter(P,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(P));
  for(const n of ['uVP','uB','uPL','uPC','uAmb','uLD','uLC','uCam','uFog','uFogC','uTex'])Lc[n]=gl.getUniformLocation(P,n);for(const n of ['aP','aN','aT','aBi','aBw'])Lc[n]=gl.getAttribLocation(P,n);
- const pais=await loadImg(ART.pais);
- PAIS=pais;for(const id in CH){const C=CH[id];C.img=await loadImg(ART[C.face]);buildCH(id);}
- gl.bindTexture(gl.TEXTURE_2D,atlasTex);ready=true;}catch(e){console.error('PS2C',e);}}
+ shaderReady=true;
+ try{PAIS=await loadImg(ART.pais,'pais');}catch(e){modelFailure('consigliere',e);}
+ for(const id of mainIds){if(modelStates[id]==='failed')continue;try{const C=CH[id];C.img=await loadImg(ART[C.face],C.face);buildCH(id);modelStates[id]='ready';C.suitOn=null;applySuit(id);}catch(e){modelFailure(id,e);}finally{gl.bindTexture(gl.TEXTURE_2D,atlasTex);}}
+ ready=mainIds.every(id=>modelStates[id]==='ready');status=ready?'ready':'degraded';
+ }catch(e){shaderReady=false;status='failed';for(const id of mainIds)modelStates[id]='failed';if(P)gl.deleteProgram(P);P=null;$('modelWarning').style.display='block';console.error('PS2C',e);}
+ finally{for(const s of shaders)gl.deleteShader(s);gl.bindTexture(gl.TEXTURE_2D,atlasTex);}}
  let PAIS=null;function jewelB(id,B){const p=PROG[id];if(!p||!CHARS.some(c=>c.id===id))return;const j=p.jewel||{};B.nowatch=!j.watch;B.chain=!!j.chain;B.rings=j.rings?2:0;}
  function buildCH(id){const C=CH[id],face=C.img,pais=PAIS;jewelB(id,C.B);const ht=paintHead(face,C.F);if(C.F.smile)paintSmile(ht,C.F);const shirt=C.B.shirt==='pais'?pais:C.B.shirt==='tropical'?tropicalCanvas():shirtCanvas(C.B.shirt);const bt=paintBody(shirt,Object.assign({shirtScale:C.B.shirt==='pais'?0.26:C.B.shirt==='tropical'?0.45:1},C.B));if(C.B.dolphin)dolphinPrint(bt.getContext('2d'));
-  MODELS[id]=[upload(buildBody(C.B),mkTex(bt)),upload(buildHead(C.B),mkTex(ht))];const cp=cv=>{const k=document.createElement('canvas');k.width=cv.width;k.height=cv.height;k.getContext('2d').drawImage(cv,0,0);return k;};C.bc=bt;C.hc=ht;C.bcBase=cp(bt);C.bc0=cp(bt);C.hc0=cp(ht);}
- function rebuild(id){if(!ready||!CH[id]||!CH[id].img)return;if(MODELS[id])for(const m of MODELS[id]){for(const b of ['p','n','t','bi','bw','i'])gl.deleteBuffer(m[b]);gl.deleteTexture(m.tex);}buildCH(id);CH[id].suitOn=null;applySuit(id);gl.bindTexture(gl.TEXTURE_2D,atlasTex);}
+  const cp=cv=>{const k=document.createElement('canvas');k.width=cv.width;k.height=cv.height;k.getContext('2d').drawImage(cv,0,0);return k;};const canvases={bc:bt,hc:ht,bcBase:cp(bt),bc0:cp(bt),hc0:cp(ht)},parts=[];
+  try{parts.push(upload(buildBody(C.B),mkTex(bt)));parts.push(upload(buildHead(C.B),mkTex(ht)));}catch(e){freeModel(parts);throw e;}
+  const old=MODELS[id];MODELS[id]=parts;Object.assign(C,canvases);freeModel(old);}
+ function rebuild(id){if(!shaderReady||!CH[id]||!CH[id].img)return;try{buildCH(id);CH[id].suitOn=null;applySuit(id);}catch(e){$('modelWarning').style.display='block';console.error('PS2C rebuild '+id,e);}finally{gl.bindTexture(gl.TEXTURE_2D,atlasTex);}}
 const RW=mir(WR),ADR=[-AD[0],AD[1],0],LW=WR,ADL=[AD[0],AD[1],0];
 function handFrame(Wm,left,sw,base){const Mh=Wm[left?BI.handL:BI.handR],w=left?LW:RW,a=left?ADL:ADR,pm=left?V.norm(V.cross(a,Z)).map(v=>v):V.norm(V.cross(a,Z)).map(v=>-v);
  const O=M4.ap(Mh,V.add(w,V.mul(a,0.065))),dz=V.norm(V.sub(M4.ap(Mh,V.add(w,a)),M4.ap(Mh,w))),dy=V.norm(V.sub(M4.ap(Mh,V.add(w,Z)),M4.ap(Mh,w))),dx=V.norm(V.cross(dy,dz)),dy2=V.cross(dz,dx);
@@ -3418,7 +3427,7 @@ function bloodify(key,lvl,c){const C=CH[key];if(!C||!C.bc)return;C.dirty=true;co
 function buildLook(key,c){const Lk=c.look,bt=c.boss?'boss':(c.body||Lk.body);const cfg=lookCfg(Lk,bt);
  const ht=paintHeadP(Lk),btx=paintBodyP(Lk);MODELS[key]=[upload(buildBody(cfg.B),mkTex(btx)),upload(buildHead(cfg.B),mkTex(ht))];CH[key]={scale:cfg.scale,npc:true,bc:btx,hc:ht};}
 function freeLooks(){for(const k in MODELS)if(CH[k]&&CH[k].npc){for(const m of MODELS[k]){for(const b of ['p','n','t','bi','bw','i'])gl.deleteBuffer(m[b]);gl.deleteTexture(m.tex);}delete MODELS[k];delete CH[k];}}
-function applySuit(id){const C=CH[id];if(!ready||!C||!C.bcBase||!MODELS[id])return;const sk=suitOK(PROG[id],PROG[id]&&PROG[id].suit)?PROG[id].suit:'default';if(C.suitOn===sk)return;C.suitOn=sk;
+function applySuit(id){const C=CH[id];if(!shaderReady||!C||!C.bcBase||!MODELS[id])return;const sk=suitOK(PROG[id],PROG[id]&&PROG[id].suit)?PROG[id].suit:'default';if(C.suitOn===sk)return;C.suitOn=sk;
  const x=C.bc0.getContext('2d');x.globalCompositeOperation='source-over';x.globalAlpha=1;x.drawImage(C.bcBase,0,0);
  if(sk!=='default'){const zones=[[0,0,200,290],[312,0,200,290],[0,290,512,90],[0,440,512,72]];x.save();x.beginPath();for(const z of zones)x.rect(...z);x.clip();
   if(sk==='power'){x.fillStyle='rgba(38,38,50,.84)';x.fillRect(0,0,512,512);x.fillStyle='rgba(210,210,235,.25)';for(let i=0;i<512;i+=12)x.fillRect(i,0,1.2,512);}
@@ -3436,7 +3445,7 @@ function ensureLook(c){levelCheck();const k=lookKey(c);if(!k)return null;if(MODE
 
 function has(id){return !!CH[id];}
 /* c: game character; mode: 'menu' | 'game' | 'stand'; returns true when drawn */
-function add(c,mode,scale,t,IB,id){if(!ready)return false;if(mode==='game')levelCheck();if(id==='look'){id=ensureLook(c);if(!id)return false;}if(!MODELS[id])return false;let anim='idle',jab,arms=null,k=0,gun=null,cash=false,dual=false;const sp=Math.hypot(c.vx||0,c.vz||0);
+function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game')levelCheck();if(id==='look'){id=ensureLook(c);if(!id)return false;}if(!MODELS[id])return false;let anim='idle',jab,arms=null,k=0,gun=null,cash=false,dual=false;const sp=Math.hypot(c.vx||0,c.vz||0);
  const atk=c.atkT>0?clamp(c.atkT/(c.atkDur||0.2),0,1):0,ap=1-atk;
  if(mode==='menu'){
   if(c.pose==='consigliere'){anim='stance';jab=c.jab>0?Math.sin((1-c.jab/0.24)*Math.PI):undefined;}
@@ -3467,15 +3476,15 @@ function add(c,mode,scale,t,IB,id){if(!ready)return false;if(mode==='game')level
  if(IB&&cash){const hm=handFrame(Wb,true,1);const pr=IB.r,pu=IB.uv;IB.r=0;for(let i=-2;i<=2;i++){const m=A.mul(A.mul(A.mul(hm,A.T(0,0.03,0.04)),A.RY(i*0.26)),A.T(0,0.004*i,0.085));IB.box(A.mul(m,A.S(0.075,0.004,0.16)),[1,1,1],false,TUV[11]);}IB.r=pr;IB.uv=pu;}
  if(IB&&id==='mcwey'&&!gun){const hm=handFrame(Wb,false,1);const pr=IB.r,pu=IB.uv;IB.r=0.6;IB.uv=null;const cm=A.mul(hm,A.mul(A.T(0,0.035,0.02),A.RX(-0.5)));IB.box(A.mul(cm,A.mul(A.T(0,0,0.06),A.S(0.022,0.022,0.15))),[0.42,0.24,0.12]);IB.box(A.mul(cm,A.mul(A.T(0,0,0.0),A.S(0.024,0.024,0.018))),[0.85,0.65,0.25]);IB.box(A.mul(cm,A.mul(A.T(0,0,0.137),A.S(0.024,0.024,0.008))),[1,0.45,0.15],true);c.cig=apply(cm,0,0,0.145);IB.r=pr;IB.uv=pu;}
  return true;}
-function flush(VPm,u){if(!ready||!queue.length||!u){queue.length=0;return;}gl.useProgram(P);
+function flush(VPm,u){if(!shaderReady||!queue.length||!u){queue.length=0;return;}gl.useProgram(P);
  gl.uniformMatrix4fv(Lc.uVP,false,VPm);gl.uniform4fv(Lc.uPL,LBUF);gl.uniform3fv(Lc.uPC,CBUF);gl.uniform3fv(Lc.uAmb,u.amb.map(v=>v*1.35));gl.uniform3fv(Lc.uLD,u.ld);gl.uniform3fv(Lc.uLC,u.lc);gl.uniform3fv(Lc.uCam,u.eye);gl.uniform2fv(Lc.uFog,u.fog);gl.uniform3fv(Lc.uFogC,u.fogC);
  gl.uniform1i(Lc.uTex,0);gl.activeTexture(gl.TEXTURE0);gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);
  for(const kk of ['aP','aN','aT','aBi','aBw']){const l=Lc[kk];if(l>=0){gl.enableVertexAttribArray(l);if(EXT_I)EXT_I.vertexAttribDivisorANGLE(l,0);}}
- for(const q of queue){gl.uniformMatrix4fv(Lc.uB,false,q.B);for(const mm of MODELS[q.id]){gl.bindTexture(gl.TEXTURE_2D,mm.tex);
+ for(const q of queue){if(!MODELS[q.id])continue;gl.uniformMatrix4fv(Lc.uB,false,q.B);for(const mm of MODELS[q.id]){gl.bindTexture(gl.TEXTURE_2D,mm.tex);
   const at=(n,b,s)=>{const l=Lc[n];if(l<0)return;gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.vertexAttribPointer(l,s,gl.FLOAT,false,0,0);};
   at('aP',mm.p,3);at('aN',mm.n,3);at('aT',mm.t,2);at('aBi',mm.bi,4);at('aBw',mm.bw,4);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,mm.i);gl.drawElements(gl.TRIANGLES,mm.n_i,gl.UNSIGNED_SHORT,0);}}
  for(const kk of ['aP','aN','aT','aBi','aBw']){const l=Lc[kk];if(l>=0)gl.disableVertexAttribArray(l);}gl.disable(gl.CULL_FACE);gl.bindTexture(gl.TEXTURE_2D,atlasTex);queue.length=0;}
-return{init,add,flush,has,applySuit,rebuild,get ready(){return ready;}};})();
+return{init,add,flush,has,applySuit,rebuild,modelStatus:id=>modelStates[id],get status(){return status;},get ready(){return ready;}};})();
 applyJewelLooks();
 PS2C.init();
 
@@ -3535,7 +3544,7 @@ function hdArm(B,tor,c,sd,ax,az,ex,kind,wt){B.r=1;B.tp=0.15;B.uv=(c.look.tank||c
  if(kind==='cash'){for(let i=-2;i<=2;i++){const m=A.mul(A.mul(A.mul(hn,A.T(0,-0.05,0.03)),A.RZ(i*0.24)),A.T(0,-0.08,0.004*i));PB(B,m,0,0,0,0.075,0.16,0.004,[1,1,1],false,TUV[11]);}}
  if(kind==='gun'){const wm=A.mul(A.mul(A.mul(hn,A.T(0,-0.035,0.02)),A.RX(Math.PI/2)),A.S(1.65,1.65,1.65));drawWeapon(B,wm,wt==='dual'?'pistol':wt);c.muzzle=apply(wm,0,0.05,WD[wt].len+0.12);}
  return hn;}
-function hdChar(B,c,t){{const pid=c.pose==='sal'?'mcwey':(typeof elevChar!=='undefined'&&c===elevChar)?CHARS[selIdx].id:c.pose;if(PS2C.has(pid)&&PS2C.add(c,c===elevChar?'stand':'menu',1,t,B,pid))return;}const NB=state==='title'||state==='select'||state==='help',SPL=NB?{torso:[],legs:[],face:[]}:c.splat;const Lk=c.look,P=(m,...a)=>PB(B,m,...a);const skin=Lk.skin,skD=skin.map(v=>v*0.86),jD=Lk.jacket.map(v=>v*0.78);
+function hdChar(B,c,t){{const pid=c.pose==='sal'?'mcwey':(typeof elevChar!=='undefined'&&c===elevChar)?CHARS[selIdx].id:c.pose;if(PS2C.has(pid)&&PS2C.add(c,c===elevChar?'stand':'menu',1,t,B,pid))return;if(['title','select','help'].includes(state)&&PS2C.modelStatus(pid)==='loading')return;}const NB=state==='title'||state==='select'||state==='help',SPL=NB?{torso:[],legs:[],face:[]}:c.splat;const Lk=c.look,P=(m,...a)=>PB(B,m,...a);const skin=Lk.skin,skD=skin.map(v=>v*0.86),jD=Lk.jacket.map(v=>v*0.78);
  const base=A.mul(A.T(c.x,c.y||0,c.z),A.RY(c.a));const br=Math.sin(t*2.1+c.x*3)*0.008;let pose;
  if(c.pose==='consigliere'){const j=c.jab>0?Math.sin((1-c.jab/0.24)*Math.PI):0;const bob=Math.abs(Math.sin(t*4))*0.025;
   pose={spread:0.15,lean:0.1,hx:0.14,hy:0,bob,R:[-1.2-0.35*j,0.2-0.1*j,-1.75+1.65*j,'fist'],L:[-0.95,0.14,-2.0,'fist']};}
@@ -3905,8 +3914,8 @@ hud.addEventListener('touchend',tend);hud.addEventListener('touchcancel',tend);
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='play')togglePause();});
 
 /* ================= LOOP ================= */
-let last=performance.now();
-function frame(now){requestAnimationFrame(frame);qualityTick((now-last)/1000);const dt=Math.min((now-last)/1000,0.05);last=now;menuT+=dt;
+let last=null;
+function frame(now){requestAnimationFrame(frame);const raw=last===null?null:Math.max(0,(now-last)/1000);qualityTick(raw);const dt=raw===null?0:Math.min(raw,0.05);last=now;menuT+=dt;
  pollPad();padMenus(dt);document.body.classList.toggle('pad',padMode);document.body.classList.toggle('touch',touchMode);
  const portrait=touchMode&&vh>vw&&(state==='play'||state==='pause');$('rotate').classList.toggle('on',portrait);
  if(pressed.pause&&(state==='play'||state==='pause'))togglePause();
