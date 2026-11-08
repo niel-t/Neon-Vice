@@ -125,7 +125,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 </div>
 <div id="sBrief" class="screen briefScr"><div class="selHead"><div class="selTop" id="brFrom">McWEY TOWER</div><div class="gname" data-t="McWEY">McWEY</div><div class="quote" id="brQuote"></div></div><div style="flex:1"></div><div class="chat" id="chat"></div><div class="tapnext" id="chatTap">TAP / SPACE / (A) TO CONTINUE</div><button class="btn" id="bGo">TAKE THE JOB</button></div>
 <div id="sElev" class="screen"><div class="elev"><div class="elT">McWEY TOWER</div><div class="elN"><span>&#9650;</span><b id="elFloor">01</b></div><div class="elT2">TAP TO SKIP</div></div></div>
-<div id="sDead" class="screen dim"><div class="big red">YOU'RE DEAD</div><div class="hint" id="deadCause" style="color:#ffb3bd"></div><div class="hint" id="deadXP" style="color:#ffd36b"></div><div class="hint" id="deadTip"></div><div class="rowc"><button class="btn" id="bRetry">RETRY<span class="kbhint"> (R)</span><span class="padhint"> (A)</span></button><button class="btn alt" id="bDeadWalk">WALK AWAY<span class="kbhint"> (W)</span><span class="padhint"> (X)</span></button><button class="btn alt" id="bDeadQuit">QUIT<span class="padhint"> (B)</span></button></div><div class="hint" style="opacity:.75">Retry keeps what you brought in · Walk away to go home with it</div></div>
+<div id="sDead" class="screen dim"><div class="big red">YOU'RE DEAD</div><div class="hint" id="deadCause" style="color:#ffb3bd"></div><div class="hint" id="deadXP" style="color:#ffd36b"></div><div class="hint" id="deadTip"></div><div class="rowc"><button class="btn" id="bRetry">RETRY<span class="kbhint"> (R)</span><span class="padhint"> (A)</span></button><button class="btn alt" id="bDeadWalk">WALK AWAY<span class="padhint"> (X)</span></button><button class="btn alt" id="bDeadQuit">QUIT<span class="padhint"> (B)</span></button></div><div class="hint" style="opacity:.75">Retry keeps what you brought in · Walk away to go home with it</div></div>
 <div id="sResults" class="screen dim"><div class="logo2" id="rTitle">FLOOR CLEAR</div><div class="stats" id="rStats"></div><div class="grade" id="rGrade">A</div><div class="rowc"><button class="btn alt" id="bRetryLvl">RETRY<span class="padhint"> (X)</span></button><button class="btn" id="bNextLvl">NEXT FLOOR</button></div></div>
 <div id="sPerk" class="screen dim"><div class="logo2">LEVEL UP!</div><div class="hint" id="pkLvl"></div><div class="rowc" id="pkCards"></div></div>
 <div id="sCar" class="screen dim"><div class="logo2">YOUR RIDE</div><div class="hint" id="carWallet" style="color:#7dff9a"></div><div class="hint" id="carLoad" style="color:#ffd36b;margin-top:4px"></div><div style="display:flex;flex-direction:column;align-items:center;margin-top:10px"><button class="btn" id="bCarJob">NEXT JOB</button><button class="btn alt" id="bCarShop">NINE OF NINE'S &middot; GUN SHOP<span class="kbhint"> (G)</span><span class="padhint"> (X)</span></button><button class="btn alt" id="bCarClub">VELVET PALMS &middot; STRIP CLUB<span class="kbhint"> (C)</span><span class="padhint"> (RB)</span></button><button class="btn alt" id="bCarStore">OCEAN DRIVE SHOPPING &middot; CARS &amp; GOLD<span class="kbhint"> (S)</span><span class="padhint"> (Y)</span></button><button class="btn alt" id="bCarHome">BACK TO YOUR PLACE</button><button class="btn alt" id="bCarBack">NOT YET<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div>
@@ -630,6 +630,8 @@ function pollPad(){if(inputSuspended){PAD.on=false;return;}let gp=null;try{const
  PAD.lx=lx;PAD.ly=ly;PAD.rx=rx;PAD.ry=ry;PAD.rt=gp.buttons[7]?gp.buttons[7].value:0;
  if(lm>0.4||rm>0.4||PAD.b.some((v,i)=>v&&!PAD.pb[i])){if(!padMode){padMode=true;touchMode=false;mouse.active=false;mouse.down=false;}}}
 const pdown=i=>PAD.on&&!!PAD.b[i]&&!PAD.pb[i];
+/* walking away abandons the run, so the pad shortcut needs a fresh X press made after the screen has been up for a moment (never a button still held from combat) */
+let WALK_ARM=0;const padWalk=()=>performance.now()>=WALK_ARM&&pdown(2);
 function rumble(st,wk,ms){if(!padMode||!PAD.gp)return;try{const a=PAD.gp.vibrationActuator;if(a&&a.playEffect)a.playEffect('dual-rumble',{startDelay:0,duration:ms,strongMagnitude:st,weakMagnitude:wk}).catch(()=>{});}catch(e){}}
 function aimAssist(p,a,max){let ba=null,bd=max;for(const e of G.enemies){if(!e.alive)continue;const dx=e.x-p.x,dz=e.z-p.z,d=Math.hypot(dx,dz);if(d>11)continue;const ea=Math.atan2(dx,dz),df=Math.abs(angDiff(a,ea));if(df<bd&&los(p.x,p.z,e.x,e.z)){bd=df;ba=ea;}}return ba===null?a:ba;}
 function padMenus(dt){if(!PAD.on)return;PAD.navT-=dt;const ax=PAD.gp.axes[0]||0;let dir=0;
@@ -643,7 +645,7 @@ function padMenus(dt){if(!PAD.on)return;PAD.navT-=dt;const ax=PAD.gp.axes[0]||0;
    if(pdown(0)||pdown(9))$('bPlay').click();else if(pdown(1)){sfx('blip');state='title';show('sTitle');}break;
   case 'elev':if(pdown(0)||pdown(9))skipElev();break;
   case 'brief':if(pdown(0)||pdown(9))skip();break;
-  case 'dead':if(pdown(0)||pdown(8))restart();else if(pdown(2))walkAway();else if(pdown(1))$('bDeadQuit').click();break;
+  case 'dead':if(pdown(0)||pdown(8))restart();else if(padWalk())walkAway();else if(pdown(1))$('bDeadQuit').click();break;
   case 'results':if(pdown(0))$('bNextLvl').click();else if(pdown(2)||pdown(8))restart();break;
   case 'end':if(pdown(0))$('bAgain').click();break;
   case 'store':storePad(dir);break;
@@ -651,7 +653,7 @@ function padMenus(dt){if(!PAD.on)return;PAD.navT-=dt;const ax=PAD.gp.axes[0]||0;
   case 'carmenu':if(pdown(3)){$('bCarStore').click();break;}if(pdown(5)&&$('bCarClub').style.display!=='none'){$('bCarClub').click();break;}if(pdown(0))$('bCarJob').click();else if(pdown(2)&&$('bCarShop').style.display!=='none')$('bCarShop').click();else if(pdown(1))closeCarMenu();break;
   case 'shop':{if(pdown(1)){closeShop();break;}if(!shopReady()){if(pdown(0))$('shSay').click();break;}const a=arm(),i=pdown(4)?0:pdown(0)?1:pdown(5)?2:-1;if(i>=0&&a.stock[i])shopPick(a.stock[i]);else if(pdown(2))shopExtra('ammo');else if(pdown(3))shopExtra('vest');}break;
   case 'perk':{const cs=document.querySelectorAll('.pcard');const i=pdown(4)?0:pdown(0)?1:pdown(5)?2:-1;if(i>=0&&cs[i])choosePerk(cs[i].dataset.k);}break;
-  case 'pause':if(pdown(9)||pdown(1))togglePause();else if(pdown(8))restart();else if(pdown(2))walkAway();else if(pdown(3))$('bQuit').click();break;
+  case 'pause':if(pdown(9)||pdown(1))togglePause();else if(pdown(8))restart();else if(padWalk())walkAway();else if(pdown(3))$('bQuit').click();break;
   case 'play':if(G&&G.cine&&(pdown(0)||pdown(2))){cineSkip();break;}if(G&&G.def.hub&&pdown(3)){hubSkip();break;}if(pdown(9))togglePause();else if(pdown(8))restart();else{if(pdown(0))pressed.grab=true;if(pdown(2))pressed.perk=true;}break;}}
 addEventListener('gamepadconnected',()=>{padMode=true;touchMode=false;mouse.active=false;banner('CONTROLLER CONNECTED','Left stick move · Right stick aim · RT attack · A grab · X cash');});
 
@@ -2945,7 +2947,7 @@ function drawHUD0(){const c=hctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0
 
 /* ================= FLOW ================= */
 const SCREENS=['sElev','sTitle','sHelp','sSelect','sBrief','sDead','sResults','sEnd','sPause','sPerk','sCar','sShop','sStore','sMorning'];
-function show(id){SCREENS.forEach(s=>$(s).classList.toggle('on',s===id));if(id==='sTitle')syncResume();if(id)$('banner').classList.remove('on');}
+function show(id){if(id==='sDead'||id==='sPause')WALK_ARM=performance.now()+500;SCREENS.forEach(s=>$(s).classList.toggle('on',s===id));if(id==='sTitle')syncResume();if(id)$('banner').classList.remove('on');}
 let bannerT=null;function banner(a,b){const el=$('banner');el.innerHTML='<div class="b1">'+a+'</div>'+(b?'<div class="b2">'+b+'</div>':'');el.classList.add('on');clearTimeout(bannerT);bannerT=setTimeout(()=>el.classList.remove('on'),2400);}
 function updateSelect(){const c=CHARS[selIdx];const gb=$('cBig');gb.textContent=c.name;gb.dataset.t=c.name;$('cQuote').textContent=c.quote;$('cPerk').innerHTML=c.perk;
  $('cDiff').innerHTML='<span>DIFFICULTY</span>'+Object.entries(DIFF).map(([k,d])=>`<button data-d="${k}" class="${SET.diff===k?'on':''}">${d.name}</button>`).join('');$('cDiffD').textContent=Dd().desc;$('cFloor').innerHTML=floorHTML();$('cFloorD').innerHTML=floorDesc()+'<br>'+chHTML(JOBS.sel);
@@ -3014,7 +3016,6 @@ tbtn('bGrab',()=>pressed.grab=true);tbtn('bPerk',()=>pressed.perk=true);tbtn('bP
 
 /* ================= INPUT ================= */
 addEventListener('keydown',e=>{if(contextLost)return;keys[e.code]=true;if(state==='morning'&&(e.code==='Enter'||e.code==='Space')){$('bMorning').click();e.preventDefault();return;}if(state==='carmenu'||state==='shop'||state==='store'){menuKey(e);e.preventDefault();return;}if((e.code==='Space'||e.code==='Enter')&&state==='play'&&G&&G.cine){cineSkip();e.preventDefault();return;}if(e.code==='Tab'&&state==='play'&&G&&G.def.hub){hubSkip();e.preventDefault();return;}if((e.code==='Enter'||e.code==='Space')&&state==='elev'){skipElev();e.preventDefault();return;}if(state==='perk'&&/^Digit[123]$/.test(e.code)){const cs=document.querySelectorAll('.pcard');const b=cs[+e.code.slice(5)-1];if(b)choosePerk(b.dataset.k);return;}if(padMode&&/^(Key[WASD]|Arrow)/.test(e.code))padMode=false;if(e.code==='KeyR')pressed.restart=true;if(e.code==='KeyE')pressed.grab=true;if(e.code==='Space'||e.code==='KeyQ')pressed.perk=true;if(e.code==='Escape'||e.code==='KeyP')pressed.pause=true;if(SETMENU&&e.code==='Escape')$('bSetBack').click();if(e.code==='KeyM')toggleMute();
- if(e.code==='KeyW'&&state==='dead'){walkAway();return;}
  if((e.code==='Enter'||e.code==='Space')&&state==='title'){$('bStart').click();e.preventDefault();return;}
  if((e.code==='Enter'||e.code==='Space')&&state==='brief'){chatTap();e.preventDefault();return;}
  if(e.code==='Enter'&&state==='select'){$('bPlay').click();return;}if(state==='select'&&(e.code==='ArrowUp'||e.code==='KeyW'))stepFloor(1);if(state==='select'&&(e.code==='ArrowDown'||e.code==='KeyS'))stepFloor(-1);if(state==='select'&&(e.code==='ArrowLeft'||e.code==='KeyA'))$('bPrev').click();if(state==='select'&&(e.code==='ArrowRight'||e.code==='KeyD'))$('bNext').click();
