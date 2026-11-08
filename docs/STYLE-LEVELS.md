@@ -243,7 +243,7 @@ Defaults for circa-1986 Miami. Level docs override per room in their §8.
 | Arcade | `docs/levels/arcade.md` | wave 1 |
 | Mall | `docs/levels/mall.md` | wave 1 |
 | Studio | `docs/levels/studio.md` | wave 1 |
-| Royal Flush (yacht) | `docs/levels/yacht.md` | next |
+| Royal Flush (yacht) | `docs/levels/yacht.md` | wave 1 |
 
 ### 7.1 Migration task: `motel-sunset.md`
 
