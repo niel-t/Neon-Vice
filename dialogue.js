@@ -7,7 +7,7 @@ const TEXT_ORDER=['S','M','L','XL'];
 const textKey=()=>TEXT_ORDER.includes(SET.textSize)?SET.textSize:'M';
 const textScale=()=>TEXT_SIZES[textKey()].k;
 function applyTextSize(){document.documentElement.style.setProperty('--tx',String(textScale()));const b=$('bText');if(b)b.textContent='TEXT SIZE: '+TEXT_SIZES[textKey()].name;}
-function cycleTextSize(){SET.textSize=TEXT_ORDER[(TEXT_ORDER.indexOf(textKey())+1)%TEXT_ORDER.length];saveSet();applyTextSize();dlogScrollEnd();}
+function cycleTextSize(){SET.textSize=TEXT_ORDER[(TEXT_ORDER.indexOf(textKey())+1)%TEXT_ORDER.length];saveSet();applyTextSize();dlogFollow();}
 
 /* ---- right-side scrolling conversation log (Disco Elysium style) ---- */
 // Earlier visits this session stay in the log, collapsed; nothing here is saved.
@@ -23,7 +23,7 @@ function dlogBegin(title){
 function dlogLine(who,me,t){
  const box=$('dlogLines');for(const o of box.children)o.classList.add('old');
  const el=document.createElement('div');el.className='dl'+(me?' me':'');el.innerHTML='<span class="who"></span><span class="txt"></span>';
- el.firstChild.textContent=who;box.appendChild(el);if(DLOG.cur)DLOG.cur.lines.push({who,me,t});dlogScrollEnd();return el.lastChild;}
+ el.firstChild.textContent=who;box.appendChild(el);if(DLOG.cur)DLOG.cur.lines.push({who,me,t});dlogFollow();return el.lastChild;}
 // Stick to the newest line unless the player has scrolled up to reread.
 function dlogScrollEnd(){const s=$('dlogScroll');if(!s)return;
  if(!DLOG.bound){DLOG.bound=true;s.addEventListener('scroll',()=>{DLOG.follow=s.scrollHeight-s.scrollTop-s.clientHeight<40;},{passive:true});}

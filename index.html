@@ -2226,7 +2226,7 @@ const MC_HAUL=[null,"See the pallet by my desk? That's the motel money. Every br
 let CHAT={q:[],i:0,phase:'idle',tm:null,done:false,onGo:null};
 function chatClearTimers(){clearTimeout(CHAT.tm);clearInterval(typeT);}
 const chatWho=me=>me?CHARS[selIdx].name:'McWEY';
-function chatDone(){CHAT.done=true;CHAT.phase='done';typeFull='';typeI=0;$('dlog').classList.add('done');dlogScrollEnd();}
+function chatDone(){CHAT.done=true;CHAT.phase='done';typeFull='';typeI=0;$('dlog').classList.add('done');dlogFollow();}
 function chatNext(){chatClearTimers();if(CHAT.i>=CHAT.q.length){chatDone();return;}
  const L=CHAT.q[CHAT.i++],me=L.who==='p';const tx=dlogLine(chatWho(me),me,L.t);tx.innerHTML='<span class="typing"><i></i><i></i><i></i></span>';CHAT.phase='dots';CHAT.cur={tx,t:L.t,me};typeFull='';typeI=0;
  CHAT.tm=setTimeout(()=>chatType(),me?350:650);}
@@ -2234,7 +2234,7 @@ function chatType(){const C=CHAT.cur;CHAT.phase='typing';C.tx.textContent='';if(
  typeT=setInterval(()=>{i++;C.tx.textContent=C.t.slice(0,i);dlogFollow();if(!C.me){typeI=i;if(i%2===0)sfx('type');}if(i>=C.t.length){clearInterval(typeT);chatRead();}},24);}
 function chatRead(){const C=CHAT.cur;CHAT.phase='read';C.tx.textContent=C.t;dlogFollow();typeI=typeFull.length;CHAT.tm=setTimeout(chatNext,900+C.t.length*28);}
 function chatTap(){if(state!=='brief')return;if(CHAT.phase==='done'){$('bGo').click();return;}if(CHAT.phase==='dots'){chatClearTimers();chatType();return;}if(CHAT.phase==='typing'){clearInterval(typeT);chatRead();return;}if(CHAT.phase==='read'){chatNext();}}
-function chatSkipAll(){if(state!=='brief'||CHAT.done)return;chatClearTimers();if(CHAT.cur)CHAT.cur.tx.textContent=CHAT.cur.t;while(CHAT.i<CHAT.q.length){const L=CHAT.q[CHAT.i++],me=L.who==='p';dlogLine(chatWho(me),me,L.t).textContent=L.t;}sfx('blip');chatDone();}
+function chatSkipAll(){if(state!=='brief'||CHAT.done)return;chatClearTimers();if(CHAT.cur)CHAT.cur.tx.textContent=CHAT.cur.t;while(CHAT.i<CHAT.q.length){const L=CHAT.q[CHAT.i++],me=L.who==='p';dlogLine(chatWho(me),me,L.t).textContent=L.t;}sfx('blip');chatDone();dlogScrollEnd();}
 function talkMcWey(){if(briefBuilt&&briefKey!==mcHaul()+'|'+briefAct())briefBuilt=false;fountainHum(null);state='brief';show('sBrief');sfx('ring');engineOn(false);const pid=CHARS[selIdx].id,q=[],m=t=>q.push({who:'m',t}),pp=t=>q.push({who:'p',t});
  arm();const pr=myProg(),MV=pr.paid?MC_PARTNER:MC_KID;
  const vi=VISIT;if(vi.debrief===null&&HUBFIRST)MC_FIRST.forEach(m);if(!pr.seen.loan){pr.seen.loan=1;saveProg();m("That "+carName('beater')+" the valet parked for you? It's ugly, it's yours, and it costs twelve grand.");m("I'll take it out of your cuts, kid. Sixty percent, every job, till we're square.");}else if(vi.debrief===null&&HUBFIRST)m(pick(MV.hi));
