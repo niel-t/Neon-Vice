@@ -250,6 +250,12 @@ async function startupPage(browser, artifactURL, mode) {
         return original.call(this, shader, parameter);
       };
     }
+    if (mode === 'no-webgl') {
+      const getContext = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function(type,...args) {
+        return type === 'webgl' ? null : getContext.call(this,type,...args);
+      };
+    }
   }, mode);
   const page = await context.newPage();
   await page.goto(artifactURL, { waitUntil: 'domcontentloaded' });
@@ -322,4 +328,13 @@ test('startup: shared shader failure settles with explicit degraded presentation
     expect(errors.length).toBe(1);
     expect(errors[0]).toContain('PS2C');
   } finally { await context.close(); }
+});
+
+test('startup: unavailable WebGL keeps the explicit error screen after script splitting', async ({browser,artifactURL})=>{
+  const {context,page,errors}=await startupPage(browser,artifactURL,'no-webgl');
+  try {
+    await expect(page.locator('#err')).toHaveClass(/on/);
+    await expect(page.locator('#modelWarning')).toBeHidden();
+    expect(errors).toEqual(['no webgl','no webgl']);
+  }finally{await context.close();}
 });

@@ -7,7 +7,7 @@ const { files } = require('./build.cjs');
 function gameData() {
   const html = readFileSync(resolve(__dirname, '..', 'index.html'), 'utf8');
   const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
-  const order = ['art.js', 'levels.js', null];
+  const order = ['art.js', 'levels.js', 'models.js', null, 'renderer.js', null];
   assert.equal(scripts.length, order.length, 'Expected ordered assets followed by the inline classic game script');
   scripts.forEach((script, i) => assert.equal(script[1].trim(), order[i] ? `src="${order[i]}"` : '', 'Scripts must retain synchronous classic loading order'));
   const sources = scripts.map((script, i) => {
@@ -19,6 +19,7 @@ function gameData() {
       assert.equal(source.trim(), '', 'External scripts must not contain inline code');
       source = readFileSync(resolve(__dirname, '..', src), 'utf8');
     }
+    assert(source.trimStart().startsWith("'use strict';"), 'Every classic script must preserve strict mode');
     new vm.Script(source, { filename: src || `index.html inline script ${i}` });
     return source;
   });

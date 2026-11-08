@@ -1,8 +1,8 @@
 # Neon Vice: Ocean Drive
 
-A gory, top-down 3D action game in the spirit of Hotline Miami, set in 1986 Miami with a PS2 / Vice City look. It runs entirely in the browser, with no runtime build step or dependencies. `index.html` contains the game; `art.js` holds the embedded character artwork and `levels.js` holds campaign maps and associated tables.
+A gory, top-down 3D action game in the spirit of Hotline Miami, set in 1986 Miami with a PS2 / Vice City look. It runs entirely in the browser, with no runtime build step or dependencies. `index.html` contains gameplay and scene orchestration; ordinary classic scripts hold artwork, campaign content, model implementation and renderer primitives.
 
-**Play:** keep `index.html`, `art.js` and `levels.js` together, then open `index.html` in a WebGL-capable browser, or serve both files from any static host.
+**Play:** keep `index.html`, `art.js`, `levels.js`, `models.js` and `renderer.js` together, then open `index.html` in a WebGL-capable browser, or serve both files from any static host.
 The authoritative repository is [GitLab](https://gitlab.com/srk7630145/neon-vice).
 GitLab Pages publishes the checked and browser-tested `public` artifact on the default branch.
 
@@ -63,9 +63,17 @@ npm test
 
 `npm run check` compiles the ordered classic scripts, checks artwork loading order and the production allowlist, and validates level/loader data without a browser.
 `npm run build` assembles an explicit production allowlist into `public`.
-The ordered classic scripts load artwork, then campaign data, then the game. Campaign
+The ordered classic scripts declare artwork, campaign data and the model implementation
+before the inline settings/math prelude. Renderer primitives then initialize before gameplay
+and scene orchestration. Detailed models initialize at their original gameplay startup point.
+Campaign
 maps, shared map glyphs/collision tables, par/grade tables, cassette locations and level
 tracks stay together in `levels.js`; mutable run state and reward handling stay in the game.
+`models.js` keeps the existing `PS2C` closure and public lifecycle/drawing API. It reads game
+state through the existing globals only when called. `renderer.js` groups shader/atlas setup,
+batches, render targets, shadows and quality helpers; it remains a shared classic-script
+implementation, not an independent engine or module. Gameplay-owned world/input state and
+transactional resource ownership are unchanged by these file moves.
 `npm run test:browser` tests the already assembled artifact using an isolated ephemeral
 localhost server, Chromium/SwiftShader and fresh save contexts; it never uses preview saves.
 Software rendering uses the existing lowest quality lock while retaining the real enhanced
