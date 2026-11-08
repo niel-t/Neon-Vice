@@ -89,7 +89,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 .dlv summary{font-family:'Press Start 2P',monospace;font-size:clamp(8px,.5em,13px);color:#c9a8e8;cursor:pointer;padding:.4em 0}
 .dlFoot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 10px;padding-top:.4em;border-top:2px solid rgba(255,45,149,.35)}
 .dlFoot .tapnext{font-size:.62em;margin:0}.dlFoot .btn{margin:4px 0;font-size:clamp(10px,.42em,16px)}
-.dlog.done #chatTap,.dlog.done #bDlSkip,.dlog:not(.done) #bGo{display:none}
+.dlog.done #chatTap,.dlog.done #bDlSkip,.dlog:not(.done) #bGo,.dlog:not(.done) #dlJobs{display:none}
 .dlog.choosing #chatTap,.dlog.choosing #bDlSkip,.dlog:not(.choosing) #chatPick{display:none}
 .dlChoices{list-style:none;margin:.2em 0 .1em;padding:0}
 .dlChoices button{display:flex;gap:.5em;width:100%;text-align:left;font:inherit;line-height:1.3;color:#ffd0ea;background:rgba(255,45,149,.08);border:0;border-left:3px solid transparent;padding:.22em .5em;margin:.14em 0;cursor:pointer}
@@ -145,9 +145,9 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <div id="sBrief" class="screen briefScr"><div class="selHead"><div class="selTop" id="brFrom">McWEY TOWER</div><div class="gname" data-t="McWEY">McWEY</div><div class="quote" id="brQuote"></div></div><div style="flex:1"></div>
  <div class="dlog" id="dlog"><div class="dlHead"><span id="dlogTitle"></span><button id="bDlText" title="Text size">TEXT A&plus;<span class="kbhint"> (T)</span><span class="padhint"> (Y)</span></button></div>
   <div id="dlogScroll"><div class="dlBody"><div id="dlogHist"></div><div id="dlogLines"></div></div></div>
-  <div class="dlFoot"><span class="tapnext" id="chatTap">SPACE / TAP<span class="padhint"> / (A)</span> &middot; NEXT</span><span class="tapnext" id="chatPick"><span class="kbhint">1&ndash;3 / &uarr;&darr; SPACE</span><span class="padhint">&uarr;&darr; (A)</span> &middot; CHOOSE</span><button class="btn alt sm" id="bDlSkip">SKIP<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button><button class="btn" id="bGo">TAKE THE JOB</button></div></div></div>
+  <div class="dlFoot"><span class="tapnext" id="chatTap">SPACE / TAP<span class="padhint"> / (A)</span> &middot; NEXT</span><span class="tapnext" id="chatPick"><span class="kbhint">1&ndash;3 / &uarr;&darr; SPACE</span><span class="padhint">&uarr;&darr; (A)</span> &middot; CHOOSE</span><button class="btn alt sm" id="bDlSkip">SKIP<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button><span id="dlJobs"></span><button class="btn" id="bGo">TAKE THE JOB</button></div></div></div>
 <div id="sElev" class="screen"><div class="elev"><div class="elT">McWEY TOWER</div><div class="elN"><span>&#9650;</span><b id="elFloor">01</b></div><div class="elT2">TAP TO SKIP</div></div></div>
-<div id="sDead" class="screen dim"><div class="big red">YOU'RE DEAD</div><div class="hint" id="deadCause" style="color:#ffb3bd"></div><div class="hint" id="deadXP" style="color:#ffd36b"></div><div class="hint" id="deadTip"></div><div class="rowc"><button class="btn" id="bRetry">RETRY<span class="kbhint"> (R)</span><span class="padhint"> (A)</span></button><button class="btn alt" id="bDeadWalk">WALK AWAY<span class="padhint"> (X)</span></button><button class="btn alt" id="bDeadQuit">QUIT<span class="padhint"> (B)</span></button></div><div class="hint" style="opacity:.75">Retry keeps what you brought in · Walk away to go home with it</div></div>
+<div id="sDead" class="screen dim"><div class="big red">YOU'RE DEAD</div><div class="hint" id="deadCause" style="color:#ffb3bd"></div><div class="hint" id="deadXP" style="color:#ffd36b"></div><div class="hint" id="deadTip"></div><div class="rowc"><button class="btn" id="bRetry">RETRY<span class="kbhint"> (R)</span><span class="padhint"> (A)</span></button><button class="btn alt" id="bDeadRestartJob" style="display:none">RESTART JOB</button><button class="btn alt" id="bDeadWalk">WALK AWAY<span class="padhint"> (X)</span></button><button class="btn alt" id="bDeadQuit">QUIT<span class="padhint"> (B)</span></button></div><div class="hint" style="opacity:.75">Retry keeps what you brought in · Walk away to go home with it</div></div>
 <div id="sResults" class="screen dim"><div class="logo2" id="rTitle">FLOOR CLEAR</div><div class="stats" id="rStats"></div><div class="grade" id="rGrade">A</div><div class="rowc"><button class="btn alt" id="bRetryLvl">RETRY<span class="padhint"> (X)</span></button><button class="btn" id="bNextLvl">NEXT FLOOR</button></div></div>
 <div id="sPerk" class="screen dim"><div class="logo2">LEVEL UP!</div><div class="hint" id="pkLvl"></div><div class="rowc" id="pkCards"></div></div>
 <div id="sCar" class="screen dim"><div class="logo2">YOUR RIDE</div><div class="hint" id="carWallet" style="color:#7dff9a"></div><div class="hint" id="carLoad" style="color:#ffd36b;margin-top:4px"></div><div style="display:flex;flex-direction:column;align-items:center;margin-top:10px"><button class="btn" id="bCarJob">NEXT JOB</button><button class="btn alt" id="bCarShop">NINE OF NINE'S &middot; GUN SHOP<span class="kbhint"> (G)</span><span class="padhint"> (X)</span></button><button class="btn alt" id="bCarClub">VELVET PALMS &middot; STRIP CLUB<span class="kbhint"> (C)</span><span class="padhint"> (RB)</span></button><button class="btn alt" id="bCarStore">OCEAN DRIVE SHOPPING &middot; CARS &amp; GOLD<span class="kbhint"> (S)</span><span class="padhint"> (Y)</span></button><button class="btn alt" id="bCarHome">BACK TO YOUR PLACE</button><button class="btn alt" id="bCarBack">NOT YET<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div>
@@ -156,7 +156,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <div id="sMorning" class="screen dim"><div class="phone"><div class="hdr"><span id="mnWho"></span><span>THE MORNING AFTER</span></div><div class="msg" id="mnMsg"></div><div class="floor" id="mnFx"></div></div><button class="btn" id="bMorning">HEAD OUT<span class="kbhint"> (ENTER)</span><span class="padhint"> (A)</span></button></div>
 <div id="sEnd" class="screen dim"><div class="logo" style="font-size:clamp(20px,5vw,44px)">THE FAMILY<br>RUNS MIAMI</div><div class="stats" id="eStats"></div><button class="btn" id="bAgain">PLAY AGAIN<span class="padhint"> (A)</span></button></div>
 <div id="sPause" class="screen dim"><div class="logo2" id="pTitle">PAUSED</div><div class="col" style="margin-top:8px">
-  <button class="btn" id="bResume">RESUME<span class="padhint"> (START)</span></button><button class="btn alt" id="bPRestart">RESTART FLOOR<span class="padhint"> (BACK)</span></button><button class="btn alt" id="bWalk">WALK AWAY FROM THE JOB<span class="padhint"> (X)</span></button>
+  <button class="btn" id="bResume">RESUME<span class="padhint"> (START)</span></button><button class="btn alt" id="bPRestart">RESTART FLOOR<span class="padhint"> (BACK)</span></button><button class="btn alt" id="bPRestartJob" style="display:none">RESTART JOB FROM THE BEGINNING</button><button class="btn alt" id="bWalk">WALK AWAY FROM THE JOB<span class="padhint"> (X)</span></button>
   <button class="btn alt" id="bMute">SOUND: ON</button><button class="btn alt" id="bShake">SCREEN SHAKE: ON</button><button class="btn alt" id="bRetro">GRAPHICS: ENHANCED</button><button class="btn alt" id="bHints">HINTS: ON</button><button class="btn alt" id="bCoverSet">COVER (BETA): OFF</button><button class="btn alt" id="bGrain">FILM GRAIN</button><button class="btn alt" id="bGlitch">VHS GLITCH</button><button class="btn alt" id="bGore">GORE</button><button class="btn alt" id="bText">TEXT SIZE: MEDIUM</button>
   <button class="btn alt" id="bQuit">QUIT TO MENU<span class="padhint"> (Y)</span></button><button class="btn" id="bSetBack" style="display:none">BACK<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div>
 <div id="rotate" class="screen"><div class="logo2">TURN YOUR PHONE<br>SIDEWAYS</div><div class="hint">Landscape works best for the twin-stick controls</div></div>
@@ -501,14 +501,24 @@ const NEON=[[1,0.25,0.7],[0.2,0.85,1],[0.65,0.3,1],[1,0.55,0.2]];
 const TIPS=['Red laser = a gunman is aiming at you. Break line of sight.','Stand still for accurate shots. Running throws your aim off.','Silenced guns barely make a sound. Loud ones wake up the whole floor.','Swing a door into someone to knock them flat.','Downed enemies get back up. Hit them again to finish the job.','Masonry bar fronts stop most bullets; kitchen cabinets and car doors don\'t. Hide behind the engine.','Out of ammo? Attack again to throw the gun. It knocks people down.','Throw a knife and it kills.','Sprinting is fast but loud - guards hear your footsteps.','Hold F to look further ahead.'];
 const parOf=i=>PAR[i]||60;const timeBonus=(t,i)=>Math.round(3750*clamp((2*parOf(i)-t)/(2*parOf(i)),0,1));
 /* floor select + personal bests, saved in localStorage nb86jobs: {top:highest unlocked floor, sel:chosen start floor, best:{i:{g,t,s,c,ch,d}}} */
-const JOBS=(()=>{const o=readSave('nb86jobs');if(!Number.isFinite(o.top)){o.top=0;delete o.mig;}o.top=clamp(Math.floor(o.top),0,CAMPAIGN_LEN-1);o.sel=Number.isFinite(o.sel)?clamp(Math.floor(o.sel),0,o.top):0;savedField('nb86jobs',o,'best',{},saveObject);for(const k of Object.keys(o.best))if(o.best[k]!=null&&!saveObject(o.best[k])){saveWarning('nb86jobs',new Error('Invalid floor record: '+k),true);delete o.best[k];}return o;})();
+const JOBS=(()=>{const o=readSave('nb86jobs');if(!Number.isFinite(o.top)){o.top=0;delete o.mig;}o.top=clamp(Math.floor(o.top),0,CAMPAIGN_LEN-1);o.sel=Number.isFinite(o.sel)?clamp(Math.floor(o.sel),0,o.top):0;savedField('nb86jobs',o,'best',{},saveObject);for(const k of Object.keys(o.best))if(o.best[k]!=null&&!saveObject(o.best[k])){saveWarning('nb86jobs',new Error('Invalid floor record: '+k),true);delete o.best[k];}
+ /* m: non-campaign mission records {id:{done,best:{'<rev>.<variant>':{g,t,s,c,ch,d}}}} (W14); unknown ids and fields are kept */
+ savedField('nb86jobs',o,'m',{},saveObject);for(const k of Object.keys(o.m)){const e=o.m[k],bad=w=>saveWarning('nb86jobs',new Error('Invalid mission record: '+k+w),true);
+  if(!saveObject(e)){bad('');o.m[k]={};continue;}if(e.best==null)continue;if(!saveObject(e.best)){bad('.best');e.best={};continue;}
+  for(const v of Object.keys(e.best))if(!saveObject(e.best[v])){bad('.best.'+v);delete e.best[v];}}
+ return o;})();
 /* one-time: unlock floors already beaten in saves from before floor select existed */
 function migJobs(){if(JOBS.mig||SAVE.blocked.has('nb86prog'))return;JOBS.mig=1;for(const k of Object.keys(PROG)){const q=PROG[k]||{};JOBS.top=Math.max(JOBS.top,q.lexDead?7:q.heli?6:q.suits2?5:q.boat?4:q.sharkDead?3:0);}JOBS.top=Math.min(JOBS.top,CAMPAIGN_LEN-1);saveJobs();}
 function saveJobs(){return writeSave('nb86jobs',JOBS);}
 const GRANK=g=>{const i=GRADES.findIndex(q=>q[0]===g);return i<0?99:i;};
-function recordBest(i,r){migJobs();const b=JOBS.best[i],nb=[];if(!b){JOBS.best[i]=Object.assign({},r);nb.push('FIRST CLEAR');}else{
- if(GRANK(r.g)<GRANK(b.g)){b.g=r.g;nb.push('GRADE');}if(r.t<b.t){b.t=r.t;nb.push('TIME');}if(r.s>b.s){b.s=r.s;b.ch=r.ch;b.d=r.d;nb.push('TAKE');}if(r.c>b.c){b.c=r.c;nb.push('COMBO');}}
+function bestInto(b,r,nb){if(GRANK(r.g)<GRANK(b.g)){b.g=r.g;nb.push('GRADE');}if(r.t<b.t){b.t=r.t;nb.push('TIME');}if(r.s>b.s){b.s=r.s;b.ch=r.ch;b.d=r.d;nb.push('TAKE');}if(r.c>b.c){b.c=r.c;nb.push('COMBO');}}
+function recordBest(i,r){migJobs();const b=JOBS.best[i],nb=[];if(!b){JOBS.best[i]=Object.assign({},r);nb.push('FIRST CLEAR');}else bestInto(b,r,nb);
  JOBS.top=Math.max(JOBS.top,Math.min(CAMPAIGN_LEN-1,i+1));saveJobs();return nb;}
+/* W14 missions: condition context (flags are the current character's wflags) and non-campaign records, merged so other revs/variants and unknown fields survive */
+function missionDone(id){const i=missionIdx(id);if(i>=0)return !!JOBS.best[i]||i<JOBS.top;const e=ownKey(JOBS.m,id)&&JOBS.m[id];return !!(e&&e.done);}
+function missionCtx(){const p=myProg(),wf=p&&p.wflags||{};return {done:missionDone,flag:f=>ownKey(wf,f)&&!!wf[f],has:id=>typeof hasCollect==='function'&&!!hasCollect(id)};}
+function recordMission(id,v,r){const e=ownKey(JOBS.m,id)?JOBS.m[id]:(JOBS.m[id]={});if(!saveObject(e.best))e.best={};const k=missionRev(id)+'.'+v,nb=[];e.done=1;
+ if(!e.best[k]){e.best[k]=Object.assign({},r);nb.push('FIRST CLEAR');}else bestInto(e.best[k],r,nb);saveJobs();return {nb,b:e.best[k]};}
 function floorHTML(){migJobs();JOBS.sel=Math.min(JOBS.sel,JOBS.top);let h='<span>START AT</span>';for(const id of campaignIds()){const i=missionIdx(id);if(i>JOBS.top)break;const b=JOBS.best[i];h+=`<button data-fl="${i}" class="${JOBS.sel===i?'on':''}" title="${LEVELS[i].name}">${i<3?'1-'+(i+1):'2-'+(i-2)}${b?' '+b.g:''}${chStars(i)?' '+'\u2605'.repeat(chStars(i)):''}</button>`;}return h;}
 function floorDesc(){const i=JOBS.sel,b=JOBS.best[i];return BRIEF_FLOOR(i)+(b?' · BEST '+b.g+' · '+mmss(b.t)+' · $'+fmt(b.s)+' · x'+b.c:' · NOT CLEARED YET');}
 /* per-floor challenges: 3 per floor, each pays CH_PAY once (saved in JOBS.ch[floor] as a bitmask) */
@@ -1118,7 +1128,7 @@ function update(dt){const g=G;fountainHum(g.def.hub?g:null);if(g.def.hub){update
  if(g.hitT>0)g.hitT-=dt;if(g.np)g.np.t+=dt;
  g.flowT-=dt;if(g.flowT<=0){computeFlow();g.flowT=0.25;}
  updatePlayer(dt);updateHazards(dt);if(g.player.ex){if(g.player.alive)updateExec(g.player,dt);else g.player.ex=null;}for(const e of g.enemies)updateEnemy(e,dt);separate();bodyPhysics();updateDoors(dt);updateBullets(dt);updateNades(dt);updateAct2(dt);updateStash(dt);updateObj(dt);updateItems(dt);updateCash(dt);updateFX(dt);
- if(!g.cleared&&g.enemies.every(e=>!e.alive)){if(g.obj&&!g.obj.done){if(!g.objWarn){g.objWarn=1;banner('GUARDS DOWN','Now: '+g.obj.label);}}else{g.cleared=true;banner('FLOOR CLEAR','Get back to the car');sfx('clear');}}
+ if(!g.cleared&&g.enemies.every(e=>!e.alive||e.boss&&g.clear&&g.clear.boss==='optional')){if(g.obj&&!g.obj.done){if(!g.objWarn){g.objWarn=1;banner('GUARDS DOWN','Now: '+g.obj.label);}}else{g.cleared=true;banner('FLOOR CLEAR','Get back to the car');sfx('clear');}}
  if(g.cleared&&g.player.alive&&!g.done&&Math.hypot(g.player.x-g.car.x,g.player.z-g.car.z)<1.8){g.done=true;finishLevel();}
  if(!g.player.alive){g.deadT+=dt;if(g.deadT>1&&state==='play')showDead();}
  updateHints(dt);updateCamera(dt);}
@@ -1680,7 +1690,7 @@ function drawHubHUD(c,g,u,m){if(g.cine)return;const d=g.def;c.font=PXF(7*u);txt(
  if(g.ia){const s3=project(g.ia.x,1.9,g.ia.z);if(s3){c.font=VTF(18*u);const lbl=(padMode?'(A) ':touchMode?'TAP: ':'[E] / CLICK: ')+g.ia.lbl,tw=c.measureText(lbl).width;c.fillStyle='rgba(10,4,18,.85)';c.fillRect(s3[0]-tw/2-7*u,s3[1]-24*u,tw+14*u,22*u);c.fillStyle='#ffd36b';c.fillRect(s3[0]-tw/2-7*u,s3[1]-24*u,3*u,22*u);txt(c,lbl,s3[0],s3[1]-22*u,'#fff','center',18*u);}}
  c.font=VTF(18*u);for(const pp of g.popups){const s2=project(pp.x,1.6+pp.t*0.5,pp.z);if(!s2)continue;c.globalAlpha=clamp(2.2-pp.t*1.3,0,1);const tw=c.measureText(pp.txt).width;c.fillStyle='rgba(10,4,18,.75)';c.fillRect(s2[0]-tw/2-6*u,s2[1]-2*u,tw+12*u,22*u);txt(c,pp.txt,s2[0],s2[1],pp.col,'center',18*u);}c.globalAlpha=1;}
 /* ---- after the briefing: lift down, your car, Nine of Nine's gun shop ---- */
-let HUBMODE='in',NEXTJOB=0;
+let HUBMODE='in',NEXTJOB=0,MISSION='c0',JOBPICK=null; // MISSION: the job being played; JOBPICK: a non-campaign job taken from McWey's menu
 function trigOn(t){return HUBMODE==='home'?t.t==='leave':HUBMODE==='in'?t.t!=='exit'&&t.t!=='leave':HUBMODE==='out'?t.t==='exit':false;}
 function hubModeSetup(name){const g=G,p=g.player;if(HUBMODE==='home'){homeSetup(g,+name.slice(4));return true;}
  if(HUBMODE==='out'){const el=g.trigs.filter(t=>t.t==='elevator');if(el.length&&p){p.x=el.reduce((a,t)=>a+t.x,0)/el.length;p.z=el[0].z+1.3;p.a=0;g.cam.x=p.x;g.cam.z=p.z-1;}
@@ -1706,9 +1716,12 @@ function arm(){const p=myProg();if(typeof p.wallet!=='number')p.wallet=0;if(p.de
  if(!p.arm)p.arm={};const a=p.arm;for(const [k,v] of Object.entries({owned:[],eq:null,mags:0,vest:0,stock:[],key:-1,met:false,jobs:0}))if(a[k]===undefined)a[k]=v;return a;}
 function wallet(){arm();return myProg().wallet;}
 let LASTPAY=null;function cutOf(take){const p=myProg();arm();return p.debt>0?Math.min(p.debt,Math.ceil(take*MC_CUT)):0;}
-function payout(){if(!G||G.paid||!G.take)return;G.paid=1;const a=arm(),p=myProg(),cut=cutOf(G.take),before=p.debt;p.debt-=cut;p.wallet+=G.take-cut;
+function payout(){if(!G||G.paid||!G.take)return;G.paid=1;const a=arm(),p=myProg();
+ /* non-campaign jobs: no cut, no debt, no story flags; only their own reward flags */
+ if(!missionIsCampaign(MISSION)){p.wallet+=G.take;p.couchBlood=0;for(const r of MISSIONS[MISSION].rewards||[])if(r&&typeof r.flag==='string')dlgObj(p,'wflags')[r.flag]=1;saveProg();return;}
+ const cut=cutOf(G.take),before=p.debt;p.debt-=cut;p.wallet+=G.take-cut;
  if(G.sjPay)p.wallet+=G.sjPay;p.gift=null;if(G.sj)p.sidejob=null;p.couchBlood=0;if(levelIdx===2)p.sharkDead=1;LASTPAY={take:G.take,cut,debt:p.debt,before,squared:false,lvl:levelIdx};
- if(levelIdx===3)p.boat=1;if(levelIdx===4){p.suits2=1;p.suit='power';PS2C.applySuit(rideId());}if(levelIdx===5)p.heli=1; if(levelIdx===7){p.lexDead=1;p.respect=1;LASTPAY.yacht=true;LASTPAY.cleared=p.debt;p.debt=0;p.paid=true;}else if(p.debt<=0&&!p.paid){p.paid=true;LASTPAY.squared=true;}a.jobs++;saveProg();}
+ if(levelIdx===3)p.boat=1;if(levelIdx===4){p.suits2=1;p.suit='power';PS2C.applySuit(rideId());}if(levelIdx===5)p.heli=1; if(levelIdx===7){if(G.enemies.some(e=>e.boss&&!e.alive)){p.lexDead=1;delete dlgObj(p,'wflags').lex_spared;}else dlgObj(p,'wflags').lex_spared=1;p.respect=1;LASTPAY.yacht=true;LASTPAY.cleared=p.debt;p.debt=0;p.paid=true;}else if(p.debt<=0&&!p.paid){p.paid=true;LASTPAY.squared=true;}a.jobs++;saveProg();}
  /* the kit is the only inventory: it is what you carry into a job and what you walk out with. During a job p.kit stays untouched;
     the run snapshot rewinds retries (stageKit), walking away restores entryKit, and only a finished job commits what you hold. */
  function kit(){arm();return myProg().kit;}
@@ -1716,9 +1729,11 @@ function payout(){if(!G||G.paid||!G.take)return;G.paid=1;const a=arm(),p=myProg(
  function kitHand(k){const h=handOf(k);return typeof h==='number'?k.guns[h].type:h==='melee'?k.melee:null;}
  /* p.kit is never written during a job, so it still equals entryKit: leaving only drops the run (and with it anything picked up or set aside on the job) */
 function runWalkAway(p){if(!p.run)return false;delete p.run;return true;}
- function runEnter(i){const p=myProg(),id=missionId(i);arm();if(p.run&&p.run.mission!==id)runWalkAway(p);
+ function runEnter(id){const p=myProg();arm();if(p.run&&p.run.mission!==id)runWalkAway(p);
   if(p.run)p.run.t=Date.now();else p.run={v:KIT_V,mission:id,stage:missionStart(id),entryKit:kitClone(p.kit),stageKit:kitClone(p.kit),t:Date.now()};
-  saveProg();return kitClone(p.run.stageKit);}
+  const r=p.run;if(!missionVariantOK(id,r.var))r.var=missionVariant(id,missionCtx()); // chosen once per run: retries and resumes keep it
+  if(!missionIsCampaign(id)&&!(Number.isInteger(r.ret)&&r.ret>=0&&r.ret<CAMPAIGN_LEN))r.ret=Number.isInteger(NEXTJOB)?NEXTJOB:Math.min(JOBS.sel,JOBS.top); // the campaign job to go back to
+  saveProg();return kitClone(r.stageKit);}
  function kitFromPlay(){const g=G,pl=g.player,k=kitClone(g.live),h=g.hand,w=pl.weapon,stow=[];let hand=null;
   if(typeof h==='number')k.guns[h]=null;else if(h==='melee')k.melee=null;
   if(w&&WD[w.type]&&w.type!=='fists'){const wd=WD[w.type];
@@ -1728,7 +1743,7 @@ function runWalkAway(p){if(!p.run)return false;delete p.run;return true;}
   if(!k.guns[k.active]&&k.guns[1-k.active])k.active=1-k.active;
   if(k.armour)k.armour.plates=Math.max(0,Math.min(pl.kitPlates||0,pl.armor|0));
   return {kit:normKit(k),stow,hand};}
- function kitCommit(){const p=myProg(),r=p.run;if(!G||G.def.hub||!G.live||!r||r.mission!==missionId(levelIdx))return false;
+ function kitCommit(){const p=myProg(),r=p.run;if(!G||G.def.hub||!G.live||!r||r.mission!==MISSION)return false;
   const m=kitFromPlay();p.kit=m.kit;p.locker.items.push(...(r.stow||[]),...m.stow);delete p.run;saveProg();return true;}
  function applyLoadout(k){const p=G&&G.player;if(!p)return;G.live=kitClone(k);const h=G.hand=handOf(k);
   if(typeof h==='number'){const s=k.guns[h],wd=WD[s.type];p.weapon={type:s.type,ammo:s.mag};if(s.mag<=0&&isCal(wd.cal)){const n=Math.min(G.live.pool[wd.cal]|0,wd.mag);G.live.pool[wd.cal]-=n;p.weapon.ammo=n;}G.live.guns[h]=null;}
@@ -1740,9 +1755,9 @@ function runWalkAway(p){if(!p.run)return false;delete p.run;return true;}
   return 'LOADOUT: '+(parts.join(' + ')||'BARE HANDS')+(am.length?' · '+am.join(' · '):'')+(ar?' · '+ar.name+(k.armour.plates<ar.plates?' (DAMAGED)':''):'');}
 /* the car menu */
 function openCarMenu(){if(state!=='play'||!G)return;sfx('blip');state='carmenu';$('carWallet').textContent='WALLET $'+fmt(wallet())+(myProg().debt>0?'  ·  OWED TO McWEY $'+fmt(myProg().debt):'')+'  ·  RIDE: '+carName(myCar());$('carLoad').textContent=loadoutTxt();
- $('bCarJob').innerHTML='NEXT JOB: '+LEVELS[NEXTJOB].name+'<span class="kbhint"> (ENTER)</span><span class="padhint"> (A)</span>';$('bCarShop').style.display=G.def===HUBS.bunker?'none':'';$('bCarClub').style.display=G.def===HUBS.club?'none':'';show('sCar');}
+ $('bCarJob').innerHTML='NEXT JOB: '+(JOBPICK?missionName(JOBPICK):LEVELS[NEXTJOB].name)+'<span class="kbhint"> (ENTER)</span><span class="padhint"> (A)</span>';$('bCarShop').style.display=G.def===HUBS.bunker?'none':'';$('bCarClub').style.display=G.def===HUBS.club?'none':'';show('sCar');}
 function closeCarMenu(){if(state!=='carmenu')return;sfx('blip');state='play';show(null);}
-$('bCarJob').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);fadeTo(()=>startLevel(NEXTJOB));};
+$('bCarJob').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);fadeTo(()=>JOBPICK?startMission(JOBPICK):startLevel(NEXTJOB));};
 $('bCarShop').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);fadeTo(()=>loadHub('bunker'));};
 $('bCarBack').onclick=()=>closeCarMenu();
 $('bCarHome').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);fadeTo(goHome);};
@@ -2441,14 +2456,16 @@ function talkMcWey(){if(briefBuilt&&briefKey!==mcHaul()+'|'+briefAct())briefBuil
   if(!busy)(((DEB_STYLE[vi.style||'mixed']||MC_DEBRIEF)[vi.debrief])||MC_DEBRIEF[vi.debrief]).forEach(m);if(mcPayday(m,dq,MC_GRADE[vi.grade]||MC_GRADE.B,busy))beat=true;
   if(lex){dq('lex');beat=true;}}
  if(!beat)mcReact(m);
- if(vi.next!=='end')dq('brief'+vi.next);else{m(RUNEND.line);dq('finale');}
+ if(vi.next!=='end'){if(missionBriefReset(missionId(vi.next),pr.wflags))saveProg();dq('brief'+vi.next);}else{m(RUNEND.line);dq('finale');}
  HUBFIRST=false;chatClearTimers();CHAT={q,i:0,phase:'idle',tm:null,done:false};$('dlog').classList.remove('done','choosing');
  $('brFrom').textContent=vi.next==='end'?'McWEY TOWER · FINAL DEBRIEF':vi.debrief!==null?'McWEY TOWER · DEBRIEF':'McWEY TOWER · 52ND FLOOR';
  dlogBegin(vi.next==='end'?'FINAL DEBRIEF':(vi.debrief!==null?'DEBRIEF · ':'')+LEVELS[vi.next].name);
  $('brQuote').textContent='"'+(vi.next==='end'?RUNEND.quote:MC_QUOTE[vi.next])+'"';
  $('bGo').innerHTML=(vi.next==='end'?'TAKE THE GOLD':'TAKE THE JOB: '+LEVELS[vi.next].name)+'<span class="padhint"> (A)</span>';
+ /* McWey's other work: unlocked non-campaign jobs, offered next to the campaign job */
+ const ctx=missionCtx(),KL={bonus:'BONUS',story:'STORY',side:'ERRAND'};$('dlJobs').innerHTML=vi.next==='end'?'':extraIds().filter(id=>missionUnlocked(id,ctx)).map(id=>`<button class="btn alt sm" data-mid="${id}">${KL[MISSIONS[id].kind]||'JOB'}: ${missionName(id)}${missionDone(id)?' \u2713':''}</button>`).join('');
  CHAT.tm=setTimeout(chatNext,500);}
-function chatGo(){if(!CHAT.done)return;chatClearTimers();sfx('pick');if(VISIT.next==='end'){showEnd();return;}NEXTJOB=VISIT.next;fadeTo(()=>enterElevator(true));}
+function chatGo(pick){if(!CHAT.done)return;chatClearTimers();sfx('pick');if(VISIT.next==='end'){showEnd();return;}NEXTJOB=VISIT.next;JOBPICK=typeof pick==='string'&&missionKnown(pick)&&!missionIsCampaign(pick)?pick:null;fadeTo(()=>enterElevator(true));}
 function showEnd(){state='end';$('eStats').innerHTML=`CREW<b>${CHARS[selIdx].name}</b><br>BODIES<b>${totalKills}</b><br>TIME<b>${mmss(totalTime)}</b><br>TOTAL TAKE<b>$${fmt(totalScore)}</b>${RUNEND?'<br>ENDING<b>'+RUNEND.title+'</b>':''}`;show('sEnd');}
 HUBLEG_FOOT['.']={};
 {const DW=66,R=(f)=>Array.from({length:DW},(_,x)=>f(x)).join('');const tw=x=>x>=51&&x<=59;
@@ -3065,7 +3082,7 @@ function drawHUD0(){const c=hctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0
  /* objective */
  c.font=PXF(7*u);txt(c,'OBJECTIVE',m,m,'#2de2e6','left',7*u);
  c.font=VTF(20*u);txt(c,g.cleared?'GET BACK TO THE CAR':'ELIMINATE TARGETS  '+(tot-alive)+'/'+tot,m,m+10*u,g.cleared?'#ff5fb8':'#fff','left',20*u);
- c.font=VTF(15*u);txt(c,BRIEF_FLOOR(levelIdx),m,m+30*u,'#c9a8e8','left',15*u);
+ c.font=VTF(15*u);txt(c,missionIsCampaign(MISSION)?BRIEF_FLOOR(levelIdx):missionName(MISSION),m,m+30*u,'#c9a8e8','left',15*u);
  if(g.obj&&!g.cleared){c.font=VTF(17*u);txt(c,(g.obj.done?'\u2713 ':'\u25a0 ')+g.obj.label+(g.obj.total>1?'  '+g.obj.n+'/'+g.obj.total:''),m,m+46*u,g.obj.done?'#7dff9a':'#ffd36b','left',17*u);}
  if(g.sj){const s=sjState(g);txt(c,'SIDE JOB · '+SIDEJOBS[g.sj].name+' · '+s.txt,m,m+46*u,s.fail?'#ff8a95':s.ok?'#7dff9a':'#ffd36b','left',15*u);}
  /* money / combo / time */
@@ -3138,35 +3155,45 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 let typeT=null,typeFull='',typeI=0;
 function showBrief(i){levelIdx=i;state='brief';show('sBrief');$('brFrom').textContent='INCOMING CALL · '+BRIEF_FLOOR(i);$('brFloor').textContent=BRIEF_FLOOR(i);typeFull=LEVELS[i].brief;typeI=0;$('brMsg').textContent='';sfx('ring');
  clearInterval(typeT);typeT=setInterval(()=>{typeI++;$('brMsg').textContent=typeFull.slice(0,typeI);if(typeI%2===0)sfx('type');if(typeI>=typeFull.length)clearInterval(typeT);},28);}
-function startLevel(i){clearInterval(typeT);levelIdx=i;HUBMODE='in';loadLevel(i);applyLoadout(runEnter(i));G.sj=myProg().sidejob||null;act2Setup(G,i);placeStash(G,i);if(i===0&&myCar()!=='beater')placeOldCar();G.track=LEVEL_TRACKS[i][RUNTRACK[i]%LEVEL_TRACKS[i].length];if(MUS.track!==G.track){MUS.track='';MUS.pending=null;}state='play';show(null);
+function startLevel(i){startMission(missionId(i));}
+/* levelIdx stays the map index (grid seeds, decor, par); campaign-only effects key on MISSION */
+function startMission(id){const i=missionIdx(id),b=missionBase(id);clearInterval(typeT);MISSION=id;JOBPICK=null;levelIdx=b;HUBMODE='in';loadLevel(b);
+ const ld=runEnter(id);G.mission=id;G.variant=myProg().run.var;G.clear=missionClear(id,G.variant);missionSpawn(G);applyLoadout(ld);
+ G.sj=i>=0?myProg().sidejob||null:null;act2Setup(G,i);if(i>=0){placeStash(G,i);if(i===0&&myCar()!=='beater')placeOldCar();}G.track=LEVEL_TRACKS[b][RUNTRACK[b]%LEVEL_TRACKS[b].length];if(MUS.track!==G.track){MUS.track='';MUS.pending=null;}state='play';show(null);
+ if(i<0){banner(missionName(id),'Clear the floor · Get back to the car');return;}
  banner(i===3?'ACT 2: HOSTILE TAKEOVER':(i<3?'FLOOR '+(i+1):'FLOOR '+(i-2))+': '+LEVELS[i].name,i===3?'Floor 1: Vice Marina · Lex Sterling\'s smuggling hub':padMode?'Clear the floor · A grabs weapons · Get back to the car':touchMode?'Left thumb moves · right thumb aims &amp; attacks':'Clear the floor · E grabs weapons · Get back to the car');
  if(CHALLENGES[i]&&chStars(i)<3)setTimeout(()=>{if(G&&state==='play'&&levelIdx===i&&!G.def.hub&&G.time<4)banner('CHALLENGES',CHALLENGES[i].map((c,k)=>(chDone(i,k)?'\u2605 ':'\u2606 ')+c.n).join(' \u00b7 '));},2600);
  if(i===1&&!LEXMET)startCameo();}
 function showDead(){G.cameo=null;G.lex=null;if(!G.def.hub){arm();myProg().couchBlood=1;saveProg();}state='dead';const k=G.killedBy;$('deadCause').textContent=DEATHNAME[k]||'KILLED';$('deadTip').textContent='TIP: '+pick(TIPS);
  let xp=0;if(!G.xpGiven){G.xpGiven=1;xp=runXP(G,false);awardXP(xp);}const pr=myProg();$('deadXP').innerHTML=(xp?'+'+xp+' XP · ':'')+'LEVEL '+pr.lvl+' <span style="opacity:.7">('+pr.xp+'/'+xpNeed(pr.lvl)+')</span>';
- if(pendingPerks>0)showPerkPick('dead');else show('sDead');}
+ syncRestartJob();if(pendingPerks>0)showPerkPick('dead');else show('sDead');}
 const KNAME={goldgl:'Gold launcher',goldak:'Golden AK',golddeagle:'Golden Deagles',katana:'Katana',dual:'Dual pistols',fists:'Fists',bat:'Bat',knife:'Knife',machete:'Machete',exec:'Execution',door:'Door slam',throw:'Thrown',pistol:'Pistol',silenced:'Silenced',revolver:'.357',smg:'Uzi',m16:'M16',shotgun:'Shotgun',double:'Double barrel'};
 function finishLevel(){const g=G;state='results';const tb=timeBonus(g.time,levelIdx);const total=g.score+tb;g.take=total;totalScore+=total;totalKills+=g.kills;totalTime+=g.time;
  const gden=g.enemies.length*700,gp=(g.gpts||0)+tb,ratio=gp/gden;const gr=GRADES.find(q=>ratio>q[1])[0];const gi=GRADES.findIndex(q=>q[0]===gr);const nextG=gi>0?GRADES[gi-1]:null;const rsty=g.execs>=2?'ruthless':g.heads>=2?'gore':(!g.taken&&g.shots&&g.hits/g.shots>=0.6)?'clean':'mixed';g.style=rsty;runStyle[rsty]=(runStyle[rsty]||0)+1;
  const acc=g.shots?Math.round(Math.min(1,g.hits/g.shots)*100)+'%':'—';
  $('rStats').innerHTML=`DIFFICULTY<b>${Dd().name}</b><br>KILLS<b>${g.kills}</b><br>EXECUTIONS<b>${g.execs}</b><br>BEST COMBO<b>x${g.maxCombo}</b><br>HEADS TAKEN<b>${g.heads}</b><br>STYLE<b>${rsty.toUpperCase()}</b><br>STYLE BONUS<b style="color:#2de2e6">+$${fmt(g.styleB||0)}${g.multis||g.switches?` <span style="opacity:.7">(${g.multis||0} MULTI · ${g.switches||0} SWITCH-UP)</span>`:''}</b><br>BY WEAPON<b>${Object.entries(g.kb).sort((a,b)=>b[1]-a[1]).map(([k,v])=>(KNAME[k]||k)+' '+v).join(' · ')||'—'}</b><br>ACCURACY<b>${acc}</b><br>TIME<b>${mmss(g.time)}  (PAR ${mmss(parOf(levelIdx))})</b><br>KILL MONEY<b>$${fmt(g.score)}</b><br>SPEED BONUS<b>$${fmt(tb)}</b><br>TAKE HOME<b>$${fmt(total)}</b><br>GRADE POINTS<b style="color:#ffd36b">${fmt(gp)}${nextG?'  ·  '+nextG[0]+' AT '+fmt(Math.floor(nextG[1]*gden)+1):'  ·  TOP GRADE'}</b>`;
  let xp=0;if(!g.xpGiven){g.xpGiven=1;xp=runXP(g,true,gr);awardXP(xp);}const pr=myProg();$('rStats').innerHTML+=`<br>XP EARNED<b style="color:#ffd36b">+${xp}</b><br>LEVEL<b style="color:#ffd36b">${pr.lvl}  (${pr.xp}/${xpNeed(pr.lvl)})</b>`;
- if(g.sj){const s=sjState(g);g.sjPay=s.ok?sjPay(g.sj,levelIdx):0;$('rStats').innerHTML+=`<br>SIDE JOB<b style="color:${s.ok?'#7dff9a':'#ff8a95'}">${SIDEJOBS[g.sj].name} · ${s.ok?'PAID +$'+fmt(g.sjPay)+' (NO CUT)':'FAILED'}</b>`;}{const wl=wallet(),ct=cutOf(total),ow=myProg().debt;$('rStats').innerHTML+=(ct?`<br>McWEY'S CUT<b style="color:#ff8a95">-$${fmt(ct)}</b><br>STILL OWED<b style="color:#ff8a95">$${fmt(ow-ct)}</b>`:'')+`<br>WALLET<b style="color:#7dff9a">$${fmt(wl)} &rarr; $${fmt(wl+total-ct+(g.sjPay||0))}</b>`;}{const nb=recordBest(levelIdx,{g:gr,t:g.time,s:total,c:g.maxCombo,ch:CHARS[selIdx].id,d:SET.diff}),b=JOBS.best[levelIdx];$('rStats').innerHTML+=`<br>PERSONAL BEST<b style="color:#2de2e6">${b.g} · ${mmss(b.t)} · $${fmt(b.s)} · x${b.c}</b>`+(nb.length?`<br>NEW<b style="color:#ff5fb8">${nb.join(' · ')}</b>`:'');}{const cr=checkChallenges(levelIdx,g);$('rStats').innerHTML+='<br>CHALLENGES<b>'+cr.out.map(c=>`<span style="color:${c.ok?'#7dff9a':'#ff8a95'}">${c.ok?'\u2605':'\u2606'} ${c.n}${c.fresh?' +$'+fmt(CH_PAY):''}</span>`).join(' · ')+'</b>'+(cr.pay?`<br>CHALLENGE BONUS<b style="color:#7dff9a">+$${fmt(cr.pay)} TO WALLET</b>`:'');}G.grade=gr;$('rGrade').textContent=gr;$('bNextLvl').innerHTML='BACK TO McWEY'+'<span class="padhint"> (A)</span>';if(pendingPerks>0)setTimeout(()=>{if(state==='results')showPerkPick('results');},900);show('sResults');sfx('cash');}
+ if(g.sj){const s=sjState(g);g.sjPay=s.ok?sjPay(g.sj,levelIdx):0;$('rStats').innerHTML+=`<br>SIDE JOB<b style="color:${s.ok?'#7dff9a':'#ff8a95'}">${SIDEJOBS[g.sj].name} · ${s.ok?'PAID +$'+fmt(g.sjPay)+' (NO CUT)':'FAILED'}</b>`;}{const wl=wallet(),ct=missionIsCampaign(MISSION)?cutOf(total):0,ow=myProg().debt;$('rStats').innerHTML+=(ct?`<br>McWEY'S CUT<b style="color:#ff8a95">-$${fmt(ct)}</b><br>STILL OWED<b style="color:#ff8a95">$${fmt(ow-ct)}</b>`:'')+`<br>WALLET<b style="color:#7dff9a">$${fmt(wl)} &rarr; $${fmt(wl+total-ct+(g.sjPay||0))}</b>`;}{const rec={g:gr,t:g.time,s:total,c:g.maxCombo,ch:CHARS[selIdx].id,d:SET.diff},camp=missionIsCampaign(MISSION),mr=camp?null:recordMission(MISSION,g.variant,rec),nb=camp?recordBest(levelIdx,rec):mr.nb,b=camp?JOBS.best[levelIdx]:mr.b;$('rStats').innerHTML+=`<br>PERSONAL BEST<b style="color:#2de2e6">${b.g} · ${mmss(b.t)} · $${fmt(b.s)} · x${b.c}</b>`+(nb.length?`<br>NEW<b style="color:#ff5fb8">${nb.join(' · ')}</b>`:'');}if(missionIsCampaign(MISSION)){const cr=checkChallenges(levelIdx,g);$('rStats').innerHTML+='<br>CHALLENGES<b>'+cr.out.map(c=>`<span style="color:${c.ok?'#7dff9a':'#ff8a95'}">${c.ok?'\u2605':'\u2606'} ${c.n}${c.fresh?' +$'+fmt(CH_PAY):''}</span>`).join(' · ')+'</b>'+(cr.pay?`<br>CHALLENGE BONUS<b style="color:#7dff9a">+$${fmt(cr.pay)} TO WALLET</b>`:'');}G.grade=gr;$('rGrade').textContent=gr;$('bNextLvl').innerHTML='BACK TO McWEY'+'<span class="padhint"> (A)</span>';if(pendingPerks>0)setTimeout(()=>{if(state==='results')showPerkPick('results');},900);show('sResults');sfx('cash');}
 /* multi-stage hooks (W14): runStage snapshots what you hold as the new retry point; runRestartMission makes the next retry start from the job's beginning */
-function runStage(id){const p=myProg(),r=p.run;if(!G||G.def.hub||!r||r.mission!==missionId(levelIdx))return false;const m=kitFromPlay();
+function runStage(id){const p=myProg(),r=p.run;if(!G||G.def.hub||!r||r.mission!==MISSION)return false;const m=kitFromPlay();
  r.stage=String(id);r.stageKit=m.kit;G.live=kitClone(m.kit);G.hand=m.hand;if(typeof m.hand==='number')G.live.guns[m.hand]=null;else if(m.hand==='melee')G.live.melee=null;if(m.stow.length)r.stow=(r.stow||[]).concat(m.stow);saveProg();return true;}
+ function missionSpawn(g){const s=missionVar(g.mission,g.variant).spawn,p=g.player;if(!s||!p)return;p.x=s[0]+0.5;p.z=s[1]+0.5;p.vx=p.vz=0;g.cam.x=p.x;g.cam.z=p.z-1;}
+ /* Q-B: rewind to the job's beginning (shown only once a later stage has been reached) */
+ function syncRestartJob(){const r=myProg().run,on=!!(G&&!G.def.hub&&r&&r.mission===MISSION&&r.stage!==missionStart(MISSION));for(const id of ['bDeadRestartJob','bPRestartJob'])$(id).style.display=on?'':'none';}
+ function restartJob(){if(!G||G.def.hub||fading)return;runRestartMission();restart();}
  function runRestartMission(){const p=myProg(),r=p.run;if(!r)return false;r.stage=missionStart(r.mission);r.stageKit=kitClone(r.entryKit);delete r.stow;saveProg();return true;}
 /* leave the job: everything you brought comes back as it was when you went in, nothing you found there comes with you */
 function walkAway(){if(!G||G.def.hub||fading||!(state==='dead'||state==='pause'))return;const p=myProg();
  if(!G.xpGiven){G.xpGiven=1;awardXP(runXP(G,false));}runWalkAway(p);saveProg();sfx('blip');
- VISIT={debrief:null,next:levelIdx,grade:null,take:0,style:null};NEXTJOB=levelIdx;G.cameo=null;G.lex=null;state='walk';show(null);fadeTo(goHome);}
-function resumeRun(){let best=-1,t=-1;CHARS.forEach((c,i)=>{const r=PROG[c.id]&&PROG[c.id].run;if(r&&r.t>t){t=r.t;best=i;}});return best<0?null:{ci:best,mi:missionIdx(PROG[CHARS[best].id].run.mission)};}
-function syncResume(){const r=resumeRun();$('bResumeJob').style.display=r?'':'none';if(r)$('bResumeJob').innerHTML='RESUME JOB · '+CHARS[r.ci].name+' · '+LEVELS[r.mi].name;}
+ const nx=missionIsCampaign(MISSION)?levelIdx:NEXTJOB;VISIT={debrief:null,next:nx,grade:null,take:0,style:null};NEXTJOB=nx;G.cameo=null;G.lex=null;state='walk';show(null);fadeTo(goHome);}
+function resumeRun(){let best=-1,t=-1;CHARS.forEach((c,i)=>{const r=PROG[c.id]&&PROG[c.id].run;if(r&&r.t>t){t=r.t;best=i;}});if(best<0)return null;const r=PROG[CHARS[best].id].run,mi=missionIdx(r.mission);
+ return {ci:best,id:r.mission,mi,st:mi>=0?mi:Number.isInteger(r.ret)&&r.ret>=0&&r.ret<CAMPAIGN_LEN?r.ret:Math.min(JOBS.sel,JOBS.top)};}
+function syncResume(){const r=resumeRun();$('bResumeJob').style.display=r?'':'none';if(r)$('bResumeJob').innerHTML='RESUME JOB · '+CHARS[r.ci].name+' · '+missionName(r.id);}
 function sessionReset(st){LEXMET=st>1;initAudio();totalScore=0;totalKills=0;totalTime=0;levelIdx=st;VISIT={debrief:null,next:st,grade:null,take:0,style:null};HUBFIRST=true;runStyle={};RUNEND=null;}
-function restart(){if(!G||G.def.hub||fading)return;if(!G.player.alive){RUNTRACK[levelIdx]++;MUS.track='';MUS.pending=null;}if(state==='results'&&G.take){totalScore-=G.take;totalKills-=G.kills;totalTime-=G.time;}startLevel(levelIdx);}
+function restart(){if(!G||G.def.hub||fading)return;if(!G.player.alive){RUNTRACK[levelIdx]++;MUS.track='';MUS.pending=null;}if(state==='results'&&G.take){totalScore-=G.take;totalKills-=G.kills;totalTime-=G.time;}startMission(MISSION);}
 /* the pause screen doubles as the settings screen on the main menu */
-let SETMENU=false;function setMenuMode(on){SETMENU=on;$('pTitle').textContent=on?'SETTINGS':'PAUSED';for(const id of ['bResume','bPRestart','bQuit'])$(id).style.display=on?'none':'';$('bWalk').style.display=on||!G||G.def.hub?'none':'';$('bSetBack').style.display=on?'':'none';}
-function togglePause(){if(state==='play'){setMenuMode(false);state='pause';show('sPause');}else if(state==='pause'){state='play';show(null);}}
+let SETMENU=false;function setMenuMode(on){SETMENU=on;$('pTitle').textContent=on?'SETTINGS':'PAUSED';for(const id of ['bResume','bPRestart','bQuit'])$(id).style.display=on?'none':'';if(on)$('bPRestartJob').style.display='none';$('bWalk').style.display=on||!G||G.def.hub?'none':'';$('bSetBack').style.display=on?'':'none';}
+function togglePause(){if(state==='play'){setMenuMode(false);syncRestartJob();state='pause';show('sPause');}else if(state==='pause'){state='play';show(null);}}
 function syncSetBtns(){$('bMute').textContent='SOUND: '+(SET.sound?'ON':'OFF');$('bShake').textContent='SCREEN SHAKE: '+(SET.shake?'ON':'OFF');$('bRetro').textContent='GRAPHICS: '+(ENH()?'ENHANCED':'PS1 RETRO');$('bHints').textContent='HINTS: '+(SET.hints?'ON':'OFF');$('bCoverSet').textContent='COVER (BETA): '+(SET.cover?'ON':'OFF');$('bGore').textContent='GORE: '+(SET.gore==='normal'?'NORMAL':'EXTREME');$('bGrain').textContent='FILM GRAIN: '+(SET.grain<=0?'OFF':SET.grain<0.3?'LOW':SET.grain<0.5?'MEDIUM':'HIGH');$('bGlitch').textContent='VHS GLITCH: '+(SET.glitch?'ON':'OFF');applyTextSize();}
 function toggleMute(){if(contextLost)return;SET.sound=!SET.sound;if(master)master.gain.value=SET.sound?0.6:0;if(SET.sound)resumeAudio();saveSet();syncSetBtns();}
 $('bStart').onclick=()=>{initAudio();sfx('blip');state='select';updateSelect();show('sSelect');};
@@ -3179,15 +3206,15 @@ $('cDiff').addEventListener('click',e=>{const d=e.target.dataset&&e.target.datas
 $('pkCards').addEventListener('click',e=>{const b=e.target.closest('.pcard');if(b)choosePerk(b.dataset.k);});
 $('bPrev').onclick=()=>{selIdx=(selIdx+2)%3;updateSelect();sfx('blip');};
 $('bNext').onclick=()=>{selIdx=(selIdx+1)%3;updateSelect();sfx('blip');};
-$('bPlay').onclick=()=>{const st=Math.min(JOBS.sel,JOBS.top),p=myProg();if(p.run){runWalkAway(p);saveProg();}sessionReset(st);sfx('pick');fadeTo(goDrive);};$('bResumeJob').onclick=()=>{const r=resumeRun();if(!r||fading)return;selIdx=r.ci;sessionReset(r.mi);NEXTJOB=r.mi;sfx('pick');fadeTo(()=>startLevel(r.mi));};$('bDeadWalk').onclick=()=>walkAway();$('bWalk').onclick=()=>walkAway();syncResume();
-$('sBrief').onclick=e=>{if(CHAT.phase==='choose'||e.target.closest('#bGo,#bDlSkip,#bDlText,summary,#dlogHist,.dlChoices'))return;chatTap();};$('bDlSkip').onclick=()=>chatSkipAll();$('bDlText').onclick=()=>cycleTextSize();
+$('bPlay').onclick=()=>{const st=Math.min(JOBS.sel,JOBS.top),p=myProg();if(p.run){runWalkAway(p);saveProg();}sessionReset(st);sfx('pick');fadeTo(goDrive);};$('bResumeJob').onclick=()=>{const r=resumeRun();if(!r||fading)return;selIdx=r.ci;sessionReset(r.st);NEXTJOB=r.st;sfx('pick');fadeTo(()=>startMission(r.id));};$('bDeadWalk').onclick=()=>walkAway();$('bWalk').onclick=()=>walkAway();syncResume();
+$('sBrief').onclick=e=>{if(CHAT.phase==='choose'||e.target.closest('#bGo,#dlJobs,#bDlSkip,#bDlText,summary,#dlogHist,.dlChoices'))return;chatTap();};$('bDlSkip').onclick=()=>chatSkipAll();$('bDlText').onclick=()=>cycleTextSize();
 $('sElev').onclick=()=>skipElev();$('cine').onclick=()=>cineSkip();$('bSkip').onclick=()=>hubSkip();
-$('bGo').onclick=()=>chatGo();
-$('bNextLvl').onclick=()=>{if(pendingPerks>0){showPerkPick('results');return;}if(fading)return;kitCommit();payout();VISIT={debrief:levelIdx,grade:G.grade,take:G.take,style:G.style,next:levelIdx+1<CAMPAIGN_LEN?levelIdx+1:'end'};fadeTo(goHome);};
+$('bGo').onclick=()=>chatGo();$('dlJobs').onclick=e=>{const b=e.target.closest('[data-mid]');if(b)chatGo(b.dataset.mid);};
+$('bNextLvl').onclick=()=>{if(pendingPerks>0){showPerkPick('results');return;}if(fading)return;kitCommit();payout();VISIT=missionIsCampaign(MISSION)?{debrief:levelIdx,grade:G.grade,take:G.take,style:G.style,next:levelIdx+1<CAMPAIGN_LEN?levelIdx+1:'end'}:{debrief:null,grade:G.grade,take:G.take,style:G.style,next:NEXTJOB};fadeTo(goHome);};
 $('bRetryLvl').onclick=()=>restart();
 $('bAgain').onclick=()=>{state='select';G=null;updateSelect();show('sSelect');};
 $('bRetry').onclick=()=>restart();$('bDeadQuit').onclick=()=>{state='title';G=null;show('sTitle');};
-$('bResume').onclick=()=>togglePause();$('bPRestart').onclick=()=>restart();$('bMute').onclick=()=>toggleMute();
+$('bResume').onclick=()=>togglePause();$('bPRestart').onclick=()=>restart();$('bPRestartJob').onclick=$('bDeadRestartJob').onclick=()=>restartJob();$('bMute').onclick=()=>toggleMute();
 $('bShake').onclick=()=>{SET.shake=!SET.shake;saveSet();syncSetBtns();};$('bRetro').onclick=()=>{SET.gfx2=!ENH();saveSet();syncSetBtns();};
 $('bGrain').onclick=()=>{const L=[0,0.2,0.35,0.6];SET.grain=L[(L.indexOf(SET.grain)+1)%L.length];if(SET.grain===undefined)SET.grain=0.35;saveSet();syncSetBtns();};$('bGlitch').onclick=()=>{SET.glitch=!SET.glitch;saveSet();syncSetBtns();};
 $('bHints').onclick=()=>{SET.hints=!SET.hints;saveSet();syncSetBtns();};$('bCoverSet').onclick=()=>{SET.cover=!SET.cover;saveSet();syncSetBtns();};$('bGore').onclick=()=>{SET.gore=SET.gore==='normal'?'extreme':'normal';saveSet();syncSetBtns();};$('bText').onclick=()=>cycleTextSize();
