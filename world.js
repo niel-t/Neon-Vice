@@ -1,6 +1,114 @@
 'use strict';
 // Legacy cell adapter. All state belongs to the caller; no DOM/GL or gameplay globals.
 const WORLD=(()=>{
+ const materials=(()=>{
+  const freeze=o=>{for(const v of Object.values(o))if(v&&typeof v==='object')freeze(v);return Object.freeze(o);};
+  // W3 MATERIALS section 8: resistance J/cm, layer thickness cm, energy J.
+  const MAT=freeze({
+   gyp:{res:25,hard:0,debris:0xe8e4dc,vfx:'gyp_plume',sfx:'board_thud'},
+   timber:{res:30,hard:0,debris:0xb88a55,vfx:'splinter',sfx:'wood_crack'},
+   pile:{res:80,hard:0,debris:0x8a6a45,vfx:'splinter',sfx:'wood_crack'},
+   ply:{res:40,hard:0,debris:0xc49a6c,vfx:'splinter',sfx:'wood_crack'},
+   particle:{res:45,hard:0,debris:0xb59a76,vfx:'chipdust',sfx:'board_thud'},
+   plaster:{res:60,hard:0,debris:0xefe9df,vfx:'plaster_burst',sfx:'plaster'},
+   stucco:{res:100,hard:0,debris:0x9a958c,vfx:'stucco_burst',sfx:'masonry_hit'},
+   cmu:{res:345,hard:1,debris:0x8d8a84,vfx:'masonry_dust',sfx:'masonry_hit',spall:1},
+   grout:{res:345,hard:1,debris:0x8d8a84,vfx:'masonry_dust',sfx:'masonry_hit',spall:1},
+   brick:{res:400,hard:1,debris:0xa2513a,vfx:'brick_dust',sfx:'masonry_hit',spall:1},
+   clay:{res:400,hard:1,debris:0xc0703f,vfx:'brick_dust',sfx:'tile_crack',spall:1},
+   concrete:{res:900,hard:1,debris:0xa19d95,vfx:'concrete_dust',sfx:'concrete_hit',spall:1},
+   glass:{res:60,hard:0,debris:0xcfe6e8,vfx:'glass_shatter',sfx:'glass_break',pane:1},
+   glass_lam:{res:300,hard:0,debris:0,vfx:'glass_craze',sfx:'glass_crunch'},
+   steel:{res:1500,hard:1,debris:0,vfx:'spark',sfx:'ricochet_metal'},
+   alu:{res:600,hard:1,debris:0xc8ccd0,vfx:'spark',sfx:'metal_hit'},
+   grp:{res:80,hard:0,debris:0xf0f0ea,vfx:'fibre',sfx:'hull_hit'},
+   foam:{res:3,hard:0,debris:0,vfx:'stuffing',sfx:'cloth'},
+   mattress:{res:5,hard:0,debris:0,vfx:'stuffing',sfx:'cloth'},
+   insul:{res:2,hard:0},void:{res:0,hard:0}
+  });
+  const BUILD=freeze({
+   stud_wood_gyp:{layers:[['gyp',1.27],['void',8.9],['gyp',1.27]],alt:{p:0.094,layers:[['gyp',1.27],['timber',8.9],['gyp',1.27]]},cellHp:600},
+   stud_steel_gyp:{layers:[['gyp',1.59],['void',9.2],['gyp',1.59]],cellHp:700},
+   stud_steel_gyp2:{layers:[['gyp',3.18],['insul',9.2],['gyp',3.18]],cellHp:1400},
+   particle_divider:{layers:[['particle',1.9]],cellHp:400},
+   plaster_lath:{layers:[['plaster',2],['timber',0.6],['void',9],['timber',0.6],['plaster',2]],alt:{p:0.094,layers:[['plaster',2],['timber',10.2],['plaster',2]]},cellHp:1500},
+   clay_tile_4:{layers:[['plaster',1.5],['clay',1],['void',7.6],['clay',1],['plaster',1.5]],coreE:800,cellHp:8000},
+   cbs_ext:{layers:[['stucco',1.9],['cmu',3.2],['void',13],['cmu',3.2],['plaster',1.3]],alt:{p:0.19,layers:[['stucco',1.9],['cmu',19.4],['plaster',1.3]]},coreE:1600,cellHp:35000},
+   cmu_hollow:{layers:[['plaster',1.3],['cmu',3.2],['void',13],['cmu',3.2],['plaster',1.3]],alt:{p:0.19,layers:[['plaster',1.3],['cmu',19.4],['plaster',1.3]]},coreE:1600,cellHp:35000},
+   cmu_filled:{layers:[['plaster',1.3],['grout',19.4],['plaster',1.3]],coreE:1600,cellHp:70000},
+   brick_1w:{layers:[['brick',9]],coreE:1600,cellHp:52000},
+   brick_2w:{layers:[['brick',21.5]],coreE:1600,cellHp:105000},
+   brick_cmu_ext:{layers:[['brick',9],['void',2.5],['cmu',3.2],['void',13],['cmu',3.2]],alt:{p:0.19,layers:[['brick',9],['void',2.5],['cmu',19.4]]},coreE:1600,cellHp:90000},
+   rc_wall_20:{layers:[['plaster',1.3],['concrete',20],['plaster',1.3]],coreE:2700,cellHp:210000},
+   rc_column_40:{layers:[['concrete',40]],cellHp:Infinity},
+   glass_annealed_6:{layers:[['glass',0.6]],cellHp:1,pane:1},
+   glass_tempered_6:{layers:[['glass',0.6]],cellHp:1,pane:1,tempered:1},
+   glass_lam_windshield:{layers:[['glass_lam',0.76]],cellHp:1500},
+   glass_block:{layers:[['glass',0.8],['void',8.2],['glass',0.8]],cellHp:2000},
+   glass_studio:{layers:[['glass_lam',1.2],['void',20],['glass_lam',1]],cellHp:6000},
+   door_hollow:{layers:[['ply',0.3],['void',2.9],['ply',0.3]],cellHp:300,lockHp:800},
+   door_solid:{layers:[['ply',0.3],['particle',3.85],['ply',0.3]],cellHp:1500,lockHp:3000},
+   door_metal:{layers:[['steel',0.12],['void',4.2],['steel',0.12]],cellHp:4000,lockHp:6000},
+   door_vault:{layers:[['steel',0.95],['void',4],['steel',0.95]],cellHp:Infinity,lockHp:Infinity},
+   car_door:{layers:[['steel',0.08],['void',10],['steel',0.08]],alt:{p:0.15,layers:[['steel',0.08],['steel',0.3],['void',10],['steel',0.08]]},cellHp:3000},
+   car_engine:{layers:[['steel',6]],cellHp:Infinity},
+   steel_3mm:{layers:[['steel',0.32]],cellHp:Infinity},
+   steel_10mm:{layers:[['steel',0.95]],cellHp:Infinity},
+   corrugated:{layers:[['steel',0.05]],cellHp:800},
+   alu_bulkhead:{layers:[['alu',0.6],['insul',5],['ply',1.2]],cellHp:5000},
+   joinery_ply:{layers:[['ply',1.9],['insul',5],['ply',1.2]],cellHp:1200},
+   grp_hull:{layers:[['grp',1.5]],cellHp:2500},
+   timber_pile:{layers:[['pile',30]],cellHp:Infinity},
+   dock_box:{layers:[['grp',0.5],['void',60],['grp',0.5]],cellHp:800},
+   acoustic_double:{layers:[['gyp',3.18],['insul',9],['void',5],['insul',9],['gyp',3.18]],cellHp:3000},
+   sofa:{layers:[['foam',60],['timber',2]],cellHp:1500},
+   mattress:{layers:[['mattress',22]],cellHp:800},
+   counter_cmu:{layers:[['ply',0.6],['cmu',3.2],['void',3.6],['cmu',3.2]],coreE:1600,cellHp:20000},
+   counter_cabinet:{layers:[['ply',1.9],['void',55],['ply',1.9]],cellHp:1200}
+  });
+  const OPTICS=freeze({glass_annealed_6:'clear',glass_tempered_6:'clear',glass_lam_windshield:'clear',glass_studio:'clear',glass_block:'translucent'});
+  const COVERAGE=freeze({full:{},chest:{nominalHeight:1.2},waist:{nominalHeight:0.9},rail:{},glass:{}});
+  const own=(o,k)=>Object.hasOwn(o,k);
+  function build(id){
+   if(typeof id!=='string'||!own(BUILD,id))throw new RangeError(`Unknown construction ${String(id)}; layout 'glass' maps to glass_tempered_6, 'open' has no surface`);
+   return BUILD[id];
+  }
+  const thickness=layers=>Math.round(layers.reduce((sum,l)=>sum+l[1],0)*1e6)/1e6;
+  function describe(id){
+   const b=build(id),copy=layers=>layers.map(l=>l.slice());
+   return{id,layers:copy(b.layers),thicknessCm:thickness(b.layers),alt:b.alt?{p:b.alt.p,layers:copy(b.alt.layers),thicknessCm:thickness(b.alt.layers)}:null,
+    coreE:b.coreE||0,cellHp:Number.isFinite(b.cellHp)?b.cellHp:null,indestructible:b.cellHp===Infinity,
+    lockHp:Number.isFinite(b.lockHp)?b.lockHp:null,lockIndestructible:b.lockHp===Infinity,
+    pane:!!b.pane,tempered:!!b.tempered,optics:OPTICS[id]||'opaque'};
+  }
+  // Caller supplies a reproducible per-hit or surface-local sample; no RNG policy here.
+  function selectLayers(id,u){
+   const b=build(id);if(!Number.isFinite(u)||u<0||u>=1)throw new RangeError('Layer sample u must be finite in [0,1)');
+   return b.alt&&u<b.alt.p?b.alt.layers:b.layers;
+  }
+  function validateSurface(s){
+   if(!s||typeof s!=='object'||Array.isArray(s))throw new TypeError('Surface must be a record');
+   const fields=['kind','build','cov','h'];
+   for(const k of Reflect.ownKeys(s))if(!fields.includes(k))throw new TypeError(`Unknown surface field ${String(k)}`);
+   for(const k of fields)if(!own(s,k))throw new TypeError(`Missing surface field ${k}`);
+   if(!['wall','window','door','prop'].includes(s.kind))throw new RangeError('Surface kind must be wall, window, door or prop');
+   build(s.build);
+   if(typeof s.cov!=='string'||!own(COVERAGE,s.cov))throw new RangeError('Surface cov must be full, chest, waist, rail or glass');
+   if(!Number.isFinite(s.h)||s.h<=0)throw new RangeError('Surface h must be positive finite metres');
+   const optics=OPTICS[s.build]||'opaque';
+   if(optics==='opaque'&&s.cov==='glass')throw new RangeError('Opaque construction cannot use glass coverage');
+   if(s.build==='glass_block'&&s.cov!=='full')throw new RangeError('glass_block requires full coverage');
+   if((s.kind==='door'||s.kind==='window')&&s.cov!=='full'&&!(optics==='clear'&&s.cov==='glass'))throw new RangeError('Door/window coverage must be full, or glass for clear glazing');
+   return Object.freeze({kind:s.kind,build:s.build,cov:s.cov,h:s.h});
+  }
+  function blocksSight(surface,stance='standing'){
+   const s=validateSurface(surface);
+   if(stance!=='standing'&&stance!=='crouched')throw new RangeError('Sight stance must be standing or crouched');
+   if(s.kind==='prop'||OPTICS[s.build]==='clear'||s.cov==='rail'||s.cov==='waist'||s.cov==='glass')return false;
+   return s.cov==='full'||(s.cov==='chest'&&stance==='crouched');
+  }
+  return Object.freeze({version:1,MAT,BUILD,OPTICS,COVERAGE,build,describe,selectLayers,validateSurface,blocksSight});
+ })();
  const clamp=(v,a,b)=>v<a?a:v>b?b:v;
  const isW=c=>c==='#'||c===' ';
  function hsh(x,z,k,idx){
@@ -94,6 +202,6 @@ const WORLD=(()=>{
   if(Math.abs(d.w)<target||Math.sign(d.w)!==-side){if(isP&&vn>2&&Math.abs(d.w)<2)sounds++;d.w=-side*target;d.pusher=isP?'p':'e';}}return sounds;}
  function bfs(g,f,sx,sz){const W=g.W;f.fill(-1);if(isBlock(g,sx,sz))return;const q=[sz*W+sx];f[q[0]]=0;let h=0;
   while(h<q.length){const i=q[h++];const d=f[i];for(const o of [1,-1,W,-W]){const j=i+o;if(j<0||j>=f.length||g.solid[j]||g.furn[j]||f[j]>=0)continue;f[j]=d+1;q.push(j);}}}
- return Object.freeze({version:1,buildGrid,hsh,cell:Object.freeze({isSolid,isBlock,isCover,rayBlock,doorHit,rayLen,los,rayWall,collideGrid,moveClear,collideDoors,bfs}),
+ return Object.freeze({version:1,materials,buildGrid,hsh,cell:Object.freeze({isSolid,isBlock,isCover,rayBlock,doorHit,rayLen,los,rayWall,collideGrid,moveClear,collideDoors,bfs}),
   geometry:Object.freeze({doorEnd,segDist,segInt})});
 })();

@@ -5,6 +5,7 @@ const vm = require('node:vm');
 const { worldData, gridSnapshot, digest } = require('./world-snapshot.cjs');
 
 function checkWorld() {
+  require('./materials-check.cjs').checkMaterials();
   const { WORLD, LEVELS } = worldData();
   const fixture = JSON.parse(readFileSync(resolve(__dirname, 'fixtures', 'grid-hashes.json'), 'utf8'));
   assert.equal(WORLD.version, 1);
