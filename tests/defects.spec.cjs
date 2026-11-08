@@ -157,27 +157,47 @@ test('audio: gesture recovery surfaces rejection without queuing suspended sound
   } finally {await context.close();}
 });
 
-test('ownership: carry survives floor changes but not a new character run', async ({ openGame }) => {
+test('ownership: the kit carries between jobs, retries rewind and walking away restores what you brought', async ({ openGame }) => {
   const page = await openGame();
   expect(await page.evaluate(() => {
-    startLevel(2);
-    G.player.weapon = { type:'shotgun', ammo:37 };
-    finishLevel();
-    const saved = { ...CARRY };
-    startLevel(3);
-    const carried = { ...G.player.weapon };
-    selIdx = 1;JOBS.sel = 0;
     const fade = fadeTo;
-    try { fadeTo = () => true;$('bPlay').click(); } finally { fadeTo = fade; }
-    const cleared = CARRY;
-    startLevel(0);
-    return { saved, carried, cleared, weapon:G.player.weapon };
+    try {
+      fadeTo = () => true;
+      selIdx = 1;
+      startLevel(2);
+      const bare = G.player.weapon;
+      G.player.weapon = { type:'shotgun', ammo:37 };
+      finishLevel(); pendingPerks = 0; $('bNextLvl').click();
+      const k = kit(), kept = { guns:k.guns, pool:k.pool, run:myProg().run || null };
+      startLevel(3);
+      const carried = { ...G.player.weapon };
+      G.player.weapon = null; G.player.alive = false;
+      restart();
+      const retried = { weapon:{ ...G.player.weapon }, pool:{ ...G.live.pool } };
+      G.player.weapon = { type:'pistol', ammo:9 };
+      togglePause(); walkAway();
+      const stored = JSON.parse(localStorage.getItem('nb86prog')).money;
+      return { bare, kept, carried, retried, walked:{ guns:kit().guns, run:myProg().run || null, stored:stored.kit.guns, storedRun:stored.run || null } };
+    } finally { fadeTo = fade; }
   })).toEqual({
-    saved:{ type:'shotgun',ammo:37,from:2 },
-    carried:{ type:'shotgun',ammo:37 },
-    cleared:null,
-    weapon:null
+    bare:null,
+    kept:{ guns:[{ type:'shotgun', mag:6 }, null], pool:{ '12ga':30 }, run:null },
+    carried:{ type:'shotgun', ammo:6 },
+    retried:{ weapon:{ type:'shotgun', ammo:6 }, pool:{ '12ga':30 } },
+    walked:{ guns:[{ type:'shotgun', mag:6 }, null], run:null, stored:[{ type:'shotgun', mag:6 }, null], storedRun:null }
   });
+});
+
+test('ownership: walking over a gun of your caliber strips its rounds into the pool without taking it', async ({ openGame }) => {
+  const page = await openGame();
+  await page.evaluate(() => {
+    selIdx = 1; startLevel(0); G.freeze = 0;
+    const p = G.player; p.weapon = { type:'silenced', ammo:15 }; G.live.pool = {};
+    G.items.push({ x:p.x, z:p.z, type:'pistol', ammo:13, vx:0, vz:0, rot:0, flying:false, fresh:false, flyT:0, age:2, tag:'w6' });
+  });
+  await expect.poll(() => page.evaluate(() => G.live.pool['9mm'] | 0)).toBe(13);
+  expect(await page.evaluate(() => ({ held:G.player.weapon.type, left:G.items.filter(i => i.tag === 'w6').map(i => i.ammo) })))
+    .toEqual({ held:'silenced', left:[0] });
 });
 
 test('ownership: delayed limb blood stays in its originating world', async ({ openGame }) => {

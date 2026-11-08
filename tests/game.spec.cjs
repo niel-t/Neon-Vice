@@ -171,3 +171,43 @@ test('saves: invalid required containers are preserved', async ({ openGame }) =>
   await expect(invalid.locator('#saveWarning')).toBeVisible();
   expect(await invalid.evaluate(() => { saveProg(); return JSON.parse(localStorage.getItem('nb86prog')); })).toEqual(invalidContainer);
 });
+
+test('saves: the old armory becomes a kit and locker without losing anything, and round-trips', async ({ openGame }) => {
+  const legacy = { don: { lvl: 2, xp: 0, perks: {}, custom: 'keep', arm: { eq: 'smg', owned: ['smg', 'bat', 'shotgun'], mags: 1, vest: 1, stock: [], jobs: 2 } } };
+  const page = await openGame({ nb86prog: legacy });
+  const kit = { v: 1, guns: [{ type: 'smg', mag: 32 }, { type: 'revolver', mag: 6 }], active: 0, melee: null, armour: { type: 'vest', plates: 1 }, pool: { '9mm': 32, '357': 3 }, upg: {}, lost: [] };
+  const locker = { v: 1, items: [{ type: 'bat' }, { type: 'shotgun', mag: 6 }], lost: [] };
+  expect(await page.evaluate(() => ({ kit: kit(), locker: myProg().locker }))).toEqual({ kit, locker });
+  await page.evaluate(() => saveProg());
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect.poll(() => page.evaluate(() => PS2C.ready && menuT > 0), modelSettle).toBe(true);
+  expect(await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('nb86prog')).don; return { kit: s.kit, locker: s.locker, arm: s.arm.owned, custom: s.custom, live: kit() }; }))
+    .toEqual({ kit, locker, arm: ['smg', 'bat', 'shotgun'], custom: 'keep', live: kit });
+});
+
+test('saves: kit content drift is kept in lost, stale jobs are dropped, broken kit structure blocks only progress', async ({ openGame }) => {
+  const drift = await openGame({ nb86prog: { don: { lvl: 1, xp: 0, perks: {},
+    kit: { v: 1, guns: [{ type: 'raygun', mag: 3 }, { type: 'pistol', mag: 99 }], active: 1, melee: 'spoon', armour: null, pool: { '9mm': 5000, plasma: 4 }, upg: {} },
+    locker: { v: 1, items: [{ type: 'pistol', mag: 2 }, { type: 'zap' }] },
+    run: { v: 1, mission: 'c99', stage: 's0', entryKit: { guns: [], pool: {} }, stageKit: { guns: [], pool: {} }, t: 1 } } } });
+  expect(await drift.evaluate(() => { const k = kit(), p = myProg(); return { guns: k.guns, melee: k.melee, pool: k.pool, lost: k.lost.map(l => l.why), locker: p.locker.items, llost: p.locker.lost.length, run: p.run || null, blocked: SAVE.blocked.has('nb86prog') }; }))
+    .toEqual({ guns: [null, { type: 'pistol', mag: 15 }], melee: null, pool: { '9mm': 90 }, lost: ['unknown gun', 'unknown melee', 'unknown caliber'], locker: [{ type: 'pistol', mag: 2 }], llost: 1, run: null, blocked: false });
+  const raw = JSON.stringify({ don: { lvl: 1, xp: 0, perks: {}, kit: { guns: 'nope', pool: {} } } });
+  const broken = await openGame({ nb86prog: raw }, ['nb86prog']);
+  await expect(broken.locator('#saveWarning')).toBeVisible();
+  expect(await broken.evaluate(() => { saveProg(); return localStorage.getItem('nb86prog'); })).toBe(raw);
+});
+
+test('saves: a job in progress resumes from its stage kit as a retry, and walking away restores the entry kit', async ({ openGame }) => {
+  const entry = { v: 1, guns: [{ type: 'pistol', mag: 15 }, null], active: 0, melee: null, armour: null, pool: { '9mm': 20 }, upg: {}, lost: [] };
+  const stage = { ...entry, guns: [{ type: 'shotgun', mag: 4 }, null], pool: { '12ga': 10 } };
+  const page = await openGame({ nb86prog: { money: { lvl: 1, xp: 0, perks: {}, kit: entry, run: { v: 1, mission: 'c1', stage: 's1', entryKit: entry, stageKit: stage, t: 5 } } } });
+  await expect(page.locator('#bResumeJob')).toBeVisible();
+  await page.locator('#bResumeJob').click();
+  await expect.poll(() => page.evaluate(() => state === 'play' && !!G && !G.def.hub && levelIdx)).toBe(1);
+  expect(await page.evaluate(() => ({ ch: CHARS[selIdx].id, weapon: G.player.weapon, pool: G.live.pool, kit: kit().guns, stage: myProg().run.stage })))
+    .toEqual({ ch: 'money', weapon: { type: 'shotgun', ammo: 4 }, pool: { '12ga': 10 }, kit: entry.guns, stage: 's1' });
+  expect(await page.evaluate(() => { const f = fadeTo; fadeTo = () => true; try { togglePause(); walkAway(); } finally { fadeTo = f; }
+    const s = JSON.parse(localStorage.getItem('nb86prog')).money; return { run: s.run || null, kit: s.kit }; }))
+    .toEqual({ run: null, kit: entry });
+});
