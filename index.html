@@ -691,6 +691,17 @@ const ARCH={
  disco:{body:'mix',f:L=>{const c=hex(pick([0xff4fa6,0xffb347,0xb04fff,0x2ad1c9]));Object.assign(L,{tee:true,jacket:c,shirt:c,medallion:true,flares:true,pants:hex(pick([0xf0f0f0,0x1a1a1a,0xc02030])),hs:'big',stache:Math.random()<0.6});}},
  bouncer:{body:'big',f:L=>{Object.assign(L,{tee:true,jacket:hex(0x111114),shirt:hex(0x111114),staff:true,hs:'buzz',earpiece:true,tattoo:true,pants:hex(0x1a1a22),boots:true});}},
 };
+/* W9d female variants: cosmetic only, applied to normal/thin archetypes so body tier, hp, speed and label stay the archetype's. armor/helmet here are look-only (no damage absorption) - gameplay armour is W8's. */
+const FEMHS=['long','long','big'],FEMHAIR=[0x101010,0xe8c860,0x6a3a1a,0xa5532a,0x2a1a10,0xc84a2a];
+ /* deterministic per look and draws nothing from Math.random, so the seeded level stream (world parity) is untouched */
+const lookRng=L=>{let h=2166136261;const s=JSON.stringify(L);for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619);return()=>{h=(h+0x6D2B79F5)|0;let t=Math.imul(h^(h>>>15),1|h);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};};
+const FEMV={
+ punk:(L,r,pk)=>{Object.assign(L,{crop:r()<0.6,hs:pk(['mohawk','big']),skirt:r()<0.4?0.3:0});},
+ hitman:(L,r,pk)=>{Object.assign(L,{tie:null,pads:true,heels:true,hs:'long',hair:hex(pk([0x101010,0xe8c860,0x2a1a10]))});},
+ mobster:(L,r,pk)=>{Object.assign(L,{tie:null,pads:true,heels:true,skirt:r()<0.5?0.42+r()*0.13:0,hs:pk(FEMHS),hair:hex(pk(FEMHAIR)),hat:r()<0.4?'fedora':null,shades:r()<0.5});},
+ merc:(L,r,pk)=>{Object.assign(L,{armor:pk(['vest','plate']),armorC:L.vest,hat:null,helmet:r()<0.5?'pasgt':null,hs:'long',hair:hex(pk(FEMHAIR))});},
+ dealer:(L,r,pk)=>{Object.assign(L,{crop:r()<0.5,heels:true,skirt:r()<0.4?0.36+r()*0.12:0,hs:pk(FEMHS),hair:hex(pk(FEMHAIR))});},
+ disco:(L,r,pk)=>{Object.assign(L,{heels:true,skirt:r()<0.6?0.4+r()*0.12:0,crop:r()<0.3,hs:'big',hair:hex(pk(FEMHAIR))});}};
 const KIND_ARCH={none:['bruiser'],noneClub:['disco','bouncer','disco'],bat:['bruiser','bouncer'],knife:['punk'],machete:['butcher'],pistol:['mobster','hitman'],silenced:['hitman'],shotgun:['biker'],double:['biker','bodyguard'],smg:['punk','dealer'],m16:['merc','bodyguard'],dual:['dealer','hitman'],revolver:['mobster','biker']};
 function thugLook(kind,bodyOverride,lvl){
  const skins=[0xf0c8a0,0xd9a37c,0xa8744f,0x7a5236,0x5a3a26,0xe8b890],hairs=[0x1a1410,0x3a2416,0x6b4a2a,0x101010,0xb08a50,0xc8c0b0];
@@ -700,8 +711,9 @@ function thugLook(kind,bodyOverride,lvl){
  if(L.hat&&(L.hs==='mohawk'||L.hs==='big'))L.hs='normal';
  if(L.apron){L.apronSplats=[];for(let i=0;i<6;i++)L.apronSplats.push([rnd(-0.14,0.14),rnd(0.3,0.62),rnd(0.03,0.07)]);}
  let body=bodyOverride||A0.body;if(body==='mix')body=Math.random()<0.45?'fat':'normal';
- if(body==='fat'){L.bw=1.5;L.bd=1.42;L.bh=0.98;L.belly=true;}else if(body==='thin'){L.bw=0.7;L.bd=0.76;L.bh=1.13;}else if(body==='big'){L.bw=1.2;L.bd=1.12;L.bh=1.1;}
- if(['bruiser','biker','butcher','bouncer'].includes(an)&&Math.random()<0.7)L.stubble=true;if(an==='bruiser'&&Math.random()<0.6)L.scar=true;if(an==='bouncer'||an==='bruiser')L.wraps=Math.random()<0.6;
+ if(FEMV[an]&&(body==='normal'||body==='thin')){const r=lookRng([L,body]),pk=a=>a[r()*a.length|0];if(r()<0.3){FEMV[an](L,r,pk);Object.assign(L,{fem:true,stache:false,beard:null,stubble:false,scar:false});if(L.hat&&(L.hs==='mohawk'||L.hs==='big'))L.hs='long';if(!L.hair)L.hair=hex(pk(FEMHAIR));}}
+ if(L.fem){L.bw=body==='thin'?0.8:0.88;L.bd=body==='thin'?0.8:0.86;L.bh=body==='thin'?1.05:1.0;}else if(body==='fat'){L.bw=1.5;L.bd=1.42;L.bh=0.98;L.belly=true;}else if(body==='thin'){L.bw=0.7;L.bd=0.76;L.bh=1.13;}else if(body==='big'){L.bw=1.2;L.bd=1.12;L.bh=1.1;}
+ if(!L.fem&&['bruiser','biker','butcher','bouncer'].includes(an)&&Math.random()<0.7)L.stubble=true;if(an==='bruiser'&&Math.random()<0.6)L.scar=true;if(an==='bouncer'||an==='bruiser')L.wraps=Math.random()<0.6;
  L.body=body;return L;}
 const BOSSNAME="VICTOR 'THE SHARK' MOREAU";const bossName=()=>(G&&G.def&&G.def.boss&&G.def.boss.name)||BOSSNAME;
 const BOSSLOOK=()=>({skin:hex(0xd9a37c),jacket:hex(0xf2e6c8),shirt:hex(0xc0182a),pants:hex(0xf2e6c8),shoes:hex(0x5a3a22),hair:hex(0x101010),hs:'slick',stache:true,shades:true,chain:true,cigar:true,watch:true,bw:1.35,bd:1.3,bh:1.0,belly:true});
@@ -1402,15 +1414,17 @@ function drawBriefDyn(B,P){B.reset();P.reset();hdChar(IBhi,salChar,menuT);
 /* ================= McWEY TOWER: DRIVE / LOBBY / ELEVATOR / OFFICE ================= */
 const PASTEL=[[1,0.78,0.86],[0.7,0.95,0.92],[1,0.86,0.7],[0.86,0.78,1],[1,1,0.85],[0.75,0.88,1]];
 const MCLOOK=Object.assign({},{skin:hex(0xd9a07a),jacket:hex(0xe4dac6),shirt:hex(0x2a8f8a),pants:hex(0xded4c0),shoes:hex(0x2a1a14),beard:hex(0xa5532a),watch:true,chain:true,medallion:true,bling:true});
+/* W9d: pads/heels/crop for random ladies, rolled from the look itself so NPC spawns keep their Math.random sequence */
+const femWear=L=>{const r=lookRng(L);if(L.sleeves&&r()<0.5)L.pads=true;if(r()<(L.skirt?0.8:0.5))L.heels=true;if(!L.skirt&&!L.sleeves&&r()<0.4)L.crop=true;return L;};
 const NPCLOOK={
  guard:()=>({skin:hex(pick([0xd9a37c,0x7a5236,0xf0c8a0])),jacket:hex(0x111116),shirt:hex(0xf0f0f0),tie:hex(0x111116),pants:hex(0x111116),shoes:hex(0x08080a),hs:'buzz',hair:hex(0x101010),shades:true,earpiece:true,bw:1.2,bd:1.12,bh:1.1,body:'big'}),
- recep:()=>({fem:true,calm:1,sleeves:true,skirt:0.6,skin:hex(0xefcaa8),jacket:hex(0xff6fae),shirt:hex(0xffffff),pants:hex(0xefcaa8),shoes:hex(0xffffff),hs:'long',hair:hex(0xe8c860),medallion:true,bw:0.85,bd:0.85,bh:1.0}),
+ recep:()=>({fem:true,calm:1,sleeves:true,pads:true,heels:true,skirt:0.6,skin:hex(0xefcaa8),jacket:hex(0xff6fae),shirt:hex(0xffffff),pants:hex(0xefcaa8),shoes:hex(0xffffff),hs:'long',hair:hex(0xe8c860),medallion:true,bw:0.85,bd:0.85,bh:1.0}),
  mcwey:()=>Object.assign({},MCLOOK),
  valet:()=>({skin:hex(pick([0xd9a37c,0x8a5a3a,0xefcaa8])),jacket:hex(0xf4efe6),shirt:hex(0xb3221f),pants:hex(0x1d1a24),shoes:hex(0x111111),hs:'slick',hair:hex(0x1a1414),bw:1.0,bd:1.0,bh:1.02}),
  nine:()=>({skin:hex(0xf2cdb4),jacket:hex(0x141419),shirt:hex(0xc8582a),torsoTile:32,pants:hex(0x2a2c3a),shoes:hex(0x1a1414),hs:'slick',hair:hex(0x9a5a2c),beard:hex(0x9a4a22),fluff:true,glasses:true,body:'fat',bw:1.15,bd:1.12,bh:1.0}),
  hguard:()=>NPCLOOK.guard(),
  tony:()=>({skin:hex(0xd9a37c),jacket:hex(0x15121a),shirt:hex(0xf4f4f0),tie:hex(0xc0182a),pants:hex(0x15121a),shoes:hex(0x0a0a0c),hs:'slick',hair:hex(0x1a1410),stache:true,watch:true,bw:1.06,bd:1.04,bh:1.0}),
- lady:()=>{const sk=hex(pick([0xf0c8a0,0xd9a37c,0x8a5a3a,0xefcaa8,0x6b4226])),dress=Math.random()<0.7;return{fem:true,calm:1,sleeves:Math.random()<0.5,skirt:dress?rnd(0.45,0.62):0,skin:sk,jacket:hex(pick([0xffffff,0xff6fae,0x2de2e6,0xffd36b,0xc9b6f2,0x1a1a22,0xff2d95,0x7dff9a])),shirt:hex(pick([0xffffff,0xffd36b,0x1a1a22,0xff6fae])),pants:dress?sk:hex(pick([0xf2f2f2,0x2a2030,0x9ad8e0])),shoes:hex(pick([0xffffff,0xff2d95,0x1a1a22,0xffd36b])),hs:pick(['long','long','big']),hair:hex(pick([0x101010,0xe8c860,0x6a3a1a,0xa5532a,0x2a1a10])),shades:Math.random()<0.35,medallion:Math.random()<0.3,bw:0.86,bd:0.86,bh:rnd(0.97,1.02)};},
+ lady:()=>{const sk=hex(pick([0xf0c8a0,0xd9a37c,0x8a5a3a,0xefcaa8,0x6b4226])),dress=Math.random()<0.7;return femWear({fem:true,calm:1,sleeves:Math.random()<0.5,skirt:dress?rnd(0.45,0.62):0,skin:sk,jacket:hex(pick([0xffffff,0xff6fae,0x2de2e6,0xffd36b,0xc9b6f2,0x1a1a22,0xff2d95,0x7dff9a])),shirt:hex(pick([0xffffff,0xffd36b,0x1a1a22,0xff6fae])),pants:dress?sk:hex(pick([0xf2f2f2,0x2a2030,0x9ad8e0])),shoes:hex(pick([0xffffff,0xff2d95,0x1a1a22,0xffd36b])),hs:pick(['long','long','big']),hair:hex(pick([0x101010,0xe8c860,0x6a3a1a,0xa5532a,0x2a1a10])),shades:Math.random()<0.35,medallion:Math.random()<0.3,bw:0.86,bd:0.86,bh:rnd(0.97,1.02)});},
  guest:()=>Math.random()<0.45?NPCLOOK.lady():({calm:0.8,skin:hex(pick([0xf0c8a0,0xd9a37c,0x8a5a3a,0xefcaa8,0x6b4226])),jacket:hex(pick([0xffffff,0xf4d6e4,0x9ad8e0,0xf6e3b4,0xc9b6f2,0x2a2a33,0xff8fb8])),shirt:hex(pick([0xff6fae,0x2de2e6,0xffffff,0xffd36b,0x1a1a22])),pants:hex(pick([0xf2f2f2,0x2a2030,0xd8d0b8,0x9ad8e0])),shoes:hex(pick([0xffffff,0x2a1a14])),hs:pick(['big','slick','normal','buzz']),hair:hex(pick([0x101010,0xe8c860,0x6a3a1a,0xa5532a,0xd8d8d8])),shades:Math.random()<0.4,glasses:Math.random()<0.15,bw:rnd(0.88,1.05),bd:rnd(0.88,1.08),bh:rnd(0.95,1.05)})};
 const NPCLINES={
  guard:[["Evening, sir. Mr. McWey is expecting you.","Elevator's at the back. Fifty-two floors of class."],["Heard about the motel. Nice work.","Boss is in a good mood. Keep it that way."],["Club Flamingo, huh? The whole strip is talking.","He's waiting upstairs."],["You actually did it. The Shark..."]],
@@ -1785,8 +1799,8 @@ function drawAct2(B,g){const T=g.T,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,
 const DANCER_NAMES=['CHERRY','DESTINY','CRYSTAL','ROXANNE','STARR','MONIQUE','JADE','BAMBI'];
 const STAGE_FITS=[[0xff2d95,0xffd36b],[0x2de2e6,0xffffff],[0xc9b6f2,0xff6fae],[0xffd36b,0x1a1a22],[0x7dff9a,0xff2d95]];
 function dancerLook(fit,stage){const f=STAGE_FITS[fit%STAGE_FITS.length],sk=hex(pick([0xefcaa8,0xd9a37c,0x8a5a3a,0xf0c8a0,0x6b4226]));
- const L={fem:true,calm:1,sleeves:true,skirt:0.52,skin:sk,jacket:hex(f[0]),shirt:hex(f[1]),pants:sk,shoes:hex(f[1]),hs:pick(['long','big']),hair:hex(pick([0xe8c860,0x101010,0x6a3a1a,0xa5532a,0xff6fae])),medallion:true,bw:0.86,bd:0.84,bh:1.02};
- if(stage>=1){L.sleeves=false;L.skirt=0.34;L.shirt=hex(f[0]);L.chain=true;}return L;}
+ const L={fem:true,calm:1,sleeves:true,skirt:0.52,skin:sk,jacket:hex(f[0]),shirt:hex(f[1]),pants:sk,shoes:hex(f[1]),hs:pick(['long','big']),hair:hex(pick([0xe8c860,0x101010,0x6a3a1a,0xa5532a,0xff6fae])),medallion:true,heels:true,bw:0.86,bd:0.84,bh:1.02};
+ if(stage>=1){L.sleeves=false;L.skirt=0.34;L.shirt=hex(f[0]);L.chain=true;L.crop=true;}return L;}
 function clubSetup(g){const W=g.W,cells=ch=>{const o=[];for(let z=0;z<g.H;z++)for(let x=0;x<W;x++)if(g.rows[z][x]===ch)o.push({x:x+0.5,z:z+0.5});return o;};
  g.park={x:g.car.x,z:g.car.z};const S=cells('S').concat(cells('j'));const xs=S.map(q=>q.x),zs=S.map(q=>q.z);g.stage={x0:Math.min(...xs)-0.5,x1:Math.max(...xs)+0.5,z0:Math.min(...zs)-0.5,z1:Math.max(...zs)+0.5};
  const sc={x:(g.stage.x0+g.stage.x1)/2,z:(g.stage.z0+g.stage.z1)/2};g.disco={x:sc.x,z:sc.z};g.lights.push({x:sc.x,y:2.2,z:sc.z,r:6,c:[1.4,0.3,0.9]});
@@ -1908,7 +1922,7 @@ function homeExtras(g){const f=homeFurn(),S=g.slots,sol=(x0,z0,w,h)=>{for(let z=
  if(f.pole&&S.p&&!g.spawned.pole){g.spawned.pole=1;g.dancer=sp('dancer',{x:S.p.x+0.4,z:S.p.z},GIRLLOOK(true));}
  for(const k of ['dog','cat','iguana','tigerpet'])if(f[k]&&!g.spawned[k]&&S.t){g.spawned[k]=1;g.pets.push({k,x:S.t.x+0.6,z:S.t.z-0.4,a:0,tx:S.t.x,tz:S.t.z,wait:1,step:0});}}
 const BGLOOK=t=>({skin:hex(pick([0xd9a37c,0x7a5236,0xf0c8a0,0x5a3a26])),jacket:hex([0x2a2a33,0xf4f1ec,0x15121a][t]),shirt:hex(pick([0x111116,0xff6fae,0x2de2e6])),pants:hex([0x2a2a33,0xf4f1ec,0x15121a][t]),shoes:hex(0x0a0a0c),hs:'buzz',hair:hex(0x101010),shades:true,earpiece:true,bw:1.18,bd:1.1,bh:1.08,body:'big'});
-const GIRLLOOK=pole=>{const sk=hex(pick([0xefcaa8,0xd9a37c,0x8a5a3a,0xf0c8a0,0x6b4226]));return{fem:true,calm:1,sleeves:!pole&&Math.random()<0.4,skirt:pole?0.34:rnd(0.42,0.55),skin:sk,jacket:hex(pick(pole?[0xffd36b,0xff2d95]:[0xff6fae,0x2de2e6,0xffd36b,0xc9b6f2,0x7dff9a])),shirt:hex(pick([0xffffff,0xff2d95,0x2de2e6])),pants:sk,shoes:hex(pick([0xffffff,0xff2d95,0xffd36b])),hs:pick(['long','big']),hair:hex(pick([0xe8c860,0x101010,0x6a3a1a,0xa5532a,0xff6fae])),medallion:true,shades:Math.random()<0.3,bw:0.86,bd:0.86,bh:1.0};};
+const GIRLLOOK=pole=>{const sk=hex(pick([0xefcaa8,0xd9a37c,0x8a5a3a,0xf0c8a0,0x6b4226]));const L={fem:true,calm:1,heels:true,crop:!!pole,sleeves:!pole&&Math.random()<0.4,skirt:pole?0.34:rnd(0.42,0.55),skin:sk,jacket:hex(pick(pole?[0xffd36b,0xff2d95]:[0xff6fae,0x2de2e6,0xffd36b,0xc9b6f2,0x7dff9a])),shirt:hex(pick([0xffffff,0xff2d95,0x2de2e6])),pants:sk,shoes:hex(pick([0xffffff,0xff2d95,0xffd36b])),hs:pick(['long','big']),hair:hex(pick([0xe8c860,0x101010,0x6a3a1a,0xa5532a,0xff6fae])),medallion:true,shades:Math.random()<0.3,bw:0.86,bd:0.86,bh:1.0};if(!pole&&lookRng(L)()<0.3)L.crop=true;return L;};
 const HOME_NPC_LINES={bguard:["Nobody gets near you, boss.","I took a bullet for a guy once. Don't make it a habit.","Perimeter's clear. The cat isn't.","You pay, I stand here. Simple."],
  pgirl:["Is it true you know McWey?","Ooh, is that real gold?","Put on some Nine, baby. The good one.","This place needs more champagne.","You're cuter than the last guy with a penthouse."],dancer:["Tips go in the jar, sugar.","I danced at Club Flamingo. Before it... closed.","Don't touch the pole. Or the dancer."]};
 function homeTick(dt){const g=G,S=g.slots;if(!S)return;homeLightTick(g);
