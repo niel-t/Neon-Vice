@@ -2,11 +2,17 @@ const { test: base, expect } = require('@playwright/test');
 const { createServer } = require('node:http');
 const { readFileSync } = require('node:fs');
 const { resolve } = require('node:path');
+const { pathToFileURL } = require('node:url');
 
 const test = base.extend({
   artifactURL: [async ({}, use) => {
     const html = readFileSync(resolve(__dirname, '..', 'public', 'index.html'));
+    const art = readFileSync(resolve(__dirname, '..', 'public', 'art.js'));
     const server = createServer((req, res) => {
+      if (req.url === '/art.js') {
+        res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8' }).end(art);
+        return;
+      }
       if (req.url !== '/' && req.url !== '/index.html') {
         res.writeHead(404).end();
         return;
@@ -21,14 +27,15 @@ const test = base.extend({
     const contexts = [];
     const unexpected = new Set();
     const saveErrorChecks = [];
-    await use(async (saves = {}, expectedSaveErrors = []) => {
+    await use(async (saves = {}, expectedSaveErrors = [], { direct = false } = {}) => {
       for (const context of contexts) if (context.pages().length) await context.close();
+      const gameURL = direct ? pathToFileURL(resolve(__dirname, '..', 'public', 'index.html')).href : artifactURL;
       const context = await browser.newContext({
         ...testInfo.project.use,
-        storageState: { cookies: [], origins: [{
+        ...(direct ? {} : { storageState: { cookies: [], origins: [{
           origin: artifactURL,
           localStorage: Object.entries(saves).map(([name, value]) => ({ name, value: typeof value === 'string' ? value : JSON.stringify(value) }))
-        }] }
+        }] } })
       });
       contexts.push(context);
       context.on('weberror', error => unexpected.add(error.error().message));
@@ -45,7 +52,8 @@ const test = base.extend({
       await context.route('**/*', route => {
         const url = new URL(route.request().url());
         if (['fonts.googleapis.com', 'fonts.gstatic.com'].includes(url.hostname)) return route.fulfill({ status: 200, body: '' });
-        if (url.origin !== artifactURL) {
+        const localFile = direct && [gameURL, new URL('art.js', gameURL).href].includes(url.href);
+        if (direct ? !localFile : url.origin !== artifactURL) {
           unexpected.add(`Unexpected external request: ${url.href}`);
           return route.abort();
         }
@@ -58,7 +66,7 @@ const test = base.extend({
         addEventListener('unhandledrejection', event => console.error('Unhandled rejection', event.reason));
       });
       const page = await context.newPage();
-      await page.goto(artifactURL, { waitUntil: 'domcontentloaded' });
+      await page.goto(gameURL, { waitUntil: 'domcontentloaded' });
       await expect.poll(() => page.evaluate(() => typeof PS2C !== 'undefined' && PS2C.ready && !!gl && !gl.isContextLost() && menuT > 0)).toBe(true);
       return page;
     });
