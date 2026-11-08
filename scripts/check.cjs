@@ -61,6 +61,7 @@ function check() {
   require('./world-check.cjs').checkWorld();
   require('./ballistics-check.cjs').checkBallistics();
   require('./missions-check.cjs').checkMissions();
+  require('./ai-check.cjs').checkAI();
   require('./dlg-check.cjs').checkDialogue(readFileSync(resolve(__dirname, '..', 'dialogue.js'), 'utf8'));
   const data = gameData();
   const { LEVELS, PAR, LEVEL_TRACKS, WD, CAL, ARMOUR } = data;
