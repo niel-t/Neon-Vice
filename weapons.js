@@ -82,7 +82,7 @@ function normLocker(l){l.v=KIT_V;const lost=l.lost=Array.isArray(l.lost)?l.lost:
    Missing/'s0' (the pre-MISSIONS default) mean the start; any other stage the mission no longer has restarts it from its beginning (entryKit). */
 function normRun(r,stageOf,lost){const st=typeof r.mission==='string'?stageOf(r.mission,r.stage):null;if(!st||typeof st.stage!=='string'||!kitShape(r.entryKit)||!kitShape(r.stageKit))return null;
  r.v=KIT_V;if(!Number.isFinite(r.t))r.t=0;normKit(r.entryKit);normKit(r.stageKit);
- if(!st.keep){r.stageKit=kitClone(r.entryKit);delete r.stow;}r.stage=st.stage;
+ if(!st.keep){r.stageKit=kitClone(r.entryKit);delete r.stow;delete r.stageHp;delete r.st;}r.stage=st.stage;
  if(Array.isArray(r.stow)){const t={items:r.stow,lost:lost||r.entryKit.lost};normLocker(t);r.stow=t.items;}else delete r.stow;return r;}
 /* first kit for a save that predates it: the old armory (arm.eq/owned/mags/vest) becomes kit + locker; arm itself is left as it was */
 function kitFromArm(a,charId){const k=kitNew(),l={v:KIT_V,items:[],lost:[]};a=plainObj(a)?a:{};
