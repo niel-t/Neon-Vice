@@ -124,6 +124,11 @@ function checkPlans() {
     o.kind = 'target'; o.room = 'nowhere'; bad(m, /not nowhere/, 'obj room must match at');
   }
   {
+    const rooms = [];
+    for (let i = 0; i < 16; i++) for (let j = 0; j < 16; j++) rooms.push({ id: `c${i}_${j}`, zone: 'exterior', rect: [i * 2, j * 2, i * 2 + 2, j * 2 + 2] });
+    bad({ id: 'cap', v: 1, stages: { s: { bounds: [0, 0, 32, 32], combat: true, rooms, spawns: [{ id: 'p', kind: 'player', at: [1, 1] }] } } }, /exceed the 255 cap/, '256 room pieces');
+  }
+  {
     const m = JSON.parse(JSON.stringify(PLANS.motel));
     m.stages.lot.spawns.find(s => s.id === 'arr_w').at = [10.4, 13.2]; bad(m, /re-trigger/, 'arrival inside a stair zone');
   }

@@ -5,7 +5,7 @@ const PLANS={};
 const PLAN=(()=>{
  const EPS=1e-6,TOL=1e-4,SNAP=1e3,PAD=.5;
  const STANCE={standing:[1.6,1.8],crouched:[1,1.1]};
- const SPAWN_KINDS=new Set(['player','enemy','civ','item','exit','arrive']),OBJ_KINDS=new Set(['target','use','exit']),STAIR_R=.65;
+ const SPAWN_KINDS=new Set(['player','enemy','civ','item','exit','arrive']),OBJ_KINDS=new Set(['target','use','exit']),STAIR_R=.65,MAX_ROOMS=255;
  const W=()=>{if(typeof WORLD==='undefined'||!WORLD.compile)throw new Error('PLAN needs WORLD v2 loaded first');return WORLD;};
  const snap=v=>Math.round(v*SNAP)/SNAP;
  const key=p=>`${snap(p[0])},${snap(p[1])}`;
@@ -332,7 +332,8 @@ const PLAN=(()=>{
   }
   for(const w of walls)w.open.sort((a,b)=>a.s0-b.s0);
   // open shared boundaries (no wall) are walkable portals, one per room pair
-  const SP=splitParents(D),byPiece=new Map();
+  const SP=splitParents(D),byPiece=new Map(),nPieces=[...SP.pieces.values()].reduce((n,ps)=>n+ps.length,0);
+  if(nPieces>MAX_ROOMS)fail(where,`${nPieces} stage room pieces exceed the ${MAX_ROOMS} cap (vertex roomId byte)`);
   const edgePortal=(e,sep,kind,walk)=>{// split the edge where generated pieces of either side change
    const ts=[0,1];for(const r of [e.L,e.R])for(const pc of SP.pieces.get(r))for(const v of pc.poly){const t=onSeg(v,e.a,e.b);if(t!==null&&t>EPS&&t<1-EPS)ts.push(t);}
    ts.sort((x,y)=>x-y);const lerp=t=>[snap(e.a[0]+(e.b[0]-e.a[0])*t),snap(e.a[1]+(e.b[1]-e.a[1])*t)];
