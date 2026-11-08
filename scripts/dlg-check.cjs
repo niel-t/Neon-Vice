@@ -20,7 +20,10 @@ function variants(v, where) {
   return keys.map(k => { assert.equal(typeof v[k], 'string', `${where}.${k}: text must be a string`); return v[k]; });
 }
 
-function lint(text, max, where, LINT, banned) {
+// Tokens are linted at their longest expansion; anything else in braces is a typo.
+const TOKEN_LEN = { kid: 'partner', car: 'x'.repeat(16), gun: 'x'.repeat(16) };
+function lint(raw, max, where, LINT, banned, tokens = LINT.tokens) {
+  const text = raw.replace(/\{(\w+)\}/g, (m, k) => { assert(tokens.includes(k), `${where}: unknown token ${m}: "${raw}"`); return TOKEN_LEN[k]; });
   assert(text.trim().length, `${where}: empty text`);
   assert(text.length <= max, `${where}: ${text.length} chars (max ${max}): "${text}"`);
   assert((text.match(/\u2014/g) || []).length <= LINT.maxDash, `${where}: too many em dashes: "${text}"`);
@@ -99,6 +102,7 @@ function selfTest(WHO, LINT) {
     banned: { start: 'a', nodes: { a: { say: [['MCWEY', "Here's the thing, kid."]] } } },
     long: { start: 'a', nodes: { a: { say: [['MCWEY', 'x'.repeat(LINT.maxLine + 1)]] } } },
     bigRel: { start: 'a', nodes: { a: { choose: [opt('One.'), opt('Two.'), { t: 'Three.', set: { rel: { mcwey: 2 } } }] } } },
+    token: { start: 'a', nodes: { a: { say: [['MCWEY', 'Hi, {kdi}.']] } } },
     halfText: { start: 'a', nodes: { a: { say: [['P', { don: 'Hi.' }]] } } },
     empty: { start: 'a', nodes: { a: {} } },
     nextLoop: { start: 'a', nodes: { a: { say: [['MCWEY', 'Again.']], next: 'b' }, b: { say: [['MCWEY', 'Again.']], next: 'a' } } },
@@ -107,10 +111,15 @@ function selfTest(WHO, LINT) {
 }
 
 function checkDialogue(source) {
-  const { DLG, DLG_WHO, DLG_LINT } = vm.runInNewContext(`${source}\n;({DLG, DLG_WHO, DLG_LINT})`, {}, { timeout: 1000 }); // dialogue data stays DOM-free
-  selfTest(DLG_WHO, DLG_LINT);
-  const n = validateDLG(DLG, DLG_WHO, DLG_LINT);
-  console.log(`dialogue: ${n} DLG conversations valid`);
+  const { DLG, DLG_WHO, DLG_LINT, DLG_TOKENS, mcLines } = vm.runInNewContext(`${source}\n;({DLG, DLG_WHO, DLG_LINT, DLG_TOKENS, mcLines})`, {}, { timeout: 1000 }); // dialogue data stays DOM-free
+  const LINT = { ...DLG_LINT, tokens: DLG_TOKENS };
+  selfTest(DLG_WHO, LINT);
+  const n = validateDLG(DLG, DLG_WHO, LINT);
+  // McWey's visit lines outside DLG may also carry the {car}/{gun} tokens that talkMcWey fills in.
+  const banned = LINT.banned.map(w => [w, new RegExp(`(^|\\W)${reEsc(w)}`, 'i')]);
+  const lines = mcLines();
+  lines.forEach((t, i) => { assert.equal(typeof t, 'string', `mcLines[${i}]: not a string`); lint(t, LINT.maxLine, `mcLines[${i}]`, LINT, banned, [...DLG_TOKENS, 'car', 'gun']); });
+  console.log(`dialogue: ${n} DLG conversations and ${lines.length} McWey lines valid`);
 }
 
 module.exports = { validateDLG, checkDialogue };
