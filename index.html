@@ -55,6 +55,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 .red{color:#ff2a3a;text-shadow:3px 3px 0 #3a0010,0 0 18px #ff0030}
 .stats{font-size:clamp(17px,3vw,24px);line-height:1.25;margin:12px 0;color:#f3e6ff;text-align:left;min-width:min(420px,90vw)}
 .stats b{color:#7dff9a;float:right;margin-left:30px;font-weight:normal}
+#rStats{font-size:clamp(12px,min(2.1vw,2.3vh),18px);line-height:1.12;margin:6px 0}
 .grade{font-family:'Press Start 2P',monospace;font-size:clamp(38px,9vw,84px);color:#ffd36b;text-shadow:4px 4px 0 #ff2d95}
 #banner{position:fixed;left:0;right:0;top:20%;z-index:4;text-align:center;pointer-events:none;opacity:0;transition:opacity .35s}
 #banner.on{opacity:1}
@@ -979,8 +980,33 @@ const GRANK=g=>{const i=GRADES.findIndex(q=>q[0]===g);return i<0?99:i;};
 function recordBest(i,r){migJobs();const b=JOBS.best[i],nb=[];if(!b){JOBS.best[i]=Object.assign({},r);nb.push('FIRST CLEAR');}else{
  if(GRANK(r.g)<GRANK(b.g)){b.g=r.g;nb.push('GRADE');}if(r.t<b.t){b.t=r.t;nb.push('TIME');}if(r.s>b.s){b.s=r.s;b.ch=r.ch;b.d=r.d;nb.push('TAKE');}if(r.c>b.c){b.c=r.c;nb.push('COMBO');}}
  JOBS.top=Math.max(JOBS.top,Math.min(LEVELS.length-1,i+1));saveJobs();return nb;}
-function floorHTML(){migJobs();JOBS.sel=Math.min(JOBS.sel,JOBS.top);let h='<span>START AT</span>';for(let i=0;i<=JOBS.top;i++){const b=JOBS.best[i];h+=`<button data-fl="${i}" class="${JOBS.sel===i?'on':''}" title="${LEVELS[i].name}">${i<3?'1-'+(i+1):'2-'+(i-2)}${b?' '+b.g:''}</button>`;}return h;}
+function floorHTML(){migJobs();JOBS.sel=Math.min(JOBS.sel,JOBS.top);let h='<span>START AT</span>';for(let i=0;i<=JOBS.top;i++){const b=JOBS.best[i];h+=`<button data-fl="${i}" class="${JOBS.sel===i?'on':''}" title="${LEVELS[i].name}">${i<3?'1-'+(i+1):'2-'+(i-2)}${b?' '+b.g:''}${chStars(i)?' '+'\u2605'.repeat(chStars(i)):''}</button>`;}return h;}
 function floorDesc(){const i=JOBS.sel,b=JOBS.best[i];return BRIEF_FLOOR(i)+(b?' · BEST '+b.g+' · '+mmss(b.t)+' · $'+fmt(b.s)+' · x'+b.c:' · NOT CLEARED YET');}
+/* per-floor challenges: 3 per floor, each pays CH_PAY once (saved in JOBS.ch[floor] as a bitmask) */
+const CHX={
+ time:s=>({n:'UNDER '+mmss(s),f:g=>g.time<=s}),
+ untouched:()=>({n:'UNTOUCHED',f:g=>!g.taken}),
+ noguns:()=>({n:'NO GUNS FIRED',f:g=>!g.shots}),
+ combo:k=>({n:'COMBO x'+k,f:g=>g.maxCombo>=k}),
+ execs:k=>({n:k+' EXECUTIONS',f:g=>g.execs>=k}),
+ doors:k=>({n:k+' DOOR KILLS',f:g=>(g.kb.door||0)>=k}),
+ slams:k=>({n:k+' AIR HOCKEY SLAMS',f:g=>(g.slams||0)>=k}),
+ glass:()=>({n:'NO BROKEN GLASS',f:g=>!g.glassBroken})};
+const CHALLENGES=[
+ [CHX.time(45),CHX.noguns(),CHX.untouched()],
+ [CHX.combo(6),CHX.doors(2),CHX.time(40)],
+ [CHX.untouched(),CHX.execs(3),CHX.time(50)],
+ [CHX.combo(8),CHX.time(45),CHX.untouched()],
+ [CHX.slams(2),CHX.noguns(),CHX.time(50)],
+ [CHX.time(70),CHX.combo(8),CHX.execs(2)],
+ [CHX.glass(),CHX.untouched(),CHX.time(50)],
+ [CHX.untouched(),CHX.time(45),CHX.combo(6)]];
+const CH_PAY=2000;
+const chDone=(i,k)=>!!(((JOBS.ch||{})[i]||0)&(1<<k));
+function chStars(i){let n=0;for(let k=0;k<3;k++)if(chDone(i,k))n++;return n;}
+function chHTML(i){return (CHALLENGES[i]||[]).map((c,k)=>`<span style="color:${chDone(i,k)?'#7dff9a':'#c9a8e8'}">${chDone(i,k)?'\u2605':'\u2606'} ${c.n}</span>`).join('  ');}
+function checkChallenges(i,g){if(!JOBS.ch)JOBS.ch={};const out=[];let pay=0;(CHALLENGES[i]||[]).forEach((c,k)=>{const ok=!!c.f(g),was=chDone(i,k);if(ok&&!was){JOBS.ch[i]=(JOBS.ch[i]||0)|(1<<k);pay+=CH_PAY;}out.push({n:c.n,ok,fresh:ok&&!was});});
+ if(pay){const p=myProg();arm();p.wallet+=pay;saveProg();}saveJobs();return {out,pay};}
 function stepFloor(d){const n=Math.max(0,Math.min(JOBS.top,JOBS.sel+d));if(n!==JOBS.sel){JOBS.sel=n;saveJobs();updateSelect();sfx('blip');}}
 const BRIEF_FLOOR=(i)=>(i<3?'ACT 1 · FLOOR '+(i+1)+' / 3':'ACT 2 · FLOOR '+(i-2)+' / 5')+' — '+LEVELS[i].name;
 
@@ -1341,7 +1367,7 @@ function stagger(e,dir){e.vx+=dir[0]*3;e.vz+=dir[1]*3;e.hitT=0.12;e.wind=0;e.cd=
 function hitEnemy(e,type,dir,dmg){type=BT(type);if(!e.alive)return;if(e.boss)G.bossSeen=true;if((e.hp||1)>dmg){e.hp-=dmg;e.hitT=0.12;bloodBurst(e.x,0.7,e.z,dir,e.boss?14:10,3);addFloorDecal(e.x+dir[0]*0.4,e.z+dir[1]*0.4,rnd(0.3,0.6),rnd(0,TAU),10,bloodTint());
  const kb=e.boss?0.8:2.5;e.vx+=dir[0]*kb;e.vz+=dir[1]*kb;if(GUNS.includes(type)){e.wounds.push([rnd(-0.14,0.14),rnd(0.48,0.74)]);G.hits++;}sfx('punch');rumble(0.2,0.4,60);G.hitT=0.12;
  if(!e.boss&&!e.toughShown){e.toughShown=true;popup(e.x,e.z,archLabel(e)+'!','#ffd36b');}if(e.state!=='chase'){e.state='chase';e.react=0.3;e.seeT=0;}return;}killEnemy(e,type,dir);}
-function knockdown(e,dir){if(!e.alive)return;if(!e.boss&&G.hockey&&G.hockey.some(h=>Math.hypot(h.x-e.x,h.z-e.z)<1.5)){G.score+=500;G.gpts=(G.gpts||0)+500;popup(e.x,e.z,'AIR HOCKEY SLAM! +$500','#2de2e6');sfx('thud');shake(0.4);killEnemy(e,'door',dir);return;}if(e.boss){stagger(e,dir);hitEnemy(e,'door',dir,1);return;}e.down=3.0;e.fall=0;e.vx=dir[0]*4;e.vz=dir[1]*4;dropWeapon(e,dir,true);e.a=Math.atan2(dir[0],dir[1]);e.state='chase';e.wind=0;e.seeT=0;sfx('hit_fists');bloodBurst(e.x,0.9,e.z,dir,6,2);}
+function knockdown(e,dir){if(!e.alive)return;if(!e.boss&&G.hockey&&G.hockey.some(h=>Math.hypot(h.x-e.x,h.z-e.z)<1.5)){G.score+=500;G.gpts=(G.gpts||0)+500;G.slams=(G.slams||0)+1;popup(e.x,e.z,'AIR HOCKEY SLAM! +$500','#2de2e6');sfx('thud');shake(0.4);killEnemy(e,'door',dir);return;}if(e.boss){stagger(e,dir);hitEnemy(e,'door',dir,1);return;}e.down=3.0;e.fall=0;e.vx=dir[0]*4;e.vz=dir[1]*4;dropWeapon(e,dir,true);e.a=Math.atan2(dir[0],dir[1]);e.state='chase';e.wind=0;e.seeT=0;sfx('hit_fists');bloodBurst(e.x,0.9,e.z,dir,6,2);}
 const DEATHNAME={grenade:'BLOWN UP BY A GOLD GRENADE',dual:'DOUBLE-TAPPED, TWICE',boss:'FLATTENED BY THE SHARK',fists:'BEATEN TO DEATH',bat:'BATTED INTO THE NEXT LIFE',knife:'STABBED',machete:'HACKED APART',pistol:'SHOT WITH A 9MM',silenced:'SILENCED',revolver:'SHOT WITH A .357',shotgun:'BLASTED WITH A SHOTGUN',double:'BOTH BARRELS',smg:'RIDDLED BY AN UZI',m16:'GUNNED DOWN BY AN M16'};
 function hurtPlayer(dir,type){const g=G,p=g.player;if(!p.alive||p.armorT>0)return;g.taken=(g.taken||0)+1;
  if(p.armor>0){p.armor--;p.armorT=0.9;p.lastHurt=g.time;shake(0.45);g.flash=0.35;g.flashC=[1,1,1];rumble(0.9,0.9,250);sfx('vest');popup(p.x,p.z,'VEST HIT!','#ffd36b');bloodBurst(p.x,0.7,p.z,dir,8,2);return;}
@@ -3846,7 +3872,7 @@ const SCREENS=['sElev','sTitle','sHelp','sSelect','sBrief','sDead','sResults','s
 function show(id){SCREENS.forEach(s=>$(s).classList.toggle('on',s===id));if(id)$('banner').classList.remove('on');}
 let bannerT=null;function banner(a,b){const el=$('banner');el.innerHTML='<div class="b1">'+a+'</div>'+(b?'<div class="b2">'+b+'</div>':'');el.classList.add('on');clearTimeout(bannerT);bannerT=setTimeout(()=>el.classList.remove('on'),2400);}
 function updateSelect(){const c=CHARS[selIdx];const gb=$('cBig');gb.textContent=c.name;gb.dataset.t=c.name;$('cQuote').textContent=c.quote;$('cPerk').innerHTML=c.perk;
- $('cDiff').innerHTML='<span>DIFFICULTY</span>'+Object.entries(DIFF).map(([k,d])=>`<button data-d="${k}" class="${SET.diff===k?'on':''}">${d.name}</button>`).join('');$('cDiffD').textContent=Dd().desc;$('cFloor').innerHTML=floorHTML();$('cFloorD').textContent=floorDesc();
+ $('cDiff').innerHTML='<span>DIFFICULTY</span>'+Object.entries(DIFF).map(([k,d])=>`<button data-d="${k}" class="${SET.diff===k?'on':''}">${d.name}</button>`).join('');$('cDiffD').textContent=Dd().desc;$('cFloor').innerHTML=floorHTML();$('cFloorD').innerHTML=floorDesc()+'<br>'+chHTML(JOBS.sel);
  $('cStats').innerHTML=Object.entries(c.stats).map(([k,v])=>`<span>${k}</span><div class="bar"><i style="width:${v*20}%"></i></div>`).join('')+`<span>STARTS WITH</span><span style="color:#ffd36b">${c.start}</span>`+xpBarHTML()+`<span>PERKS</span><span style="color:#7dff9a;font-size:.85em">${perkList()}</span>`+suitHTML();PS2C.applySuit(c.id);}
 function suitHTML(){const p=myProg(),cur=mySuit();return '<span>SUIT</span><div class="suits" style="display:flex;gap:4px;flex-wrap:wrap;grid-column:1/-1">'+SUITKEYS.map(k=>{const S=SUITS[k],ok=suitOK(p,k);return `<button data-suit="${k}" class="${cur===k?'on':''}" ${ok?'':'disabled'} style="font-size:.7em;padding:4px 7px;opacity:${ok?1:.45}">${ok?S.name:S.name+(S.act2?' · ACT 2':' · LV '+S.lvl)}</button>`;}).join('')+'</div><span style="color:#ffd36b;font-size:.8em;grid-column:1/-1">'+SUITS[cur].desc+'</span>';}
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-suit]');if(!b||b.disabled)return;const p=myProg();p.suit=b.dataset.suit;saveProg();sfx('pick');updateSelect();});
@@ -3856,6 +3882,7 @@ function showBrief(i){levelIdx=i;state='brief';show('sBrief');$('brFrom').textCo
 let CARRY=null;/* the weapon the player left the last floor with: {type,ammo,from} */
 function startLevel(i){clearInterval(typeT);levelIdx=i;HUBMODE='in';loadLevel(i);applyLoadout();if(CARRY&&CARRY.from!==i&&WD[CARRY.type]){const p=G.player,w=p.weapon;if(w&&w.type===CARRY.type)w.ammo+=CARRY.ammo;else p.weapon={type:CARRY.type,ammo:CARRY.ammo};}G.sj=myProg().sidejob||null;act2Setup(G,i);if(i===0&&myCar()!=='beater')placeOldCar();G.track=LEVEL_TRACKS[i][RUNTRACK[i]%LEVEL_TRACKS[i].length];if(MUS.track!==G.track){MUS.track='';MUS.pending=null;}state='play';show(null);
  banner(i===3?'ACT 2: HOSTILE TAKEOVER':(i<3?'FLOOR '+(i+1):'FLOOR '+(i-2))+': '+LEVELS[i].name,i===3?'Floor 1: Vice Marina · Lex Sterling\'s smuggling hub':padMode?'Clear the floor · A grabs weapons · Get back to the car':touchMode?'Left thumb moves · right thumb aims &amp; attacks':'Clear the floor · E grabs weapons · Get back to the car');
+ if(CHALLENGES[i]&&chStars(i)<3)setTimeout(()=>{if(G&&state==='play'&&levelIdx===i&&!G.def.hub&&G.time<4)banner('CHALLENGES',CHALLENGES[i].map((c,k)=>(chDone(i,k)?'\u2605 ':'\u2606 ')+c.n).join(' \u00b7 '));},2600);
  if(i===1&&!LEXMET)startCameo();}
 function showDead(){G.cameo=null;G.lex=null;if(!G.def.hub){arm();myProg().couchBlood=1;saveProg();}state='dead';const k=G.killedBy;$('deadCause').textContent=DEATHNAME[k]||'KILLED';$('deadTip').textContent='TIP: '+pick(TIPS);
  let xp=0;if(!G.xpGiven){G.xpGiven=1;xp=runXP(G,false);awardXP(xp);}const pr=myProg();$('deadXP').innerHTML=(xp?'+'+xp+' XP · ':'')+'LEVEL '+pr.lvl+' <span style="opacity:.7">('+pr.xp+'/'+xpNeed(pr.lvl)+')</span>';
@@ -3866,7 +3893,7 @@ function finishLevel(){const g=G;state='results';{const w=g.player.weapon;CARRY=
  const acc=g.shots?Math.round(Math.min(1,g.hits/g.shots)*100)+'%':'—';
  $('rStats').innerHTML=`DIFFICULTY<b>${Dd().name}</b><br>KILLS<b>${g.kills}</b><br>EXECUTIONS<b>${g.execs}</b><br>BEST COMBO<b>x${g.maxCombo}</b><br>HEADS TAKEN<b>${g.heads}</b><br>STYLE<b>${rsty.toUpperCase()}</b><br>STYLE BONUS<b style="color:#2de2e6">+$${fmt(g.styleB||0)}${g.multis||g.switches?` <span style="opacity:.7">(${g.multis||0} MULTI · ${g.switches||0} SWITCH-UP)</span>`:''}</b><br>BY WEAPON<b>${Object.entries(g.kb).sort((a,b)=>b[1]-a[1]).map(([k,v])=>(KNAME[k]||k)+' '+v).join(' · ')||'—'}</b><br>ACCURACY<b>${acc}</b><br>TIME<b>${mmss(g.time)}  (PAR ${mmss(parOf(levelIdx))})</b><br>KILL MONEY<b>$${fmt(g.score)}</b><br>SPEED BONUS<b>$${fmt(tb)}</b><br>TAKE HOME<b>$${fmt(total)}</b><br>GRADE POINTS<b style="color:#ffd36b">${fmt(gp)}${nextG?'  ·  '+nextG[0]+' AT '+fmt(Math.floor(nextG[1]*gden)+1):'  ·  TOP GRADE'}</b>`;
  let xp=0;if(!g.xpGiven){g.xpGiven=1;xp=runXP(g,true,gr);awardXP(xp);}const pr=myProg();$('rStats').innerHTML+=`<br>XP EARNED<b style="color:#ffd36b">+${xp}</b><br>LEVEL<b style="color:#ffd36b">${pr.lvl}  (${pr.xp}/${xpNeed(pr.lvl)})</b>`;
- if(g.sj){const s=sjState(g);g.sjPay=s.ok?sjPay(g.sj,levelIdx):0;$('rStats').innerHTML+=`<br>SIDE JOB<b style="color:${s.ok?'#7dff9a':'#ff8a95'}">${SIDEJOBS[g.sj].name} · ${s.ok?'PAID +$'+fmt(g.sjPay)+' (NO CUT)':'FAILED'}</b>`;}{const wl=wallet(),ct=cutOf(total),ow=myProg().debt;$('rStats').innerHTML+=(ct?`<br>McWEY'S CUT<b style="color:#ff8a95">-$${fmt(ct)}</b><br>STILL OWED<b style="color:#ff8a95">$${fmt(ow-ct)}</b>`:'')+`<br>WALLET<b style="color:#7dff9a">$${fmt(wl)} &rarr; $${fmt(wl+total-ct+(g.sjPay||0))}</b>`;}{const nb=recordBest(levelIdx,{g:gr,t:g.time,s:total,c:g.maxCombo,ch:CHARS[selIdx].id,d:SET.diff}),b=JOBS.best[levelIdx];$('rStats').innerHTML+=`<br>PERSONAL BEST<b style="color:#2de2e6">${b.g} · ${mmss(b.t)} · $${fmt(b.s)} · x${b.c}</b>`+(nb.length?`<br>NEW<b style="color:#ff5fb8">${nb.join(' · ')}</b>`:'');}G.grade=gr;$('rGrade').textContent=gr;$('bNextLvl').innerHTML='BACK TO McWEY'+'<span class="padhint"> (A)</span>';if(pendingPerks>0)setTimeout(()=>{if(state==='results')showPerkPick('results');},900);show('sResults');sfx('cash');}
+ if(g.sj){const s=sjState(g);g.sjPay=s.ok?sjPay(g.sj,levelIdx):0;$('rStats').innerHTML+=`<br>SIDE JOB<b style="color:${s.ok?'#7dff9a':'#ff8a95'}">${SIDEJOBS[g.sj].name} · ${s.ok?'PAID +$'+fmt(g.sjPay)+' (NO CUT)':'FAILED'}</b>`;}{const wl=wallet(),ct=cutOf(total),ow=myProg().debt;$('rStats').innerHTML+=(ct?`<br>McWEY'S CUT<b style="color:#ff8a95">-$${fmt(ct)}</b><br>STILL OWED<b style="color:#ff8a95">$${fmt(ow-ct)}</b>`:'')+`<br>WALLET<b style="color:#7dff9a">$${fmt(wl)} &rarr; $${fmt(wl+total-ct+(g.sjPay||0))}</b>`;}{const nb=recordBest(levelIdx,{g:gr,t:g.time,s:total,c:g.maxCombo,ch:CHARS[selIdx].id,d:SET.diff}),b=JOBS.best[levelIdx];$('rStats').innerHTML+=`<br>PERSONAL BEST<b style="color:#2de2e6">${b.g} · ${mmss(b.t)} · $${fmt(b.s)} · x${b.c}</b>`+(nb.length?`<br>NEW<b style="color:#ff5fb8">${nb.join(' · ')}</b>`:'');}{const cr=checkChallenges(levelIdx,g);$('rStats').innerHTML+='<br>CHALLENGES<b>'+cr.out.map(c=>`<span style="color:${c.ok?'#7dff9a':'#ff8a95'}">${c.ok?'\u2605':'\u2606'} ${c.n}${c.fresh?' +$'+fmt(CH_PAY):''}</span>`).join(' · ')+'</b>'+(cr.pay?`<br>CHALLENGE BONUS<b style="color:#7dff9a">+$${fmt(cr.pay)} TO WALLET</b>`:'');}G.grade=gr;$('rGrade').textContent=gr;$('bNextLvl').innerHTML='BACK TO McWEY'+'<span class="padhint"> (A)</span>';if(pendingPerks>0)setTimeout(()=>{if(state==='results')showPerkPick('results');},900);show('sResults');sfx('cash');}
 function restart(){if(!G||G.def.hub)return;if(!G.player.alive){RUNTRACK[levelIdx]++;MUS.track='';MUS.pending=null;}if(state==='results'&&G.take){totalScore-=G.take;totalKills-=G.kills;totalTime-=G.time;}startLevel(levelIdx);}
 /* the pause screen doubles as the settings screen on the main menu */
 let SETMENU=false;function setMenuMode(on){SETMENU=on;$('pTitle').textContent=on?'SETTINGS':'PAUSED';for(const id of ['bResume','bPRestart','bQuit'])$(id).style.display=on?'none':'';$('bSetBack').style.display=on?'':'none';}
