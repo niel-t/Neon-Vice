@@ -56,3 +56,8 @@ function coverShotY(muzzleY,t){return stanceOf(t)==='crouch'?Math.min(muzzleY,ST
 /* enemy e (eye at e.x/e.z) sees the player's eye. Legacy cell LOS today: no gameplay WORLD state exists until
    W1's mutation-sync checkpoint, after which this becomes stanceSight(st,e.x,e.z,STANCE[stanceOf(e)].eye,p). */
 function playerSeenBy(e){const p=G.player,eye=p.eye||p;return WORLD.cell.los(G,e.x,e.z,eye.x,eye.z);}
+/* a leaning player exposes the lean point: it is hittable, and enemies aim at it when the body is hidden from them */
+const COVER_LEAN_R=0.2;
+const leaning=p=>!!(p&&p.cs&&p.cs.lean&&p.eye);
+function playerHitPoints(p){return leaning(p)?[p,{x:p.eye.x,z:p.eye.z,r:COVER_LEAN_R}]:[p];}
+function playerAimPoint(e){const p=G.player;return leaning(p)&&!WORLD.cell.los(G,e.x,e.z,p.x,p.z)?p.eye:p;}

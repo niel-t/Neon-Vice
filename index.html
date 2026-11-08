@@ -1243,7 +1243,7 @@ function balCrossings(g,b,rem){const st=wst(g);let S=rem+1.5;
 function bulletLeg(b,rem){const g=G,p=g.player,ax=b.x,az=b.z,ev=balCrossings(g,b,rem);
  const hitR=(x,z,rr)=>{const t=(x-ax)*b.dx+(z-az)*b.dz,px=ax+b.dx*t-x,pz=az+b.dz*t-z,q=rr*rr-px*px-pz*pz;if(q<0)return null;const d=Math.max(0,t-Math.sqrt(q));return d<=rem&&t+Math.sqrt(q)>=0?d:null;};
  if(b.own==='p'){for(const e of g.enemies){if(!e.alive||b.hit.includes(e))continue;const d=hitR(e.x,e.z,e.r+0.07);if(d!==null)ev.push({t:'e',e,d});}}
- else if(p.alive){const d=hitR(p.x,p.z,p.r+0.04);if(d!==null)ev.push({t:'p',d});}
+ else if(p.alive){let d=null;for(const h of typeof playerHitPoints==='function'?playerHitPoints(p):[p]){const dh=hitR(h.x,h.z,h.r+0.04);if(dh!==null&&(d===null||dh<d))d=dh;}if(d!==null)ev.push({t:'p',d});}
  ev.sort((a,c)=>a.d-c.d);
  const moveTo=d=>{if(b.own==='p')for(let s=0.2;s<d;s+=0.2){b.x=ax+b.dx*s;b.z=az+b.dz*s;shootCorpse(b);}b.x=ax+b.dx*d;b.z=az+b.dz*d;if(b.own==='p')shootCorpse(b);};
  // low cover is fired over when the shooter or the standing target hugs it (W7 stance); crouched targets behind it are covered
@@ -1287,7 +1287,7 @@ function updateBullets(dt){if(typeof BAL_LEGACY!=='undefined'&&!BAL_LEGACY)retur
    b.life=0;break;}
   b.x=nx;b.z=nz;
   if(b.own==='p'){for(const e of g.enemies){if(!e.alive||b.hit.includes(e))continue;if(Math.hypot(e.x-b.x,e.z-b.z)<e.r+0.07){b.hit.push(e);hitEnemy(e,b.type,[b.dx,b.dz],1);b.pierce--;if(b.pierce<=0){b.life=0;break;}}}if(b.life>0)shootCorpse(b);}
-  else{const p=g.player;if(p.alive&&Math.hypot(p.x-b.x,p.z-b.z)<p.r+0.04){hurtPlayer([b.dx,b.dz],b.type);b.life=0;break;}}}
+  else{const p=g.player;if(p.alive&&(typeof playerHitPoints==='function'?playerHitPoints(p):[p]).some(h=>Math.hypot(h.x-b.x,h.z-b.z)<h.r+0.04)){hurtPlayer([b.dx,b.dz],b.type);b.life=0;break;}}}
  b.life-=dt;}
  g.bullets=g.bullets.filter(b=>b.life>0);}
 function updateItems(dt){const g=G;for(const it of g.items){it.age=(it.age||0)+dt;

@@ -121,14 +121,16 @@ function updateEnemy(e,dt){const g=G,p=g.player,T=g.T||0;
   case 'chase':{
    if(!e.weapon){let bi=null,bd=4.5;for(const it of g.items){if(it.flying)continue;const d=Math.hypot(it.x-e.x,it.z-e.z);if(d<bd&&los(e.x,e.z,it.x,it.z)&&WORLD.cell.moveClear(g,e.x,e.z,it.x,it.z)){bd=d;bi=it;}}
     if(bi&&(dist>2.5||!see)){const ddx=bi.x-e.x,ddz=bi.z-e.z;tvx=ddx/(bd||1)*3.2;tvz=ddz/(bd||1)*3.2;face=Math.atan2(ddx,ddz);if(bd<0.5){e.weapon={type:bi.type,ammo:99};g.items.splice(g.items.indexOf(bi),1);e.react=0.5;}break;}}
-   if(see){face=ang;gaze=ang;e.sb=null;
+   // W7: aim at the exposed lean point when the body is behind the corner
+   const ap=see&&typeof playerAimPoint==='function'?playerAimPoint(e):p,aang=ap===p?ang:Math.atan2(ap.x-e.x,ap.z-e.z);
+   if(see){face=aang;gaze=aang;e.sb=null;
     if(SET.diff!=='easy'&&!e.boss&&p.weapon&&!WD[p.weapon.type].melee&&dist<10&&!(e.dodgeT>0)&&Math.abs(angDiff(p.a,Math.atan2(-dx,-dz)))<0.09&&Math.random()<dt*(SET.diff==='hard'?1.6:0.7)){e.dodgeT=0.3;e.dodgeD=Math.random()<0.5?-1:1;const s=e.dodgeD*5.2/Math.max(dist,1e-3);e.dodX=dz*s;e.dodZ=-dx*s;}
-    if(e.boss){const r=bossAI(e,dt,dist,dx,dz,ang);tvx=r[0];tvz=r[1];}
+    if(e.boss){const r=bossAI(e,dt,dist,dx,dz,aang);tvx=r[0];tvz=r[1];}
     else if(wd.melee){const sp=e.weapon?3.6:3.4;if(dist>0.85){tvx=dx/dist*sp;tvz=dz/dist*sp;const pg=p.weapon&&!WD[p.weapon.type].melee;if(pg&&dist>2.2){const zz=Math.sin(g.T*5+e.id*1.7)*0.85;tvx+=dz/dist*sp*zz;tvz-=dx/dist*sp*zz;}}if(dist<1.05&&e.wind<=0&&e.cd<=0){e.wind=0.28*Math.min(Dd().react,1.6);e.alertT=0.3;}}
     else{e.aiming=true;e.react-=dt;const want=e.pers==='rush'?3.2:e.pers==='careful'?6.5:4.8;
      if(dist>want+1.5){tvx=dx/dist*2.2;tvz=dz/dist*2.2;}else if(dist<want-1.5&&e.pers!=='rush'){tvx=-dx/dist*1.8;tvz=-dz/dist*1.8;}
      e.strT=(e.strT||0)-dt;if(e.strT<=0){e.strT=rnd(0.7,1.6);e.strD=Math.random()<0.5?-1:1;}if(SET.diff!=='easy'||e.pers==='rush'){const sv=e.pers==='careful'?1.1:1.5;tvx+=dz/dist*sv*e.strD;tvz-=dx/dist*sv*e.strD;}
-     const lead=SET.diff==='hard'?0.9:SET.diff==='normal'?0.5:0;if(lead){const tt=dist/Dd().ebSpd;face=Math.atan2(dx+p.vx*tt*lead,dz+p.vz*tt*lead);}
+     const lead=SET.diff==='hard'?0.9:SET.diff==='normal'?0.5:0;if(lead){const tt=dist/Dd().ebSpd;face=Math.atan2(ap.x-e.x+p.vx*tt*lead,ap.z-e.z+p.vz*tt*lead);}
      if(e.react<=0&&e.cd<=0&&Math.abs(angDiff(e.a,face))<0.22){e.weapon.ammo=99;fireGun(e,e.weapon,false);
       if(wd.burst){e.burst++;if(e.burst>=wd.burst){e.burst=0;e.cd=0.9;}}else if(wd.burst3){e.burst++;if(e.burst<3)e.cd=0.08;else{e.burst=0;e.cd=wd.ecd;}}}}}
    // Seen target only: the shared player field is honest while the player is in sight.

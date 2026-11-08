@@ -14,12 +14,13 @@ function grid(rows) {
 
 function checkCover() {
   const calls = [];
+  let losOK = () => true;
   const sb = { G: null, WORLD: {
     sight: (...a) => (calls.push(['sight', ...a]), { clear: true }),
-    cell: { los: (g, ...a) => (calls.push(['los', ...a]), true) },
+    cell: { los: (g, ...a) => (calls.push(['los', ...a]), losOK(...a)) },
   } };
-  const { STANCE, coverFind, coverStep, COVER_END, COVER_PEEK, stanceSight, coverShotY, playerSeenBy } = vm.runInNewContext(`${readFileSync(resolve(__dirname, '..', 'cover.js'), 'utf8')}
-    ;({STANCE, coverFind, coverStep, COVER_END, COVER_PEEK, stanceSight, coverShotY, playerSeenBy})`, sb, { timeout: 1000 });
+  const { STANCE, coverFind, coverStep, COVER_END,   COVER_PEEK, stanceSight, coverShotY, playerSeenBy, playerHitPoints, playerAimPoint } = vm.runInNewContext(`${readFileSync(resolve(__dirname, '..', 'cover.js'), 'utf8')}
+      ;({STANCE, coverFind, coverStep, COVER_END, COVER_PEEK, stanceSight, coverShotY, playerSeenBy, playerHitPoints, playerAimPoint})`, sb, { timeout: 1000 });
   const step = (cv, q, x, z, m = [0, 0], aim = [0, -1], fired = false) => coverStep(cv, q, x, z, m[0], m[1], aim[0], aim[1], fired, 1 / 60);
 
   // A bar run x=2..4 at z=2 with an open end at x=5 and a wall at x=1.
@@ -87,6 +88,23 @@ function checkCover() {
   sb.G.player.eye = { x: 4.5, z: 4.8, y: 1.6 };
   playerSeenBy({ x: 1, z: 1 });
   assert.deepEqual(calls.pop(), ['los', 1, 1, 4.5, 4.8], 'Leaning: sight targets the lean eye');
+
+  // Lean is two-way (Astra CP2 repro, Motel Sunset): body (22.3,6.7) behind the corner, lean point (22.3,7.22), enemy (19.3,7.22)
+  const lp = { x: 22.3, z: 6.7, r: 0.28, eye: { x: 22.3, z: 7.22, y: 1.6 }, cs: { lean: true } };
+  const en = { x: 19.3, z: 7.22 };
+  sb.G = { player: lp };
+  losOK = (x0, z0, x1, z1) => !(x1 === lp.x && z1 === lp.z); // the wall hides the body only
+  const hp = playerHitPoints(lp);
+  assert.equal(hp.length, 2, 'A leaning player has a lean hit volume');
+  assert.ok(hp.some(h => Math.hypot(h.x - 22.3, h.z - 7.22) < 1e-9 && h.r > 0.1), 'The lean volume sits at the lean point');
+  assert.equal(playerSeenBy(en), true, 'The enemy sees the lean point');
+  assert.equal(playerAimPoint(en), lp.eye, 'An enemy that sees only the lean point aims at it');
+  losOK = () => true;
+  assert.equal(playerAimPoint(en), lp, 'An enemy with the body in view aims at the body');
+  assert.deepEqual(playerHitPoints({ x: 1, z: 1, r: 0.28, eye: { x: 1, z: 1, y: 1 }, cs: { crouch: true } }).length, 1, 'No lean, no extra volume');
+  assert.equal(playerHitPoints({ x: 1, z: 1, r: 0.28 }).length, 1, 'Harness players without eye/cs keep one volume');
+  sb.G = { player: { x: 1, z: 1, r: 0.28 } };
+  assert.equal(playerAimPoint(en), sb.G.player, 'No lean: aim at the body');
 }
 
 module.exports = { checkCover };
