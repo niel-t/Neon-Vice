@@ -47,6 +47,10 @@ re-arming. Suspended audio retries on browser-supported user interaction; recove
 are visible and silent play remains available. Controller-generated clicks alone may not
 provide the browser permission needed for audio.
 
+Graphics context loss stops play and displays a reload action without resetting existing
+saves. Automatic graphics-resource reconstruction is not supported; even if the browser
+restores the context, reload is required.
+
 ## Development
 
 Node.js 22 or newer is needed for tooling only, not for playing:

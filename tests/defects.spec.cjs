@@ -1,5 +1,57 @@
 const { test, expect, progressing } = require('./fixtures.cjs');
 
+test('graphics: bloom replacements release only the previous targets', async ({ openGame }) => {
+  const page=await openGame();
+  const result=await page.evaluate(()=>{
+    const methods=['createTexture','createFramebuffer','deleteTexture','deleteFramebuffer'],original={},counts={},deleted=[];
+    for(const name of methods){original[name]=gl[name];counts[name]=0;gl[name]=function(...args){counts[name]++;if(name.startsWith('delete'))deleted.push(args[0]);return original[name].apply(this,args);};}
+    let correct=true;
+    try {
+      for(let i=0;i<9;i++){
+        const old=[bloomA.tex,bloomA.fb,bloomB.tex,bloomB.fb],offset=deleted.length;
+        setBloom(1000+i*40,800+i*40);
+        correct=correct&&old.every(handle=>deleted.slice(offset).includes(handle))&&gl.isTexture(bloomA.tex)&&gl.isTexture(bloomB.tex)&&gl.isFramebuffer(bloomA.fb)&&gl.isFramebuffer(bloomB.fb);
+      }
+      setBloom(1320,1120);
+    }finally{for(const name of methods)gl[name]=original[name];}
+    return {counts,correct};
+  });
+  expect(result).toEqual({counts:{createTexture:18,createFramebuffer:18,deleteTexture:18,deleteFramebuffer:18},correct:true});
+  await progressing(page);
+});
+
+test('graphics: context loss stops progression, preserves saves and requires reload', async ({ browser,artifactURL }) => {
+  const {context,page,errors}=await startupPage(browser,artifactURL,'normal');
+  try {
+    await expect.poll(()=>page.evaluate(()=>PS2C.ready)).toBe(true);
+    await page.locator('#bStart').click();
+    await page.evaluate(()=>{startLevel(0);togglePause();});
+    await page.locator('#bShake').click();
+    const saves=await page.evaluate(()=>{
+      saveProg();saveSet();
+      window.lossExtension=gl.getExtension('WEBGL_lose_context');lossExtension.loseContext();
+      return ['nb86','nb86prog','nb86jobs'].map(key=>localStorage.getItem(key));
+    });
+    await expect(page.locator('#contextWarning')).toBeVisible();
+    const stopped=await page.evaluate(()=>({time:G.T,menuT,state,gain:master.gain.value}));
+    expect(await page.evaluate(()=>document.activeElement.id)).toBe('bContextReload');
+    expect(await page.evaluate(()=>$('sPause').inert)).toBe(true);
+    await page.keyboard.press('m');await page.keyboard.press('Escape');
+    await page.evaluate(()=>new Promise(resolve=>{let frames=0;function tick(){if(++frames===8)resolve();else requestAnimationFrame(tick);}requestAnimationFrame(tick);}));
+    expect(await page.evaluate(()=>({time:G.T,menuT,state,gain:master.gain.value}))).toEqual(stopped);
+    expect(stopped.state).toBe('pause');expect(stopped.gain).toBe(0);
+    expect(await page.evaluate(()=>document.elementFromPoint(innerWidth/2,innerHeight/2).closest('#contextWarning')!==null)).toBe(true);
+    expect(await page.evaluate(()=>['nb86','nb86prog','nb86jobs'].map(key=>localStorage.getItem(key)))).toEqual(saves);
+    await page.evaluate(()=>lossExtension.restoreContext());
+    await expect(page.locator('#contextMessage')).toContainText('available again');
+    expect(await page.evaluate(()=>menuT)).toBe(stopped.menuT);
+    await Promise.all([page.waitForEvent('domcontentloaded'),page.keyboard.press('Enter')]);
+    await expect.poll(()=>page.evaluate(()=>PS2C.ready&&!contextLost&&menuT>0)).toBe(true);
+    expect(await page.evaluate(()=>['nb86','nb86prog','nb86jobs'].map(key=>localStorage.getItem(key)))).toEqual(saves);
+    expect(errors).toEqual([]);
+  }finally{await context.close();}
+});
+
 test('models: one NPC build per render and visible pending combatants', async ({ openGame }) => {
   const page = await openGame();
   const result = await page.evaluate(() => {
