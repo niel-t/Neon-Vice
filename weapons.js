@@ -26,20 +26,70 @@ const WD={
 const BT=t=>(WD[t]&&WD[t].base)||t;
 /* calibers shared by every gun that chambers them (one pool per caliber in the kit).
    box=rounds per box at Nine's, price=$ per box, cap=base pool capacity before upgrades, up=capacity added per upgrade.
-   Ballistic fields (penetration, energy) are W5's and are added to these same entries. */
+   Ballistics (W5, CAL v2, docs/research/BALLISTICS.md §1): e0=muzzle J per projectile (12ga: per 00 pellet), hard=hard-layer factor,
+   metal=steel/alu loss factor, rifle=rifle bullet for armour, dmg=damage of a clean hit. 40mm is blast only (no e0). WD.eMul scales e0 (Uzi). */
 const CAL={
- '9mm':{name:'9MM',box:30,price:300,cap:90,up:45},
- '357':{name:'.357 MAGNUM',box:12,price:400,cap:36,up:18},
- '12ga':{name:'12 GAUGE',box:10,price:400,cap:30,up:15},
- '556':{name:'5.56MM',box:30,price:600,cap:90,up:45},
- '762':{name:'7.62MM',box:30,price:700,cap:90,up:45},
- '50ae':{name:'.50 AE',box:14,price:900,cap:42,up:14},
+ '9mm':{name:'9MM',box:30,price:300,cap:90,up:45,e0:490,hard:1,metal:1,dmg:1},
+ '357':{name:'.357 MAGNUM',box:12,price:400,cap:36,up:18,e0:731,hard:0.9,metal:1,dmg:1},
+ '12ga':{name:'12 GAUGE',box:10,price:400,cap:30,up:15,e0:287,hard:0.5,metal:1,dmg:1},
+ '556':{name:'5.56MM',box:30,price:600,cap:90,up:45,e0:1750,hard:1,metal:1,rifle:true,dmg:1},
+ '762':{name:'7.62MM',box:30,price:700,cap:90,up:45,e0:2030,hard:1.3,metal:1,rifle:true,dmg:1},
+ '50ae':{name:'.50 AE',box:14,price:900,cap:42,up:14,e0:1965,hard:0.8,metal:1.5,dmg:1},
  '40mm':{name:'40MM GRENADE',box:3,price:1500,cap:9,up:3},
 };
-/* persistent body armour: plates absorb one hit each; repaired or replaced at Nine's. spd=move mult while worn */
+WD.smg.eMul=1.22;
+/* persistent body armour: plates absorb one hit each; repaired or replaced at Nine's. spd=move mult while worn. lv=NIJ level (ARMLV) */
 const ARMOUR={
- vest:{name:'KEVLAR VEST',plates:1,price:2500,repair:900},
- carrier:{name:'PLATE CARRIER',plates:2,price:6000,repair:1600,spd:0.96},
+ vest:{name:'KEVLAR VEST',plates:1,price:2500,repair:900,lv:'II'},
+ carrier:{name:'PLATE CARRIER',plates:2,price:6000,repair:1600,spd:0.96,lv:'III'},
+};
+/* NIJ 0101.02/.03 levels (BALLISTICS.md §5, P): stop = e·hard below which a plate stops the round (rifles only if rifle:true);
+   part = rifle energy below which a III plate still takes half. absorb 1 stop, 0.5 blunt/partial, 0.1 pass. */
+const ARMLV={II:{stop:900},IIIA:{stop:2000},III:{stop:2100,rifle:true,part:3000}};
+/* ================= BALLISTICS (W5): pure penetration + damage, no DOM/GL =================
+   mats = WORLD.materials ({MAT,BUILD}); passed in so this file loads standalone. A projectile p = {e0,hard,metal,rifle,dmg}. */
+const BAL=(()=>{
+ // BODY_J: flat loss per torso, a gameplay value (research has none: 9mm FMJ over-penetrates, M193 fragments)
+ const EMIN=30,TUMBLE=2,OBL_MAX=3,HP_EPS=0.1,BODY_J=500,E_REF=250;
+ const proj=(cal,eMul)=>{const c=CAL[cal]||{};return {e0:(c.e0||0)*(eMul||1),hard:c.hard||1,metal:c.metal||1,rifle:!!c.rifle,dmg:c.dmg||1};};
+ // one construction: returns {e: energy out or null if stopped, tum: perforated a hard layer ≥3 cm nominal, dep: energy deposited}
+ function cross(mats,p,build,e,tum=1,cos=1,alt=false){
+  const B=mats.BUILD[build];if(!B)throw new RangeError('Unknown build '+build);
+  const layers=alt&&B.alt?B.alt.layers:B.layers,obl=Math.min(OBL_MAX,1/Math.max(cos,1e-6)),eIn=e;let hardT=false;
+  for(const [m,t] of layers){const M=mats.MAT[m];if(!M.res)continue;
+   let loss=M.res*t*obl*tum;if(M.hard)loss/=p.hard;if(m==='steel'||m==='alu')loss*=p.metal;
+   e-=loss;if(e<EMIN)return {e:null,tum:hardT,dep:eIn};if(M.hard&&t>=3)hardT=true;}
+  return {e,tum:hardT,dep:eIn-e};}
+ // chain of constructions (perpendicular, no alt unless 'id@alt'): final energy or {stop:index}
+ function chain(mats,p,builds){let e=p.e0,tum=1;for(let i=0;i<builds.length;i++){const [b,a]=builds[i].split('@');const r=cross(mats,p,b,e,tum,1,!!a);if(r.e===null)return {stop:i+1};e=r.e;if(r.tum)tum=TUMBLE;}return {e};}
+ // energy deposited toward cell destruction (0 below coreE)
+ const deposit=(mats,p,build,eIn,dep)=>{const c=mats.BUILD[build].coreE;return c&&eIn*p.hard<c?0:dep;};
+ function roundsPerCell(mats,p,build,pellets=1){const B=mats.BUILD[build];if(B.cellHp===Infinity)return Infinity;if(B.coreE&&p.e0*p.hard<B.coreE)return Infinity;
+  const r=cross(mats,p,build,p.e0);return Math.ceil(B.cellHp/((p.e0-(r.e||0))*pellets));}
+ function absorb(lv,p,e){const L=ARMLV[lv];if(!L)return 0;const eh=e*p.hard;return eh<L.stop&&(!p.rifle||L.rifle)?1:(!p.rifle||eh<(L.part||0))?0.5:0.1;}
+ // damage vs a fixed reference energy (not muzzle e0): any round still above E_REF is a clean hit (1), weaker ones wound
+ const damage=(p,e,abs=0)=>p.dmg*Math.min(1,Math.pow(Math.max(0,e)/E_REF,0.7))*(1-abs);
+ const dead=(hp,dmg)=>hp-dmg<=HP_EPS;
+ return Object.freeze({EMIN,TUMBLE,OBL_MAX,HP_EPS,BODY_J,E_REF,proj,cross,chain,deposit,roundsPerCell,absorb,damage,dead});
+})();
+/* legacy cell levels have one wall glyph: interior '#' takes the level typology (MATERIALS.md §4), '#' touching the void or an outdoor glyph (out) takes ext,
+   the void itself is indestructible. prop = COVER furniture id -> build. Keyed by level name; def for hub/unknown. P, W5-owned. */
+const LEGACY_BUILD={
+ void:'rc_column_40',
+ out:' =',
+ def:{int:'cmu_hollow',ext:'cbs_ext',door:'door_solid',pane:'glass_annealed_6'},
+ levels:{
+  'MOTEL SUNSET':{int:'cmu_hollow',ext:'cbs_ext',door:'door_solid',pane:'glass_annealed_6'},
+  'CLUB FLAMINGO':{int:'cmu_hollow',ext:'cbs_ext',door:'door_solid',pane:'glass_annealed_6'},
+  'THE PENTHOUSE':{int:'stud_steel_gyp2',ext:'cbs_ext',door:'door_solid',pane:'glass_tempered_6'},
+  'VICE MARINA':{int:'stud_steel_gyp',ext:'cbs_ext',door:'door_metal',pane:'glass_annealed_6',out:' =_oY'},
+  'STARLIGHT ARCADE':{int:'stud_steel_gyp2',ext:'cbs_ext',door:'door_metal',pane:'glass_tempered_6'},
+  'OCEAN VIEW MALL':{int:'stud_steel_gyp2',ext:'rc_wall_20',door:'door_metal',pane:'glass_tempered_6'},
+  'THE RECORDING STUDIO':{int:'acoustic_double',ext:'cbs_ext',door:'door_solid',pane:'glass_annealed_6'},
+  'THE ROYAL FLUSH':{int:'joinery_ply',ext:'alu_bulkhead',door:'door_hollow',pane:'glass_lam_windshield',out:' _oyY'},
+ },
+ prop:{2:'counter_cmu',7:'counter_cabinet',9:'steel_3mm',10:'counter_cabinet',11:'counter_cabinet',12:'counter_cabinet',13:'counter_cabinet',
+  14:'steel_10mm',19:'counter_cabinet',20:'counter_cabinet',21:'car_door',22:'car_door'},
 };
 /* ================= KIT: the persistent inventory (save contract kit/locker/run v1) =================
    kit    = {v:1, guns:[{type,mag}|null ×2], active:0|1, melee:type|null, armour:{type,plates}|null,
