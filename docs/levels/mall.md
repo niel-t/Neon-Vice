@@ -563,7 +563,9 @@ only by their night lights; MC2's 1 foot-candle egress minimum is the floor.
 4. **The roof.** "Helicopter's on the roof" unlocks a helicopter for later
    jobs (HP1 shows a real 1983 mall helipad). This brief keeps the roof off
    stage. Should the exit be by helicopter from the mall roof, which needs a
-   roof stage and a stair? W10 to decide.
+   roof stage and a stair? W10 to decide. **W2 (layout):** the plan keeps
+   the roof off stage and reserves a service stair landing so that a roof
+   stage can be added later without moving walls.
 5. **Objective.** The legacy level is "clear the level". Keep that, or
    "survive and reach the car / the roof"? W10 to decide.
 6. **"Ocean View."** No enclosed ocean-view mall existed in Miami (§2). The

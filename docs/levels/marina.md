@@ -473,13 +473,16 @@ D29 as the foot route (C5).  Pushing out to the fuel dock is a commitment, unles
    the hull sinks it".
 2. **Water traversal.** Can the player swim? If yes, every finger becomes an
    entry; if no, E5 needs a boat. Proposal: no swimming; water = fall and
-   respawn on the quay.
+   respawn on the quay. **Resolved by W2 (layout):** no swimming. Water is
+   not walkable ground, and finger and quay edges are stage edges, so E5
+   needs a boat. Whether a fall respawns or kills is W1/W14's call.
 3. **Lex's best speedboat U.** Script: "And if one floats? — Then it's
    yours." Is U a required target (unlock = failing to sink it) or an
    optional fifth boat (mission completes with T1–T4)? Proposal: optional
    fifth, so sparing it is a choice. Stray rounds can still sink it: S12
    crosses its slip and it sits beside T2. W10/W2 to decide; W1 may want a
-   hull-hit warning.
+   hull-hit warning. **W2 (layout):** U keeps its slip beside T2 either
+   way; whether it is required is routed to W14.
 4. **Fuel.** Do the pumps or T3's tanks explode? Out of BALLISTICS scope; a
    W5 call.
 5. **Deck heights.** Floor steps never block sight, so the 0.3 m land/quay

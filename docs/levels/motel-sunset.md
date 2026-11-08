@@ -364,4 +364,6 @@ check for consumer goods.
    `rail_pipe` build with `res` 0 and a bullet-catch chance). W1 to decide.
 3. **Curtain fill** for jalousies (MATERIALS §3 "Coverage is separate") is
    assumed here.
-4. Parked-car density (8 of 13) is a W2 tuning knob.
+4. Parked-car density (8 of 13) is a W2 tuning knob. **W2:** `plans/motel.js`
+   authors the cars as props. Front stall k=2 stays empty for the pool S
+   gate. See docs/PLAN-FORMAT.md §Motel settlements.
