@@ -1750,11 +1750,11 @@ function applyJewelLooks(){for(const c of CHARS){const j=(PROG[c.id]&&PROG[c.id]
 function placeOldCar(){const g=G,free=(x,z)=>{for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=0;dz++){const ix=Math.floor(x+dx),iz=Math.floor(z+dz);if(ix<1||iz<1||ix>=g.W-1||iz>=g.H-1||g.solid[iz*g.W+ix]||g.furn[iz*g.W+ix])return false;}return true;};
  for(const [ox,oz] of [[-3,0],[3,0],[0,2.2],[0,-2.2],[-3,2],[3,2]]){const x=g.car.x+ox,z=g.car.z+oz;if(free(x,z)&&Math.hypot(x-g.player.x,z-g.player.z)>2){g.oldCar={x,z,a:0};return;}}}
 /* Nine of Nine */
-const NINE_INTRO="Hello my Friend, you may call me Nine, last name of Nine. I have come from the far east and bring you exotic machinery of death. Only at Nine of Nines can you get this ludicrous and exotic killing machines.";
-const NINE_HI=["Ah, my friend returns! Capitalism is beautiful, da?","From Leningrad, Lagos, Lisbon. Every piece I calibrate personally. With mathematics.","Is not a gun. Is a statement, written in lead.","Nine guns of ten are boring. I sell you the tenth.","Today's selection is very ludicrous. I am proud."];
+const NINE_INTRO="Hello, my friend! I am Nine, last name also Nine, and I bring you exotic machinery of death. Very ludicrous. Only at Nine of Nines.";
+const NINE_HI=["Ah, my friend returns! Capitalism is beautiful, da?","Every piece I calibrate personally, with mathematics.","Is not a gun. Is a statement, written in lead.","Nine guns of ten are boring. I sell you the tenth.","Today's selection is very ludicrous. I am proud."];
 const NINE_BUY=["Excellent choice. Very ballistic.","Da! Treat her well, she is temperamental.","You have taste. Dangerous taste.","Pleasure doing business. Mostly the pleasure is mine."];
-const NINE_EXCL="Ah... you choose the exclusive. This one, I smuggle through three borders and one very angry customs officer.";
-const NINE_POOR="My friend, this costs more money than you have. Is simple arithmetic.";
+const NINE_EXCL="Ah, you choose the exclusive! This one I smuggle through three borders and past one very angry customs officer.";
+const NINE_POOR="My friend, this costs more than you have. I am sorry, but is simple arithmetic.";
 const SHOPP={pistol:1500,silenced:2200,revolver:2800,dual:3200,smg:3500,shotgun:3800,double:4200,m16:5200,bat:600,knife:500,machete:900,katana:7500,tknife:1100,golddeagle:12000,goldak:15000,goldgl:20000};
 const WDESC={pistol:'Reliable. Boring. Like a Swiss watch.',silenced:'For conversations nobody hears.',revolver:'Six chances. Goes through three men.',dual:'Two pistols, twice the opinions.',smg:'Sprays the room like cologne.',shotgun:'Seven pellets of diplomacy.',double:'Two shells. One argument.',m16:'Three-round bursts, through walls.',bat:'Silent. Swings. Home run.',knife:'Close, quiet, personal.',tknife:'Four blades. Silent across the room. Go pick them up after.',machete:'For cutting through the paperwork.',
  katana:'Folded nine hundred times. By me. On a Tuesday.',goldgl:'I acquire it from a very wet gentleman. Six gold grenades.',golddeagle:'Two solid-gold hand cannons. Through walls, through men.',goldak:'Solid gold. Fully automatic. Zero subtlety.'};
@@ -1928,13 +1928,13 @@ function tipDancer(d){const p=myProg(),g=G;arm();if(p.wallet<100){popup(g.player
  for(let i=0;i<8;i++){const a=Math.atan2(d.x-g.player.x,d.z-g.player.z)+rnd(-0.4,0.4),v=rnd(2.5,4.5);g.parts.push({t:'c',x:g.player.x,y:1.1,z:g.player.z,vx:Math.sin(a)*v,vy:rnd(1,2.5),vz:Math.cos(a)*v,s:0.08,c:[0.35,0.8,0.4],life:1.0});}
  popup(d.x,d.z,'-$100 · '+pick(['WOO!','OOH, BIG SPENDER','DON\'T STOP NOW','MORE!','THANK YOU, SUGAR']),'#7dff9a');
  if(d.tips===3||d.tips===7){d.stage=Math.min(2,d.stage+1);if(d.stage===1){d.look=dancerLook(d.fit,1);d._ps2k=null;popup(d.x,d.z,d.dname+' DROPS THE JACKET','#ff6fae');}else{popup(d.x,d.z,d.dname+"'S BIG FINALE","#ffd36b");sfx('clear');}}}
-const TONY_LINES=[()=>"Name's Tony. First drink's on the house. The second one costs you a story.",
- ()=>myProg().debt>0?"Word is you still owe McWey $"+fmt(myProg().debt)+". Tip big, pay him back slower. Your call.":"McWey's guys say you're square with the man. Drinks taste better debt-free, huh?",
+const TONY_LINES=[()=>"Name's Tony. First drink's on the house; the second one costs you a story.",
+ ()=>myProg().debt>0?"Word is you owe McWey $"+fmt(myProg().debt)+". Tip big and pay him slow, that's my advice, but it's your call.":"Heard you're square with McWey. Funny how a drink tastes better when you're debt-free.",
  ()=>"Nine of Nine was in here last week. Paid for a round with a Soviet rifle. I didn't ask.",
- ()=>myProg().lexDead?"Lex Sterling used to sit in that booth. No socks, no tips. Nobody misses him.":"Lex Sterling? Sits in the VIP booth, never tips, wears no socks. Guy's a cancer.",
+ ()=>myProg().lexDead?"Lex used to sit in that booth, no socks, no tips. Can't say anybody's missed him.":"Lex Sterling? Sits in the VIP booth, never tips, never wears socks. I don't trust a man without socks.",
  ()=>"Cherry, Destiny, Crystal... none of them use their real names. Neither does anybody else in here.",
  ()=>"The more you throw, the harder they dance. Basic economics.",
- ()=>"You want my advice? Never trust a guy in a linen suit. Or a guy who gives advice.",
+ ()=>"You want my advice? Never trust a guy in a linen suit, or a guy who gives advice.",
  ()=>myProg().car==='sig'?"That "+carName('sig')+" outside yours? The valet's been crying about it all night.":"Saw your "+carName(myCar())+" outside. Bold choice."];
 function tonyTalk(){const g=G,c=g.club;sfx('blip');const L=TONY_LINES[c.talkI%TONY_LINES.length]();c.talkI++;g.say={who:'TONY',txt:L,t:0,dur:2.5+L.length*0.05};if(c.tony)c.tony.atkT=0.2;}
 function drawSay(c,S,u){const k=textScale(),fs=20*u*k;c.font=VTF(fs);const maxW=Math.min(vw*0.8,560*u*k),words=S.txt.split(' '),lines=[];let cur='';for(const w of words){const t2=cur?cur+' '+w:w;if(c.measureText(t2).width>maxW&&cur){lines.push(cur);cur=w;}else cur=t2;}if(cur)lines.push(cur);
@@ -2270,10 +2270,10 @@ function hguardLine(){const p=myProg(),sn=p.seen||(p.seen={}),j=p.jewel||{};
 /* ---- Act 1 cameo: Lex "Silks" Sterling walks past at Club Flamingo (sets up Act 2) ---- */
 let LEXMET=false;
 const LEXLOOK=()=>({skin:hex(0xf0c8a4),jacket:hex(0xf6f2ea),shirt:hex(0xffa6c9),pants:hex(0xf6f2ea),shoes:hex(0xc9a27a),hs:'slick',hair:hex(0xe3c26a),shades:true,watch:true,bw:0.98,bd:0.96,bh:1.04,body:'normal'});
-const LEX_INSULT={consigliere:"Nice watch, pal. Did it come free in a box of cereal, or did you pawn what's left of your family name for it?",
- money:"Do me a favor and valet my Testarossa. And don't bleed on the leather when you go park your rust-bucket.",
- don:"Careful sweating in that chain, big guy. It's already leaving a green mark on your neck."};
-const LEX_REPLY={consigliere:"Remember this face, Silks. You'll be seeing it again.",money:"...Keep the change. For now.",don:"Enjoy the VIP lounge. While it lasts."};
+const LEX_INSULT={consigliere:"Nice watch, pal. Free with the cereal, or did you pawn the family name?",
+ money:"Do me a favour and valet my Testarossa, would you? Try not to bleed on the leather.",
+ don:"Careful sweating in that chain, big guy. It's turning your neck green."};
+const LEX_REPLY={consigliere:"Remember this face, Silks. You'll be seeing it again.",money:"...Keep the change. For now.",don:"Enjoy the lounge. While it lasts."};
 function startCameo(){const g=G,p=g.player;if(!p)return;LEXMET=true;
  const free=(x,z)=>{const ix=Math.floor(x),iz=Math.floor(z);return ix>0&&iz>0&&ix<g.W-1&&iz<g.H-1&&!g.solid[iz*g.W+ix];};
  let best=null,bl=-1;for(const d of [[1,0],[-1,0],[0,1],[0,-1]]){let n=0;for(let k=1;k<=8;k++){if(free(p.x+d[0]*k,p.z+d[1]*k))n++;else break;}let b=0;for(let k=1;k<=3;k++){if(free(p.x-d[0]*k,p.z-d[1]*k))b++;else break;}if(n+b>bl){bl=n+b;best={d,n,b};}}
@@ -2323,62 +2323,23 @@ function drawElevDyn(B,P){B.reset();P.reset();if(!ENH())floorQuad(P,elevChar.x,e
   B.box(TRS(x,y+h/2,z,0,w,h,w),i%3?[0.3,0.27,0.45]:[0.25,0.4,0.55],true,TUV[i%3?33:35]);}
  for(let i=0;i<10;i++){const x=-6+i*1.3,y=((i*3.1-off*1.6)%14+14)%14-4;B.box(TRS(x,y,-2.2,0,0.04,0.04,0.04),[1,0.9,0.6],true);}}
 /* ---- chat with McWey ---- */
-const MC_FIRST=["There he is. Sit, sit. Don't mind the shark — he's only eaten one accountant."];
-const MC_BRIEF=[
- ["Some out-of-town crew moved into the Sunset Motel on Route 1. They're dealing on our streets.","Nobody does business in Miami without asking McWey first. Go make it clear."],
- ["The motel was a front. The money runs through Club Flamingo on the strip.","VIP lounge in the back, lots of guards, lots of doors. Shut it down. Permanently."],
- ["Now the big fish. Victor 'The Shark' Moreau, top floor of Coral Tower.","Two sharks in one town is one too many. Bring me his watch — I want to know what time it was."],
- ["Lex says his marina deliveries are clean. Funny — your corners are suddenly drowning in fake gold.","I can't be seen touching my golden boy. You, on the other hand, were never here. Vice Marina. Sink his boats."],
- ["Lex washes his money through the Starlight Arcade on the beach. Quarters in, clean dollars out.","Unplug it. Every cabinet. And if somebody needs a lesson, there's always the air hockey tables."],
- ["You've been working too hard. Go shopping — Ocean View Mall, my treat.","Relax. What's the worst that could happen?"],
- ["Lex is hiding. His only friend left is a pop singer he's paying to make a terrible album.","Sunset Sound, the big room. Crash the session and make the singer tell you where Lex sleeps."],
- ["Lex is on his yacht, the Royal Flush, two miles off the coast.","Glass dance floor over a shark tank, and Lex with a gold grenade launcher. Bring me the yacht. Lex is optional."]];
-const MC_DEBRIEF=[
- ["The motel's quiet. The news is calling it a 'gas leak'. I love the news."],
- ["Club Flamingo is closed for... renovations. Beautiful work."],
- ["Moreau's done. Every corner of Miami answers to the Family now."],
- ["Lex's boats are at the bottom of the marina. He called me crying. I told him the sea is a dangerous place."],
- ["The Starlight Arcade is closed. Game over, as the kids say."],
- ["Lex hit your ride. You hit his whole mall. I'd call that an even trade, but you'd disagree."],
- ["The singer sang. The album is still terrible."],
- ["Lex is fish food and the Royal Flush is anchored in my harbor."]];
-const MC_GRADE={S:"Clean. Fast. Not a hair out of place. That's how McWey likes it.",'A+':"Sharp work. You've got style, kid.",A:"Sharp work. You've got style, kid.",B:"Solid. Could've been faster, but I'm not complaining.",C:"Messy. But messy pays the same.",D:"Sloppy. Next time, less mess and more finesse."};
-const MC_QUOTE=["In Miami, gold doesn't lie. People do.","Loyalty is like gold, kid. Heavy, rare — and it looks good on you.","Sharks don't sleep. Neither does McWey.","Gold sinks. Remember that.","Everybody launders. The trick is not getting caught in the dryer.","Revenge is a dish best served at the food court.","Every song ends. Make sure his ends tonight.","On the water, the biggest fish eats first.","Everybody wants a crown. Few want to wear the weight."];
-/* debrief lines per playstyle (clean / gore / ruthless / mixed), indexed by floor */
-const DEB_STYLE={clean:[["Not one scratch on you, and the motel never saw it coming. Quiet work. I like quiet."],["Club Flamingo closed without a siren. Nobody even spilled a drink. Beautiful."],["Moreau's gone and you didn't leave a mark on Coral Tower. Who taught you to be that tidy?"]],
- gore:[["The motel looks like a slaughterhouse. The news has no idea what to call it. I do, and I love it."],["Club Flamingo's a crime scene now. They'll be scrubbing those walls till spring. Good."],["Coral Tower's lobby is wallpaper now. Moreau's people are going to need a bigger mop."]],
- ruthless:[["Every man in that motel got a personal goodbye. Cold. Efficient. Exactly how I like it."],["You didn't just shoot the VIP room. You finished it, face to face. The Family respects that."],["Moreau begged, and you didn't stop. I won't ask what you did with the watch."]],
- mixed:MC_DEBRIEF};
-/* ending by dominant playstyle across the run */
-const END_STYLE={clean:{title:'THE QUIET HAND',line:"Tidy, quiet, and nobody saw your face. That's how the Family stays on top.",quote:"Quiet men hold the most keys."},
- gore:{title:'THE RED TIDE',line:"Half of Miami is still talking about the blood. Fear is the cheapest security there is.",quote:"Blood makes the best receipts."},
- ruthless:{title:'NO WITNESSES',line:"Nobody left in this city will say your name twice. That's the job done right.",quote:"Mercy is for people who can afford it."},
- mixed:{title:'STEADY HANDS',line:"You kept it steady all the way up. The Family likes steady.",quote:MC_QUOTE[8]}};
-const FINALE=["You know what? Keep the Lambo. And take this — solid gold. You earned it.","Now get out of my office before I start getting sentimental."];
 const MC_LOAN=12000,MC_CUT=0.6;
-const MC_KID={hi:["Come in, kid. Wipe your feet, that carpet cost more than your car.","There's my favourite employee. Still employed, I see."],open:["Here's how you start paying off that car, kid.","You want to own that heap? Then you go where I point.","Moreau. You do this, kid, and we're close to square.","Favor time, kid. The kind I deny later.","Clean money is still money, kid. Go make it dirty.","Take the night off, kid.","One more song, kid.","This is the one, kid. Finish him."],
- finale:["The car's nearly yours. Don't make me come collecting.","And take this — solid gold. You earned it.","Now get out of my office before I start getting sentimental."]};
-const MC_PARTNER={hi:["Partner. Sit — no, the good chair.","There he is. Drink? I'm pouring either way."],open:["Favor to ask. Your old neighbours at the Sunset are back.","I need a favor. Club Flamingo. You can say no.","Moreau. I'm not ordering you. I'm asking, one businessman to another.","Partner. I need a favor I can deny.","Partner, the arcade. You know what to do.","Partner. Take the night off. Go shopping.","One more stop, partner.","Partner. Finish it."],
- finale:["Keep the car — it was always yours.","And take this. Solid gold.","Now get out of my office before I start getting sentimental."]};
-const MC_SQUARE=["That's the last of it. The car's yours. God help you, it's yours.","No more 'kid'. Kids owe people. You don't owe anybody. Not even me.","So from now on I don't give orders. I ask for favors. And you can say no.","...Nobody says no."];
-const ACT2_REPLY={don:"Lex Sterling. The guy with no socks.",consigliere:"The man who insulted my family name.",money:"The guy who tossed me a quarter."};
-const UNLOCK_LINE={3:"Lex's best speedboat didn't sink. It's docked under your window now. Call it a souvenir.",4:"And get out of those street clothes. My tailor dressed you — power suits, on the house.",5:"Lex torched your ride, so you're flying from now on. There's a helicopter waiting for you."};
-function mcPayday(m,pp,pid,dq){const L=LASTPAY;LASTPAY=null;if(!L){return;}if(UNLOCK_LINE[L.lvl])setTimeout(()=>{},0);
- if(L.yacht){m("Your take: $"+fmt(L.take)+". All of it. And the yacht.");m("No more 'kid'. Whatever you owed me — "+(L.cleared>0?'$'+fmt(L.cleared)+', ':'')+"it's gone.");m("You don't work for me anymore. You work with me.");return;}
- const ul=UNLOCK_LINE[L.lvl];const done=()=>{if(ul)m(ul);};
- if(L.cut>0&&!L.squared){m("Your take: $"+fmt(L.take)+". My cut: $"+fmt(L.cut)+". You still owe me $"+fmt(L.debt)+". Count it in front of me.");
-  if(L.debt<=MC_LOAN*0.25)m("One more good night, kid, and we're square.");else if(L.before>MC_LOAN/2&&L.debt<=MC_LOAN/2)m("Halfway there. Keep this up and that "+carName('beater')+"'s yours outright.");done();return;}
- if(L.squared){m("Your take: $"+fmt(L.take)+". My cut: $"+fmt(L.cut)+". And that...");MC_SQUARE.slice(0,3).forEach(m);dq('square');m(MC_SQUARE[3]);done();return;}
- m("Your cut: $"+fmt(L.take)+". All of it. Count it in front of me anyway — I like the sound.");done();}
-function mcReact(m){const p=myProg(),sn=p.seen||(p.seen={}),V=p.paid?MC_PARTNER:MC_KID;
- if(p.jewel&&(p.jewel.watch||p.jewel.chain||p.jewel.rings)&&!sn.mcJewel){sn.mcJewel=1;m(p.paid?"Look at you. Gold suits you, partner. Heavy, rare.":"Nice gold. You know where it'd look nicer? In my ledger.");}
- if(p.car!=='beater'&&!sn['mcCar_'+p.car]){sn['mcCar_'+p.car]=1;m(p.paid?"You drove that up my driveway? Now you're making me jealous.":"New wheels before you've paid for the old ones? Bold, kid.");}
- const a=arm(),su=mySuit();if(su!=='default'&&!sn['mcSuit_'+su]){sn['mcSuit_'+su]=1;m(MC_SUIT[su]);}
- const hg=kitHand(kit());if(hg&&WD[hg]&&!sn['mcGun_'+hg]){sn['mcGun_'+hg]=1;m("Is that a "+WD[hg].name.toLowerCase()+" under your jacket? In my office?");m(p.paid?"Relax, partner. I'd carry one too.":"Relax. Just don't point it at the shark.");}
- const J=mcHaul();if(J>(sn.mcHaul||0)){sn.mcHaul=J;m(MC_HAUL[Math.min(J,MC_HAUL.length-1)]);}
- saveProg();}
-const MC_SUIT={pinstripe:"Pinstripes. Now you look like you work for me.",camo:"Camo? In my office? What is this, the Everglades?",pink:"Hot pink. Bold. Miami approves.",power:"Now that's a suit. Double-breasted. You're learning.",linen:"Linen, sleeves up. Very Ocean Drive."};
-const MC_HAUL=[null,"See the pallet by my desk? That's the motel money. Every brick of it.","Gold bars now. I had to buy a plinth. A plinth.","I'm putting up a gun wall. My decorator cried.","Champagne's on ice permanently now. That's on you.","Had a sculptor do my bust. In gold. Tasteful.","The pile keeps growing. I like the pile.","The safe won't close any more. Good problem to have.","Look around. All of this? Your work. My money."];
+const mcFill=(t,o)=>t.replace(/\{(\w+)\}/g,(s,k)=>k in o?o[k]:s);
+// The grade and the money share one line. Returns true when the payday is a story beat.
+// busy: another scene follows this visit, so squaring the debt is one line, not a choice.
+function mcPayday(m,dq,g,busy){const L=LASTPAY;LASTPAY=null;if(!L){m(g);return false;}
+ const v={take:fmt(L.take),cut:fmt(L.cut),debt:fmt(L.debt)},say=k=>m(g+' '+mcFill(MC_PAY[k],v)),ul=UNLOCK_LINE[L.lvl];
+ if(L.yacht){say('yacht');if(L.cleared>0)m(MC_PAY.yacht2);return true;}
+ if(L.squared){say('square');if(busy)m(DLG.square.nodes.a.say[0][1]);else dq('square');}else say(L.cut>0?(L.debt<=MC_LOAN*0.25?'near':'owe'):'free');
+ if(ul)m(ul);return !!(L.squared||ul);}
+// One reaction per visit at most; the others keep for later visits.
+function mcReact(m){const p=myProg(),sn=p.seen||(p.seen={}),kid=p.paid?'partner':'kid',su=mySuit(),hg=kitHand(kit()),J=mcHaul();let t=null;
+ if(su!=='default'&&MC_SUIT[su]&&!sn['mcSuit_'+su]){sn['mcSuit_'+su]=1;t=MC_SUIT[su];}
+ else if(hg&&WD[hg]&&!sn['mcGun_'+hg]){sn['mcGun_'+hg]=1;t=mcFill(MC_GUN[kid],{gun:WD[hg].name.toLowerCase()});}
+ else if(p.jewel&&(p.jewel.watch||p.jewel.chain||p.jewel.rings)&&!sn.mcJewel){sn.mcJewel=1;t=MC_JEWEL[kid];}
+ else if(p.car!=='beater'&&!sn['mcCar_'+p.car]){sn['mcCar_'+p.car]=1;t=MC_CAR[kid];}
+ else if(J>(sn.mcHaul||0)){sn.mcHaul=J;t=MC_HAUL[Math.min(J,MC_HAUL.length-1)];}
+ if(t){m(t);saveProg();}}
 let CHAT={q:[],i:0,phase:'idle',tm:null,done:false,onGo:null};
 function chatClearTimers(){clearTimeout(CHAT.tm);clearInterval(typeT);}
 const chatWho=me=>me?CHARS[selIdx].name:'McWEY';
@@ -2404,12 +2365,16 @@ function chatTap(){if(state!=='brief')return;if(CHAT.phase==='done'){$('bGo').cl
 function chatSkipAll(){if(state!=='brief'||CHAT.done||CHAT.phase==='choose')return;chatClearTimers();if(CHAT.cur)CHAT.cur.tx.textContent=CHAT.cur.t;sfx('blip');
  for(;;){chatExpand();const L=CHAT.q[CHAT.i];if(!L)break;if(L.choose){chatChoose(L);dlogScrollEnd();return;}CHAT.i++;dlogLine(chatName(L),L.who==='p',L.t).textContent=L.t;}
  chatDone();dlogScrollEnd();}
-function talkMcWey(){if(briefBuilt&&briefKey!==mcHaul()+'|'+briefAct())briefBuilt=false;fountainHum(null);state='brief';show('sBrief');sfx('ring');engineOn(false);const pid=CHARS[selIdx].id,q=[],m=t=>q.push({who:'m',t}),pp=t=>q.push({who:'p',t}),dq=id=>q.push(dlgStart(id));
- arm();const pr=myProg(),MV=pr.paid?MC_PARTNER:MC_KID;
- const vi=VISIT;if(vi.debrief===null&&HUBFIRST)MC_FIRST.forEach(m);if(!pr.seen.loan){pr.seen.loan=1;saveProg();m("That "+carName('beater')+" the valet parked for you? It's ugly, it's yours, and it costs twelve grand.");m("I'll take it out of your cuts, kid. Sixty percent, every job, till we're square.");}else if(vi.debrief===null&&HUBFIRST)m(pick(MV.hi));
+function talkMcWey(){if(briefBuilt&&briefKey!==mcHaul()+'|'+briefAct())briefBuilt=false;fountainHum(null);state='brief';show('sBrief');sfx('ring');engineOn(false);const q=[],m=t=>q.push({who:'m',t:dlgSub(t)}),dq=id=>q.push(dlgStart(id));
+ arm();const pr=myProg(),vi=VISIT;let beat=false;
+ if(!pr.seen.loan){pr.seen.loan=1;saveProg();if(vi.debrief===null&&HUBFIRST)m(MC_FIRST);MC_LOAN_LINES.forEach(t=>m(mcFill(t,{car:carName('beater').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase())})));beat=true;}
+ else if(vi.debrief===null&&HUBFIRST)m(pick(MC_HI[pr.paid?'partner':'kid']));
  if(vi.next==='end'){let best=vi.style||'mixed';for(const k in runStyle)if(runStyle[k]>(runStyle[best]||0))best=k;RUNEND=END_STYLE[best];}
- if(vi.debrief!==null){(((DEB_STYLE[vi.style||'mixed']||MC_DEBRIEF)[vi.debrief])||MC_DEBRIEF[vi.debrief]).forEach(m);m((MC_GRADE[vi.grade]||MC_GRADE.B).replace('kid',pr.paid?'partner':'kid'));mcPayday(m,pp,pid,dq);if(vi.debrief===2&&vi.next===3){const ph=(myProg().homes||[]).includes(2);m("Moreau's gone. Which means Coral Tower needs a new man in charge.");m("I'm giving it to Lex Sterling. Clean money. Corporate. The future.");m(ph?"You've got Moreau's penthouse. Enjoy the view.":"You? Moreau's penthouse is on the market. I'll make you a price.");pp(ACT2_REPLY[pid]||ACT2_REPLY.don);m("Don't look at me like that. Business is business.");}}mcReact(m);const MV2=myProg().paid?MC_PARTNER:MC_KID;
- if(vi.next!=='end'){m(MV2.open[vi.next]);MC_BRIEF[vi.next].forEach(m);dq('reply'+vi.next);m(MC_QUOTE[vi.next]);}else{m(RUNEND.line);MV2.finale.forEach(m);dq('reply2');m(RUNEND.quote);}
+ if(vi.debrief!==null){const lex=vi.debrief===2&&vi.next===3,busy=lex&&LASTPAY&&LASTPAY.squared;
+  if(!busy)(((DEB_STYLE[vi.style||'mixed']||MC_DEBRIEF)[vi.debrief])||MC_DEBRIEF[vi.debrief]).forEach(m);if(mcPayday(m,dq,MC_GRADE[vi.grade]||MC_GRADE.B,busy))beat=true;
+  if(lex){dq('lex');beat=true;}}
+ if(!beat)mcReact(m);
+ if(vi.next!=='end')dq('brief'+vi.next);else{m(RUNEND.line);dq('finale');}
  HUBFIRST=false;chatClearTimers();CHAT={q,i:0,phase:'idle',tm:null,done:false};$('dlog').classList.remove('done','choosing');
  $('brFrom').textContent=vi.next==='end'?'McWEY TOWER · FINAL DEBRIEF':vi.debrief!==null?'McWEY TOWER · DEBRIEF':'McWEY TOWER · 52ND FLOOR';
  dlogBegin(vi.next==='end'?'FINAL DEBRIEF':(vi.debrief!==null?'DEBRIEF · ':'')+LEVELS[vi.next].name);
