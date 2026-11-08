@@ -277,7 +277,7 @@ const WORLD=(()=>{
    }return result;
   }
   function base(id,bounds,combat,policy){
-   return{v:2,policy,id,bounds:Object.freeze(bounds.slice()),combat,ground:[],panels:[],cells:[],doors:[],props:[],buckets:new Map(),rooms:[],spawns:[]};
+   return{v:3,policy,id,bounds:Object.freeze(bounds.slice()),combat,ground:[],panels:[],cells:[],doors:[],props:[],buckets:new Map(),rooms:[],openings:[],portals:[],spawns:[]};
   }
   function addPanel(st,ref,ax,az,bx,bz,half,kind,build,cov,spans,polyOverride){
    const len=Math.hypot(bx-ax,bz-az),poly=polyOverride||box(ax,az,bx,bz,half);
@@ -329,7 +329,7 @@ const WORLD=(()=>{
    return Math.abs(area)<1e-12?null:polygon(out,'wall panel',true);
   }
   function compile(stage){
-   record(stage,['id','bounds','combat','ground','walls','props','rooms','spawns'],'stage');
+   record(stage,['id','bounds','combat','ground','walls','props','rooms','portals','spawns'],'stage');
    const ids=new Set(),id=v=>{if(typeof v!=='string'||!v.length||v.includes(':')||ids.has(v))throw new RangeError(`Invalid/duplicate geometry id ${String(v)}`);ids.add(v);return v;};
    id(stage.id);if(!Array.isArray(stage.bounds)||stage.bounds.length!==4)throw new TypeError('Stage bounds need [x0,z0,x1,z1]');
    const bounds=stage.bounds.map(v=>finite(v,'bounds'));if(bounds[2]<=bounds[0]||bounds[3]<=bounds[1])throw new RangeError('Stage bounds have no area');
@@ -402,13 +402,24 @@ const WORLD=(()=>{
      else if(d.hinge==='end')make(o.id,b,angle+Math.PI,len,d.th||0);
      else make(o.id,a,angle,len,d.th||0);
     }
+    for(const o of opens){
+     const segments=[];
+     for(const p of pieces){
+      const s0=Math.max(p.s0,o.s0),s1=Math.min(p.s1,o.s1);if(s1<=s0+EPS)continue;
+      const at=s=>{const u=(s-p.s0)/(p.s1-p.s0);return[p.a[0]+(p.b[0]-p.a[0])*u,p.a[1]+(p.b[1]-p.a[1])*u];};
+      segments.push([at(s0),at(s1)]);
+     }
+     st.openings.push(freezeData({id:o.id,wall:w.id,kind:o.kind,build:o.build??null,cov:o.cov??null,s0:o.s0,s1:o.s1,y0:o.y0,y1:o.y1,half,segments,
+      doors:st.doors.filter(d=>d.id===o.id||d.id.startsWith(`${o.id}:`)).map(d=>d.id)}));
+    }
    }
    for(const p of stage.props||[]){
     record(p,['id','poly','build','cov','h'],'prop');id(p.id);surface('prop',p);const poly=polygon(p.poly,'prop',true);poly.forEach(within);
     const prop=Object.freeze({id:p.id,poly:Object.freeze(poly),build:p.build,cov:p.cov,h:p.h});st.props.push(prop);addBucket(st,'prop',st.props.length-1,poly);
    }
-   for(const r of stage.rooms||[]){if(!r||typeof r!=='object'||Array.isArray(r)||!Object.prototype.hasOwnProperty.call(r,'id'))throw new TypeError('Room must have its own id');id(r.id);if(r.combat!==undefined&&typeof r.combat!=='boolean')throw new TypeError('Room combat must be boolean');}
-   st.rooms=copyData(stage.rooms||[]);st.spawns=copyData(stage.spawns||[]);
+   buildRooms(st,stage.rooms||[],id,within);
+   buildPortals(st,stage.portals||[],id);
+   st.spawns=copyData(stage.spawns||[]);
    return st;
   }
   function fromCells(g){
@@ -423,7 +434,7 @@ const WORLD=(()=>{
     st.legacyPanel[i]=st.panels.length;st.panels.push(p);addBucket(st,'panel',st.panels.length-1,p.poly);
     if(g.furn[i]){const poly=p.poly;st.props.push(Object.freeze({id:`furn:${i}`,ref:i,poly,build:null,cov:'full',h:1.15}));addBucket(st,'prop',st.props.length-1,poly);}
    }
-   return st;
+   adapterRooms(st);return st;
   }
   function syncCell(st,g,i){
    if(st.policy!=='legacy'||st.legacy!==g||!Number.isInteger(i)||i<0||i>=st.legacyPanel.length)throw new RangeError('Invalid adapter sync');
@@ -545,8 +556,443 @@ const WORLD=(()=>{
     const ref=p.ref??p.id,old=byRef.get(ref);if(!old||n.d<old.d)byRef.set(ref,{...n,h,ref,kind:type==='prop'?'prop':p.kind,cov:p.cov});
    }return[...byRef.values()].sort((a,b)=>a.d-b.d);
   }
-  return{compile,fromCells,syncCell,sight,trace,move,groundY,coverAt};
+  function freezeData(value){
+   if(value&&typeof value==='object'){for(const v of Object.values(value))freezeData(v);Object.freeze(value);}return value;
+  }
+  function polyArea(poly){
+   let a=0,x=0,z=0;
+   for(let i=0;i<poly.length;i++){const p=poly[i],q=poly[(i+1)%poly.length],c=cross(...p,...q);a+=c;x+=(p[0]+q[0])*c;z+=(p[1]+q[1])*c;}
+   return{area:Math.abs(a)/2,centroid:[x/(3*a),z/(3*a)]};
+  }
+  function strictInside(poly,x,z){return !poly.some((p,i)=>onSegment(x,z,p,poly[(i+1)%poly.length]))&&inside(poly,x,z,false);}
+  function roomOverlap(a,b){
+   for(let i=0;i<a.length;i++)for(let j=0;j<b.length;j++)if(segInt(...a[i],...a[(i+1)%a.length],...b[j],...b[(j+1)%b.length]))return true;
+   if(a.some(p=>strictInside(b,...p))||b.some(p=>strictInside(a,...p)))return true;
+   for(const [p,q] of [[a,b],[b,a]]){
+    const signed=p.reduce((s,v,i)=>s+cross(...v,...p[(i+1)%p.length]),0),sign=Math.sign(signed);
+    for(let i=0;i<p.length;i++){
+     const v=p[i],w=p[(i+1)%p.length],dx=w[0]-v[0],dz=w[1]-v[1],len=Math.hypot(dx,dz);
+     for(const t of [.25,.5,.75]){const x=v[0]+dx*t-sign*dz/len*1e-6,z=v[1]+dz*t+sign*dx/len*1e-6;if(strictInside(q,x,z))return true;}
+    }
+   }return false;
+  }
+  function buildRooms(st,rooms,id,within){
+   if(rooms.length>255)throw new RangeError('Stage exceeds 255 rooms (byte room id reserves zero)');
+   for(const r of rooms){
+    if(!r||typeof r!=='object'||Array.isArray(r)||!Object.prototype.hasOwnProperty.call(r,'id')||!Object.prototype.hasOwnProperty.call(r,'poly'))throw new TypeError('Room must have its own id and polygon');
+    id(r.id);const poly=polygon(r.poly,'room');poly.forEach(within);
+    if(r.combat!==undefined&&typeof r.combat!=='boolean')throw new TypeError('Room combat must be boolean');
+    for(const prev of st.rooms)if(roomOverlap(poly,prev.poly))throw new RangeError(`Room interiors overlap: ${r.id}/${prev.id}`);
+    const info=polyArea(poly),samples=[];
+    if(strictInside(poly,...info.centroid))samples.push(info.centroid.slice());
+    const [x0,z0,x1,z1]=aabb(poly);
+    for(let n=3;n<=17&&samples.length<4;n+=2)for(let z=0;z<n&&samples.length<4;z++)for(let x=0;x<n&&samples.length<4;x++){
+     const p=[x0+(x+.5)*(x1-x0)/n,z0+(z+.5)*(z1-z0)/n];
+     if(strictInside(poly,...p)&&samples.every(q=>Math.hypot(p[0]-q[0],p[1]-q[1])>Math.min(x1-x0,z1-z0)/8))samples.push(p);
+    }
+    if(!samples.length){
+     const sign=Math.sign(poly.reduce((s,v,i)=>s+cross(...v,...poly[(i+1)%poly.length]),0));
+     for(let i=0;i<poly.length;i++){
+      const a=poly[(i+poly.length-1)%poly.length],b=poly[i],c=poly[(i+1)%poly.length];
+      if(sign*cross(b[0]-a[0],b[1]-a[1],c[0]-b[0],c[1]-b[1])<=EPS)continue;
+      if(poly.some((p,j)=>j!==i&&j!==(i+1)%poly.length&&j!==(i+poly.length-1)%poly.length&&inside([a,b,c],...p)))continue;
+      const p=[(a[0]+b[0]+c[0])/3,(a[1]+b[1]+c[1])/3];if(strictInside(poly,...p)){samples.push(p);break;}
+     }
+    }
+    if(!samples.length)throw new RangeError(`Room ${r.id} has no interior samples`);
+    st.rooms.push(freezeData({...copyData(r),poly,idx:st.rooms.length,combat:r.combat??st.combat,...info,samples}));
+   }Object.freeze(st.rooms);
+  }
+  function roomAt(st,x,z){
+   finite(x,'room x');finite(z,'room z');
+   if(st.policy==='legacy'){
+    const ix=Math.floor(x),iz=Math.floor(z);if(ix<0||iz<0||ix>=st.legacy.W||iz>=st.legacy.H)return null;
+    const idx=st.roomTiles[iz*st.legacy.W+ix];return idx<0?null:st.rooms[idx];
+   }return st.rooms.find(r=>inside(r.poly,x,z))||null;
+  }
+  function segmentRoom(r,a,b){
+   if(!r)return false;
+   return coversSegment(r.poly.map((v,i)=>[v,r.poly[(i+1)%r.poly.length]]),a,b);
+  }
+  function coversSegment(segments,a,b){
+   const dx=b[0]-a[0],dz=b[1]-a[1],L=dx*dx+dz*dz,spans=[];
+   for(const [v,w] of segments){
+    if(Math.abs(cross(v[0]-a[0],v[1]-a[1],dx,dz))>EPS||Math.abs(cross(w[0]-a[0],w[1]-a[1],dx,dz))>EPS)continue;
+    const t=p=>((p[0]-a[0])*dx+(p[1]-a[1])*dz)/L,lo=Math.max(0,Math.min(t(v),t(w))),hi=Math.min(1,Math.max(t(v),t(w)));if(hi>lo)spans.push([lo,hi]);
+   }
+   spans.sort((a,b)=>a[0]-b[0]);let end=0;for(const [lo,hi] of spans){if(lo>end+EPS)return false;end=Math.max(end,hi);}return end>=1-EPS;
+  }
+  function buildPortals(st,portals,id){
+   if(!Array.isArray(portals))throw new TypeError('Stage portals must be an array');
+   for(const p of portals){
+    record(p,['id','a','b','open','seg','wall'],'portal');id(p.id);
+    const a=st.rooms.find(r=>r.id===p.a),b=p.b===null?null:st.rooms.find(r=>r.id===p.b);
+    if(!a||p.b!==null&&!b||a===b)throw new RangeError('Portal room references invalid');
+    if((p.open!==undefined)===(p.seg!==undefined))throw new TypeError('Portal needs exactly one of open or seg');
+    let segments,kind,build,cov,half,y0,y1,doors=[],ref;
+    if(p.open!==undefined){
+     if(p.wall!==undefined)throw new TypeError('Opening portal does not need wall');
+     const o=st.openings.find(o=>o.id===p.open);if(!o)throw new RangeError('Unknown portal opening');
+     ({segments,kind,build,cov,half,y0,y1}=o);doors=o.doors.map(id=>st.doors.find(d=>d.id===id));ref=o.id;
+    }else{
+     if(!Array.isArray(p.seg)||p.seg.length!==2)throw new TypeError('Portal seg needs two points');
+     const ends=p.seg.map(q=>point(q,'portal'));if(Math.hypot(ends[1][0]-ends[0][0],ends[1][1]-ends[0][1])<1e-6)throw new RangeError('Portal has no width');
+     segments=[ends];kind='open';build=null;cov=null;half=0;y0=0;y1=Infinity;ref=p.id;
+     if(p.wall!==undefined){
+      const panels=st.panels.filter(q=>q.ref===p.wall);
+      if(!panels.length)throw new RangeError('Unknown portal wall');
+      if(!coversSegment(panels.map(q=>[[q.ax,q.az],[q.bx,q.bz]]),...ends))throw new RangeError('Wall portal must lie on intact wall path');
+      const q=panels[0];kind='wall';build=q.build;cov=q.cov;half=q.half;y1=Math.max(...panels.flatMap(q=>st.cells.slice(q.c0,q.c1).map(c=>c.y1)));ref=p.wall;
+     }else for(const q of st.panels)if(segments.some(([a,b])=>{const h=clip(q.poly,...a,...b);return h&&h.t1-h.t0>1e-6;}))throw new RangeError('Open portal crosses a wall; reference its opening or wall');
+    }
+    for(const [v,w] of segments)if(!segmentRoom(a,v,w)||b&&!segmentRoom(b,v,w))throw new RangeError('Portal must lie on shared room boundary');
+    const v=segments[0][0],w=segments.at(-1)[1],dx=segments[0][1][0]-v[0],dz=segments[0][1][1]-v[1],len=Math.hypot(dx,dz);
+    let nx=-dz/len,nz=dx/len;
+    const mid=[(v[0]+segments[0][1][0])/2,(v[1]+segments[0][1][1])/2];
+    if(inside(a.poly,mid[0]+nx*1e-5,mid[1]+nz*1e-5)){nx=-nx;nz=-nz;}
+    const width=segments.reduce((sum,[a,b])=>sum+Math.hypot(b[0]-a[0],b[1]-a[1]),0);
+    const flags=kind==='open'||kind==='arch'?{standing:true,crouched:true}:{standing:materials.blocksSight({kind:kind==='wall'?'wall':kind==='window'?'window':'door',build,cov,h:y1-y0},'standing')===false,crouched:materials.blocksSight({kind:kind==='wall'?'wall':kind==='window'?'window':'door',build,cov,h:y1-y0},'crouched')===false};
+    // Leaf doors are candidates even when currently closed; sight tests the live leaf.
+    if(doors.length)flags.standing=flags.crouched=true;
+    const portal={id:p.id,idx:st.portals.length,a:a.idx,b:b?.idx??null,kind,ref,build,cov,half,y0,y1,ends:freezeData([v.slice(),w.slice()]),segments,mid:Object.freeze(mid),width,nx,nz,
+     walk:kind!=='window'&&kind!=='wall'&&y0===0&&y1>=1,sight:Object.freeze(flags),doors:Object.freeze(doors)};
+    Object.freeze(portal);st.portals.push(portal);
+   }finishGraph(st);
+  }
+  function finishGraph(st){
+   st.adjacency=Object.freeze(st.rooms.map(r=>Object.freeze(st.portals.filter(p=>p.a===r.idx||p.b===r.idx).map(p=>p.idx))));
+   Object.freeze(st.portals);
+  }
+  function adapterRooms(st){
+   const g=st.legacy,W=g.W,H=g.H,labels=new Int16Array(W*H).fill(-1),doorCells=new Set((g.doorSpecs||[]).map(d=>Math.floor(d.hz+Math.sin(d.base)*.49)*W+Math.floor(d.hx+Math.cos(d.base)*.49)));
+   st.roomTiles=labels;
+   const zone=i=>g.floorT?.[i]===7?'exterior':'interior';
+   for(let i=0;i<labels.length;i++){
+    if(g.solid[i]||doorCells.has(i)||labels[i]>=0)continue;
+    if(st.rooms.length>=255)throw new RangeError('Adapter exceeds 255 topological rooms');
+    const idx=st.rooms.length,queue=[i],cells=[];labels[i]=idx;
+    for(let n=0;n<queue.length;n++){
+     const j=queue[n];cells.push(j);
+     for(const k of [j%W<W-1?j+1:-1,Math.floor(j/W)<H-1?j+W:-1,j%W?j-1:-1,j>=W?j-W:-1])if(k>=0&&!g.solid[k]&&!doorCells.has(k)&&labels[k]<0&&zone(k)===zone(i)){labels[k]=idx;queue.push(k);}
+    }
+    const points=cells.map(j=>[j%W+.5,Math.floor(j/W)+.5]),centroid=[points.reduce((s,p)=>s+p[0],0)/cells.length,points.reduce((s,p)=>s+p[1],0)/cells.length];
+    st.rooms.push(freezeData({id:`region:${idx}`,idx,derived:true,kind:'region',zone:zone(i),combat:st.combat,area:cells.length,centroid,samples:points.filter((p,j)=>j%Math.max(1,Math.ceil(points.length/4))===0).slice(0,4)}));
+   }
+   const add=(a,b,ends,kind,door=null)=>{
+    if(a<0||b<0||a===b)return;const [v,w]=ends,dx=w[0]-v[0],dz=w[1]-v[1],width=Math.hypot(dx,dz);
+    const p={id:`portal:${st.portals.length}`,idx:st.portals.length,a,b,kind,ref:door??null,build:null,half:door?.half??.035,y0:0,y1:WALL_H,ends:freezeData(ends),segments:freezeData([ends]),mid:Object.freeze([(v[0]+w[0])/2,(v[1]+w[1])/2]),width,nx:-dz/width,nz:dx/width,walk:true,sight:Object.freeze({standing:true,crouched:true}),doors:Object.freeze(door?[door]:[])};
+    st.portals.push(Object.freeze(p));
+   };
+   for(const d of st.doors){
+    const cx=d.hx+Math.cos(d.base)*.49,cz=d.hz+Math.sin(d.base)*.49,nx=-Math.sin(d.base),nz=Math.cos(d.base);
+    const label=(x,z)=>{x=Math.floor(x);z=Math.floor(z);return x<0||z<0||x>=W||z>=H?-1:labels[z*W+x];};
+    add(label(cx-nx*.6,cz-nz*.6),label(cx+nx*.6,cz+nz*.6),[[d.hx,d.hz],[d.hx+Math.cos(d.base)*.98,d.hz+Math.sin(d.base)*.98]],'door',d);
+   }
+   for(let z=0;z<H;z++)for(let x=0;x<W;x++){
+    const i=z*W+x;if(labels[i]<0)continue;
+    if(x<W-1&&labels[i+1]>=0&&labels[i+1]!==labels[i])add(labels[i],labels[i+1],[[x+1,z+1],[x+1,z]],'open');
+    if(z<H-1&&labels[i+W]>=0&&labels[i+W]!==labels[i])add(labels[i],labels[i+W],[[x,z+1],[x+1,z+1]],'open');
+   }Object.freeze(st.rooms);finishGraph(st);
+  }
+  function portals(st,room){
+   const idx=typeof room==='number'?room:typeof room==='string'?st.rooms.find(r=>r.id===room)?.idx:room?.idx;
+   if(!Number.isInteger(idx)||idx<0||idx>=st.rooms.length)throw new RangeError('Unknown room');
+   return st.adjacency[idx];
+  }
+  function portalAt(st,x,z){
+   finite(x,'portal x');finite(z,'portal z');
+   return st.portals.find(p=>p.segments.some(([a,b])=>segDist(x,z,...a,...b)<=p.half+.01))||null;
+  }
+  function portalOpen(st,p,mode,eye=1.6,top=1.8){
+   if(!p||st.portals[p.idx]!==p)throw new RangeError('Foreign portal');
+   if(mode==='move')return p.walk&&p.doors.every(d=>d.locked!==true);
+   if(mode!=='sight')throw new RangeError('Portal mode must be move or sight');
+   const offset=p.half+.02;
+   return sight(st,p.mid[0]-p.nx*offset,p.mid[1]-p.nz*offset,p.mid[0]+p.nx*offset,p.mid[1]+p.nz*offset,eye,top).clear;
+  }
+  const groundEdges=new WeakMap(),navData=new WeakMap(),fieldData=new WeakMap();
+  function segmentCuts(a,b,c,d){
+   const dx=b[0]-a[0],dz=b[1]-a[1],ex=d[0]-c[0],ez=d[1]-c[1],den=cross(dx,dz,ex,ez);
+   if(Math.abs(den)>EPS){
+    const t=cross(c[0]-a[0],c[1]-a[1],ex,ez)/den,u=cross(c[0]-a[0],c[1]-a[1],dx,dz)/den;return u>=-EPS&&u<=1+EPS&&t>=-EPS&&t<=1+EPS?[clamp(t,0,1)]:[];
+   }
+   if(Math.abs(cross(c[0]-a[0],c[1]-a[1],dx,dz))>EPS)return[];
+   const L=dx*dx+dz*dz;return[c,d].map(p=>((p[0]-a[0])*dx+(p[1]-a[1])*dz)/L).filter(t=>t>=0&&t<=1);
+  }
+  function boundaries(st){
+   if(groundEdges.has(st))return groundEdges.get(st);
+   if(st.policy==='legacy'){groundEdges.set(st,[]);return[];}
+   const edges=st.ground.flatMap(g=>g.poly.map((p,i)=>[p,g.poly[(i+1)%g.poly.length]]));
+   if(edges.length>8192)throw new RangeError('Ground exceeds 8192 edges');
+   const out=[];
+   for(const [a,b] of edges){
+    const dx=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dx,dz),cuts=[0,1,...edges.flatMap(([c,d])=>segmentCuts(a,b,c,d))].sort((a,b)=>a-b);
+    for(let i=1;i<cuts.length;i++){
+     if(cuts[i]-cuts[i-1]<EPS)continue;
+     const t=(cuts[i]+cuts[i-1])/2,x=a[0]+dx*t,z=a[1]+dz*t,nx=-dz/len,nz=dx/len;
+     const y0=groundY(st,x-nx*1e-6,z-nz*1e-6),y1=groundY(st,x+nx*1e-6,z+nz*1e-6);
+     if(y0!==y1)out.push([[a[0]+dx*cuts[i-1],a[1]+dz*cuts[i-1]],[a[0]+dx*cuts[i],a[1]+dz*cuts[i]],y0,y1]);
+    }
+   }groundEdges.set(st,out);return out;
+  }
+  function segmentDistance(ax,az,bx,bz,a,b){
+   if(Math.hypot(bx-ax,bz-az)<EPS)return segDist(ax,az,...a,...b);
+   if(segmentCuts([ax,az],[bx,bz],a,b).length)return 0;
+   return Math.min(segDist(ax,az,...a,...b),segDist(bx,bz,...a,...b),segDist(...a,ax,az,bx,bz),segDist(...b,ax,az,bx,bz));
+  }
+  function clear(st,ax,az,bx,bz,r=0){
+   [ax,az,bx,bz,r].forEach(v=>finite(v,'clear coordinate'));if(r<0)throw new RangeError('Clear radius must be nonnegative');
+   if(groundY(st,ax,az)===null||groundY(st,bx,bz)===null)return false;
+   if(st.policy==='legacy')return moveClear(st.legacy,ax,az,bx,bz,r);
+   const zero=Math.hypot(bx-ax,bz-az)<EPS;
+   let features;
+   if(st.navFeatures){
+    const [x0,z0,x1,z1]=st.bounds;if(Math.min(ax,bx)-r<x0||Math.min(az,bz)-r<z0||Math.max(ax,bx)+r>x1||Math.max(az,bz)+r>z1)return false;
+    const unique=new Set();for(let z=Math.floor((Math.min(az,bz)-r)/2);z<=Math.floor((Math.max(az,bz)+r)/2);z++)for(let x=Math.floor((Math.min(ax,bx)-r)/2);x<=Math.floor((Math.max(ax,bx)+r)/2);x++)for(const p of st.navFeatures.get(`${x},${z}`)||[])unique.add(p);
+    features=unique;
+   }else features=movementFeatures(st,ax,az,bx,bz,r);
+   for(const poly of features){
+    if(inside(poly,ax,az)||inside(poly,bx,bz))return false;
+    if(zero){if(nearPoly(poly,ax,az).d<r-1e-8)return false;continue;}
+    if(!zero&&clip(poly,ax,az,bx,bz))return false;
+    for(let i=0;i<poly.length;i++)if(segmentDistance(ax,az,bx,bz,poly[i],poly[(i+1)%poly.length])<r-1e-8)return false;
+   }
+   for(const [a,b] of boundaries(st)){const d=segmentDistance(ax,az,bx,bz,a,b);if(d<=EPS||d<r-1e-8)return false;}
+   return true;
+  }
+  const directions=Object.freeze([[1,0],[0,1],[-1,0],[0,-1],[1,1],[-1,1],[-1,-1],[1,-1]].map(Object.freeze));
+  function nav(st,opts={}){
+   record(opts,['cellSize','radius','diagonal','maxTiles'],'nav option');
+   const size=opts.cellSize??.5,r=opts.radius??.3,diagonal=opts.diagonal??true,max=opts.maxTiles??262144;
+   finite(size,'cellSize');finite(r,'radius');
+   if(size<.1||size>2||r<0||r>2||!Number.isInteger(max)||max<1||max>262144)throw new RangeError('Nav size/radius/budget invalid');
+   if(typeof diagonal!=='boolean')throw new TypeError('Nav diagonal must be boolean');
+   const [ox,oz,x1,z1]=st.bounds,W=Math.ceil((x1-ox)/size),H=Math.ceil((z1-oz)/size),N=W*H;
+   if(N>max)throw new RangeError('Nav tile budget exceeded');
+   const geometry={...st,ground:st.ground.slice(),panels:st.panels.slice(),props:st.props.slice(),buckets:new Map([...st.buckets].map(([k,v])=>[k,v.map(p=>p.slice())])),cells:st.cells.map(c=>({...c}))};
+   if(st.policy==='legacy')geometry.legacy={...st.legacy,solid:st.legacy.solid.slice(),furn:st.legacy.furn.slice(),wh:st.legacy.wh.slice()};
+   else{
+    geometry.navFeatures=new Map();
+    for(const [key,items] of geometry.buckets){
+     const polys=[];for(const [type,i] of items){
+      const p=type==='prop'?geometry.props[i]:geometry.panels[i];
+      if(type==='prop'||geometry.cells.slice(p.c0,p.c1).some(c=>c.active&&c.y0<MOVE_H))polys.push(p.poly);
+     }if(polys.length)geometry.navFeatures.set(key,polys);
+    }
+   }
+   const navClear=(ax,az,bx,bz)=>clear(geometry,ax,az,bx,bz,r+1e-5);
+   const unit=st.policy==='legacy'&&size===1&&Number.isInteger(ox)&&Number.isInteger(oz)&&r<.499;
+   const xs=new Float64Array(N),zs=new Float64Array(N),walk=new Uint8Array(N),masks=new Uint8Array(N),rooms=new Int16Array(N).fill(-1),tags=new Map();
+   const axes=st.openings.filter(o=>o.kind!=='window'&&o.y0===0&&o.y1>=1).flatMap(o=>o.segments.map(([a,b])=>({a,b,half:o.half})));
+   if(st.policy==='legacy')for(const d of st.doors)axes.push({a:[d.hx,d.hz],b:[d.hx+Math.cos(d.base)*.98,d.hz+Math.sin(d.base)*.98],half:.5});
+   const tile=(x,z)=>{finite(x,'tile x');finite(z,'tile z');return x<ox||z<oz||x>=x1||z>=z1?-1:Math.floor((z-oz)/size)*W+Math.floor((x-ox)/size);};
+   for(let i=0;i<N;i++){
+    const x0=ox+i%W*size,z0=oz+Math.floor(i/W)*size,xhi=Math.min(x0+size,x1),zhi=Math.min(z0+size,z1),cx=(x0+xhi)/2,cz=(z0+zhi)/2,choices=[[cx,cz]],snaps=[];
+    if(unit){xs[i]=cx;zs[i]=cz;walk[i]=!isBlock(geometry.legacy,Math.floor(cx),Math.floor(cz));if(walk[i])rooms[i]=roomAt(st,cx,cz)?.idx??-1;continue;}
+    if(navClear(cx,cz,cx,cz)){xs[i]=cx;zs[i]=cz;walk[i]=1;rooms[i]=roomAt(st,cx,cz)?.idx??-1;continue;}
+    if(st.policy==='legacy'&&Math.floor(x0)===Math.ceil(xhi)-1&&Math.floor(z0)===Math.ceil(zhi)-1&&isBlock(st.legacy,Math.floor(cx),Math.floor(cz))){xs[i]=cx;zs[i]=cz;continue;}
+    for(const {a,b,half} of axes){
+     const ux=(b[0]-a[0]),uz=(b[1]-a[1]),L=Math.hypot(ux,uz),nx=-uz/L,nz=ux/L,mx=(a[0]+b[0])/2,mz=(a[1]+b[1])/2;
+     const along=(cx-mx)*ux/L+(cz-mz)*uz/L,normal=(cx-mx)*nx+(cz-mz)*nz;
+     if(Math.abs(along)>L/2+size||Math.abs(normal)>half+r+size)continue;
+     const x=cx-along*ux/L,z=cz-along*uz/L;
+     if(x>=x0-EPS&&x<=xhi+EPS&&z>=z0-EPS&&z<=zhi+EPS)snaps.push([x,z]);
+    }
+    if(st.policy==='legacy'){
+     const lx=Math.floor(cx)+.5,lz=Math.floor(cz)+.5;
+     if(lx>=x0-EPS&&lx<=xhi+EPS)choices.push([lx,cz]);
+     if(lz>=z0-EPS&&lz<=zhi+EPS)choices.push([cx,lz]);
+     if(lx>=x0-EPS&&lx<=xhi+EPS&&lz>=z0-EPS&&lz<=zhi+EPS)choices.push([lx,lz]);
+    }
+    for(let z=0;z<5;z++)for(let x=0;x<5;x++)choices.push([x0+(x+.5)*(xhi-x0)/5,z0+(z+.5)*(zhi-z0)/5]);
+    // Opening-axis points win, then deterministic closest clear sub-sample.
+    choices.sort((a,b)=>Math.hypot(a[0]-cx,a[1]-cz)-Math.hypot(b[0]-cx,b[1]-cz));
+    snaps.sort((a,b)=>Math.hypot(a[0]-cx,a[1]-cz)-Math.hypot(b[0]-cx,b[1]-cz));
+    const best=snaps.find(p=>navClear(...p,...p))||choices.find(p=>navClear(...p,...p));
+    if(best){xs[i]=best[0];zs[i]=best[1];walk[i]=1;rooms[i]=roomAt(st,...best)?.idx??-1;}else{xs[i]=cx;zs[i]=cz;}
+   }
+   const doorPorts=st.portals.filter(p=>p.walk);
+   const openingTags=(ax,az,bx,bz)=>{
+    const result=[];
+    for(const p of doorPorts)if(p.segments.some(([a,b])=>segmentCuts([ax,az],[bx,bz],a,b).length))result.push(p.idx);
+    return result;
+   };
+   for(let i=0;i<N;i++)if(walk[i])for(let k=0;k<(diagonal?8:4);k++){
+    const [dx,dz]=directions[k],x=i%W+dx,z=Math.floor(i/W)+dz;if(x<0||z<0||x>=W||z>=H)continue;const j=z*W+x;
+    if(!walk[j]||!(unit&&k<4)&&!navClear(xs[i],zs[i],xs[j],zs[j]))continue;
+    masks[i]|=1<<k;const edgeTags=openingTags(xs[i],zs[i],xs[j],zs[j]);if(edgeTags.length)tags.set(i*8+k,edgeTags);
+   }
+   const check=i=>{if(!Number.isInteger(i)||i<0||i>=N)throw new RangeError('Nav tile out of bounds');return i;};
+   const handle=Object.freeze({v:1,stage:st,origin:Object.freeze([ox,oz]),W,H,cellSize:size,radius:r,diagonal,revision:0,
+    tileAt:tile,rep:i=>Object.freeze([xs[check(i)],zs[i]]),walkable:i=>!!walk[check(i)],edges:i=>masks[check(i)],room:i=>rooms[check(i)],
+    edgePortals:(i,k)=>{check(i);if(!Number.isInteger(k)||k<0||k>7)throw new RangeError('Nav direction invalid');return Object.freeze((tags.get(i*8+k)||[]).slice());}});
+   navData.set(handle,{st,geometry,W,H,N,xs,zs,walk,masks,tags,tile,r});return handle;
+  }
+  function newField(n){
+   const handle={target:null,reachable:false,revision:0};
+   const data={nav:n,cost:new Int32Array(navData.get(n).N),next:new Int32Array(navData.get(n).N),heap:new Int32Array(navData.get(n).N),pos:new Int32Array(navData.get(n).N),closed:new Uint8Array(n.stage.portals.length),locked:new Uint8Array(n.stage.portals.length),count:0};
+   fieldData.set(handle,data);return Object.seal(handle);
+  }
+  function flow(n,targets,out,opts={}){
+   const d=navData.get(n);if(!d)throw new TypeError('Unknown nav snapshot');
+   record(opts,['closed'],'flow option');
+   if(!Array.isArray(targets)||!targets.length)throw new TypeError('Flow needs at least one target');
+   // Scalar point and multi-source list are both accepted.
+   const sources=typeof targets[0]==='number'?[targets]:targets;
+   for(const p of sources)point(p,'flow target');
+   const f=out??newField(n),q=fieldData.get(f);if(!q||q.nav!==n)throw new RangeError('Flow buffer belongs to another nav snapshot');
+   q.cost.fill(-1);q.next.fill(-1);q.pos.fill(-1);q.closed.fill(0);q.count=0;
+   for(const p of d.st.portals)q.locked[p.idx]=p.doors.some(d=>d.locked===true)?1:0;
+   if(opts.closed!==undefined){
+    if(!Array.isArray(opts.closed))throw new TypeError('Flow closed must be portal ids');
+    for(const id of opts.closed){const p=d.st.portals.find(p=>p.id===id||p.ref===id);if(!p)throw new RangeError(`Unknown closed portal ${id}`);q.closed[p.idx]=1;}
+   }
+   const less=(a,b)=>q.cost[a]<q.cost[b]||q.cost[a]===q.cost[b]&&a<b;
+   const swap=(a,b)=>{const x=q.heap[a];q.heap[a]=q.heap[b];q.heap[b]=x;q.pos[q.heap[a]]=a;q.pos[q.heap[b]]=b;};
+   const put=i=>{let pos=q.pos[i];if(pos<0){pos=q.count++;q.heap[pos]=i;q.pos[i]=pos;}while(pos){const p=(pos-1)>>1;if(!less(q.heap[pos],q.heap[p]))break;swap(pos,p);pos=p;}};
+   const take=()=>{const i=q.heap[0];q.pos[i]=-1;q.count--;if(q.count){q.heap[0]=q.heap[q.count];q.pos[q.heap[0]]=0;let p=0;while(true){let k=p*2+1;if(k>=q.count)break;if(k+1<q.count&&less(q.heap[k+1],q.heap[k]))k++;if(!less(q.heap[k],q.heap[p]))break;swap(k,p);p=k;}}return i;};
+   const blocked=(i,k)=>(d.tags.get(i*8+k)||[]).some(p=>q.closed[p]||q.locked[p]);
+   for(const target of sources){
+    const ti=d.tile(...target);if(ti<0||!clear(d.geometry,...target,...target,0))continue;
+    const tx=ti%d.W,tz=Math.floor(ti/d.W);
+    for(let z=Math.max(0,tz-1);z<=Math.min(d.H-1,tz+1);z++)for(let x=Math.max(0,tx-1);x<=Math.min(d.W-1,tx+1);x++){
+     const i=z*d.W+x;if(d.walk[ti]&&Math.hypot(d.xs[ti]-target[0],d.zs[ti]-target[1])<EPS&&i!==ti)continue;
+     if(!d.walk[i]||!clear(d.geometry,d.xs[i],d.zs[i],...target,0))continue;
+     if(d.st.portals.some(p=>(q.closed[p.idx]||q.locked[p.idx])&&p.segments.some(([a,b])=>segmentDistance(d.xs[i],d.zs[i],...target,a,b)<=EPS)))continue;
+     const c=Math.round(Math.hypot(d.xs[i]-target[0],d.zs[i]-target[1])*100);
+     if(q.cost[i]<0||c<q.cost[i]){q.cost[i]=c;q.next[i]=-1;put(i);}
+    }
+   }
+   f.target=freezeData(sources.map(p=>p.slice()));f.reachable=q.count>0;
+   while(q.count){
+    const i=take(),ix=i%d.W,iz=Math.floor(i/d.W);
+    for(let k=0;k<8;k++){
+     if(!(d.masks[i]&(1<<k))||blocked(i,k))continue;
+     const [dx,dz]=directions[k],j=(iz+dz)*d.W+ix+dx,c=q.cost[i]+Math.max(1,Math.round(Math.hypot(d.xs[i]-d.xs[j],d.zs[i]-d.zs[j])*100));
+     if(q.cost[j]<0||c<q.cost[j]){q.cost[j]=c;q.next[j]=i;put(j);}
+    }
+   }return f;
+  }
+  function fieldIndex(n,f,x,z){
+   const d=navData.get(n),q=fieldData.get(f);if(!d||!q||q.nav!==n)throw new RangeError('Field/nav snapshot mismatch');
+   for(const p of d.st.portals)if(q.locked[p.idx]!==Number(p.doors.some(d=>d.locked===true)))throw new Error('Door lock changed; recompute flow field');
+   finite(x,'field x');finite(z,'field z');const ti=d.tile(x,z);if(ti<0)return-1;
+   const available=i=>q.cost[i]>=0&&clear(d.geometry,x,z,d.xs[i],d.zs[i],d.r)&&!d.st.portals.some(p=>(q.closed[p.idx]||q.locked[p.idx])&&p.segments.some(([a,b])=>segmentDistance(x,z,d.xs[i],d.zs[i],a,b)<=EPS));
+   let best=-1,score=Infinity,tx=ti%d.W,tz=Math.floor(ti/d.W);
+   for(let zz=Math.max(0,tz-1);zz<=Math.min(d.H-1,tz+1);zz++)for(let xx=Math.max(0,tx-1);xx<=Math.min(d.W-1,tx+1);xx++){
+    const i=zz*d.W+xx;if(!available(i))continue;
+    if(Math.hypot(x-d.xs[i],z-d.zs[i])<EPS)return i;
+    const s=q.cost[i]+Math.hypot(x-d.xs[i],z-d.zs[i])*100;if(s<score){score=s;best=i;}
+   }return best;
+  }
+  function dist(n,f,x,z){
+   const i=fieldIndex(n,f,x,z);if(i<0)return-1;const d=navData.get(n);return fieldData.get(f).cost[i]/100+Math.hypot(x-d.xs[i],z-d.zs[i]);
+  }
+  function step(n,f,x,z,out=[0,0]){
+   const i=fieldIndex(n,f,x,z);if(i<0)return null;
+   const d=navData.get(n),q=fieldData.get(f);let at=i;
+   if(Math.hypot(x-d.xs[i],z-d.zs[i])<.05){
+    const next=q.next[i];if(next<0)return null;
+    if(clear(d.geometry,x,z,d.xs[next],d.zs[next],d.r+1e-5)&&!d.st.portals.some(p=>(q.closed[p.idx]||q.locked[p.idx])&&p.segments.some(([a,b])=>segmentDistance(x,z,d.xs[next],d.zs[next],a,b)<=EPS)))at=next;
+   }
+   if(at<0)return null;out[0]=d.xs[at];out[1]=d.zs[at];return out;
+  }
+  function stageRun(mission,describe,opts={}){
+   record(opts,['maxStageBytes','maxRunBytes'],'stage run option');
+   if(!mission||typeof mission.id!=='string'||!Array.isArray(mission.stages)||!mission.stages.length||!mission.stages.every(id=>typeof id==='string'&&id.length)||new Set(mission.stages).size!==mission.stages.length||!mission.stages.includes(mission.start))throw new TypeError('Invalid stage mission');
+   if(typeof describe!=='function')throw new TypeError('Stage descriptor resolver required');
+   const stageLimit=opts.maxStageBytes??16384,runLimit=opts.maxRunBytes??262144;
+   if(!Number.isInteger(stageLimit)||stageLimit<256||!Number.isInteger(runLimit)||runLimit<stageLimit)throw new RangeError('Stage snapshot budget invalid');
+   const mid=mission.id,start=mission.start,descs=new Map(),tokens=new WeakMap();
+   const bytes=s=>{let n=0;for(const c of s){const k=c.codePointAt(0);n+=k<128?1:k<2048?2:k<65536?3:4;}return n;};
+   const data=(value,limit)=>{
+    const out=copyData(value);
+    const validate=v=>{if(!v||typeof v!=='object')return;const proto=Object.getPrototypeOf(v);if(!Array.isArray(v)&&proto!==null&&proto.constructor?.name!=='Object')throw new TypeError('Stage snapshots must be plain JSON data');for(const k of Reflect.ownKeys(v)){if(typeof k!=='string')throw new TypeError('Stage snapshot symbol key');validate(v[k]);}};
+    validate(value);if(bytes(JSON.stringify(out))>limit)throw new RangeError('Stage snapshot byte budget exceeded');return freezeData(out);
+   };
+   for(const sid of mission.stages){
+    const raw=describe(sid);record(raw,['id','kind','rev','arrivals','stairs','backdrop'],'stage descriptor');
+    if(raw.id!==sid||!['grid','plan'].includes(raw.kind)||!Number.isInteger(raw.rev)||raw.rev<1)throw new TypeError(`Invalid descriptor ${sid}`);
+    const arrivals=raw.arrivals??{};if(!arrivals||typeof arrivals!=='object'||Array.isArray(arrivals))throw new TypeError('Stage arrivals must be a record');
+    const entries={};
+    for(const id of Object.keys(arrivals)){
+     const a=arrivals[id];record(a,['at','dir'],'stage arrival');const at=point(a.at,'arrival');if(a.dir!==undefined)finite(a.dir,'arrival direction');Object.defineProperty(entries,id,{value:freezeData({at,dir:a.dir??null}),enumerable:true});
+    }
+    if(raw.stairs!==undefined&&!Array.isArray(raw.stairs)||raw.backdrop!==undefined&&!Array.isArray(raw.backdrop))throw new TypeError('Stairs/backdrop must be arrays');
+    const ids=new Set(),stairs=(raw.stairs||[]).map(s=>{
+     record(s,['id','to','at','arrive','r','oneWay'],'stair');
+     if(typeof s.id!=='string'||!s.id||ids.has(s.id)||!mission.stages.includes(s.to)||s.to===sid||typeof s.arrive!=='string')throw new RangeError('Invalid stair reference');
+     ids.add(s.id);const r=s.r??.65;finite(r,'stair radius');if(r<=0||s.oneWay!==undefined&&typeof s.oneWay!=='boolean')throw new RangeError('Invalid stair trigger');
+     return freezeData({...copyData(s),at:point(s.at,'stair'),r});
+    });
+    const backdrop=(raw.backdrop||[]).map(b=>{
+     record(b,['stage','city','dy','dim'],'backdrop');finite(b.dy,'backdrop dy');
+     if((b.stage!==undefined)===(b.city!==undefined)||b.dy===0||b.stage!==undefined&&(!mission.stages.includes(b.stage)||b.stage===sid)||b.city!==undefined&&(typeof b.city!=='string'||!b.city))throw new RangeError('Invalid backdrop reference');
+     const dim=b.dim??.6;finite(dim,'backdrop dim');if(dim<0||dim>1)throw new RangeError('Invalid backdrop dim');return freezeData({...copyData(b),dim});
+    });
+    descs.set(sid,freezeData({id:sid,kind:raw.kind,rev:raw.rev,arrivals:entries,stairs,backdrop}));
+   }
+   for(const desc of descs.values()){
+    for(const arrival of Object.values(desc.arrivals))if(desc.stairs.some(s=>Math.hypot(s.at[0]-arrival.at[0],s.at[1]-arrival.at[1])<=s.r))throw new RangeError('Arrival must be outside every stair trigger');
+    for(const stair of desc.stairs){
+     const target=descs.get(stair.to);if(!Object.prototype.hasOwnProperty.call(target.arrivals,stair.arrive))throw new RangeError('Stair arrival missing');
+     if(!stair.oneWay&&!target.stairs.some(s=>s.to===desc.id))throw new RangeError('Stair must be paired or marked oneWay');
+    }
+   }
+   let current=start,active=false,states=new Map(),entry=null,bag=freezeData({}),revision=0;
+   const envelope=(sid,value)=>value===null?null:freezeData({sid,rev:descs.get(sid).rev,data:data(value,stageLimit)});
+   const encoded=(cur,store,checkpoint,b)=>data({v:1,mission:mid,current:cur,states:Object.fromEntries(store),entry:checkpoint,bag:b},runLimit);
+   const prepare=(to,arrive=null)=>{
+    if(!descs.has(to))throw new RangeError('Unknown target stage');
+    const desc=descs.get(to);
+    if(arrive!==null&&!Object.prototype.hasOwnProperty.call(desc.arrivals,arrive))throw new RangeError('Unknown stage arrival');
+    const plan=Object.freeze({from:active?current:null,to,arrive,arrival:arrive===null?null:desc.arrivals[arrive],desc,snapshot:states.get(to)?.data??null});
+    tokens.set(plan,revision);return plan;
+   };
+   const candidate=(plan,leaving,checkpoint,nextBag)=>{
+    if(!tokens.has(plan)||tokens.get(plan)!==revision)throw new Error('Stale or foreign stage transition');
+    const next=new Map(states),saved=plan.from===null?null:envelope(plan.from,leaving),incoming=envelope(plan.to,checkpoint),b=data(nextBag,runLimit);
+    if(!incoming||plan.from!==null&&!saved)throw new TypeError('Stage entry/leaving snapshots required');
+    if(saved)next.set(plan.from,saved);next.set(plan.to,incoming);
+    return{next,incoming,b,encoded:encoded(plan.to,next,incoming,b)};
+   };
+   const manager={
+    version:1,mission:mid,get current(){return current;},get active(){return active;},
+    describe:sid=>{if(!descs.has(sid))throw new RangeError('Unknown stage');return descs.get(sid);},
+    prepare,
+    prepareStair:id=>{
+     if(!active)throw new Error('Stage run has not entered a stage');
+     const stair=descs.get(current).stairs.find(s=>s.id===id);if(!stair)throw new RangeError('Unknown stair');return prepare(stair.to,stair.arrive);
+    },
+    preview:(plan,leaving,checkpoint,nextBag={})=>candidate(plan,leaving,checkpoint,nextBag).encoded,
+    commit:(plan,leaving,checkpoint,nextBag={})=>{
+     const c=candidate(plan,leaving,checkpoint,nextBag);
+     states=c.next;current=plan.to;entry=c.incoming;bag=c.b;active=true;revision++;tokens.delete(plan);return c.encoded;
+    },
+    retry:()=>{if(!active)throw new Error('Stage run has not entered a stage');return freezeData({sid:current,snapshot:entry.data,bag});},
+    restart:()=>{current=start;states=new Map();entry=null;bag=freezeData({});active=false;revision++;},
+    encode:()=>encoded(current,states,entry,bag),
+    decode:saved=>{
+     record(saved,['v','mission','current','states','entry','bag'],'stage checkpoint');
+     if(saved.v!==1||saved.mission!==mid||!descs.has(saved.current)||!saved.states||typeof saved.states!=='object'||Array.isArray(saved.states))throw new TypeError('Invalid stage checkpoint');
+     data(saved,runLimit);const next=new Map();
+     const restore=(sid,v)=>{
+      record(v,['sid','rev','data'],'stage snapshot');
+      if(!descs.has(sid)||v.sid!==sid||v.rev!==descs.get(sid).rev)throw new RangeError('Stage snapshot revision changed');
+      if(v.data===null)throw new TypeError('Retained stage snapshot data cannot be null');
+      return envelope(sid,v.data);
+     };
+     for(const [sid,v] of Object.entries(saved.states))next.set(sid,restore(sid,v));
+     const checkpoint=saved.entry===null?null:restore(saved.current,saved.entry),b=data(saved.bag,runLimit);
+     if(!checkpoint&&(next.size||saved.current!==start)||checkpoint&&!next.has(saved.current))throw new TypeError('Checkpoint entry missing');
+     states=next;current=saved.current;entry=checkpoint;bag=b;active=checkpoint!==null;revision++;return manager;
+    },
+    backdrops:sid=>{if(!descs.has(sid))throw new RangeError('Unknown backdrop stage');return descs.get(sid).backdrop;}
+   };
+   return Object.freeze(manager);
+  }
+  return{compile,fromCells,syncCell,sight,trace,move,groundY,coverAt,roomAt,portals,portalAt,portalOpen,clear,nav,flow,step,dist,stageRun};
  })();
- return Object.freeze({version:2,materials,...freeform,buildGrid,hsh,cell:Object.freeze({isSolid,isBlock,isCover,rayBlock,doorHit,rayLen,los,rayWall,collideGrid,moveClear,collideDoors,bfs}),
+ return Object.freeze({version:3,materials,...freeform,buildGrid,hsh,cell:Object.freeze({isSolid,isBlock,isCover,rayBlock,doorHit,rayLen,los,rayWall,collideGrid,moveClear,collideDoors,bfs}),
   geometry:Object.freeze({doorEnd,segDist,segInt})});
 })();

@@ -8,7 +8,7 @@ function checkCompile() {
   const stage = (walls = [], props = []) => ({ id: 'test', bounds: [0,0,20,20], combat: true, ground, walls, props });
   const close = (a,b,eps=1e-8) => assert(Math.abs(a-b)<=eps, `${a} != ${b}`);
   const full = W.compile(stage([wall]));
-  assert.equal(full.v, 2); assert.equal(full.policy, 'v2');
+  assert.equal(full.v, 3); assert.equal(full.policy, 'v2');
   assert(!W.sight(full,5,10,15,10).clear);
   for (const p of full.panels) {
     assert(Math.hypot(p.bx-p.ax,p.bz-p.az)<=.5+1e-8);
@@ -136,7 +136,7 @@ function checkCompile() {
   const selfTouch=[[3,3],[5,5],[7,3],[7,5],[3,5]];
   for(let i=0;i<selfTouch.length;i++)assert.throws(()=>W.compile({...stage(),ground:[{...ground[0],poly:[...selfTouch.slice(i),...selfTouch.slice(0,i)]}]}),/simple/);
   assert.throws(()=>W.compile(Object.create(stage())),/Inherited/);
-  assert.throws(()=>W.compile({...stage(),rooms:[{id:'room',note:new Date()}]}),/JSON-like/);
+  assert.throws(()=>W.compile({...stage(),rooms:[{id:'room',poly:ground[0].poly,note:new Date()}]}),/JSON-like/);
   const source=stage([{...wall}]);const owned=W.compile(source);source.walls[0].path[0][0]=0;assert.equal(owned.panels[0].ax,10);
   checkJoints(W,close);
   checkAdapter(W,LEVELS);
