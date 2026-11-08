@@ -1815,8 +1815,8 @@ const HUBS={
  "|BBB...rrrrrr......|",
  "|......rrrrrr...Gp.|",
  "|..c...rrrrrr....c.|",
- "|.n................|",
- "|EE......P........H|",
+ "|..................|",
+ "|EE.....nP.n......H|",
  "|||||||||ee|||||||||"]},
 
  home0:{name:'ROOM 14 · SUNSET MOTEL',hub:'foot',wall:48,floor:27,amb:[0.27,0.25,0.21],lc:[0.42,0.4,0.3],sofa:0x2a9ea3,track:'n_haze',where:'SUNSET MOTEL · ROOM 14',obj:'FURNISH THE PLACE · THEN HEAD OUT',
@@ -1875,7 +1875,7 @@ function updateHub(dt){const g=G;g.T+=dt;g.time+=dt;if(g.np)g.np.t+=dt;
  updateCamera(dt);}
 function npcStep(dt){const g=G,p=g.player;if(g.talkT>0)g.talkT-=dt;const vi=Math.min(3,VISIT.debrief===null?0:VISIT.debrief+1);
  for(const n of g.npcs){if(n.kind==='guest'&&g.club){clubWalk(n,dt,g,p);}else if(n.kind==='guest'||n.kind==='pgirl')guestStep(n,dt,g,p);if(n.kind==='dancer'||n.kind==='sdancer'||n.kind==='patron')continue;const dx=p.x-n.x,dz=p.z-n.z,d=Math.hypot(dx,dz);
-  if(d<(n.kind==='guest'?1.6:3)){const ta=Math.atan2(dx,dz);n.a+=clamp(angDiff(n.a,ta),-4*dt,4*dt);}else if(n.kind!=='guest')n.a+=clamp(angDiff(n.a,n.a0),-2*dt,2*dt);if(n.seat)n.a=clamp(n.a,-0.9,0.9);
+  if(d<(n.kind==='guest'?1.6:3)){const ta=Math.atan2(dx,dz);n.a+=clamp(angDiff(n.a,ta),-4*dt,4*dt);}else if(n.kind!=='guest')n.a+=clamp(angDiff(n.a,n.a0),-2*dt,2*dt);if(n.seat)n.a=n.a0+clamp(angDiff(n.a0,n.a),-0.9,0.9);
   if(d<2.2&&!n.said&&!(g.talkT>0)){n.said=true;const L=n.kind==='recep'&&RECEP_GRADE[VISIT.grade]?RECEP_GRADE[VISIT.grade]:n.kind==='hguard'?[hguardLine()]:HOME_NPC_LINES[n.kind]?[pick(HOME_NPC_LINES[n.kind])]:(NPCLINES[n.kind][vi]||NPCLINES[n.kind][0]);g.talkT=L.length*1.5+0.4;let t=0;for(const line of L){setTimeout(()=>{if(G===g)popup(n.x,n.z,line,'#ffe9a8');},t);t+=1500;}}
   if(d<n.r+p.r&&d>1e-4){const k=(n.r+p.r-d);p.x+=dx/d*k;p.z+=dz/d*k;}}}
 let ENG=null;
@@ -1912,7 +1912,7 @@ if(!g.cine){const y=2.4+Math.sin(g.T*4)*0.2;B.box(A.mul(A.mul(A.T(g.car.x,y,g.ca
   for(let i=0;i<6;i++)B.box(TRS(g.car.x+Math.sin(g.T*2+i)*0.9,0.02,g.car.z+Math.cos(g.T*2+i)*0.9,0,0.25,0.01,0.25),[1,0.85,0.3],true);}}
  else{for(const n of g.npcs)drawChar(IBhi,n);if(g.player)drawChar(IBhi,g.player);if(g.park){if(myProg().heli)drawHeli(B,g.park.x,g.park.z,0,g.T);else drawRide(B,g.park.x,g.park.z,1,0);}if(g.def===HUBS.bunker)drawBunker(B,g);if(g.slots){drawHomeDecor(B,g);drawHome(B,g);drawHomeX(B,g);}if(g.club)drawClub(B,g);
   if(g.tankB){const t=g.tankB;drawTankLife(B,g.T,t.x0,t.x1,(t.z0+t.z1)/2,0.08,1.35,0.35,0.9,0.4,2.15);}
-  if(g.fount)drawFountainWater(B,g.fount,g.T);if(g.mcDesk)drawMcOffice(B,g);if(g.tv)drawLobbyTV(B,g);
+  if(g.fount)drawFountainWater(B,g.fount,g.T);if(g.mcDesk)drawMcOffice(B,g);if(g.tv)drawLobbyTV(B,g);if(g.lounge)drawLounge(B,g);
   const y=1.6+Math.sin(g.T*4)*0.12;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.22,0.22,0.22))),GOLD,true);}
  for(const q of g.parts)B.box(A.mul(A.T(q.x,q.y,q.z),A.S(q.s,q.s,q.s)),q.c,q.t==='s');}
 function drawHubHUD(c,g,u,m){if(g.cine)return;const d=g.def;c.font=PXF(7*u);txt(c,d.where,m,m,'#ffd36b','left',7*u);c.font=VTF(22*u);txt(c,g.obj||d.obj,m,m+10*u,'#fff','left',22*u);
@@ -2633,16 +2633,16 @@ HUBLEG_FOOT['.']={};
   R(x=>x%6===0?'l':x%13===7?'*':'s'),R(x=>x%6===3?'H':'y'),R(()=>'y'),R(()=>'o'),R(()=>'o'),R(()=>'o')];}
 HUBS.lobby.map=[
  "||||||||eeee||||||||||",
- "|c......vvvv.......c.|",
- "|.H.....n..n.......H.|",
+ "|c.....nvvvvn......c.|",
+ "|.H................H.|",
  "|...q.........g..EEl.|",
  "|..KKKKK.l......SSS..|",
  "|...g....FFF...l.....|",
- "|.l......FFF.........|",
+ "|........FFF.........|",
  "|....c...FFF.....c.l.|",
- "|.p......rrrr...g..p.|",
- "|...l....rrrr........|",
- "|.....n...P...n......|",
+ "|........rrrr...g..p.|",
+ "|........rrrr........|",
+ "|......n..P...n......|",
  "||||||||xxxxxx||||||||"];
 /* ---------- McWey's office: he sits behind a real desk, and the haul around it grows with every job ---------- */
 function mcHaul(){let n=0;for(const k in PROG){const a=PROG[k]&&PROG[k].arm;if(a)n+=a.jobs||0;}return n;}
@@ -2672,6 +2672,8 @@ function drawMcOffice(B,g){const D=g.mcDesk,n=g.npcs.find(q=>q.kind==='mcwey'),J
  B.box(TRS(x-1.6,top+0.02,z-0.15,0,0.16,0.04,0.16),GOLD);B.box(TRS(x-1.6,top+0.14,z-0.15,0,0.03,0.22,0.03),GOLD);B.box(TRS(x-1.6,top+0.27,z-0.1,0,0.4,0.08,0.16),[0.2,0.85,0.45],true);
  B.box(TRS(x+1.55,top+0.04,z-0.15,0.25,0.12,0.08,0.24),hex(0xc0182a));B.box(TRS(x+1.55,top+0.085,z-0.13,0.25,0.07,0.01,0.12),[0.95,0.95,0.95]);
  B.box(TRS(x-1.05,top+0.02,z+0.25,0,0.16,0.03,0.16),hex(0x8a8a9a));B.box(TRS(x-1.03,top+0.045,z+0.25,0.6,0.12,0.018,0.018),[0.55,0.3,0.15]);
+ /* a visitor's chair on your side of the desk */
+ {const vx=x,vz=fz+0.75,VC=hex(0x6a1426);B.box(TRS(vx,0.42,vz,0,0.62,0.12,0.58),VC);B.box(TRS(vx,0.82,vz+0.27,0,0.64,0.72,0.1),VC);for(const sd of [-1,1]){B.box(TRS(vx+sd*0.3,0.6,vz,0,0.06,0.06,0.5),GOLD);for(const sz of [-0.24,0.24])B.box(TRS(vx+sd*0.27,0.18,vz+sz,0,0.04,0.36,0.04),GOLD);}for(const sd of [-1,1])B.box(TRS(vx+sd*0.2,1.12,vz+0.32,0,0.04,0.04,0.02),GOLD);}
  /* the pour: decanter tips over the glass on your side of the desk */
  const pt=g.pour?g.pour.t:0,k=clamp((pt-0.3)/0.4,0,1)*(1-clamp((pt-1.9)/0.4,0,1)),dx=x+0.75,dz=z-0.1,gx=x+0.4,gz=z+0.3;
  const dm=A.mul(A.mul(A.T(dx-k*0.22,top+0.12+k*0.12,dz+k*0.2),A.RZ(k*1.1)),A.S(1,1,1));
@@ -2701,14 +2703,26 @@ function drawMcOffice(B,g){const D=g.mcDesk,n=g.npcs.find(q=>q.kind==='mcwey'),J
 const NPC_CHAT={guard:["Keep your hands where I can see 'em. Kidding.","Fifty-two floors and I get the lobby.","Boss says you're family. Family still gets frisked."],
  guard2:["Extra security since Moreau went swimming.","Nobody gets up without the boss saying so. Except you.","Nice and quiet tonight. Let's keep it that way."],
  recep:["Can I get you anything? Water? A lawyer?","He's on the phone with Bogota. Give him a minute.","Sign the guest book? No? Smart."],
+ sitter:["These sofas cost more than my car.","We've been waiting two hours. You just walk in?","Sit with us. Nobody's in a hurry here except you."],
  guest:["Is it true about the motel?","My husband says McWey is a 'businessman'.","Love the suit.","Is that fountain real gold? It's real gold."]};
-NPCLINES.guard2=[["Extra security since Moreau. Can't be too careful."]];
+NPCLINES.sitter=[["Don't mind us. We're waiting for the man upstairs."],["You're the one from the motel? Sit down a minute."]];NPCLINES.guard2=[["Extra security since Moreau. Can't be too careful."]];
 const RECEP_GRADE={S:["Not a scratch on you, darling.","They're calling it surgical on the radio."],'A+':["Sharp work out there. Very sharp."],A:["Sharp work out there. Very sharp."],B:["Good job. He's in a decent mood."],C:["Bit messy, wasn't it? I saw the news."],D:["Darling... you've got something on your shoes."]};
 function tvHeadline(){const vi=VISIT;if(vi.debrief===null||!LEVELS[vi.debrief])return "McWEY TOWER: MIAMI'S NEW CROWN JEWEL  ·  McWEY HOLDINGS STOCK UP 12%  ·  ";
  const nm=LEVELS[vi.debrief].name,tail={S:'NO WITNESSES, NO SUSPECTS',A:'POLICE BAFFLED','A+':'POLICE BAFFLED',B:'POLICE APPEAL FOR INFORMATION',C:'CLEANUP TO TAKE DAYS',D:'"A BLOODBATH," SAYS CORONER'}[vi.grade]||'POLICE BAFFLED';
  return 'BREAKING: CARNAGE AT '+nm+'  ·  '+tail+'  ·  McWEY HOLDINGS STOCK UP AGAIN  ·  ';}
 function lobbySetup(g){g.tv={x:6,z:2.3,msg:tvHeadline()};g.solids=[{x:6,z:2.3,w:1.8,d:0.5}];g.lights.push({x:6,y:1.2,z:2.9,r:2.4,c:[0.4,0.6,1.3]});
- if(myProg().sharkDead){for(const x of [8.3,13.7]){const n=makeChar(x,2.7,NPCLOOK.guard(),false);n.kind='guard2';n.state='idle';n.a=n.a0=0;n.r=0.3;n.body=n.look.body;n.said=false;g.npcs.push(n);}}}
+ loungeSetup(g);if(myProg().sharkDead){for(const x of [7.4,14.6]){const n=makeChar(x,2.6,NPCLOOK.guard(),false);n.kind='guard2';n.state='idle';n.a=n.a0=0;n.r=0.3;n.body=n.look.body;n.said=false;g.npcs.push(n);}}}
+/* lounge in the lobby's west corner: an L of cream sofas, an armchair, a glass table, and a couple of guests already sat down */
+function loungeSetup(g){const L={x:4.6,z:9.4};g.lounge=L;g.solids.push({x:L.x-0.1,z:L.z-1.25,w:2.6,d:0.8},{x:2.6,z:L.z+0.1,w:0.8,d:2.2},{x:L.x+2.0,z:L.z,w:0.8,d:0.8},{x:L.x,z:L.z,w:1.2,d:0.7});
+ for(const [x,z,a] of [[L.x-0.6,L.z-1.2,0],[2.65,L.z+0.5,Math.PI/2]]){const n=makeChar(x,z,NPCLOOK.guest(),false);n.kind='sitter';n.state='idle';n.y=-0.24;n.seat=true;n.a=n.a0=a;n.r=0.3;n.body=n.look.body;g.npcs.push(n);}}
+function sofaAt(B,x,z,rot,len,arm){const s=Math.sin(rot),c=Math.cos(rot),CR=[0.95,0.9,0.8],PK=hex(0xff6fae),put=(lx,ly,lz,sx,sy,sz,col,uv)=>B.box(TRS(x+c*lx+s*lz,ly,z-s*lx+c*lz,rot,sx,sy,sz),col,false,uv);
+ put(0,0.05,0,len,0.1,0.82,DARK);put(0,0.26,0.04,len-0.1,0.32,0.74,CR);put(0,0.62,-0.32,len,0.6,0.18,CR);
+ if(arm)for(const sd of [-1,1]){put(sd*(len/2-0.09),0.42,0,0.18,0.42,0.82,CR);put(sd*(len/2-0.09),0.64,0,0.2,0.03,0.84,GOLD);}
+ for(let i=0;i<Math.max(1,Math.round(len/0.9));i++){const n=Math.max(1,Math.round(len/0.9)),lx=-len/2+len*(i+0.5)/n;put(lx,0.66,-0.18,0.36,0.3,0.1,i%2?CR.map(v=>v*0.92):PK);}}
+function drawLounge(B,g){const L=g.lounge;sofaAt(B,L.x-0.1,L.z-1.25,0,2.6,true);sofaAt(B,2.6,L.z+0.1,Math.PI/2,2.2,true);sofaAt(B,L.x+2.0,L.z,-Math.PI/2,0.95,true);
+ const tx=L.x,tz=L.z;B.box(TRS(tx,0.42,tz,0,1.2,0.03,0.7),[0.6,0.85,0.95],true);B.box(TRS(tx,0.4,tz,0,1.24,0.02,0.74),GOLD);for(const sx of [-0.55,0.55])for(const sz of [-0.3,0.3])B.box(TRS(tx+sx,0.2,tz+sz,0,0.04,0.4,0.04),GOLD);
+ B.box(TRS(tx-0.3,0.45,tz+0.05,0.3,0.22,0.02,0.3),hex(0xff2d95));B.box(TRS(tx-0.25,0.47,tz+0.08,-0.2,0.2,0.02,0.28),hex(0x2de2e6));B.box(TRS(tx+0.3,0.47,tz-0.05,0,0.16,0.05,0.16),GOLD);B.box(TRS(tx+0.36,0.52,tz-0.02,0.5,0.1,0.02,0.02),[0.55,0.3,0.15]);
+ B.box(TRS(tx+0.05,0.52,tz+0.15,0,0.08,0.18,0.08),[0.8,0.9,0.95]);B.box(TRS(tx+0.05,0.49,tz+0.15,0,0.065,0.1,0.065),[1,0.6,0.75]);}
 function drawLobbyTV(B,g){const t=g.tv,fl=0.85+Math.sin(g.T*7)*0.05+(Math.sin(g.T*31)>0.97?0.2:0);B.box(TRS(t.x,0.24,t.z,0,1.7,0.48,0.42),hex(0x1a1418),false,TUV[4]);B.box(TRS(t.x,0.49,t.z,0,1.74,0.03,0.46),GOLD);B.box(TRS(t.x,0.56,t.z-0.05,0,0.3,0.1,0.2),GOLD);B.box(TRS(t.x,1.06,t.z-0.05,0,1.5,0.9,0.12),hex(0x1a1418));B.box(TRS(t.x,1.06,t.z+0.015,0,1.36,0.76,0.01),[0.25*fl,0.45*fl,1.1*fl],true);}
 function drawTVTicker(c,g,u){const t=g.tv,a=project(t.x-0.68,1.44,t.z+0.03),b=project(t.x+0.68,0.68,t.z+0.03);if(!a||!b)return;const x0=Math.min(a[0],b[0]),x1=Math.max(a[0],b[0]),y0=Math.min(a[1],b[1]),y1=Math.max(a[1],b[1]),w=x1-x0,h=y1-y0;if(w<40||x1<0||x0>vw||y1<0||y0>vh)return;
  c.save();c.beginPath();c.rect(x0,y0,w,h);c.clip();const fs=Math.max(9,h*0.3);c.fillStyle='rgba(8,14,48,.55)';c.fillRect(x0,y0,w,h);c.fillStyle='#c0182a';c.fillRect(x0,y0,w,fs*0.9);c.font=PXF(fs*0.5);txt(c,'CH 9 NEWS',x0+4,y0+fs*0.18,'#fff','left',fs*0.5);
