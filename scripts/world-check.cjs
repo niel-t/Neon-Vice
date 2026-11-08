@@ -6,9 +6,10 @@ const { worldData, gridSnapshot, digest } = require('./world-snapshot.cjs');
 
 function checkWorld() {
   require('./materials-check.cjs').checkMaterials();
+  require('./compile-check.cjs').checkCompile();
   const { WORLD, LEVELS } = worldData();
   const fixture = JSON.parse(readFileSync(resolve(__dirname, 'fixtures', 'grid-hashes.json'), 'utf8'));
-  assert.equal(WORLD.version, 1);
+  assert.equal(WORLD.version, 2);
   assert.equal(fixture.cases.filter(c => c.key.startsWith('level:')).length, LEVELS.length);
   for (const entry of fixture.cases) {
     const def = entry.key.startsWith('level:') ? LEVELS[entry.idx] : {
