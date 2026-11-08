@@ -14,7 +14,7 @@ test('legacy world grid and seeded loader retain browser-captured parity', async
   if (process.env.WORLD_CAPTURE === '1') {
     writeFileSync(fixture, `${JSON.stringify({ baseline: 'c2385f8', cases: values }, null, 2)}\n`);
   }
-  // Ray behavior intentionally changes in W1b; retain the W1a ray golden for reference.
+  // Collision parity is independent of intentional sight/placement changes.
   const withoutRays = cases => cases.map(({ queryHash, ...value }) => value);
   expect(withoutRays(values)).toEqual(withoutRays(JSON.parse(readFileSync(fixture, 'utf8')).cases));
 });
