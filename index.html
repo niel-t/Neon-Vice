@@ -1004,9 +1004,23 @@ const CHALLENGES=[
 const CH_PAY=2000;
 const chDone=(i,k)=>!!(((JOBS.ch||{})[i]||0)&(1<<k));
 function chStars(i){let n=0;for(let k=0;k<3;k++)if(chDone(i,k))n++;return n;}
-function chHTML(i){return (CHALLENGES[i]||[]).map((c,k)=>`<span style="color:${chDone(i,k)?'#7dff9a':'#c9a8e8'}">${chDone(i,k)?'\u2605':'\u2606'} ${c.n}</span>`).join('  ');}
+function chHTML(i){return (CHALLENGES[i]||[]).map((c,k)=>`<span style="color:${chDone(i,k)?'#7dff9a':'#c9a8e8'}">${chDone(i,k)?'\u2605':'\u2606'} ${c.n}</span>`).join('  ')+'  <span style="color:'+(stashDone(i)?'#7dff9a':'#c9a8e8')+'">'+(stashDone(i)?'\u25c6 STASH FOUND':'\u25c7 HIDDEN STASH')+'</span>';}
 function checkChallenges(i,g){if(!JOBS.ch)JOBS.ch={};const out=[];let pay=0;(CHALLENGES[i]||[]).forEach((c,k)=>{const ok=!!c.f(g),was=chDone(i,k);if(ok&&!was){JOBS.ch[i]=(JOBS.ch[i]||0)|(1<<k);pay+=CH_PAY;}out.push({n:c.n,ok,fresh:ok&&!was});});
  if(pay){const p=myProg();arm();p.wallet+=pay;saveProg();}saveJobs();return {out,pay};}
+/* hidden stashes: [map x, map z, hi-fi track unlocked (or null), cash]. Saved in JOBS.stash[floor]=1 */
+const STASH=[[5,4,'n_nightdrive',1500],[29,5,'n_haze',1500],[12,5,'n_concrete',2000],[37,3,'n_redtide',2000],[37,2,'n_overdrive',2000],[38,4,'n_rampage',2000],[29,1,null,4000],[39,4,null,5000]];
+const stashDone=i=>!!((JOBS.stash||{})[i]);
+const tapeOK=t=>t==='n_crystal'||STASH.some((q,i)=>q[2]===t&&stashDone(i));
+function placeStash(g,i){const q=STASH[i];if(g.def.hub||!q||stashDone(i))return;g.stash={x:q[0]+1.5,z:q[1]+1.5,t:0,i,got:false};}
+function updateStash(dt){const g=G,q=g&&g.stash;if(!q||q.got||!g.player||!g.player.alive)return;q.t+=dt;if(Math.hypot(g.player.x-q.x,g.player.z-q.z)>0.8)return;
+ q.got=true;const d=STASH[q.i];if(!JOBS.stash)JOBS.stash={};JOBS.stash[q.i]=1;saveJobs();const p=myProg();arm();p.wallet+=d[3];saveProg();sfx('cash');shake(0.2);
+ const ti=d[2]&&TRACKS[d[2]]&&TRACKS[d[2]].title;popup(q.x,q.z,'+$'+fmt(d[3]),'#7dff9a');
+ banner('HIDDEN STASH FOUND',(ti?'CASSETTE: '+ti+' \u00b7 ADDED TO YOUR HI-FI \u00b7 ':'')+'+$'+fmt(d[3]));}
+/* only visible up close: a small cassette hovering with a pink glint */
+function drawStash(B,g){const q=g.stash;if(!q||q.got||!g.player)return;const d=Math.hypot(g.player.x-q.x,g.player.z-q.z);if(d>4.5)return;
+ const y=0.45+Math.sin(g.T*2.4)*0.06,a=g.T*1.2,f=Math.min(1,(4.5-d)/1.5);
+ B.box(TRS(q.x,y,q.z,a,0.34,0.05,0.22),[0.1,0.08,0.14],false);B.box(TRS(q.x,y+0.03,q.z,a,0.3,0.02,0.18),[0.92,0.35,0.7],true);
+ B.box(TRS(q.x,0.03,q.z,0,0.5*f+0.2,0.015,0.5*f+0.2),[1,0.3,0.7],true);}
 function stepFloor(d){const n=Math.max(0,Math.min(JOBS.top,JOBS.sel+d));if(n!==JOBS.sel){JOBS.sel=n;saveJobs();updateSelect();sfx('blip');}}
 const BRIEF_FLOOR=(i)=>(i<3?'ACT 1 · FLOOR '+(i+1)+' / 3':'ACT 2 · FLOOR '+(i-2)+' / 5')+' — '+LEVELS[i].name;
 
@@ -1471,7 +1485,7 @@ function update(dt){const g=G;fountainHum(g.def.hub?g:null);if(g.def.hub){update
  if(g.comboT>0){g.comboT-=dt;if(g.comboT<=0)g.combo=0;}
  if(g.hitT>0)g.hitT-=dt;if(g.np)g.np.t+=dt;
  g.flowT-=dt;if(g.flowT<=0){computeFlow();g.flowT=0.25;}
- updatePlayer(dt);updateHazards(dt);if(g.player.ex){if(g.player.alive)updateExec(g.player,dt);else g.player.ex=null;}for(const e of g.enemies)updateEnemy(e,dt);separate();bodyPhysics();updateDoors(dt);updateBullets(dt);updateNades(dt);updateAct2(dt);updateItems(dt);updateCash(dt);updateFX(dt);
+ updatePlayer(dt);updateHazards(dt);if(g.player.ex){if(g.player.alive)updateExec(g.player,dt);else g.player.ex=null;}for(const e of g.enemies)updateEnemy(e,dt);separate();bodyPhysics();updateDoors(dt);updateBullets(dt);updateNades(dt);updateAct2(dt);updateStash(dt);updateItems(dt);updateCash(dt);updateFX(dt);
  if(!g.cleared&&g.enemies.every(e=>!e.alive)){g.cleared=true;banner('FLOOR CLEAR','Get back to the car');sfx('clear');}
  if(g.cleared&&g.player.alive&&!g.done&&Math.hypot(g.player.x-g.car.x,g.player.z-g.car.z)<1.8){g.done=true;finishLevel();}
  if(!g.player.alive){g.deadT+=dt;if(g.deadT>1&&state==='play')showDead();}
@@ -2299,7 +2313,7 @@ function catOf(t){return FURN_CAT[t].concat(FURN_X[t]);}
 function buyFurn(k){const p=myProg(),it=catOf(p.home||0).find(q=>q.k===k),f=homeFurn();if(!it)return;if(f[k])return renderStore('Already installed.');if(p.wallet<it.price){sfx('blip');return renderStore('Not enough cash. Come back richer.');}
  p.wallet-=it.price;f[k]=1;saveProg();sfx('cash');renderStore('DELIVERED: '+it.name+'.');if(G&&G.slots)homeExtras(G);}
 const HIFI_TRACKS=['n_crystal','n_nightdrive','n_haze','n_redtide','n_overdrive','n_concrete','n_rampage'];
-function hifiNext(){const p=myProg(),i=(HIFI_TRACKS.indexOf(p.homeTrack||G.track)+1)%HIFI_TRACKS.length;p.homeTrack=HIFI_TRACKS[i];saveProg();G.track=p.homeTrack;sfx('click');popup(G.player.x,G.player.z,'NOW PLAYING: '+((TRACKS[p.homeTrack]&&TRACKS[p.homeTrack].title)||p.homeTrack),'#2de2e6');}
+function hifiNext(){const p=myProg(),L=HIFI_TRACKS.filter(tapeOK),i=(L.indexOf(p.homeTrack||G.track)+1)%L.length;p.homeTrack=L[i];saveProg();G.track=p.homeTrack;sfx('click');popup(G.player.x,G.player.z,'NOW PLAYING: '+((TRACKS[p.homeTrack]&&TRACKS[p.homeTrack].title)||p.homeTrack),'#2de2e6');}
 function homeSetup(g,t){g.home=t;g.slots={};g.spots={};g.pets=[];g.spawned={};for(let z=0;z<g.H;z++)for(let x=0;x<g.W;x++){const ch=g.rows[z][x];if('abcdokfqhsrljpt'.includes(ch))g.slots[ch]={x:x+0.5,z:z+0.5};if(ch==='g'||ch==='m')(g.spots[ch]=g.spots[ch]||[]).push({x:x+0.5,z:z+0.5});}
  homeDecorSetup(g,t);
  const p=myProg();if(t===1&&homeFurn().hifi&&p.homeTrack)g.track=p.homeTrack;homeExtras(g);g.obj=t===0?'CHECK THE PHONE · THEN HEAD OUT':'FURNISH THE PLACE · THEN HEAD OUT';
@@ -3755,7 +3769,7 @@ function drawHazards(B,g){if(!g.fans)return;const DK=hex(0x1a1820),W=g.W;
 function buildDynamic(){const g=G,B=dynB,O=ovB;B.reset();O.reset();if(g.def.hub){drawHubDyn(B,O);return;}if(ENH())drawMotes(g.cam.x,g.cam.z,levelIdx>=1,g.T);
  for(const d of g.doors){const a=d.base+d.th,e=doorEnd(d);B.box(A.mul(A.mul(A.T((d.hx+e[0])/2,0.55,(d.hz+e[1])/2),A.RY(-a)),A.S(0.98,1.1,0.07)),[0.95,0.9,0.9],false,TUV[4]);
   const kx=d.hx+Math.cos(a)*0.82,kz=d.hz+Math.sin(a)*0.82;B.box(TRS(kx,0.55,kz,-a,0.05,0.05,0.12),GOLD);}
- drawRide(B,g.car.x,g.car.z,1,0);drawAct2(B,g);if(g.oldCar)drawBeater(B,g.oldCar.x,g.oldCar.z,1,g.oldCar.a,rideId());drawDisco(B,g);drawHazards(B,g);
+ drawRide(B,g.car.x,g.car.z,1,0);drawAct2(B,g);if(g.oldCar)drawBeater(B,g.oldCar.x,g.oldCar.z,1,g.oldCar.a,rideId());drawDisco(B,g);drawHazards(B,g);drawStash(B,g);
  if(g.cleared){const y=1.5+Math.sin(g.T*5)*0.15;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.3,0.3,0.3))),[1,0.3,0.75],true);}
  const p=g.player;const near=p.alive?nearItem(p):null;
  for(const it of g.items)drawItem(B,it,it===near);
@@ -3880,7 +3894,7 @@ let typeT=null,typeFull='',typeI=0;
 function showBrief(i){levelIdx=i;state='brief';show('sBrief');$('brFrom').textContent='INCOMING CALL · '+BRIEF_FLOOR(i);$('brFloor').textContent=BRIEF_FLOOR(i);typeFull=LEVELS[i].brief;typeI=0;$('brMsg').textContent='';sfx('ring');
  clearInterval(typeT);typeT=setInterval(()=>{typeI++;$('brMsg').textContent=typeFull.slice(0,typeI);if(typeI%2===0)sfx('type');if(typeI>=typeFull.length)clearInterval(typeT);},28);}
 let CARRY=null;/* the weapon the player left the last floor with: {type,ammo,from} */
-function startLevel(i){clearInterval(typeT);levelIdx=i;HUBMODE='in';loadLevel(i);applyLoadout();if(CARRY&&CARRY.from!==i&&WD[CARRY.type]){const p=G.player,w=p.weapon;if(w&&w.type===CARRY.type)w.ammo+=CARRY.ammo;else p.weapon={type:CARRY.type,ammo:CARRY.ammo};}G.sj=myProg().sidejob||null;act2Setup(G,i);if(i===0&&myCar()!=='beater')placeOldCar();G.track=LEVEL_TRACKS[i][RUNTRACK[i]%LEVEL_TRACKS[i].length];if(MUS.track!==G.track){MUS.track='';MUS.pending=null;}state='play';show(null);
+function startLevel(i){clearInterval(typeT);levelIdx=i;HUBMODE='in';loadLevel(i);applyLoadout();if(CARRY&&CARRY.from!==i&&WD[CARRY.type]){const p=G.player,w=p.weapon;if(w&&w.type===CARRY.type)w.ammo+=CARRY.ammo;else p.weapon={type:CARRY.type,ammo:CARRY.ammo};}G.sj=myProg().sidejob||null;act2Setup(G,i);placeStash(G,i);if(i===0&&myCar()!=='beater')placeOldCar();G.track=LEVEL_TRACKS[i][RUNTRACK[i]%LEVEL_TRACKS[i].length];if(MUS.track!==G.track){MUS.track='';MUS.pending=null;}state='play';show(null);
  banner(i===3?'ACT 2: HOSTILE TAKEOVER':(i<3?'FLOOR '+(i+1):'FLOOR '+(i-2))+': '+LEVELS[i].name,i===3?'Floor 1: Vice Marina · Lex Sterling\'s smuggling hub':padMode?'Clear the floor · A grabs weapons · Get back to the car':touchMode?'Left thumb moves · right thumb aims &amp; attacks':'Clear the floor · E grabs weapons · Get back to the car');
  if(CHALLENGES[i]&&chStars(i)<3)setTimeout(()=>{if(G&&state==='play'&&levelIdx===i&&!G.def.hub&&G.time<4)banner('CHALLENGES',CHALLENGES[i].map((c,k)=>(chDone(i,k)?'\u2605 ':'\u2606 ')+c.n).join(' \u00b7 '));},2600);
  if(i===1&&!LEXMET)startCameo();}
