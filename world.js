@@ -897,7 +897,101 @@ const WORLD=(()=>{
    }
    if(at<0)return null;out[0]=d.xs[at];out[1]=d.zs[at];return out;
   }
-  return{compile,fromCells,syncCell,sight,trace,move,groundY,coverAt,roomAt,portals,portalAt,portalOpen,clear,nav,flow,step,dist};
+  function stageRun(mission,describe,opts={}){
+   record(opts,['maxStageBytes','maxRunBytes'],'stage run option');
+   if(!mission||typeof mission.id!=='string'||!Array.isArray(mission.stages)||!mission.stages.length||!mission.stages.every(id=>typeof id==='string'&&id.length)||new Set(mission.stages).size!==mission.stages.length||!mission.stages.includes(mission.start))throw new TypeError('Invalid stage mission');
+   if(typeof describe!=='function')throw new TypeError('Stage descriptor resolver required');
+   const stageLimit=opts.maxStageBytes??16384,runLimit=opts.maxRunBytes??262144;
+   if(!Number.isInteger(stageLimit)||stageLimit<256||!Number.isInteger(runLimit)||runLimit<stageLimit)throw new RangeError('Stage snapshot budget invalid');
+   const mid=mission.id,start=mission.start,descs=new Map(),tokens=new WeakMap();
+   const bytes=s=>{let n=0;for(const c of s){const k=c.codePointAt(0);n+=k<128?1:k<2048?2:k<65536?3:4;}return n;};
+   const data=(value,limit)=>{
+    const out=copyData(value);
+    const validate=v=>{if(!v||typeof v!=='object')return;const proto=Object.getPrototypeOf(v);if(!Array.isArray(v)&&proto!==null&&proto.constructor?.name!=='Object')throw new TypeError('Stage snapshots must be plain JSON data');for(const k of Reflect.ownKeys(v)){if(typeof k!=='string')throw new TypeError('Stage snapshot symbol key');validate(v[k]);}};
+    validate(value);if(bytes(JSON.stringify(out))>limit)throw new RangeError('Stage snapshot byte budget exceeded');return freezeData(out);
+   };
+   for(const sid of mission.stages){
+    const raw=describe(sid);record(raw,['id','kind','rev','arrivals','stairs','backdrop'],'stage descriptor');
+    if(raw.id!==sid||!['grid','plan'].includes(raw.kind)||!Number.isInteger(raw.rev)||raw.rev<1)throw new TypeError(`Invalid descriptor ${sid}`);
+    const arrivals=raw.arrivals??{};if(!arrivals||typeof arrivals!=='object'||Array.isArray(arrivals))throw new TypeError('Stage arrivals must be a record');
+    const entries={};
+    for(const id of Object.keys(arrivals)){
+     const a=arrivals[id];record(a,['at','dir'],'stage arrival');const at=point(a.at,'arrival');if(a.dir!==undefined)finite(a.dir,'arrival direction');Object.defineProperty(entries,id,{value:freezeData({at,dir:a.dir??null}),enumerable:true});
+    }
+    if(raw.stairs!==undefined&&!Array.isArray(raw.stairs)||raw.backdrop!==undefined&&!Array.isArray(raw.backdrop))throw new TypeError('Stairs/backdrop must be arrays');
+    const ids=new Set(),stairs=(raw.stairs||[]).map(s=>{
+     record(s,['id','to','at','arrive','r','oneWay'],'stair');
+     if(typeof s.id!=='string'||!s.id||ids.has(s.id)||!mission.stages.includes(s.to)||s.to===sid||typeof s.arrive!=='string')throw new RangeError('Invalid stair reference');
+     ids.add(s.id);const r=s.r??.65;finite(r,'stair radius');if(r<=0||s.oneWay!==undefined&&typeof s.oneWay!=='boolean')throw new RangeError('Invalid stair trigger');
+     return freezeData({...copyData(s),at:point(s.at,'stair'),r});
+    });
+    const backdrop=(raw.backdrop||[]).map(b=>{
+     record(b,['stage','city','dy','dim'],'backdrop');finite(b.dy,'backdrop dy');
+     if((b.stage!==undefined)===(b.city!==undefined)||b.dy===0||b.stage!==undefined&&(!mission.stages.includes(b.stage)||b.stage===sid)||b.city!==undefined&&(typeof b.city!=='string'||!b.city))throw new RangeError('Invalid backdrop reference');
+     const dim=b.dim??.6;finite(dim,'backdrop dim');if(dim<0||dim>1)throw new RangeError('Invalid backdrop dim');return freezeData({...copyData(b),dim});
+    });
+    descs.set(sid,freezeData({id:sid,kind:raw.kind,rev:raw.rev,arrivals:entries,stairs,backdrop}));
+   }
+   for(const desc of descs.values()){
+    for(const arrival of Object.values(desc.arrivals))if(desc.stairs.some(s=>Math.hypot(s.at[0]-arrival.at[0],s.at[1]-arrival.at[1])<=s.r))throw new RangeError('Arrival must be outside every stair trigger');
+    for(const stair of desc.stairs){
+     const target=descs.get(stair.to);if(!Object.prototype.hasOwnProperty.call(target.arrivals,stair.arrive))throw new RangeError('Stair arrival missing');
+     if(!stair.oneWay&&!target.stairs.some(s=>s.to===desc.id))throw new RangeError('Stair must be paired or marked oneWay');
+    }
+   }
+   let current=start,active=false,states=new Map(),entry=null,bag=freezeData({}),revision=0;
+   const envelope=(sid,value)=>value===null?null:freezeData({sid,rev:descs.get(sid).rev,data:data(value,stageLimit)});
+   const encoded=(cur,store,checkpoint,b)=>data({v:1,mission:mid,current:cur,states:Object.fromEntries(store),entry:checkpoint,bag:b},runLimit);
+   const prepare=(to,arrive=null)=>{
+    if(!descs.has(to))throw new RangeError('Unknown target stage');
+    const desc=descs.get(to);
+    if(arrive!==null&&!Object.prototype.hasOwnProperty.call(desc.arrivals,arrive))throw new RangeError('Unknown stage arrival');
+    const plan=Object.freeze({from:active?current:null,to,arrive,arrival:arrive===null?null:desc.arrivals[arrive],desc,snapshot:states.get(to)?.data??null});
+    tokens.set(plan,revision);return plan;
+   };
+   const candidate=(plan,leaving,checkpoint,nextBag)=>{
+    if(!tokens.has(plan)||tokens.get(plan)!==revision)throw new Error('Stale or foreign stage transition');
+    const next=new Map(states),saved=plan.from===null?null:envelope(plan.from,leaving),incoming=envelope(plan.to,checkpoint),b=data(nextBag,runLimit);
+    if(!incoming||plan.from!==null&&!saved)throw new TypeError('Stage entry/leaving snapshots required');
+    if(saved)next.set(plan.from,saved);next.set(plan.to,incoming);
+    return{next,incoming,b,encoded:encoded(plan.to,next,incoming,b)};
+   };
+   const manager={
+    version:1,mission:mid,get current(){return current;},get active(){return active;},
+    describe:sid=>{if(!descs.has(sid))throw new RangeError('Unknown stage');return descs.get(sid);},
+    prepare,
+    prepareStair:id=>{
+     if(!active)throw new Error('Stage run has not entered a stage');
+     const stair=descs.get(current).stairs.find(s=>s.id===id);if(!stair)throw new RangeError('Unknown stair');return prepare(stair.to,stair.arrive);
+    },
+    preview:(plan,leaving,checkpoint,nextBag={})=>candidate(plan,leaving,checkpoint,nextBag).encoded,
+    commit:(plan,leaving,checkpoint,nextBag={})=>{
+     const c=candidate(plan,leaving,checkpoint,nextBag);
+     states=c.next;current=plan.to;entry=c.incoming;bag=c.b;active=true;revision++;tokens.delete(plan);return c.encoded;
+    },
+    retry:()=>{if(!active)throw new Error('Stage run has not entered a stage');return freezeData({sid:current,snapshot:entry.data,bag});},
+    restart:()=>{current=start;states=new Map();entry=null;bag=freezeData({});active=false;revision++;},
+    encode:()=>encoded(current,states,entry,bag),
+    decode:saved=>{
+     record(saved,['v','mission','current','states','entry','bag'],'stage checkpoint');
+     if(saved.v!==1||saved.mission!==mid||!descs.has(saved.current)||!saved.states||typeof saved.states!=='object'||Array.isArray(saved.states))throw new TypeError('Invalid stage checkpoint');
+     data(saved,runLimit);const next=new Map();
+     const restore=(sid,v)=>{
+      record(v,['sid','rev','data'],'stage snapshot');
+      if(!descs.has(sid)||v.sid!==sid||v.rev!==descs.get(sid).rev)throw new RangeError('Stage snapshot revision changed');
+      if(v.data===null)throw new TypeError('Retained stage snapshot data cannot be null');
+      return envelope(sid,v.data);
+     };
+     for(const [sid,v] of Object.entries(saved.states))next.set(sid,restore(sid,v));
+     const checkpoint=saved.entry===null?null:restore(saved.current,saved.entry),b=data(saved.bag,runLimit);
+     if(!checkpoint&&(next.size||saved.current!==start)||checkpoint&&!next.has(saved.current))throw new TypeError('Checkpoint entry missing');
+     states=next;current=saved.current;entry=checkpoint;bag=b;active=checkpoint!==null;revision++;return manager;
+    },
+    backdrops:sid=>{if(!descs.has(sid))throw new RangeError('Unknown backdrop stage');return descs.get(sid).backdrop;}
+   };
+   return Object.freeze(manager);
+  }
+  return{compile,fromCells,syncCell,sight,trace,move,groundY,coverAt,roomAt,portals,portalAt,portalOpen,clear,nav,flow,step,dist,stageRun};
  })();
  return Object.freeze({version:3,materials,...freeform,buildGrid,hsh,cell:Object.freeze({isSolid,isBlock,isCover,rayBlock,doorHit,rayLen,los,rayWall,collideGrid,moveClear,collideDoors,bfs}),
   geometry:Object.freeze({doorEnd,segDist,segInt})});

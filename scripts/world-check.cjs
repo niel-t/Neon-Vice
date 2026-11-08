@@ -8,6 +8,7 @@ function checkWorld() {
   require('./materials-check.cjs').checkMaterials();
   require('./compile-check.cjs').checkCompile();
   require('./nav-check.cjs').checkNav();
+  require('./stages-check.cjs').checkStages();
   const { WORLD, LEVELS } = worldData();
   const fixture = JSON.parse(readFileSync(resolve(__dirname, 'fixtures', 'grid-hashes.json'), 'utf8'));
   assert.equal(WORLD.version, 3);
