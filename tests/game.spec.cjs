@@ -103,7 +103,7 @@ test('integration: existing startLevel loads all eight floors and advances real 
   }
 });
 
-test('saves: historical migration, current round-trip, floor bounds and corruption protection', async ({ openGame }) => {
+test('saves: historical migration, current round-trip, floor stepping and quota recovery', async ({ openGame }) => {
   const history = await openGame({ nb86prog: { don: { lvl: 4, xp: 120, perks: { tough: 1 }, sharkDead: 1, custom: 'preserve' } } }, ['nb86']);
   expect(await history.evaluate(() => ({ top: JOBS.top, wallet: wallet(), lvl: myProg().lvl, custom: myProg().custom })))
     .toEqual({ top: 3, wallet: 0, lvl: 4, custom: 'preserve' });
@@ -129,19 +129,29 @@ test('saves: historical migration, current round-trip, floor bounds and corrupti
   await expect(history.locator('#saveWarning')).toBeVisible();
   expect(await history.evaluate(() => saveSet())).toBe(true);
   await expect(history.locator('#saveWarning')).toBeHidden();
+});
 
+test('saves: out-of-range floor records are clamped', async ({ openGame }) => {
   const bounds = await openGame({ nb86jobs: { mig: 1, top: 999, sel: -1 } });
   expect(await bounds.evaluate(() => [JOBS.top, JOBS.sel])).toEqual([7, 0]);
+});
+
+test('saves: pre-RPG progress preserves purchases and loan history', async ({ openGame }) => {
   const preRPG = await openGame({ nb86prog: { don: {
     wallet: 123, debt: 0, cars: ['beater', 'mid'], car: 'mid', jewel: { watch: true }, seen: { loan: 1 }
   } } });
   await preRPG.locator('#bStart').click();
   expect(await preRPG.evaluate(() => ({ wallet: wallet(), lvl: myProg().lvl, car: myProg().car, loan: myProg().seen.loan })))
     .toEqual({ wallet: 123, lvl: 1, car: 'mid', loan: 1 });
+});
+
+test('saves: pre-debt progress preserves the car and loan history', async ({ openGame }) => {
   const preDebt = await openGame({ nb86prog: { don: { lvl: 2, xp: 10, perks: {}, cars: ['beater', 'mid'], car: 'mid', seen: { loan: 1 } } } });
   expect(await preDebt.evaluate(() => { arm(); return [myProg().car, myProg().seen.loan]; })).toEqual(['mid', 1]);
+});
 
-  for (const [key, raw] of [['nb86', ''], ['nb86prog', 'null'], ['nb86jobs', 'null']]) {
+for (const [key, raw] of [['nb86', ''], ['nb86prog', 'null'], ['nb86jobs', 'null']]) {
+  test(`saves: corrupt ${key} remains untouched by all save writers`, async ({ openGame }) => {
     const broken = await openGame({ [key]: raw }, [key]);
     await expect(broken.locator('#saveWarning')).toBeVisible();
     expect(await broken.evaluate(key => {
@@ -149,7 +159,10 @@ test('saves: historical migration, current round-trip, floor bounds and corrupti
       return localStorage.getItem(key);
     }, key)).toBe(raw);
     if (key === 'nb86prog') expect(await broken.evaluate(() => JOBS.mig)).toBeFalsy();
-  }
+  });
+}
+
+test('saves: invalid required containers are preserved', async ({ openGame }) => {
   const invalidContainer = { don: { lvl: 3, xp: 90, perks: [], custom: 'keep' } };
   const invalid = await openGame({ nb86prog: invalidContainer }, ['nb86prog']);
   await expect(invalid.locator('#saveWarning')).toBeVisible();
