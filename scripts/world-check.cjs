@@ -2,12 +2,7 @@ const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
 const { resolve } = require('node:path');
 const vm = require('node:vm');
-const { gridSnapshot, digest } = require('./world-snapshot.cjs');
-
-function worldData() {
-  const source = ['levels.js', 'world.js'].map(file => readFileSync(resolve(__dirname, '..', file), 'utf8')).join('\n');
-  return vm.runInNewContext(`${source}\n({WORLD,LEVELS})`, {}, { timeout: 1000 });
-}
+const { worldData, gridSnapshot, digest } = require('./world-snapshot.cjs');
 
 function checkWorld() {
   const { WORLD, LEVELS } = worldData();
@@ -33,6 +28,8 @@ function checkWorld() {
   }
   console.log(`WORLD: ${fixture.cases.length} browser-captured grid hashes preserved`);
   checkSight(WORLD, LEVELS);
+  require('./world-nav-check.cjs').checkNavigation();
+  checkPlan();
 }
 
 function checkSight(WORLD, LEVELS) {
@@ -120,6 +117,35 @@ function checkBullets(WORLD) {
   assert(closed.effects[0].slice(0, 3).every(Number.isFinite));
   assert.equal(run(Math.PI/2).damage.length, 1, 'Production bullet loop clears the opened doorway');
   assert.equal(run(0, true).damage.length, 1, 'Production bullet loop clears a low water/kerb cell');
+}
+
+function checkPlan() {
+  const { loadPlan, stats, sight, renderPlan, point } = require('./world-plan.cjs');
+  for (let idx=0;idx<8;idx++) {
+    const plan = loadPlan(idx), summary = stats(plan), svg = renderPlan(plan);
+    assert.equal(summary.spawns.player, 1);
+    assert.equal(summary.spawns.exit, 1);
+    assert(summary.walkableCells > 0 && summary.walkableCells <= summary.floorCells);
+    assert(svg.startsWith('<svg ') && svg.endsWith('</svg>\n'));
+    assert(!svg.includes('NaN') && !svg.includes('undefined'));
+    assert(svg.includes('not researched materials'));
+  }
+  const plan = loadPlan(3), ray = sight(plan, [6.5, 4.5], [13.5, 4.5]);
+  assert.equal(ray.visible, true);
+  assert(renderPlan(plan, ray).includes('clear sightline'));
+  const d = plan.grid.doors[0], e = plan.WORLD.geometry.doorEnd(d), x = (d.hx+e[0])/2, z = (d.hz+e[1])/2;
+  const ux = Math.cos(d.base), uz = Math.sin(d.base);
+  const blocked = sight(plan, [x+uz*.2,z-ux*.2], [x-uz*.2,z+ux*.2]);
+  assert.equal(blocked.visible, false);
+  assert.equal(blocked.firstHit.kind, 'door');
+  const wall = sight(loadPlan(0), [1.5,1.5], [2.5,1.5]);
+  assert.equal(wall.visible, false);
+  assert.equal(wall.firstHit.kind, 'wall');
+  assert.throws(() => loadPlan(8), /existing campaign index/);
+  assert.throws(() => point('1,'), /finite x,z pair/);
+  assert.throws(() => point('Infinity,2'), /finite x,z pair/);
+  assert.throws(() => sight(plan, [-1, 0], [2, 2]), /plan bounds/);
+  console.log('WORLD: dev SVG and query tooling covers all eight legacy plans');
 }
 
 module.exports = { checkWorld, worldData };
