@@ -178,8 +178,8 @@ ssssssssssssssssssssssssssssssssssssssss
 6. **The change booth faces the door.** The booth (BOOTH) sits on the rear
    wall of the arcade floor, raised, and looks over the islands at the front
    door D1 (S1) and across at the back-room door D5 (S15) (P, the usual
-   attendant post). The raised floor is what lets it see over 1.73 m
-   cabinets if W1 makes them block sight (§9 Q5).
+   attendant post). Props never block sight (§9 Q5), so the
+   raised floor is flavour, not a sight rule.
 7. **Cabinets to real sizes.** Uprights are 0.63 × 0.84 m (PM2). Islands
    are two rows back to back (1.7 m deep); wall rows are one deep. Pinball
    machines are about 0.74 × 1.4 m (P). Aisles are 1.6–3.4 m between
@@ -509,19 +509,19 @@ Where two rooms share a wall, the first matching row wins.
    W5 to decide whether a cabinet needs a stronger front (a CRT) and a
    soft side; that would be new MATERIALS data (a `crt_cabinet` row) and is
    not added here.
-3. **Locked storefront.** After midnight D1 is locked glass. Proposal: it
-   shatters as `glass_tempered_6` (any hit), which makes the front entry
-   loud by nature. The roll-down grilles are raised (P) so the glass stays
-   in play. W1/W10 to decide.
+3. **Locked storefront. Resolved by W1.** A locked D1 is still breakable
+   clear glass: locking is not penetration immunity. D1 `glass` maps to
+   `glass_tempered_6` in the future W2 compiler. It breaks loudly with the
+   existing glass feedback; breach and audio behaviour are W5's, later. The
+   roll-down grilles are raised (P) so the glass stays in play.
 4. **Members' door.** Does D2 open to a knock (social entry, W10 dialogue),
    or only by force? And do the back-room gamblers count as civilians for
    scoring? W10 to decide.
-5. **Cabinet sight.** Cabinets stand 1.73 m (PM2), above eye height, so in
-   reality they block sight. STYLE-LEVELS §3.4 says props never block sight,
-   so S1, S4, S8, S14 and S15 are clear over and past the islands. If W1
-   makes `full` props block sight (club.md §9 Q6), S1 (CR3, CR5), S4 (CR5),
-   S14 (CR4, CR3, BOOTH) and S15 (CR2) become blocked unless the raised booth
-   gets an eye-height exception; W2 can then use the islands as sight screens. W1 to confirm.
+5. **Cabinet sight. Resolved by W1 (W1c schema gate).** Props, including
+   full-height cabinets, never block sight (user Q9, STYLE-LEVELS §3.4), so
+   S1, S4, S8, S14 and S15 stay clear over and past the islands, and the
+   raised booth needs no eye-height exception. Cabinets remain cover and
+   penetration layers, not sight screens.
 6. **"On the beach."** The legacy map puts the beach directly south of the
    storefront. This brief puts 71st Street in front and the beach one
    block east, across Collins Avenue (P). Miami Beach strips face a street,
