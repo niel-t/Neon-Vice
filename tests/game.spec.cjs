@@ -64,8 +64,8 @@ test('UI journey: title/select/intro/elevator/brief/car/mission, spam and held m
   for (let i = 0; i < 6; i++) await page.keyboard.press('Tab');
   await expect.poll(() => page.evaluate(() => state)).toBe('brief');
   await page.waitForFunction(() => !fading && CHAT.phase !== 'idle', null, { polling: 'raf' });
-  const dialogueSteps = await page.evaluate(() => CHAT.q.length * 3 + 1);
-  for (let i = 0; i < dialogueSteps; i++) {
+  // Branches expand the queue as they are reached; Space also confirms the highlighted choice.
+  for (let i = 0; i < 200; i++) {
     if (await page.evaluate(() => CHAT.done)) break;
     await page.keyboard.press('Space');
   }
