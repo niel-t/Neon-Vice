@@ -988,7 +988,8 @@ function fireGun(c,w,isP){const g=G,wd=WD[w.type];if(isP&&c.cover){c.cover.pop=C
  const mo=c.cs&&c.cs.lean?c.eye:c;let a0=c.a;if(mo!==c&&!touchMode&&!padMode&&mouse.active&&Math.hypot(g.aimX-mo.x,g.aimZ-mo.z)>0.5)a0=Math.atan2(g.aimX-mo.x,g.aimZ-mo.z);
   if(isP&&!touchMode&&Dd().assist>0){let bd=Dd().assist;const aa=a0;for(const e of g.enemies){if(!e.alive)continue;const dx=e.x-mo.x,dz=e.z-mo.z,d=Math.hypot(dx,dz);if(d>12)continue;const ea=Math.atan2(dx,dz),df=Math.abs(angDiff(aa,ea));if(df<bd&&los(mo.x,mo.z,e.x,e.z)){bd=df;a0=ea;}}}
  let ox=0;if(BT(w.type)==='dual'){c.alt=!c.alt;ox=c.alt?-0.17:0.17;}const bx0=mo.x+ca*ox,bz0=mo.z-sa*ox,bP=bProj(w.type);
- for(let i=0;i<wd.pel;i++){const a=a0+(wd.pel>1?rnd(-spr,spr):(Math.random()+Math.random()-1)*spr);g.bullets.push({x:bx0,z:bz0,dx:Math.sin(a),dz:Math.cos(a),sp:isP?34:Dd().ebSpd,life:1.2,own:isP?'p':'e',pierce:isP?(wd.pierce||1):1,type:w.type,hit:[],p:bP,e:bP.e0,tum:1,y:(c.eyeY??1.6)-0.3,sx:bx0,sz:bz0,st:c.stance||'stand'});}
+ const bY0=(c.eyeY??1.6)-0.3,bY=!isP&&typeof coverShotY==='function'?coverShotY(bY0,G.player):bY0;
+ for(let i=0;i<wd.pel;i++){const a=a0+(wd.pel>1?rnd(-spr,spr):(Math.random()+Math.random()-1)*spr);g.bullets.push({x:bx0,z:bz0,dx:Math.sin(a),dz:Math.cos(a),sp:isP?34:Dd().ebSpd,life:1.2,own:isP?'p':'e',pierce:isP?(wd.pierce||1):1,type:w.type,hit:[],p:bP,e:bP.e0,tum:1,y:bY,sx:bx0,sz:bz0,st:c.stance||'stand'});}
  const ml=0.4+wd.len;g.flashes.push({x:c.x+sa*ml+ca*(ox||0.17),y:0.74,z:c.z+ca*ml-sa*(ox||0.17),t:0.06,big:wd.pel>1,sil:w.type==='silenced'});
  sfx(wd.snd,isP?1:clamp(1.15-Math.hypot(c.x-g.player.x,c.z-g.player.z)/18,0.2,1));
  if(w.type!=='double'&&w.type!=='shotgun')gib(c.x+ca*0.2,0.72,c.z-sa*0.2,ca*rnd(1.5,2.5),rnd(1.5,2.5),-sa*rnd(1.5,2.5),wd.pel>1?[0.04,0.04,0.08]:[0.03,0.03,0.06],wd.pel>1?[0.8,0.15,0.15]:[0.85,0.65,0.25],true);
