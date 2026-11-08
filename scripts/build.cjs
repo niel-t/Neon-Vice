@@ -4,7 +4,7 @@ const { resolve, join } = require('node:path');
 const root = resolve(__dirname, '..');
 const output = join(root, 'public');
 // Add runtime assets here atomically with their HTML references.
-const files = ['index.html', 'art.js', 'levels.js'];
+const files = ['index.html', 'art.js', 'levels.js', 'models.js', 'renderer.js'];
 function build() {
   mkdirSync(output, { recursive: true });
   for (const name of readdirSync(output)) {
