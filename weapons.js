@@ -104,3 +104,28 @@ function reloadNeed(type,mag,pool){const w=WD[type];if(!w||w.melee||!isCal(w.cal
 function reloadNew(type){const w=WD[type],d=w.rl||1.5,a=w.ar||[0.5,0.12];return {t:0,dur:d,ar0:a[0]*d,ar1:(a[0]+a[1])*d,tried:false,jam:false};}
 function reloadPress(r){if(r.tried)return 'locked';r.tried=true;if(r.t>=r.ar0&&r.t<=r.ar1)return 'hit';r.jam=true;r.dur=r.t+(r.dur-r.t)*AR_JAM;return 'jam';}
 const stripRoom=(kit,cal)=>isCal(cal)?Math.max(0,capOf(kit,cal)-(kit.pool[cal]|0)):0;
+/* ================= LOCKER + NINE'S (W6d): moving things between the kit and the apartment locker, deliveries and sales =================
+   Slots: 0|1 = kit.guns, 'melee' = kit.melee, 'armour' = kit.armour. Nothing is duplicated or dropped: every move either completes or changes nothing. */
+const SELL_FRAC=0.4;
+const lockerRoom=l=>l.items.length<LOCKER_CAP;
+function itemOfSlot(k,s){if(s===0||s===1)return k.guns[s];if(s==='melee')return k.melee?{type:k.melee}:null;if(s==='armour')return k.armour?{armour:k.armour.type,plates:k.armour.plates}:null;return null;}
+function clearSlot(k,s){if(s===0||s===1){k.guns[s]=null;if(!k.guns[k.active]&&k.guns[1-k.active])k.active=1-k.active;}else if(s==='melee')k.melee=null;else if(s==='armour')k.armour=null;}
+/* kit -> locker; false when the locker is full or the slot is empty */
+function kitStash(k,l,s){const it=itemOfSlot(k,s);if(!it||!lockerRoom(l))return false;l.items.push(it);clearSlot(k,s);return true;}
+/* locker[i] -> kit: a gun takes a free slot (active first) or trades places with the active gun; melee and armour trade places with what you carry */
+function kitTake(k,l,i){const it=l.items[i];if(!it)return false;
+ if(it.armour){l.items.splice(i,1);if(k.armour)l.items.splice(i,0,{armour:k.armour.type,plates:k.armour.plates});k.armour={type:it.armour,plates:it.plates|0};return true;}
+ if(isMeleeT(it.type)){l.items.splice(i,1);if(k.melee)l.items.splice(i,0,{type:k.melee});k.melee=it.type;return true;}
+ if(!isGunT(it.type))return false;l.items.splice(i,1);
+ const s=k.guns[k.active]==null?k.active:k.guns[1-k.active]==null?1-k.active:-1;
+ if(s<0)l.items.splice(i,0,k.guns[k.active]);const d=s<0?k.active:s;k.guns[d]={type:it.type,mag:it.mag|0};k.active=d;return true;}
+/* a purchase: into the kit when there is room for it, otherwise into the locker; 'kit' | 'locker' | false (both full) */
+function kitReceive(k,l,it){
+ if(it.armour){if(!k.armour){k.armour={type:it.armour,plates:it.plates|0};return 'kit';}if(!lockerRoom(l))return false;l.items.push(it);return 'locker';}
+ if(isMeleeT(it.type)){if(!k.melee){k.melee=it.type;return 'kit';}if(!lockerRoom(l))return false;l.items.push({type:it.type});return 'locker';}
+ if(!isGunT(it.type))return false;const s=k.guns[k.active]==null?k.active:k.guns[1-k.active]==null?1-k.active:-1;
+ if(s>=0){k.guns[s]={type:it.type,mag:it.mag|0};if(!k.guns[k.active])k.active=s;return 'kit';}if(!lockerRoom(l))return false;l.items.push({type:it.type,mag:it.mag|0});return 'locker';}
+/* what Nine pays: SELL_FRAC of the price (a damaged vest at half that); rounds left in a sold gun's magazine go to the pool (up to its cap) */
+function sellValue(it,price){const base=Math.round((price||0)*SELL_FRAC);if(it&&it.armour){const a=ARMOUR[it.armour];return a&&it.plates<a.plates?Math.round(base/2):base;}return base;}
+function kitSell(k,l,where,i){let it;if(where==='kit'){it=itemOfSlot(k,i);if(!it)return null;clearSlot(k,i);}else{it=l.items[i];if(!it)return null;l.items.splice(i,1);}
+ const w=it.type&&WD[it.type];if(w&&!w.melee&&(it.mag|0)>0)poolAdd(k,w.cal,it.mag|0);return it;}

@@ -30,6 +30,7 @@ Jobs come from **McWey**, from his office on the 52nd floor of McWey Tower, next
 - PS2-style low-poly characters with faces taken from the original artwork, skinned animation and Vice City colour trails.
 - Extreme gore mode: dismemberment, head pops, blood-soaked clothes and real execution animations. You can switch it to NORMAL in the pause menu.
 - A pump-action shotgun, dual 9mms, an M16, a bat, a machete and more, each with its own sound.
+- A persistent kit: two guns, a melee weapon and armour carry between jobs, with one ammo pool per caliber. Nine of Nine sells guns, ammo, bigger ammo stashes, a kevlar vest and a plate carrier (two plates, slightly slower), and buys back anything you own at 40%. Purchases go to your apartment's gun locker (12 spaces) when your hands are full; swap gear there before the next job.
 - A Miami Vice-style drive cutscene, McWey Tower's lobby, elevator and office, and an RPG perk system.
 - Music that changes per level and on every death.
 - Pause menu settings: graphics (enhanced / PS1 retro), film grain, VHS glitch, gore, hints, sound and screen shake.

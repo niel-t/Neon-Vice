@@ -232,6 +232,33 @@ test('slots: two guns and a melee switch in hand, pickups fill the free slot, re
   });
 });
 
+test('nine: full hands deliver to the locker, a sale takes two clicks, and the locker swaps without duplicating', async ({ openGame }) => {
+  const page = await openGame();
+  await page.evaluate(() => {
+    selIdx = 1; const p = myProg();
+    p.kit = { v:1, guns:[{ type:'pistol', mag:15 }, { type:'smg', mag:30 }], active:0, melee:'bat', armour:null, pool:{}, upg:{}, lost:[] };
+    p.locker = { v:1, items:[], lost:[] }; p.wallet = 100000;
+    startLevel(0); state = 'play'; G.cine = null;
+    const a = arm(); a.met = true; a.stock = ['m16', 'katana', 'revolver']; a.key = a.jobs;
+    openShop();
+  });
+  await page.locator('#shCards [data-k="m16"]').click();
+  expect(await page.evaluate(() => ({ items:myProg().locker.items, guns:kit().guns.map(g => g.type), spent:100000 - myProg().wallet === SHOPP.m16 })))
+    .toEqual({ items:[{ type:'m16', mag:30 }], guns:['pistol', 'smg'], spent:true });
+  await page.locator('#shExtra [data-x="sell"]').click();
+  await page.locator('#shExtra [data-s="l0"]').click();
+  expect(await page.evaluate(() => myProg().locker.items.length)).toBe(1);
+  await page.locator('#shExtra [data-s="l0"]').click();
+  expect(await page.evaluate(() => ({ n:myProg().locker.items.length, paid:myProg().wallet === 100000 - SHOPP.m16 + Math.round(SHOPP.m16 * SELL_FRAC) })))
+    .toEqual({ n:0, paid:true });
+  await page.evaluate(() => { closeShop(); openStore('locker'); });
+  await page.locator('#sStore [data-ks="g1"]').click();
+  expect(await page.evaluate(() => ({ guns:kit().guns.map(g => g && g.type), items:myProg().locker.items }))).toEqual({ guns:['pistol', null], items:[{ type:'smg', mag:30 }] });
+  await page.locator('#sStore [data-ks="melee"]').click();
+  await page.locator('#sStore [data-lt="0"]').click();
+  expect(await page.evaluate(() => ({ guns:kit().guns.map(g => g && g.type), melee:kit().melee, items:myProg().locker.items.map(i => i.type), saved:JSON.parse(localStorage.getItem('nb86prog')).money.locker.items.length })))
+    .toEqual({ guns:['pistol', 'smg'], melee:null, items:['bat'], saved:1 });
+});
 test('slots: in a job Tab switches and R reloads instead of restarting; Backspace restarts', async ({ openGame }) => {
   const page = await openGame();
   await page.evaluate(() => {
