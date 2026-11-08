@@ -79,7 +79,8 @@ const MC_GRADE={S:"Not a hair out of place, beautiful.",'A+':"Sharp work, really
 const MC_PAY={owe:"${take} for you, ${cut} for me, and you still owe me ${debt}.",near:"${take} for you, ${cut} for me, and ${debt} more and we're square. Nearly there.",
  square:"${take} for you, ${cut} for me, and that, believe it or not, is the last of it.",free:"${take}, all of it yours. Count it here where I can watch; I enjoy it.",yacht:"${take}, all yours, and she comes with a yacht.",
  yacht2:"Whatever you still owed me, forget it. You don't work for me any more, you work with me."};
-const UNLOCK_LINE={3:"One of Lex's speedboats somehow didn't sink. It's tied up under your window, with a bow on it.",4:"And for God's sake lose the street clothes. My tailor's waiting downstairs, and he's already measured you by eye.",5:"Lex torched your car, so you're flying from now on. There's a helicopter on the roof; try not to scratch the pad."};
+// [3] is keyed on the marina_u_kept wflag (W14): kept afloat vs. all sunk. The boat itself is always granted.
+const UNLOCK_LINE={3:{kept:"One of Lex's speedboats somehow didn't sink. It's tied up under your window, with a bow on it.",sunk:"Every one of Lex's boats is on the bottom, so I bought you one of your own. It's under your window; try not to sink it out of habit."},4:"And for God's sake lose the street clothes. My tailor's waiting downstairs, and he's already measured you by eye.",5:"Lex torched your car, so you're flying from now on. There's a helicopter on the roof; try not to scratch the pad."};
 // Header quote card for each job; the log never repeats it. The only place a motto belongs (§4).
 const MC_QUOTE=["In Miami, gold doesn't lie. People do.","Loyalty's like gold. Heavy, and it looks good on you.","Sharks don't sleep. Neither does McWey.","Gold sinks. Remember that.","Everybody launders. The trick is not getting caught in the dryer.","Revenge is a dish best served at the food court.","Every song ends. Make sure his ends tonight.","On the water, the biggest fish eats first.","Everybody wants the crown. Nobody wants the weight."];
 const END_STYLE={clean:{title:'THE QUIET HAND',line:"You did it quietly, start to finish, and nobody in this city could pick your face out of a lineup.",quote:"Quiet men hold the most keys."},
@@ -149,7 +150,7 @@ const DLG={
   {t:"Thank you, Mr McWey.",set:{rel:{mcwey:1}}}],"Now get out before I say something sentimental and we both have to pretend I didn't.")};
 // Every McWey string outside DLG, for the style lint in scripts/dlg-check.cjs.
 const mcLines=()=>[MC_FIRST,...MC_LOAN_LINES,...Object.values(MC_HI).flat(),...MC_DEBRIEF.flat(),...['clean','gore','ruthless'].flatMap(k=>DEB_STYLE[k].flat()),
- ...Object.values(MC_GRADE),...Object.values(UNLOCK_LINE),...MC_QUOTE,...Object.values(END_STYLE).flatMap(e=>[e.line,e.quote]),
+ ...Object.values(MC_GRADE),...Object.values(UNLOCK_LINE).flatMap(u=>typeof u==='string'?u:Object.values(u)),...MC_QUOTE,...Object.values(END_STYLE).flatMap(e=>[e.line,e.quote]),
  ...Object.values(MC_SUIT),...Object.values(MC_GUN),...Object.values(MC_JEWEL),...Object.values(MC_CAR),...MC_HAUL.slice(1),MC_PAY.yacht2,
  ...Object.values(MC_GRADE).flatMap(g=>['owe','near','square','free','yacht'].map(k=>g+' '+MC_PAY[k].replace(/\{(take|cut|debt)\}/g,'120,000')))];
 
@@ -159,6 +160,7 @@ const dlgObj=(p,k)=>p[k]&&typeof p[k]==='object'&&!Array.isArray(p[k])?p[k]:(p[k
 function relGet(who){const p=dlgProg(),v=p&&p.rel&&p.rel[who];return Number.isInteger(v)?Math.max(-REL_MAX,Math.min(REL_MAX,v)):0;}
 const relMul=who=>1-REL_PCT*relGet(who)/REL_MAX; // price multiplier: a friend of McWey's pays up to 10% less
 function dlgFlag(f){const p=dlgProg();return !!(p&&p.wflags&&p.wflags[f]);}
+const unlockLine=lvl=>{const u=UNLOCK_LINE[lvl];return u&&typeof u==='object'?u[dlgFlag('marina_u_kept')?'kept':'sunk']:u;};
 const dlgHas=id=>typeof hasCollect==='function'&&!!hasCollect(id);
 function dlgReqOk(r){if(!r)return true;
  if(r.has&&!dlgHas(r.has))return false;if(r.flag&&!dlgFlag(r.flag))return false;if(r.noFlag&&dlgFlag(r.noFlag))return false;
