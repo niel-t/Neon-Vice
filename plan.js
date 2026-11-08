@@ -5,7 +5,7 @@ const PLANS={};
 const PLAN=(()=>{
  const EPS=1e-6,TOL=1e-4,SNAP=1e3,PAD=.5;
  const STANCE={standing:[1.6,1.8],crouched:[1,1.1]};
- const SPAWN_KINDS=new Set(['player','enemy','civ','item','exit','arrive']),OBJ_KINDS=new Set(['target','use','exit']),STAIR_R=1;
+ const SPAWN_KINDS=new Set(['player','enemy','civ','item','exit','arrive']),OBJ_KINDS=new Set(['target','use','exit']),STAIR_R=.65;
  const W=()=>{if(typeof WORLD==='undefined'||!WORLD.compile)throw new Error('PLAN needs WORLD v2 loaded first');return WORLD;};
  const snap=v=>Math.round(v*SNAP)/SNAP;
  const key=p=>`${snap(p[0])},${snap(p[1])}`;

@@ -100,7 +100,7 @@ compiles every stage with `WORLD.compile` and then checks:
 - **Structure:** unknown builds and constructions, overlap, children outside
   their parent, a door or window off a shared edge, or at a junction or mitre;
   drop edges; and stair targets (`to` stage and `arrive` spawn exist; the arrival lies
-  outside every stair zone on the target stage, radius `r` (default 1 m);
+  outside every stair zone on the target stage, radius `r` (default 0.65 m);
   each stair has a return stair unless marked `oneWay`), matching W1
   `stageRun` v1.
 - **Rooms:** every non-`sealed` room has a walkable entrance, and spawns lie
@@ -170,6 +170,11 @@ and fixture case and smoke-tests the renderer.
 - Mall: the big yellow tables read as oversized; resize them to period food-court tables.
 - Home: keep decor off the gun-locker cells `HOME_LOCKER_WORLD` (16.72, 6.5),
   (20.72, 5.5) and (24.72, 9.5) (W6d).
+- stageRun descriptor adapter (W2b, agreed with W1): `arrivals` from
+  `arrive` spawns (`a` → `dir`); `stairs` keep `id/to/at/arrive/r/oneWay`,
+  dropping `room`/`rise`; `rev` is a deterministic positive-integer hash of
+  the plan stage (0 → 1). A revision mismatch on decode must surface an
+  explicit migrate/reset choice and never overwrite the original checkpoint.
 - Objective `obj` entries per W14 (2026-11-08), to author with each plan:
   - Motel (authored): `obj_lab` `target` (required, `need`) and `obj_cash`
     `use` (optional, sets `wflags.motel_cash`).
