@@ -201,16 +201,22 @@ test('saves: kit content drift is kept in lost, stale jobs are dropped, broken k
 test('saves: a job in progress resumes from its stage kit as a retry, and walking away restores the entry kit', async ({ openGame }) => {
   const entry = { v: 1, guns: [{ type: 'pistol', mag: 15 }, null], active: 0, melee: null, armour: null, pool: { '9mm': 20 }, upg: {}, lost: [] };
   const stage = { ...entry, guns: [{ type: 'shotgun', mag: 4 }, null], pool: { '12ga': 10 } };
-  const page = await openGame({ nb86prog: { money: { lvl: 1, xp: 0, perks: {}, kit: entry, run: { v: 1, mission: 'c1', stage: 's0', entryKit: entry, stageKit: stage, t: 5 } } } });
+  const page = await openGame({ nb86prog: { money: { lvl: 1, xp: 0, perks: {}, kit: entry, run: { v: 1, mission: 'c1', stage: 's1', entryKit: entry, stageKit: stage, stow: [{ type: 'smg', mag: 12 }], t: 5 } } } });
   await expect(page.locator('#bResumeJob')).toBeVisible();
   await page.locator('#bResumeJob').click();
   await expect.poll(() => page.evaluate(() => state === 'play' && !!G && !G.def.hub && levelIdx)).toBe(1);
-  expect(await page.evaluate(() => ({ ch: CHARS[selIdx].id, weapon: G.player.weapon, pool: G.live.pool, kit: kit().guns, stage: myProg().run.stage })))
-    .toEqual({ ch: 'money', weapon: { type: 'shotgun', ammo: 4 }, pool: { '12ga': 10 }, kit: entry.guns, stage: 'legacy' });
-  // pre-MISSIONS 's0' is an alias for the start (keeps the stage kit); a stage the mission no longer has restarts it from the entry kit
-  expect(await page.evaluate(([e, st]) => { const r = normRun({ mission: 'c1', stage: 'gone', entryKit: e, stageKit: st, stow: 1 }, missionStage, []);
-    return { stage: r.stage, guns: r.stageKit.guns, stow: r.stow, bad: normRun({ mission: 'toString', entryKit: e, stageKit: st }, missionStage, []) }; }, [entry, stage]))
-    .toEqual({ stage: 'legacy', guns: entry.guns, stow: undefined, bad: null });
+  // a pre-MISSIONS checkpoint ('s1') on a still-unmigrated mission keeps its stage kit and stowed finds, and stays kept after the next save
+  expect(await page.evaluate(() => { saveProg(); const r = JSON.parse(localStorage.getItem('nb86prog')).money.run;
+    return { ch: CHARS[selIdx].id, weapon: G.player.weapon, pool: G.live.pool, kit: kit().guns, stage: r.stage, stageGuns: r.stageKit.guns, stow: r.stow }; }))
+    .toEqual({ ch: 'money', weapon: { type: 'shotgun', ammo: 4 }, pool: { '12ga': 10 }, kit: entry.guns, stage: 'legacy', stageGuns: stage.guns, stow: [{ type: 'smg', mag: 12 }] });
+  // 's0' (the old start id) is the same; only a stage a migrated mission no longer has restarts it from the entry kit
+  expect(await page.evaluate(([e, st]) => { const run = stg => normRun({ mission: 'c1', stage: stg, entryKit: structuredClone(e), stageKit: structuredClone(st), stow: [{ type: 'smg', mag: 12 }] }, missionStage, []);
+    const s0 = run('s0'), stages = MISSIONS.c1.stages;
+    MISSIONS.c1.stages = ['legacy', 'yard'];
+    try { const gone = run('gone'), yard = run('yard');
+      return { s0: [s0.stage, s0.stageKit.guns, s0.stow.length], gone: [gone.stage, gone.stageKit.guns, gone.stow], yard: [yard.stage, yard.stageKit.guns, yard.stow.length],
+        bad: normRun({ mission: 'toString', entryKit: e, stageKit: st }, missionStage, []) }; } finally { MISSIONS.c1.stages = stages; } }, [entry, stage]))
+    .toEqual({ s0: ['legacy', stage.guns, 1], gone: ['legacy', entry.guns, undefined], yard: ['yard', stage.guns, 1], bad: null });
   expect(await page.evaluate(() => { const f = fadeTo; fadeTo = () => true; try { togglePause(); walkAway(); } finally { fadeTo = f; }
     const s = JSON.parse(localStorage.getItem('nb86prog')).money; return { run: s.run || null, kit: s.kit }; }))
     .toEqual({ run: null, kit: entry });

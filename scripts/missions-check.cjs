@@ -37,8 +37,9 @@ function checkMissions() {
     assert.equal(new Set(m.stages).size, m.stages.length, `${id}: duplicate stage`);
     assert(m.stages.includes(m.start), `${id}: start ${m.start} is not one of its stages`);
     assert.equal(missionStart(id), m.start);
-    assert.equal(missionStage(id, m.start), m.start);
-    assert.equal(missionStage(id, 'no such stage'), m.start);
+    assert.deepEqual({ ...missionStage(id, m.start) }, { stage: m.start, keep: true });
+    const legacyOnly = m.stages.length === 1 && m.stages[0] === 'legacy';
+    assert.deepEqual({ ...missionStage(id, 'no such stage') }, { stage: m.start, keep: legacyOnly }, `${id}: a vanished stage keeps the kit only on an unmigrated mission`);
     if (m.stages.includes('legacy')) {
       const base = m.kind === 'campaign' ? m.idx : m.base;
       assert(Number.isInteger(base) && LEVELS[base], `${id}: a legacy stage needs a campaign level (idx or base)`);

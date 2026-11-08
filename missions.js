@@ -25,6 +25,11 @@ const campaignIds=()=>Array.from({length:CAMPAIGN_LEN},(_,i)=>missionId(i));
 /* the stage a mission begins at; null for unknown missions (a run naming one is dropped) */
 const missionStart=id=>missionKnown(id)?MISSIONS[id].start:null;
 const missionStageOK=(id,st)=>missionKnown(id)&&MISSIONS[id].stages.includes(st);
-/* run-resume resolver for W6's normRun: null = unknown mission (drop the run); otherwise the stage to resume at
-   (st itself if the mission still has it, else the start; the caller decides whether that was a restart) */
-const missionStage=(id,st)=>!missionKnown(id)?null:missionStageOK(id,st)?st:MISSIONS[id].start;
+/* run-resume resolver for W6's normRun: null = unknown mission (drop the run); otherwise {stage, keep}.
+   A stage the mission has resumes as-is. A mission that is still one 'legacy' stage resumes there with the stage kit kept,
+   whatever stage id was stored: pre-MISSIONS runs saved free-form ids ('s0', 's1', ...) that all meant "this map".
+   Only a stage a migrated mission no longer has restarts it from the beginning (keep:false = entry kit, no stow). */
+const missionStage=(id,st)=>{if(!missionKnown(id))return null;const m=MISSIONS[id];
+ if(missionStageOK(id,st))return {stage:st,keep:true};
+ if(m.stages.length===1&&m.stages[0]==='legacy')return {stage:'legacy',keep:true};
+ return {stage:m.start,keep:false};};
