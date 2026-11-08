@@ -1,8 +1,8 @@
-# WORLD geometry v2 and materials/build v1
+# WORLD geometry v3 and materials/build v1
 
 `WORLD.materials` is an additive, DOM/GL-free schema in the ordered classic
 `world.js`. It does **not** migrate legacy levels, change their sight rules, or
-implement penetration, destruction, or rendering. `WORLD.version === 2` adds
+implement penetration, destruction, or rendering. `WORLD.version === 3` adds
 the freeform compiler/query API described below; material schema version stays 1.
 
 The 21 `MAT` and 38 `BUILD` records exactly match W3's
@@ -97,9 +97,9 @@ and captured raw, loaded, query and movement hashes are unchanged.
 All coordinates, heights, radii and displacements below are metres; angles are
 radians. Required stage fields are `id`, `[x0,z0,x1,z1]` bounds, boolean `combat`,
 and `ground`, `walls`, `props` arrays (empty arrays are valid). Optional `rooms`
-and `spawns` arrays are copied as JSON-like metadata; room IDs and optional
-boolean `combat` are checked, but navigation, entrance counts and spawn
-semantics are **not** implemented in this gate. Geometry records reject unknown
+and `spawns` arrays are copied as JSON-like metadata. Geometry v3 validates rooms and
+portals and adds snapshot navigation, below; spawn semantics and entrance-count
+requirements still belong to the plan validator. Geometry records reject unknown
 own fields and inherited contract fields. IDs are unique across the stage,
 ground, walls, openings, props and rooms; authored IDs cannot contain `:`.
 
@@ -233,3 +233,111 @@ leaves, height holes, cover, high-speed sweeps, overlap escape, polygon validati
 and metadata ownership. Mitred 90/120/135-degree bends, small-radius arcs, short
 thick legs, a closed square and near-vertex openings check convex partitions,
 area conservation/no interior overlap, corner crack rays and repeated slides.
+
+## Geometry v3: room graphs and navigation (W1d contract)
+
+This additive version keeps scalar sight/trace/movement signatures and material
+v1 intact. It does not enable new gameplay routing, fog, damage or stage loading.
+Compiled stages now report `v:3`. Existing policy names `v2` and `legacy` identify
+geometry behavior, not the API version.
+
+### Rooms and explicit authored portals
+
+`rooms` records require `{id,poly}` with a simple polygon inside bounds. Maximum
+256 rooms; interiors must not overlap. Shared edges/vertices are allowed.
+`combat` defaults to stage combat. Other JSON-like metadata (`name`, `kind`,
+`roof`, `zone`, parent grouping) is copied. Holes/subtractive rings are not
+implemented: W2 partitions nested parent areas into simple polygons.
+Outputs are deep-frozen and have dense deterministic `idx`, `area` in m²,
+polygon `centroid` and up to four deterministic interior `samples`. A concave
+polygon's area centroid need not itself be inside; use `samples` for waypoints.
+
+`roomAt(st,x,z)` returns the frozen room or `null` in unroomed space.
+The first listed room wins on shared boundaries. `portalAt(st,x,z)` explicitly
+identifies doorway thresholds; it tests distance to portal segments within
+wall half-thickness +0.01. No silent nearest-room assignment.
+
+Authored `stage.portals` are an optional array, with exactly one physical source:
+
+```js
+{id:'entry-link', a:'hall', b:'bedroom', open:'entry-opening'}
+{id:'pier-link', a:'quay', b:'pier', seg:[[4,2],[6,2]]}
+{id:'glass-link', a:'hall', b:'booth', seg:[[4,2],[6,2]], wall:'glazing'}
+```
+
+Room refs are strings; `b:null` means unroomed outside. Segments/openings must
+lie on the named rooms' shared polygon boundary; portals of zero width, missing
+refs and unwalled segments crossing a physical wall are rejected. A wall-source
+segment must lie on its intact path. W2 owns portal completeness/entrance-count
+requirements; WORLD does not infer arbitrary authored adjacency.
+
+Compiler preserves frozen `st.openings` (including arches) with path-distance
+bounds, build, coverage, vertical span, wall half-thickness, segment list and
+leaf IDs. Compiled `st.portals` has dense `idx`, integer room `a`/`b|null`,
+`id`, physical `kind` (`door`, `double`, `slide`, `arch`, `window`, `wall`, `open`),
+`ref`, `build`, `doors` (live leaf objects), `ends`, `segments`, `mid`, `width`,
+normal, vertical span, `walk` and stance `sight` candidate flags.
+
+`portals(st, roomIdx|roomId|roomRecord)` returns the immutable **portal-index
+adjacency list**, not newly allocated portal records. Use `st.portals[idx]`.
+`portalOpen(st,p,'move')` means a walk candidate with no locked leaf. Door
+push/open physics is still separate. `portalOpen(st,p,'sight',eye,top)` tests
+the actual local crossing ray, including the live leaf; candidate flags alone
+are not visibility guarantees. Glass is sight-only, glass block blocks sight,
+and closed leaf doors remain graph candidates. Sound attenuation belongs to W8.
+
+Adapter rooms are honestly **derived topological regions**, not semantic rooms:
+flood-fill non-solid cells split at door squares and street texture boundaries,
+ignoring movable furniture. Records expose `derived:true`, area, centroid,
+samples and zone. Door portals retain actual live legacy leaves; shared
+interior/street boundaries yield open portals. `roomAt` in a removed door square
+returns null, with `portalAt` providing the doorway. Recompile the adapter after
+topology changes to obtain a new room graph.
+
+### Navigation snapshot and target-owned fields
+
+`clear(st,ax,az,bx,bz,r=0)` checks static disc/capsule clearance, including ground
+void/height boundaries and stage bounds, without door leaves. Use it instead
+of `move(...,0,0)`, whose zero-displacement call does not detect overlap.
+In W1d any ground height discontinuity is blocked; equal-height overlapping
+regions follow first-wins. W1e will gate step/ramp policy separately.
+Water/drops must be absent or lower ground; a same-height polygon named `water`
+is not automatically unwalkable.
+
+`nav(st,{cellSize=.5,radius=.3,diagonal=true,maxTiles=262144})` builds an immutable
+static geometry snapshot with private arrays. Cell size is in [0.1,2], radius
+in [0,2], tile budget <=262144. Handle fields: `v`, source `stage`, `origin`,
+`W`, `H`, `cellSize`, `radius`, `diagonal`, `revision`.
+Accessors: `tileAt(x,z)` (-1 outside), `rep(i)` (representative point),
+`walkable(i)`, `edges(i)`, `room(i)` (-1 unroomed), `edgePortals(i,direction)`.
+Direction masks use E,S,W,N,SE,SW,NW,NE. Diagonal edges must pass exact capsule
+clearance; no corner cutting.
+
+Tile centres alone disconnect 0.8/0.9 m doors and legacy passages. Blocked
+centres first try projected opening-axis points, then deterministic nearest
+5x5 sub-samples. Representatives are returned by `step`; do not reconstruct
+them from tile centres. A 1e-5 margin avoids numerically tangential edges.
+Agent radii are per snapshot; build a separate nav for larger agents.
+
+`flow(nav,[x,z]|[[x,z],...],out?,{closed:portalIds?})` computes integer-centimetre
+Dijkstra costs with a reusable indexed heap. The first call allocates an opaque
+field; passing that field as `out` reuses its cost/next/heap buffers. Each field
+belongs to exactly one nav snapshot. No shared player target or global search.
+Target tiles seed nearby representatives that have a radius-zero clear path
+to the target, allowing wall-adjacent targets. A target inside an obstacle or
+with no visible seed produces `reachable:false`; no nearest-global fallback.
+
+`dist(nav,field,x,z)` returns metres, or -1 unreachable/outside.
+`step(nav,field,x,z,out=[0,0])` returns the next representative, or null at the
+seed/unreachable; an optional point buffer is reused. Agent-to-representative
+segments must be clear at nav radius. `field.target` records copied sources.
+Closed portal IDs exclude their crossing edges. Leaf angle changes do not
+invalidate nav or fields; lock changes require recomputing the field and stale
+field queries throw explicitly.
+
+Nav geometry is a snapshot: mutations do not silently patch it. Rebuild after
+wall/prop/ground changes; old fields cannot be passed to the new nav. W1f will
+add dirty-tile invalidation. Private arrays prevent one agent corrupting
+another. Field buffers are reused, but existing scalar geometry helpers still
+allocate temporary candidate arrays; this gate does not claim allocation-free
+runtime queries or enable them in the game's hot path.
