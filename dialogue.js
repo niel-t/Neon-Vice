@@ -126,7 +126,7 @@ const DLG={
   {t:{don:"Shopping. Sure.",consigliere:"I could use a new tie.",money:"Your treat means your card, right?"}},
   {t:"You never treat anybody.",a:["I'm treating you, aren't I?",['P',"That's what worries me."],"Don't make it weird, just go and buy yourself a shirt."]},
   {t:"Who else knows I'm going?",a:"Me, and whoever I happened to mention it to. Why, are you nervous?"}]),
- brief6:dlgScene(["Lex is hiding, and his last friend in the world is a pop singer he's paying to make an album.","They're at Sunset Sound tonight. Crash the session and get the singer to tell you where Lex sleeps."],[
+ brief6:dlgScene(["Lex is hiding, and his last friend in the world is a pop singer he's paying to make an album.","They're at Biscayne Sound tonight. Crash the session and get the singer to tell you where Lex sleeps."],[
   {t:{don:"He'll sing.",consigliere:"We'll discuss the lyrics.",money:"I'll just outbid Lex."}},
   {t:"Why crash it? I'll buy the session.",a:"Your money, your idea. Just keep it off my expenses; my accountant's nervous enough.",set:{flag:'singer_paid'}},
   {t:"Is the album any good?",a:"I heard the demo. Bring me the tapes as well, so nobody else ever has to."}]),
