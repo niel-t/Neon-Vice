@@ -1606,11 +1606,11 @@ function applyJewelLooks(){for(const c of CHARS){const j=(PROG[c.id]&&PROG[c.id]
 function placeOldCar(){const g=G,free=(x,z)=>{for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=0;dz++){const ix=Math.floor(x+dx),iz=Math.floor(z+dz);if(ix<1||iz<1||ix>=g.W-1||iz>=g.H-1||g.solid[iz*g.W+ix]||g.furn[iz*g.W+ix])return false;}return true;};
  for(const [ox,oz] of [[-3,0],[3,0],[0,2.2],[0,-2.2],[-3,2],[3,2]]){const x=g.car.x+ox,z=g.car.z+oz;if(free(x,z)&&Math.hypot(x-g.player.x,z-g.player.z)>2){g.oldCar={x,z,a:0};return;}}}
 /* Nine of Nine */
-const NINE_INTRO="Hello my friend! Nine. Last name, also Nine. Exotic machinery of death. Ludicrous. Only at Nine of Nines.";
-const NINE_HI=["Ah, my friend returns! Capitalism is beautiful, da?","Every piece I calibrate personally. With mathematics.","Is not a gun. Is a statement, written in lead.","Nine guns of ten are boring. I sell you the tenth.","Today's selection is very ludicrous. I am proud."];
+const NINE_INTRO="Hello, my friend! I am Nine, last name also Nine, and I bring you exotic machinery of death. Very ludicrous. Only at Nine of Nines.";
+const NINE_HI=["Ah, my friend returns! Capitalism is beautiful, da?","Every piece I calibrate personally, with mathematics.","Is not a gun. Is a statement, written in lead.","Nine guns of ten are boring. I sell you the tenth.","Today's selection is very ludicrous. I am proud."];
 const NINE_BUY=["Excellent choice. Very ballistic.","Da! Treat her well, she is temperamental.","You have taste. Dangerous taste.","Pleasure doing business. Mostly the pleasure is mine."];
-const NINE_EXCL="Ah, the exclusive. Three borders and one very angry customs officer.";
-const NINE_POOR="My friend, this costs more than you have. Is simple arithmetic.";
+const NINE_EXCL="Ah, you choose the exclusive! This one I smuggle through three borders and past one very angry customs officer.";
+const NINE_POOR="My friend, this costs more than you have. I am sorry, but is simple arithmetic.";
 const SHOPP={pistol:1500,silenced:2200,revolver:2800,dual:3200,smg:3500,shotgun:3800,double:4200,m16:5200,bat:600,knife:500,machete:900,katana:7500,tknife:1100,golddeagle:12000,goldak:15000,goldgl:20000};
 const WDESC={pistol:'Reliable. Boring. Like a Swiss watch.',silenced:'For conversations nobody hears.',revolver:'Six chances. Goes through three men.',dual:'Two pistols, twice the opinions.',smg:'Sprays the room like cologne.',shotgun:'Seven pellets of diplomacy.',double:'Two shells. One argument.',m16:'Three-round bursts, through walls.',bat:'Silent. Swings. Home run.',knife:'Close, quiet, personal.',tknife:'Four blades. Silent across the room. Go pick them up after.',machete:'For cutting through the paperwork.',
  katana:'Folded nine hundred times. By me. On a Tuesday.',goldgl:'I acquire it from a very wet gentleman. Six gold grenades.',golddeagle:'Two solid-gold hand cannons. Through walls, through men.',goldak:'Solid gold. Fully automatic. Zero subtlety.'};
@@ -1764,13 +1764,13 @@ function tipDancer(d){const p=myProg(),g=G;arm();if(p.wallet<100){popup(g.player
  for(let i=0;i<8;i++){const a=Math.atan2(d.x-g.player.x,d.z-g.player.z)+rnd(-0.4,0.4),v=rnd(2.5,4.5);g.parts.push({t:'c',x:g.player.x,y:1.1,z:g.player.z,vx:Math.sin(a)*v,vy:rnd(1,2.5),vz:Math.cos(a)*v,s:0.08,c:[0.35,0.8,0.4],life:1.0});}
  popup(d.x,d.z,'-$100 · '+pick(['WOO!','OOH, BIG SPENDER','DON\'T STOP NOW','MORE!','THANK YOU, SUGAR']),'#7dff9a');
  if(d.tips===3||d.tips===7){d.stage=Math.min(2,d.stage+1);if(d.stage===1){d.look=dancerLook(d.fit,1);d._ps2k=null;popup(d.x,d.z,d.dname+' DROPS THE JACKET','#ff6fae');}else{popup(d.x,d.z,d.dname+"'S BIG FINALE","#ffd36b");sfx('clear');}}}
-const TONY_LINES=[()=>"Name's Tony. First drink's free. The second costs you a story.",
- ()=>myProg().debt>0?"Word is you owe McWey $"+fmt(myProg().debt)+". Tip big, pay him slower. Your call.":"Heard you're square with McWey. Drinks taste better debt-free.",
+const TONY_LINES=[()=>"Name's Tony. First drink's on the house; the second one costs you a story.",
+ ()=>myProg().debt>0?"Word is you owe McWey $"+fmt(myProg().debt)+". Tip big and pay him slow, that's my advice, but it's your call.":"Heard you're square with McWey. Funny how a drink tastes better when you're debt-free.",
  ()=>"Nine of Nine was in here last week. Paid for a round with a Soviet rifle. I didn't ask.",
- ()=>myProg().lexDead?"Lex used to sit in that booth. No socks, no tips. Nobody misses him.":"Lex Sterling? VIP booth, no socks, no tips.",
+ ()=>myProg().lexDead?"Lex used to sit in that booth, no socks, no tips. Can't say anybody's missed him.":"Lex Sterling? Sits in the VIP booth, never tips, never wears socks. I don't trust a man without socks.",
  ()=>"Cherry, Destiny, Crystal... none of them use their real names. Neither does anybody else in here.",
  ()=>"The more you throw, the harder they dance. Basic economics.",
- ()=>"My advice? Never trust a guy in a linen suit. Or a guy who gives advice.",
+ ()=>"You want my advice? Never trust a guy in a linen suit, or a guy who gives advice.",
  ()=>myProg().car==='sig'?"That "+carName('sig')+" outside yours? The valet's been crying about it all night.":"Saw your "+carName(myCar())+" outside. Bold choice."];
 function tonyTalk(){const g=G,c=g.club;sfx('blip');const L=TONY_LINES[c.talkI%TONY_LINES.length]();c.talkI++;g.say={who:'TONY',txt:L,t:0,dur:2.5+L.length*0.05};if(c.tony)c.tony.atkT=0.2;}
 function drawSay(c,S,u){const k=textScale(),fs=20*u*k;c.font=VTF(fs);const maxW=Math.min(vw*0.8,560*u*k),words=S.txt.split(' '),lines=[];let cur='';for(const w of words){const t2=cur?cur+' '+w:w;if(c.measureText(t2).width>maxW&&cur){lines.push(cur);cur=w;}else cur=t2;}if(cur)lines.push(cur);
@@ -2107,9 +2107,9 @@ function hguardLine(){const p=myProg(),sn=p.seen||(p.seen={}),j=p.jewel||{};
 let LEXMET=false;
 const LEXLOOK=()=>({skin:hex(0xf0c8a4),jacket:hex(0xf6f2ea),shirt:hex(0xffa6c9),pants:hex(0xf6f2ea),shoes:hex(0xc9a27a),hs:'slick',hair:hex(0xe3c26a),shades:true,watch:true,bw:0.98,bd:0.96,bh:1.04,body:'normal'});
 const LEX_INSULT={consigliere:"Nice watch, pal. Free with the cereal, or did you pawn the family name?",
- money:"Valet my Testarossa. Don't bleed on the leather.",
+ money:"Do me a favour and valet my Testarossa, would you? Try not to bleed on the leather.",
  don:"Careful sweating in that chain, big guy. It's turning your neck green."};
-const LEX_REPLY={consigliere:"Remember this face, Silks.",money:"...Keep the change. For now.",don:"Enjoy the lounge. While it lasts."};
+const LEX_REPLY={consigliere:"Remember this face, Silks. You'll be seeing it again.",money:"...Keep the change. For now.",don:"Enjoy the lounge. While it lasts."};
 function startCameo(){const g=G,p=g.player;if(!p)return;LEXMET=true;
  const free=(x,z)=>{const ix=Math.floor(x),iz=Math.floor(z);return ix>0&&iz>0&&ix<g.W-1&&iz<g.H-1&&!g.solid[iz*g.W+ix];};
  let best=null,bl=-1;for(const d of [[1,0],[-1,0],[0,1],[0,-1]]){let n=0;for(let k=1;k<=8;k++){if(free(p.x+d[0]*k,p.z+d[1]*k))n++;else break;}let b=0;for(let k=1;k<=3;k++){if(free(p.x-d[0]*k,p.z-d[1]*k))b++;else break;}if(n+b>bl){bl=n+b;best={d,n,b};}}

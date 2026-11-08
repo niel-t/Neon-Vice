@@ -1,15 +1,17 @@
 # Neon Vice — Dialogue Style Guide
 
-This guide is for developers and doesn't ship with the game. It covers McWey's briefings and debriefs, `REPLY`, the `MC_*` tables, Nine of Nine, Tony, banners, and anything new written in `DLG` nodes.
+This guide is for developers and doesn't ship with the game. It covers McWey's briefings and debriefs, the `DLG` scenes, the `MC_*` tables, Nine of Nine, Tony, banners, and anything new written in `DLG` nodes.
 
 > **North star:** better the player has too little and wants more, than too much.
+>
+> Keep it short by cutting *lines*, not by clipping *sentences*. A visit of five easy, natural lines beats a visit of five lines chopped into fragments.
 
 ---
 
 ## 1. The ten rules
 
 1. **Cut the part players skip.** If you can delete a line and lose neither the objective, the relationship nor a laugh, delete it. "If it sounds like writing, rewrite it." — Leonard [1]
-2. **One thought per line, 3–12 words.** A line over 14 words has to earn its length. Hard cap: 90 characters.
+2. **Vary the cadence.** Let a long, flowing sentence run, then land a short one. People talk in clauses, asides and second thoughts, not in a string of four-word declaratives. A run of clipped sentences ("Every sentence. Reads like this.") looks profound and is actually shallow, so never write one. Hard cap: 140 characters per log entry. See §2a.
 3. **Every exchange is a deal.** Someone wants something *now*: obedience, a cut, an excuse, a watch. Ask Mamet's question: *who wants what, and why now?* [2]
 4. **Never tell people what they both know.** McWey doesn't explain the loan to the person who owes it. The target and the place go on the objective card; the dialogue carries the attitude.
 5. **Subtext over statement.** Characters say one thing and do another: they probe, dodge, flatter or threaten. Nobody narrates their own feelings. [3][5]
@@ -24,25 +26,45 @@ This guide is for developers and doesn't ship with the game. It covers McWey's b
 | Visit part | Budget |
 |---|---|
 | Greeting or reaction (suit, haul, payday) | **Max 1 line.** Pick *one*, not all of them. |
-| Briefing | **2–3 lines** from McWey: the job plus one complication. |
+| Briefing | **2 lines** from McWey: the job plus one complication. Full sentences are fine. |
 | Player response | 1 line (later, a choice of at least 3). |
 | Sign-off quote | 1 line, and only if it's good. |
-| **Whole visit** | **6 lines or fewer.** Put optional lore behind an optional question. |
+| **Whole visit** | **6 McWey lines or fewer on the default path.** Optional questions can open a short exchange (McWey, player, McWey) on top. |
 
 The debrief gives a *consequence*, not a replay of the mission, in one line.
 
+The budget counts lines, not words. Don't meet it by clipping sentences.
+
 When several reactions are eligible (first visit, loan, grade, payday, suit, haul), show only **the most important one**, in this priority order: story beat, grade, payday, suit, haul.
+
+## 2a. Cadence
+
+The first editorial pass overcorrected. In the user's words: *"Every sentence. Reads like this. You can either tell, or you don't. It's not a natural cadence. It's just a bunch of clipped sentences. They look profound. But actually, they're shallow."*
+
+- **Mix lengths.** Most lines should have one sentence of 10+ words. Use the short sentence for the order, the threat or the punchline, where it lands because the line around it breathes.
+- **Real back-and-forth.** People interrupt, ask the obvious, and get answered. An optional question can run to a three-beat exchange: McWey answers, the player pushes, McWey closes it.
+- **Shift tone within a visit.** McWey can be warm about the money, irritated by the suit, joking about the shark and practical about the job, all in one visit. One flat register for every line reads as a machine.
+- **Talk, don't pronounce.** Contractions, asides ("between us"), second thoughts and small specific complaints sound like a person. Symmetrical declaratives sound like a poster.
+- **Linted.** `scripts/dlg-check.cjs` rejects three sentences of 4 words or fewer in a row, any scene where more than 40% of McWey's sentences are 4 words or fewer, and any scene with no sentence of 10+ words.
+
+> **Clipped (rejected)**
+> McWEY — Sunset Motel, Route 1. New faces selling on my corners.
+> McWEY — Nobody asked me. Go ask them why.
+
+> **Varied**
+> McWEY — Sunset Motel, out on Route 1. There's a new crew there selling on my corners, and not one of them came and asked me first.
+> McWEY — So go and ask them why. Politely, if they let you.
 
 ## 3. Voice sheets
 
 | Character | Sentence shape | Lexicon | Never |
 |---|---|---|---|
-| **McWey** | Short. Corrects people mid-sentence. Asks questions he already knows the answer to. | Money, gold, prices, the shark; "kid" until the loan is square, "partner" after | Explains his employers, raises his voice, says "dangerous" |
+| **McWey** | Easy, full sentences, like a man nobody interrupts; a short line only for the order or the threat. Moves between warm, irritated, joking and practical. Corrects people mid-sentence. Asks questions he already knows the answer to. | Money, gold, prices, the shark; "kid" until the loan is square, "partner" after | Explains his employers, raises his voice, says "dangerous" |
 | **The Don** | Fewest words in the room. Statements, not questions. | Family, the city, "done" | Jokes about money, asks permission |
 | **The Consigliere** | Polite words, violent meaning. | Advice, a word, conversation, manners | Swears, rushes |
 | **The Money Man** | Fast and transactional; always pricing something. | Cut, price, double, change, receipts | Sentiment, loyalty talk |
 | **Lex** (off-screen) | Heard only through other people's reports. Petty and theatrical. | Gold, glamour, his yacht | Appears on screen before the finale |
-| **Nine of Nine** | *Deliberately* broken salesman English, eager and grandiose. Keep the charm, cut the length. | "My friend", "exotic", "ludicrous" | Becomes a caricature: the joke is the hard sell, not the accent |
+| **Nine of Nine** | *Deliberately* broken salesman English, eager and grandiose, in long run-on sales patter. Keep the charm, cut the length. | "My friend", "exotic", "ludicrous" | Becomes a caricature: the joke is the hard sell, not the accent |
 | **Tony** | A barman's patience. Trades favours for stories. | Drinks, tabs, "on the house" | Monologues |
 
 ## 4. Banned AI-isms
@@ -57,8 +79,8 @@ Rewrite these on sight. They are editorial tics, not proof of authorship [26].
 - **Throat-clearing:** *let's be honest, at the end of the day, here's the thing, make no mistake, mark my words.*
 - **Self-answered rhetorical questions:** "Know what I call that? Business."
 - **Generic menace:** "You have no idea who you're dealing with." / "You'll regret this."
-- **Stacked fortune-cookie aphorisms.** McWey gets **one** aphorism per visit at most.
-- **Over-tidy symmetry.** "Gold doesn't lie. People do." works once; ten in a row become a pattern.
+- **The aphorism pattern.** Avoid it. Clipped, symmetrical declaratives that sound wise and say nothing ("Gold sinks. Remember that." "Sharks don't sleep.") don't belong in dialogue at all. The only place a motto goes is the header quote card on the briefing screen.
+- **Clipped cadence.** Three or more very short sentences in a row, or a whole scene of them (§2a).
 - **A punchline on every line.** Let some lines just be business.
 
 ## 5. Interactive rules (for W10c branching)
@@ -70,7 +92,7 @@ These come from inkle's script-first approach [15][16][17] and Disco Elysium's m
 - **Branch short, rejoin fast.** A choice changes McWey's *reaction*, then the conversation rejoins the main line.
 - **Remember one thing.** A later line that references an earlier choice is worth more than a new branch.
 - **Honest labels.** The choice text must match the force of the spoken line. A mild question can't come out as an insult.
-- **Player lines are the shortest in the script:** 2–8 words.
+- **Player lines are the shortest in the script:** 2–10 words. A player follow-up inside an exchange can be just as short.
 - **Untimed.** No timers on mandatory briefings.
 
 ## 6. Presentation rules (log UI)
@@ -82,11 +104,11 @@ These come from Disco Elysium's column model [19][20] and the Xbox and Game Acce
 - Set body text in a readable sans or mono face. Keep the neon styling for headers.
 - Put a solid dark backing behind the text, with contrast of at least 4.5:1 against the worst background.
 - Render default body text at 18 px or more at 1080p. The text-size setting goes up to about 1.45×. Test the largest size on the smallest viewport.
-- A log is not subtitles, so there's no 2-line limit. Keep lines short (rule 2) so each entry wraps to 3 lines or fewer at the default size.
+- A log is not subtitles, so there's no 2-line limit. Each entry should wrap to 4 lines or fewer at the default size; the 140-character cap keeps it there.
 
 ## 7. Before and after
 
-These show the rules in action; they are not final copy. The full rewrite happens in W10d, after sign-off.
+These show the rules in action. Each *After* is the shipped line after the cadence revision (§2a); the first pass's clipped versions were rejected.
 
 **Motel brief** (`MC_BRIEF[0]` plus reply and quote, 4 lines down to 3)
 
@@ -97,11 +119,11 @@ These show the rules in action; they are not final copy. The full rewrite happen
 > McWEY — In Miami, gold doesn't lie. People do.
 
 > **After**
-> McWEY — Sunset Motel, Route 1. New faces selling on my corners.
-> McWEY — Nobody asked me. Go ask them why.
-> THE DON — They'll tell me.
+> McWEY — Sunset Motel, out on Route 1. There's a new crew there selling on my corners, and not one of them came and asked me first.
+> McWEY — So go and ask them why. Politely, if they let you.
+> THE DON — They'll tell me why.
 
-*Why:* the place goes on the objective card. "Go ask them why" is the threat, so it doesn't need saying. The aphorism is cut because the line before it is stronger.
+*Why:* "Go and ask them why" is the threat, so the threat doesn't need saying. The aphorism is cut. The first line runs long and conversational so the short order lands.
 
 **Moreau brief** (`MC_BRIEF[2]`)
 
@@ -110,10 +132,10 @@ These show the rules in action; they are not final copy. The full rewrite happen
 > Two sharks in one town is one too many. Bring me his watch — I want to know what time it was.
 
 > **After**
-> Moreau. Top floor, Coral Tower.
-> Bring me his watch. I want to know what time it was.
+> Now the big one: Moreau, top floor of Coral Tower, with the view I was supposed to have.
+> Bring me his watch, because I'd like to know exactly what time it was.
 
-*Why:* "big fish" and "two sharks" are two shark gags before the good one. Keep the good one.
+*Why:* "big fish" and "two sharks" are two shark gags before the good one. Keep the good one, and give McWey a petty grievance (the view) instead.
 
 **Arcade brief** (`MC_BRIEF[4]`)
 
@@ -122,8 +144,8 @@ These show the rules in action; they are not final copy. The full rewrite happen
 > Unplug it. Every cabinet. And if somebody needs a lesson, there's always the air hockey tables.
 
 > **After**
-> Lex runs his laundry through the Starlight Arcade. Quarters in, clean dollars out.
-> Unplug every cabinet.
+> Lex washes his money through the Starlight Arcade. Quarters go into the machines and clean dollars come out the back.
+> Unplug every cabinet in the place.
 
 *Why:* the air-hockey line explains a joke the player will make on their own.
 
@@ -133,14 +155,14 @@ These show the rules in action; they are not final copy. The full rewrite happen
 > Lex's boats are at the bottom of the marina. He called me crying. I told him the sea is a dangerous place.
 
 > **After**
-> Lex called me crying. I told him boats sink.
+> Lex called me crying about his boats. I told him I was sorry, the sea is very big and he's very careless.
 
-*Why:* this gives the consequence instead of a replay. The player already knows where the boats are.
+*Why:* this gives the consequence instead of a replay, and McWey's mock sympathy carries the joke. The player already knows where the boats are.
 
 **Grade** (`MC_GRADE.D`)
 
 > **Before** Sloppy. Next time, less mess and more finesse.
-> **After** I had to buy a mop. For a building.
+> **After** I had to send a man with a mop, and he quit.
 
 *Why:* the rhyme is a greeting-card move. A specific complaint carries both the judgement and the character.
 
@@ -150,20 +172,20 @@ These show the rules in action; they are not final copy. The full rewrite happen
 > Hello my Friend, you may call me Nine, last name of Nine. I have come from the far east and bring you exotic machinery of death. Only at Nine of Nines can you get this ludicrous and exotic killing machines.
 
 > **After**
-> Hello my friend! Nine. Last name, also Nine.
-> Exotic machinery of death. Ludicrous. Only at Nine of Nines.
+> Hello, my friend! I am Nine, last name also Nine, and I bring you exotic machinery of death. Very ludicrous. Only at Nine of Nines.
 
-*Why:* this keeps the voice and the joke, and gets the player to the shop sooner.
+*Why:* this keeps the voice, the run-on patter and the joke, and gets the player to the shop sooner.
 
 ## 8. Final pass checklist
 
 Read the scene aloud with the speaker names hidden. Can you still tell who's talking?
 
 - [ ] Does each visit stay at 6 lines or fewer?
-- [ ] Is every line 90 characters or fewer, with one thought?
+- [ ] Is every line 140 characters or fewer?
+- [ ] Read it aloud: does the cadence vary, with long lines and short ones? Does the tone shift at least once?
 - [ ] Does each scene have a want, and does the last line pull forward?
 - [ ] Is everything from §4 gone?
-- [ ] Is there at most one aphorism per visit?
+- [ ] Is the aphorism pattern gone from the dialogue (mottos only on the header card)?
 - [ ] Is the objective clear from the objective card plus one line?
 
 ---
