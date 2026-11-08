@@ -21,16 +21,16 @@ function checkNavigation() {
     readFileSync(resolve(__dirname, '..', 'ai.js'), 'utf8').replace(/^'use strict';/, ''),
     section('function updateCash(', 'function updateFX(')
   ].join('\n');
-  function simulation({ weapon = 'bat', boss = false, lex = false, map, start = [6.5, 4.5], target = [13.5, 4.5], radius = .28, item, cash } = {}) {
+  function simulation({ weapon = 'bat', boss = false, lex = false, map, start = [6.5, 4.5], target = [13.5, 4.5], radius = .28, item, cash, facing, frames = 1200 } = {}) {
     const g = WORLD.buildGrid(map || LEVELS[3], 3);
     g.flow = new Int16Array(g.W*g.H); g.nflow = new Int16Array(g.W*g.H);
     g.doors = g.doorSpecs.map(d => ({ ...d, th: 0, w: 0, pusher: '' }));
     g.player = { x: target[0], z: target[1], r: .28, vx: 0, vz: 0, a: 0, alive: true, weapon: null };
-    const e = { x: start[0], z: start[1], r: radius, vx: 0, vz: 0, a: 0, alive: true, down: 0, cd: 0, atkT: 0, alertT: 0, qT: 0, hitT: 0,
+    const e = { x: start[0], z: start[1], r: radius, vx: 0, vz: 0, a: facing ?? Math.atan2(target[0]-start[0], target[1]-start[1]), alive: true, down: 0, cd: 0, atkT: 0, alertT: 0, qT: 0, hitT: 0,
       weapon: weapon && { type: weapon, ammo: 99 }, state: 'chase', seeT: 0, react: 0, wind: 0, pers: 'rush',
-      id: 0, spd: 1, hp: 10, maxhp: 10, boss, lex, walk: 0, lastStep: 0 };
+      id: 0, spd: 1, pa: 0, ta: 0, turnT: 0, pauseT: 0, hp: 10, maxhp: 10, boss, lex, walk: 0, lastStep: 0 };
     g.enemies = [e]; g.items = item ? [item] : []; g.cash = cash ? [cash] : []; g.parts = [];
-    let attacks = 0, maxZ = e.z;
+    let attacks = 0, maxZ = e.z, minD = Infinity;
     const context = vm.createContext({
       G: g, WORLD, SET: { diff: 'easy' }, Dd: () => ({ vision: 9, cone: .85, react: 1, ecd: 1 }), pk: () => 0,
       lerp: (a,b,t) => a+(b-a)*t,
@@ -44,15 +44,15 @@ function checkNavigation() {
     vm.runInContext(`${source}\nMath.random=()=>0.5;`, context, { timeout: 1000 });
     const step = new vm.Script('updateEnemy(G.enemies[0],1/60);');
     const cashStep = new vm.Script('updateCash(1/60);');
-    for (let frame=0;frame<1200;frame++) {
+    for (let frame=0;frame<frames;frame++) {
       g.T = frame/60;
       if (frame%12===0) WORLD.cell.bfs(g,g.flow,Math.floor(g.player.x),Math.floor(g.player.z));
       if (cash) { e.state = 'idle'; cashStep.runInContext(context, { timeout: 1000 }); break; }
       step.runInContext(context, { timeout: 1000 });
-      maxZ = Math.max(maxZ, e.z);
+      maxZ = Math.max(maxZ, e.z); minD = Math.min(minD, Math.hypot(e.x-g.player.x, e.z-g.player.z));
       assert(Number.isFinite(e.x) && Number.isFinite(e.z));
     }
-    return { g, e, attacks, maxZ };
+    return { g, e, attacks, maxZ, minD };
   }
   const marina = WORLD.buildGrid(LEVELS[3], 3);
   assert.equal(WORLD.cell.moveClear(marina,6.5,4.5,13.5,4.5,.26),false);
@@ -75,6 +75,9 @@ function checkNavigation() {
   assert(simulation({ map: room, start: [4, 2.5], target: [9, 3.5], weapon: null, item }).e.weapon, 'Wall-adjacent weapons remain collectible');
   const cash = { x: 2.1, z: 2.5, sx: 2.1, sz: 2.5, tx: 2.1, tz: 2.5, t: .4, life: 20, landed: false };
   assert.equal(simulation({ map: room, start: [4, 2.5], target: [9, 3.5], cash }).e.state, 'distract', 'Wall-adjacent cash still attracts guards');
+  const walled = { map: ['###########', '#....#....#', '#....#....#', '#....#....#', '#....#....#', '#....#....#', '#.........#', '###########'], wall: 1 };
+  const blind = simulation({ map: walled, start: [2.5, 2.5], target: [7.5, 2.5], facing: Math.PI, frames: 600 });
+  assert(blind.attacks === 0 && blind.minD > 3 && !blind.e.bl, `A blind chaser with no belief must not home on the hidden player: ${JSON.stringify({x:blind.e.x,z:blind.e.z,minD:blind.minD,state:blind.e.state})}`);
   console.log(`WORLD: production Marina navigation restored (${bat.attacks} melee attacks), bosses and wall-adjacent interactions checked`);
 }
 
