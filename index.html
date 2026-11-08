@@ -145,6 +145,8 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <div id="audioWarning" role="status" style="display:none;position:fixed;top:48px;left:8px;right:8px;z-index:1000;padding:8px;background:#24151f;color:#ffd36b;font:12px sans-serif;pointer-events:none">Sound could not start. Play silently or try another click, key press or tap.</div>
 <script src="art.js"></script>
 <script src="levels.js"></script>
+<script src="world.js"></script>
+<script src="missions.js"></script>
 <script src="models.js"></script>
 <script>
 'use strict';
@@ -215,6 +217,10 @@ const TRS=(x,y,z,ry,sx,sy,sz)=>A.mul(A.mul(A.T(x,y,z),A.RY(ry)),A.S(sx,sy,sz));
 
 </script>
 <script src="renderer.js"></script>
+<script src="weapons.js"></script>
+<script src="ai.js"></script>
+<script src="dialogue.js"></script>
+<script src="overworld.js"></script>
 <script>
 'use strict';
 if(!gl)throw new Error('no webgl');

@@ -2,7 +2,7 @@
 
 A gory, top-down 3D action game in the spirit of Hotline Miami, set in 1986 Miami with a PS2 / Vice City look. It runs entirely in the browser, with no runtime build step or dependencies. `index.html` contains gameplay and scene orchestration; ordinary classic scripts hold artwork, campaign content, model implementation and renderer primitives.
 
-**Play:** keep `index.html`, `art.js`, `levels.js`, `models.js` and `renderer.js` together, then open `index.html` in a WebGL-capable browser, or serve both files from any static host.
+**Play:** keep `index.html` and the classic scripts listed in `scripts/build.cjs` together, then open `index.html` in a WebGL-capable browser, or serve them from any static host.
 The authoritative repository is [GitLab](https://gitlab.com/srk7630145/neon-vice).
 GitLab Pages publishes the checked and browser-tested `public` artifact on the default branch.
 
