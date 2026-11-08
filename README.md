@@ -38,6 +38,10 @@ but changes to that key will not save in the current session. Back up the origin
 browser developer tools before repairing/removing it and reloading. A write failure warning
 clears after a later successful save; keep the tab open until storage works again.
 
+Title characters wait for their detailed models instead of flashing simplified models
+during loading. If artwork or its shader fails, an explicit warning appears and simplified
+characters remain usable; reload to retry. Other successfully loaded models remain available.
+
 ## Development
 
 Node.js 22 or newer is needed for tooling only, not for playing:
