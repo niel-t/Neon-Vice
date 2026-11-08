@@ -118,6 +118,11 @@ function checkPlans() {
     targets: { loops: [{ id: 'fake', rooms: ['street', 'yard', 'street'] }] } } } });
   bad(loopy, /loop fake/, 'one boundary split into pieces is not a loop');
   bad(tiny(s => { s.rooms[1].id = 'a.1'; s.doors[0].rooms[0] = 'a.1'; s.doors[1].rooms[0] = 'a.1'; return s; }), /reserved/, 'dots reserved for pieces');
+  {
+    const m = JSON.parse(JSON.stringify(PLANS.motel)), o = m.stages.f2.obj[0];
+    o.kind = 'lab'; bad(m, /kind must be target/, 'obj kind');
+    o.kind = 'target'; o.room = 'nowhere'; bad(m, /not nowhere/, 'obj room must match at');
+  }
   const sps = clip.stage.portals || clip.extras.stagePortals;
   assert(sps.every(p => p.open ? Object.keys(p).length === 4 : p.seg && !('walk' in p) && !('kind' in p)), 'strict v3 stage portals');
   const orient = ok(tiny(s => { s.rooms[1].part = 'stud_steel_gyp2'; s.rooms.push({ id: 'a_c', in: 'a', kind: 'closet', rect: [2.5, 2.5, 4, 4] }); s.doors.push({ id: 'd_c', rooms: ['a', 'a_c'], at: [3.25, 4], w: 0.8, kind: 'door_hollow' }); return s; }), 'orient').outs.s.out;

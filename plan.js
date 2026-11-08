@@ -5,7 +5,7 @@ const PLANS={};
 const PLAN=(()=>{
  const EPS=1e-6,TOL=1e-4,SNAP=1e3,PAD=.5;
  const STANCE={standing:[1.6,1.8],crouched:[1,1.1]};
- const SPAWN_KINDS=new Set(['player','enemy','civ','item','exit','arrive']);
+ const SPAWN_KINDS=new Set(['player','enemy','civ','item','exit','arrive']),OBJ_KINDS=new Set(['target','use','exit']);
  const W=()=>{if(typeof WORLD==='undefined'||!WORLD.compile)throw new Error('PLAN needs WORLD v2 loaded first');return WORLD;};
  const snap=v=>Math.round(v*SNAP)/SNAP;
  const key=p=>`${snap(p[0])},${snap(p[1])}`;
@@ -376,7 +376,7 @@ const PLAN=(()=>{
   const [x0,z0,x1,z1]=S.bounds;
   const stage=JSON.parse(JSON.stringify({id:sid,bounds:[x0-PAD,z0-PAD,x1+PAD,z1+PAD],combat:S.combat??true,ground,walls,props,rooms:outRooms,...(v3?{portals:stagePortals}:{}),spawns}));
   for(const k of ['stairs','obj','stash','items'])for(const o of S[k]||[])claim(o.id,`${where} ${k} ${o.id}`);
-  const extras={portals:JSON.parse(JSON.stringify(portals)),...(v3?{}:{stagePortals:JSON.parse(JSON.stringify(stagePortals))}),stairs:S.stairs||[],obj:S.obj||[],stash:S.stash||[],items:S.items||[],backdrop:S.backdrop||[],targets:S.targets||{},floorH:S.floorH,briefBounds:S.bounds,elevated:!!S.elevated};
+  const extras={portals:JSON.parse(JSON.stringify(portals)),...(v3?{}:{stagePortals:JSON.parse(JSON.stringify(stagePortals))}),stairs:S.stairs||[],obj:(S.obj||[]).map(o=>({...o,room:o.room??roomAt(...o.at)})),stash:S.stash||[],items:S.items||[],backdrop:S.backdrop||[],targets:S.targets||{},floorH:S.floorH,briefBounds:S.bounds,elevated:!!S.elevated};
   return{stage,extras,info:{rooms,edges,chains:cs,junctions,roomAt,pieceAt:SP.pieceAt,pieces:SP.pieces,top:D.top}};
  }
 
@@ -478,7 +478,8 @@ const PLAN=(()=>{
    for(const s of out.extras.stairs){const id=placed(s.at,`stair ${s.id}`);if(s.room&&id!==s.room)err(`${where} stair ${s.id}: at is in ${id}, not ${s.room}`);
     const to=plan.stages[s.to];if(!to)err(`${where} stair ${s.id}: target stage ${s.to} does not exist`);
     else if(!(to.spawns||[]).some(x=>x.id===s.arrive&&x.kind==='arrive'))err(`${where} stair ${s.id}: arrive spawn ${s.arrive} missing on ${s.to}`);}
-   for(const k of ['obj','stash','items'])for(const o of out.extras[k])placed(o.at,`${k} ${o.id}`);
+   for(const k of ['obj','stash','items'])for(const o of out.extras[k]){const id=placed(o.at,`${k} ${o.id}`);if(k==='obj'&&id&&o.room!==id)err(`${where} obj ${o.id}: at is in ${id}, not ${o.room}`);}
+   for(const o of out.extras.obj)if(!OBJ_KINDS.has(o.kind))err(`${where} obj ${o.id}: kind must be target, use or exit (got ${o.kind})`);
    for(const [id,m2] of Object.entries(T.area||{})){const r=out.info.rooms.get(id);if(!r){err(`${where} area target: unknown room ${id}`);continue;}
     const ok=Math.abs(r.gross-m2)<=Math.max(.5,m2*.02);R.area.push({id,m2:snap(r.gross),want:m2,ok});if(!ok)err(`${where} room ${id}: ${r.gross.toFixed(1)} m² vs brief ${m2}`);}
    for(const [id,n] of Object.entries(T.ent||{})){if(!g.has(id)){err(`${where} ent target: unknown room ${id}`);continue;}

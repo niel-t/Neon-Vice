@@ -177,7 +177,7 @@ PLANS.motel=(()=>{
     {id:'e_boss',kind:'enemy',role:'boss',at:[41,4]},{id:'e_bodyguard',kind:'enemy',role:'bodyguard',at:[39.6,5.6]},
    ],
    stairs:[{id:'stair_w2',room:'st_w2',at:[10.1,12.6],to:'lot',arrive:'arr_w',rise:-3},{id:'stair_e2',room:'st_e2',at:[44.3,12.6],to:'lot',arrive:'arr_e',rise:-3}],
-   obj:[{id:'obj_lab',kind:'lab',at:[24.6,1.6]},{id:'obj_cash',kind:'cash',at:[33,1.2]}],
+   obj:[{id:'obj_lab',kind:'target',what:'lab',at:[24.6,1.6]},{id:'obj_cash',kind:'use',what:'cash',at:[33,1.2]}],
    targets:{
     area:{...guestArea(range(201,208)),r201_bath:4.8,balc:64.1},
     ent:{...guestEnt(range(201,208),[204,205,206,207])},

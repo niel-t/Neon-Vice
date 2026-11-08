@@ -32,7 +32,8 @@ Coordinates are metres: x runs east and z runs south. Stage keys:
 | `props` | `{id, at, size:[w,d], rot, build, cov, h}` or `{id, poly, ...}`. |
 | `spawns` | `{id, kind:'player'\|'arrive'\|'enemy'\|'civ'\|'item'\|'exit', at, role, a}` |
 | `stairs` | `{id, room, at, to:<stage>, arrive:<spawn id>, rise}` |
-| `obj`, `stash`, `items`, `backdrop` | Passed to extras for W14 and the mesher. |
+| `obj` | `{id, kind, room?, at, what?}`. `kind` is `target` (destroy or kill), `use` (interact) or `exit` (an alternative to C). `room` defaults to the plan room at `at` and must match it. MISSIONS `clear:{boss, need, exits}` references these ids (W14). |
+| `stash`, `items`, `backdrop` | Passed to extras for W14 and the mesher. |
 | `targets` | Brief checks: `area {room:m²}`, `ent {room:n}`, `entries {outside:[rooms], n}`, `sight [{id, from, to, stance, open:[door ids], expect:'clear'\|'blocked'}]`, `links [{from, to, without}]`, `loops [{id, rooms:[a,b,…,a]}]` (consecutive rooms joined by distinct walkable portals) |
 
 Room nesting (`in`) is explicit, and a child must lie inside its parent. Rooms
@@ -166,3 +167,12 @@ and fixture case and smoke-tests the renderer.
 - Mall: the big yellow tables read as oversized; resize them to period food-court tables.
 - Home: keep decor off the gun-locker cells `HOME_LOCKER_WORLD` (16.72, 6.5),
   (20.72, 5.5) and (24.72, 9.5) (W6d).
+- Objective `obj` entries per W14 (2026-11-08), to author with each plan:
+  - Marina: `t1`–`t4` `target` (required) and `u` `target` (optional).
+  - Arcade: main panel `use` (required) and count-room safe `use` (optional).
+  - Club: count-room safe `use` (optional); the boss is the objective.
+  - Studio: tapes `use` at TM1 in the machine room (optional).
+  - Yacht: helm `use` (required) and swim-platform speedboat `exit`.
+  - Mall: none (clear the floor, reach C).
+  - Civilians flee to exits, so keep those routes open: club D1/D7,
+    studio reception, yacht tender.
