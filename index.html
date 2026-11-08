@@ -3169,11 +3169,11 @@ function pose(t,anim,jab,arms,kick){const R={},rot=(b,ax,a)=>{R[b]=M4.mul(M4.R(a
 const NB=BONES.length;let ready=false,P=null,MODELS={},Lc={},queue=[];
 const CH={
  consigliere:{face:'face',F:{EM:[190,192],TS:0.158,prof:[[0,0],[53,13],[93,5],[153,0]],skin:[[120,250],[250,250],[186,95],[150,120],[220,120],[186,320]]},
-  B:{jacket:[162,132,210],pants:[154,126,202],shirt:'pais',watch:-1,dusters:true,shoe:[42,36,48],shoulders:0.22},scale:[1.14,1.36,1.12]},
+  B:{jacket:[162,132,210],pants:[154,126,202],shirt:'pais',watch:-1,dusters:true,shoe:[42,36,48],shoulders:0.22},scale:[1.14,1.36,1.12],neckDrop:0.04},
  money:{face:'money',F:{...FACECFG.money,skin:[[110,255],[240,255],[176,90],[150,110],[205,110]]},
   B:{jacket:[236,232,222],pants:[226,222,212],shirt:[246,244,240],pin:false,watch:1,shoe:[170,140,105]},scale:[0.93,1.0,0.93]},
  don:{face:'don',F:{...FACECFG.don,skin:[[150,140],[200,140],[176,150]],hairPt:[176,72],beardPt:[176,342],beardTop:1.7},
-  B:{jacket:[240,236,228],pants:[234,230,222],shirt:[112,42,172],chain:true,cigar:true,watch:1,shoe:[96,60,34],square:'#7b2fc0',pin:false,belly:0.2},scale:[1.45,0.96,1.4]},
+  B:{jacket:[240,236,228],pants:[234,230,222],shirt:[112,42,172],chain:true,cigar:true,watch:1,shoe:[96,60,34],square:'#7b2fc0',pin:false,belly:0.13},scale:[1.34,0.97,1.28]},
  nine:{face:'nine',F:{EM:[176,192],prof:[[0,0],[43,2],[70,4],[153,2]],glassesSwatch:1,smile:1,hl:106,hr:104,skin:[[150,118],[200,118],[176,100],[118,212],[236,212]],hairPt:[176,62],beardPt:[176,322],beardTop:1.69,beardBot:1.53},
   B:{jacket:[24,24,30],pants:[42,44,58],shirt:[204,90,42],dolphin:true,pin:false,shoe:[30,24,22],belly:0.12,shoulders:0.06,specs:1,fluff:'photo',hairVol:true},scale:[1.24,0.98,1.2]},
  mcwey:{face:'mcwey',F:{...FACECFG.mcwey,hl:100,hr:126,beardBot:1.545,skin:[[120,235],[232,235],[176,100],[140,130],[212,130]],beardPt:[130,305],beardTop:1.69},
@@ -3338,7 +3338,7 @@ function add(c,mode,scale,t,IB,id){if(!ready)return false;if(mode==='game')level
  const W=pose(lying?0:tt,anim,jab,arms,k);window.EXLEAN=0;const S=CH[id].scale;
  let base=M4.mul(M4.T(c.x,c.y||0,c.z),M4.mul(M4.R([0,1,0],c.a||0),[scale*S[0],0,0,0,0,scale*S[1],0,0,0,0,scale*S[2],0,0,0,0,1]));
  if(lying){const fe=c.fall===undefined?1:1-Math.pow(1-c.fall,2);base=M4.mul(base,M4.mul(M4.T(0,0.2*fe,0),M4.R([1,0,0],(c.alive?1:-1)*Math.PI/2*fe)));}
- const Wb=[];const B=new Float32Array(NB*16);for(let i=0;i<NB;i++)Wb[i]=M4.mul(base,W[i]);
+ const Wb=[];const B=new Float32Array(NB*16);for(let i=0;i<NB;i++)Wb[i]=M4.mul(base,W[i]);if(CH[id].neckDrop){const h=BI.head;Wb[h]=M4.mul(base,M4.mul(M4.T(0,-CH[id].neckDrop,0),W[h]));}
  const cut=[],SEV={armL:['uarmL','farmL','handL'],armR:['uarmR','farmR','handR'],legL:['thighL','shinL','footL'],legR:['thighR','shinR','footR']};
  if(c.sev)for(const l in c.sev)cut.push(SEV[l]);if(c.headless)cut.push(['head']);
  for(const grp of cut){const b0=BI[grp[0]],pv=M4.ap(Wb[b0],BONES[b0][2]);const Z0=[0,0,0,0,0,0,0,0,0,0,0,0,pv[0],pv[1],pv[2],1];for(const nm of grp)Wb[BI[nm]]=Z0;
