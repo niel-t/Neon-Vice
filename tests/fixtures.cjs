@@ -3,24 +3,21 @@ const { createServer } = require('node:http');
 const { readFileSync } = require('node:fs');
 const { resolve } = require('node:path');
 const { pathToFileURL } = require('node:url');
+const { files } = require('../scripts/build.cjs');
 
 // Hosted SwiftShader can need 12-17s to prepare all high-detail models.
 const modelSettle = { timeout: 30_000 };
 
 const test = base.extend({
   artifactURL: [async ({}, use) => {
-    const html = readFileSync(resolve(__dirname, '..', 'public', 'index.html'));
-    const art = readFileSync(resolve(__dirname, '..', 'public', 'art.js'));
+    const assets = new Map(files.map(file => [`/${file}`, readFileSync(resolve(__dirname, '..', 'public', file))]));
     const server = createServer((req, res) => {
-      if (req.url === '/art.js') {
-        res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8' }).end(art);
-        return;
-      }
-      if (req.url !== '/' && req.url !== '/index.html') {
+      const path = req.url === '/' ? '/index.html' : req.url;
+      if (!assets.has(path)) {
         res.writeHead(404).end();
         return;
       }
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }).end(html);
+      res.writeHead(200, { 'Content-Type': path.endsWith('.js') ? 'text/javascript; charset=utf-8' : 'text/html; charset=utf-8' }).end(assets.get(path));
     });
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
     try { await use(`http://127.0.0.1:${server.address().port}`); }
@@ -55,7 +52,7 @@ const test = base.extend({
       await context.route('**/*', route => {
         const url = new URL(route.request().url());
         if (['fonts.googleapis.com', 'fonts.gstatic.com'].includes(url.hostname)) return route.fulfill({ status: 200, body: '' });
-        const localFile = direct && [gameURL, new URL('art.js', gameURL).href].includes(url.href);
+        const localFile = direct && files.some(file => new URL(file, gameURL).href === url.href);
         if (direct ? !localFile : url.origin !== artifactURL) {
           unexpected.add(`Unexpected external request: ${url.href}`);
           return route.abort();
