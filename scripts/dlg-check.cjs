@@ -20,11 +20,26 @@ function variants(v, where) {
   return keys.map(k => { assert.equal(typeof v[k], 'string', `${where}.${k}: text must be a string`); return v[k]; });
 }
 
-function lint(text, max, where, LINT, banned) {
+// Tokens are linted at their longest expansion; anything else in braces is a typo.
+const TOKEN_LEN = { kid: 'partner', car: 'x'.repeat(16), gun: 'x'.repeat(16) };
+function lint(raw, max, where, LINT, banned, tokens = LINT.tokens) {
+  const text = raw.replace(/\{(\w+)\}/g, (m, k) => { assert(tokens.includes(k), `${where}: unknown token ${m}: "${raw}"`); return TOKEN_LEN[k]; });
   assert(text.trim().length, `${where}: empty text`);
   assert(text.length <= max, `${where}: ${text.length} chars (max ${max}): "${text}"`);
   assert((text.match(/\u2014/g) || []).length <= LINT.maxDash, `${where}: too many em dashes: "${text}"`);
   for (const [word, re] of banned) assert(!re.test(text), `${where}: banned phrase "${word}": "${text}"`);
+}
+
+// Cadence (docs/STYLE-DIALOGUE.md §2a): flowing sentences mixed with short ones, never a run of clipped fragments.
+const sentences = t => t.split(/(?<=[.!?])\s+/).map(x => x.split(/\s+/).filter(Boolean).length).filter(Boolean);
+function cadenceLine(text, where, C) {
+  let run = 0;
+  for (const n of sentences(text)) { run = n <= C.short ? run + 1 : 0; assert(run < C.run, `${where}: ${C.run} clipped sentences in a row (the aphorism tic): "${text}"`); }
+}
+function cadenceSet(texts, where, C) {
+  const n = texts.flatMap(sentences), short = n.filter(x => x <= C.short).length;
+  assert(Math.max(...n) >= C.long, `${where}: no sentence of ${C.long}+ words; vary the cadence`);
+  if (n.length >= C.min) assert(short / n.length <= C.shareMax, `${where}: ${short}/${n.length} sentences are ${C.short} words or fewer; vary the cadence`);
 }
 
 function validateDLG(DLG, WHO, LINT) {
@@ -32,7 +47,7 @@ function validateDLG(DLG, WHO, LINT) {
   for (const [id, d] of Object.entries(DLG)) {
     assert(isObj(d) && isObj(d.nodes), `DLG ${id}: needs nodes`);
     assert(d.nodes[d.start], `DLG ${id}: start node ${d.start} missing`);
-    const edges = {};
+    const edges = {}, mc = [];
     for (const [n, node] of Object.entries(d.nodes)) {
       const at = `DLG ${id}.${n}`;
       assert(isObj(node), `${at}: node must be an object`);
@@ -43,7 +58,7 @@ function validateDLG(DLG, WHO, LINT) {
       (node.say || []).forEach((line, i) => {
         assert(Array.isArray(line) && line.length === 2, `${at}.say[${i}]: expected [speaker, text]`);
         assert(Object.prototype.hasOwnProperty.call(WHO, line[0]), `${at}.say[${i}]: unknown speaker ${line[0]}`);
-        for (const t of variants(line[1], `${at}.say[${i}]`)) lint(t, LINT.maxLine, `${at}.say[${i}]`, LINT, banned);
+        for (const t of variants(line[1], `${at}.say[${i}]`)) { lint(t, LINT.maxLine, `${at}.say[${i}]`, LINT, banned); cadenceLine(t, `${at}.say[${i}]`, LINT.cadence); if (line[0] === 'MCWEY') mc.push(t); }
       });
       if (node.next) { assert(d.nodes[node.next], `${at}: next ${node.next} missing`); edges[n].push(node.next); }
       if (!node.choose) continue;
@@ -75,6 +90,7 @@ function validateDLG(DLG, WHO, LINT) {
         }
       });
     }
+    if (mc.length) cadenceSet(mc, `DLG ${id}`, LINT.cadence);
     const seen = new Set([d.start]), todo = [d.start];
     while (todo.length) for (const m of edges[todo.pop()]) if (!seen.has(m)) { seen.add(m); todo.push(m); }
     for (const n of Object.keys(d.nodes)) assert(seen.has(n), `DLG ${id}.${n}: unreachable from ${d.start}`);
@@ -89,7 +105,7 @@ function validateDLG(DLG, WHO, LINT) {
 
 function selfTest(WHO, LINT) {
   const opt = t => ({ t });
-  const ok = { start: 'a', nodes: { a: { say: [['MCWEY', 'Go.']], choose: [opt('One.'), opt('Two.'), { t: 'Three.', to: 'b', set: { rel: { mcwey: 1 } } }, { t: 'Four.', req: { has: 'x' } }] }, b: { say: [['P', { _: 'Fine.' }]] } } };
+  const ok = { start: 'a', nodes: { a: { say: [['MCWEY', 'Go and see the man at the motel, and take your time about it.']], choose: [opt('One.'), opt('Two.'), { t: 'Three.', to: 'b', set: { rel: { mcwey: 1 } } }, { t: 'Four.', req: { has: 'x' } }] }, b: { say: [['P', { _: 'Fine.' }]] } } };
   validateDLG({ ok }, WHO, LINT);
   const bad = {
     twoOpts: { start: 'a', nodes: { a: { choose: [opt('One.'), opt('Two.'), { t: 'Three.', req: { flag: 'f' } }] } } },
@@ -99,18 +115,27 @@ function selfTest(WHO, LINT) {
     banned: { start: 'a', nodes: { a: { say: [['MCWEY', "Here's the thing, kid."]] } } },
     long: { start: 'a', nodes: { a: { say: [['MCWEY', 'x'.repeat(LINT.maxLine + 1)]] } } },
     bigRel: { start: 'a', nodes: { a: { choose: [opt('One.'), opt('Two.'), { t: 'Three.', set: { rel: { mcwey: 2 } } }] } } },
+    token: { start: 'a', nodes: { a: { say: [['MCWEY', 'Hi, {kdi}.']] } } },
     halfText: { start: 'a', nodes: { a: { say: [['P', { don: 'Hi.' }]] } } },
     empty: { start: 'a', nodes: { a: {} } },
+    clipped: { start: 'a', nodes: { a: { say: [['MCWEY', 'Gold sinks. Sharks swim. Remember that, kid.']] } } },
+    terse: { start: 'a', nodes: { a: { say: [['MCWEY', 'The motel, tonight.'], ['MCWEY', 'Bring the watch, kid.'], ['MCWEY', 'Moreau knows.'], ['MCWEY', 'Go now.']] } } },
     nextLoop: { start: 'a', nodes: { a: { say: [['MCWEY', 'Again.']], next: 'b' }, b: { say: [['MCWEY', 'Again.']], next: 'a' } } },
   };
   for (const [name, d] of Object.entries(bad)) assert.throws(() => validateDLG({ [name]: d }, WHO, LINT), undefined, `dlg-check self-test: ${name} should fail`);
 }
 
 function checkDialogue(source) {
-  const { DLG, DLG_WHO, DLG_LINT } = vm.runInNewContext(`${source}\n;({DLG, DLG_WHO, DLG_LINT})`, {}, { timeout: 1000 }); // dialogue data stays DOM-free
-  selfTest(DLG_WHO, DLG_LINT);
-  const n = validateDLG(DLG, DLG_WHO, DLG_LINT);
-  console.log(`dialogue: ${n} DLG conversations valid`);
+  const { DLG, DLG_WHO, DLG_LINT, DLG_TOKENS, mcLines } = vm.runInNewContext(`${source}\n;({DLG, DLG_WHO, DLG_LINT, DLG_TOKENS, mcLines})`, {}, { timeout: 1000 }); // dialogue data stays DOM-free
+  const LINT = { ...DLG_LINT, tokens: DLG_TOKENS };
+  selfTest(DLG_WHO, LINT);
+  const n = validateDLG(DLG, DLG_WHO, LINT);
+  // McWey's visit lines outside DLG may also carry the {car}/{gun} tokens that talkMcWey fills in.
+  const banned = LINT.banned.map(w => [w, new RegExp(`(^|\\W)${reEsc(w)}`, 'i')]);
+  const lines = mcLines();
+  lines.forEach((t, i) => { assert.equal(typeof t, 'string', `mcLines[${i}]: not a string`); lint(t, LINT.maxLine, `mcLines[${i}]`, LINT, banned, [...DLG_TOKENS, 'car', 'gun']); cadenceLine(t, `mcLines[${i}]`, LINT.cadence); });
+  cadenceSet(lines, 'mcLines', LINT.cadence);
+  console.log(`dialogue: ${n} DLG conversations and ${lines.length} McWey lines valid`);
 }
 
 module.exports = { validateDLG, checkDialogue };
