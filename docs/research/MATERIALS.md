@@ -119,6 +119,7 @@ Thickness in cm, outer → inner. "Alt" is the stochastic alternate stack.
 | `door_hollow` | Hollow-core interior door | ply 0.3 · void 2.9 · ply 0.3 | 3.5 | — | — | 300 (lock: 800, §5) | P |
 | `door_solid` | Solid-core (particle) door — motel guest door, apartment entry | ply 0.3 · particle 3.85 · ply 0.3 | 4.45 | — | — | 1 500 (lock: 3 000, §5) | P (≈1¾″ standard) |
 | `door_metal` | Hollow-metal door — service, stair, shaft, back-of-house | steel 0.12 · void 4.2 · steel 0.12 | 4.44 | — | — | 4 000 (lock/hinge: 6 000, §5) | P (18-gauge skins) |
+| `door_vault` | Panic-room / vault door: two ⅜″ steel skins on a steel frame | steel 0.95 · void 4 · steel 0.95 | 5.9 | — | — | ∞ (no lock breach: opens by script/key only) | P (built from the A ⅜″ plate anchor; G no breach) |
 | `car_door` | 1980s sedan door | steel 0.08 · void 10 · steel 0.08 | 10.2 | window mech 15 %: + steel 0.3 | — | 3 000 | V CAR (qualitative) |
 | `car_engine` | Engine block line through a car | steel 6 | 6 | — | ∞ | ∞ | P; A (engine block is cover) |
 | `steel_3mm` | ⅛″ plate: dumpster, cabinet, shed panel | steel 0.32 | 0.32 | — | ∞ | ∞ | P |
@@ -166,7 +167,7 @@ level doc.
 |---|---|---|---|---|---|---|
 | **1950s MiMo motel** (Motel Sunset) | `cbs_ext` | `cmu_hollow` (between guest rooms) | `stud_wood_gyp` (bath, closet) | `door_solid` guest; `door_metal` service; `door_hollow` bath | `glass_annealed_6` jalousies; `glass_tempered_6` office storefront | planters `brick_1w`/`cbs_ext` waist; cars |
 | **1930s Deco hotel → nightclub** (Club Flamingo) | `cbs_ext` | `cmu_hollow` or `clay_tile_4` | `plaster_lath`; new club fit-out `stud_steel_gyp` | `door_solid`; `door_metal` back-of-house | `glass_annealed_6` | `counter_cmu` bar die; booths `sofa` |
-| **1980s Brickell tower** (Penthouse) | glazing + `rc_column_40`; spandrel `cbs_ext` | `stud_steel_gyp2` (unit/corridor); `rc_wall_20` core | `stud_steel_gyp` | `door_solid`; `door_metal` stairs/service | `glass_tempered_6` sliding doors; `glass_annealed_6` (P) fixed | `counter_cabinet` kitchen |
+| **1980s Brickell tower** (Penthouse) | glazing + `rc_column_40`; spandrel `cbs_ext` | `stud_steel_gyp2` (unit/corridor); `rc_wall_20` core | `stud_steel_gyp` | `door_solid`; `door_metal` stairs/service | `glass_tempered_6` sliding doors; `glass_annealed_6` (P) fixed | `counter_cabinet` kitchen; panic room `cmu_filled` + `door_vault` (P) |
 | **Marina** (Marina) | office `cbs_ext`; shed `corrugated` on steel frame | `stud_steel_gyp` | `stud_steel_gyp` | `door_metal`; big shed doors `corrugated` | `glass_annealed_6` | boats `grp_hull`; fuel tanks `steel_3mm`; dock piles `rc_column_40` |
 | **Strip centre arcade** (Arcade) | `cbs_ext` or `brick_cmu_ext` | `stud_steel_gyp2` (tenant demising) | `stud_steel_gyp`, `particle_divider` | `door_metal` rear; storefront `glass_tempered_6` | `glass_tempered_6` | arcade cabinets ≈ `counter_cabinet` |
 | **Mall** (Mall) | `rc_wall_20` / `cbs_ext` | `stud_steel_gyp2` | `stud_steel_gyp`, `particle_divider` | storefront `glass_tempered_6`; roll-down grille (rail cov) | `glass_tempered_6` | kiosks `counter_cabinet` |
@@ -243,7 +244,7 @@ Rules:
    buck shell) to the door's `lockHp`, not the energy deposited in the leaf.
    That is how real breaching rounds work: they destroy the hardware, not the
    slab. `lockHp` (P): `door_hollow` 800, `door_solid` 3 000, `door_metal`
-   6 000. Hits needed (`pen_model.py`): `door_solid` 1 slug or 2 buck shells
+   6 000; `door_vault` ∞ (opens only by script or key). Hits needed (`pen_model.py`): `door_solid` 1 slug or 2 buck shells
    or ≈7 9mm; `door_metal` 2 slugs or 3 buck shells or ≈13 9mm. Hits on the
    leaf away from hardware use the ordinary energy-deposit rule, so buck
    (which stops in the leaf and deposits everything) chews a hole in a solid
@@ -276,7 +277,7 @@ Removal reach (`Jwall(d) ≥ cellHp`, from `pen_model.py`):
 | `clay_tile_4` | 0.37 m | 1–2 cells | — |
 | `cmu_hollow` / `cbs_ext` | 0.27 m | 1 cell + spall decal around | **G target** |
 | `brick_1w` | 0.25 m | 1 cell only on direct contact | — |
-| `cmu_filled`, `brick_2w`, `brick_cmu_ext`, `rc_wall_20` | never | scorch/crater decal only | **G target** |
+| `cmu_filled`, `brick_2w`, `brick_cmu_ext`, `rc_wall_20`, `door_vault` | never | scorch/crater decal only | **G target** |
 
 **Glass:** every pane within 5 m of the burst shatters (the M406 casualty
 radius, HE), regardless of `Jwall`.
@@ -383,6 +384,7 @@ const BUILD = {
   door_hollow:{layers:[['ply',0.3],['void',2.9],['ply',0.3]],cellHp:300,lockHp:800},
   door_solid:{layers:[['ply',0.3],['particle',3.85],['ply',0.3]],cellHp:1500,lockHp:3000},
   door_metal:{layers:[['steel',0.12],['void',4.2],['steel',0.12]],cellHp:4000,lockHp:6000},
+  door_vault:{layers:[['steel',0.95],['void',4],['steel',0.95]],cellHp:Infinity,lockHp:Infinity}, // opens by script/key only
   car_door:{layers:[['steel',0.08],['void',10],['steel',0.08]],alt:{p:0.15,layers:[['steel',0.08],['steel',0.3],['void',10],['steel',0.08]]},cellHp:3000},
   car_engine:{layers:[['steel',6]],cellHp:Infinity},
   steel_3mm:{layers:[['steel',0.32]],cellHp:Infinity},

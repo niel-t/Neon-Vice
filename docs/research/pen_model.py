@@ -34,6 +34,7 @@ CON={
  'door_hollow':([('ply',0.3),('void',2.9),('ply',0.3)],None,300),
  'door_solid':([('ply',0.3),('particle',3.85),('ply',0.3)],None,1500),
  'door_metal':([('steel',0.12),('void',4.2),('steel',0.12)],None,4000),
+ 'door_vault':([('steel',0.95),('void',4),('steel',0.95)],None,math.inf),
  'car_door':([('steel',0.08),('void',10),('steel',0.08)],None,3000),
  'car_door@reg':([('steel',0.08),('steel',0.3),('void',10),('steel',0.08)],None,3000),
  'car_engine':([('steel',6)],None,math.inf),

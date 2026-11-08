@@ -150,6 +150,7 @@ stay a pass (see the knife-edge cells in MATERIALS.md §6).
 | `door_hollow` | 95% | 96% | 96% | 97% | 99% | 99% | 99% | 92% | 99% | 100% |
 | `door_solid` | 60% | 67% | 64% | 73% | 90% | 89% | 90% | 31% | 94% | 99% |
 | `door_metal` | 27% | 40% | 18% | 45% | 66% | 79% | 86% | stop | 58% | 91% |
+| `door_vault` | stop | stop | stop | stop | stop | stop | stop | stop | stop | 33% |
 | `car_door` | 51% | 60% | 45% | 64% | 77% | 86% | 91% | stop | 72% | 94% |
 | `car_door@reg` | stop | stop | stop | stop | 34% | 61% | 74% | stop | 19% | 84% |
 | `car_engine` | stop | stop | stop | stop | stop | stop | stop | stop | stop | stop |
