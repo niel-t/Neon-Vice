@@ -1,5 +1,42 @@
 const { test, expect, progressing } = require('./fixtures.cjs');
 
+test('ownership: carry survives floor changes but not a new character run', async ({ openGame }) => {
+  const page = await openGame();
+  expect(await page.evaluate(() => {
+    startLevel(2);
+    G.player.weapon = { type:'shotgun', ammo:37 };
+    finishLevel();
+    const saved = { ...CARRY };
+    startLevel(3);
+    const carried = { ...G.player.weapon };
+    selIdx = 1;JOBS.sel = 0;
+    const fade = fadeTo;
+    try { fadeTo = () => true;$('bPlay').click(); } finally { fadeTo = fade; }
+    const cleared = CARRY;
+    startLevel(0);
+    return { saved, carried, cleared, weapon:G.player.weapon };
+  })).toEqual({
+    saved:{ type:'shotgun',ammo:37,from:2 },
+    carried:{ type:'shotgun',ammo:37 },
+    cleared:null,
+    weapon:null
+  });
+});
+
+test('ownership: delayed limb blood stays in its originating world', async ({ openGame }) => {
+  const page = await openGame();
+  expect(await page.evaluate(() => {
+    startLevel(0);
+    const callbacks = [], timer = setTimeout;
+    try { window.setTimeout = fn => { callbacks.push(fn);return 0; };limbGib(G.enemies[0],'armL',[1,0]); }
+    finally { window.setTimeout = timer; }
+    const before = G.parts.length;callbacks[0]();const sameWorld = G.parts.length - before;
+    startLevel(1);
+    const replacement = G.parts.length;callbacks.forEach(fn=>fn());
+    return { timers:callbacks.length,sameWorld,replacementDelta:G.parts.length-replacement };
+  })).toEqual({ timers:4,sameWorld:6,replacementDelta:0 });
+});
+
 async function startupPage(browser, artifactURL, mode) {
   const context = await browser.newContext();
   const errors = [];
