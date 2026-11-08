@@ -1,4 +1,4 @@
-const { test, expect, progressing } = require('./fixtures.cjs');
+const { test, expect, progressing, modelSettle } = require('./fixtures.cjs');
 const { gameData, expectedMap } = require('../scripts/check.cjs');
 
 test('direct-open artifact loads ordered artwork, models and real frames', async ({ openGame }) => {
@@ -28,13 +28,13 @@ test('boot, models, real frames and settings reload in enhanced/retro', async ({
   await page.locator('#bRetro').click();
   await page.locator('#bMute').click();
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await expect.poll(() => page.evaluate(() => PS2C.ready && !ENH() && SET.sound === false && menuT > 0)).toBe(true);
+  await expect.poll(() => page.evaluate(() => PS2C.ready && !ENH() && SET.sound === false && menuT > 0), modelSettle).toBe(true);
   await progressing(page);
   await page.locator('#bSettings').click();
   await expect(page.locator('#bRetro')).toHaveText('GRAPHICS: PS1 RETRO');
   await page.locator('#bRetro').click();
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await expect.poll(() => page.evaluate(() => PS2C.ready && ENH() && !!PI && menuT > 0)).toBe(true);
+  await expect.poll(() => page.evaluate(() => PS2C.ready && ENH() && !!PI && menuT > 0), modelSettle).toBe(true);
 });
 
 test('UI journey: title/select/intro/elevator/brief/car/mission, spam and held movement', async ({ openGame }) => {
@@ -118,7 +118,7 @@ test('saves: historical migration, current round-trip, floor stepping and quota 
     stepFloor(1);
   });
   await history.reload({ waitUntil: 'domcontentloaded' });
-  await expect.poll(() => history.evaluate(() => PS2C.ready && menuT > 0)).toBe(true);
+  await expect.poll(() => history.evaluate(() => PS2C.ready && menuT > 0), modelSettle).toBe(true);
   expect(await history.evaluate(() => ({ wallet: wallet(), top: JOBS.top, sel: JOBS.sel, grade: JOBS.best[7].g, custom: myProg().custom })))
     .toEqual({ wallet: 321, top: 7, sel: 7, grade: 'A', custom: 'preserve' });
   await history.evaluate(() => { JOBS.sel = 0; stepFloor(-1); });

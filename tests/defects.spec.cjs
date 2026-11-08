@@ -1,4 +1,4 @@
-const { test, expect, progressing } = require('./fixtures.cjs');
+const { test, expect, progressing, modelSettle } = require('./fixtures.cjs');
 
 test('graphics: bloom replacements release only the previous targets', async ({ openGame }) => {
   const page=await openGame();
@@ -23,7 +23,7 @@ test('graphics: bloom replacements release only the previous targets', async ({ 
 test('graphics: context loss stops progression, preserves saves and requires reload', async ({ browser,artifactURL }) => {
   const {context,page,errors}=await startupPage(browser,artifactURL,'normal');
   try {
-    await expect.poll(()=>page.evaluate(()=>PS2C.ready)).toBe(true);
+    await expect.poll(()=>page.evaluate(()=>PS2C.ready), modelSettle).toBe(true);
     await page.locator('#bStart').click();
     await page.evaluate(()=>{startLevel(0);togglePause();});
     await page.locator('#bShake').click();
@@ -46,7 +46,7 @@ test('graphics: context loss stops progression, preserves saves and requires rel
     await expect(page.locator('#contextMessage')).toContainText('available again');
     expect(await page.evaluate(()=>menuT)).toBe(stopped.menuT);
     await Promise.all([page.waitForEvent('domcontentloaded'),page.keyboard.press('Enter')]);
-    await expect.poll(()=>page.evaluate(()=>PS2C.ready&&!contextLost&&menuT>0)).toBe(true);
+    await expect.poll(()=>page.evaluate(()=>PS2C.ready&&!contextLost&&menuT>0), modelSettle).toBe(true);
     expect(await page.evaluate(()=>['nb86','nb86prog','nb86jobs'].map(key=>localStorage.getItem(key)))).toEqual(saves);
     expect(errors).toEqual([]);
   }finally{await context.close();}
@@ -78,7 +78,7 @@ test('models: one NPC build per render and visible pending combatants', async ({
 test('models: failed NPC build does not starve subsequent models', async ({ browser, artifactURL }) => {
   const { context,page,errors }=await startupPage(browser,artifactURL,'normal');
   try {
-    await expect.poll(()=>page.evaluate(()=>PS2C.ready)).toBe(true);
+    await expect.poll(()=>page.evaluate(()=>PS2C.ready), modelSettle).toBe(true);
     expect(await page.evaluate(()=>{
       startLevel(0);state='pause';PS2C.beginFrame();
       const a=G.enemies[0],b=G.enemies[1],upload=gl.bufferData;let calls=0;
@@ -121,7 +121,7 @@ test('focus: lost releases clear world input and held controller buttons re-arm 
 test('audio: gesture recovery surfaces rejection without queuing suspended sound effects', async ({ browser, artifactURL }) => {
   const { context, page, errors } = await startupPage(browser, artifactURL, 'audio');
   try {
-    await expect.poll(() => page.evaluate(() => PS2C.ready)).toBe(true);
+    await expect.poll(() => page.evaluate(() => PS2C.ready), modelSettle).toBe(true);
     await page.evaluate(() => {window.allowAudioActivation=true;});
     await page.locator('#bStart').click();
     await expect.poll(() => page.evaluate(() => AC.state)).toBe('running');
@@ -259,7 +259,7 @@ async function startupPage(browser, artifactURL, mode) {
 test('startup: nonnegative first frame and no loading-only title fallback', async ({ browser, artifactURL }) => {
   const { context, page, errors } = await startupPage(browser, artifactURL, 'healthy');
   try {
-    await expect.poll(() => page.evaluate(() => PS2C.ready)).toBe(true);
+    await expect.poll(() => page.evaluate(() => PS2C.ready), modelSettle).toBe(true);
     const samples = await page.evaluate(() => ({ frames: bootSamples, pending: pendingDraws }));
     expect(samples.frames[0].menuT).toBe(0);
     expect(samples.frames.every(sample => sample.menuT >= 0 && sample.ftEma >= 0)).toBe(true);
@@ -273,7 +273,7 @@ test('startup: nonnegative first frame and no loading-only title fallback', asyn
 test('startup: one failed image settles without hiding healthy models', async ({ browser, artifactURL }) => {
   const { context, page, errors } = await startupPage(browser, artifactURL, 'image');
   try {
-    await expect.poll(() => page.evaluate(() => PS2C.status)).toBe('degraded');
+    await expect.poll(() => page.evaluate(() => PS2C.status), modelSettle).toBe('degraded');
     expect(await page.evaluate(() => [PS2C.ready, PS2C.modelStatus('money'), PS2C.modelStatus('don')]))
       .toEqual([false, 'failed', 'ready']);
     await expect(page.locator('#modelWarning')).toBeVisible();
@@ -296,7 +296,7 @@ test('startup: one failed image settles without hiding healthy models', async ({
 test('startup: failed rebuild preserves the previous drawable model', async ({ browser, artifactURL }) => {
   const { context, page, errors } = await startupPage(browser, artifactURL, 'normal');
   try {
-    await expect.poll(() => page.evaluate(() => PS2C.ready)).toBe(true);
+    await expect.poll(() => page.evaluate(() => PS2C.ready), modelSettle).toBe(true);
     expect(await page.evaluate(() => {
       const original = gl.bufferData;
       let allocations = 0, freed = 0;
@@ -315,7 +315,7 @@ test('startup: failed rebuild preserves the previous drawable model', async ({ b
 test('startup: shared shader failure settles with explicit degraded presentation', async ({ browser, artifactURL }) => {
   const { context, page, errors } = await startupPage(browser, artifactURL, 'shader');
   try {
-    await expect.poll(() => page.evaluate(() => PS2C.status)).toBe('failed');
+    await expect.poll(() => page.evaluate(() => PS2C.status), modelSettle).toBe('failed');
     expect(await page.evaluate(() => [PS2C.ready, PS2C.modelStatus('don')])).toEqual([false, 'failed']);
     await expect(page.locator('#modelWarning')).toBeVisible();
     await progressing(page);

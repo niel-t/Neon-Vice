@@ -4,6 +4,9 @@ const { readFileSync } = require('node:fs');
 const { resolve } = require('node:path');
 const { pathToFileURL } = require('node:url');
 
+// Hosted SwiftShader can need 12-17s to prepare all high-detail models.
+const modelSettle = { timeout: 30_000 };
+
 const test = base.extend({
   artifactURL: [async ({}, use) => {
     const html = readFileSync(resolve(__dirname, '..', 'public', 'index.html'));
@@ -67,7 +70,7 @@ const test = base.extend({
       });
       const page = await context.newPage();
       await page.goto(gameURL, { waitUntil: 'domcontentloaded' });
-      await expect.poll(() => page.evaluate(() => typeof PS2C !== 'undefined' && PS2C.ready && !!gl && !gl.isContextLost() && menuT > 0)).toBe(true);
+      await expect.poll(() => page.evaluate(() => typeof PS2C !== 'undefined' && PS2C.ready && !!gl && !gl.isContextLost() && menuT > 0), modelSettle).toBe(true);
       return page;
     });
     for (const context of contexts) await context.close();
@@ -84,4 +87,4 @@ async function progressing(page) {
   expect(await page.evaluate(() => !!gl && !gl.isContextLost())).toBe(true);
 }
 
-module.exports = { test, expect, progressing };
+module.exports = { test, expect, progressing, modelSettle };
