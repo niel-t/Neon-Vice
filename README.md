@@ -1,8 +1,8 @@
 # Neon Vice: Ocean Drive
 
-A gory, top-down 3D action game in the spirit of Hotline Miami, set in 1986 Miami with a PS2 / Vice City look. It runs entirely in the browser. The whole game is one HTML file, with no build step and no dependencies.
+A gory, top-down 3D action game in the spirit of Hotline Miami, set in 1986 Miami with a PS2 / Vice City look. It runs entirely in the browser, with no runtime build step or dependencies. `index.html` contains the game; `art.js` holds the embedded character artwork.
 
-**Play:** open `index.html` in a WebGL-capable browser, or serve it from any static host.
+**Play:** keep `index.html` and `art.js` together, then open `index.html` in a WebGL-capable browser, or serve both files from any static host.
 The authoritative repository is [GitLab](https://gitlab.com/srk7630145/neon-vice).
 GitLab Pages publishes the checked and browser-tested `public` artifact on the default branch.
 
@@ -48,13 +48,14 @@ npx playwright install chromium
 npm test
 ```
 
-`npm run check` compiles the inline script and validates level/loader data without a browser.
+`npm run check` compiles the ordered classic scripts, checks artwork loading order and the production allowlist, and validates level/loader data without a browser.
 `npm run build` assembles an explicit production allowlist into `public`.
 `npm run test:browser` tests the already assembled artifact using an isolated ephemeral
 localhost server, Chromium/SwiftShader and fresh save contexts; it never uses preview saves.
 Software rendering uses the existing lowest quality lock while retaining the real enhanced
 pipeline; tests assert simulation/frame progress, not GPU performance or pixel fidelity.
-Four compact groups cover boot/settings, one real first-mission UI route, an all-eight-floor
+One direct-open check verifies the assembled `file://` game loads its artwork and models.
+Four compact groups cover hosted boot/settings, one real first-mission UI route, an all-eight-floor
 integration smoke (not a full campaign), and historical/current/corrupt save regressions.
 Only external Google Fonts are replaced with an empty response for deterministic offline tests.
 Failure traces/screenshots are in `test-results`; the HTML report is in `playwright-report`.

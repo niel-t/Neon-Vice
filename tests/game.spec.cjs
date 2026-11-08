@@ -1,6 +1,21 @@
 const { test, expect, progressing } = require('./fixtures.cjs');
 const { gameData, expectedMap } = require('../scripts/check.cjs');
 
+test('direct-open artifact loads ordered artwork, models and real frames', async ({ openGame }) => {
+  const page = await openGame({}, [], { direct: true });
+  expect(page.url()).toMatch(/^file:/);
+  expect(await page.evaluate(() => ({
+    keys: Object.keys(ART),
+    embedded: Object.values(ART).every(value => value.startsWith('data:image/jpeg;base64,')),
+    models: PS2C.ready && !!PI
+  }))).toEqual({
+    keys: ['face', 'pais', 'jack', 'money', 'don', 'mcwey', 'nine'],
+    embedded: true,
+    models: true
+  });
+  await progressing(page);
+});
+
 test('boot, models, real frames and settings reload in enhanced/retro', async ({ openGame }) => {
   const page = await openGame();
   expect(await page.evaluate(() => {

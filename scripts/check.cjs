@@ -2,14 +2,29 @@ const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
 const { resolve } = require('node:path');
 const vm = require('node:vm');
+const { files } = require('./build.cjs');
 
 function gameData() {
   const html = readFileSync(resolve(__dirname, '..', 'index.html'), 'utf8');
   const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
-  assert.equal(scripts.length, 1, 'Expected one inline classic game script');
-  assert(!/\bsrc\s*=|\btype\s*=\s*["']module/.test(scripts[0][1]), 'Game script must remain inline/classic');
-  const source = scripts[0][2];
-  new vm.Script(source, { filename: 'index.html inline script' });
+  assert.equal(scripts.length, 2, 'Expected artwork followed by the inline classic game script');
+  assert.equal(scripts[0][1].trim(), 'src="art.js"', 'Artwork must load synchronously before the game');
+  assert.equal(scripts[1][1].trim(), '', 'Game script must remain inline/classic');
+  const sources = scripts.map((script, i) => {
+    const src = script[1].match(/\bsrc="([^"]+)"/)?.[1];
+    let source = script[2];
+    if (src) {
+      assert(/^[a-z0-9_-]+\.js$/.test(src), 'Runtime scripts must use local bare filenames');
+      assert(files.includes(src), `${src} is missing from the production allowlist`);
+      assert.equal(source.trim(), '', 'External scripts must not contain inline code');
+      source = readFileSync(resolve(__dirname, '..', src), 'utf8');
+    }
+    new vm.Script(source, { filename: src || `index.html inline script ${i}` });
+    return source;
+  });
+  const source = sources.join('\n;\n');
+  new vm.Script(source, { filename: 'ordered classic game scripts' });
+  assert(!sources[1].includes('const ART='), 'Embedded artwork must remain outside the game script');
   for (const marker of ['/*LEVELS*/', '/*END*/']) {
     assert.equal(source.split(marker).length, 2, `Missing or duplicate ${marker} data marker`);
   }
