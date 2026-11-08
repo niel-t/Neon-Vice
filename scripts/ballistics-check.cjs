@@ -74,6 +74,15 @@ function checkBallistics() {
   // float HP: a clean hit is exactly 1, so one-hit kills stay one-hit
   assert.equal(BAL.damage(P['9mm'], 490), 1);
   assert(BAL.dead(1, BAL.damage(P['9mm'], 490)) && !BAL.dead(2, 1) && BAL.dead(2, 1.95));
+  assert(BAL.dead(1.1, 1) && BAL.dead(1, 0.9) && !BAL.dead(1.1, 0.9), 'float error at the 0.1 death line');
+  { // hurtPlayer's arithmetic: 2 HP + vest II; M16 (vest absorbs 0.1, kept), pistol (vest stops it, consumed), pistol kills
+    let hp = 2, armor = 1, alive = true;
+    const hit = (p, e) => { if (!alive) return; let dmg = p.dmg; if (armor > 0) { const ab = BAL.absorb('II', p, e); if (ab > 0.1) armor--; if (ab >= 1) return; dmg *= 1 - ab; }
+      if (BAL.dead(hp, dmg)) alive = false; else hp -= dmg; };
+    hit(P['5.56'], 1750); assert(alive && armor === 1 && Math.abs(hp - 1.1) < 1e-9, `M16 through a vest leaves 1.1: ${hp}`);
+    hit(P['9mm'], 490); assert(alive && armor === 0, 'pistol is stopped by the vest, which is spent');
+    hit(P['9mm'], 490); assert(!alive, `second pistol hit kills at ${hp} HP`);
+  }
   // kill/no-kill vs a 1-hp thug (checkpoint: assert gameplay outcomes, not just matrix energies)
   const after = (cal, builds) => BAL.chain(mats, P[cal], builds).e || 0, kills = (cal, e) => BAL.dead(1, BAL.damage(P[cal], e));
   assert(kills('9mm', after('9mm', ['stud_steel_gyp2'])), '9mm through steel-stud partition kills');

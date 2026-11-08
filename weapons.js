@@ -69,7 +69,7 @@ const BAL=(()=>{
  function absorb(lv,p,e){const L=ARMLV[lv];if(!L)return 0;const eh=e*p.hard;return eh<L.stop&&(!p.rifle||L.rifle)?1:(!p.rifle||eh<(L.part||0))?0.5:0.1;}
  // damage vs a fixed reference energy (not muzzle e0): any round still above E_REF is a clean hit (1), weaker ones wound
  const damage=(p,e,abs=0)=>p.dmg*Math.min(1,Math.pow(Math.max(0,e)/E_REF,0.7))*(1-abs);
- const dead=(hp,dmg)=>hp-dmg<=HP_EPS;
+ const dead=(hp,dmg)=>hp-dmg<=HP_EPS+1e-9;
  return Object.freeze({EMIN,TUMBLE,OBL_MAX,HP_EPS,BODY_J,E_REF,proj,cross,chain,deposit,roundsPerCell,absorb,damage,dead});
 })();
 /* legacy cell levels have one wall glyph: interior '#' takes the level typology (MATERIALS.md §4), '#' touching the void or an outdoor glyph (out) takes ext,
