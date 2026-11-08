@@ -511,8 +511,14 @@ function paintBodyP(L){const sh=C255(L.shirt),jk=C255(L.jacket),sk=C255(L.skin);
   if(L.tee||L.tank)pat(0,0,512,290,false);else{pat(0,0,512,290,true);pat(0,290,512,90,false);}if(L.legTile===L.torsoTile)pat(0,440,512,72,false);}
  if(L.gloves){const gc=C255(L.gloves);x.fillStyle=rgb(gc);x.fillRect(0,400,150,40);x.fillRect(0,381,512,18);}
  return c;}
-function lookCfg(L,bodyType){const bt=BODYCFG[bodyType]||BODYCFG[L.body]||BODYCFG.normal;
- return{L,B:{specs:L.glasses?1:0,fluff:!!(L.fluff&&L.beard),hs:(L.hair&&!L.hat)?L.hs:null,watch:L.watch?-1:0,cigar:!!L.cigar,hat:L.hat||null,shoulders:bt.shoulders||0,belly:bt.belly||(L.belly?0.1:0),rings:L.bling?1:0,fem:!!L.fem,skirt:L.fem?(L.skirt||0):0},scale:L.fem?bt.scale.map((v,i)=>v*BODYP.fem.scale[i]):bt.scale,gait:(L.fem?BODYP.fem:BODYP.male).gait};}
+/* look fields v2 (additive; absent = v1 output):
+   armor:'vest'|'plate' (any body) soft vest or plate carrier over the torso; armorC:[r,g,b] 0..1 colour.
+   helmet:'pasgt'|'riot' (any body) replaces hat and hides hair; helmetC:[r,g,b] 0..1 colour.
+   fem only: heels:1 pumps; pads:1 80s shoulder pads; crop:1 bare midriff. */
+const ARMOR={vest:1,plate:1},HELMET={pasgt:1,riot:1};
+function lookCfg(L,bodyType){const bt=BODYCFG[bodyType]||BODYCFG[L.body]||BODYCFG.normal,helmet=HELMET[L.helmet]?L.helmet:null;
+ return{L,B:{specs:L.glasses?1:0,fluff:!!(L.fluff&&L.beard),hs:(L.hair&&!L.hat&&!helmet)?L.hs:null,watch:L.watch?-1:0,cigar:!!L.cigar,hat:helmet?null:(L.hat||null),shoulders:bt.shoulders||0,belly:bt.belly||(L.belly?0.1:0),rings:L.bling?1:0,fem:!!L.fem,skirt:L.fem?(L.skirt||0):0,
+  armor:ARMOR[L.armor]?L.armor:null,helmet,heels:!!(L.fem&&L.heels),pads:!!(L.fem&&L.pads),crop:!!(L.fem&&L.crop)},scale:L.fem?bt.scale.map((v,i)=>v*BODYP.fem.scale[i]):bt.scale,gait:(L.fem?BODYP.fem:BODYP.male).gait};}
 /* vertex counts for a look without touching GL (budget checks: female <= 1.25x male) */
 function lookVerts(L,bodyType){const B=lookCfg(L||{},bodyType).B,b=buildBody(B).p.length/3,h=buildHead(B).p.length/3;return{body:b,head:h,total:b+h};}
 let LOOKN=0,lastG=null,buildsThisFrame=0;const failedLooks=new Set();
