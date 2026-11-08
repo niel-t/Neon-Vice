@@ -244,7 +244,8 @@ geometry behavior, not the API version.
 ### Rooms and explicit authored portals
 
 `rooms` records require `{id,poly}` with a simple polygon inside bounds. Maximum
-256 rooms; interiors must not overlap. Shared edges/vertices are allowed.
+255 rooms (idx 0..254, encoded as idx+1 in the vertex byte; zero is unroomed);
+interiors must not overlap. Shared edges/vertices are allowed.
 `combat` defaults to stage combat. Other JSON-like metadata (`name`, `kind`,
 `roof`, `zone`, parent grouping) is copied. Holes/subtractive rings are not
 implemented: W2 partitions nested parent areas into simple polygons.

@@ -577,7 +577,7 @@ const WORLD=(()=>{
    }return false;
   }
   function buildRooms(st,rooms,id,within){
-   if(rooms.length>256)throw new RangeError('Stage exceeds 256 rooms');
+   if(rooms.length>255)throw new RangeError('Stage exceeds 255 rooms (byte room id reserves zero)');
    for(const r of rooms){
     if(!r||typeof r!=='object'||Array.isArray(r)||!Object.prototype.hasOwnProperty.call(r,'id')||!Object.prototype.hasOwnProperty.call(r,'poly'))throw new TypeError('Room must have its own id and polygon');
     id(r.id);const poly=polygon(r.poly,'room');poly.forEach(within);
@@ -669,7 +669,7 @@ const WORLD=(()=>{
    const zone=i=>g.floorT?.[i]===7?'exterior':'interior';
    for(let i=0;i<labels.length;i++){
     if(g.solid[i]||doorCells.has(i)||labels[i]>=0)continue;
-    if(st.rooms.length>=256)throw new RangeError('Adapter exceeds 256 topological rooms');
+    if(st.rooms.length>=255)throw new RangeError('Adapter exceeds 255 topological rooms');
     const idx=st.rooms.length,queue=[i],cells=[];labels[i]=idx;
     for(let n=0;n<queue.length;n++){
      const j=queue[n];cells.push(j);

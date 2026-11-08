@@ -92,7 +92,7 @@ function checkNav(){
   const goal=free[Math.floor(free.length/2)],target=[goal%g.W+.5,Math.floor(goal/g.W)+.5],t1=performance.now(),field=W.flow(nav,target),t2=performance.now();
   const old=new Int16Array(g.W*g.H);W.cell.bfs(g,old,goal%g.W,Math.floor(goal/g.W));
   for(const i of free)assert.equal(W.dist(nav,field,i%g.W+.5,Math.floor(i/g.W)+.5),old[i],`Legacy ${idx}/${i} BFS parity`);
-  assert(st.rooms.length<=256&&st.rooms.every(r=>r.derived));
+  assert(st.rooms.length<=255&&st.rooms.every(r=>r.derived));
   const fine=W.nav(st);for(const d of g.doors){
    const x=d.hx+Math.cos(d.base)*.49,z=d.hz+Math.sin(d.base)*.49,nx=-Math.sin(d.base),nz=Math.cos(d.base),a=[x-nx*.6,z-nz*.6],b=[x+nx*.6,z+nz*.6];
    if(W.clear(st,...a,...b,.3))assert(W.dist(fine,W.flow(fine,b),...a)>=0,'Adapter doorway survives subtiles');
@@ -100,6 +100,10 @@ function checkNav(){
   timing.push({level:idx,buildMs:+(t1-t0).toFixed(2),fieldMs:+(t2-t1).toFixed(2),rooms:st.rooms.length,portals:st.portals.length});
  }
  console.log('WORLD nav/rooms:',JSON.stringify(timing));
+ const byteRooms=Array.from({length:256},(_,i)=>({id:`room${i}`,poly:square(i,0,i+1,1)}));
+ assert.throws(()=>W.compile({id:'room-cap',bounds:[0,0,256,1],combat:false,ground:[],walls:[],props:[],rooms:byteRooms}),/255 rooms/);
+ const last=W.compile({id:'room-cap',bounds:[0,0,255,1],combat:false,ground:[],walls:[],props:[],rooms:byteRooms.slice(0,255)});
+ assert.equal(last.rooms[254].idx+1,255,'Last room fits vertex byte without wrapping to unroomed zero');
 }
 module.exports={checkNav};
 if(require.main===module)checkNav();
