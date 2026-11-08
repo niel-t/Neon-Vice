@@ -58,6 +58,8 @@ function expectedMap(def, data) {
 }
 
 function check() {
+  require('./world-check.cjs').checkWorld();
+  require('./dlg-check.cjs').checkDialogue(readFileSync(resolve(__dirname, '..', 'dialogue.js'), 'utf8'));
   const data = gameData();
   const { LEVELS, PAR, LEVEL_TRACKS, WD, CAL, ARMOUR } = data;
   for (const [id, c] of Object.entries(CAL)) {
