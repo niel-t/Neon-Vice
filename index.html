@@ -499,15 +499,15 @@ const NEON=[[1,0.25,0.7],[0.2,0.85,1],[0.65,0.3,1],[1,0.55,0.2]];
 const TIPS=['Red laser = a gunman is aiming at you. Break line of sight.','Stand still for accurate shots. Running throws your aim off.','Silenced guns barely make a sound. Loud ones wake up the whole floor.','Swing a door into someone to knock them flat.','Downed enemies get back up. Hit them again to finish the job.','Bar counters and kitchen counters stop bullets. Use them.','Out of ammo? Attack again to throw the gun. It knocks people down.','Throw a knife and it kills.','Sprinting is fast but loud - guards hear your footsteps.','Hold F to look further ahead.'];
 const parOf=i=>PAR[i]||60;const timeBonus=(t,i)=>Math.round(3750*clamp((2*parOf(i)-t)/(2*parOf(i)),0,1));
 /* floor select + personal bests, saved in localStorage nb86jobs: {top:highest unlocked floor, sel:chosen start floor, best:{i:{g,t,s,c,ch,d}}} */
-const JOBS=(()=>{const o=readSave('nb86jobs');if(!Number.isFinite(o.top)){o.top=0;delete o.mig;}o.top=clamp(Math.floor(o.top),0,LEVELS.length-1);o.sel=Number.isFinite(o.sel)?clamp(Math.floor(o.sel),0,o.top):0;savedField('nb86jobs',o,'best',{},saveObject);for(const k of Object.keys(o.best))if(o.best[k]!=null&&!saveObject(o.best[k])){saveWarning('nb86jobs',new Error('Invalid floor record: '+k),true);delete o.best[k];}return o;})();
+const JOBS=(()=>{const o=readSave('nb86jobs');if(!Number.isFinite(o.top)){o.top=0;delete o.mig;}o.top=clamp(Math.floor(o.top),0,CAMPAIGN_LEN-1);o.sel=Number.isFinite(o.sel)?clamp(Math.floor(o.sel),0,o.top):0;savedField('nb86jobs',o,'best',{},saveObject);for(const k of Object.keys(o.best))if(o.best[k]!=null&&!saveObject(o.best[k])){saveWarning('nb86jobs',new Error('Invalid floor record: '+k),true);delete o.best[k];}return o;})();
 /* one-time: unlock floors already beaten in saves from before floor select existed */
-function migJobs(){if(JOBS.mig||SAVE.blocked.has('nb86prog'))return;JOBS.mig=1;for(const k of Object.keys(PROG)){const q=PROG[k]||{};JOBS.top=Math.max(JOBS.top,q.lexDead?7:q.heli?6:q.suits2?5:q.boat?4:q.sharkDead?3:0);}JOBS.top=Math.min(JOBS.top,LEVELS.length-1);saveJobs();}
+function migJobs(){if(JOBS.mig||SAVE.blocked.has('nb86prog'))return;JOBS.mig=1;for(const k of Object.keys(PROG)){const q=PROG[k]||{};JOBS.top=Math.max(JOBS.top,q.lexDead?7:q.heli?6:q.suits2?5:q.boat?4:q.sharkDead?3:0);}JOBS.top=Math.min(JOBS.top,CAMPAIGN_LEN-1);saveJobs();}
 function saveJobs(){return writeSave('nb86jobs',JOBS);}
 const GRANK=g=>{const i=GRADES.findIndex(q=>q[0]===g);return i<0?99:i;};
 function recordBest(i,r){migJobs();const b=JOBS.best[i],nb=[];if(!b){JOBS.best[i]=Object.assign({},r);nb.push('FIRST CLEAR');}else{
  if(GRANK(r.g)<GRANK(b.g)){b.g=r.g;nb.push('GRADE');}if(r.t<b.t){b.t=r.t;nb.push('TIME');}if(r.s>b.s){b.s=r.s;b.ch=r.ch;b.d=r.d;nb.push('TAKE');}if(r.c>b.c){b.c=r.c;nb.push('COMBO');}}
- JOBS.top=Math.max(JOBS.top,Math.min(LEVELS.length-1,i+1));saveJobs();return nb;}
-function floorHTML(){migJobs();JOBS.sel=Math.min(JOBS.sel,JOBS.top);let h='<span>START AT</span>';for(let i=0;i<=JOBS.top;i++){const b=JOBS.best[i];h+=`<button data-fl="${i}" class="${JOBS.sel===i?'on':''}" title="${LEVELS[i].name}">${i<3?'1-'+(i+1):'2-'+(i-2)}${b?' '+b.g:''}${chStars(i)?' '+'\u2605'.repeat(chStars(i)):''}</button>`;}return h;}
+ JOBS.top=Math.max(JOBS.top,Math.min(CAMPAIGN_LEN-1,i+1));saveJobs();return nb;}
+function floorHTML(){migJobs();JOBS.sel=Math.min(JOBS.sel,JOBS.top);let h='<span>START AT</span>';for(const id of campaignIds()){const i=missionIdx(id);if(i>JOBS.top)break;const b=JOBS.best[i];h+=`<button data-fl="${i}" class="${JOBS.sel===i?'on':''}" title="${LEVELS[i].name}">${i<3?'1-'+(i+1):'2-'+(i-2)}${b?' '+b.g:''}${chStars(i)?' '+'\u2605'.repeat(chStars(i)):''}</button>`;}return h;}
 function floorDesc(){const i=JOBS.sel,b=JOBS.best[i];return BRIEF_FLOOR(i)+(b?' · BEST '+b.g+' · '+mmss(b.t)+' · $'+fmt(b.s)+' · x'+b.c:' · NOT CLEARED YET');}
 /* per-floor challenges: 3 per floor, each pays CH_PAY once (saved in JOBS.ch[floor] as a bitmask) */
 const CHX={
@@ -609,7 +609,7 @@ const PROG=(()=>{const o=readSave('nb86prog');for(const c of CHARS){
  if(p.kit!=null)savedField('nb86prog',p,'kit',null,kitShape);
  if(p.locker!=null)savedField('nb86prog',p,'locker',null,lockerShape);
  if(p.run!=null)savedField('nb86prog',p,'run',null,runShape);
- kitBoot(p,c.id,LEVELS.length);
+ kitBoot(p,c.id,missionStage);
  }return o;})();
 function saveProg(){return writeSave('nb86prog',PROG);}
 const SUITS={default:{name:'SIGNATURE',lvl:1,perk:{},desc:'Your own look'},
@@ -1751,8 +1751,8 @@ function payout(){if(!G||G.paid||!G.take)return;G.paid=1;const a=arm(),p=myProg(
  function kitHand(k){const h=handOf(k);return typeof h==='number'?k.guns[h].type:h==='melee'?k.melee:null;}
  /* p.kit is never written during a job, so it still equals entryKit: leaving only drops the run (and with it anything picked up or set aside on the job) */
 function runWalkAway(p){if(!p.run)return false;delete p.run;return true;}
- function runEnter(i){const p=myProg(),id='c'+i;arm();if(p.run&&p.run.mission!==id)runWalkAway(p);
-  if(p.run)p.run.t=Date.now();else p.run={v:KIT_V,mission:id,stage:'s0',entryKit:kitClone(p.kit),stageKit:kitClone(p.kit),t:Date.now()};
+ function runEnter(i){const p=myProg(),id=missionId(i);arm();if(p.run&&p.run.mission!==id)runWalkAway(p);
+  if(p.run)p.run.t=Date.now();else p.run={v:KIT_V,mission:id,stage:missionStart(id),entryKit:kitClone(p.kit),stageKit:kitClone(p.kit),t:Date.now()};
   saveProg();return kitClone(p.run.stageKit);}
  function kitFromPlay(){const g=G,pl=g.player,k=kitClone(g.live),h=g.hand,w=pl.weapon,stow=[];let hand=null;
   if(typeof h==='number')k.guns[h]=null;else if(h==='melee')k.melee=null;
@@ -1763,7 +1763,7 @@ function runWalkAway(p){if(!p.run)return false;delete p.run;return true;}
   if(!k.guns[k.active]&&k.guns[1-k.active])k.active=1-k.active;
   if(k.armour)k.armour.plates=Math.max(0,Math.min(pl.kitPlates||0,pl.armor|0));
   return {kit:normKit(k),stow,hand};}
- function kitCommit(){const p=myProg(),r=p.run;if(!G||G.def.hub||!G.live||!r||r.mission!=='c'+levelIdx)return false;
+ function kitCommit(){const p=myProg(),r=p.run;if(!G||G.def.hub||!G.live||!r||r.mission!==missionId(levelIdx))return false;
   const m=kitFromPlay();p.kit=m.kit;p.locker.items.push(...(r.stow||[]),...m.stow);delete p.run;saveProg();return true;}
  function applyLoadout(k){const p=G&&G.player;if(!p)return;G.live=kitClone(k);const h=G.hand=handOf(k);
   if(typeof h==='number'){const s=k.guns[h],wd=WD[s.type];p.weapon={type:s.type,ammo:s.mag};if(s.mag<=0&&isCal(wd.cal)){const n=Math.min(G.live.pool[wd.cal]|0,wd.mag);G.live.pool[wd.cal]-=n;p.weapon.ammo=n;}G.live.guns[h]=null;}
@@ -3189,14 +3189,14 @@ function finishLevel(){const g=G;state='results';const tb=timeBonus(g.time,level
  let xp=0;if(!g.xpGiven){g.xpGiven=1;xp=runXP(g,true,gr);awardXP(xp);}const pr=myProg();$('rStats').innerHTML+=`<br>XP EARNED<b style="color:#ffd36b">+${xp}</b><br>LEVEL<b style="color:#ffd36b">${pr.lvl}  (${pr.xp}/${xpNeed(pr.lvl)})</b>`;
  if(g.sj){const s=sjState(g);g.sjPay=s.ok?sjPay(g.sj,levelIdx):0;$('rStats').innerHTML+=`<br>SIDE JOB<b style="color:${s.ok?'#7dff9a':'#ff8a95'}">${SIDEJOBS[g.sj].name} · ${s.ok?'PAID +$'+fmt(g.sjPay)+' (NO CUT)':'FAILED'}</b>`;}{const wl=wallet(),ct=cutOf(total),ow=myProg().debt;$('rStats').innerHTML+=(ct?`<br>McWEY'S CUT<b style="color:#ff8a95">-$${fmt(ct)}</b><br>STILL OWED<b style="color:#ff8a95">$${fmt(ow-ct)}</b>`:'')+`<br>WALLET<b style="color:#7dff9a">$${fmt(wl)} &rarr; $${fmt(wl+total-ct+(g.sjPay||0))}</b>`;}{const nb=recordBest(levelIdx,{g:gr,t:g.time,s:total,c:g.maxCombo,ch:CHARS[selIdx].id,d:SET.diff}),b=JOBS.best[levelIdx];$('rStats').innerHTML+=`<br>PERSONAL BEST<b style="color:#2de2e6">${b.g} · ${mmss(b.t)} · $${fmt(b.s)} · x${b.c}</b>`+(nb.length?`<br>NEW<b style="color:#ff5fb8">${nb.join(' · ')}</b>`:'');}{const cr=checkChallenges(levelIdx,g);$('rStats').innerHTML+='<br>CHALLENGES<b>'+cr.out.map(c=>`<span style="color:${c.ok?'#7dff9a':'#ff8a95'}">${c.ok?'\u2605':'\u2606'} ${c.n}${c.fresh?' +$'+fmt(CH_PAY):''}</span>`).join(' · ')+'</b>'+(cr.pay?`<br>CHALLENGE BONUS<b style="color:#7dff9a">+$${fmt(cr.pay)} TO WALLET</b>`:'');}G.grade=gr;$('rGrade').textContent=gr;$('bNextLvl').innerHTML='BACK TO McWEY'+'<span class="padhint"> (A)</span>';if(pendingPerks>0)setTimeout(()=>{if(state==='results')showPerkPick('results');},900);show('sResults');sfx('cash');}
 /* multi-stage hooks (W14): runStage snapshots what you hold as the new retry point; runRestartMission makes the next retry start from the job's beginning */
-function runStage(id){const p=myProg(),r=p.run;if(!G||G.def.hub||!r||r.mission!=='c'+levelIdx)return false;const m=kitFromPlay();
+function runStage(id){const p=myProg(),r=p.run;if(!G||G.def.hub||!r||r.mission!==missionId(levelIdx))return false;const m=kitFromPlay();
  r.stage=String(id);r.stageKit=m.kit;G.live=kitClone(m.kit);G.hand=m.hand;if(typeof m.hand==='number')G.live.guns[m.hand]=null;else if(m.hand==='melee')G.live.melee=null;if(m.stow.length)r.stow=(r.stow||[]).concat(m.stow);saveProg();return true;}
- function runRestartMission(){const p=myProg(),r=p.run;if(!r)return false;r.stage='s0';r.stageKit=kitClone(r.entryKit);delete r.stow;saveProg();return true;}
+ function runRestartMission(){const p=myProg(),r=p.run;if(!r)return false;r.stage=missionStart(r.mission);r.stageKit=kitClone(r.entryKit);delete r.stow;saveProg();return true;}
 /* leave the job: everything you brought comes back as it was when you went in, nothing you found there comes with you */
 function walkAway(){if(!G||G.def.hub||fading||!(state==='dead'||state==='pause'))return;const p=myProg();
  if(!G.xpGiven){G.xpGiven=1;awardXP(runXP(G,false));}runWalkAway(p);saveProg();sfx('blip');
  VISIT={debrief:null,next:levelIdx,grade:null,take:0,style:null};NEXTJOB=levelIdx;G.cameo=null;G.lex=null;state='walk';show(null);fadeTo(goHome);}
-function resumeRun(){let best=-1,t=-1;CHARS.forEach((c,i)=>{const r=PROG[c.id]&&PROG[c.id].run;if(r&&r.t>t){t=r.t;best=i;}});return best<0?null:{ci:best,mi:+PROG[CHARS[best].id].run.mission.slice(1)};}
+function resumeRun(){let best=-1,t=-1;CHARS.forEach((c,i)=>{const r=PROG[c.id]&&PROG[c.id].run;if(r&&r.t>t){t=r.t;best=i;}});return best<0?null:{ci:best,mi:missionIdx(PROG[CHARS[best].id].run.mission)};}
 function syncResume(){const r=resumeRun();$('bResumeJob').style.display=r?'':'none';if(r)$('bResumeJob').innerHTML='RESUME JOB · '+CHARS[r.ci].name+' · '+LEVELS[r.mi].name;}
 function sessionReset(st){LEXMET=st>1;initAudio();totalScore=0;totalKills=0;totalTime=0;levelIdx=st;VISIT={debrief:null,next:st,grade:null,take:0,style:null};HUBFIRST=true;runStyle={};RUNEND=null;}
 function restart(){if(!G||G.def.hub||fading)return;if(!G.player.alive){RUNTRACK[levelIdx]++;MUS.track='';MUS.pending=null;}if(state==='results'&&G.take){totalScore-=G.take;totalKills-=G.kills;totalTime-=G.time;}startLevel(levelIdx);}
@@ -3219,7 +3219,7 @@ $('bPlay').onclick=()=>{const st=Math.min(JOBS.sel,JOBS.top),p=myProg();if(p.run
 $('sBrief').onclick=e=>{if(CHAT.phase==='choose'||e.target.closest('#bGo,#bDlSkip,#bDlText,summary,#dlogHist,.dlChoices'))return;chatTap();};$('bDlSkip').onclick=()=>chatSkipAll();$('bDlText').onclick=()=>cycleTextSize();
 $('sElev').onclick=()=>skipElev();$('cine').onclick=()=>cineSkip();$('bSkip').onclick=()=>hubSkip();
 $('bGo').onclick=()=>chatGo();
-$('bNextLvl').onclick=()=>{if(pendingPerks>0){showPerkPick('results');return;}if(fading)return;kitCommit();payout();VISIT={debrief:levelIdx,grade:G.grade,take:G.take,style:G.style,next:levelIdx+1<LEVELS.length?levelIdx+1:'end'};fadeTo(goHome);};
+$('bNextLvl').onclick=()=>{if(pendingPerks>0){showPerkPick('results');return;}if(fading)return;kitCommit();payout();VISIT={debrief:levelIdx,grade:G.grade,take:G.take,style:G.style,next:levelIdx+1<CAMPAIGN_LEN?levelIdx+1:'end'};fadeTo(goHome);};
 $('bRetryLvl').onclick=()=>restart();
 $('bAgain').onclick=()=>{state='select';G=null;updateSelect();show('sSelect');};
 $('bRetry').onclick=()=>restart();$('bDeadQuit').onclick=()=>{state='title';G=null;show('sTitle');};

@@ -95,7 +95,7 @@ const LEGACY_BUILD={
    kit    = {v:1, guns:[{type,mag}|null ×2], active:0|1, melee:type|null, armour:{type,plates}|null,
              pool:{cal:rounds}, upg:{cal:upgrades}, lost:[{item,why}]}
    locker = {v:1, items:[{type,mag}|{type}|{armour,plates}], lost:[]}
-   run    = {v:1, mission:'c'+levelIdx, stage:'s0', entryKit, stageKit, t, stow?:[locker items set aside at a stage]}  (absent = not on a job)
+   run    = {v:1, mission:MISSIONS id, stage:one of its stages (start at entry), entryKit, stageKit, t, stow?:[locker items set aside at a stage]}  (absent = not on a job)
    Pure and DOM-free so the save tests and check.cjs can load it. Pool capacity is derived (capOf), never stored. */
 const KIT_V=1,LOCKER_CAP=12;
 const plainObj=o=>!!o&&typeof o==='object'&&!Array.isArray(o);
@@ -127,9 +127,12 @@ function normLocker(l){l.v=KIT_V;const lost=l.lost=Array.isArray(l.lost)?l.lost:
   if(plainObj(it)&&Object.prototype.hasOwnProperty.call(ARMOUR,it.armour)){it.plates=kitInt(it.plates,0,ARMOUR[it.armour].plates);return true;}
   lost.push({item:it,why:'unknown item'});return false;});
  return l;}
-/* a run that no longer makes sense (unknown mission, broken snapshots) is dropped = walked away from; the kit itself is untouched during a job */
-function normRun(r,nMissions,lost){const m=/^c(\d+)$/.exec(r.mission);if(!m||+m[1]>=nMissions||!kitShape(r.entryKit)||!kitShape(r.stageKit))return null;
- r.v=KIT_V;if(typeof r.stage!=='string')r.stage='s0';if(!Number.isFinite(r.t))r.t=0;normKit(r.entryKit);normKit(r.stageKit);
+/* a run that no longer makes sense (unknown mission, broken snapshots) is dropped = walked away from; the kit itself is untouched during a job.
+   stageOf(mission,stage) = {stage, keep} to resume at (keep:false = that stage is gone; restart from the entry kit), or null for an unknown mission (missionStage in missions.js).
+   Missing/'s0' (the pre-MISSIONS default) mean the start; any other stage the mission no longer has restarts it from its beginning (entryKit). */
+function normRun(r,stageOf,lost){const st=typeof r.mission==='string'?stageOf(r.mission,r.stage):null;if(!st||typeof st.stage!=='string'||!kitShape(r.entryKit)||!kitShape(r.stageKit))return null;
+ r.v=KIT_V;if(!Number.isFinite(r.t))r.t=0;normKit(r.entryKit);normKit(r.stageKit);
+ if(!st.keep){r.stageKit=kitClone(r.entryKit);delete r.stow;}r.stage=st.stage;
  if(Array.isArray(r.stow)){const t={items:r.stow,lost:lost||r.entryKit.lost};normLocker(t);r.stow=t.items;}else delete r.stow;return r;}
 /* first kit for a save that predates it: the old armory (arm.eq/owned/mags/vest) becomes kit + locker; arm itself is left as it was */
 function kitFromArm(a,charId){const k=kitNew(),l={v:KIT_V,items:[],lost:[]};a=plainObj(a)?a:{};
@@ -142,11 +145,11 @@ function kitFromArm(a,charId){const k=kitNew(),l={v:KIT_V,items:[],lost:[]};a=pl
   const s=k.guns.indexOf(null);if(s>=0){k.guns[s]={type:'revolver',mag:WD.revolver.mag};if(!k.guns[k.active])k.active=s;}else l.items.push({type:'revolver',mag:WD.revolver.mag});poolAdd(k,'357',3);}
  return {kit:k,locker:l};}
 /* boot-time per-character normalisation; called after the structural checks, never writes the save */
-function kitBoot(p,charId,nMissions){
+function kitBoot(p,charId,stageOf){
  if(p.kit==null){const m=kitFromArm(p.arm,charId);p.kit=m.kit;if(p.locker==null)p.locker=m.locker;}
  if(p.locker==null)p.locker={v:KIT_V,items:[],lost:[]};
  normKit(p.kit);normLocker(p.locker);
- if(p.run!=null&&!normRun(p.run,nMissions,p.locker.lost))delete p.run;}
+ if(p.run!=null&&!normRun(p.run,stageOf,p.locker.lost))delete p.run;}
 /* ================= RELOAD (W6c): timed top-up from the caliber pool with a Gears-style active window =================
    One press inside [ar0,ar1] seconds finishes at once; a press anywhere else jams (the rest takes AR_JAM× longer) and locks further tries. */
 const AR_JAM=1.4;
