@@ -318,7 +318,9 @@ heights (chest 1.2 m, waist 0.9 m), only `full` walls and **closed leaf doors
 of any kind** (`door_hollow`, `door_solid`, `door_metal`, `door_vault`) block
 a standing sightline. Open doorways, glass (sliders and fixed panes),
 counters, spandrels, planters and rails do not. Props never block. Floor
-steps never break line of sight (user decision Q9).
+steps never break line of sight (user decision Q9). All targets assume every
+leaf door is closed; an open leaf still blocks rays that cross its swung
+position (STYLE-LEVELS §3.4).
 
 | # | From → to | Length | Expected | Intent |
 |---|---|---:|---|---|

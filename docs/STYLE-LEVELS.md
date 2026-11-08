@@ -137,8 +137,16 @@ doorway with no leaf.
 - **Expected** is `clear` or `blocked` (no third value). For standing
   sight, only `full` walls and closed leaf doors of any kind block. Chest
   (1.2 m) walls block crouched sight only (eye 1.0 m); waist, rail and glass
-  never block sight. Open doorways never block. Props and floor steps never
-  block (user decision Q9).
+  never block sight. Props and floor steps never block (user decision Q9).
+- **Doors.** A door leaf is a physical object at whatever angle it is swung
+  to (W1b traces it). Opening a door clears the doorway, not the leaf: a
+  partly or fully open leaf still blocks any ray that crosses it. A doorway
+  with no leaf (`open`) never blocks. Unless a row says otherwise, sightline
+  targets are stated with every leaf door **closed**; a row that depends on
+  a door being open names the door and its state.
+- The stance (chest/crouched) and `door_vault` semantics above are W3's
+  research inputs for the future W1c contract gate; they do not change the
+  current legacy adapter.
 - Include **blocked-by-design** lines: they protect reveals and stop one
   position raking a whole floor.
 - **Intent** is mandatory. A sightline with no intent is not a target.
