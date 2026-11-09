@@ -114,11 +114,11 @@ const AI=(()=>{
     for(const s of[back,back*.66,back*.4]){const x=mx+ux*s,z=mz+uz*s;if(gr.at(x,z)!==mine||(gr.ok&&!gr.ok(x,z,.3)))continue;return{k:best,x,z,a:Math.atan2(mx-x,mz-z),p:bp};}}
    return null;}
  };
- const HUNT=30,AMB_HOLD=8,PSPD=3,rg={st:null,pt:null,m:0,gr:null};
+ const HUNT=30,AMB_HOLD=8,PSPD=3,rg={st:null,v:-1,pt:null,m:0,gr:null};
  // Room graph of the live stage (index.html wst); null on harnesses without one or on roomless stages.
  function graph(){if(typeof wst!=='function')return null;const st=wst(G);if(!st||!st.rooms||!st.rooms.length)return null;
-  // W1f damage appends/merges portals in place: rebuild when the portal set changes.
-  if(rg.st!==st||rg.pt!==st.portals||rg.m!==st.portals.length){rg.st=st;rg.pt=st.portals;rg.m=st.portals.length;rg.gr=rooms.graph(st);}return rg.gr;}
+  // Rebuild on stage swap, nav revision (glass/breach bumps g.navVer) or W1f portal append/merge.
+  const v=G.navVer|0;if(rg.st!==st||rg.v!==v||rg.pt!==st.portals||rg.m!==st.portals.length){rg.st=st;rg.v=v;rg.pt=st.portals;rg.m=st.portals.length;rg.gr=rooms.graph(st);}return rg.gr;}
  // Room belief follows e.bl: reseeded on new information, spread at player speed, and the agent's own room drains as it looks.
  function track(e,dt){const gr=graph(),b=e.bl;if(!gr||!b)return null;const T=G.T||0;
   if(e.rpB!==b||!e.rp||e.rp.length!==gr.n+1){e.rp=rooms.init(gr,b.x,b.z,e.rp);e.rpB=b;for(let a=Math.min(T-b.t,8);a>1e-3;a-=.25)rooms.diffuse(gr,e.rp,Math.min(.25,a),PSPD);}

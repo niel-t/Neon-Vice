@@ -142,6 +142,8 @@ function checkAI() {
       assert(gr.at(am.x, am.z) === mine && WORLD.clear(st, am.x, am.z, am.x, am.z, .3), `${def.name}: ambush ${JSON.stringify(am)} outside room ${mine} or blocked`);
     }
   });
+  { const g0 = AI.graph(); assert.equal(AI.graph(), g0, 'Graph cached'); g.navVer = (g.navVer|0)+1; assert.notEqual(AI.graph(), g0, 'navVer bump rebuilds the graph');
+    const g1 = AI.graph(); g.wst = null; assert.notEqual(AI.graph(), g1, 'Stage swap rebuilds the graph'); }
   delete ctx.wst; assert.equal(AI.graph(), null, 'No stage graph: room logic is inert');
   console.log('AI: belief, attenuation, callouts, seeded rng, per-target nav fields, room belief, hunt and ambush checked');
 }
