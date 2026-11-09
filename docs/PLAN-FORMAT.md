@@ -23,7 +23,7 @@ Coordinates are metres: x runs east and z runs south. Stage keys:
 | `bounds [x0,z0,x1,z1]` | Brief bounds. The emitted stage pads them by 0.5 m so that boundary walls fit. |
 | `combat`, `elevated`, `floorH` | Copied to the stage or extras. On an `elevated` stage, any edge open to nothing is an error ("drop edge"). |
 | `defaults` | `{shell:'cbs_ext', part:'cmu_hollow', inner:'stud_wood_gyp', h:2.8, surf:'concrete'}`, each overridable. |
-| `rooms` | `{id, rect:[x0,z0,x1,z1] \| poly, zone:'interior'\|'exterior', kind, name, in, part, shell, h, y, surf, roof, combat, sealed}` |
+| `rooms` | `{id, rect:[x0,z0,x1,z1] \| poly, zone:'interior'\|'exterior', kind, style, name, in, part, shell, h, y, surf, roof, combat, sealed}`. `kind` is the room's function from the closed set in docs/levels/STYLE.md §1 (`special` = no decor kit); a missing or unknown kind warns. `style` (`motel`\|`high_end`\|`deco`\|`marine`\|`commercial`) overrides the plan-level `style` and passes through to stage rooms for W4 decor kits. |
 | `edges` | Overrides: `{rooms:[a, b\|null\|[...]], none:true \| build, cov, h}`. `null` means the void outside the stage. |
 | `doors` | `{id, rooms:[a,b], at:[x,z], w, kind: <door build> \| 'open' \| 'glass', double, slide, hinge:'n'\|'s'\|'e'\|'w'\|'start'\|'end', y1}` |
 | `windows` | `{id, rooms:[a,b], at, w, y0=0.9, y1=2.1, build='glass_annealed_6', cov='glass'}` |

@@ -17,8 +17,8 @@ function tiny(tweak = s => s) {
     bounds: [0, 0, 12, 8], combat: true,
     rooms: [
       { id: 'yard', zone: 'exterior', kind: 'yard', rect: [0, 0, 12, 8] },
-      { id: 'a', in: 'yard', kind: 'room', rect: [2, 2, 6, 6] },
-      { id: 'b', in: 'yard', kind: 'room', rect: [6, 2, 10, 6] },
+      { id: 'a', in: 'yard', kind: 'bedroom', rect: [2, 2, 6, 6] },
+      { id: 'b', in: 'yard', kind: 'office', rect: [6, 2, 10, 6] },
     ],
     doors: [
       { id: 'd_a', rooms: ['a', 'yard'], at: [4, 6], w: 0.91, kind: 'door_solid', hinge: 'w' },
@@ -45,6 +45,7 @@ function checkPlans() {
   for (const [id, plan] of Object.entries(PLANS)) {
     assert.equal(plan.id, id);
     const r = reports[id] = ok(plan, id);
+    assert(!r.warnings.some(w => /STYLE\.md/.test(w)), `: ${r.warnings.filter(w => /STYLE\.md/.test(w)).join('; ')}`);
     for (const sid of Object.keys(plan.stages)) {
       const out = r.outs[sid].out;
       if (WORLD.version >= 3) {
@@ -57,6 +58,10 @@ function checkPlans() {
   }
 
   // tiny case: walls, door, sight with the door open and shut, reachability through the door
+  // STYLE.md §1 kinds and styles are warned, not errors
+  const kw = PLAN.validate(tiny(s => { s.rooms[1].kind = 'room'; s.rooms[2].style = 'bogus'; delete s.rooms[0].kind; return s; }), { raster: false }).warnings.join('\n');
+  assert(/kind room is not/.test(kw) && /style bogus/.test(kw) && /yard: no kind/.test(kw), `kind/style warnings missing:\n${kw}`);
+  assert.equal(PLAN.fromPlan({ ...tiny(), style: 'motel' }, 's').stage.rooms.find(r => r.id === 'a').style, 'motel', 'plan style passes through to stage rooms');
   const t = ok(tiny(), 'tiny');
   assert.deepEqual([...t.stages.s.sight.map(s => s.got)], ['blocked', 'clear']);
   const ts = t.outs.s.out.stage, by = id => ts.walls.find(w => w.open.some(o => o.id === id));

@@ -9,7 +9,7 @@ PLANS.motel=(()=>{
   for(let k=0;k<8;k++){
    const n=first+k,id=`r${n}`,x0=+(9.4+4.1*k).toFixed(3),x1=+(x0+4.1).toFixed(3),east=k%2===0;
    const bx=east?[+(x1-2.1).toFixed(3),x1]:[x0,+(x0+2.1).toFixed(3)];
-   rooms.push({id,name:`Room ${n}`,kind:'guest',rect:[x0,0,x1,7.6]},{id:`${id}_bath`,in:id,kind:'bath',part:'stud_wood_gyp',rect:[bx[0],0,bx[1],2.3]});
+   rooms.push({id,name:`Room ${n}`,kind:'bedroom',rect:[x0,0,x1,7.6]},{id:`${id}_bath`,in:id,kind:'bath',part:'stud_wood_gyp',rect:[bx[0],0,bx[1],2.3]});
    doors.push({id:`d${n}`,rooms:[id,front],at:[x0+3,7.6],w:GUEST_DOOR,kind:'door_solid',hinge:'w'},
     {id:`d${n}_bath`,rooms:[id,`${id}_bath`],at:[east?x1-.6:x0+.6,2.3],w:BATH_DOOR,kind:'door_hollow',hinge:east?'e':'w'});
    windows.push({id:`j${n}`,rooms:[id,front],at:[x0+1.4,7.6],w:1.4});
@@ -22,7 +22,7 @@ PLANS.motel=(()=>{
  for(let k=0;k<5;k++){
   const n=109+k,id=`r${n}`,z0=+(9.4+4.1*k).toFixed(3),z1=+(z0+4.1).toFixed(3),south=k%2===0&&k<4;
   const bz=south?[+(z1-2.1).toFixed(3),z1]:[z0,+(z0+2.1).toFixed(3)];
-  west.rooms.push({id,name:`Room ${n}`,kind:'guest',rect:[0,z0,7.6,z1]},{id:`${id}_bath`,in:id,kind:'bath',part:'stud_wood_gyp',rect:[0,bz[0],2.3,bz[1]]});
+  west.rooms.push({id,name:`Room ${n}`,kind:'bedroom',rect:[0,z0,7.6,z1]},{id:`${id}_bath`,in:id,kind:'bath',part:'stud_wood_gyp',rect:[0,bz[0],2.3,bz[1]]});
   west.doors.push({id:`d${n}`,rooms:[id,'walk_w'],at:[7.6,z0+3],w:GUEST_DOOR,kind:'door_solid',hinge:'n'},
    {id:`d${n}_bath`,rooms:[id,`${id}_bath`],at:[2.3,south?z1-.6:z0+.6],w:BATH_DOOR,kind:'door_hollow',hinge:south?'s':'n'});
   west.windows.push({id:`j${n}`,rooms:[id,'walk_w'],at:[7.6,z0+1.4],w:1.4});
@@ -38,17 +38,17 @@ PLANS.motel=(()=>{
  const range=(a,b)=>Array.from({length:b-a+1},(_,i)=>a+i);
  const guestArea=ids=>Object.fromEntries(ids.map(n=>[`r${n}`,31.2]));
  const guestEnt=(ids,two)=>Object.fromEntries(ids.map(n=>[`r${n}`,two.includes(n)?2:1]));
- return{id:'motel',v:1,name:'Motel Sunset',source:'docs/levels/motel-sunset.md',stages:{
+ return{id:'motel',v:1,name:'Motel Sunset',style:'motel',source:'docs/levels/motel-sunset.md',stages:{
   lot:{bounds:[-2,0,52,44],combat:true,defaults:{shell:'cbs_ext',part:'cmu_hollow',h:2.8},
    rooms:[
     {id:'alley_w',zone:'exterior',kind:'alley',rect:[-2,0,0,31.8]},
     {id:'alley_e',zone:'exterior',kind:'alley',rect:[50,0,52,32]},
     {id:'sidewalk',zone:'exterior',kind:'street',poly:[[-2,31.8],[41,31.8],[41,32],[52,32],[52,34],[-2,34]]},
     {id:'road',zone:'exterior',kind:'road',rect:[-2,34,52,44],surf:'asphalt'},
-    {id:'laundry',name:'Laundry',kind:'service',rect:[0,0,4.5,7.6]},
-    {id:'maint',name:'Maintenance',kind:'service',rect:[4.5,0,9.4,7.6]},
+    {id:'laundry',name:'Laundry',kind:'utility',rect:[0,0,4.5,7.6]},
+    {id:'maint',name:'Maintenance',kind:'workshop',rect:[4.5,0,9.4,7.6]},
     ...lotRear.rooms,
-    {id:'hk',name:'Housekeeping',kind:'service',rect:[42.2,0,45,7.6]},
+    {id:'hk',name:'Housekeeping',kind:'utility',rect:[42.2,0,45,7.6]},
     {id:'walk_r',name:'Rear walkway',zone:'exterior',kind:'walk',rect:[0,7.6,45,9.4],roof:true},
     {id:'walk_w',name:'West walkway',zone:'exterior',kind:'walk',poly:[[7.6,9.4],[9.4,9.4],[9.4,31.8],[0,31.8],[0,29.9],[7.6,29.9]],roof:true},
     ...west.rooms,
@@ -57,15 +57,15 @@ PLANS.motel=(()=>{
     {id:'pool',name:'Pool court',zone:'exterior',kind:'court',in:'parking',rect:[26.5,10.6,41,20],surf:'tile'},
     {id:'island',name:'Landscape island',zone:'exterior',kind:'planter',in:'parking',rect:[21,20,27,25.5],y:.3,surf:'grass'},
     {id:'pc',name:'Porte-cochère',zone:'exterior',kind:'canopy',in:'parking',rect:[36,26,41,31.8],roof:true},
-    {id:'ice',name:'Ice / vending',kind:'service',rect:[41,9.4,43.6,12.4],shell:'cmu_hollow'},
-    {id:'chase',name:'Pool plant chase',kind:'shaft',sealed:true,rect:[41,12.4,43.6,14],shell:'cmu_hollow'},
+    {id:'ice',name:'Ice / vending',kind:'special',rect:[41,9.4,43.6,12.4],shell:'cmu_hollow'},
+    {id:'chase',name:'Pool plant chase',kind:'core',sealed:true,rect:[41,12.4,43.6,14],shell:'cmu_hollow'},
     {id:'st_e',name:'East stair',zone:'exterior',kind:'stair',rect:[43.6,9.4,45,14]},
-    {id:'pump',name:'Pump room',kind:'service',rect:[41,14,45,20],shell:'cmu_hollow'},
+    {id:'pump',name:'Pump room',kind:'plant',rect:[41,14,45,20],shell:'cmu_hollow'},
     {id:'yard',name:'Service yard',zone:'exterior',kind:'yard',rect:[45,0,50,20]},
-    {id:'mgr_bed',name:"Manager's bedroom",kind:'apartment',rect:[41,20,44,23.6]},
+    {id:'mgr_bed',name:"Manager's bedroom",kind:'bedroom',rect:[41,20,44,23.6]},
     {id:'mgr_bath',name:"Manager's bath",kind:'bath',rect:[41,23.6,44,26]},
-    {id:'mgr_liv',name:"Manager's living",kind:'apartment',rect:[44,20,50,26]},
-    {id:'lobby',name:'Office / lobby',kind:'office',rect:[41,26,46.5,32]},
+    {id:'mgr_liv',name:"Manager's living",kind:'living',rect:[44,20,50,26]},
+    {id:'lobby',name:'Office / lobby',kind:'reception',rect:[41,26,46.5,32]},
     {id:'bo',name:'Back office',kind:'office',rect:[46.5,26,50,32]},
    ],
    edges:[

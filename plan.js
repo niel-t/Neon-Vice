@@ -6,6 +6,10 @@ const PLAN=(()=>{
  const EPS=1e-6,TOL=1e-4,SNAP=1e3,PAD=.5;
  const STANCE={standing:[1.6,1.8],crouched:[1,1.1]};
  const SPAWN_KINDS=new Set(['player','enemy','civ','item','exit','arrive']),OBJ_KINDS=new Set(['target','use','exit']),STAIR_R=.65,MAX_ROOMS=255;
+ // docs/levels/STYLE.md §1 (W3 R3): room function kinds and finish styles; decor kits key on DECOR.kits[kind][style]
+ const ROOM_KINDS=new Set(['living','dining','kitchen','bedroom','bath','closet','reception','lounge','assembly','retail','office','secure','control','studio','workshop','staff',
+  'utility','store','plant','circulation','stair','core','walk','terrace','court','lot','street','road','alley','yard','pier','planter','canopy','roof','special']);
+ const STYLES=new Set(['motel','high_end','deco','marine','commercial']);
  const W=()=>{if(typeof WORLD==='undefined'||!WORLD.compile)throw new Error('PLAN needs WORLD v2 loaded first');return WORLD;};
  const snap=v=>Math.round(v*SNAP)/SNAP;
  const key=p=>`${snap(p[0])},${snap(p[1])}`;
@@ -368,7 +372,7 @@ const PLAN=(()=>{
    return{id:s.id,kind:s.kind,x:at[0],z:at[1],room:roomAt(...at),...(s.a!==undefined?{a:s.a}:{}),...(s.role?{role:s.role}:{})};});
   const outRooms=[...rooms.values()].flatMap(r=>SP.pieces.get(r.id).map(p=>{const o={id:p.id,poly:p.poly,kind:r.kind??(r.zone==='interior'?'room':'yard'),zone:r.zone,roof:r.roof??r.zone==='interior'};
    if(p.id!==r.id){claim(p.id,`${where} room ${r.id} piece`);o.parent=r.id;}
-   if(r.name)o.name=r.name;if(r.in!==undefined)o.in=r.in;if(r.combat!==undefined)o.combat=r.combat;if(r.y)o.y=r.y;return o;}));
+   if(r.name)o.name=r.name;{const sty=r.style??plan.style;if(sty!==undefined)o.style=sty;}if(r.in!==undefined)o.in=r.in;if(r.combat!==undefined)o.combat=r.combat;if(r.y)o.y=r.y;return o;}));
   // portals carry stage pieces in a/b and plan rooms in ra/rb
   for(const p of portals){if(p.ra!==undefined)continue;
    let q1,q2;if(p.seg){const [s,t]=p.seg,l=dist(s,t),n=[-(t[1]-s[1])/l*2e-3,(t[0]-s[0])/l*2e-3],m=[(s[0]+t[0])/2,(s[1]+t[1])/2];q1=[m[0]+n[0],m[1]+n[1]];q2=[m[0]-n[0],m[1]-n[1]];}
@@ -497,6 +501,8 @@ const PLAN=(()=>{
    if(st.panels.length>3000)err(`${where}: ${st.panels.length} panels exceeds the 3k stage budget`);
    const g=roomGraph(out),T=out.extras.targets;
    for(const r of out.info.rooms.values()){
+    if(r.kind===undefined)warn(`${where} room ${r.id}: no kind (STYLE.md §1)`);else if(!ROOM_KINDS.has(r.kind))warn(`${where} room ${r.id}: kind ${r.kind} is not a STYLE.md §1 kind`);
+    const sty=r.style??plan.style;if(sty!==undefined&&!STYLES.has(sty))warn(`${where} room ${r.id}: style ${sty} is not a STYLE.md §1 style`);
     if(!r.sealed&&!g.get(r.id).length&&!(r.kids.length&&entrances(out,r.id).length))err(`${where} room ${r.id}: no walkable entrance (mark sealed:true for shafts)`);}
    for(const e of out.info.edges){if(e.wall)continue;const [a,b]=[e.L,e.R].map(id=>id&&out.info.rooms.get(id));
     if((a?.zone==='interior'&&!b)||(b?.zone==='interior'&&!a))warn(`${where}: interior room ${(a||b).id} is open to the void along ${key(e.a)}–${key(e.b)}`);
@@ -548,5 +554,5 @@ const PLAN=(()=>{
   }
   report.outs=outs;return report;
  }
- return Object.freeze({version:1,derive,fromPlan,validate,compileLocated,raster,roomGraph,pathRooms,entrances,sightTest,STANCE,area,inside});
+ return Object.freeze({version:1,derive,fromPlan,validate,compileLocated,raster,roomGraph,pathRooms,entrances,sightTest,STANCE,ROOM_KINDS,STYLES,area,inside});
 })();
