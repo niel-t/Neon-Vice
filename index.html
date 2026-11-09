@@ -3056,11 +3056,11 @@ function drawMenuDyn(B,P){B.reset();P.reset();drawRide(B,-4.8,-1.5,1.7,0.3,state
  if(menuFlash>0&&menuChars[2].muzzle){const m=menuChars[2].muzzle;B.box(TRS(m[0],m[1],m[2],rnd(0,TAU),0.3,0.22,0.3),[1,0.95,0.6],true);}
  for(const p of menuParts){if(p.t==='c'){IBlo.r=0;IBlo.tp=0;drawBill(IBlo,A.mul(A.mul(A.T(p.x,p.y,p.z),A.RY(p.ph+menuT)),A.RX(Math.sin(menuT*2+p.ph)*0.5)));}else B.box(A.mul(A.T(p.x,p.y,p.z),A.S(p.s,p.s,p.s)),p.c,p.t==='f'||p.t==='e');}}
 
-/* W2b dev preview: ?planview=<plan>/<stage>[&at=x,z][&h=m] draws a plan stage via MESH over the menu (no gameplay) */
+/* W2b dev preview: ?planview=<plan>/<stage>[&at=x,z][&h=m][&cut=0] draws a plan stage via MESH over the menu (no gameplay) */
 const PLANV=(()=>{const q=new URLSearchParams(location.search),v=q.get('planview');if(!v)return null;const [pid,sid]=v.split('/'),at=(q.get('at')||'').split(',').map(Number);
- return{pid,sid,at:at.length===2&&at.every(Number.isFinite)?at:null,h:+q.get('h')||26,B:null};})();
+ return{pid,sid,at:at.length===2&&at.every(Number.isFinite)?at:null,h:+q.get('h')||26,cut:q.get('cut')==='0'?false:undefined,B:null};})();
 function planViewBuild(){const P=PLANV,o=PLAN.fromPlan(PLANS[P.pid],P.sid),st=WORLD.compile(o.stage);P.B=new Batch();
- const r=MESH.build(st,{uv:t=>TUV[t],white:WUV,tint:surfTint,pick:surfPick,finish:o.extras.finish},P.B);P.B.upload(true);
+ const r=MESH.build(st,{uv:t=>TUV[t],white:WUV,tint:surfTint,pick:surfPick,finish:o.extras.finish,cut:P.cut},P.B);P.B.upload(true);
  if(!P.at){let x0=Infinity,z0=Infinity,x1=-Infinity,z1=-Infinity;for(const m of st.rooms)for(const [x,z] of m.poly){x0=Math.min(x0,x);z0=Math.min(z0,z);x1=Math.max(x1,x);z1=Math.max(z1,z);}P.at=[(x0+x1)/2,(z0+z1)/2];}
  window.planViewInfo={verts:r.verts,ms:r.ms,rooms:st.rooms.length};}
 function render(){if(contextLost||gl.isContextLost())return;PS2C.beginFrame();resize();const asp=vw/vh;let fovy=asp>=1?50*DEG:Math.min(2*Math.atan(Math.tan(25*DEG)*1.25/asp),82*DEG);if(G&&G.cine&&state==='play')fovy=asp>=1?40*DEG:62*DEG;

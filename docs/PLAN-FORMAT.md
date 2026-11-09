@@ -202,12 +202,19 @@ DOM/GL-free and deterministic, and returns `{verts, tris, floorArea, ms, prof}`.
 `buildStatic`; the gameplay loader branch for plan stages lands with W1e's factory bridge.
 
 `opts`: `uv(tile)` (required, e.g. `t => TUV[t]`), `white` (UV rect for flat colour, `WUV`), `tint(x,z)` (`surfTint`),
-`pick(tile,x,z,salt) -> [tile, D8 index]` (`surfPick`), `finish` (`extras.finish`).
+`pick(tile,x,z,salt) -> [tile, D8 index]` (`surfPick`), `finish` (`extras.finish`), `cut` (cutaway below;
+`false` = full walls, or `{h=1.2, eye=8, back=4.6}`).
 
 - **Walls**: one face per panel edge over its active cell spans; faces hidden by a collinear, opposite-facing neighbour
   edge are cut away. Faces are split at whole metres along the wall and where they cross a room outline, so tiles
   stay 1 m and each piece takes the room byte and finish of the room it looks into. Window panels draw glass
   (tile 20); rail covers draw flat.
+- **Cutaway** (user decision): sight, ballistics and plan data keep the real wall heights; only the render cuts.
+  The game camera has a fixed yaw (looking -z from `back` m behind and `eye` m above the player). A wall panel
+  renders at `cut.h` when, for some camera over a playable point (inside a stage room), its part above `cut.h`
+  would hide playable floor; otherwise (back walls and shells with only void behind them) it stays full height.
+  Headers over doors in cut panels and door lintels drop out; jambs stop at `cut.h`. `?planview=...&cut=0` previews
+  full walls.
 - **Caps and soffits**: room byte 0, so wall tops stay visible under room fog. Glass gets none.
 - **Door casings**: jamb and head trims on both faces of door, double and slide openings.
 - **Props**: coloured prisms by build (placeholder until W2f/W13 decor).
@@ -232,6 +239,7 @@ DOM/GL-free and deterministic, and returns `{verts, tris, floorArea, ms, prof}`.
 - room byte constant per triangle and equal to `roomAt` on floors;
 - floor area equal to room area;
 - no wall face inside a door opening;
+- the cutaway (void-backed wall stays full, occluding wall and door casing cut);
 - determinism, the ≤ 200k vertex budget and the finish overrides and validation.
 
 Run it with `MESH_TIMING=1` to print per-section timings.

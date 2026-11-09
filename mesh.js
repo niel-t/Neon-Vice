@@ -109,9 +109,26 @@ const MESH=(()=>{
   const quadUV=(uv,s,t,k)=>{const m=D8[k||0],a=s-0.5,b=t-0.5;return[uv[0]+(m[0]*a+m[1]*b+0.5)*(uv[2]-uv[0]),uv[1]+(m[2]*a+m[3]*b+0.5)*(uv[3]-uv[1])];};
 
   // ---- walls ------------------------------------------------------------------------------------
-  const P=st.panels,spans=P.map((p,i)=>{const out=[];for(let c=p.c0;c<p.c1;c++){const k=st.cells[c];if(!k.active)continue;const l=out[out.length-1];
+  const P=st.panels,spans0=P.map((p,i)=>{const out=[];for(let c=p.c0;c<p.c1;c++){const k=st.cells[c];if(!k.active)continue;const l=out[out.length-1];
    if(l&&Math.abs(l[1]-k.y0)<1e-9)l[1]=k.y1;else out.push([k.y0,k.y1]);}return out;});
   const fullH=P.map(p=>{let h=0;for(let c=p.c0;c<p.c1;c++)h=Math.max(h,st.cells[c].y1);return h;});
+  // render cutaway (sight/ballistics keep the full walls): the fixed game camera looks -z from `back` m behind and `eye` m above
+  // the player. A panel drops to cut.h when, for some camera over a playable point, its part above cut.h hides playable floor;
+  // panels that only ever hide void (back walls, outer shells) stay full height. opts.cut=false renders full walls.
+  const CUT=opts.cut===false?null:Object.assign({h:1.2,eye:8,back:4.6},opts.cut),pmemo=new Map();
+  const playable=(x,z)=>{const k=Math.round(x*8)*65536+Math.round(z*8);let v=pmemo.get(k);if(v===undefined)pmemo.set(k,v=!!roomAt(x,z));return v;};
+  // camera ground positions d m from the wall (player = camera - back in z), then the ground the wall hides between the
+  // rays over cut.h and over H, walked in 0.25 m steps (H >= eye hides everything beyond; capped at CUT_FAR)
+  const CUT_DIRS=[-50,-25,0,25,50].map(a=>[Math.sin(a*Math.PI/180),-Math.cos(a*Math.PI/180)]),CUT_L=[],CUT_FAR=16;for(let d=0.25;d<=10;d+=0.5)CUT_L.push(d);
+  const occludes=(p,H)=>{const L=Math.hypot(p.bx-p.ax,p.bz-p.az),n=Math.max(1,Math.ceil(L/0.5));
+   for(let k=0;k<n;k++){const f=(k+0.5)/n,sx=p.ax+(p.bx-p.ax)*f,sz=p.az+(p.bz-p.az)*f;
+    for(const [ux,uz] of CUT_DIRS)for(const d of CUT_L){const cx=sx-ux*d,cz=sz-uz*d;if(!playable(cx,cz-CUT.back))continue;
+     const t0=d*CUT.h/(CUT.eye-CUT.h),t1=H>=CUT.eye-1e-6?CUT_FAR:Math.min(CUT_FAR,d*H/(CUT.eye-H));
+     for(let t=t0;t<=t1+1e-9;t+=0.25){const q=p.half+t;if(playable(sx+ux*q,sz+uz*q))return true;}}}
+   return false;};
+  const cutAt=P.map((p,i)=>CUT&&fullH[i]>CUT.h+1e-6&&occludes(p,fullH[i])?CUT.h:Infinity);
+  const spans=spans0.map((sp,i)=>sp.filter(s=>s[0]<cutAt[i]-1e-6).map(s=>[s[0],Math.min(s[1],cutAt[i])]));
+  const topH=P.map((p,i)=>Math.min(fullH[i],cutAt[i]));
   const edges=[],eh=hash();
   P.forEach((p,pi)=>{const poly=ccw(p.poly);for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length],L=Math.hypot(b[0]-a[0],b[1]-a[1]);if(L<1e-6)continue;
    const e={pi,a,b,L,ux:(b[0]-a[0])/L,uz:(b[1]-a[1])/L};e.nx=e.uz;e.nz=-e.ux;edges.push(e);eh.add(e,Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[0],b[0]),Math.max(a[1],b[1]));}});
@@ -152,7 +169,7 @@ const MESH=(()=>{
   // caps (room 0: visible under fog) and soffits; glass has neither
   P.forEach((p,i)=>{if(p.kind==='window')return;const poly=ccw(p.poly);
    for(const [y0,y1] of spans[i]){
-    const top=Math.abs(y1-fullH[i])<1e-6,c=p.cov==='rail'?RAIL:top?CAP:SILL;
+    const top=Math.abs(y1-topH[i])<1e-6,c=p.cov==='rail'?RAIL:top?CAP:SILL;
     emit(0,poly.map(q=>[q[0],y1,q[1]]),[0,1,0],poly.map(()=>[white[0],white[1]]),poly.map(()=>c));
     if(y0>1e-6){const rp=poly.slice().reverse();emit(0,rp.map(q=>[q[0],y0,q[1]]),[0,-1,0],rp.map(()=>[white[0],white[1]]),rp.map(()=>SILL));}
    }});
@@ -166,10 +183,16 @@ const MESH=(()=>{
    for(let i=0;i<4;i++){const a=ring[i],b=ring[(i+1)%4],L=Math.hypot(b[0]-a[0],b[1]-a[1]);
     emit(room,[[a[0],y0,a[1]],[b[0],y0,b[1]],[b[0],y1,b[1]],[a[0],y1,a[1]]],[(b[1]-a[1])/L,0,-(b[0]-a[0])/L],[w,w,w,w],[mul(col,0.8),mul(col,0.8),col,col]);}
   };
+  const byRef=new Map();P.forEach((p,i)=>{if(!byRef.has(p.ref))byRef.set(p.ref,[]);byRef.get(p.ref).push(i);});
+  const cutOver=(ref,m)=>{let h=Infinity;for(const i of byRef.get(ref)||[]){const p=P[i],L=Math.hypot(p.bx-p.ax,p.bz-p.az)||1,s=((m[0]-p.ax)*(p.bx-p.ax)+(m[1]-p.az)*(p.bz-p.az))/L;
+   if(s>-1e-6&&s<L+1e-6&&Math.abs(cross((p.bx-p.ax)/L,(p.bz-p.az)/L,m[0]-p.ax,m[1]-p.az))<p.half+0.01)h=Math.min(h,cutAt[i]);}return h;};
+  // full-height openings have no panel across them: test a virtual panel over the opening itself
+  const cutOpen=(o,a,b,half)=>{const ch=cutOver(o.wall,[(a[0]+b[0])/2,(a[1]+b[1])/2]);if(ch<Infinity||!CUT||o.y1+0.07<=CUT.h+1e-6)return ch;
+   return occludes({ax:a[0],az:a[1],bx:b[0],bz:b[1],half},o.y1+0.07)?CUT.h:Infinity;};
   for(const o of st.openings){if(!['door','double','slide'].includes(o.kind))continue;const half=halfOf.get(o.wall)??0.1;
-   for(const [a,b] of o.segments){const L=Math.hypot(b[0]-a[0],b[1]-a[1]),u=[(b[0]-a[0])/L,(b[1]-a[1])/L],n=[-u[1],u[0]];
+   for(const [a,b] of o.segments){const L=Math.hypot(b[0]-a[0],b[1]-a[1]),u=[(b[0]-a[0])/L,(b[1]-a[1])/L],n=[-u[1],u[0]],ch=cutOpen(o,a,b,half),jt=Math.min(o.y1+0.07,ch);
     for(const sgn of [1,-1]){const off=half+0.015,c=t=>[a[0]+u[0]*t+n[0]*off*sgn,a[1]+u[1]*t+n[1]*off*sgn],r=roomAt(a[0]+u[0]*L/2+n[0]*(half+0.05)*sgn,a[1]+u[1]*L/2+n[1]*(half+0.05)*sgn),rb=byte(r);
-     box(c(-0.035),u,0.035,0.015,0,o.y1+0.07,CASING,rb);box(c(L+0.035),u,0.035,0.015,0,o.y1+0.07,CASING,rb);box(c(L/2),u,L/2,0.015,o.y1,o.y1+0.07,CASING,rb);}}}
+     box(c(-0.035),u,0.035,0.015,0,jt,CASING,rb);box(c(L+0.035),u,0.035,0.015,0,jt,CASING,rb);if(o.y1<ch)box(c(L/2),u,L/2,0.015,o.y1,jt,CASING,rb);}}}
 
   // ---- props: prisms --------------------------------------------------------------------------
   for(const p of st.props){const poly=ccw(p.poly),col=PROP_COL.find(([re])=>re.test(p.build))[1],c=poly.reduce((s,q)=>[s[0]+q[0]/poly.length,s[1]+q[1]/poly.length],[0,0]),rb=byte(roomAt(...c)),w=[white[0],white[1]];
