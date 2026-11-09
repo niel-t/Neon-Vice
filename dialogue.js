@@ -70,7 +70,7 @@ const MC_DEBRIEF=[["The TV says the Sunset Motel had a gas leak. I love the TV; 
  ["Lex is going through his couch cushions for quarters now. I hear it's a big couch, but not that big."],
  ["Lex hit your ride and you hit his mall, so I'm calling it even. He's calling his insurance company."],
  ["The singer sang every word, God bless him. The album's still terrible, but that was never your job."],
- ["Lex is down there with the sharks he paid for, and the Royal Flush is tied up in my harbour. Look at her."]];
+ ["Lex is down there with the sharks he paid for, and the Royal Flush is riding at anchor off my terrace. Look at her."]];
 const DEB_STYLE={clean:[["Not a scratch on you, and the motel manager slept right through it. I do like a quiet worker."],["Flamingo closed without a single siren, and the people at the bar finished their drinks. That's craft."],["Coral Tower looks like nothing happened up there, which is the nicest thing anybody's done for me all year."]],
  gore:[["The news doesn't have a word for what you did to that motel. I do, but I'm not saying it at dinner."],["They'll be scrubbing Flamingo's walls until spring, and good. Let them smell the bleach and think of me."],["Coral Tower needs a new lobby, new carpets and probably a priest. Moreau doesn't need anything now."]],
  ruthless:[["Every man in that motel got a personal goodbye from you. Thorough. I'd hate to be on your Christmas list."],["You finished the VIP room face to face, one at a time. The Family noticed, and so did I."],["Moreau begged, I'm told. I won't ask how you got the watch off him, and please don't tell me."]],
