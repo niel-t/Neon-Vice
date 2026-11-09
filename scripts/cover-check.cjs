@@ -14,10 +14,10 @@ function grid(rows) {
 
 function checkCover() {
   const calls = [];
-  let losOK = () => true;
+  let losOK = () => true, shotBlock = () => false, doorBlock = () => null;
   const sb = { G: null, WORLD: {
     sight: (...a) => (calls.push(['sight', ...a]), { clear: true }),
-    cell: { los: (g, ...a) => (calls.push(['los', ...a]), losOK(...a)) },
+    cell: { los: (g, ...a) => (calls.push(['los', ...a]), losOK(...a)), rayBlock: (g, cx, cz, cover) => shotBlock(cx, cz, cover), doorHit: (g, ...a) => doorBlock(...a) },
   } };
   const { STANCE, coverFind, coverStep, COVER_END,   COVER_PEEK, stanceSight, coverShotY, playerSeenBy, playerHitPoints, playerAimPoint } = vm.runInNewContext(`${readFileSync(resolve(__dirname, '..', 'cover.js'), 'utf8')}
       ;({STANCE, coverFind, coverStep, COVER_END, COVER_PEEK, stanceSight, coverShotY, playerSeenBy, playerHitPoints, playerAimPoint})`, sb, { timeout: 1000 });
@@ -94,13 +94,23 @@ function checkCover() {
   const en = { x: 19.3, z: 7.22 };
   sb.G = { player: lp };
   losOK = (x0, z0, x1, z1) => !(x1 === lp.x && z1 === lp.z); // the wall hides the body only
+  shotBlock = (cx, cz) => cx === 21 && cz === 6; // wall cell between the enemy and the body
   const hp = playerHitPoints(lp);
   assert.equal(hp.length, 2, 'A leaning player has a lean hit volume');
   assert.ok(hp.some(h => Math.hypot(h.x - 22.3, h.z - 7.22) < 1e-9 && h.r > 0.1), 'The lean volume sits at the lean point');
   assert.equal(playerSeenBy(en), true, 'The enemy sees the lean point');
   assert.equal(playerAimPoint(en), lp.eye, 'An enemy that sees only the lean point aims at it');
-  losOK = () => true;
+  losOK = () => true; shotBlock = () => false;
   assert.equal(playerAimPoint(en), lp, 'An enemy with the body in view aims at the body');
+  // Astra repro 2 (Motel Sunset fridge): body (29.7,2.7), lean (29.7,3.22), enemy (32.7,3.22). Sight ignores the fridge, bullets don't.
+  const fp = { x: 29.7, z: 2.7, r: 0.28, eye: { x: 29.7, z: 3.22, y: 1.6 }, cs: { lean: true } };
+  sb.G = { player: fp };
+  shotBlock = (cx, cz, cover) => !!cover && cx === 31 && cz === 2; // fridge: bullet-stopping furniture only
+  assert.equal(playerAimPoint({ x: 32.7, z: 3.22 }), fp.eye, 'Tall furniture shielding the body sends aim to the lean point');
+  shotBlock = () => false;
+  doorBlock = (x0, z0, x1, z1) => (x1 === fp.x && z1 === fp.z ? { x: 31, z: 3 } : null); // an open leaf shields the body only
+  assert.equal(playerAimPoint({ x: 32.7, z: 3.22 }), fp.eye, 'A door shielding the body sends aim to the lean point');
+  doorBlock = () => null; sb.G = { player: lp };
   assert.deepEqual(playerHitPoints({ x: 1, z: 1, r: 0.28, eye: { x: 1, z: 1, y: 1 }, cs: { crouch: true } }).length, 1, 'No lean, no extra volume');
   assert.equal(playerHitPoints({ x: 1, z: 1, r: 0.28 }).length, 1, 'Harness players without eye/cs keep one volume');
   sb.G = { player: { x: 1, z: 1, r: 0.28 } };
