@@ -184,7 +184,7 @@ function checkFog(WORLD, LEVELS) {
   assert.equal(FOG.level(d.f, 0), 2, 'Eye room is live');
   assert.equal(FOG.level(d.f, 1), 0, 'Closed door hides the room behind it');
   assert(FOG.hidden(d.f, 10, 7) && !FOG.hidden(d.f, 1, 1), 'Dynamic objects hide only in the unseen room');
-  assert(d.f.rays > 0 && d.f.rays <= FOG.RAYS_ROOM, `Ray cap per candidate room (${d.f.rays})`);
+  assert(d.f.rays > 0 && d.f.rays <= FOG.RAYS_ROOM + 3, `Ray cap per candidate room (${d.f.rays})`);
   door.doors[0].th = Math.PI/2; d.tick(0.05);
   assert.equal(FOG.level(d.f, 1), 0, 'Reveal runs at 10Hz');
   assert(d.tick(0.05), 'Opened door: visible portal reveals');
@@ -207,6 +207,29 @@ function checkFog(WORLD, LEVELS) {
   assert.equal(FOG.level(arch.f, 1), 2, 'Arch reveals');
   const hole = run(WORLD.compile(stage(null, { portals: [{ id: 'hole', a: 'left', b: 'right', seg: [[6,1],[6,3]] }] })), 'keep'); hole.tick(0);
   assert.equal(FOG.level(hole.f, 1), 2, 'Hole reveals');
+  // Two entrances, only the later one in view: a failed first entrance must not end the room's test.
+  const two = WORLD.compile(stage(DOOR, { walls: [{ id: 'wall', path: [[6,0],[6,8]], build: 'cbs_ext', cov: 'full', h: 2.8,
+    open: [{ id: 'entry', s0: 1.55, s1: 2.45, y0: 0, y1: 2.2, ...DOOR }, { id: 'arch', s0: 5.55, s1: 6.45, y0: 0, y1: 2.2, ...ARCH }] }],
+    portals: [{ id: 'link', a: 'left', b: 'right', open: 'entry' }, { id: 'link2', a: 'left', b: 'right', open: 'arch' }] }));
+  const tw = run(two, 'keep', [3,6]); tw.tick(0);
+  assert.equal(FOG.level(tw.f, 1), 2, 'Every entrance is tried: a closed first door does not hide the open second');
+  // Sight with no portal in the graph (low barrier, legacy glass): the sight-only pass reveals.
+  const open = run(WORLD.compile(stage(null, { portals: [] })), 'keep'); open.tick(0);
+  assert.equal(FOG.level(open.f, 1), 2, 'Sight-only link reveals');
+  // A guard with a firing line is never hidden, even if no static target is in view.
+  const narrow = run(door, 'keep', [3,2]); door.doors[0].th = Math.PI/2;
+  const leg2 = FOG.create(WORLD, door, 'keep'); leg2.tx.fill(-1000);
+  FOG.tick(leg2, 0, 3, 2, narrow.see, new Float64Array([11, 2]), 1);
+  assert(!FOG.hidden(leg2, 11, 2), 'Dynamic point with clear sight reveals its room');
+  door.doors[0].th = 0;
+  // Breach after fog creation: the replaced graph is picked up, seen state is kept.
+  const wallSt = (portals = []) => WORLD.compile({ ...stage(null, { portals }), walls: [{ id: 'div', path: [[6,0],[6,8]], build: 'particle_divider', cov: 'full', h: 2.8 }] });
+  const br = wallSt(), bf = run(br, 'keep'); bf.tick(0);
+  assert.equal(FOG.level(bf.f, 1), 0, 'Divider hides');
+  for (let y = .25; y < 2.8; y += .5) for (const h of WORLD.trace(br,3,4,9,4,y).filter(o => o.panel !== null)) WORLD.damage(br,h.panel,h.cell,br.cells[h.cell].hp,'bullet');
+  assert(WORLD.sight(br,3,4,9,4).clear && br.portals.length > 0, 'Breach opens sight');
+  for (let i = 0; i < 3; i++) bf.tick();
+  assert.equal(FOG.level(bf.f, 1), 2, 'Breach after fog creation reveals');
   const far = run(WORLD.compile(stage(ARCH)), 'keep', [3,7.9]); far.tick(0);
   assert.equal(FOG.level(far.f, 1), 2, 'Oblique view through an opening still reveals');
   // Pieces of one parent room reveal together; a third room behind a closed door stays dark.
@@ -245,6 +268,7 @@ function checkFog(WORLD, LEVELS) {
     let worst = 0;
     for (let i = 0; i < st.roomTiles.length; i += 7) if (st.roomTiles[i] >= 0) {
       FOG.tick(f, FOG.TICK, i%q.W+.5, Math.floor(i/q.W)+.5, fogSee); worst = Math.max(worst, f.rays);
+      assert(!f.unk.some(Boolean), `${def.name}: no room starved of rays`);
       assert.equal(FOG.level(f, st.roomTiles[i]), 2, `${def.name}: eye room is live`);
     }
     assert(worst <= FOG.RAYS_TICK, `${def.name}: ${worst} rays per tick`);
