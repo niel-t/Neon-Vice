@@ -8,6 +8,46 @@ function checkCompile() {
   const stage = (walls = [], props = []) => ({ id: 'test', bounds: [0,0,20,20], combat: true, ground, walls, props });
   const close = (a,b,eps=1e-8) => assert(Math.abs(a-b)<=eps, `${a} != ${b}`);
   const full = W.compile(stage([wall]));
+  const decor = [{id:'partition',kind:'sign',at:[10,10],size:[2,2],h:2,col:[.5,.6,.7],tile:255}];
+  const decorated = W.compile({...stage([wall]),decor});
+  assert(Object.isFrozen(decorated.decor) && Object.isFrozen(decorated.decor[0].col));
+  assert.equal(JSON.stringify(decorated.decor),JSON.stringify([{...decor[0],rot:0,y:0}]));
+  decor[0].col[0]=1;
+  assert.equal(decorated.decor[0].col[0],.5, 'Decor owns copied render data');
+  assert.equal(decorated.cells.length,full.cells.length);
+  assert.equal(decorated.panels.length,full.panels.length);
+  assert.equal(decorated.props.length,0);
+  assert.equal(decorated.buckets.size,full.buckets.size);
+  const empty = W.compile(stage()), visibleDecor=W.compile({...stage(),decor:decorated.decor});
+  assert.equal(empty.decor.length,0);
+  assert(W.sight(visibleDecor,5,10,15,10).clear);
+  assert.equal(W.trace(visibleDecor,5,10,15,10).length,0);
+  assert(W.clear(visibleDecor,5,10,15,10,.3));
+  assert(!W.move(visibleDecor,5,10,.3,10,0).hit);
+  assert.equal(W.coverAt(visibleDecor,10,10,1,0,2).length,0);
+  const plainNav=W.nav(empty),decorNav=W.nav(visibleDecor);
+  assert.equal(W.dist(plainNav,W.flow(plainNav,[5,10]),15,10),W.dist(decorNav,W.flow(decorNav,[5,10]),15,10));
+  for(let i=0;i<plainNav.W*plainNav.H;i++){
+    assert.equal(plainNav.walkable(i),decorNav.walkable(i));
+    assert.equal(plainNav.edges(i),decorNav.edges(i));
+  }
+  const dd=decorated.decor[0];
+  for(const bad of [null,{},[null],[[]],[1],new Array(1),[{x:Infinity}],[new Date()], [dd,dd],
+    [{...dd,shape:'model'}],[{...dd,at:[21,10]}],[{...dd,size:[0,1]}],[{...dd,h:0}],
+    [{...dd,rot:Infinity}],[{...dd,y:-1}],[{...dd,col:[1,2,0]}],[{...dd,col:new Array(3)}],[{...dd,tile:256}],
+    [{...dd,tile:1.5}],[{...dd,room:'missing'}]]){
+    assert.throws(()=>W.compile({...stage(),decor:bad}), /decor|metadata|bounds/i);
+  }
+  const symbolic={...dd};symbolic[Symbol('render')]=1;
+  assert.throws(()=>W.compile({...stage(),decor:[symbolic]}), /decor/);
+  const many=Array.from({length:8192},(_,i)=>({...dd,id:'d'+i}));
+  assert.equal(W.compile({...stage(),decor:many}).decor.length,8192);
+  assert.throws(()=>W.compile({...stage(),decor:[...many,{...dd,id:'overflow'}]}), /8192/);
+  const room={id:'lobby',poly:[[0,0],[20,0],[20,20],[0,20]]};
+  assert.equal(W.compile({...stage(),rooms:[room],decor:[{...dd,room:'lobby'}]}).decor[0].room,'lobby');
+  const {gridSnapshot,digest}=require('./world-snapshot.cjs');
+  const legacy={map:['###','#P#','###'],wall:1};
+  assert.equal(digest(gridSnapshot(W.buildGrid(legacy,0))),digest(gridSnapshot(W.buildGrid({...legacy,decor:decorated.decor},0))));
   assert.equal(full.v, 3); assert.equal(full.policy, 'v2');
   assert(!W.sight(full,5,10,15,10).clear);
   for (const p of full.panels) {

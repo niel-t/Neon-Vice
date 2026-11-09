@@ -199,6 +199,9 @@ only with a new reference.
 ## 5. Decor boards by room kind (for W4)
 
 Defaults for circa-1986 Miami. Level docs override per room in their §8.
+The canonical room-kind vocabulary, per-item sizes, kits and clearances are
+in [docs/levels/STYLE.md](levels/STYLE.md). The kind names in this table
+are the older board names; see STYLE.md §1 for the mapping.
 
 | Kind | Board |
 |---|---|

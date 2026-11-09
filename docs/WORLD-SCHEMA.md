@@ -506,3 +506,22 @@ error; infinite vault locks cannot breach. A successful breach returns
 `{breached:true}`, unlocks the opening's leaves together (one lock for a double
 door), and preserves their current angles/slide/velocity. It does not force the
 door open. Caller-owned legacy doors need their material `build` assigned first.
+
+## Render-only decor boxes (v1)
+
+Optional stage `decor:[]` is a separate render-only namespace, copied and frozen
+at `st.decor` (default `[]`). Each record is
+`{id,kind,at:[x,z],size:[w,d],h,rot?,y?,col?,tile?,room?}`.
+IDs are nonempty and unique within decor only; they may match geometry IDs.
+`kind` is an informational nonempty kit-item name. Position must be finite and
+inside stage bounds; width, depth and height must be positive finite metres.
+Rotation defaults to zero radians about +y; base offset `y` defaults to zero
+and must be finite/nonnegative above the ground at `at`.
+Optional colour is three finite RGB components in [0,1], tile is an integer
+0..255, and room names must resolve to an authored room ID. Unknown keys and
+more than 8192 records reject explicitly.
+
+Decor never creates panels, props, buckets, collision, cover, sight/trace hits,
+nav/flow barriers or fog occluders. Legacy grid generation and its hash fixtures
+remain unchanged. W4 generates placement at load time; W2b renders the boxes
+from this retained layer, with no additional build step.
