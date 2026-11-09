@@ -279,7 +279,7 @@ const WORLD=(()=>{
    }return result;
   }
   function base(id,bounds,combat,policy){
-   return{v:3,policy,id,bounds:Object.freeze(bounds.slice()),combat,ground:[],panels:[],cells:[],doors:[],props:[],buckets:new Map(),rooms:[],openings:[],portals:[],spawns:[]};
+   return{v:3,policy,id,bounds:Object.freeze(bounds.slice()),combat,ground:[],panels:[],cells:[],doors:[],props:[],buckets:new Map(),rooms:[],openings:[],portals:[],spawns:[],decor:Object.freeze([])};
   }
   function addPanel(st,ref,ax,az,bx,bz,half,kind,build,cov,spans,polyOverride){
    const len=Math.hypot(bx-ax,bz-az),poly=polyOverride||box(ax,az,bx,bz,half);
@@ -331,7 +331,7 @@ const WORLD=(()=>{
    return Math.abs(area)<1e-12?null:polygon(out,'wall panel',true);
   }
   function compile(stage){
-   record(stage,['id','bounds','combat','ground','walls','props','rooms','portals','spawns'],'stage');
+   record(stage,['id','bounds','combat','ground','walls','props','rooms','portals','spawns','decor'],'stage');
    const ids=new Set(),id=v=>{if(typeof v!=='string'||!v.length||v.includes(':')||ids.has(v))throw new RangeError(`Invalid/duplicate geometry id ${String(v)}`);ids.add(v);return v;};
    id(stage.id);if(!Array.isArray(stage.bounds)||stage.bounds.length!==4)throw new TypeError('Stage bounds need [x0,z0,x1,z1]');
    const bounds=stage.bounds.map(v=>finite(v,'bounds'));if(bounds[2]<=bounds[0]||bounds[3]<=bounds[1])throw new RangeError('Stage bounds have no area');
@@ -420,6 +420,21 @@ const WORLD=(()=>{
     const prop=Object.freeze({id:p.id,poly:Object.freeze(poly),build:p.build,cov:p.cov,h:p.h});st.props.push(prop);addBucket(st,'prop',st.props.length-1,poly);
    }
    buildRooms(st,stage.rooms||[],id,within);
+   if(stage.decor!==undefined){
+    if(!Array.isArray(stage.decor)||stage.decor.length>8192)throw new RangeError('Stage decor must be an array of at most 8192 records');
+    const decorIds=new Set();
+    st.decor=freezeData(Array.from(stage.decor,d=>{
+     record(d,['id','kind','at','size','h','rot','y','col','tile','room'],'decor');
+     if(typeof d.id!=='string'||!d.id||decorIds.has(d.id)||typeof d.kind!=='string'||!d.kind)throw new RangeError('Invalid/duplicate decor id or kind');
+     decorIds.add(d.id);const at=point(d.at,'decor at'),size=point(d.size,'decor size');within(at);
+     const h=finite(d.h,'decor height'),rot=finite(d.rot??0,'decor rotation'),y=finite(d.y??0,'decor base');
+     if(size.some(v=>v<=0)||h<=0||y<0)throw new RangeError('Decor dimensions must be positive and base nonnegative');
+     if(d.col!==undefined&&(!Array.isArray(d.col)||d.col.length!==3||Array.from(d.col).some(v=>!Number.isFinite(v)||v<0||v>1)))throw new RangeError('Decor col must be RGB in [0,1]');
+     if(d.tile!==undefined&&(!Number.isInteger(d.tile)||d.tile<0||d.tile>255))throw new RangeError('Decor tile must be an integer in [0,255]');
+     if(d.room!==undefined&&(typeof d.room!=='string'||!st.rooms.some(r=>r.id===d.room)))throw new RangeError('Unknown decor room');
+     return{...copyData(d),at,size,h,rot,y};
+    }));
+   }
    buildPortals(st,stage.portals||[],id);
    st.spawns=copyData(stage.spawns||[]);
    return st;
