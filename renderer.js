@@ -297,14 +297,15 @@ function makeAtlas(){
   const c00=h(0,0),c10=h(1,0),c01=h(0,1),c11=h(1,1);return c00+(c10-c00)*fa+(c01-c00)*fb+(c00-c10-c01+c11)*fa*fb;};
  /* the outer band (≥16px, a whole mip-4 texel) is symmetrised over D8 so every edge has one palindromic profile that
     survives 2×2 box mips: neighbours match under any transform. Coarser mips (far/oblique views) may still seam slightly. */
- const m0=(u,v)=>pn(u,v,3,61)*0.55+pn(u,v,7,62)*0.3+pn(u,v,15,63)*0.15,MK=new Float32Array(64*64),SY=new Float32Array(4096),FR=new Float32Array(4096),FE=new Float32Array(4096);
+ /* medium/fine grain only: the large grime shapes come from the world-space grimeW vertex weights, so the mask never
+    forms a per-cell blob that repeats as a dot grid */
+ const m0=(u,v)=>pn(u,v,7,62)*0.55+pn(u,v,15,63)*0.3+pn(u,v,31,64)*0.15,MK=new Float32Array(64*64),SY=new Float32Array(4096),FR=new Float32Array(4096),FE=new Float32Array(4096);
  for(let j=0;j<64;j++)for(let i=0;i<64;i++){const u=(Math.min(61,Math.max(2,i))-2)/59,v=(Math.min(61,Math.max(2,j))-2)/59,a=u-0.5,b=v-0.5,
   f=Math.max(0,Math.min(1,(Math.min(u,v,1-u,1-v)-0.25)/0.2)),q=j*64+i;let sy=0;for(const m of D8)sy+=m0(((m[0]*a+m[1]*b+0.5)%1+1)%1,((m[2]*a+m[3]*b+0.5)%1+1)%1);
   SY[q]=sy/8;FR[q]=m0(u,v);FE[q]=f*f*(3-2*f);}
- /* rank-equalise both fields to uniform 0..1; the symmetric band is then kept low-contrast so it reads as a soft
-    edge fade rather than a repeating per-cell ring, and the free interior carries the visible blotches */
+ /* rank-equalise both fields to uniform 0..1; the D8-symmetric rim keeps reduced contrast, the free interior full */
  const eq=A=>{const s=Float32Array.from(A).sort();for(let q=0;q<4096;q++){let lo=0,hi=4096;while(lo<hi){const md=(lo+hi)>>1;if(s[md]<A[q])lo=md+1;else hi=md;}A[q]=lo/4095;}};
- eq(SY);eq(FR);for(let q=0;q<4096;q++)MK[q]=FR[q]*FE[q]+(0.5+(SY[q]-0.5)*0.3)*(1-FE[q]);
+ eq(SY);eq(FR);for(let q=0;q<4096;q++)MK[q]=(0.5+(FR[q]-0.5)*0.85)*FE[q]+(0.5+(SY[q]-0.5)*0.55)*(1-FE[q]);
  for(const [t,p] of Object.entries(BLEND)){const [sx,sy]=TCELL(+t),[px,py]=TCELL(p);
   for(let j=0;j<64;j++)for(let i=0;i<64;i++){const s=((sy*64+j)*ATLAS+sx*64+i)*4,k=((py*64+j)*ATLAS+px*64+i)*4,m=MK[j*64+i],
    l=d[s]*0.3+d[s+1]*0.59+d[s+2]*0.11,st=1-0.3*Math.max(0,Math.min(1,(m-0.72)*4)),gr=0.86+0.28*ihash(i,j,p),dk=(1-l/255)**2;
