@@ -3151,7 +3151,11 @@ function drawHUD0(){const c=hctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0
  if(SET.cover&&!g.def.hub&&g.player.alive&&!g.cine){const p=g.player,cs=p.cs,cn=p.coverNear,key=padMode?'(B) ':touchMode?'COVER BTN: ':'[SPACE] ';let lbl=null,wx=p.x,wz=p.z,col='#7df9ff';
   if(p.cover&&cs)lbl=cs.lean?'LEANING OUT \u00b7 '+key+'LEAVE':cs.crouch?'CROUCHED \u00b7 '+key+'LEAVE':cs.kind==='low'?'FIRING OVER COVER':cs.edge?'AIM PAST THE EDGE TO LEAN':p.cover.openLo||p.cover.openHi?'IN COVER \u00b7 SLIDE TO AN EDGE TO LEAN':'IN COVER \u00b7 '+key+'LEAVE';
   else if(cn){lbl=key+'TAKE COVER';col='#ffd36b';const v=Math.min(cn.hi-0.3,Math.max(cn.lo+0.3,cn.ax==='x'?p.z:p.x));wx=cn.ax==='x'?cn.face:v;wz=cn.ax==='x'?v:cn.face;}
-  const s3=lbl&&project(wx,2.1,wz);if(s3){c.font=PXF(8*u);const tw=c.measureText(lbl).width;c.fillStyle='rgba(10,4,18,.8)';c.fillRect(s3[0]-tw/2-5*u,s3[1]-4*u,tw+10*u,16*u);c.fillStyle=col;c.fillRect(s3[0]-tw/2-5*u,s3[1]-4*u,2*u,16*u);txt(c,lbl,s3[0],s3[1],col,'center',8*u);}}
+  const s3=lbl&&project(wx,2.1,wz);if(s3){c.font=PXF(8*u);const tw=c.measureText(lbl).width;
+   /* keep clear of the tutorial hint banner drawn later (same geometry as below): lift the prompt above it */
+   if(g.hint){c.font=VTF(touchMode?17*u:20*u);const hw=Math.min(c.measureText(g.hint.txt).width,vw*0.9)+24*u,hy=touchMode?vh-m-30*u:vh-m-2*R-44*u;c.font=PXF(8*u);
+    if(s3[1]+12*u>hy&&s3[1]-4*u<hy+28*u&&Math.abs(s3[0]-vw/2)<(hw+tw+10*u)/2)s3[1]=hy-14*u;}
+   c.fillStyle='rgba(10,4,18,.8)';c.fillRect(s3[0]-tw/2-5*u,s3[1]-4*u,tw+10*u,16*u);c.fillStyle=col;c.fillRect(s3[0]-tw/2-5*u,s3[1]-4*u,2*u,16*u);txt(c,lbl,s3[0],s3[1],col,'center',8*u);}}
   /* popups */
  c.font=PXF(8*u);for(const pp of g.popups){const s=project(pp.x,1.3+pp.t*0.9,pp.z);if(!s)continue;c.globalAlpha=clamp(1.6-pp.t*1.3,0,1);txt(c,pp.txt,s[0],s[1],pp.col,'center',8*u);}c.globalAlpha=1;
  if(g.boss&&g.boss.alive&&g.bossSeen){const bw2=Math.min(vw*0.42,420*u),bx=vw/2-bw2/2,byy=touchMode?m+46*u:m+52*u;c.fillStyle='rgba(0,0,0,.8)';c.fillRect(bx-3,byy-3,bw2+6,20*u+6);c.fillStyle='#3a0010';c.fillRect(bx,byy,bw2,20*u);c.fillStyle=g.boss.hitT>0?'#fff':(g.boss.enraged&&Math.sin(g.T*12)>0?'#ff7a2a':'#ff2a3a');c.fillRect(bx,byy,bw2*g.boss.hp/g.boss.maxhp,20*u);c.font=PXF(7*u);txt(c,bossName(),vw/2,byy+6*u,'#fff','center',7*u);}
