@@ -68,3 +68,26 @@ test('surfaces: macro tiles wrap continuously and blend partners carry grime mas
   expect(r.surf).toEqual([r.m4 + 3, 0]);
   expect(r.err).toBe(0);
 });
+
+// W13e: static faces carry roomId (r+1) and the 256×1 room-state texture drives brightness; all-live is the default.
+test('surfaces: buildStatic roomId and room-state texture', async ({ openGame }) => {
+  const page = await openGame();
+  const r = await page.evaluate(() => {
+    startLevel(0);state='pause';
+    const B=G.staticB,st=wst(G);let tagged=0,max=0;
+    for(let k=0;k<B.n;k++){const rm=B.u8[k*48+46];if(rm){tagged++;max=Math.max(max,rm);}}
+    // floor vertex check: every floor cell's room must match roomAt at its centre
+    let floors=0;for(let z=0;z<G.H;z++)for(let x=0;x<G.W;x++){const i=z*G.W+x;if(G.solid[i])continue;const rr=WORLD.roomAt(st,x+0.5,z+0.5);if(rr)floors++;}
+    const lum=()=>{render();const w=gl.drawingBufferWidth,h=gl.drawingBufferHeight,p=new Uint8Array(w*h*4);gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,p);let s=0;for(let q=0;q<p.length;q+=4)s+=p[q]+p[q+1]+p[q+2];return s/(w*h);};
+    const live=lum();for(const rm of st.rooms)setRoomState(rm.idx,[40,0,255,255]);const dim=lum();resetRoomState();const back=lum();
+    return {tagged,max,rooms:st.rooms.length,floors,live,dim,back,def:Array.from(ROOMS.slice(0,8)),err:gl.getError()};
+  });
+  expect(r.rooms).toBeGreaterThan(0);
+  expect(r.floors).toBeGreaterThan(0);
+  expect(r.tagged).toBeGreaterThan(0);
+  expect(r.max).toBeLessThanOrEqual(r.rooms);
+  expect(r.def).toEqual([255,255,255,255,255,255,255,255]);
+  expect(r.dim).toBeLessThan(r.live*0.8);
+  expect(Math.abs(r.back-r.live)).toBeLessThan(r.live*0.03);
+  expect(r.err).toBe(0);
+});
