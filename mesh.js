@@ -7,8 +7,12 @@ const MESH=(()=>{
  const D8=[[1,0,0,1],[0,-1,1,0],[-1,0,0,-1],[0,1,-1,0],[-1,0,0,1],[1,0,0,-1],[0,1,1,0],[0,-1,-1,0]];
  // atlas tile ids (renderer.js makeAtlas). Plans override per room id, parent id, kind or surf via stage finish.
  const SURF=Object.freeze({asphalt:7,grass:17,tile:37,water:39,carpet:3,wood:4,marble:14,checker:1,tan:27,sand:38,concrete:38,cream:41,dark:43,white:44});
- const FLOOR_KIND=Object.freeze({guest:3,apartment:4,bath:37,office:4,service:38,walk:41,lot:7,street:38,road:7,yard:38,court:37,alley:7,stair:38,shaft:43,roof:38,canopy:41,planter:17});
- const WALL_KIND=Object.freeze({guest:12,apartment:12,bath:33,office:13,service:6,stair:6,shaft:6,exterior:5,interior:12});
+ // default finishes by STYLE.md §1 room kind (atlas tiles); plan extras.finish overrides
+ const FLOOR_KIND=Object.freeze({bedroom:3,living:4,dining:4,lounge:4,reception:4,office:4,secure:4,control:4,studio:4,assembly:4,retail:37,closet:3,bath:37,kitchen:37,
+  utility:38,workshop:38,plant:38,store:38,staff:38,special:38,circulation:38,core:43,
+  walk:41,terrace:41,pier:41,lot:7,street:38,road:7,yard:38,court:37,alley:7,stair:38,roof:38,canopy:41,planter:17});
+ const WALL_KIND=Object.freeze({bedroom:12,living:12,dining:12,closet:12,lounge:13,reception:13,office:13,secure:13,control:13,studio:13,assembly:13,retail:13,bath:33,kitchen:33,
+  utility:6,workshop:6,plant:6,store:6,staff:6,special:6,circulation:6,stair:6,core:6,exterior:5,interior:12});
  const CAP=[0.13,0.09,0.16],SILL=[0.78,0.75,0.72],CASING=[0.8,0.74,0.64],GLASS=[0.55,0.85,1],RAIL=[0.36,0.38,0.42],GLASS_TILE=20;
  const DECOR_COL=[0.6,0.6,0.62];
  const PROP_COL=[[/^car_/,[0.62,0.18,0.22]],[/mattress|sofa|bed/,[0.72,0.6,0.62]],[/wood|plywood|ply_/,[0.55,0.4,0.28]],[/steel|alu|metal/,[0.5,0.52,0.56]],
