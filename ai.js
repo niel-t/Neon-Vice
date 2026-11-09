@@ -1,8 +1,12 @@
 'use strict';
 // Enemy perception, knowledge and behaviour. Enemies act on beliefs built from sight, sound, callouts and hits;
 // G.player is read directly only for the senses themselves (vision, proximity, footsteps) and while seen.
+/* W2f plan stages (g.plan): WORLD geometry is authoritative, the cell grid is compatibility only */
+const PL=g=>!!(g&&g.plan&&g.wst&&typeof planNav==='function');
+const mClear=(g,ax,az,bx,bz,r=0)=>PL(g)?WORLD.clear(g.wst,ax,az,bx,bz,r):WORLD.cell.moveClear(g,ax,az,bx,bz,r);
+const blk=(g,x,z)=>PL(g)?!WORLD.clear(g.wst,x,z,x,z,0):WORLD.cell.isBlock(g,Math.floor(x),Math.floor(z));
 const AI=(()=>{
- const SRC={see:{conf:1,sig:.3},step:{conf:.8,sig:.8},noise:{conf:.7,sig:1.5},call:{conf:.75,sig:1.2},hit:{conf:.6,sig:3}};
+ const SRC={see:{conf:1,sig:.3},step:{conf:.8,sig:.8},noise:{conf:.7,sig:1.5},call:{conf:.75,sig:1.2},hit:{conf:.6,sig:3},shot:{conf:.6,sig:1.5}};
  const TAU_C=4,SIG_RATE=2.5,SIG_MAX=8,PRED_MAX=1,GRACE=3,KEEP=6,WALL_COST=6,DOOR_COST=3;
  const belief={
   make(x,z,t,src,o){o=o||{};const s=SRC[src];return{x,z,vx:o.vx||0,vz:o.vz||0,t,src,conf:o.conf!==undefined?o.conf:s.conf,sig:o.sig!==undefined?o.sig:s.sig};},
@@ -12,7 +16,7 @@ const AI=(()=>{
   predict(b,T){const a=Math.min(belief.age(b,T),PRED_MAX);return[b.x+b.vx*a,b.z+b.vz*a];},
   accept:(old,nb,T)=>!old||nb.src==='see'||belief.conf(nb,T)>=belief.conf(old,T),
   // Movement goal: computed once per belief, prediction clamped to 1 s and to a clear straight line.
-  goal(g,b){if(b.gx===undefined){const p=belief.predict(b,b.t+PRED_MAX);const ok=(b.vx||b.vz)&&WORLD.cell.moveClear(g,b.x,b.z,p[0],p[1]);b.gx=ok?p[0]:b.x;b.gz=ok?p[1]:b.z;}return[b.gx,b.gz];}
+  goal(g,b){if(b.gx===undefined){const p=belief.predict(b,b.t+PRED_MAX);const ok=(b.vx||b.vz)&&mClear(g,b.x,b.z,p[0],p[1]);b.gx=ok?p[0]:b.x;b.gz=ok?p[1]:b.z;}return[b.gx,b.gz];}
  };
  function rng(seed){let a=seed>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};}
  function rand(e){if(!e.rng)e.rng=rng(Math.imul((typeof levelIdx==='number'?levelIdx:0)+1,0x9E3779B1)^Math.imul((e.id|0)+1,0x85EBCA77));return e.rng();}
@@ -36,13 +40,18 @@ const AI=(()=>{
   return a;}
  function costAt(a,x,z){const g=a.g,cx=Math.floor(x),cz=Math.floor(z);if(cx<0||cz<0||cx>=g.W||cz>=g.H)return Infinity;const i=cz*g.W+cx;return a.seen[i]===a.cur?a.dist[i]:Infinity;}
  /* per-target navigation fields, shared by target cell, at most BUDGET fresh BFS per frame, oldest request first */
- const nav={BUDGET:4,MAX:32,g:null,cache:new Map(),queue:[],T:NaN,budget:0,built:0,
+ const nav={BUDGET:4,MAX:32,g:null,cache:new Map(),queue:[],T:NaN,budget:0,built:0,pn:null,pc:new Map(),
+  // plan stages: WORLD.flow fields keyed by 0.5 m target tile; null while waiting for budget, false if nav fails
+  pfield(g,x,z){nav.frame(g);let n;try{n=planNav(g);}catch(err){return false;}if(nav.pn!==n){nav.pn=n;nav.pc.clear();}
+   const k=Math.floor(x*2)+','+Math.floor(z*2),c=nav.pc.get(k);if(c){c.used=nav.T;return c.f;}if(nav.budget<=0)return null;
+   if(nav.pc.size>=nav.MAX){let ok=null,ou=Infinity;for(const [kk,v] of nav.pc)if(v.used<ou){ou=v.used;ok=kk;}nav.pc.delete(ok);}
+   let f;try{f=WORLD.flow(n,[[x,z]]);}catch(err){return false;}nav.budget--;nav.built++;nav.pc.set(k,{f,used:nav.T});return f;},
   key(g,x,z){const cx=Math.floor(x),cz=Math.floor(z);if(!WORLD.cell.isBlock(g,cx,cz))return cz*g.W+cx;
    for(const [ox,oz] of NB){if(!WORLD.cell.isBlock(g,cx+ox,cz+oz))return(cz+oz)*g.W+cx+ox;}return -1;},
   build(g,k){let c=nav.cache.get(k);if(!c){if(nav.cache.size>=nav.MAX){let ok=null,ou=Infinity;for(const [kk,v] of nav.cache)if(v.used<ou){ou=v.used;ok=kk;}c=nav.cache.get(ok);nav.cache.delete(ok);}
     else c={f:new Int16Array(g.W*g.H)};nav.cache.set(k,c);}
    WORLD.cell.bfs(g,c.f,k%g.W,(k/g.W)|0);c.ver=g.navVer|0;c.used=nav.T;nav.budget--;nav.built++;return c.f;},
-  frame(g){const T=g.T||0;if(nav.g!==g){nav.g=g;nav.cache.clear();nav.queue.length=0;}if(T===nav.T)return;nav.T=T;nav.budget=nav.BUDGET;
+  frame(g){const T=g.T||0;if(nav.g!==g){nav.g=g;nav.cache.clear();nav.queue.length=0;nav.pc.clear();}if(T===nav.T)return;nav.T=T;nav.budget=nav.BUDGET;
    while(nav.budget>0&&nav.queue.length){const k=nav.queue.shift(),c=nav.cache.get(k);if(!c||c.ver!==(g.navVer|0))nav.build(g,k);}},
   // Int16Array field (fresh or awaiting rebuild), null while waiting for budget, false if no free cell near the target.
   field(g,x,z){nav.frame(g);const k=nav.key(g,x,z);if(k<0)return false;const c=nav.cache.get(k);
@@ -60,14 +69,16 @@ const AI=(()=>{
  function witness(e){const g=G;for(const q of g.enemies){if(q.alive&&q!==e&&!(q.down>0)&&q.state!=='chase'&&Math.hypot(q.x-e.x,q.z-e.z)<4&&los(q.x,q.z,e.x,e.z)){q.wary=1;e.found=1;poi(q,e.x,e.z,'body');investigate(q,e.x,e.z,1.2);}}}
  function seek(e,tx,tz,sp){const g=G,dx=tx-e.x,dz=tz-e.z,d=Math.hypot(dx,dz);if(d<.6)return{vx:0,vz:0,face:null,done:true};
   let px=tx,pz=tz;
-  if(!WORLD.cell.moveClear(g,e.x,e.z,tx,tz,Math.max(0,e.r-.02))){const f=nav.field(g,tx,tz);
+  if(!mClear(g,e.x,e.z,tx,tz,Math.max(0,e.r-.02))){if(PL(g)){const f=nav.pfield(g,tx,tz);if(f===null)return{vx:0,vz:0,face:Math.atan2(dx,dz)};
+    let s=null;try{const v=f?WORLD.dist(nav.pn,f,e.x,e.z):-1;if(v<0)return{vx:0,vz:0,face:null,stuck:true};if(v<.3)return{vx:0,vz:0,face:null,done:true};s=WORLD.step(nav.pn,f,e.x,e.z);}catch(err){nav.pc.clear();}
+    if(!s)return{vx:0,vz:0,face:null,stuck:true};px=s[0];pz=s[1];}else{const f=nav.field(g,tx,tz);
    if(f===null)return{vx:0,vz:0,face:Math.atan2(dx,dz)};
    const cx=Math.floor(e.x),cz=Math.floor(e.z),v=f?f[cz*g.W+cx]:-1;if(v<0)return{vx:0,vz:0,face:null,stuck:true};if(v===0)return{vx:0,vz:0,face:null,done:true};
-   const t=flowStep(f,e,tx,tz);px=t[0];pz=t[1];}
+   const t=flowStep(f,e,tx,tz);px=t[0];pz=t[1];}}
   const ddx=px-e.x,ddz=pz-e.z,l=Math.hypot(ddx,ddz)||1;return{vx:ddx/l*sp,vz:ddz/l*sp,face:Math.atan2(ddx,ddz)};}
  function probe(e){const g=G,s=e.bl?Math.min(4,Math.max(1.5,belief.sig(e.bl,g.T||0))):2.5,h=e.lh!==undefined?e.lh:e.a;
   for(let k=0;k<6;k++){const a=h+(rand(e)-.5)*2.6,d=s*(.5+.5*rand(e)),x=e.sx+Math.sin(a)*d,z=e.sz+Math.cos(a)*d;
-   if(WORLD.cell.isBlock(g,Math.floor(x),Math.floor(z)))continue;
+   if(blk(g,x,z))continue;
    if(Math.abs(angDiff(e.a,Math.atan2(x-e.x,z-e.z)))<visionHalfAngle(e)&&los(e.x,e.z,x,z))continue;
    return[x,z];}
   return null;}
@@ -99,14 +110,14 @@ const AI=(()=>{
   // Mass leaks through move-open portals at speed*width/area per second, capped so a room never over-drains.
   diffuse(gr,P,dt,speed){const n=gr.n,m=gr.pa.length,d=(gr.dd||(gr.dd=new Float64Array(n+1))).fill(0);let deg=gr.deg;
    if(!deg){deg=gr.deg=new Float64Array(n+1);for(let k=0;k<m;k++){deg[gr.pa[k]]++;deg[gr.pb[k]<0?n:gr.pb[k]]++;}}
-   for(let k=0;k<m;k++){if(!gr.open(k))continue;const a=gr.pa[k],b=gr.pb[k]<0?n:gr.pb[k];
+   for(let k=0;k<m;k++){if(gr.pa[k]<0||!gr.open(k))continue;const a=gr.pa[k],b=gr.pb[k]<0?n:gr.pb[k];
     const fa=P[a]*Math.min(dt*speed*gr.pw[k]/gr.area[a],.9/deg[a]),fb=P[b]*Math.min(dt*speed*gr.pw[k]/gr.area[b],.9/deg[b]);d[a]+=fb-fa;d[b]+=fa-fb;}
    for(let i=0;i<=n;i++)P[i]=Math.max(0,P[i]+d[i]);return P;},
   // Negative information: room i was looked at and the player is not there.
   clear(P,i,f){P[i]*=1-(f==null?1:f);let s=0;for(let j=0;j<P.length;j++)s+=P[j];if(s<1e-6)return false;for(let j=0;j<P.length;j++)P[j]/=s;return true;},
   pick(gr,P,x,z){let best=-1,bs=1e-4;for(let i=0;i<gr.n;i++){const s=P[i]/(1+.1*Math.hypot(gr.cx[i]-x,gr.cz[i]-z));if(s>bs){bs=s;best=i;}}return best;},
   // Ambush: cover the own-room portal facing the most likely neighbour, standing back inside the room.
-  ambush(gr,P,mine,back){back=back||1.5;let best=-1,bp=1e-3;for(const k of gr.adj(mine)){if(!gr.open(k))continue;const o=gr.pa[k]===mine?gr.pb[k]:gr.pa[k],q=P[o<0?gr.n:o];if(q>bp){bp=q;best=k;}}
+  ambush(gr,P,mine,back){back=back||1.5;let best=-1,bp=1e-3;for(const k of gr.adj(mine)){if(k>=gr.pa.length||!gr.open(k))continue;const o=gr.pa[k]===mine?gr.pb[k]:gr.pa[k],q=P[o<0?gr.n:o];if(q>bp){bp=q;best=k;}}
    if(best<0)return null;const mx=gr.px[best],mz=gr.pz[best];
    // Stand back along the portal normal on our side (centroid direction as fallback); the spot must be in our room and clear.
    const nx=gr.pnx?gr.pnx[best]:0,nz=gr.pnz?gr.pnz[best]:0,dirs=[nx,nz,-nx,-nz,gr.cx[mine]-mx,gr.cz[mine]-mz];
@@ -114,10 +125,11 @@ const AI=(()=>{
     for(const s of[back,back*.66,back*.4]){const x=mx+ux*s,z=mz+uz*s;if(gr.at(x,z)!==mine||(gr.ok&&!gr.ok(x,z,.3)))continue;return{k:best,x,z,a:Math.atan2(mx-x,mz-z),p:bp};}}
    return null;}
  };
- const HUNT=30,AMB_HOLD=8,PSPD=3,rg={st:null,gr:null};
+ const HUNT=30,AMB_HOLD=8,PSPD=3,rg={st:null,v:-1,pt:null,m:0,gr:null};
  // Room graph of the live stage (index.html wst); null on harnesses without one or on roomless stages.
  function graph(){if(typeof wst!=='function')return null;const st=wst(G);if(!st||!st.rooms||!st.rooms.length)return null;
-  if(rg.st!==st){rg.st=st;rg.gr=rooms.graph(st);}return rg.gr;}
+  // Rebuild on stage swap, nav revision (glass/breach bumps g.navVer) or W1f portal append/merge.
+  const v=G.navVer|0;if(rg.st!==st||rg.v!==v||rg.pt!==st.portals||rg.m!==st.portals.length){rg.st=st;rg.v=v;rg.pt=st.portals;rg.m=st.portals.length;rg.gr=rooms.graph(st);}return rg.gr;}
  // Room belief follows e.bl: reseeded on new information, spread at player speed, and the agent's own room drains as it looks.
  function track(e,dt){const gr=graph(),b=e.bl;if(!gr||!b)return null;const T=G.T||0;
   if(e.rpB!==b||!e.rp||e.rp.length!==gr.n+1){e.rp=rooms.init(gr,b.x,b.z,e.rp);e.rpB=b;for(let a=Math.min(T-b.t,8);a>1e-3;a-=.25)rooms.diffuse(gr,e.rp,Math.min(.25,a),PSPD);}
@@ -132,7 +144,34 @@ const AI=(()=>{
  function lurk(e){if(e.boss)return false;const gr=track(e,0);if(!gr||rand(e)>=(e.pers==='careful'?.7:.25))return false;
   const mine=gr.at(e.x,e.z);if(mine<0)return false;const am=rooms.ambush(gr,e.rp,mine,1.5);if(!am||am.p<.25)return false;
   e.amb={x:am.x,z:am.z,a:am.a,t:G.T||0};return true;}
- return{SRC,belief,rng,rand,hear,costAt,nav,rooms,graph,track,hunt,lurk,noises,know,poi,investigate,callout,hurt,witness,seek,search,probe,noiseDup,GRACE,KEEP,HUNT,AMB_HOLD,
+ // Shot evidence: impacts, penetration exits, near misses and hits on allies alarm witnesses even when suppressed.
+ // Same room always witnesses; otherwise line of sight within SHOT_R, or close enough to hear the crack.
+ const SHOT_R=9,SHOT_NEAR=1.5,WHIZ=1;
+ const iq=e=>e.iq!==undefined?e.iq:e.pers==='careful'?.9:e.pers==='flank'?.5:.15;
+ // Smart witnesses walk the shot line back to the first obstruction and through it into the space beyond.
+ function backtrace(g,x,z,ux,uz){let px=x,pz=z,wall=0;
+  for(let s=.25;s<=12;s+=.25){const qx=x+ux*s,qz=z+uz*s,b=WORLD.cell.isBlock(g,Math.floor(qx),Math.floor(qz));
+   if(b){if(++wall>8)break;continue;}if(wall){const rx=qx+ux*.75,rz=qz+uz*.75;return WORLD.cell.isBlock(g,Math.floor(rx),Math.floor(rz))?[qx,qz]:[rx,rz];}px=qx;pz=qz;if(s>=8)break;}
+  return[px,pz];}
+ function shot(x,z,dx,dz,kind,skip){const g=G;if(!g||!g.enemies)return 0;const l=Math.hypot(dx,dz);if(!(l>1e-6))return 0;const ux=dx/l,uz=dz/l,T=g.T||0;
+  // Evidence point sits on the witnesses' side of the surface it marks.
+  const k=kind==='exit'?.1:kind==='impact'?-.1:0;x+=ux*k;z+=uz*k;
+  const gr=graph(),ri=gr?gr.at(x,z):-1;let n=0;
+  for(const e of g.enemies){if(!e.alive||e===skip||e.down>0)continue;if(e.bl&&e.bl.src==='see'&&T-e.bl.t<.25)continue;const d=Math.hypot(e.x-x,e.z-z);
+   const same=ri>=0&&gr.at(e.x,e.z)===ri;if(!same&&d>SHOT_NEAR&&!(d<=SHOT_R&&los(e.x,e.z,x,z)))continue;
+   n++;e.wary=1;const smart=rand(e)<iq(e);let bx=x,bz=z,o={conf:.45,sig:5};
+   if(smart){[bx,bz]=backtrace(g,x,z,-ux,-uz);o={};}
+   know(e,belief.make(bx,bz,T,'shot',o));e.shK=smart?'trace':'panic';
+   if(e.state!=='chase'){if(!(e.shT>T-3)&&typeof popup==='function'){popup(e.x,e.z,smart?'SHOTS!':'?!','#ffd36b');if(typeof sfx==='function')sfx('alert');}
+    investigate(e,bx,bz,.4,smart?Math.atan2(-ux,-uz):undefined);}
+   e.shT=T;}
+  return n;}
+ // Near misses along a player bullet segment: each enemy reacts once per bullet.
+ function whiz(b,ax,az,d){const g=G;if(!g||!g.enemies||!(d>0))return;
+  for(const e of g.enemies){if(!e.alive||(b.hit&&b.hit.includes(e))||(b.nm&&b.nm.includes(e)))continue;
+   const t=Math.max(0,Math.min(d,(e.x-ax)*b.dx+(e.z-az)*b.dz)),px=ax+b.dx*t,pz=az+b.dz*t;
+   if(Math.hypot(e.x-px,e.z-pz)>WHIZ+e.r)continue;(b.nm||(b.nm=[])).push(e);shot(px,pz,b.dx,b.dz,'miss');}}
+ return{SRC,belief,rng,rand,hear,costAt,nav,rooms,graph,track,hunt,lurk,noises,know,poi,investigate,callout,hurt,witness,seek,search,probe,noiseDup,shot,whiz,backtrace,iq,GRACE,KEEP,HUNT,AMB_HOLD,
   debug:typeof location!=='undefined'&&/[?&]ai=1(&|$)/.test(location.search)};
 })();
 function alertNoise(x,z,r,src){const g=G;if(!g||!(r>=1)||AI.noiseDup(x,z,r,src))return;const T=g.T||0,R=r*1.5;
@@ -171,7 +210,7 @@ function updateEnemy(e,dt){const g=G,p=g.player,T=g.T||0;
   case 'distract':{const c=e.cashT;if(!c||c.life<=0){e.state='patrol';break;}const ddx=c.x-e.x,ddz=c.z-e.z,dd=Math.hypot(ddx,ddz);face=Math.atan2(ddx,ddz);if(dd>0.8){tvx=ddx/dd*2.2;tvz=ddz/dd*2.2;}break;}
   case 'search':{const r=AI.search(e,dt,2.6);tvx=r.vx;tvz=r.vz;face=r.face;if(r.end&&!AI.hunt(e)){e.state=e.wary?'idle':'patrol';e.turnT=0;e.searchT=0;}break;}
   case 'chase':{
-   if(!e.weapon){let bi=null,bd=4.5;for(const it of g.items){if(it.flying)continue;const d=Math.hypot(it.x-e.x,it.z-e.z);if(d<bd&&los(e.x,e.z,it.x,it.z)&&WORLD.cell.moveClear(g,e.x,e.z,it.x,it.z)){bd=d;bi=it;}}
+   if(!e.weapon){let bi=null,bd=4.5;for(const it of g.items){if(it.flying)continue;const d=Math.hypot(it.x-e.x,it.z-e.z);if(d<bd&&los(e.x,e.z,it.x,it.z)&&mClear(g,e.x,e.z,it.x,it.z)){bd=d;bi=it;}}
     if(bi&&(dist>2.5||!see)){const ddx=bi.x-e.x,ddz=bi.z-e.z;tvx=ddx/(bd||1)*3.2;tvz=ddz/(bd||1)*3.2;face=Math.atan2(ddx,ddz);if(bd<0.5){e.weapon={type:bi.type,ammo:99};g.items.splice(g.items.indexOf(bi),1);e.react=0.5;}break;}}
    // W7: aim at the exposed lean point when the body is behind the corner
    const ap=see&&typeof playerAimPoint==='function'?playerAimPoint(e):p,aang=ap===p?ang:Math.atan2(ap.x-e.x,ap.z-e.z);
@@ -186,7 +225,7 @@ function updateEnemy(e,dt){const g=G,p=g.player,T=g.T||0;
      if(e.react<=0&&e.cd<=0&&Math.abs(angDiff(e.a,face))<0.22){e.weapon.ammo=99;fireGun(e,e.weapon,false);
       if(wd.burst){e.burst++;if(e.burst>=wd.burst){e.burst=0;e.cd=0.9;}}else if(wd.burst3){e.burst++;if(e.burst<3)e.cd=0.08;else{e.burst=0;e.cd=wd.ecd;}}}}}
    // Seen target only: the shared player field is honest while the player is in sight.
-   if(see&&tvx*dx+tvz*dz>1e-6&&!WORLD.cell.moveClear(g,e.x,e.z,p.x,p.z,Math.max(0,Math.min(e.r,p.r)-0.02))){
+   if(see&&tvx*dx+tvz*dz>1e-6&&!mClear(g,e.x,e.z,p.x,p.z,Math.max(0,Math.min(e.r,p.r)-0.02))){
     const t=flowStep(g.flow,e,p.x,p.z),sp=(tvx*dx+tvz*dz)/dist;
     if(t){const tx=t[0]-e.x,tz=t[1]-e.z,d=Math.hypot(tx,tz)||1;tvx=tx/d*sp;tvz=tz/d*sp;if(wd.melee)face=Math.atan2(tx,tz);}else{tvx=tvz=0;}
    }

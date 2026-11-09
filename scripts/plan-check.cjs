@@ -147,6 +147,55 @@ function checkPlans() {
     assert(!PLAN.validate(m).errors.some(e => /return stair/.test(e)), 'oneWay stairs need no pair');
     m.stages.f2.stairs.forEach(s => delete s.oneWay); bad(m, /no return stair/, 'unpaired stair');
   }
+  {
+    // stageRun descriptor adapter: real WORLD.stageRun accepts every plan's stage set; rev is stable and content-sensitive
+    for (const [pid, p] of Object.entries(PLANS)) {
+      const m = PLAN.stageDefs(p);
+      if (WORLD.stageRun) WORLD.stageRun({ id: pid, stages: m.stages, start: m.start }, sid => { const { def, ...d } = m.stageDefs[sid]; return d; });
+      for (const sid of m.stages) assert.equal(PLAN.describe(p, sid).rev, PLAN.describe(JSON.parse(JSON.stringify(p)), sid).rev, `${pid}.${sid} rev deterministic`);
+    }
+    const m = JSON.parse(JSON.stringify(PLANS.motel)), d = PLAN.describe(m, 'lot');
+    assert.equal(PLAN.stageDefs(m).start, 'lot', 'motel starts on the lot');
+    assert.deepEqual(Object.keys(d.arrivals).sort(), ['arr_e', 'arr_w'], 'arrivals from arrive spawns');
+    assert(d.stairs.every(s => s.r === 0.65 && !('room' in s) && !('rise' in s)), 'stairs keep id/to/at/arrive/r only');
+    m.stages.lot.spawns[0].at = [m.stages.lot.spawns[0].at[0] + 0.1, m.stages.lot.spawns[0].at[1]];
+    assert.notEqual(PLAN.describe(m, 'lot').rev, d.rev, 'stage edit bumps rev');
+    assert.equal(PLAN.describe(m, 'f2').rev, PLAN.describe(PLANS.motel, 'f2').rev, 'other stage rev unchanged');
+  }
+  {
+    // PLAN.shift moves every coordinate: compiled geometry, rooms, spawns and extras all translate exactly
+    const near = (a, b, dx, dz, what) => assert(Math.abs(a[0] + dx - b[0]) < 1e-6 && Math.abs(a[1] + dz - b[1]) < 1e-6, `${what}: ${a} -> ${b}`);
+    for (const [pid, p] of Object.entries(PLANS)) {
+      const q = PLAN.shift(p, 2, 1);
+      assert.equal(PLAN.validate(q).errors.length, 0, `${pid} shifted validates`);
+      for (const sid of Object.keys(p.stages)) {
+        const A = PLAN.fromPlan(p, sid), B = PLAN.fromPlan(q, sid), a = WORLD.compile(A.stage), b = WORLD.compile(B.stage);
+        assert.equal(a.panels.length, b.panels.length, `${pid}.${sid} panel count`);
+        a.panels.forEach((pa, i) => { near([pa.ax, pa.az], [b.panels[i].ax, b.panels[i].az], 2, 1, `${sid} panel ${i}`); pa.poly.forEach((v, k) => near(v, b.panels[i].poly[k], 2, 1, `${sid} panel poly`)); });
+        a.props.forEach((pa, i) => pa.poly.forEach((v, k) => near(v, b.props[i].poly[k], 2, 1, `${sid} prop ${pa.id}`)));
+        a.rooms.forEach((r, i) => r.poly.forEach((v, k) => near(v, b.rooms[i].poly[k], 2, 1, `${sid} room ${r.id}`)));
+        a.doors.forEach((d, i) => near([d.hx, d.hz], [b.doors[i].hx, b.doors[i].hz], 2, 1, `${sid} door ${d.id}`));
+        A.stage.spawns.forEach((s, i) => near([s.x, s.z], [B.stage.spawns[i].x, B.stage.spawns[i].z], 2, 1, `${sid} spawn ${s.id}`));
+        for (const k of ['stairs', 'obj', 'stash', 'items']) A.extras[k].forEach((o, i) => near(o.at, B.extras[k][i].at, 2, 1, `${sid} ${k} ${o.id}`));
+        assert.deepEqual(A.stage.rooms.map(r => r.id), B.stage.rooms.map(r => r.id), `${sid} same room pieces`);
+      }
+    }
+    const n = PLAN.shift(PLANS.motel);
+    assert(Object.values(n.stages).every(S => S.bounds[0] >= 0 && S.bounds[1] >= 0) && Object.values(n.stages).some(S => S.bounds[0] === 0), 'normalised plan bounds start at 0');
+    assert.deepEqual(PLAN.shift(n).stages.lot.bounds, n.stages.lot.bounds, 'normalising twice is idempotent');
+    // playable copy: compiled bounds (plan bounds +PAD) start at >= 1 m for the padded compat grid; cached per plan
+    const pl = PLAN.playable(PLANS.motel), lo = Object.values(pl.stages).map(S => S.bounds);
+    assert(Math.min(...lo.map(b => b[0])) - 0.5 < 2 && Math.min(...lo.map(b => b[1])) - 0.5 < 2, 'playable shift is minimal');
+    assert.equal(PLAN.playable(PLANS.motel), pl, 'playable is cached');
+    for (const sid of Object.keys(pl.stages)) {
+      const st = WORLD.compile(PLAN.fromPlan(pl, sid).stage), b = st.bounds, Wn = Math.ceil(b[2]) + 1, Hn = Math.ceil(b[3]) + 1;
+      assert(b[0] >= 1 && b[1] >= 1, `${sid} playable bounds ${b}`);
+      const c = PLAN.cells(st, Wn, Hn);
+      assert(c.solid.some(v => v) && c.ground.some(v => v), `${sid} compat cells have walls and ground`);
+      for (const s of st.spawns) { const i = Math.floor(s.z) * Wn + Math.floor(s.x); assert(c.ground[i], `${sid} spawn ${s.id} on ground cell`); }
+      st.panels.forEach((p, i) => { if (st.cells.slice(p.c0, p.c1).some(k => k.active && k.y0 < 1)) assert(c.solid[Math.floor((p.az + p.bz) / 2) * Wn + Math.floor((p.ax + p.bx) / 2)], `${sid} panel ${i} rastered`); });
+    }
+  }
   const sps = clip.stage.portals || clip.extras.stagePortals;
   assert(sps.every(p => p.open ? Object.keys(p).length === 4 : p.seg && !('walk' in p) && !('kind' in p)), 'strict v3 stage portals');
   const orient = ok(tiny(s => { s.rooms[1].part = 'stud_steel_gyp2'; s.rooms.push({ id: 'a_c', in: 'a', kind: 'closet', rect: [2.5, 2.5, 4, 4] }); s.doors.push({ id: 'd_c', rooms: ['a', 'a_c'], at: [3.25, 4], w: 0.8, kind: 'door_hollow' }); return s; }), 'orient').outs.s.out;

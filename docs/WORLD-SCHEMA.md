@@ -348,6 +348,23 @@ another. Field buffers are reused, but existing scalar geometry helpers still
 allocate temporary candidate arrays; this gate does not claim allocation-free
 runtime queries or enable them in the game's hot path.
 
+Static nav snapshots spatially index ground polygons, ground-height/void
+boundaries, movement-feature bounds and portal crossing segments in 2 m
+buckets. Ground candidates retain authored order (first-listed ground wins);
+the broadphase does not replace exact capsule or boundary tests. Empty swept
+buckets can pass only after endpoint ground and stage-bound checks. Near-zero
+radii and tolerance-sensitive short rays keep the original exhaustive edge
+and feature candidates, including radius-zero target seeding. Node regressions
+cover negative coordinates, bucket edges, height steps, voids, short-ray
+collinearity and acute-vertex clipping.
+
+On the shifted playable Motel benchmark, native-realm lot nav construction
+fell from 9483 ms to 536 ms and f2 from 1365 ms to 114 ms on the same host.
+Walkability, representatives, edge masks, room indexes, portal crossing tags
+and flow costs matched the pre-optimization snapshots exactly. These are
+observed timings, not a hardware-independent load-time guarantee.
+The rebuilt Chromium artifact measured 609 ms for lot and 107 ms for f2.
+
 ## Stage-run envelope v1 (W1eA, no gameplay activation)
 
 `WORLD.stageRun(mission,describe,opts?)` is a pure state machine, not a renderer
@@ -506,3 +523,22 @@ error; infinite vault locks cannot breach. A successful breach returns
 `{breached:true}`, unlocks the opening's leaves together (one lock for a double
 door), and preserves their current angles/slide/velocity. It does not force the
 door open. Caller-owned legacy doors need their material `build` assigned first.
+
+## Render-only decor boxes (v1)
+
+Optional stage `decor:[]` is a separate render-only namespace, copied and frozen
+at `st.decor` (default `[]`). Each record is
+`{id,kind,at:[x,z],size:[w,d],h,rot?,y?,col?,tile?,room?}`.
+IDs are nonempty and unique within decor only; they may match geometry IDs.
+`kind` is an informational nonempty kit-item name. Position must be finite and
+inside stage bounds; width, depth and height must be positive finite metres.
+Rotation defaults to zero radians about +y; base offset `y` defaults to zero
+and must be finite/nonnegative above the ground at `at`.
+Optional colour is three finite RGB components in [0,1], tile is an integer
+0..255, and room names must resolve to an authored room ID. Unknown keys and
+more than 8192 records reject explicitly.
+
+Decor never creates panels, props, buckets, collision, cover, sight/trace hits,
+nav/flow barriers or fog occluders. Legacy grid generation and its hash fixtures
+remain unchanged. W4 generates placement at load time; W2b renders the boxes
+from this retained layer, with no additional build step.

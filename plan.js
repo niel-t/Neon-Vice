@@ -554,5 +554,59 @@ const PLAN=(()=>{
   }
   report.outs=outs;return report;
  }
- return Object.freeze({version:1,derive,fromPlan,validate,compileLocated,raster,roomGraph,pathRooms,entrances,sightTest,STANCE,ROOM_KINDS,STYLES,area,inside});
+ // stageRun v1 descriptor adapter (agreed with W1): rev = deterministic positive 31-bit hash of the plan stage plus
+ // plan-level fields; arrivals from 'arrive' spawns; stairs keep id/to/at/arrive/r/oneWay
+ function stableJSON(v){if(Array.isArray(v))return'['+v.map(stableJSON).join(',')+']';
+  if(v&&typeof v==='object')return'{'+Object.keys(v).sort().filter(k=>v[k]!==undefined).map(k=>JSON.stringify(k)+':'+stableJSON(v[k])).join(',')+'}';return JSON.stringify(v);}
+ function describe(plan,sid){
+  const S=plan&&plan.stages&&plan.stages[sid];if(!S)throw new RangeError(`plan ${plan&&plan.id}: no stage ${sid}`);
+  const {stages,...top}=plan,src=stableJSON({top,stage:S});let h=0x811c9dc5;
+  for(let i=0;i<src.length;i++){h^=src.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0;}
+  const arrivals={};for(const s of S.spawns||[])if(s.kind==='arrive')arrivals[s.id]=s.a===undefined?{at:[s.at[0],s.at[1]]}:{at:[s.at[0],s.at[1]],dir:s.a};
+  const stairs=(S.stairs||[]).map(s=>{const o={id:s.id,to:s.to,at:[s.at[0],s.at[1]],arrive:s.arrive,r:s.r??STAIR_R};if(s.oneWay!==undefined)o.oneWay=s.oneWay;return o;});
+  return{id:sid,kind:'plan',rev:(h&0x7fffffff)||1,arrivals,stairs,backdrop:[]};
+ }
+ // translate every stage of a plan by one offset (stages stay mutually aligned for backdrops); the legacy compatibility grid
+ // of a playable stage needs bounds >= 0, so the loader calls shift(plan) to move the lowest bound of any stage to 0
+ function shift(plan,dx,dz){
+  if(dx===undefined){const bs=Object.values(plan.stages).map(S=>S.bounds);dx=Math.max(0,-Math.min(...bs.map(b=>b[0])));dz=Math.max(0,-Math.min(...bs.map(b=>b[1])));}
+  const P=JSON.parse(JSON.stringify(plan));if(!dx&&!dz)return P;
+  const m=p=>[snap(p[0]+dx),snap(p[1]+dz)],r4=r=>[snap(r[0]+dx),snap(r[1]+dz),snap(r[2]+dx),snap(r[3]+dz)];
+  for(const S of Object.values(P.stages)){
+   S.bounds=r4(S.bounds);
+   for(const r of S.rooms||[]){if(r.rect)r.rect=r4(r.rect);if(r.poly)r.poly=r.poly.map(m);}
+   for(const k of ['doors','windows','spawns','stairs','obj','stash','items','props'])for(const o of S[k]||[]){if(o.at)o.at=m(o.at);if(o.poly)o.poly=o.poly.map(m);}
+   for(const g of S.ground||[])g.poly=g.poly.map(m);
+   for(const w of S.walls||[])w.path=Array.isArray(w.path)?w.path.map(m):{...w.path,arc:[snap(w.path.arc[0]+dx),snap(w.path.arc[1]+dz),...w.path.arc.slice(2)]};
+   for(const s of S.targets?.sight||[])for(const k of ['from','to'])if(Array.isArray(s[k]))s[k]=m(s[k]);
+  }
+  return P;
+ }
+ // the play loader's copy: shifted by whole metres so the compiled bounds (plan bounds +PAD) sit at x,z >= 1, matching
+ // the legacy grid whose map row/col k is cell k+1 (world coords == cell coords). Cached per plan object.
+ const PLAYABLE=new WeakMap();
+ function playable(plan){
+  if(PLAYABLE.has(plan))return PLAYABLE.get(plan);
+  const bs=Object.values(plan.stages).map(S=>S.bounds),need=v=>Math.max(0,Math.ceil(1+PAD-v));
+  const P=shift(plan,need(Math.min(...bs.map(b=>b[0]))),need(Math.min(...bs.map(b=>b[1]))));
+  PLAYABLE.set(plan,P);return P;
+ }
+ // compatibility raster of a compiled stage on a W x H 1 m grid (presentation/legacy-only, never authoritative for plan
+ // collision, sight or pathing): solid = a wall panel with an active cell below 1 m crosses the cell, wh = its tallest
+ // active cell top, ground = the cell centre has ground. Doors and props are left out.
+ function cells(st,GW,GH){
+  const W_=GW,H=GH,N=W_*H,solid=new Uint8Array(N),wh=new Float32Array(N),ground=new Uint8Array(N),Wd=W();
+  st.panels.forEach((p,pi)=>{let top=0,low=false;
+   for(let c=p.c0;c<p.c1;c++){const k=st.cells[c];if(k.panel===pi&&k.active){top=Math.max(top,k.y1);if(k.y0<1)low=true;}}
+   if(!low)return;const len=Math.hypot(p.bx-p.ax,p.bz-p.az),n=Math.max(1,Math.ceil(len/.25));
+   for(let s=0;s<=n;s++){const x=Math.floor(p.ax+(p.bx-p.ax)*s/n),z=Math.floor(p.az+(p.bz-p.az)*s/n);
+    if(x>=0&&z>=0&&x<W_&&z<H){const i=z*W_+x;solid[i]=1;wh[i]=Math.max(wh[i],top);}}});
+  for(let z=0;z<H;z++)for(let x=0;x<W_;x++)if(Wd.groundY(st,x+.5,z+.5)!==null)ground[z*W_+x]=1;
+  return{solid,wh,ground};
+ }
+ // MISSIONS-shaped stage set: start is the stage holding the player spawn; def names the plan stage for the loader
+ function stageDefs(plan){const ids=Object.keys(plan.stages),start=ids.filter(sid=>(plan.stages[sid].spawns||[]).some(s=>s.kind==='player'));
+  if(start.length!==1)throw new RangeError(`plan ${plan.id}: exactly one stage needs the player spawn (found ${start.length})`);
+  return{stages:ids,start:start[0],stageDefs:Object.fromEntries(ids.map(sid=>[sid,{...describe(plan,sid),def:{plan:plan.id,stage:sid}}]))};}
+ return Object.freeze({version:1,derive,fromPlan,validate,compileLocated,raster,roomGraph,pathRooms,entrances,sightTest,describe,stageDefs,shift,playable,cells,STANCE,ROOM_KINDS,STYLES,area,inside});
 })();

@@ -46,8 +46,13 @@ function checkCover() {
   assert(step(cv, bar, 3.5, 3.3, [1, 0]).t === 1, 'Moving slides along the run');
   assert.equal(step(cv, bar, 5 - COVER_END, 3.3, [1, 0]).t, 0, 'Run end stops the slide');
   assert.equal(step(cv, bar, 3.5, 3.3, [0, 1]), null, 'Pulling away leaves cover');
-  assert.equal(coverFind(bar, 3.5, 3.6, 0.28, 0, 1), null, 'Nothing to hug facing away from the bar');
-  assert.equal(coverFind(bar, 6.5, 3.6, 0.28, 0, -1), null, 'Open floor is not cover');
+  // Playtest: aim follows the mouse, so facing away must not rule out the only cover in reach.
+  assert.equal(coverFind(bar, 3.5, 3.6, 0.28, 0, 1).face, 3, 'Facing away still finds the bar');
+  // Two faces equally near (bar north, wall south, gaps .22): direction breaks the tie.
+  const lane = grid(['########', '#......#', '#.BBB..#', '#......#', '########']);
+  assert.equal(coverFind(lane, 3.5, 3.5, 0.28, 0, -1).face, 3, 'Aiming north picks the bar over the equally near wall');
+  assert.equal(coverFind(lane, 3.5, 3.5, 0.28, 0, 1).face, 4, 'Aiming south picks the wall');
+  assert.equal(coverFind(bar, 5.5, 3.6, 0.28, 0, -1), null, 'Open floor is not cover');
   // No direction: nearest face wins.
   assert.equal(coverFind(bar, 3.5, 3.4, 0.28, 0, 0).face, 3);
 
@@ -73,7 +78,7 @@ function checkCover() {
   const shelf = grid(['#####', '#.H.#', '#...#', '#####']);
   assert.equal(step(coverFind(shelf, 2.5, 2.4, 0.28, 0, -1), shelf, 2.5, 2.3).kind, 'high');
   const sofa = grid(['#####', '#.B.#', '#.S.#', '#...#', '#####']);
-  assert.equal(coverFind(sofa, 2.5, 3.4, 0.28, 0, -1), null, 'Cannot hug cover through a sofa');
+  assert.equal(coverFind(sofa, 2.5, 3.4, 0.28, 0, -1).face, 4, 'Cannot hug the bar through a sofa (falls back to the wall behind)');
 
   // W7b stance hooks
   const crouched = { x: 3, z: 3, stance: 'crouch', eye: { x: 3, z: 3, y: 1 } };

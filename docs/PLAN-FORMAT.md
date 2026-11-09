@@ -270,3 +270,21 @@ DOM/GL-free and deterministic, and returns `{verts, tris, floorArea, ms, prof}`.
 Run it with `MESH_TIMING=1` to print per-section timings.
 
 Preview: `public/index.html?planview=motel/lot[&at=x,z][&h=m]` draws the stage on the title screen.
+
+## 10. Gameplay loader (W2f, dev-gated)
+
+`?planplay=motel` registers the side errand `plan_motel` (job list) from `PLAN.stageDefs(PLAN.playable(PLANS.motel))`.
+It is a preview: no shipped mission uses a plan stage until the user's layout review and the coordinator's rollout gate.
+
+- `PLAN.playable(plan)` shifts every stage together so the lowest bound is 0 (the legacy grid needs non-negative bounds).
+- `PLAN.cells(st,W,H)` rasterises a compiled stage into `{solid,wh,ground}` per 1 m cell.
+- `stageBuild` dispatches `kind:'plan'` to `planStageBuild` in `index.html`.
+  `WORLD.compile(PLAN.fromPlan(...).stage)` is authoritative for movement (`WORLD.move`/`clear`), sight, bullet traces,
+  doors (stage door leaves, the same push/swing logic) and pathing (`WORLD.nav`/`flow`/`step`, also used by `ai.js`).
+  `loadLevel` only builds a synthetic compatibility grid from `PLAN.cells` for the radar, decals and particles; it is never
+  consulted for plan collision, LOS or pathing. `MESH.build` replaces the static batch.
+- Spawns: the player spawn (or the arrival), and enemies from `spawns` with weapons by `role`.
+- Plan snapshots are `{v:2,kind:'plan',player,enemies,items,doors:[{i,th,w,pusher}]}`. Grid and plan snapshots reject each other.
+- Explicitly refused: sliding or locked doors; civilians, item/exit spawns, objectives and stashes unless the stage's `def.preview`
+  is true (the dev gate sets it and the loader then drops them). Not yet supported: cover hugging (disabled on plan stages),
+  bosses (a `boss` role spawns a plain enemy), glass shatter, wall damage, backdrops and plan lights.

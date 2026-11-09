@@ -117,12 +117,14 @@ const MESH=(()=>{
   // panels that only ever hide void (back walls, outer shells) stay full height. opts.cut=false renders full walls.
   const CUT=opts.cut===false?null:Object.assign({h:1.2,eye:8,back:4.6},opts.cut),pmemo=new Map();
   const playable=(x,z)=>{const k=Math.round(x*8)*65536+Math.round(z*8);let v=pmemo.get(k);if(v===undefined)pmemo.set(k,v=!!roomAt(x,z));return v;};
-  const CUT_DIRS=[-50,-25,0,25,50].map(a=>[Math.sin(a*Math.PI/180),-Math.cos(a*Math.PI/180)]),CUT_L=[1.5,3,4.5,6,8];
-  const occludes=(p,H)=>{const L=Math.hypot(p.bx-p.ax,p.bz-p.az),n=Math.max(1,Math.ceil(L));
+  // camera ground positions d m from the wall (player = camera - back in z), then the ground the wall hides between the
+  // rays over cut.h and over H, walked in 0.25 m steps (H >= eye hides everything beyond; capped at CUT_FAR)
+  const CUT_DIRS=[-50,-25,0,25,50].map(a=>[Math.sin(a*Math.PI/180),-Math.cos(a*Math.PI/180)]),CUT_L=[],CUT_FAR=16;for(let d=0.25;d<=10;d+=0.5)CUT_L.push(d);
+  const occludes=(p,H)=>{const L=Math.hypot(p.bx-p.ax,p.bz-p.az),n=Math.max(1,Math.ceil(L/0.5));
    for(let k=0;k<n;k++){const f=(k+0.5)/n,sx=p.ax+(p.bx-p.ax)*f,sz=p.az+(p.bz-p.az)*f;
     for(const [ux,uz] of CUT_DIRS)for(const d of CUT_L){const cx=sx-ux*d,cz=sz-uz*d;if(!playable(cx,cz-CUT.back))continue;
-     const t0=d*CUT.h/(CUT.eye-CUT.h),t1=d*Math.min(H,CUT.eye-0.5)/(CUT.eye-Math.min(H,CUT.eye-0.5));
-     for(const g of [0.3,0.65,1]){const t=p.half+t0+(t1-t0)*g;if(playable(sx+ux*t,sz+uz*t))return true;}}}
+     const t0=d*CUT.h/(CUT.eye-CUT.h),t1=H>=CUT.eye-1e-6?CUT_FAR:Math.min(CUT_FAR,d*H/(CUT.eye-H));
+     for(let t=t0;t<=t1+1e-9;t+=0.25){const q=p.half+t;if(playable(sx+ux*q,sz+uz*q))return true;}}}
    return false;};
   const cutAt=P.map((p,i)=>CUT&&fullH[i]>CUT.h+1e-6&&occludes(p,fullH[i])?CUT.h:Infinity);
   const spans=spans0.map((sp,i)=>sp.filter(s=>s[0]<cutAt[i]-1e-6).map(s=>[s[0],Math.min(s[1],cutAt[i])]));
@@ -184,8 +186,11 @@ const MESH=(()=>{
   const byRef=new Map();P.forEach((p,i)=>{if(!byRef.has(p.ref))byRef.set(p.ref,[]);byRef.get(p.ref).push(i);});
   const cutOver=(ref,m)=>{let h=Infinity;for(const i of byRef.get(ref)||[]){const p=P[i],L=Math.hypot(p.bx-p.ax,p.bz-p.az)||1,s=((m[0]-p.ax)*(p.bx-p.ax)+(m[1]-p.az)*(p.bz-p.az))/L;
    if(s>-1e-6&&s<L+1e-6&&Math.abs(cross((p.bx-p.ax)/L,(p.bz-p.az)/L,m[0]-p.ax,m[1]-p.az))<p.half+0.01)h=Math.min(h,cutAt[i]);}return h;};
+  // full-height openings have no panel across them: test a virtual panel over the opening itself
+  const cutOpen=(o,a,b,half)=>{const ch=cutOver(o.wall,[(a[0]+b[0])/2,(a[1]+b[1])/2]);if(ch<Infinity||!CUT||o.y1+0.07<=CUT.h+1e-6)return ch;
+   return occludes({ax:a[0],az:a[1],bx:b[0],bz:b[1],half},o.y1+0.07)?CUT.h:Infinity;};
   for(const o of st.openings){if(!['door','double','slide'].includes(o.kind))continue;const half=halfOf.get(o.wall)??0.1;
-   for(const [a,b] of o.segments){const L=Math.hypot(b[0]-a[0],b[1]-a[1]),u=[(b[0]-a[0])/L,(b[1]-a[1])/L],n=[-u[1],u[0]],ch=cutOver(o.wall,[(a[0]+b[0])/2,(a[1]+b[1])/2]),jt=Math.min(o.y1+0.07,ch);
+   for(const [a,b] of o.segments){const L=Math.hypot(b[0]-a[0],b[1]-a[1]),u=[(b[0]-a[0])/L,(b[1]-a[1])/L],n=[-u[1],u[0]],ch=cutOpen(o,a,b,half),jt=Math.min(o.y1+0.07,ch);
     for(const sgn of [1,-1]){const off=half+0.015,c=t=>[a[0]+u[0]*t+n[0]*off*sgn,a[1]+u[1]*t+n[1]*off*sgn],r=roomAt(a[0]+u[0]*L/2+n[0]*(half+0.05)*sgn,a[1]+u[1]*L/2+n[1]*(half+0.05)*sgn),rb=byte(r);
      box(c(-0.035),u,0.035,0.015,0,jt,CASING,rb);box(c(L+0.035),u,0.035,0.015,0,jt,CASING,rb);if(o.y1<ch)box(c(L/2),u,L/2,0.015,o.y1,jt,CASING,rb);}}}
 

@@ -279,7 +279,7 @@ const WORLD=(()=>{
    }return result;
   }
   function base(id,bounds,combat,policy){
-   return{v:3,policy,id,bounds:Object.freeze(bounds.slice()),combat,ground:[],panels:[],cells:[],doors:[],props:[],buckets:new Map(),rooms:[],openings:[],portals:[],spawns:[]};
+   return{v:3,policy,id,bounds:Object.freeze(bounds.slice()),combat,ground:[],panels:[],cells:[],doors:[],props:[],buckets:new Map(),rooms:[],openings:[],portals:[],spawns:[],decor:Object.freeze([])};
   }
   function addPanel(st,ref,ax,az,bx,bz,half,kind,build,cov,spans,polyOverride){
    const len=Math.hypot(bx-ax,bz-az),poly=polyOverride||box(ax,az,bx,bz,half);
@@ -331,7 +331,7 @@ const WORLD=(()=>{
    return Math.abs(area)<1e-12?null:polygon(out,'wall panel',true);
   }
   function compile(stage){
-   record(stage,['id','bounds','combat','ground','walls','props','rooms','portals','spawns'],'stage');
+   record(stage,['id','bounds','combat','ground','walls','props','rooms','portals','spawns','decor'],'stage');
    const ids=new Set(),id=v=>{if(typeof v!=='string'||!v.length||v.includes(':')||ids.has(v))throw new RangeError(`Invalid/duplicate geometry id ${String(v)}`);ids.add(v);return v;};
    id(stage.id);if(!Array.isArray(stage.bounds)||stage.bounds.length!==4)throw new TypeError('Stage bounds need [x0,z0,x1,z1]');
    const bounds=stage.bounds.map(v=>finite(v,'bounds'));if(bounds[2]<=bounds[0]||bounds[3]<=bounds[1])throw new RangeError('Stage bounds have no area');
@@ -420,6 +420,21 @@ const WORLD=(()=>{
     const prop=Object.freeze({id:p.id,poly:Object.freeze(poly),build:p.build,cov:p.cov,h:p.h});st.props.push(prop);addBucket(st,'prop',st.props.length-1,poly);
    }
    buildRooms(st,stage.rooms||[],id,within);
+   if(stage.decor!==undefined){
+    if(!Array.isArray(stage.decor)||stage.decor.length>8192)throw new RangeError('Stage decor must be an array of at most 8192 records');
+    const decorIds=new Set();
+    st.decor=freezeData(Array.from(stage.decor,d=>{
+     record(d,['id','kind','at','size','h','rot','y','col','tile','room'],'decor');
+     if(typeof d.id!=='string'||!d.id||decorIds.has(d.id)||typeof d.kind!=='string'||!d.kind)throw new RangeError('Invalid/duplicate decor id or kind');
+     decorIds.add(d.id);const at=point(d.at,'decor at'),size=point(d.size,'decor size');within(at);
+     const h=finite(d.h,'decor height'),rot=finite(d.rot??0,'decor rotation'),y=finite(d.y??0,'decor base');
+     if(size.some(v=>v<=0)||h<=0||y<0)throw new RangeError('Decor dimensions must be positive and base nonnegative');
+     if(d.col!==undefined&&(!Array.isArray(d.col)||d.col.length!==3||Array.from(d.col).some(v=>!Number.isFinite(v)||v<0||v>1)))throw new RangeError('Decor col must be RGB in [0,1]');
+     if(d.tile!==undefined&&(!Number.isInteger(d.tile)||d.tile<0||d.tile>255))throw new RangeError('Decor tile must be an integer in [0,255]');
+     if(d.room!==undefined&&(typeof d.room!=='string'||!st.rooms.some(r=>r.id===d.room)))throw new RangeError('Unknown decor room');
+     return{...copyData(d),at,size,h,rot,y};
+    }));
+   }
    buildPortals(st,stage.portals||[],id);
    st.spawns=copyData(stage.spawns||[]);
    return st;
@@ -585,6 +600,11 @@ const WORLD=(()=>{
   function groundY(st,x,z){
    finite(x,'ground x');finite(z,'ground z');
    if(st.policy==='legacy')return x>=0&&z>=0&&x<st.legacy.W&&z<st.legacy.H?0:null;
+   if(st.navGround){
+    for(const {g,b} of st.navGround.get(`${Math.floor(x/2)},${Math.floor(z/2)}`)||[])
+     if(x>=b[0]-EPS&&z>=b[1]-EPS&&x<=b[2]+EPS&&z<=b[3]+EPS&&inside(g.poly,x,z))return g.y;
+    return null;
+   }
    const g=st.ground.find(g=>inside(g.poly,x,z));return g?g.y:null;
   }
   function nearPoly(poly,x,z){
@@ -820,7 +840,7 @@ const WORLD=(()=>{
    const points=[p.mid,...(breachAxes.get(st)||[]).filter(a=>a.portal===p.idx).map(a=>[(a.a[0]+a.b[0])/2,(a.a[1]+a.b[1])/2])];
    return points.some(([x,z])=>sight(st,x-p.nx*offset,z-p.nz*offset,x+p.nx*offset,z+p.nz*offset,eye,top).clear);
   }
-  const groundEdges=new WeakMap(),navData=new WeakMap(),fieldData=new WeakMap();
+  const groundEdges=new WeakMap(),groundBuckets=new WeakMap(),navData=new WeakMap(),fieldData=new WeakMap();
   function segmentCuts(a,b,c,d){
    const dx=b[0]-a[0],dz=b[1]-a[1],ex=d[0]-c[0],ez=d[1]-c[1],den=cross(dx,dz,ex,ez);
    if(Math.abs(den)>EPS){
@@ -847,27 +867,68 @@ const WORLD=(()=>{
   }
   function segmentDistance(ax,az,bx,bz,a,b){
    if(Math.hypot(bx-ax,bz-az)<EPS)return segDist(ax,az,...a,...b);
-   if(segmentCuts([ax,az],[bx,bz],a,b).length)return 0;
+   if(segmentTouches(ax,az,bx,bz,a,b))return 0;
    return Math.min(segDist(ax,az,...a,...b),segDist(bx,bz,...a,...b),segDist(...a,ax,az,bx,bz),segDist(...b,ax,az,bx,bz));
+  }
+  function segmentTouches(ax,az,bx,bz,a,b){
+   const dx=bx-ax,dz=bz-az,ex=b[0]-a[0],ez=b[1]-a[1],den=cross(dx,dz,ex,ez);
+   if(Math.abs(den)>EPS){
+    const t=cross(a[0]-ax,a[1]-az,ex,ez)/den,u=cross(a[0]-ax,a[1]-az,dx,dz)/den;
+    return u>=-EPS&&u<=1+EPS&&t>=-EPS&&t<=1+EPS;
+   }
+   if(Math.abs(cross(a[0]-ax,a[1]-az,dx,dz))>EPS)return false;
+   const L=dx*dx+dz*dz,t0=((a[0]-ax)*dx+(a[1]-az)*dz)/L,t1=((b[0]-ax)*dx+(b[1]-az)*dz)/L;
+   return t0>=0&&t0<=1||t1>=0&&t1<=1;
+  }
+  function boundaryBuckets(st){
+   let buckets=groundBuckets.get(st);if(buckets)return buckets;
+   buckets=new Map();
+   for(const edge of boundaries(st)){
+    const [a,b]=edge,margin=EPS*(1+Math.hypot(b[0]-a[0],b[1]-a[1])),
+     entry={edge,b:[Math.min(a[0],b[0])-margin,Math.min(a[1],b[1])-margin,Math.max(a[0],b[0])+margin,Math.max(a[1],b[1])+margin]};
+    for(let z=Math.floor(entry.b[1]/2);z<=Math.floor(entry.b[3]/2);z++)
+     for(let x=Math.floor(entry.b[0]/2);x<=Math.floor(entry.b[2]/2);x++){
+      const key=`${x},${z}`;let list=buckets.get(key);if(!list)buckets.set(key,list=[]);list.push(entry);
+     }
+   }groundBuckets.set(st,buckets);return buckets;
   }
   function clear(st,ax,az,bx,bz,r=0){
    [ax,az,bx,bz,r].forEach(v=>finite(v,'clear coordinate'));if(r<0)throw new RangeError('Clear radius must be nonnegative');
    if(groundY(st,ax,az)===null||groundY(st,bx,bz)===null)return false;
    if(st.policy==='legacy')return moveClear(st.legacy,ax,az,bx,bz,r);
    const zero=Math.hypot(bx-ax,bz-az)<EPS;
+   const length=Math.hypot(bx-ax,bz-az),exactCandidates=r<1e-6||length>=EPS&&EPS/length>r,
+    pad=r+EPS*(1+length),loX=Math.min(ax,bx)-pad,hiX=Math.max(ax,bx)+pad,loZ=Math.min(az,bz)-pad,hiZ=Math.max(az,bz)+pad,
+    xlo=Math.floor(loX/2),xhi=Math.floor(hiX/2),zlo=Math.floor(loZ/2),zhi=Math.floor(hiZ/2),buckets=boundaryBuckets(st),edges=new Set();
+   const touches=b=>b[0]<=hiX&&b[1]<=hiZ&&b[2]>=loX&&b[3]>=loZ;
    let features;
    if(st.navFeatures){
     const [x0,z0,x1,z1]=st.bounds;if(Math.min(ax,bx)-r<x0||Math.min(az,bz)-r<z0||Math.max(ax,bx)+r>x1||Math.max(az,bz)+r>z1)return false;
-    const unique=new Set();for(let z=Math.floor((Math.min(az,bz)-r)/2);z<=Math.floor((Math.max(az,bz)+r)/2);z++)for(let x=Math.floor((Math.min(ax,bx)-r)/2);x<=Math.floor((Math.max(ax,bx)+r)/2);x++)for(const p of st.navFeatures.get(`${x},${z}`)||[])unique.add(p);
+    const unique=new Set();
+    if(exactCandidates){
+     // Near-zero radii and short rays retain the original tolerance-sensitive candidates.
+     for(let z=Math.floor((Math.min(az,bz)-r)/2);z<=Math.floor((Math.max(az,bz)+r)/2);z++)
+      for(let x=Math.floor((Math.min(ax,bx)-r)/2);x<=Math.floor((Math.max(ax,bx)+r)/2);x++)
+       for(const p of st.navFeatures.get(`${x},${z}`)||[])unique.add(p.poly);
+     for(const edge of boundaries(st))edges.add(edge);
+    }else for(let z=zlo;z<=zhi;z++)for(let x=xlo;x<=xhi;x++){
+      const key=`${x},${z}`;for(const p of st.navFeatures.get(key)||[])if(touches(p.b))unique.add(p.poly);
+      for(const entry of buckets.get(key)||[])if(touches(entry.b))edges.add(entry.edge);
+    }
     features=unique;
-   }else features=movementFeatures(st,ax,az,bx,bz,r);
+    if(!features.size&&!edges.size)return true;
+   }else{
+    features=movementFeatures(st,ax,az,bx,bz,r);
+    if(exactCandidates)for(const edge of boundaries(st))edges.add(edge);
+    else for(let z=zlo;z<=zhi;z++)for(let x=xlo;x<=xhi;x++)for(const entry of buckets.get(`${x},${z}`)||[])if(touches(entry.b))edges.add(entry.edge);
+   }
    for(const poly of features){
     if(inside(poly,ax,az)||inside(poly,bx,bz))return false;
     if(zero){if(nearPoly(poly,ax,az).d<r-1e-8)return false;continue;}
     if(!zero&&clip(poly,ax,az,bx,bz))return false;
     for(let i=0;i<poly.length;i++)if(segmentDistance(ax,az,bx,bz,poly[i],poly[(i+1)%poly.length])<r-1e-8)return false;
    }
-   for(const [a,b] of boundaries(st)){const d=segmentDistance(ax,az,bx,bz,a,b);if(d<=EPS||d<r-1e-8)return false;}
+   for(const [a,b] of edges){const d=segmentDistance(ax,az,bx,bz,a,b);if(d<=EPS||d<r-1e-8)return false;}
    return true;
   }
   const directions=Object.freeze([[1,0],[0,1],[-1,0],[0,-1],[1,1],[-1,1],[-1,-1],[1,-1]].map(Object.freeze));
@@ -882,11 +943,26 @@ const WORLD=(()=>{
    const geometry={...st,ground:st.ground.slice(),panels:st.panels.slice(),props:st.props.slice(),buckets:new Map([...st.buckets].map(([k,v])=>[k,v.map(p=>p.slice())])),cells:st.cells.map(c=>({...c}))};
    if(st.policy==='legacy')geometry.legacy={...st.legacy,solid:st.legacy.solid.slice(),furn:st.legacy.furn.slice(),wh:st.legacy.wh.slice()};
    else{
+    geometry.navGround=new Map();
+    for(const g of geometry.ground){
+     const b=aabb(g.poly),entry={g,b};
+     for(let z=Math.floor((b[1]-EPS)/2);z<=Math.floor((b[3]+EPS)/2);z++)for(let x=Math.floor((b[0]-EPS)/2);x<=Math.floor((b[2]+EPS)/2);x++){
+      const key=`${x},${z}`;let list=geometry.navGround.get(key);if(!list)geometry.navGround.set(key,list=[]);list.push(entry);
+     }
+    }
     geometry.navFeatures=new Map();
+    const features=new Map();
     for(const [key,items] of geometry.buckets){
      const polys=[];for(const [type,i] of items){
       const p=type==='prop'?geometry.props[i]:geometry.panels[i];
-      if(type==='prop'||geometry.cells.slice(p.c0,p.c1).some(c=>c.active&&c.y0<MOVE_H))polys.push(p.poly);
+      if(type==='prop'||geometry.cells.slice(p.c0,p.c1).some(c=>c.active&&c.y0<MOVE_H)){
+       let entry=features.get(p);
+       if(!entry){
+        const b=aabb(p.poly),minEdge=Math.min(...p.poly.map((a,j)=>Math.hypot(a[0]-p.poly[(j+1)%p.poly.length][0],a[1]-p.poly[(j+1)%p.poly.length][1]))),
+         margin=EPS*(1+1/minEdge);
+        features.set(p,entry={poly:p.poly,b:[b[0]-margin,b[1]-margin,b[2]+margin,b[3]+margin]});
+       }polys.push(entry);
+      }
      }if(polys.length)geometry.navFeatures.set(key,polys);
     }
    }
@@ -924,11 +1000,21 @@ const WORLD=(()=>{
     const best=snaps.find(p=>navClear(...p,...p))||choices.find(p=>navClear(...p,...p));
     if(best){xs[i]=best[0];zs[i]=best[1];walk[i]=1;rooms[i]=roomAt(st,...best)?.idx??-1;}else{xs[i]=cx;zs[i]=cz;}
    }
-   const doorPorts=st.portals.filter(p=>!p.inactive);
+   const doorPorts=new Map();
+   for(const p of st.portals)if(!p.inactive)for(const [a,b] of p.segments){
+    const entry={idx:p.idx,a,b},margin=EPS*(1+Math.hypot(b[0]-a[0],b[1]-a[1]));
+    for(let z=Math.floor((Math.min(a[1],b[1])-margin)/2);z<=Math.floor((Math.max(a[1],b[1])+margin)/2);z++)
+     for(let x=Math.floor((Math.min(a[0],b[0])-margin)/2);x<=Math.floor((Math.max(a[0],b[0])+margin)/2);x++){
+      const key=`${x},${z}`;let list=doorPorts.get(key);if(!list)doorPorts.set(key,list=[]);list.push(entry);
+     }
+   }
    const openingTags=(ax,az,bx,bz)=>{
-    const result=[];
-    for(const p of doorPorts)if(p.segments.some(([a,b])=>segmentCuts([ax,az],[bx,bz],a,b).length))result.push(p.idx);
-    return result;
+    const result=new Set();
+    const length=Math.hypot(bx-ax,bz-az),margin=EPS*(1+length)+EPS/Math.max(length,EPS);
+    for(let z=Math.floor((Math.min(az,bz)-margin)/2);z<=Math.floor((Math.max(az,bz)+margin)/2);z++)
+     for(let x=Math.floor((Math.min(ax,bx)-margin)/2);x<=Math.floor((Math.max(ax,bx)+margin)/2);x++)
+      for(const p of doorPorts.get(`${x},${z}`)||[])if(segmentTouches(ax,az,bx,bz,p.a,p.b))result.add(p.idx);
+    return[...result].sort((a,b)=>a-b);
    };
    for(let i=0;i<N;i++)if(walk[i])for(let k=0;k<(diagonal?8:4);k++){
     const [dx,dz]=directions[k],x=i%W+dx,z=Math.floor(i/W)+dz;if(x<0||z<0||x>=W||z>=H)continue;const j=z*W+x;
