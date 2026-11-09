@@ -91,3 +91,20 @@ test('surfaces: buildStatic roomId and room-state texture', async ({ openGame })
   expect(Math.abs(r.back-r.live)).toBeLessThan(r.live*0.03);
   expect(r.err).toBe(0);
 });
+
+// W13e regression: buildStatic must not cache g.wst before act2Setup solidifies glass/cabinets/elevators.
+test('surfaces: buildStatic leaves g.wst uncached so act2 solid cells reach the world stage', async ({ openGame }) => {
+  const page = await openGame();
+  const r = await page.evaluate(() => {
+    const out = [];
+    for (const lv of [4, 5, 6]) {
+      startLevel(lv);state='pause';const st=wst(G);let solid=0,miss=0,glass=0;
+      for(let i=0;i<G.W*G.H;i++){if(!G.solid[i])continue;solid++;if(!st.cells[st.panels[st.legacyPanel[i]].c0].active)miss++;}
+      for(let z=0;z<G.H;z++)for(let x=0;x<G.W;x++)if(G.rows[z][x]==='%')glass++;
+      out.push({lv,solid,miss,glass});
+    }
+    return out;
+  });
+  for (const o of r) { expect(o.solid).toBeGreaterThan(0); expect(o.miss).toBe(0); }
+  expect(r.find(o => o.lv === 6).glass).toBeGreaterThan(0);
+});
