@@ -168,6 +168,9 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <script src="art.js"></script>
 <script src="levels.js"></script>
 <script src="world.js"></script>
+<script src="plan.js"></script>
+<script src="plans/motel.js"></script>
+<script src="mesh.js"></script>
 <script src="missions.js"></script>
 <script src="models.js"></script>
 <script>
@@ -2939,29 +2942,37 @@ function drawMenuDyn(B,P){B.reset();P.reset();drawRide(B,-4.8,-1.5,1.7,0.3,state
  if(menuFlash>0&&menuChars[2].muzzle){const m=menuChars[2].muzzle;B.box(TRS(m[0],m[1],m[2],rnd(0,TAU),0.3,0.22,0.3),[1,0.95,0.6],true);}
  for(const p of menuParts){if(p.t==='c'){IBlo.r=0;IBlo.tp=0;drawBill(IBlo,A.mul(A.mul(A.T(p.x,p.y,p.z),A.RY(p.ph+menuT)),A.RX(Math.sin(menuT*2+p.ph)*0.5)));}else B.box(A.mul(A.T(p.x,p.y,p.z),A.S(p.s,p.s,p.s)),p.c,p.t==='f'||p.t==='e');}}
 
+/* W2b dev preview: ?planview=<plan>/<stage>[&at=x,z][&h=m] draws a plan stage via MESH over the menu (no gameplay) */
+const PLANV=(()=>{const q=new URLSearchParams(location.search),v=q.get('planview');if(!v)return null;const [pid,sid]=v.split('/'),at=(q.get('at')||'').split(',').map(Number);
+ return{pid,sid,at:at.length===2&&at.every(Number.isFinite)?at:null,h:+q.get('h')||26,B:null};})();
+function planViewBuild(){const P=PLANV,o=PLAN.fromPlan(PLANS[P.pid],P.sid),st=WORLD.compile(o.stage);P.B=new Batch();
+ const r=MESH.build(st,{uv:t=>TUV[t],white:WUV,tint:surfTint,pick:surfPick,finish:o.extras.finish},P.B);P.B.upload(true);
+ if(!P.at){let x0=Infinity,z0=Infinity,x1=-Infinity,z1=-Infinity;for(const m of st.rooms)for(const [x,z] of m.poly){x0=Math.min(x0,x);z0=Math.min(z0,z);x1=Math.max(x1,x);z1=Math.max(z1,z);}P.at=[(x0+x1)/2,(z0+z1)/2];}
+ window.planViewInfo={verts:r.verts,ms:r.ms,rooms:st.rooms.length};}
 function render(){if(contextLost||gl.isContextLost())return;PS2C.beginFrame();resize();const asp=vw/vh;let fovy=asp>=1?50*DEG:Math.min(2*Math.atan(Math.tan(25*DEG)*1.25/asp),82*DEG);if(G&&G.cine&&state==='play')fovy=asp>=1?40*DEG:62*DEG;
  const menu=state==='title'||state==='select'||state==='help'||state==='brief'||state==='elev'||state==='shop'||!G;let eye,tgt,fogC,fog,amb,ld,lc,lights;
  if(menu){if(!stageBuilt)buildStage();const mv=state==='shop'?(nineBuilt||buildNine(),nineView(asp)):state==='brief'?(briefBuilt||buildBrief(),briefView(asp)):state==='elev'?elevView(asp):menuView(asp);eye=mv.eye;tgt=mv.tgt;lights=mv.lights;MSH=mv.shDir||null;SHL=mv.shl===undefined?-1:mv.shl;
-  fogC=[0.05,0.02,0.07];fog=[5,15];amb=[0.2,0.16,0.26];ld=[-0.3,-0.8,-0.5];lc=[0.22,0.18,0.24];}
+  fogC=[0.05,0.02,0.07];fog=[5,15];amb=[0.2,0.16,0.26];ld=[-0.3,-0.8,-0.5];lc=[0.22,0.18,0.24];
+  if(PLANV&&state==='title'){if(!PLANV.B)planViewBuild();tgt=[PLANV.at[0],0,PLANV.at[1]];eye=[tgt[0],PLANV.h,tgt[2]+PLANV.h*0.58];lights=[];MSH=null;SHL=-1;fog=[400,500];amb=[0.62,0.58,0.66];lc=[0.55,0.5,0.5];}}
  else{SHL=-1;MSH=null;const g=G,sh=g.shake;tgt=[g.cam.x+g.cam.kx+rnd(-sh,sh)*0.5,0,g.cam.z+g.cam.kz+rnd(-sh,sh)*0.5];eye=[tgt[0],8,tgt[2]+4.6];if(asp<1){eye[1]=10.5;eye[2]=tgt[2]+6;}if(g.tankB){tgt[2]-=1.2;eye=[tgt[0],6.6,tgt[2]+5.6];if(asp<1){eye[1]=9;eye[2]=tgt[2]+7;}}if(g.def.hub==='drive'){eye=[tgt[0],13,tgt[2]+7.5];if(asp<1){eye[1]=17;eye[2]=tgt[2]+10;}}if(g.cine){eye=g.cine.eye.slice();tgt=g.cine.tgt.slice();}
   fogC=[0.07,0.03,0.09];fog=g.cine?[45,140]:g.def.hub==='drive'?[18,44]:[11,26];amb=g.def.amb||(g.def.hub==='drive'?[0.5,0.46,0.58]:g.def.hub?[0.34,0.31,0.4]:[0.42,0.36,0.5]);ld=[-0.4,-1,-0.3];lc=g.def.lc||[0.6,0.5,0.52];if(ENH()){amb=amb.map(v=>v*0.72);lc=g.def.lc?lc.map(v=>v*0.85):[0.42,0.47,0.66];}
   const ls=g.lights.concat(discoLights(g)).sort((a,b)=>Math.hypot(a.x-tgt[0],a.z-tgt[2])-Math.hypot(b.x-tgt[0],b.z-tgt[2])).slice(0,6);
   if(g.def.hub==='drive'){const c=g.pcar;ls.push({x:c.x+Math.sin(c.h)*2.2,y:0.6,z:c.z+Math.cos(c.h)*2.2,r:4.5,c:[1.2,1.1,0.9]});}
   for(const f of g.flashes.slice(-2))if(!f.sil)ls.push({x:f.x,y:f.y,z:f.z,r:f.big?6:4.5,c:[1.4,1.1,0.6]});lights=ls;}
  const l=Math.hypot(...ld);ld=ld.map(v=>v/l);
- const proj=M4.persp(fovy,asp,(menu||(G&&G.cine))?0.3:2,(G&&G.cine)?150:80),view=M4.lookAt(eye,tgt,[0,1,0]);VP=M4.mul(proj,view);invVP=M4.inv(VP);
+ const pv=!!(PLANV&&PLANV.B&&menu&&state==='title'),proj=M4.persp(fovy,asp,(menu||(G&&G.cine))?0.3:2,pv?300:(G&&G.cine)?150:80),view=M4.lookAt(eye,tgt,[0,1,0]);VP=M4.mul(proj,view);invVP=M4.inv(VP);
  if(!menu&&mouse.active&&invVP){const nx=mouse.x/vw*2-1,ny=1-mouse.y/vh*2;const a=M4.x4(invVP,nx,ny,-1,1),b=M4.x4(invVP,nx,ny,1,1);const p0=[a[0]/a[3],a[1]/a[3],a[2]/a[3]],p1=[b[0]/b[3],b[1]/b[3],b[2]/b[3]];const t=(0.7-p0[1])/(p1[1]-p0[1]);G.aimX=p0[0]+(p1[0]-p0[0])*t;G.aimZ=p0[2]+(p1[2]-p0[2])*t;}
  IBhi.reset();IBlo.reset();
- if(menu){if(state==='shop')drawNineDyn(dynB,poolB);else if(state==='brief')drawBriefDyn(dynB,poolB);else if(state==='elev')drawElevDyn(dynB,poolB);else drawMenuDyn(dynB,poolB);}
+ if(menu){if(pv){dynB.reset();poolB.reset();}else if(state==='shop')drawNineDyn(dynB,poolB);else if(state==='brief')drawBriefDyn(dynB,poolB);else if(state==='elev')drawElevDyn(dynB,poolB);else drawMenuDyn(dynB,poolB);}
  else{if(G.decalDirty){rebuildDecals();G.decalDirty=false;}buildDynamic();}
  dynB.upload();IBhi.upload();IBlo.upload();RU={ld,lc,amb,eye,fog,fogC,menu};shadowLive=false;
- if(ENH()&&QL<2&&PD){const st=menu?[state==='shop'?nineB:state==='brief'?briefB:state==='elev'?elevB:stageB]:[G.staticB];renderShadow([tgt[0],0,tgt[2]],MSH||ld,menu?6:13,st);}
+ if(ENH()&&QL<2&&PD){const st=menu?[pv?PLANV.B:state==='shop'?nineB:state==='brief'?briefB:state==='elev'?elevB:stageB]:[G.staticB];renderShadow([tgt[0],0,tgt[2]],MSH||ld,pv?40:menu?6:13,st);}
  gl.bindFramebuffer(gl.FRAMEBUFFER,rt.fb);gl.viewport(0,0,rtW,rtH);gl.clearColor(fogC[0],fogC[1],fogC[2],1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
  gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.disable(gl.CULL_FACE);gl.useProgram(P1);
  for(const k of ['aP','aN','aT','aC'])gl.enableVertexAttribArray(L[k]);
  gl.uniformMatrix4fv(L.uVP,false,VP);gl.uniform1f(L.uPix,ENH()?1:0);gl.uniform2f(L.uRes,rtW,rtH);gl.uniform3fv(L.uLD,ld);gl.uniform3fv(L.uLC,lc);gl.uniform3fv(L.uAmb,amb);gl.uniform3fv(L.uCam,eye);gl.uniform2fv(L.uFog,fog);gl.uniform3fv(L.uFogC,fogC);
  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,atlasTex);gl.uniform1i(L.uTex,0);setLights(lights);setFX(L,menu);
- if(menu){if(state==='shop')nineB.draw();else if(state==='brief')briefB.draw();else if(state==='elev')elevB.draw();else stageB.draw();gl.depthMask(false);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(-1,-2);poolB.upload();gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);poolB.draw();gl.disable(gl.BLEND);gl.disable(gl.POLYGON_OFFSET_FILL);gl.depthMask(true);dynB.draw();drawInst();PS2C.flush(VP,RU);}
+ if(menu){if(pv)PLANV.B.draw();else if(state==='shop')nineB.draw();else if(state==='brief')briefB.draw();else if(state==='elev')elevB.draw();else stageB.draw();gl.depthMask(false);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(-1,-2);poolB.upload();gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);poolB.draw();gl.disable(gl.BLEND);gl.disable(gl.POLYGON_OFFSET_FILL);gl.depthMask(true);dynB.draw();drawInst();PS2C.flush(VP,RU);}
  else{const g=G;g.staticB.draw();
   if(g.decalDirty){rebuildDecals();g.decalDirty=false;}
   gl.depthMask(false);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(-1,-2);g.decalB.draw();
