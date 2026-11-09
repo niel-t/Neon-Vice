@@ -1638,7 +1638,9 @@ function loadHub(name,mode){HUBMODE=mode||'in';const d=HUBS[name];loadLevel(leve
  else if(name==='lobby')banner('McWEY TOWER','Take the elevator to the 52nd floor');}
 function goDrive(){const p=PROG[rideId()];if(p&&p.heli){loadHub('lobby');banner('BY HELICOPTER','Landed on McWey Tower · take the elevator up');return;}startCine();}
 let fading=false;function fadeTo(fn){if(contextLost||fading)return false;fading=true;$('fade').classList.add('on');setTimeout(()=>{try{if(!contextLost)fn();}finally{setTimeout(()=>{$('fade').classList.remove('on');fading=false;},60);}},380);return true;}
-function onHubTrigger(t){if(fading)return false;if(t==='leave'){sfx('blip');return fadeTo(()=>loadHub('drive','parked'));}if(t==='exit'){sfx('blip');return fadeTo(()=>loadHub('drive','parked'));}if(t==='tower'){sfx('blip');return fadeTo(()=>loadHub('lobby'));}else if(t==='elevator'){sfx('ding');return fadeTo(enterElevator);}else if(t==='mcwey'){return fadeTo(talkMcWey);}return true;}
+/* McWey still owes a debrief/brief (VISIT.next is only taken into NEXTJOB by chatGo): leaving home or taking the job goes to him first, never back to the last job */
+const mcDue=()=>VISIT.next!==NEXTJOB;
+function onHubTrigger(t){if(fading)return false;if(t==='leave'){sfx('blip');return fadeTo(mcDue()?goDrive:()=>loadHub('drive','parked'));}if(t==='exit'){sfx('blip');return fadeTo(()=>loadHub('drive','parked'));}if(t==='tower'){sfx('blip');return fadeTo(()=>loadHub('lobby'));}else if(t==='elevator'){sfx('ding');return fadeTo(enterElevator);}else if(t==='mcwey'){return fadeTo(talkMcWey);}return true;}
 function updateHub(dt){const g=G;g.T+=dt;g.time+=dt;if(g.np)g.np.t+=dt;
  if(g.cine)updateCine(dt);else if(g.def.hub==='drive'&&!g.parked)updateDrive(dt);else{hubInteract();updatePlayer(dt);if(g.solids&&g.player)for(const s of g.solids)boxPush(s,g.player);npcStep(dt);if(g.mcDesk)officeTick(g,dt);if(g.parked)parkedStreet(dt);if(g.slots)homeTick(dt);if(g.club)clubTick(dt);}
  updateFX(dt);
@@ -1762,9 +1764,9 @@ function runWalkAway(p){if(!p.run)return false;delete p.run;return true;}
   return 'LOADOUT: '+(parts.join(' + ')||'BARE HANDS')+(am.length?' · '+am.join(' · '):'')+(ar?' · '+ar.name+(k.armour.plates<ar.plates?' (DAMAGED)':''):'');}
 /* the car menu */
 function openCarMenu(){if(state!=='play'||!G)return;sfx('blip');state='carmenu';$('carWallet').textContent='WALLET $'+fmt(wallet())+(myProg().debt>0?'  ·  OWED TO McWEY $'+fmt(myProg().debt):'')+'  ·  RIDE: '+carName(myCar());$('carLoad').textContent=loadoutTxt();
- $('bCarJob').innerHTML='NEXT JOB: '+(JOBPICK?missionName(JOBPICK):LEVELS[NEXTJOB].name)+'<span class="kbhint"> (ENTER)</span><span class="padhint"> (A)</span>';$('bCarShop').style.display=G.def===HUBS.bunker?'none':'';$('bCarClub').style.display=G.def===HUBS.club?'none':'';show('sCar');}
+ $('bCarJob').innerHTML=(mcDue()?'SEE McWEY':'NEXT JOB: '+(JOBPICK?missionName(JOBPICK):LEVELS[NEXTJOB].name))+'<span class="kbhint"> (ENTER)</span><span class="padhint"> (A)</span>';$('bCarShop').style.display=G.def===HUBS.bunker?'none':'';$('bCarClub').style.display=G.def===HUBS.club?'none':'';show('sCar');}
 function closeCarMenu(){if(state!=='carmenu')return;sfx('blip');state='play';show(null);}
-$('bCarJob').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);fadeTo(()=>JOBPICK?startMission(JOBPICK):startLevel(NEXTJOB));};
+$('bCarJob').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);fadeTo(mcDue()?goDrive:()=>JOBPICK?startMission(JOBPICK):startLevel(NEXTJOB));};
 $('bCarShop').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);fadeTo(()=>loadHub('bunker'));};
 $('bCarBack').onclick=()=>closeCarMenu();
 $('bCarHome').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);fadeTo(goHome);};
