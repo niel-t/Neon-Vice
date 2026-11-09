@@ -32,6 +32,19 @@ const vnoise=(x,z,s)=>{const X=Math.floor(x),Z=Math.floor(z),u=x-X,w=z-Z,fu=u*u*
  return a+(b-a)*fu+(c-a)*fw+(a-b-c+d)*fu*fw;};
 /* low-frequency brightness/warmth multiplier at a world point; continuous, so shared vertices agree and cells don't seam */
 function surfTint(x,z){const n=vnoise(x/6,z/6,11)*0.65+vnoise(x/2.3,z/2.3,12)*0.35,h=vnoise(x/9,z/9,13)-0.5,f=0.91+0.18*n;return[f*(1+0.07*h),f,f*(1-0.07*h)];}
+/* W13c materials, generic by tile id (no per-level data):
+   MACRO[base] = first of 4 cells holding one 2×2-cell design that is continuous across the quarters and wraps, so a
+   horizontal surface uses MACRO[base]+(x&1)+2(z&1) with no transform (surfFloor).
+   BLEND[tile] = derived grime partner cell whose alpha is a height mask. Set Batch.blT=BLEND[t] for the quad (constant
+   per triangle) and pass per-corner weights (grimeW); the FS shows grime where weight·1.3 > 1−mask, giving crisp
+   organic patch edges that grow with the weight. */
+const MACDEF=[1,4,14,43],MACRO={};MACDEF.forEach((b,i)=>MACRO[b]=64+VDEF.length+i*4);
+const BLEND={};{let n=64+VDEF.length+MACDEF.length*4;
+ for(const t of [0,1,2,3,4,5,6,7,12,13,14,27,33,34,37,38,41,43,48,61,62,63])BLEND[t]=n++;
+ VDEF.forEach((_,i)=>BLEND[64+i]=n++);MACDEF.forEach(b=>{for(let q=0;q<4;q++)BLEND[MACRO[b]+q]=n++;});}
+function surfFloor(t,x,z){const m=MACRO[t];return m!==undefined?[m+(x&1)+2*(z&1),0]:surfPick(t,x,z);}
+/* grime weight at a world point (continuous, so shared corners agree); e adds a bias such as wall/edge proximity */
+function grimeW(x,z,e=0){const n=vnoise(x/3.5,z/3.5,31)*0.8+vnoise(x/1.7,z/1.7,32)*0.2;return clamp((n-0.5)*2.4+e,0,1);}
 const VS=`
 attribute vec3 aP;attribute vec3 aN;attribute vec2 aT;attribute vec3 aC;attribute vec4 aS;
 uniform mat4 uVP;uniform vec2 uRes;uniform vec3 uLD;uniform vec3 uLC;uniform vec3 uAmb;uniform float uPix;
@@ -67,7 +80,7 @@ float shadowF(vec3 n){if(uShOn<0.5)return 1.0;vec4 lp=uLVP*vec4(vW+n*0.05,1.0);v
  float sum=0.0;for(int i=-1;i<=1;i++)for(int j=-1;j<=1;j++){float d=unpackD(texture2D(uSh,s.xy+vec2(float(i),float(j))*0.0016));sum+=(s.z-0.004>d)?0.0:1.0;}return sum/9.0;}
 void main(){float cA=1.0;vec2 uv=vT.xy/vT.z;if(uv.x>${GLASS[0][0]}&&uv.x<${GLASS[0][1]}&&uv.y>${GLASS[1][0]}&&uv.y<${GLASS[1][1]}){cA=0.3;}
  vec4 t=texture2D(uTex,uv);
- if(uBlend>0.5){vec4 tb=texture2D(uTex,uv+vS.xy);t=vec4(mix(t.rgb,tb.rgb,vS.z),vS.z<0.5?t.a:tb.a);}
+ if(uBlend>0.5){vec4 tb=texture2D(uTex,uv+vS.xy);t.rgb=mix(t.rgb,tb.rgb,clamp((vS.z*1.3-1.0+tb.a)*5.0,0.0,1.0));}
  if(t.a<0.5)discard;vec3 col=t.rgb*vC;
  if(uPix>0.5&&vE<0.5){vec3 n0=normalize(vN),n=n0;
 #ifdef HAS_D
@@ -254,7 +267,49 @@ function makeAtlas(){
   chip:x=>{const a=8+srand()*14,b=8+srand()*14;x.fillStyle='rgba(30,24,30,.45)';x.beginPath();x.moveTo(a,b);x.lineTo(a+2.5,b+0.6);x.lineTo(a+0.8,b+2.2);x.fill();mk.crack(x);}};
  VDEF.forEach(([b,kind],i)=>{const [bx,by]=TCELL(b),wall=[5,6,12,13,34,48,62].includes(b);
   tile(64+i,x=>{x.drawImage(A,bx*64+2,by*64+2,60,60,0,0,32,32);x.beginPath();x.rect(3,3,26,wall?21:26);x.clip();mk[kind](x);});});
+ /* W13c macro designs on a 64-unit square, drawn once per quarter; wrap() repeats shapes at ±64 so the 2×2 block tiles
+    with itself. Randomness comes from ihash (not srand) so every quarter sees the same design. */
+ const wrap=(x,f)=>{for(const ox of [-64,0,64])for(const oy of [-64,0,64]){x.save();x.translate(ox,oy);f(x);x.restore();}},
+  vein=(x,s,n,col,w,hl)=>wrap(x,x=>{for(let k=0;k<n;k++){let px=ihash(k,1,s)*64,py=ihash(k,2,s)*64,a=ihash(k,3,s)*TAU;x.beginPath();x.moveTo(px,py);
+   for(let q=0;q<16;q++){a+=(ihash(k,q+9,s)-0.5)*0.9;px+=Math.cos(a)*5;py+=Math.sin(a)*5;x.lineTo(px,py);}x.lineWidth=w;x.strokeStyle=col;x.stroke();if(hl){x.translate(0.5,0.4);x.lineWidth=w*0.5;x.strokeStyle=hl;x.stroke();}}}),
+  spk=(x,s,n,cols)=>wrap(x,x=>{x.globalAlpha=0.45;for(let k=0;k<n;k++){x.fillStyle=cols[k%cols.length];x.fillRect(ihash(k,1,s)*64,ihash(k,2,s)*64,1+(ihash(k,3,s)*2|0),1);}x.globalAlpha=1;});
+ const MDES={
+  1:x=>{for(let i=0;i<4;i++)for(let j=0;j<4;j++){x.fillStyle=(i+j)%2?'#1d1a24':'#d9d4de';x.fillRect(i*16,j*16,16,16);}
+   vein(x,41,4,'rgba(118,108,132,.55)',0.8,'rgba(255,255,255,.16)');spk(x,42,260,['#8a8590','#2c2833','#b9b3bf','#494350']);},
+  4:x=>{const cols=['#7a4a2a','#6b3f22','#835333','#714527','#7e4e2c','#66401f','#875636','#744828'];
+   for(let r=0;r<8;r++){x.fillStyle=cols[r];x.fillRect(0,r*8,64,8);x.lineWidth=0.4;x.strokeStyle='rgba(50,28,14,.4)';
+    for(let g=0;g<2;g++){const y=r*8+2+g*3+ihash(r,g,43)*1.5,ph=ihash(r,g+5,43)*TAU;x.beginPath();for(let s=0;s<=64;s+=2)x.lineTo(s,y+Math.sin(s/64*TAU*2+ph)*0.7);x.stroke();}
+    x.fillStyle='#3a2212';x.fillRect(0,r*8+7,64,1);x.fillRect((r*23+(ihash(r,9,43)*6|0))%62+1,r*8,1,7);}
+   x.fillStyle='rgba(58,32,16,.5)';wrap(x,x=>{for(let k=0;k<3;k++){x.beginPath();x.ellipse(ihash(k,1,44)*64,(ihash(k,2,44)*8|0)*8+3.5,1.6,0.9,0,0,TAU);x.fill();}});
+   spk(x,45,160,['#5a3519','#94613d']);},
+  14:x=>{x.fillStyle='#e8e4ea';x.fillRect(0,0,64,64);const sh=['#e3dee6','#ece8ef','#e6e1ea','#efebf1'];
+   wrap(x,x=>{for(let k=0;k<4;k++){x.fillStyle=sh[k];x.fillRect(16+(k&1)*32,16+(k>>1)*32,32,32);}});
+   vein(x,46,3,'rgba(160,150,174,.7)',0.9,'rgba(200,192,210,.5)');vein(x,47,4,'rgba(185,177,194,.5)',0.4);
+   x.fillStyle='#c9c2cf';for(const v of [15,47]){x.fillRect(0,v,64,1);x.fillRect(v,0,1,64);}},
+  43:x=>{x.fillStyle='#16141a';x.fillRect(0,0,64,64);vein(x,48,5,'#34303c',1,'rgba(120,110,130,.25)');spk(x,49,120,['#221f28','#0e0d12']);
+   x.fillStyle='#c9a24a';x.fillRect(0,0,64,1);x.fillRect(0,0,1,64);x.fillStyle='rgba(201,162,74,.35)';x.fillRect(0,32,64,1);x.fillRect(32,0,1,64);}};
+ for(const b of MACDEF)for(let q=0;q<4;q++)tile(MACRO[b]+q,x=>{x.translate(-32*(q&1),-32*(q>>1));MDES[b](x);});
  for(const t of ATILES)if(!legacy.has(t)){gutter(t);const [cx,cy]=TCELL(t),n=ax.getImageData(cx*64,cy*64,64,64).data;for(let j=0;j<64;j++)d.set(n.subarray(j*256,j*256+256),((cy*64+j)*ATLAS+cx*64)*4);}
+ /* W13c grime partners, computed straight into the upload data (no canvas round trip, so the alpha mask keeps exact RGB):
+    desaturated warm-dark grime with grit and a dust lift on dark bases; alpha = fbm height mask (gutters replicate the
+    edge texel). */
+ const pn=(u,v,p,s)=>{const X=Math.floor(u*p),Z=Math.floor(v*p),a=u*p-X,b=v*p-Z,fa=a*a*(3-2*a),fb=b*b*(3-2*b),h=(i,j)=>ihash((X+i)%p,(Z+j)%p,s);
+  const c00=h(0,0),c10=h(1,0),c01=h(0,1),c11=h(1,1);return c00+(c10-c00)*fa+(c01-c00)*fb+(c00-c10-c01+c11)*fa*fb;};
+ /* the outer band (≥16px, a whole mip-4 texel) is symmetrised over D8 so every edge has one palindromic profile that
+    survives 2×2 box mips: neighbours match under any transform. Coarser mips (far/oblique views) may still seam slightly. */
+ /* medium/fine grain only: the large grime shapes come from the world-space grimeW vertex weights, so the mask never
+    forms a per-cell blob that repeats as a dot grid */
+ const m0=(u,v)=>pn(u,v,7,62)*0.55+pn(u,v,15,63)*0.3+pn(u,v,31,64)*0.15,MK=new Float32Array(64*64),SY=new Float32Array(4096),FR=new Float32Array(4096),FE=new Float32Array(4096);
+ for(let j=0;j<64;j++)for(let i=0;i<64;i++){const u=(Math.min(61,Math.max(2,i))-2)/59,v=(Math.min(61,Math.max(2,j))-2)/59,a=u-0.5,b=v-0.5,
+  f=Math.max(0,Math.min(1,(Math.min(u,v,1-u,1-v)-0.25)/0.2)),q=j*64+i;let sy=0;for(const m of D8)sy+=m0(((m[0]*a+m[1]*b+0.5)%1+1)%1,((m[2]*a+m[3]*b+0.5)%1+1)%1);
+  SY[q]=sy/8;FR[q]=m0(u,v);FE[q]=f*f*(3-2*f);}
+ /* rank-equalise both fields to uniform 0..1; the D8-symmetric rim keeps reduced contrast, the free interior full */
+ const eq=A=>{const s=Float32Array.from(A).sort();for(let q=0;q<4096;q++){let lo=0,hi=4096;while(lo<hi){const md=(lo+hi)>>1;if(s[md]<A[q])lo=md+1;else hi=md;}A[q]=lo/4095;}};
+ eq(SY);eq(FR);for(let q=0;q<4096;q++)MK[q]=(0.5+(FR[q]-0.5)*0.85)*FE[q]+(0.5+(SY[q]-0.5)*0.55)*(1-FE[q]);
+ for(const [t,p] of Object.entries(BLEND)){const [sx,sy]=TCELL(+t),[px,py]=TCELL(p);
+  for(let j=0;j<64;j++)for(let i=0;i<64;i++){const s=((sy*64+j)*ATLAS+sx*64+i)*4,k=((py*64+j)*ATLAS+px*64+i)*4,m=MK[j*64+i],
+   l=d[s]*0.3+d[s+1]*0.59+d[s+2]*0.11,st=1-0.3*Math.max(0,Math.min(1,(m-0.72)*4)),gr=0.86+0.28*ihash(i,j,p),dk=(1-l/255)**2;
+   const R=[0.6,0.52,0.43],DU=[34,29,22];for(let c=0;c<3;c++)d[k+c]=Math.min(255,(d[s+c]*0.6+l*0.4)*R[c]*st*gr+DU[c]*dk);d[k+3]=Math.round(m*255);}}
  /* the legacy canvas is uploaded over the top-left quadrant exactly as the old 512 atlas was (a canvas readback round
     trip would shift translucent texels by ±1) */
  return{img:o,legacy:c};
@@ -288,7 +343,8 @@ const CI=[];for(let i=0;i<8;i++)CI.push([(i&1)?.5:-.5,(i&2)?.5:-.5,(i&4)?.5:-.5]
 const CF=[[[1,0,0],[5,1,3,7]],[[-1,0,0],[0,4,6,2]],[[0,1,0],[6,7,3,2]],[[0,-1,0],[0,1,5,4]],[[0,0,1],[4,5,7,6]],[[0,0,-1],[1,0,2,3]]];
 const Q6=[0,1,2,0,2,3],QST=[[0,1],[1,1],[1,0],[0,0]];const SCR=new Float32Array(24);
 /* Vertex format v2 (48 B): pos3 nrm3 uv2 col3 (f32) + aS RGBA8 normalized at byte 44 = (blendTile, blendW, roomId, 0).
-   blendTile/roomId must be constant per triangle (no flat varyings in GLSL ES 1.0). roomId 0 = no room; room r is r+1. */
+   blendTile/roomId must be constant per triangle (no flat varyings in GLSL ES 1.0). roomId 0 = no room; room r is r+1.
+   blendW is a height-mask threshold (W13c): the FS shows blendTile where blendW·1.3 > 1 − blendTile.alpha. */
 const VSTRIDE=12;
 class Batch{
  constructor(){this.alloc(8000);this.n=0;this.buf=gl.createBuffer();this.blT=0;this.blW=0;this.room=0;this.bl=false;}
@@ -297,9 +353,9 @@ class Batch{
  ensure(k){const need=this.n+k,cap=this.f.length/VSTRIDE;if(need>cap)this.alloc(Math.max(need,cap*2),this.u8);}
  vtx(x,y,z,nx,ny,nz,u,v,c,w){const f=this.f,o=this.n*VSTRIDE,b=o*4+44;f[o]=x;f[o+1]=y;f[o+2]=z;f[o+3]=nx;f[o+4]=ny;f[o+5]=nz;f[o+6]=u;f[o+7]=v;f[o+8]=c[0];f[o+9]=c[1];f[o+10]=c[2];
   const bw=w===undefined?this.blW:Math.round(clamp(w,0,1)*255);if(bw)this.bl=true;const u8=this.u8;u8[b]=this.blT;u8[b+1]=bw;u8[b+2]=this.room;u8[b+3]=0;this.n++;}
- quad4(P,nx,ny,nz,uv,cs,k){this.ensure(6);let U=[uv[0],uv[2],uv[2],uv[0]],V=[uv[3],uv[3],uv[1],uv[1]];
+ quad4(P,nx,ny,nz,uv,cs,k,ws){this.ensure(6);let U=[uv[0],uv[2],uv[2],uv[0]],V=[uv[3],uv[3],uv[1],uv[1]];
   if(k){const m=D8[k];U=[];V=[];for(const [s,t] of QST){const a=s-0.5,b=t-0.5;U.push(uv[0]+(m[0]*a+m[1]*b+0.5)*(uv[2]-uv[0]));V.push(uv[1]+(m[2]*a+m[3]*b+0.5)*(uv[3]-uv[1]));}}
-  for(const i of Q6)this.vtx(P[i][0],P[i][1],P[i][2],nx,ny,nz,U[i],V[i],cs[i]);}
+  for(const i of Q6)this.vtx(P[i][0],P[i][1],P[i][2],nx,ny,nz,U[i],V[i],cs[i],ws?ws[i]:undefined);}
  quad(P,nx,ny,nz,uv,c){this.ensure(6);const U=[uv[0],uv[2],uv[2],uv[0]],V=[uv[3],uv[3],uv[1],uv[1]];for(const i of Q6)this.vtx(P[i][0],P[i][1],P[i][2],nx,ny,nz,U[i],V[i],c);}
  box(m,c,em,uv){uv=uv||WUV;this.ensure(36);const T=SCR;
   for(let i=0;i<8;i++){const a=CI[i];T[i*3]=m[0]*a[0]+m[1]*a[1]+m[2]*a[2]+m[3];T[i*3+1]=m[4]*a[0]+m[5]*a[1]+m[6]*a[2]+m[7];T[i*3+2]=m[8]*a[0]+m[9]*a[1]+m[10]*a[2]+m[11];}
