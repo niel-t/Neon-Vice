@@ -540,10 +540,11 @@ screens).
    W1 decides.
 4. **Lift doors as entries.** Do D28/D29 open on call, and can enemies arrive
    by lift as reinforcements (E2)?
-5. **Interior columns** at (19.8, 11.4) and (23.8, 11.4) are a gameplay
-   choice. W2 may remove them if the great room should be pure concealment.
-6. **Sunken conversation pit** (period-typical) inside the great room, about
-   x 20.4–25.2, z 7.6–11.0. Per user decision Q9, floor steps never break
-   line of sight, so it is decor only, not cover. W2 decides whether to
-   include it.
-7. **Stages.** `lobby` and `roof` are optional; the brief needs only `ph`.
+5. **Interior columns. Resolved by W2:** keep both. They are the great
+   room's only hard cover; props never block sight, so concealment is
+   unchanged.
+6. **Sunken conversation pit. Resolved by W2:** include it in the plan as a
+   −0.35 m ground step, decor only, once W1e's `maxStep` lands. Until then
+   the plan leaves the floor flat.
+7. **Stages. Resolved by W2:** the plan authors `ph` only; `lobby` and
+   `roof` stay off stage for now.

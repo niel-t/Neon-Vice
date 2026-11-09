@@ -496,4 +496,5 @@ meet the restrooms in clay tile.
 6. **Columns.** The 0.4 m columns COL1–COL4 are `full` cover but too narrow for the
    line test; they don't block sightlines here. W1 to confirm whether props
    of `full` coverage should block sight (STYLE-LEVELS §3.4 says props never
-   do).
+   do). **Resolved (W1c schema gate, as arcade §9 Q5):** props never block
+   sight, so the columns are cover only.

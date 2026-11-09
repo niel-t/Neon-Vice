@@ -512,15 +512,17 @@ The first matching row wins.
 1. **At anchor or alongside?** The brief says "two miles out"; the legacy
    map has a gangway to a quay with the player's car. A 51 m yacht would
    plausibly anchor off (Y26's modern Miamarina limit is 45.7 m). This brief assumes at
-   anchor, arriving by speedboat. W10 and W2 to confirm.
-2. **The lower deck.** The guest cabins, the engine room and the tank are
-   implied. Should any of them be playable (a second stage)? W2 to decide.
+   anchor, arriving by speedboat. W10 and W2 to confirm. **W2 (layout):** at
+   anchor, so there is no quay or gangway. Dialogue wording goes to the coordinator.
+2. **The lower deck. Resolved by W2:** not playable in this milestone. The
+   plan keeps the companionway landing clear. It adds a `stairs` record
+   only when a `lower` stage exists, because stair targets are validated.
 3. **The glass floor.** Can it break, and does a pawn fall into the tank?
    The panels are thick acrylic (Y17); MATERIALS has no id for them, and
    whether they stop a handgun round is unmodelled. W5 to decide; W1 to add a construction if it is cover or
    breakable.
-4. **The bow entry (E2).** Include it, or keep the stern the only way
-   aboard? W2 to decide.
+4. **The bow entry (E2). Resolved by W2:** include it. A second entry
+   breaks the single-choke stern, and it gives the deck loop a flank.
 5. **Is Lex optional?** The script says so, but the engine's clear rule
    needs the boss dead (§1). Either W5 adds a boss exception for this
    floor or W10 drops the line. This brief keeps Lex on the dance floor and
@@ -534,6 +536,9 @@ The first matching row wins.
    and W5 to decide.
 8. **Falling overboard.** The bulwarks are waist-high stage edges, and the
    swim platform's stern is open. Can pawns go over? W2 to decide.
+   **Resolved by W2:** no. Bulwarks block movement as waist-cover walls.
+   The swim platform's open stern is a stage edge, which W1d's ground-void
+   rule blocks, so nobody goes over.
 9. **HE against yacht builds.** MATERIALS §5 has no HE reach for
    `alu_bulkhead`, `joinery_ply` or `steel_10mm`, and Lex fires 40 mm HE.
    W5 to add them.
