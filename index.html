@@ -1511,8 +1511,12 @@ function updateBrief(dt){if(!briefBuilt)buildBrief();const s=salChar;const talki
  blinkT-=dt;if(blinkT<=0){s.blink=0.13;blinkT=rnd(2,4.5);}s.blink-=dt;
  if(Math.random()<dt*5)briefParts.push({x:0.86,y:0.88,z:0.81,vx:rnd(-0.03,0.03),vy:0.2,vz:rnd(-0.03,0.03),s:rnd(0.015,0.03),life:2.2});
  for(let i=briefParts.length-1;i>=0;i--){const p=briefParts[i];p.life-=dt;p.x+=(p.vx+Math.sin(menuT*2+i)*0.04)*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;p.s*=Math.exp(dt*0.25);if(p.life<=0)briefParts.splice(i,1);}}
+// World x pan that puts McWey's head (0,1.25,0) mid-way across the screen left of the dialogue log (same width as .dlog).
+function briefPan(eye,tgt,asp){const n=v=>{const l=Math.hypot(...v);return v.map(c=>c/l);},f=n([tgt[0]-eye[0],tgt[1]-eye[1],tgt[2]-eye[2]]),r=n([-f[2],0,f[0]]),
+ h=[-eye[0],1.25-eye[1],-eye[2]],xc=h[0]*r[0]+h[2]*r[2],dp=h[0]*f[0]+h[1]*f[1]+h[2]*f[2],
+ k=-Math.max(340,Math.min(0.36*vw,820))/vw*asp*Math.tan(25*DEG);return (k*dp-xc)/(k*f[0]-r[0]);}
 function briefView(asp){let eye=[0.05,1.36,2.0],tgt=[-0.55,1.12,0];if(asp<1){eye=[0.25,1.5,3.1];tgt=[0,1.12,0];}
- else{const pf=Math.min(0.55,Math.max(340,Math.min(0.36*vw,820))/vw)*1.2;eye[0]+=pf;tgt[0]+=pf;} // keep McWey clear of the right-side log
+ else{const dx=briefPan(eye,tgt,asp);eye[0]+=dx;tgt[0]+=dx;} // centre McWey in the space left of the log
  const fl=Math.sin(menuT*1.3)>0.95?0.3:1;
  return{eye,tgt,lights:[{x:-0.78,y:1.15,z:0.6,r:2.4,c:[1.1,0.85,0.5]},{x:1.8,y:1.9,z:-0.7,r:3.6,c:BRIEF_SUN[briefAct()].map(v=>v*fl)},{x:-1.3,y:1.7,z:-0.55,r:3.4,c:[0.3,0.85,1.4]},{x:0.7,y:2.1,z:1.7,r:3.8,c:[1.05,0.88,0.78]},{x:-0.6,y:1.4,z:-0.8,r:2,c:[0.8,0.1,0.3]}]};}
 function drawBriefDyn(B,P){B.reset();P.reset();hdChar(IBhi,salChar,menuT);
@@ -1650,7 +1654,7 @@ function updateHub(dt){const g=G;g.T+=dt;g.time+=dt;if(g.np)g.np.t+=dt;
 function npcStep(dt){const g=G,p=g.player;if(g.talkT>0)g.talkT-=dt;const vi=Math.min(3,VISIT.debrief===null?0:VISIT.debrief+1);
  for(const n of g.npcs){if(n.kind==='guest'&&g.club){clubWalk(n,dt,g,p);}else if(n.kind==='guest'||n.kind==='pgirl')guestStep(n,dt,g,p);if(n.kind==='dancer'||n.kind==='sdancer'||n.kind==='patron')continue;const dx=p.x-n.x,dz=p.z-n.z,d=Math.hypot(dx,dz);
   if(d<(n.kind==='guest'?1.6:3)){const ta=Math.atan2(dx,dz);n.a+=clamp(angDiff(n.a,ta),-4*dt,4*dt);}else if(n.kind!=='guest')n.a+=clamp(angDiff(n.a,n.a0),-2*dt,2*dt);if(n.seat)n.a=n.a0+clamp(angDiff(n.a0,n.a),-0.9,0.9);
-  if(d<2.2&&!n.said&&!(g.talkT>0)){n.said=true;const L=n.kind==='recep'&&RECEP_GRADE[VISIT.grade]?RECEP_GRADE[VISIT.grade]:n.kind==='hguard'?[hguardLine()]:HOME_NPC_LINES[n.kind]?[pick(HOME_NPC_LINES[n.kind])]:(NPCLINES[n.kind][vi]||NPCLINES[n.kind][0]);g.talkT=L.length*1.5+0.4;let t=0;for(const line of L){setTimeout(()=>{if(G===g)popup(n.x,n.z,line,'#ffe9a8');},t);t+=1500;}}
+  if(d<2.2&&!n.said&&!(g.talkT>0)){n.said=true;const L=n.kind==='recep'&&RECEP_GRADE[VISIT.grade]?RECEP_GRADE[VISIT.grade]:n.kind==='hguard'?[hguardLine()]:HOME_NPC_LINES[n.kind]?[pick(HOME_NPC_LINES[n.kind])]:(NPCLINES[n.kind][vi]||NPCLINES[n.kind][0]);g.talkT=L.length*1.5+0.4;const qg=g.quipGen=(g.quipGen||0)+1;let t=0;for(const line of L){setTimeout(()=>{if(G===g&&g.quipGen===qg)popup(n.x,n.z,line,'#ffe9a8');},t);t+=1500;}}
   if(d<n.r+p.r&&d>1e-4){const k=(n.r+p.r-d);p.x+=dx/d*k;p.z+=dz/d*k;}}}
 let ENG=null;
 function engineOn(on){if(!AC)return;if(!ENG){if(!on)return;const o1=AC.createOscillator(),o2=AC.createOscillator(),f=AC.createBiquadFilter(),gg=AC.createGain();o1.type='sawtooth';o2.type='square';f.type='lowpass';f.frequency.value=500;gg.gain.value=0;o1.connect(f);o2.connect(f);f.connect(gg);gg.connect(sfxG);o1.start();o2.start();ENG={o1,o2,f,g:gg,on:false};}
@@ -1697,7 +1701,8 @@ function drawHubHUD(c,g,u,m){if(g.cine)return;const d=g.def;c.font=PXF(7*u);txt(
  const s=project(g.car.x,1,g.car.z);if(s&&(s[0]<0||s[0]>vw||s[1]<0||s[1]>vh)){const cx=vw/2,cy=vh/2,a=Math.atan2(s[1]-cy,s[0]-cx),r=Math.min(vw,vh)*0.4;c.save();c.translate(cx+Math.cos(a)*r,cy+Math.sin(a)*r);c.rotate(a);c.fillStyle='#ffd36b';c.strokeStyle='#000';c.lineWidth=3;c.beginPath();c.moveTo(16*u,0);c.lineTo(-9*u,-11*u);c.lineTo(-9*u,11*u);c.closePath();c.stroke();c.fill();c.restore();}
  if(g.tv)drawTVTicker(c,g,u);
  if(g.say&&g.say.t<g.say.dur){g.say.t+=1/60;drawSay(c,g.say,u);}
- if(g.ia){const s3=project(g.ia.x,1.9,g.ia.z);if(s3){c.font=VTF(18*u);const lbl=(padMode?'(A) ':touchMode?'TAP: ':'[E] / CLICK: ')+g.ia.lbl,tw=c.measureText(lbl).width;c.fillStyle='rgba(10,4,18,.85)';c.fillRect(s3[0]-tw/2-7*u,s3[1]-24*u,tw+14*u,22*u);c.fillStyle='#ffd36b';c.fillRect(s3[0]-tw/2-7*u,s3[1]-24*u,3*u,22*u);txt(c,lbl,s3[0],s3[1]-22*u,'#fff','center',18*u);}}
+ if(g.ia&&g.ia.k==='talk'){const s3=project(g.ia.x,1.9,g.ia.z);if(s3){const lbl=padMode?'(A)':touchMode?'TAP':'E';c.font=VTF(12*u);const tw=c.measureText(lbl).width;c.fillStyle='rgba(10,4,18,.55)';c.fillRect(s3[0]-tw/2-4*u,s3[1]-17*u,tw+8*u,14*u);txt(c,lbl,s3[0],s3[1]-16*u,'#ffd36b','center',12*u);}}
+ else if(g.ia){const s3=project(g.ia.x,1.9,g.ia.z);if(s3){c.font=VTF(18*u);const lbl=(padMode?'(A) ':touchMode?'TAP: ':'[E] / CLICK: ')+g.ia.lbl,tw=c.measureText(lbl).width;c.fillStyle='rgba(10,4,18,.85)';c.fillRect(s3[0]-tw/2-7*u,s3[1]-24*u,tw+14*u,22*u);c.fillStyle='#ffd36b';c.fillRect(s3[0]-tw/2-7*u,s3[1]-24*u,3*u,22*u);txt(c,lbl,s3[0],s3[1]-22*u,'#fff','center',18*u);}}
  c.font=VTF(18*u);for(const pp of g.popups){const s2=project(pp.x,1.6+pp.t*0.5,pp.z);if(!s2)continue;c.globalAlpha=clamp(2.2-pp.t*1.3,0,1);const tw=c.measureText(pp.txt).width;c.fillStyle='rgba(10,4,18,.75)';c.fillRect(s2[0]-tw/2-6*u,s2[1]-2*u,tw+12*u,22*u);txt(c,pp.txt,s2[0],s2[1],pp.col,'center',18*u);}c.globalAlpha=1;}
 /* ---- after the briefing: lift down, your car, Nine of Nine's gun shop ---- */
 let HUBMODE='in',NEXTJOB=0,MISSION='c0',JOBPICK=null; // MISSION: the job being played; JOBPICK: a non-campaign job taken from McWey's menu
@@ -2578,7 +2583,7 @@ function drawLobbyTV(B,g){const t=g.tv,fl=0.85+Math.sin(g.T*7)*0.05+(Math.sin(g.
 function drawTVTicker(c,g,u){const t=g.tv,a=project(t.x-0.68,1.44,t.z+0.03),b=project(t.x+0.68,0.68,t.z+0.03);if(!a||!b)return;const x0=Math.min(a[0],b[0]),x1=Math.max(a[0],b[0]),y0=Math.min(a[1],b[1]),y1=Math.max(a[1],b[1]),w=x1-x0,h=y1-y0;if(w<40||x1<0||x0>vw||y1<0||y0>vh)return;
  c.save();c.beginPath();c.rect(x0,y0,w,h);c.clip();const fs=Math.max(9,h*0.3);c.fillStyle='rgba(8,14,48,.55)';c.fillRect(x0,y0,w,h);c.fillStyle='#c0182a';c.fillRect(x0,y0,w,fs*0.9);c.font=PXF(fs*0.5);txt(c,'CH 9 NEWS',x0+4,y0+fs*0.18,'#fff','left',fs*0.5);
  c.fillStyle='rgba(0,0,0,.6)';c.fillRect(x0,y1-fs*1.25,w,fs*1.25);c.font=VTF(fs);const tw=c.measureText(t.msg).width,off=(g.T*fs*2.2)%tw;for(let xx=x1-off-tw;xx<x1;xx+=tw)if(xx+tw>x0)txt(c,t.msg,xx,y1-fs*1.15,'#ffd36b','left',fs);c.restore();}
-function npcTalk(g,n){if(g.talkT>0)return;const pool=NPC_CHAT[n.kind]||[];let L=pick(pool);if(L===n.lastLine&&pool.length>1)L=pool[(pool.indexOf(L)+1)%pool.length];n.lastLine=L;n.said=true;g.talkT=1.4;popup(n.x,n.z,L,'#ffe9a8');sfx('blip');}
+function npcTalk(g,n){if(g.chatT>g.T)return;g.chatT=g.T+0.5;g.quipGen=(g.quipGen||0)+1;g.popups=g.popups.filter(q=>Math.hypot(q.x-n.x,q.z-n.z)>0.6);const pool=NPC_CHAT[n.kind]||[];let L=pick(pool);if(L===n.lastLine&&pool.length>1)L=pool[(pool.indexOf(L)+1)%pool.length];n.lastLine=L;n.said=true;g.talkT=1.4;popup(n.x,n.z,L,'#ffe9a8');sfx('blip');}
 /* ---------- the fountain actually sounds like water ---------- */
 let FOUNT=null;
 function fountainHum(g){if(!AC||!noiseBuf)return;const on=state==='play'&&g&&g.fount&&g.player;if(!FOUNT){if(!on)return;const s=AC.createBufferSource();s.buffer=noiseBuf;s.loop=true;const f=AC.createBiquadFilter();f.type='bandpass';f.frequency.value=1600;f.Q.value=0.6;const f2=AC.createBiquadFilter();f2.type='lowpass';f2.frequency.value=4200;const gg=AC.createGain();gg.gain.value=0;s.connect(f);f.connect(f2);f2.connect(gg);gg.connect(sfxG);s.start();FOUNT={g:gg};}
