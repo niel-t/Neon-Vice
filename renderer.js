@@ -73,7 +73,7 @@ precision highp float;
 precision mediump float;
 #endif
 uniform sampler2D uTex;uniform vec3 uFogC;uniform float uPix;uniform vec3 uLD;uniform vec3 uLC;uniform vec3 uAmb;uniform vec4 uPL[${NL}];uniform vec3 uPC[${NL}];uniform vec3 uCam;
-uniform sampler2D uSh;uniform mat4 uLVP;uniform float uShOn;uniform float uHaze;uniform float uBump;uniform float uShL;uniform float uBlend;
+uniform sampler2D uSh;uniform mat4 uLVP;uniform float uShOn;uniform float uHaze;uniform float uBump;uniform float uShL;uniform float uBlend;uniform sampler2D uRoom;
 varying vec3 vC;varying vec3 vT;varying float vF;varying vec3 vW;varying vec3 vN;varying float vE;varying vec4 vS;
 float unpackD(vec4 c){return dot(c,vec4(1.0,1.0/255.0,1.0/65025.0,1.0/16581375.0));}
 float shadowF(vec3 n){if(uShOn<0.5)return 1.0;vec4 lp=uLVP*vec4(vW+n*0.05,1.0);vec3 s=lp.xyz/lp.w*0.5+0.5;if(s.x<0.01||s.x>0.99||s.y<0.01||s.y>0.99||s.z>1.0)return 1.0;
@@ -93,6 +93,7 @@ void main(){float cA=1.0;vec2 uv=vT.xy/vT.z;if(uv.x>${GLASS[0][0]}&&uv.x<${GLASS
   float rim=pow(1.0-max(dot(n0,V),0.0),3.0)*(n0.y<0.6?0.35:0.0);
   col=col*l*(1.0-wet*0.45)+sp+rim*col*0.6;}
  if(uHaze>0.0){vec3 rd=vW-uCam;float Lr=length(rd);rd/=Lr;vec3 hz=vec3(0.0);for(int i=0;i<${NL};i++){if(uPL[i].w<5.2)continue;vec3 lc=uPL[i].xyz-uCam;float tt=clamp(dot(lc,rd),0.0,Lr);float d=length(lc-rd*tt);hz+=uPC[i]*exp(-d*d*5.0);}col+=hz*uHaze;}
+ vec4 rs=texture2D(uRoom,vec2((vS.w+0.5)/256.0,0.5));if(min(rs.r,rs.g)<0.999)col=mix(vec3(dot(col,vec3(0.3,0.59,0.11))),col,rs.g)*rs.r;
  gl_FragColor=vec4(mix(col,uFogC,vF),cA);}`;
 const BRFS=`precision mediump float;uniform sampler2D uS;varying vec2 vU;void main(){vec3 c=texture2D(uS,vU).rgb;float l=max(c.r,max(c.g,c.b));gl_FragColor=vec4(c*smoothstep(0.6,1.0,l)*1.3,1.0);}`;
 const BLFS=`precision mediump float;uniform sampler2D uS;uniform vec2 uD;varying vec2 vU;void main(){vec3 c=texture2D(uS,vU).rgb*0.227;c+=texture2D(uS,vU+uD*1.385).rgb*0.316;c+=texture2D(uS,vU-uD*1.385).rgb*0.316;c+=texture2D(uS,vU+uD*3.23).rgb*0.07;c+=texture2D(uS,vU-uD*3.23).rgb*0.07;gl_FragColor=vec4(c,1.0);}`;
@@ -319,6 +320,14 @@ const atlasTex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,atlasTex);
 function setAtlasFilter(sm){gl.bindTexture(gl.TEXTURE_2D,atlasTex);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,sm?gl.LINEAR_MIPMAP_LINEAR:gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,sm?gl.LINEAR:gl.NEAREST);}
 gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
 gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+/* W13e room-state texture, 256×1 RGBA8 NEAREST on unit 3, sampled by the vertex roomId (texel 0 = no room, room r = r+1).
+   r = brightness, g = saturation (255,255 = live, pixel-identical); b, a reserved for W12b. All-live by default. */
+const ROOMS=new Uint8Array(256*4).fill(255),roomTex=gl.createTexture();let roomDirty=false;
+gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,roomTex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,256,1,0,gl.RGBA,gl.UNSIGNED_BYTE,ROOMS);
+for(const [p,v] of [[gl.TEXTURE_MIN_FILTER,gl.NEAREST],[gl.TEXTURE_MAG_FILTER,gl.NEAREST],[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE]])gl.texParameteri(gl.TEXTURE_2D,p,v);
+gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,atlasTex);
+function setRoomState(idx,rgba){if(!(idx>=0&&idx<255))return;const o=(idx+1)*4;for(let c=0;c<4;c++)ROOMS[o+c]=rgba[c]&255;roomDirty=true;}
+function resetRoomState(){ROOMS.fill(255);roomDirty=true;}
 const TUV=[];for(let t=0;t<256;t++){const [tx,ty]=TCELL(t),e=2.5/ATLAS;TUV.push([tx/ACELLS+e,ty/ACELLS+e,(tx+1)/ACELLS-e,(ty+1)/ACELLS-e]);}
 const WUV=[0.03*512/ATLAS,0.03*512/ATLAS,0.09*512/ATLAS,0.09*512/ATLAS];
 
@@ -393,12 +402,12 @@ const VSDI=GEOM+`uniform mat4 uLVP;void main(){geom();gl_Position=uLVP*vec4(gW,1
 const VSD=`attribute vec3 aP;uniform mat4 uLVP;void main(){gl_Position=uLVP*vec4(aP,1.0);}`;
 const FSD=`precision highp float;void main(){vec4 e=vec4(1.0,255.0,65025.0,16581375.0)*gl_FragCoord.z;e=fract(e);e-=e.yzww*vec4(1.0/255.0,1.0/255.0,1.0/255.0,0.0);gl_FragColor=e;}`;
 let PI=null,PD=null,PDI=null,LI={},LD={},LDI={};
-const UNAMES=['uShL','uVP','uRes','uLD','uLC','uAmb','uPL','uPC','uCam','uFog','uTex','uFogC','uPix','uSh','uLVP','uShOn','uHaze','uBump','uBlend'];
+const UNAMES=['uShL','uVP','uRes','uLD','uLC','uAmb','uPL','uPC','uCam','uFog','uTex','uFogC','uPix','uSh','uLVP','uShOn','uHaze','uBump','uBlend','uRoom'];
 const INAMES=['aP','aN','aT','iR0','iR1','iR2','iC','iU','iS'];
 try{if(EXT_I){PI=prog(VSI,FS);INAMES.forEach(n=>LI[n]=gl.getAttribLocation(PI,n));UNAMES.forEach(n=>LI[n]=gl.getUniformLocation(PI,n));
   PDI=prog(VSDI,FSD);INAMES.forEach(n=>LDI[n]=gl.getAttribLocation(PDI,n));LDI.uLVP=gl.getUniformLocation(PDI,'uLVP');}
  PD=prog(VSD,FSD);LD.aP=gl.getAttribLocation(PD,'aP');LD.uLVP=gl.getUniformLocation(PD,'uLVP');}catch(e){console.warn('gfx2 fallback',e);PI=null;}
-['uSh','uLVP','uShOn','uHaze','uBump','uShL'].forEach(n=>L[n]=gl.getUniformLocation(P1,n));
+['uSh','uLVP','uShOn','uHaze','uBump','uShL','uRoom'].forEach(n=>L[n]=gl.getUniformLocation(P1,n));
 function makeTemplate(N){const v=[],ix=[];const F=[[0,1,2,1],[0,1,2,-1],[1,2,0,1],[1,2,0,-1],[2,0,1,1],[2,0,1,-1]];
  for(const [ax,ua,va,sg] of F){const b=v.length/8;for(let j=0;j<=N;j++)for(let i=0;i<=N;i++){const u=i/N,w=j/N,p=[0,0,0],n=[0,0,0];p[ax]=0.5*sg;p[ua]=(u-0.5)*sg;p[va]=w-0.5;n[ax]=sg;v.push(p[0],p[1],p[2],n[0],n[1],n[2],u,w);}
   for(let j=0;j<N;j++)for(let i=0;i<N;i++){const a=b+j*(N+1)+i,c=a+N+1;ix.push(a,a+1,c+1,a,c+1,c);}}
@@ -437,7 +446,9 @@ function renderShadow(center,ld,half,statics){if(!shT)initShadow();const e=[cent
  if(PDI){gl.useProgram(PDI);gl.uniformMatrix4fv(LDI.uLVP,false,LVP);IBhi.draw(LDI);IBlo.draw(LDI);}
  gl.bindFramebuffer(gl.FRAMEBUFFER,null);shadowLive=true;}
 function setFX(Lc,menu){gl.uniform1f(Lc.uBump,ENH()?0.55:0);gl.uniform1f(Lc.uHaze,ENH()&&QL<1?(menu?0.085:0.05):0);gl.uniform1f(Lc.uShOn,shadowLive?1:0);gl.uniform1f(Lc.uShL,shadowLive?SHL:-1);gl.uniformMatrix4fv(Lc.uLVP,false,LVP);
- gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,shT?shT.tex:atlasTex);gl.uniform1i(Lc.uSh,2);gl.activeTexture(gl.TEXTURE0);}
+ gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,shT?shT.tex:atlasTex);gl.uniform1i(Lc.uSh,2);
+ gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,roomTex);if(roomDirty){roomDirty=false;gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,256,1,gl.RGBA,gl.UNSIGNED_BYTE,ROOMS);}
+ gl.uniform1i(Lc.uRoom,3);gl.activeTexture(gl.TEXTURE0);}
 let RU=null,SHL=-1,MSH=null;
 function drawInst(){if(!PI||!ENH()||(!IBhi.n&&!IBlo.n))return;for(const k of ['aP','aN','aT','aC'])gl.disableVertexAttribArray(L[k]);gl.useProgram(PI);const u=RU;
  gl.uniformMatrix4fv(LI.uVP,false,VP);gl.uniform1f(LI.uPix,1);gl.uniform2f(LI.uRes,rtW,rtH);gl.uniform3fv(LI.uLD,u.ld);gl.uniform3fv(LI.uLC,u.lc);gl.uniform3fv(LI.uAmb,u.amb);gl.uniform3fv(LI.uCam,u.eye);gl.uniform2fv(LI.uFog,u.fog);gl.uniform3fv(LI.uFogC,u.fogC);
