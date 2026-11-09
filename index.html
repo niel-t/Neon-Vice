@@ -249,6 +249,10 @@ const TRS=(x,y,z,ry,sx,sy,sz)=>A.mul(A.mul(A.T(x,y,z),A.RY(ry)),A.S(sx,sy,sz));
 <script src="overworld.js"></script>
 <script>
 'use strict';
+/* W2f dev gate (not shipped to players): ?planplay=motel registers a plan-stage preview errand on the job list */
+(()=>{const id=new URLSearchParams(location.search).get('planplay');if(id!=='motel'||!PLANS[id])return;
+ const m=PLAN.stageDefs(PLAN.playable(PLANS[id]));for(const s of Object.values(m.stageDefs))s.def.preview=true;
+ MISSIONS['plan_'+id]={kind:'side',name:'Motel Sunset (plan preview)',base:0,...m};})();
 if(!gl)throw new Error('no webgl');
 /* ================= AUDIO ================= */
 let AC=null,master,musicG,sfxG,noiseBuf,musTimer=null,musStep=0,musNext=0,audioFailed=false;
@@ -764,15 +768,18 @@ function loadLevel(i,dOver,staged=false){
   else if(c==='@'){g.disco={x:cx,z:cz};}
   else if(c==='*'){g.lights.push({x:cx,y:1.6,z:cz,r:5.5,c:NEON[g.lights.length%4]});}
   else if(c==='D')continue;
-  else if(c in EKIND||c==='X'){const boss=c==='X';const k=boss?((def.boss&&def.boss.weapon)||'m16'):EKIND[c];const mel=!k||WD[k].melee;const L0=boss?(def.boss?def.boss.look():BOSSLOOK()):thugLook(k,null,i);const body=boss?(def.boss?'normal':'boss'):L0.body;if(!boss&&def.hawaii){const hc=hex(pick([0xff6fae,0x2de2e6,0xffd36b,0x7dff9a,0xff8a3a]));L0.shirt=hc;L0.jacket=hc;L0.tee=true;L0.torsoTile=29;}
-   const e=makeChar(cx,cz,L0,false);e.body=body;e.hp=(body==='fat'||body==='big')?2:boss?Math.round(((def.boss&&def.boss.hp)||16)*(SET.diff==='hard'?1.25:1)):1;e.maxhp=e.hp;e.spd=body==='fat'?0.72:body==='big'?0.92:body==='thin'?1.25:boss?0.7:1;e.rmul=body==='thin'?0.8:1;if(body==='fat')e.r=0.36;if(body==='thin')e.r=0.24;if(body==='big')e.r=0.33;if(boss){e.boss=true;e.sc=def.boss?1.12:1.3;e.r=0.42;g.boss=e;if(def.boss)e.lex=!!def.boss.lex;}e.weapon=k?{type:k,ammo:99}:null;e.a=pick([0,Math.PI/2,Math.PI,-Math.PI/2]);
-   const melee=!k||WD[k].melee;e.state=Math.random()<(melee?0.6:0.3)?'patrol':'idle';e.pa=e.a;e.ta=e.a;e.turnT=rnd(1,4);e.pauseT=0;e.react=0;e.wind=0;e.id=g.enemies.length;e.pers=pick(['rush','careful','flank','flank']);e.seeT=99;e.lkx=cx;e.lkz=cz;e.burst=0;e.searchT=0;g.enemies.push(e);}
-  else if(c in IKIND){const t=IKIND[c];g.items.push({x:cx,z:cz,type:t,ammo:WD[t].ammo||0,vx:0,vz:0,rot:rnd(0,TAU),flying:false,fresh:true,flyT:0});}
+  else if(c in EKIND||c==='X')makeEnemy(g,def,i,c==='X'?((def.boss&&def.boss.weapon)||'m16'):EKIND[c],c==='X',cx,cz);
+  else if(c in IKIND)makeItem(g,IKIND[c],cx,cz);
  }
  markZones(g);if(!def.hub&&!staged)addHazards(g,i);
  if(staged){g.fans=[];g.pool=new Uint8Array(W*H);g.glass=new Uint8Array(W*H);g.nades=[];}
  if(def.hub)hubSetup(g);g.lights.push({x:g.car.x,y:0.3,z:g.car.z,r:3,c:[1,0.2,0.7]});dressStreet(g);buildStatic(g);buildRadar(g);g.cam.x=g.player.x;g.cam.z=g.player.z-1;computeFlow();return g;
 }
+/* k = weapon type (null = unarmed); same random-call order as the original inline grid spawn */
+function makeEnemy(g,def,i,k,boss,cx,cz,a){const L0=boss?(def.boss?def.boss.look():BOSSLOOK()):thugLook(k,null,i);const body=boss?(def.boss?'normal':'boss'):L0.body;if(!boss&&def.hawaii){const hc=hex(pick([0xff6fae,0x2de2e6,0xffd36b,0x7dff9a,0xff8a3a]));L0.shirt=hc;L0.jacket=hc;L0.tee=true;L0.torsoTile=29;}
+ const e=makeChar(cx,cz,L0,false);e.body=body;e.hp=(body==='fat'||body==='big')?2:boss?Math.round(((def.boss&&def.boss.hp)||16)*(SET.diff==='hard'?1.25:1)):1;e.maxhp=e.hp;e.spd=body==='fat'?0.72:body==='big'?0.92:body==='thin'?1.25:boss?0.7:1;e.rmul=body==='thin'?0.8:1;if(body==='fat')e.r=0.36;if(body==='thin')e.r=0.24;if(body==='big')e.r=0.33;if(boss){e.boss=true;e.sc=def.boss?1.12:1.3;e.r=0.42;g.boss=e;if(def.boss)e.lex=!!def.boss.lex;}e.weapon=k?{type:k,ammo:99}:null;e.a=pick([0,Math.PI/2,Math.PI,-Math.PI/2]);if(a!==undefined)e.a=a;
+ const melee=!k||WD[k].melee;e.state=Math.random()<(melee?0.6:0.3)?'patrol':'idle';e.pa=e.a;e.ta=e.a;e.turnT=rnd(1,4);e.pauseT=0;e.react=0;e.wind=0;e.id=g.enemies.length;e.pers=pick(['rush','careful','flank','flank']);e.seeT=99;e.lkx=cx;e.lkz=cz;e.burst=0;e.searchT=0;g.enemies.push(e);return e;}
+function makeItem(g,t,cx,cz){const it={x:cx,z:cz,type:t,ammo:WD[t].ammo||0,vx:0,vz:0,rot:rnd(0,TAU),flying:false,fresh:true,flyT:0};g.items.push(it);return it;}
 function furnBox(B,m,c,uv){B.box(m,c,false,uv);}
 function buildFurniture(B,g,x,z,f){const cx=x+0.5,cz=z+0.5,W=g.W;const same=(ox,oz)=>g.furn[(z+oz)*W+x+ox]===f;
  const wallDir=()=>{for(const [ox,oz,a] of [[0,-1,0],[0,1,Math.PI],[-1,0,Math.PI/2],[1,0,-Math.PI/2]])if(isSolid(x+ox,z+oz))return a;return 0;};
@@ -835,7 +842,7 @@ function markZones(g){const W=g.W,H=g.H,out=new Uint8Array(W*H),q=[];g.out=out;
    const r=run(X,Z,dz!==0);if(r<=6&&fn>=0&&!(fa===fb&&fb===fn)&&run(X+dx,Z+dz,dz!==0)>r)continue;
    out[Z*W+X]=1;q.push(X,Z);}}}
 const isOut=(g,x,z)=>!!(g.out&&g.out[z*g.W+x]);
-function rayLen(x,z,dx,dz,max){return WORLD.cell.rayLen(G,x,z,dx,dz,max);}
+function rayLen(x,z,dx,dz,max){if(G&&G.plan){const r=WORLD.trace(G.wst,x,z,x+dx*max,z+dz*max,1.5,PLAN_RAY)[0];return r?r.t0*max:max;}return WORLD.cell.rayLen(G,x,z,dx,dz,max);}
 function dressStreet(g){const W=g.W,H=g.H;
  const street=(x,z)=>x>=0&&z>=0&&x<W&&z<H&&!g.solid[z*W+x]&&g.floorT[z*W+x]===7;
  const occ=(x,z)=>g.rows[z][x]!=='=';
@@ -926,19 +933,44 @@ function buildRadar(g){const c=document.createElement('canvas');c.width=g.W*4;c.
   else{x.fillStyle=g.floorT[i]===7?'#1c1a24':'#2e1f40';x.fillRect(xx*4,z*4,4,4);if(g.furn[i]){x.fillStyle='#6a4f80';x.fillRect(xx*4+1,z*4+1,2,2);}}}
  g.radar=c;}
 function bfs(f,sx,sz){return WORLD.cell.bfs(G,f,sx,sz);}
-function computeFlow(){const p=G.player;bfs(G.flow,Math.floor(p.x),Math.floor(p.z));}
-function flowStep(f,e,fx,fz){const g=G,W=g.W,cx=Math.floor(e.x),cz=Math.floor(e.z);let best=f[cz*W+cx];if(best<0)return null;let bx=cx,bz=cz;
+function computeFlow(){const p=G.player;if(G.plan){planFlow(G);return;}bfs(G.flow,Math.floor(p.x),Math.floor(p.z));}
+/* plan stages: the shared player field is a WORLD.flow field on the stage nav (rebuilt when geometry/locks change) */
+function planNav(g){const P=g.plan;if(!P.nav||P.nav.stage!==g.wst){P.nav=WORLD.nav(g.wst,{cellSize:0.5,radius:0.3});P.field=null;}return P.nav;}
+function planFlow(g){const p=g.player;for(let k=0;k<2;k++){try{const n=planNav(g);g.plan.field=WORLD.flow(n,[[p.x,p.z]],g.plan.field||undefined);g.flow=g.plan.field;return;}
+ catch(e){g.plan.nav=null;g.plan.field=null;}}g.flow=null;}
+function flowStep(f,e,fx,fz){const g=G;
+ if(g.plan){if(!f||typeof f!=='object'||f instanceof Int16Array)return null;try{const n=g.plan.nav,v=WORLD.dist(n,f,e.x,e.z);if(v<0)return null;if(v<0.3)return[fx,fz];const s=WORLD.step(n,f,e.x,e.z);return s?[s[0],s[1]]:null;}catch(err){g.plan.nav=null;g.plan.field=null;return null;}}
+ const W=g.W,cx=Math.floor(e.x),cz=Math.floor(e.z);let best=f[cz*W+cx];if(best<0)return null;let bx=cx,bz=cz;
  for(const [ox,oz] of [[1,0],[-1,0],[0,1],[0,-1]]){const v=f[(cz+oz)*W+cx+ox];if(v>=0&&v<best){best=v;bx=cx+ox;bz=cz+oz;}}
  if(bx===cx&&bz===cz)return[fx,fz];return[bx+0.5,bz+0.5];}
 
+function pathClear(g,ax,az,bx,bz,r=0){return g&&g.plan?WORLD.clear(g.wst,ax,az,bx,bz,r):WORLD.cell.moveClear(g,ax,az,bx,bz,r);}
 /* ================= GEOMETRY HELPERS ================= */
-function doorEnd(d){return WORLD.geometry.doorEnd(d);}
+function doorEnd(d){if(d.len!==undefined){const a=d.base+d.th;return[d.hx+Math.cos(a)*d.len,d.hz+Math.sin(a)*d.len];}return WORLD.geometry.doorEnd(d);}
 function segDist(px,pz,ax,az,bx,bz){return WORLD.geometry.segDist(px,pz,ax,az,bx,bz);}
 function segInt(ax,az,bx,bz,cx,cz,dx,dz){return WORLD.geometry.segInt(ax,az,bx,bz,cx,cz,dx,dz);}
-function los(x0,z0,x1,z1){return WORLD.cell.los(G,x0,z0,x1,z1);}
-function rayWall(x,z,dx,dz,max,cover){return WORLD.cell.rayWall(G,x,z,dx,dz,max,cover);}
-function collideGrid(c){return WORLD.cell.collideGrid(G,c);}
-function collideDoors(c,isP){const sounds=WORLD.cell.collideDoors(G,c,isP);for(let i=0;i<sounds;i++)sfx('door');}
+/* W2f plan stages (G.plan): the WORLD stage is authoritative for sight, rays, collision and pathing; the compat grid
+   (PLAN.cells) only feeds presentation (radar, decals, particles, acoustics). */
+const PLAN_RAY=[];
+function los(x0,z0,x1,z1){if(G&&G.plan)return WORLD.sight(G.wst,x0,z0,x1,z1).clear;return WORLD.cell.los(G,x0,z0,x1,z1);}
+function rayWall(x,z,dx,dz,max,cover){if(G&&G.plan){const r=WORLD.trace(G.wst,x,z,x+dx*max,z+dz*max,cover?0.7:1.5,PLAN_RAY)[0];
+  if(!r)return null;let nx=r.nx,nz=r.nz;if(nx*dx+nz*dz>0){nx=-nx;nz=-nz;}const h={x:r.x,z:r.z,nx,nz,d:r.t0*max};if(r.door)h.door=r.door;return h;}
+ return WORLD.cell.rayWall(G,x,z,dx,dz,max,cover);}
+/* plan collision sweeps from the last resolved position, so a body never tunnels through a thin wall; a teleport
+   (>2 m, or a new stage) is accepted as-is */
+function collideGrid(c){const g=G;if(!g||!g.plan)return WORLD.cell.collideGrid(g,c);
+ if(c._pw!==g.wst||!Number.isFinite(c._px)||Math.hypot(c.x-c._px,c.z-c._pz)>2){c._pw=g.wst;c._px=c.x;c._pz=c.z;return;}
+ const m=WORLD.move(g.wst,c._px,c._pz,c.r,c.x-c._px,c.z-c._pz);c.x=c._px=m.x;c.z=c._pz=m.z;}
+function collideDoors(c,isP){if(!G||!G.plan){const sounds=WORLD.cell.collideDoors(G,c,isP);for(let i=0;i<sounds;i++)sfx('door');return;}
+ let sounds=0;for(const d of G.doors){const e=doorEnd(d),sx=e[0]-d.hx,sz=e[1]-d.hz;let t=((c.x-d.hx)*sx+(c.z-d.hz)*sz)/(sx*sx+sz*sz);t=clamp(t,0,1);
+  const px=d.hx+sx*t,pz=d.hz+sz*t,dx=c.x-px,dz=c.z-pz,dist=Math.hypot(dx,dz),rr=c.r+(d.half??0.035)+0.025;if(dist>=rr||dist<1e-6)continue;
+  const side=Math.sign(sx*(c.z-d.hz)-sz*(c.x-d.hx))||1;const nx=dx/dist,nz=dz/dist,pen=rr-dist;c.x+=nx*pen;c.z+=nz*pen;if(t<0.1)continue;
+  const vn=Math.max(0,-(c.vx*nx+c.vz*nz)),target=vn/Math.max(t,0.35)*1.7+pen*25;
+  if(Math.abs(d.w)<target||Math.sign(d.w)!==-side){if(isP&&vn>2&&Math.abs(d.w)<2)sounds++;d.w=-side*target;d.pusher=isP?'p':'e';}}
+ for(let i=0;i<sounds;i++)sfx('door');}
+/* static blocking at a point / along a corridor (doors excluded, as in the grid's moveClear) */
+/* the step a->b ends blocked: on plan stages the whole swept segment, on grids the end cell (unchanged) */
+function blockedAt(ax,az,x,z){return G&&G.plan?!WORLD.clear(G.wst,ax,az,x,z,0):isBlock(Math.floor(x),Math.floor(z));}
 function surfaceAt(x,z){const g=G,cx=Math.floor(x),cz=Math.floor(z),i=cz*g.W+cx;for(const pl of g.pools)if(pl.s>0.4){const c=pl.c;if(Math.hypot(c.x-Math.sin(c.a)*0.45-x,c.z-Math.cos(c.a)*0.45-z)<pl.s*0.45)return'wet';}
  if(g.rug[i])return'soft';const f=g.floorT[i];return f===3?'soft':f===4?'wood':f===7?'street':'hard';}
 function footstep(c,isP){if(!AC||!SET.sound)return;const sp=Math.hypot(c.vx,c.vz);if(sp<0.5)return;const p=G.player,d=isP?0:Math.hypot(c.x-p.x,c.z-p.z);
@@ -1107,7 +1139,7 @@ function playerGrab(p){const g=G;const best=nearItem(p);if(objGrab(p,best))retur
   g.items.splice(g.items.indexOf(best),1);let ammo=best.ammo;if(best.fresh&&WD[best.type].ammo)ammo=Math.round(ammo*(CHARS[selIdx].id==='don'?1.5:1)*(1+0.25*pk('pockets')));takeWeapon(p,best.type,ammo);sfx('pick');}
  else if(p.weapon)throwWeapon(p);}
 function playerPerk(p){if(CHARS[selIdx].id!=='money'||p.perkCD>0)return;const g=G;let d=6;if(!touchMode&&mouse.active)d=clamp(Math.hypot(g.aimX-p.x,g.aimZ-p.z),1.5,7);
- const sa=Math.sin(p.a),ca=Math.cos(p.a);let tx=p.x,tz=p.z;for(let s=0;s<d;s+=0.1){const nx=p.x+sa*s,nz=p.z+ca*s;if(isBlock(Math.floor(nx),Math.floor(nz)))break;tx=nx;tz=nz;}
+ const sa=Math.sin(p.a),ca=Math.cos(p.a);let tx=p.x,tz=p.z;for(let s=0;s<d;s+=0.1){const nx=p.x+sa*s,nz=p.z+ca*s;if(blockedAt(tx,tz,nx,nz))break;tx=nx;tz=nz;}
  g.cash.push({sx:p.x,sz:p.z,x:p.x,z:p.z,tx,tz,t:0,landed:false,life:5});p.perkCD=6;sfx('throw');}
 
 /* ================= UPDATE ================= */
@@ -1148,7 +1180,7 @@ function stickVec(s){let dx=(s.x-s.ox)/55,dy=(s.y-s.oy)/55;const l=Math.hypot(dx
 /* W7a cover (SET.cover beta). COVER toggles hugging the nearest cover face: low cover crouches (pop up to fire),
    high cover and doorway edges lean the eye/muzzle past the corner. p.stance/p.eyeY/p.eye are the queryable stance. */
 function playerCover(p,mx,mz,dt){const g=G;let cs=null;
- if(!SET.cover||g.def.hub||p.exec>0||p.down>0)p.cover=p.coverNear=null;
+ if(!SET.cover||g.def.hub||g.plan||p.exec>0||p.down>0)p.cover=p.coverNear=null; // W2f: grid cover hugging is unsupported on plan stages
  else{const near=p.cover?null:coverFind(coverGridQ(g),p.x,p.z,p.r,0,0);p.coverNear=near;
   if(pressed.cover){if(p.cover){p.cover=null;sfx('blip');}else{const mv=Math.hypot(mx,mz)>0.2;p.cover=coverFind(coverGridQ(g),p.x,p.z,p.r,mv?mx:Math.sin(p.a),mv?mz:Math.cos(p.a));sfx(p.cover?'pick':'blip');if(!p.cover)popup(p.x,p.z,'NO COVER IN REACH','#ff8a8a');}}
   if(p.cover){cs=coverStep(p.cover,coverGridQ(g),p.x,p.z,mx,mz,Math.sin(p.a),Math.cos(p.a),!!p.atkHeld,dt);if(!cs)p.cover=null;}}
@@ -1231,7 +1263,7 @@ function updateDoors(dt){const g=G;for(const d of g.doors){d.th+=d.w*dt;d.w*=Mat
 const BAL_Q=(k,ls,v)=>{try{return new RegExp('[?&]'+k+'='+v+'\\b').test(location.search)||localStorage.getItem(ls)===v;}catch(e){return false;}};
 const BAL_LEGACY=BAL_Q('ballistics','nb86bal','legacy'),BAL_EPEN=!BAL_Q('enemypen','nb86epen','0');
 const BPC={};function bProj(t){return BPC[t]||(BPC[t]=BAL.proj(WD[t].cal,WD[t].eMul));}
-function wst(g){if(!g.wst||g.wst.legacy!==g)g.wst=WORLD.fromCells(g);return g.wst;}
+function wst(g){if(g.plan)return g.wst;if(!g.wst||g.wst.legacy!==g)g.wst=WORLD.fromCells(g);return g.wst;}
 /* ===== W12a fog of war. FOG is DOM-free (world-check runs FOG_BEGIN..FOG_END in node). Rooms reveal whole
    (grouped by parent||id) when a ray from the eye reaches one of their targets: portal insets and interior samples.
    Per room state: 0 unseen, 1 seen but out of sight (hard only), 2 live. Street/entry/non-combat rooms start live. ===== */
@@ -1346,7 +1378,7 @@ function fogRadar(g){const f=g.fog;if(!f||f.mode==='off'||!f.st.roomTiles)return
  for(let i=0;i<rt.length;i++){if(rt[i]<0)continue;const s=FOG.level(f,rt[i]);if(s===2)continue;x.fillStyle=s===0?'rgba(10,4,18,.97)':'rgba(10,4,18,.6)';x.fillRect((i%g.W)*4,((i/g.W)|0)*4,4,4);}
  g.fogRad=c;g.fogRadF=f;g.fogRadV=f.ver;return c;}
 /* legacy cell -> build: '#' touching out-of-bounds, the void or an outdoor glyph is exterior */
-function legBuild(g,r){const L=LEGACY_BUILD,m=L.levels[g.def.name]||L.def,out=m.out||L.out;if(r.kind==='door')return m.door;if(r.kind==='prop')return L.prop[g.furn[r.ref]]||'counter_cabinet';
+function legBuild(g,r){if(g.plan&&r.build)return r.build;const L=LEGACY_BUILD,m=L.levels[g.def.name]||L.def,out=m.out||L.out;if(r.kind==='door')return m.door;if(r.kind==='prop')return L.prop[g.furn[r.ref]]||'counter_cabinet';
  const i=r.ref;if(g.glassSet&&g.glassSet.has(i))return m.pane;const W=g.W,x=i%W,z=(i/W)|0,ch=(cx,cz)=>(g.rows[cz]||'')[cx]||' ';if(ch(x,z)===' ')return L.void;
  for(const [cx,cz] of [[x+1,z],[x-1,z],[x,z+1],[x,z-1]])if(out.includes(ch(cx,cz)))return m.ext;return m.int;}
 const BAL_DEFL={glass:5,glass_lam:5,timber:3,ply:3,particle:3,pile:3,steel:3,alu:3,gyp:1.5,insul:1.5,foam:1.5,mattress:1.5};
@@ -1383,15 +1415,15 @@ function bulletLeg(b,rem){const g=G,p=g.player,ax=b.x,az=b.z,ev=balCrossings(g,b
  for(const v of ev){if(ex&&v.d>=ex.d1)return leave();if(v.d>rem&&!ex)break;
   if(v.t==='e'){hitEnemy(v.e,b.type,[b.dx,b.dz],BAL.damage(b.p,b.e));b.hit.push(v.e);shotEv(b,v.e.x,v.e.z,'ally',v.e);b.e-=BAL.BODY_J;if(b.e<BAL.EMIN){moveTo(v.d);b.life=0;return 0;}continue;}
   if(v.t==='p'){moveTo(v.d);hurtPlayer([b.dx,b.dz],b.type,BAL.damage(b.p,b.e),{p:b.p,e:b.e});b.life=0;return 0;}
-  const r=v.r;if(r.kind==='prop'&&!TALL_FURN[g.furn[r.ref]]&&hugs(v))continue;
+  const r=v.r;if(r.kind==='prop'&&!(g.plan?(g.plan.propH.get(r.ref)??0)>=1.2:TALL_FURN[g.furn[r.ref]])&&hugs(v))continue;
   const look=balLook(v.build),B=WORLD.materials.BUILD[v.build];let nx=r.nx,nz=r.nz;if(nx*b.dx+nz*b.dz>0){nx=-nx;nz=-nz;}
   moveTo(v.d);
   if(look.hard&&r.cos<0.26&&!B.pane){shotEv(b,b.x,b.z,'impact');const k=2*(b.dx*nx+b.dz*nz);b.dx-=k*nx;b.dz-=k*nz;b.e*=0.5;b.x+=nx*0.02;b.z+=nz*0.02;sparks(b.x,0.74,b.z);if(Math.random()<0.5)sfx('ric',0.4);
    if(b.e<BAL.EMIN)b.life=0;return Math.max(0,rem-v.d);}
-  if(B.pane&&r.kind==='wall')hitGlass(r.ref%g.W,(r.ref/g.W)|0);else balImpact(b.x,b.z,nx,nz,look,r.kind,false);shotEv(b,b.x,b.z,'impact');
+  if(B.pane&&r.kind==='wall'&&!g.plan)hitGlass(r.ref%g.W,(r.ref/g.W)|0);else balImpact(b.x,b.z,nx,nz,look,r.kind,false);shotEv(b,b.x,b.z,'impact');
   if(b.own==='e'&&!BAL_EPEN&&!B.pane){b.life=0;return 0;}
   // legacy cells are 1 m: path through merged cells sets the obliquity (a run along a wall costs its length); doors keep the face angle
-  const cos=r.kind==='door'?r.cos:1/Math.max(1,v.d1-v.d),alt=!!(B.alt&&hsh(Math.floor(r.x*4),Math.floor(r.z*4),53)<B.alt.p);
+  const cos=r.kind==='door'||g.plan?r.cos:1/Math.max(1,v.d1-v.d),alt=!!(B.alt&&hsh(Math.floor(r.x*4),Math.floor(r.z*4),53)<B.alt.p);
   const out=BAL.cross(WORLD.materials,b.p,v.build,b.e,b.tum,cos,alt);
   if(out.e===null){b.life=0;return 0;}
   b.e=out.e;if(out.tum)b.tum=BAL.TUMBLE;
@@ -1403,7 +1435,7 @@ function updateBulletsW5(dt){const g=G;
   if(b.x<0||b.z<0||b.x>=g.W||b.z>=g.H)b.life=0;b.life-=dt;}
  g.bullets=g.bullets.filter(b=>b.life>0);}
 /* legacy grid stepping (CP2 comparison); dispatches to W5 unless BAL_LEGACY. The typeof guard keeps world-check's bare-vm slice on this path. */
-function updateBullets(dt){if(typeof BAL_LEGACY!=='undefined'&&!BAL_LEGACY)return updateBulletsW5(dt);const g=G;for(const b of g.bullets){const dist=b.sp*dt,steps=Math.ceil(dist/0.2),st=dist/steps;
+function updateBullets(dt){if(typeof BAL_LEGACY!=='undefined'&&(!BAL_LEGACY||G&&G.plan))return updateBulletsW5(dt);const g=G;for(const b of g.bullets){const dist=b.sp*dt,steps=Math.ceil(dist/0.2),st=dist/steps;
  for(let s=0;s<steps&&b.life>0;s++){const nx=b.x+b.dx*st,nz=b.z+b.dz*st;const ncx=Math.floor(nx),ncz=Math.floor(nz);
   const door=WORLD.cell.doorHit(g,b.x,b.z,nx,nz);
   if(door){sparks(door.x+door.nx*0.05,0.74,door.z+door.nz*0.05,[0.7,0.5,0.3]);sfx('thud');b.life=0;break;}
@@ -1418,14 +1450,14 @@ function updateBullets(dt){if(typeof BAL_LEGACY!=='undefined'&&!BAL_LEGACY)retur
  b.life-=dt;}
  g.bullets=g.bullets.filter(b=>b.life>0);}
 function updateItems(dt){const g=G;for(const it of g.items){it.age=(it.age||0)+dt;
- if(it.flying){it.flyT+=dt;it.rot+=dt*22;const st=4;for(let s=0;s<st&&it.flying;s++){const nx=it.x+it.vx*dt/st,nz=it.z+it.vz*dt/st;if(isBlock(Math.floor(nx),Math.floor(nz))){it.flying=false;it.vx*=-0.3;it.vz*=-0.3;sfx('click');break;}it.x=nx;it.z=nz;
+ if(it.flying){it.flyT+=dt;it.rot+=dt*22;const st=4;for(let s=0;s<st&&it.flying;s++){const nx=it.x+it.vx*dt/st,nz=it.z+it.vz*dt/st;if(blockedAt(it.x,it.z,nx,nz)){it.flying=false;it.vx*=-0.3;it.vz*=-0.3;sfx('click');break;}it.x=nx;it.z=nz;
   for(const e of g.enemies){if(e.alive&&!(e.down>0)&&Math.hypot(e.x-it.x,e.z-it.z)<e.r+0.18){const l=Math.hypot(it.vx,it.vz)||1,dir=[it.vx/l,it.vz/l];if(it.type==='knife'||BT(it.type)==='machete')hitEnemy(e,'throw',dir,2);else if(e.body==='fat'||e.body==='big'||e.boss){stagger(e,dir);if(e.boss)hitEnemy(e,'throw',dir,1);}else{knockdown(e,dir);popup(e.x,e.z,'DOWN!','#ffd36b');}it.flying=false;it.vx*=-0.2;it.vz*=-0.2;break;}}}
   if(it.flyT>0.7)it.flying=false;}
- else if(Math.abs(it.vx)+Math.abs(it.vz)>0.01){const nx=it.x+it.vx*dt,nz=it.z+it.vz*dt;if(isBlock(Math.floor(nx),Math.floor(nz))){it.vx=it.vz=0;}else{it.x=nx;it.z=nz;}it.vx*=Math.exp(-dt*6);it.vz*=Math.exp(-dt*6);it.rot+=(Math.abs(it.vx)+Math.abs(it.vz))*dt*3;}}}
+ else if(Math.abs(it.vx)+Math.abs(it.vz)>0.01){const nx=it.x+it.vx*dt,nz=it.z+it.vz*dt;if(blockedAt(it.x,it.z,nx,nz)){it.vx=it.vz=0;}else{it.x=nx;it.z=nz;}it.vx*=Math.exp(-dt*6);it.vz*=Math.exp(-dt*6);it.rot+=(Math.abs(it.vx)+Math.abs(it.vz))*dt*3;}}}
 function updateCash(dt){const g=G;for(const c of g.cash){c.t+=dt;
  if(!c.landed){const k=Math.min(c.t/0.4,1);c.x=lerp(c.sx,c.tx,k);c.z=lerp(c.sz,c.tz,k);c.y=0.6+Math.sin(k*Math.PI)*1.2;
   if(k>=1){c.landed=true;c.y=0.06;sfx('cash');for(let i=0;i<18;i++)g.parts.push({t:'c',x:c.x,y:rnd(0.3,0.9),z:c.z,vx:rnd(-1.2,1.2),vy:rnd(0.5,2),vz:rnd(-1.2,1.2),s:0.07,c:[0.35,0.8,0.4],life:rnd(2,4)});
-   for(const e of g.enemies){if(!e.alive||e.down>0||e.state==='chase')continue;if(Math.hypot(e.x-c.x,e.z-c.z)<9&&los(e.x,e.z,c.x,c.z)&&WORLD.cell.moveClear(g,e.x,e.z,c.x,c.z)){e.state='distract';e.cashT=c;popup(e.x,e.z,'$$$?','#7dff9a');}}}}
+   for(const e of g.enemies){if(!e.alive||e.down>0||e.state==='chase')continue;if(Math.hypot(e.x-c.x,e.z-c.z)<9&&los(e.x,e.z,c.x,c.z)&&pathClear(g,e.x,e.z,c.x,c.z)){e.state='distract';e.cashT=c;popup(e.x,e.z,'$$$?','#7dff9a');}}}}
  else c.life-=dt;}
  g.cash=g.cash.filter(c=>c.life>0);}
 function updateFX(dt){const g=G;
@@ -3158,8 +3190,8 @@ function drawHazards(B,g){if(!g.fans)return;const DK=hex(0x1a1820),W=g.W;
   B.box(TRS(f.x,2.78,f.z,0,0.26,0.14,0.26),DK);
   for(let k=0;k<4;k++){const a=f.ph+k*Math.PI/2;B.box(TRS(f.x+Math.cos(a)*0.55,y,f.z+Math.sin(a)*0.55,-a,1.0,0.03,0.14),[0.45,0.36,0.22]);}}}
 function buildDynamic(){const g=G,B=dynB,O=ovB;B.reset();O.reset();if(g.def.hub){drawHubDyn(B,O);return;}if(ENH())drawMotes(g.cam.x,g.cam.z,levelIdx>=1,g.T);
- for(const d of g.doors){const a=d.base+d.th,e=doorEnd(d);B.box(A.mul(A.mul(A.T((d.hx+e[0])/2,0.55,(d.hz+e[1])/2),A.RY(-a)),A.S(0.98,1.1,0.07)),[0.95,0.9,0.9],false,TUV[4]);
-  const kx=d.hx+Math.cos(a)*0.82,kz=d.hz+Math.sin(a)*0.82;B.box(TRS(kx,0.55,kz,-a,0.05,0.05,0.12),GOLD);}
+ for(const d of g.doors){const a=d.base+d.th,e=doorEnd(d);const dl=d.len??0.98;B.box(A.mul(A.mul(A.T((d.hx+e[0])/2,0.55,(d.hz+e[1])/2),A.RY(-a)),A.S(dl,1.1,0.07)),[0.95,0.9,0.9],false,TUV[4]);
+  const kl=d.len===undefined?0.82:dl*0.84,kx=d.hx+Math.cos(a)*kl,kz=d.hz+Math.sin(a)*kl;B.box(TRS(kx,0.55,kz,-a,0.05,0.05,0.12),GOLD);}
  drawRide(B,g.car.x,g.car.z,1,0);drawAct2(B,g);if(g.oldCar)drawBeater(B,g.oldCar.x,g.oldCar.z,1,g.oldCar.a,rideId());drawDisco(B,g);drawHazards(B,g);drawStash(B,g);
  if(g.cleared){const y=1.5+Math.sin(g.T*5)*0.15;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.3,0.3,0.3))),[1,0.3,0.75],true);}
  const p=g.player;const near=p.alive?nearItem(p):null;
@@ -3385,6 +3417,8 @@ function stageManager(id){
 function stageRelease(g){if(!g)return;for(const key of ['staticB','decalB'])if(g[key]?.buf){gl.deleteBuffer(g[key].buf);g[key].buf=null;}}
 function stageCapture(g,armour=g.player.armor){
  if(g.obj||g.sj||g.fin||g.cine||g.npcs.length||g.trigs.length||g.cash.length||g.items.some(it=>it.flying))throw new Error('Unsupported stage objective, NPC, cash lure or flying item state');
+ if(g.plan){const s=stageJSON({v:2,kind:'plan',player:{...stagePick(g.player,['x','z','a']),armor:armour},enemies:g.enemies.map(e=>stagePick(e,STAGE_ENEMY)),items:g.items.map(it=>stagePick(it,STAGE_ITEM)),doors:g.doors.map((d,i)=>({i,th:d.th,w:d.w,pusher:d.pusher}))});
+  stageHydrate(g,s,false);return s;}
  const cells=[];for(let i=0;i<g.W*g.H;i++){const d={i};for(const k of STAGE_CELLS)if(g[k][i]!==g.stageBase[k][i])d[k]=g[k][i];if(Object.keys(d).length>1)cells.push(d);}
  if(!g.wst||g.wst.legacy!==g)throw new Error('Stage durability requires its owning grid adapter');
  const durability=[];for(const c of g.wst.cells)if(c.hp!==null){const p=g.wst.panels[c.panel];durability.push({i:p.ref,hp:c.hp===Infinity?'indestructible':c.hp});}
@@ -3394,14 +3428,18 @@ function stageCapture(g,armour=g.player.armor){
 }
 function stageHydrate(g,s,apply=true){
  if(apply)stageHydrate(g,s,false);
- stageJSON(s);stageRecord(s,['v','W','H','player','enemies','items','doors','cells','durability'],'grid snapshot');
- if(s.v!==1||s.W!==g.W||s.H!==g.H||!Array.isArray(s.enemies)||s.enemies.length!==g.enemies.length||!Array.isArray(s.doors)||s.doors.length!==g.doors.length||!Array.isArray(s.items)||!Array.isArray(s.cells))throw new Error('Grid snapshot layout changed');
+ const plan=!!g.plan;stageJSON(s);
+ if(plan){stageRecord(s,['v','kind','player','enemies','items','doors'],'plan snapshot');if(s.v!==2||s.kind!=='plan')throw new Error('Plan snapshot layout changed');}
+ else stageRecord(s,['v','W','H','player','enemies','items','doors','cells','durability'],'grid snapshot');
+ if(plan&&(!Array.isArray(s.enemies)||s.enemies.length!==g.enemies.length||!Array.isArray(s.doors)||s.doors.length!==g.doors.length||!Array.isArray(s.items)))throw new Error('Plan snapshot layout changed');
+ if(!plan&&(s.v!==1||s.W!==g.W||s.H!==g.H||!Array.isArray(s.enemies)||s.enemies.length!==g.enemies.length||!Array.isArray(s.doors)||s.doors.length!==g.doors.length||!Array.isArray(s.items)||!Array.isArray(s.cells)))throw new Error('Grid snapshot layout changed');
  stageRecord(s.player,['x','z','a','armor'],'entry player');stageNumber(s.player,['x','z','a','armor']);if(s.player.armor<0)throw new Error('Invalid stage armour');if(apply)Object.assign(g.player,stagePick(s.player,['x','z','a']));
  const weapon=w=>{if(w===null)return;stageRecord(w,['type','ammo'],'enemy weapon');if(!WD[w.type]||!Number.isFinite(w.ammo)||w.ammo<0)throw new Error('Invalid stage weapon');};
  s.enemies.forEach((e,i)=>{stageRecord(e,STAGE_ENEMY,'enemy snapshot');stageNumber(e,['id','x','z','a','hp','maxhp','r','spd','rmul','vx','vz','down']);if(e.id!==g.enemies[i].id||typeof e.alive!=='boolean'||typeof e.headless!=='boolean'||!['rush','careful','flank'].includes(e.pers)||!plainObj(e.look)||!Array.isArray(e.wounds))throw new Error('Invalid stable enemy snapshot');weapon(e.weapon);if(apply)Object.assign(g.enemies[i],stageJSON(e));});
  s.items.forEach(it=>{stageRecord(it,STAGE_ITEM,'item snapshot');stageNumber(it,['x','z','ammo','vx','vz','rot','flyT']);if(!WD[it.type]||it.ammo<0||it.flying!==false||typeof it.fresh!=='boolean')throw new Error('Invalid grounded item snapshot');});
  if(apply)g.items=stageJSON(s.items);
- s.doors.forEach((d,i)=>{stageDoor(d,i);if(apply)Object.assign(g.doors[i],stagePick(d,['th','w','pusher']));});
+ s.doors.forEach((d,i)=>{if(plan){stageRecord(d,['i','th','w','pusher'],'plan door snapshot');stageNumber(d,['th','w']);if(d.i!==i||!['','p','e'].includes(d.pusher)||Math.abs(d.th)>1.57)throw new Error('Invalid stable door snapshot');}else stageDoor(d,i);if(apply)Object.assign(g.doors[i],stagePick(d,['th','w','pusher']));});
+ if(plan)return;
  const used=new Set();for(const d of s.cells){stageRecord(d,['i',...STAGE_CELLS],'world delta');if(!Number.isInteger(d.i)||d.i<0||d.i>=g.W*g.H||used.has(d.i)||Object.keys(d).length<2)throw new Error('Invalid world delta index');used.add(d.i);
   for(const k of STAGE_CELLS)if(k in d){const n=d[k];if(!Number.isFinite(n)||k!=='wh'&&(!Number.isInteger(n)||n<-128||n>255)||['solid','glass','pool','rug'].includes(k)&&![0,1].includes(n))throw new Error('Invalid world delta '+k);if(apply)g[k][d.i]=n;}}
  stageDurability(g,s);
@@ -3409,8 +3447,9 @@ function stageHydrate(g,s,apply=true){
 function stageBuild(id,token,snapshot){
  const desc=token.desc,raw=MISSIONS[id].stageDefs[token.to],def=raw?.def,b=missionBase(id);
  if(!raw||raw.id!==desc.id||raw.kind!==desc.kind||raw.rev!==desc.rev)throw new Error('Stage descriptor changed; reload or migrate explicitly');
- if(desc.kind!=='grid')throw new Error('Unsupported playable stage kind '+desc.kind);
+ if(desc.kind!=='grid'&&desc.kind!=='plan')throw new Error('Unsupported playable stage kind '+desc.kind);
  if(desc.backdrop.length)throw new Error('Stage backdrops require W2c');
+ if(desc.kind==='plan')return planStageBuild(id,token,snapshot,raw,b);
  stageRecord(def,['name','map','wall','floor','legend'],'grid definition');
  if(!Array.isArray(def.map)||!def.map.length||!def.map.every(r=>typeof r==='string')||def.map.join('').split('P').length!==2)throw new Error('Grid stage requires exactly one player spawn');
  for(const c of def.map.join(''))if(!isW(c)&&!Object.prototype.hasOwnProperty.call(FLOORCH,c)&&!FURN[c]&&!Object.prototype.hasOwnProperty.call(EKIND,c)&&!IKIND[c]&&![' ','P','C','D','@','*','r','%'].includes(c)&&!def.legend?.[c])throw new Error('Unsupported grid stage glyph '+c);
@@ -3432,6 +3471,45 @@ function stageBuild(id,token,snapshot){
   markZones(fresh);buildStatic(fresh);buildRadar(fresh);computeFlow();return fresh;
  }catch(e){stageRelease(fresh||G!==prev&&G);throw e;}finally{G=prev;levelIdx=idx;}
 }
+/* W2f plan stages: WORLD.compile(PLAN.fromPlan(PLAN.playable(plan))) is authoritative for collision, sight, rays and
+   pathing; loadLevel only builds a synthetic compatibility grid (walls/ground raster) for radar, decals and particles.
+   Refused: sliding/locked doors and cover hugging; civilians, item/exit spawns, objectives and stashes unless def.preview. */
+const PLAN_ROLE_WEAPON={lookout:'pistol',dealer:'pistol',patrol:'bat',cook:'knife',guard:'shotgun',counter:'smg',crew:'pistol',bodyguard:'double',boss:'m16'};
+function planStageBuild(id,token,snapshot,raw,b){
+ const def=raw.def;stageRecord(def,['plan','stage','preview'],'plan definition');if(def.preview!==undefined&&def.preview!==true)throw new TypeError('Invalid plan definition');
+ if(typeof PLAN==='undefined'||typeof MESH==='undefined'||typeof PLANS==='undefined'||!PLANS[def.plan]||def.stage!==token.to)throw new Error('Unknown plan stage '+def.plan+'/'+def.stage);
+ const P=PLAN.playable(PLANS[def.plan]),S=P.stages[def.stage];if(!S)throw new Error('Unknown plan stage '+def.plan+'/'+def.stage);
+ const o=PLAN.fromPlan(P,def.stage),st=WORLD.compile(o.stage);
+ if(st.doors.some(d=>d.kind==='slide'||d.slide||d.locked===true))throw new Error('Plan stage sliding/locked doors are unsupported');
+ for(const it of o.extras.items)if(!it||!WD[it.type]||!Array.isArray(it.at))throw new Error('Unsupported plan stage item');
+ // civilians, item/exit spawns, objectives and stashes are not wired yet: only a dev preview def may drop them
+ const unsup=[...(S.spawns||[]).filter(s=>!['player','enemy','arrive'].includes(s.kind)),...o.extras.obj,...o.extras.stash].map(x=>x.id);
+ if(unsup.length&&def.preview!==true)throw new Error('Unsupported plan stage content '+unsup.join(','));
+ const ps=(S.spawns||[]).find(s=>s.kind==='player'),arr=token.arrival||(S.spawns||[]).find(s=>s.kind==='arrive'),at=ps?ps.at:arr&&arr.at;
+ if(!at)throw new Error('Plan stage has no player spawn or arrival');
+ const GW=Math.ceil(st.bounds[2])+1,GH=Math.ceil(st.bounds[3])+1,C=PLAN.cells(st,GW,GH),pc=Math.floor(at[0]),pz=Math.floor(at[1]);
+ if(pc<1||pz<1||pc>GW-2||pz>GH-2)throw new Error('Plan stage spawn outside the compatibility grid');
+ const map=[];for(let z=1;z<GH-1;z++){let r='';for(let x=1;x<GW-1;x++){const i=z*GW+x;r+=x===pc&&z===pz?'P':C.solid[i]?'#':C.ground[i]?'.':' ';}map.push(r);}
+ const gdef={name:'plan:'+def.plan+'/'+def.stage,map,wall:1,floor:1};
+ const prev=G,idx=levelIdx;let fresh;
+ try{
+  levelIdx=b;fresh=loadLevel(b,gdef,true);fresh.stageManaged=true;fresh.sid=token.to;fresh.mission=id;
+  if(fresh.W!==GW||fresh.H!==GH)throw new Error('Plan compatibility grid size mismatch');
+  fresh.wh.set(C.wh);fresh.furn.fill(0);fresh.panes=[];fresh.glassSet=new Set();fresh.lights=[];fresh.deco=[];
+  fresh.wst=st;fresh.doors=st.doors;fresh.plan={id:def.plan,stage:def.stage,nav:null,field:null,propH:new Map(st.props.map(p=>[p.ref??p.id,p.h]))};
+  const p=fresh.player;p.x=at[0];p.z=at[1];if(ps&&ps.a!==undefined)p.a=ps.a;
+  for(const s of S.spawns||[])if(s.kind==='enemy')makeEnemy(fresh,gdef,b,PLAN_ROLE_WEAPON[s.role]||'pistol',false,s.at[0],s.at[1],s.a);
+  for(const it of o.extras.items)makeItem(fresh,it.type,it.at[0],it.at[1]);
+  if(snapshot)stageHydrate(fresh,snapshot);
+  const a=token.arrival;if(a){p.x=a.at[0];p.z=a.at[1];if(a.dir!==null&&a.dir!==undefined)p.a=a.dir;}
+  if(!Number.isFinite(p.maxhp)||p.maxhp<=0||!WORLD.clear(st,p.x,p.z,p.x,p.z,p.r)||fresh.doors.some(d=>{const end=doorEnd(d);return segDist(p.x,p.z,d.hx,d.hz,end[0],end[1])<p.r+(d.half||0);}))throw new Error('Stage arrival lacks bounds/body clearance');
+  for(const c of [p,...fresh.enemies]){c._pw=st;c._px=c.x;c._pz=c.z;}
+  fresh.cam.x=p.x;fresh.cam.z=p.z-1;fresh.stairLatch=new Set(token.desc.stairs.filter(s=>Math.hypot(p.x-s.at[0],p.z-s.at[1])<=s.r).map(s=>s.id));
+  const old=fresh.staticB;if(old.buf){gl.deleteBuffer(old.buf);old.buf=null;}
+  fresh.staticB=new Batch();MESH.build(st,{uv:t=>TUV[t],white:WUV,tint:surfTint,pick:surfPick,finish:o.extras.finish},fresh.staticB);fresh.staticB.upload(true);
+  buildRadar(fresh);computeFlow();return fresh;
+ }catch(e){stageRelease(fresh||G!==prev&&G);throw e;}finally{G=prev;levelIdx=idx;}
+}
 function stageKitCheck(k){
  if(!kitShape(k)||k.guns.length!==2||![0,1].includes(k.active))throw new Error('Invalid stage loadout');
  stageJSON(k);for(const s of k.guns)if(s&&(!isGunT(s.type)||!Number.isInteger(s.mag)||s.mag<0||s.mag>WD[s.type].mag))throw new Error('Invalid stage gun');
@@ -3440,7 +3518,7 @@ function stageKitCheck(k){
 function stageActivate(g,manager,kit,hp,bag,armour){
  G=g;levelIdx=missionBase(g.mission);MISSION=g.mission;JOBPICK=null;HUBMODE='in';
  g.stageRun=manager;g.runOwner=myProg().run;g.variant=myProg().run.var;g.clear=missionClear(MISSION,g.variant);Object.assign(g,stageJSON(bag));
- applyLoadout(kit);g.player.hp=hp;g.player.armor=armour;g.track=LEVEL_TRACKS[levelIdx][RUNTRACK[levelIdx]%LEVEL_TRACKS[levelIdx].length];state='play';show(null);banner(missionName(MISSION)+' · '+g.sid,'Grid stage · completion policy not enabled');
+ applyLoadout(kit);g.player.hp=hp;g.player.armor=armour;g.track=LEVEL_TRACKS[levelIdx][RUNTRACK[levelIdx]%LEVEL_TRACKS[levelIdx].length];state='play';show(null);banner(missionName(MISSION)+' · '+g.sid,(g.plan?'Plan':'Grid')+' stage · completion policy not enabled');
 }
 function stageFailure(e){banner('STAGE LOAD REFUSED',e.message);return false;}
 function startGridMission(id){
@@ -3449,7 +3527,7 @@ function startGridMission(id){
 function enterStage(id,arrive=null,startingMission=null){
  const mission=startingMission||MISSION,raw=MISSIONS[mission]?.stageDefs?.[id];
  if(!raw)return stageFailure(new Error('Missing stage definition '+id+'; legacy fallback is disabled'));
- if(raw.kind!=='grid')return stageFailure(new Error('Unsupported playable stage kind '+raw.kind));
+ if(raw.kind!=='grid'&&!(raw.kind==='plan'&&typeof raw.def?.plan==='string'&&typeof PLANS!=='undefined'&&Object.hasOwn(PLANS,raw.def.plan)))return stageFailure(new Error('Unsupported playable stage kind '+raw.kind));
  return startingMission?startGridRun(startingMission,arrive):enterGridStage(id,arrive);
 }
 function startGridRun(id,arrive=null){
