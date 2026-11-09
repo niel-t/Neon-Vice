@@ -95,6 +95,10 @@ loader, door physics, glass replacement and every solid/furniture mutation
 must be synchronized before a runtime flag is safe. Existing save/level indexes
 and captured raw, loaded, query and movement hashes are unchanged.
 
+Authored level plans (`plans/*.js`) compile to this stage record through
+`PLAN.fromPlan`; see [PLAN-FORMAT.md](PLAN-FORMAT.md) for the room/portal
+contract, validator and `world-plan.cjs --plan` tools.
+
 All coordinates, heights, radii and displacements below are metres; angles are
 radians. Required stage fields are `id`, `[x0,z0,x1,z1]` bounds, boolean `combat`,
 and `ground`, `walls`, `props` arrays (empty arrays are valid). Optional `rooms`

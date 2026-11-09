@@ -60,4 +60,7 @@ function playerSeenBy(e){const p=G.player,eye=p.eye||p;return WORLD.cell.los(G,e
 const COVER_LEAN_R=0.2;
 const leaning=p=>!!(p&&p.cs&&p.cs.lean&&p.eye);
 function playerHitPoints(p){return leaning(p)?[p,{x:p.eye.x,z:p.eye.z,r:COVER_LEAN_R}]:[p];}
-function playerAimPoint(e){const p=G.player;return leaning(p)&&!WORLD.cell.los(G,e.x,e.z,p.x,p.z)?p.eye:p;}
+/* bullet line clear of walls and bullet-stopping furniture (los ignores furniture; a fridge must count) */
+function coverShotClear(g,x0,z0,x1,z1){const dx=x1-x0,dz=z1-z0,n=Math.ceil(Math.hypot(dx,dz)/0.15);
+ for(let i=1;i<n;i++){const t=i/n;if(WORLD.cell.rayBlock(g,Math.floor(x0+dx*t),Math.floor(z0+dz*t),true))return false;}return!WORLD.cell.doorHit(g,x0,z0,x1,z1);}
+function playerAimPoint(e){const p=G.player;return leaning(p)&&!coverShotClear(G,e.x,e.z,p.x,p.z)?p.eye:p;}

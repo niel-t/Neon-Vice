@@ -82,7 +82,7 @@ const LEVELS=[
  "===P==================C=================",
  "========================================"]},
  {name:'STARLIGHT ARCADE',act:2,wall:25,floor:23,sofa:0xe0459a,from:'McWEY',legend:{'.':{f:23},'c':{f:23},'a':{f:23}},
-  brief:"Lex washes his money through the Starlight Arcade on the beach. Quarters in, clean dollars out. Unplug it.",map:[
+  brief:"Lex washes his money through the Starlight Arcade, a block off the beach. Quarters in, clean dollars out. Unplug it.",map:[
  "########################################",
  "#c.c.c.c.c..#..u........g.....#c.c.c.c##",
  "#...........#....aa....aa.....#.......##",

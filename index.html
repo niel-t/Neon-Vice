@@ -2413,7 +2413,7 @@ const mcFill=(t,o)=>t.replace(/\{(\w+)\}/g,(s,k)=>k in o?o[k]:s);
 // The grade and the money share one line. Returns true when the payday is a story beat.
 // busy: another scene follows this visit, so squaring the debt is one line, not a choice.
 function mcPayday(m,dq,g,busy){const L=LASTPAY;LASTPAY=null;if(!L){m(g);return false;}
- const v={take:fmt(L.take),cut:fmt(L.cut),debt:fmt(L.debt)},say=k=>m(g+' '+mcFill(MC_PAY[k],v)),ul=UNLOCK_LINE[L.lvl];
+ const v={take:fmt(L.take),cut:fmt(L.cut),debt:fmt(L.debt)},say=k=>m(g+' '+mcFill(MC_PAY[k],v)),ul=unlockLine(L.lvl);
  if(L.yacht){say('yacht');if(L.cleared>0)m(MC_PAY.yacht2);return true;}
  if(L.squared){say('square');if(busy)m(DLG.square.nodes.a.say[0][1]);else dq('square');}else say(L.cut>0?(L.debt<=MC_LOAN*0.25?'near':'owe'):'free');
  if(ul)m(ul);return !!(L.squared||ul);}
