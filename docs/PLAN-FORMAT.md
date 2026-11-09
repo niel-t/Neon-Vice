@@ -187,6 +187,12 @@ and fixture case and smoke-tests the renderer.
   no stair records yet. There is no `obj`: the boss is the objective.
 - The validator reports 0 errors and 0 warnings. The entrances are D8, D9,
   D15, D28 and D29 (5).
+- User rulings are recorded in the plan-level `rules` object, which plan.js
+  ignores until the runtime lands:
+  - The panic door D27 can be breached by explosives only; otherwise it needs
+    a key or a script.
+  - The terrace rail blocks the player, but enemies can be knocked over it.
+  - The lift doors stay closed until W2c.
 
 ## 8. Backlog for W2f (map content, from W4)
 

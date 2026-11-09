@@ -191,5 +191,12 @@ PLANS.penthouse=(()=>{
      {id:'L7',rooms:['gal_w','den','ter_s','gal_e','foyer','gal_s','gal_w']},
     ],
    }},
- }};
+ },
+ // User rulings (2026-11-09), inert until the runtime lands: plan.js does not read these.
+ rules:{
+  breach:{D27:{by:['explosive'],else:['key','script']}},
+  rail:{rooms:[null,['ter_e','ter_s']],player:'block',enemy:'knockover'},
+  lifts:{rooms:['lift_p1','lift_p2','svc_lift'],doors:'closed_until_W2c'},
+ },
+};
 })();
