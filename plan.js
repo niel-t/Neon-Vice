@@ -236,16 +236,16 @@ const PLAN=(()=>{
     return res.map(comp=>({comp,rings:trace(comp,xs,zs,nxs)}));};
    let parts=comps(new Set());
    if(parts.some(p=>!p.rings||p.rings.length>1)){
-    const holes=parts.flatMap(p=>(p.rings||[]).filter(ring=>area(ring)<0)),bb=k=>[Math.min(...r.poly.map(q=>q[k])),Math.max(...r.poly.map(q=>q[k]))],[bx,bz]=[bb(0),bb(1)];
+    const bb=k=>[Math.min(...r.poly.map(q=>q[k])),Math.max(...r.poly.map(q=>q[k]))],[bx,bz]=[bb(0),bb(1)];
     const gaps=[...(D.S.doors||[]),...(D.S.windows||[])].filter(o=>Array.isArray(o.at)&&o.at[0]>bx[0]-.3&&o.at[0]<bx[1]+.3&&o.at[1]>bz[0]-.3&&o.at[1]<bz[1]+.3);
-    const along=(o,k)=>[...D.rooms.values()].some(q=>q.poly.some((a,i)=>{const b=q.poly[(i+1)%q.poly.length];return Math.abs(a[1-k]-b[1-k])<EPS&&Math.abs(a[1-k]-o.at[1-k])<EPS&&o.at[k]>Math.min(a[k],b[k])-EPS&&o.at[k]<Math.max(a[k],b[k])+EPS;}));
-    const hits=(k,cut)=>gaps.some(o=>along(o,k)&&[...cut].some(c=>Math.abs(o.at[k]-c)<(o.w??1)/2+.15));
+    const along=(o,k)=>[...D.rooms.values()].some(q=>q.poly.some((a,i)=>{const b=q.poly[(i+1)%q.poly.length];return Math.abs(a[1-k]-b[1-k])<EPS&&Math.abs(a[1-k]-snap(o.at[1-k]))<TOL&&snap(o.at[k])>Math.min(a[k],b[k])-TOL&&snap(o.at[k])<Math.max(a[k],b[k])+TOL;}));
+    const hits=(k,cut)=>gaps.some(o=>along(o,k)&&[...cut].some(c=>Math.abs(snap(o.at[k])-c)<(o.w??1)/2+.15));
     const holesOf=ps=>ps.flatMap(p=>(p.rings||[]).filter(ring=>area(ring)<0));
     // one seam per hole, through a hole vertex, avoiding doors and windows; else x-slabs at every hole extent
     const cx=new Set(),cz=new Set();
     for(let hs=holesOf(parts);hs.length;hs=holesOf(parts=comps(cx,cz))){
      const v=hs[0].flatMap(v=>[[0,v[0]],[1,v[1]]]).find(([k,c])=>!(k?cz:cx).has(c)&&!hits(k,[c]));
-     if(!v){parts=comps(new Set(holes.flatMap(ring=>ring.map(v=>v[0]))));break;}
+     if(!v)fail(`${D.where} room ${r.id}`,`every seam through nested room vertices would cut a door or window; move an opening or reshape the nested rooms`);
      (v[0]?cz:cx).add(v[1]);}
    }
    if(parts.some(p=>!p.rings||p.rings.length!==1))fail(`${D.where} room ${r.id}`,'could not split the region around its nested rooms into simple pieces');
@@ -392,13 +392,13 @@ const PLAN=(()=>{
     if(t1-t0>1e-9)cut.push([t0,t1]);}
    cut.sort((x,y)=>x[0]-y[0]);const out=[];let t=0;
    for(const [c0,c1] of cut){if(c0>t)out.push([t,c0]);t=Math.max(t,c1);}if(t<1)out.push([t,1]);
-   const L=Math.hypot(dx,dz),at=u=>[snap(a[0]+dx*u),snap(a[1]+dz*u)];
+   const L=Math.hypot(dx,dz),at=u=>[a[0]+dx*u,a[1]+dz*u];
    return out.filter(([u,v])=>(v-u)*L>=TOL).map(([u,v])=>[at(u),at(v)]);};
   const intact=([a,b],ref)=>{const dx=b[0]-a[0],dz=b[1]-a[1],L2=dx*dx+dz*dz,L=Math.sqrt(L2),iv=[];// spans on the wall's intact panel path
    const off=(x,z)=>Math.abs((x-a[0])*dz-(z-a[1])*dx)/L,par=(x,z)=>((x-a[0])*dx+(z-a[1])*dz)/L2;
    for(const q of panels)if(q.ref===ref&&off(q.ax,q.az)<1e-6&&off(q.bx,q.bz)<1e-6){const u=par(q.ax,q.az),v=par(q.bx,q.bz),u0=Math.max(0,Math.min(u,v)),u1=Math.min(1,Math.max(u,v));if(u1>u0)iv.push([u0,u1]);}
    iv.sort((x,y)=>x[0]-y[0]);const m=[];for(const [u,v] of iv){const l=m.at(-1);if(l&&u<=l[1]+1e-9)l[1]=Math.max(l[1],v);else m.push([u,v]);}
-   const at=u=>[snap(a[0]+dx*u),snap(a[1]+dz*u)];return m.filter(([u,v])=>(v-u)*L>=TOL).map(([u,v])=>[at(u),at(v)]);};
+   const at=u=>[a[0]+dx*u,a[1]+dz*u];return m.filter(([u,v])=>(v-u)*L>=TOL).map(([u,v])=>[at(u),at(v)]);};
   const stagePortals=[],taken=new Set([...ids,...rooms.keys()]),uniq=id=>{let u=id;for(let n=2;taken.has(u);n++)u=`${id}_${n}`;taken.add(u);return u;};
   for(const p of portals){if(p.open){stagePortals.push({id:uniq(`${p.id}~p`),a:p.a,b:p.b,open:p.open});continue;}
    if(p.kind==='door')continue;const segs=(p.segs||[p.seg]).flatMap(s=>p.wall?intact(s,p.wall):free(s));

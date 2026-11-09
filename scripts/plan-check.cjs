@@ -146,6 +146,16 @@ function checkPlans() {
   assert(sps.every(p => p.open ? Object.keys(p).length === 4 : p.seg && !('walk' in p) && !('kind' in p)), 'strict v3 stage portals');
   const orient = ok(tiny(s => { s.rooms[1].part = 'stud_steel_gyp2'; s.rooms.push({ id: 'a_c', in: 'a', kind: 'closet', rect: [2.5, 2.5, 4, 4] }); s.doors.push({ id: 'd_c', rooms: ['a', 'a_c'], at: [3.25, 4], w: 0.8, kind: 'door_hollow' }); return s; }), 'orient').outs.s.out;
   assert(orient.stage.walls.filter(w => w.id.includes('a_c')).every(w => w.build === 'stud_steel_gyp2'), 'child partitions take the parent part on every side');
+  // v3 portal review regressions: exact clipped spans, door-aware seams, snapped opening positions
+  const hall = (doors, extra = []) => ({ id: 'hall', v: 1, stages: { s: { bounds: [-2, -2, 22, 22], combat: true,
+    rooms: [{ id: 'out', zone: 'exterior', rect: [-2, -2, 22, 22] }, { id: 'p', in: 'out', rect: [0, 0, 20, 20] }, { id: 'c', in: 'p', rect: [8, 8, 12, 12] }, ...extra],
+    doors: [{ id: 'd_c', rooms: ['c', 'p'], at: [10, 8], w: 1, kind: 'door_hollow' }, ...doors], spawns: [{ id: 'pl', kind: 'player', at: [-1, -1] }] } } });
+  const ext = (id, at) => ({ id, rooms: ['p', 'out'], at, w: 1, kind: 'door_solid' });
+  if (WORLD.version >= 3) {
+    ok(hall([ext('d0', [2, 0])]), 'exact clipped spans compile');
+    ok(hall([ext('d0', [12, 0.0004])]), 'snapped door positions steer seams');
+    bad(hall([ext('d1', [8, 0]), ext('d2', [12, 0]), ext('d3', [0, 8]), ext('d4', [0, 12])]), /would cut a door or window/, 'no unsafe seam fallback');
+  }
 
   // plan SVG export and room query used by agents (scripts/world-plan.cjs --plan)
   const wp = require('./world-plan.cjs');
