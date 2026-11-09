@@ -7,7 +7,7 @@ const { files } = require('./build.cjs');
 function gameData() {
   const html = readFileSync(resolve(__dirname, '..', 'index.html'), 'utf8');
   const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
-  const order = ['art.js', 'levels.js', 'world.js', 'plan.js', 'plans/motel.js', 'mesh.js', 'missions.js', 'models.js', null, 'renderer.js', 'weapons.js', 'ai.js', 'cover.js', 'dialogue.js', 'overworld.js', null];
+  const order = ['art.js', 'levels.js', 'world.js', 'plan.js', 'plans/motel.js', 'plans/penthouse.js', 'mesh.js', 'missions.js', 'models.js', null, 'renderer.js', 'weapons.js', 'ai.js', 'cover.js', 'dialogue.js', 'overworld.js', null];
   assert.equal(scripts.length, order.length, 'Expected ordered assets followed by the inline classic game script');
   scripts.forEach((script, i) => assert.equal(script[1].trim(), order[i] ? `src="${order[i]}"` : '', 'Scripts must retain synchronous classic loading order'));
   const sources = scripts.map((script, i) => {

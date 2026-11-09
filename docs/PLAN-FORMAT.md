@@ -169,6 +169,25 @@ and fixture case and smoke-tests the renderer.
 - The bath doors are 0.76 m (period-correct). The validator warns that they
   are tight, but they are reachable.
 
+### Penthouse settlements (plans/penthouse.js vs docs/levels/penthouse.md)
+
+- This is layout only: one stage, `ph`. The lobby and roof stages, E6 and
+  stair links wait for W2c. Decor waits for W4.
+- Every brief room is its own top-level room. Shafts are `sealed` cores.
+  `staff`, `laundry` and `svc_hall` use style `commercial`. The rest use the
+  plan style `high_end`.
+- Edge precedence: core `rc_wall_20` > panic room `cmu_filled` > façade
+  glass to terraces (`glass_annealed_6`) > the §7.2 `stud_steel_gyp2` list.
+  The terrace rail to the void is `steel_3mm`, 1.1 m high (an open brief
+  question).
+- D25, D26 and D32 are narrowed from 1.8 m to 1.4 m arches to clear wall
+  junctions. D44 (the open terrace corner) is an edge portal, not a door, so
+  the entrance count is not doubled.
+- The player starts in the private lift (E1). E2–E5 are `arrive` spawns with
+  no stair records yet. There is no `obj`: the boss is the objective.
+- The validator reports 0 errors and 0 warnings. The entrances are D8, D9,
+  D15, D28 and D29 (5).
+
 ## 8. Backlog for W2f (map content, from W4)
 
 - Marina: there are toilets on the open dock and in the crate storerooms.
