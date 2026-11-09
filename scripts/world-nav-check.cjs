@@ -21,7 +21,7 @@ function checkNavigation() {
     readFileSync(resolve(__dirname, '..', 'ai.js'), 'utf8').replace(/^'use strict';/, ''),
     section('function updateCash(', 'function updateFX(')
   ].join('\n');
-  function simulation({ weapon = 'bat', boss = false, lex = false, map, start = [6.5, 4.5], target = [13.5, 4.5], radius = .28, item, cash, facing, frames = 1200 } = {}) {
+  function simulation({ weapon = 'bat', boss = false, lex = false, map, start = [6.5, 4.5], target = [13.5, 4.5], radius = .28, item, cash, facing, frames = 1200, rooms = false, init } = {}) {
     const g = WORLD.buildGrid(map || LEVELS[3], 3);
     g.flow = new Int16Array(g.W*g.H); g.nflow = new Int16Array(g.W*g.H);
     g.doors = g.doorSpecs.map(d => ({ ...d, th: 0, w: 0, pusher: '' }));
@@ -39,9 +39,10 @@ function checkNavigation() {
       collideGrid: c => WORLD.cell.collideGrid(g,c), collideDoors: (c,p) => WORLD.cell.collideDoors(g,c,p),
       footstep: () => {}, slideBody: () => {}, spot: () => {}, sfx: () => {}, popup: () => {}, shake: () => {},
       hurtPlayer: () => attacks++, fireGun: () => attacks++, throwNade: () => attacks++, rnd: (a,b) => (a+b)/2,
-      pick: values => values[0]
+      pick: values => values[0], ...(rooms ? { wst: q => q.wst || (q.wst = WORLD.fromCells(q)) } : {})
     });
     vm.runInContext(`${source}\nMath.random=()=>0.5;`, context, { timeout: 1000 });
+    if (init) init(e, g, context);
     const step = new vm.Script('updateEnemy(G.enemies[0],1/60);');
     const cashStep = new vm.Script('updateCash(1/60);');
     for (let frame=0;frame<frames;frame++) {
@@ -78,6 +79,14 @@ function checkNavigation() {
   const walled = { map: ['###########', '#....#....#', '#....#....#', '#....#....#', '#....#....#', '#....#....#', '#.........#', '###########'], wall: 1 };
   const blind = simulation({ map: walled, start: [2.5, 2.5], target: [7.5, 2.5], facing: Math.PI, frames: 600 });
   assert(blind.attacks === 0 && blind.minD > 3 && !blind.e.bl, `A blind chaser with no belief must not home on the hidden player: ${JSON.stringify({x:blind.e.x,z:blind.e.z,minD:blind.minD,state:blind.e.state})}`);
+  // W8b: an old belief in the next room; once the own room is searched, the room graph sends the hunter through the door.
+  const doored = { map: ['###########', '#....#....#', '#....#....#', '#....#....#', '#....#....#', '#....#....#', '#....D....#', '###########'], wall: 1 };
+  const hunt = rooms => simulation({ map: doored, weapon: 'm16', start: [2.5, 2.5], target: [8.5, 3.5], facing: Math.PI, frames: 1800, rooms,
+    init: (e, g, ctx) => { e.state = 'search'; e.sx = 2.5; e.sz = 2.5; e.arr = 1; e.searchT = 0; e.srT = 0; e.lookT = 0; e.lh = Math.PI; g.doors[0].th = Math.PI/2;
+      e.bl = vm.runInContext('AI.belief.make(8.5,3.5,-7,"noise")', ctx); } });
+  const hunted = hunt(true), idle = hunt(false);
+  assert(hunted.attacks > 0 && hunted.e.hr === 1, `Room belief leads the search into the likely room: ${JSON.stringify({x:hunted.e.x,z:hunted.e.z,state:hunted.e.state,hr:hunted.e.hr})}`);
+  assert(idle.attacks === 0, 'Without a room graph the same search gives up in its own room');
   console.log(`WORLD: production Marina navigation restored (${bat.attacks} melee attacks), bosses and wall-adjacent interactions checked`);
 }
 

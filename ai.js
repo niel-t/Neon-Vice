@@ -52,7 +52,7 @@ const AI=(()=>{
  const noises=[];let nzT=NaN,nzF=[];
  function know(e,b){if(belief.accept(e.bl,b,G.T||0))e.bl=b;}
  function poi(e,x,z,src){e.poi={x,z,t:G.T||0,src};}
- function investigate(e,x,z,qT,lh){if(e.state==='chase')return;e.state='search';e.sx=x;e.sz=z;e.searchT=0;e.srT=0;e.arr=0;e.pb=null;e.qT=qT;
+ function investigate(e,x,z,qT,lh){if(e.state==='chase')return;e.state='search';e.sx=x;e.sz=z;e.searchT=0;e.srT=0;e.arr=0;e.pb=null;e.qT=qT;e.amb=null;
   e.lh=lh!==undefined?lh:Math.atan2(x-e.x,z-e.z);}
  function callout(e,r,fn){const g=G,ls=g.enemies.filter(q=>q!==e&&q.alive&&!(q.down>0)&&Math.hypot(q.x-e.x,q.z-e.z)<r);if(!ls.length)return 0;
   const a=hear(g,e.x,e.z,r*1.3);let n=0;for(const q of ls)if(costAt(a,q.x,q.z)<=r*1.3){fn(q);n++;}return n;}
@@ -72,7 +72,9 @@ const AI=(()=>{
    return[x,z];}
   return null;}
  // Sweep around (e.sx,e.sz): walk there, then alternate looking around with probes biased to the last heading.
- function search(e,dt,sp){const lim=e.wary?6:3.5;e.srT=(e.srT||0)+dt;if(e.srT>lim+10)return{vx:0,vz:0,face:null,end:true};
+ function search(e,dt,sp){const lim=e.wary?6:3.5;
+  if(e.amb){const a=e.amb;if((G.T||0)-a.t>AMB_HOLD){e.amb=null;e.srT=0;}else{const r=seek(e,a.x,a.z,sp);return r.done||r.stuck?{vx:0,vz:0,face:a.a}:r;}}
+  e.srT=(e.srT||0)+dt;if(e.srT>lim+10)return{vx:0,vz:0,face:null,end:true};
   if(!e.arr){const r=seek(e,e.sx,e.sz,sp);if(!r.done&&!r.stuck)return r;e.arr=1;e.searchT=0;e.lookT=.6;}
   e.searchT+=dt;if(e.searchT>lim)return{vx:0,vz:0,face:null,end:true};
   if(e.pb){e.pbT-=dt;const r=seek(e,e.pb[0],e.pb[1],sp*.8);if(!r.done&&!r.stuck&&e.pbT>0)return r;e.pb=null;e.lookT=1;}
@@ -81,7 +83,56 @@ const AI=(()=>{
  function noiseDup(x,z,r,src){const T=G.T||0;if(T!==nzT){nzT=T;nzF.length=0;}
   if(nzF.some(n=>n.src===src&&n.r>=r&&Math.hypot(n.x-x,n.z-z)<.75))return true;nzF.push({x,z,r,src});
   noises.push({x,z,r,t:T});if(noises.length>16)noises.shift();return false;}
- return{SRC,belief,rng,rand,hear,costAt,nav,noises,know,poi,investigate,callout,hurt,witness,seek,search,probe,noiseDup,GRACE,KEEP,
+ // W8b room belief: probability mass over a room graph; index n is "unroomed/outside".
+ // gr={n,area[],cx[],cz[],at(x,z)->i|-1,adj(i)->portal idx[],pa[],pb[] (-1 outside),pw[],px[],pz[],open(k)->bool}
+ const PROBE=[.6,0,-.6,0,0,.6,0,-.6,.6,.6,-.6,.6,.6,-.6,-.6,-.6,1.1,0,-1.1,0,0,1.1,0,-1.1];
+ const rooms={
+  graph(st,W){W=W||WORLD;const R=st.rooms,Pt=st.portals,n=R.length,m=Pt.length,gr={n,area:new Float64Array(n+1),cx:new Float64Array(n+1),cz:new Float64Array(n+1),
+   pa:new Int16Array(m),pb:new Int16Array(m),pw:new Float64Array(m),px:new Float64Array(m),pz:new Float64Array(m),
+   at:(x,z)=>{let r=W.roomAt(st,x,z);if(r)return r.idx;const p=W.portalAt(st,x,z);if(p)return p.a;
+    // Legacy doorway cells belong to no room: resolve to the nearest adjoining one so mass never strands outside.
+    for(let j=0;j<PROBE.length;j+=2){r=W.roomAt(st,x+PROBE[j],z+PROBE[j+1]);if(r)return r.idx;}return -1;},
+   adj:i=>i<n?W.portals(st,i):[],open:k=>W.portalOpen(st,Pt[k],'move'),ok:(x,z,r)=>W.clear(st,x,z,x,z,r),s:[],pnx:new Float64Array(m),pnz:new Float64Array(m)};
+   for(const r of R){gr.area[r.idx]=Math.max(r.area,1);gr.cx[r.idx]=r.centroid[0];gr.cz[r.idx]=r.centroid[1];gr.s[r.idx]=r.samples;}gr.area[n]=1e3;
+   for(const p of Pt){gr.pa[p.idx]=p.a;gr.pb[p.idx]=p.b==null?-1:p.b;gr.pw[p.idx]=p.width;gr.px[p.idx]=p.mid[0];gr.pz[p.idx]=p.mid[1];gr.pnx[p.idx]=p.nx||0;gr.pnz[p.idx]=p.nz||0;}return gr;},
+  init(gr,x,z,out){const P=out&&out.length===gr.n+1?out.fill(0):new Float32Array(gr.n+1),i=gr.at(x,z);P[i<0?gr.n:i]=1;return P;},
+  // Mass leaks through move-open portals at speed*width/area per second, capped so a room never over-drains.
+  diffuse(gr,P,dt,speed){const n=gr.n,m=gr.pa.length,d=(gr.dd||(gr.dd=new Float64Array(n+1))).fill(0);let deg=gr.deg;
+   if(!deg){deg=gr.deg=new Float64Array(n+1);for(let k=0;k<m;k++){deg[gr.pa[k]]++;deg[gr.pb[k]<0?n:gr.pb[k]]++;}}
+   for(let k=0;k<m;k++){if(!gr.open(k))continue;const a=gr.pa[k],b=gr.pb[k]<0?n:gr.pb[k];
+    const fa=P[a]*Math.min(dt*speed*gr.pw[k]/gr.area[a],.9/deg[a]),fb=P[b]*Math.min(dt*speed*gr.pw[k]/gr.area[b],.9/deg[b]);d[a]+=fb-fa;d[b]+=fa-fb;}
+   for(let i=0;i<=n;i++)P[i]=Math.max(0,P[i]+d[i]);return P;},
+  // Negative information: room i was looked at and the player is not there.
+  clear(P,i,f){P[i]*=1-(f==null?1:f);let s=0;for(let j=0;j<P.length;j++)s+=P[j];if(s<1e-6)return false;for(let j=0;j<P.length;j++)P[j]/=s;return true;},
+  pick(gr,P,x,z){let best=-1,bs=1e-4;for(let i=0;i<gr.n;i++){const s=P[i]/(1+.1*Math.hypot(gr.cx[i]-x,gr.cz[i]-z));if(s>bs){bs=s;best=i;}}return best;},
+  // Ambush: cover the own-room portal facing the most likely neighbour, standing back inside the room.
+  ambush(gr,P,mine,back){back=back||1.5;let best=-1,bp=1e-3;for(const k of gr.adj(mine)){if(!gr.open(k))continue;const o=gr.pa[k]===mine?gr.pb[k]:gr.pa[k],q=P[o<0?gr.n:o];if(q>bp){bp=q;best=k;}}
+   if(best<0)return null;const mx=gr.px[best],mz=gr.pz[best];
+   // Stand back along the portal normal on our side (centroid direction as fallback); the spot must be in our room and clear.
+   const nx=gr.pnx?gr.pnx[best]:0,nz=gr.pnz?gr.pnz[best]:0,dirs=[nx,nz,-nx,-nz,gr.cx[mine]-mx,gr.cz[mine]-mz];
+   for(let j=0;j<6;j+=2){const l=Math.hypot(dirs[j],dirs[j+1]);if(l<1e-6)continue;const ux=dirs[j]/l,uz=dirs[j+1]/l;
+    for(const s of[back,back*.66,back*.4]){const x=mx+ux*s,z=mz+uz*s;if(gr.at(x,z)!==mine||(gr.ok&&!gr.ok(x,z,.3)))continue;return{k:best,x,z,a:Math.atan2(mx-x,mz-z),p:bp};}}
+   return null;}
+ };
+ const HUNT=30,AMB_HOLD=8,PSPD=3,rg={st:null,gr:null};
+ // Room graph of the live stage (index.html wst); null on harnesses without one or on roomless stages.
+ function graph(){if(typeof wst!=='function')return null;const st=wst(G);if(!st||!st.rooms||!st.rooms.length)return null;
+  if(rg.st!==st){rg.st=st;rg.gr=rooms.graph(st);}return rg.gr;}
+ // Room belief follows e.bl: reseeded on new information, spread at player speed, and the agent's own room drains as it looks.
+ function track(e,dt){const gr=graph(),b=e.bl;if(!gr||!b)return null;const T=G.T||0;
+  if(e.rpB!==b||!e.rp||e.rp.length!==gr.n+1){e.rp=rooms.init(gr,b.x,b.z,e.rp);e.rpB=b;for(let a=Math.min(T-b.t,8);a>1e-3;a-=.25)rooms.diffuse(gr,e.rp,Math.min(.25,a),PSPD);}
+  else if(dt>0)rooms.diffuse(gr,e.rp,dt,PSPD);
+  const i=gr.at(e.x,e.z);if(i>=0)rooms.clear(e.rp,i,Math.min(1,dt*.8));return gr;}
+ // Search ended: rule out the searched room and move on to the likeliest remaining one.
+ function hunt(e){const gr=graph(),b=e.bl;if(!gr||!b||e.boss||!e.rp||e.rpB!==b||(G.T||0)-b.t>HUNT)return false;
+  for(const q of[[e.x,e.z],[e.sx,e.sz]]){const i=gr.at(q[0],q[1]);if(i>=0&&!rooms.clear(e.rp,i,1))return false;}
+  const k=rooms.pick(gr,e.rp,e.x,e.z);if(k<0)return false;const s=gr.s[k]||[],q=s.length?s[Math.floor(rand(e)*s.length)]:[gr.cx[k],gr.cz[k]];
+  investigate(e,q[0],q[1],0);e.hr=k;return true;}
+ // Lost sight: some ranged agents hold their room, covering the portal the player most likely left through.
+ function lurk(e){if(e.boss)return false;const gr=track(e,0);if(!gr||rand(e)>=(e.pers==='careful'?.7:.25))return false;
+  const mine=gr.at(e.x,e.z);if(mine<0)return false;const am=rooms.ambush(gr,e.rp,mine,1.5);if(!am||am.p<.25)return false;
+  e.amb={x:am.x,z:am.z,a:am.a,t:G.T||0};return true;}
+ return{SRC,belief,rng,rand,hear,costAt,nav,rooms,graph,track,hunt,lurk,noises,know,poi,investigate,callout,hurt,witness,seek,search,probe,noiseDup,GRACE,KEEP,HUNT,AMB_HOLD,
   debug:typeof location!=='undefined'&&/[?&]ai=1(&|$)/.test(location.search)};
 })();
 function alertNoise(x,z,r,src){const g=G;if(!g||!(r>=1)||AI.noiseDup(x,z,r,src))return;const T=g.T||0,R=r*1.5;
@@ -106,6 +157,7 @@ function updateEnemy(e,dt){const g=G,p=g.player,T=g.T||0;
  const chasing=e.state==='chase',look=chasing?e.ga:e.a,half=chasing?Math.max(visionHalfAngle(e),1.4):visionHalfAngle(e);
  let see=false;if(p.alive&&dist<(chasing?13:Dd().vision)){const cone=dist<1.6||Math.abs(angDiff(look,ang))<half;if(cone&&(typeof playerSeenBy==='function'?playerSeenBy(e):los(e.x,e.z,p.x,p.z)))see=true;}
  if(!see&&p.alive){const hear=(p.sprinting?3.2:1.4)*(Math.hypot(p.vx,p.vz)>0.6?1:0);if(dist<hear&&los(e.x,e.z,p.x,p.z)){AI.know(e,AI.belief.make(p.x,p.z,T,'step'));if(!chasing){AI.investigate(e,p.x,p.z,1);e.ta=ang;}}}
+ if(!see&&e.bl&&(chasing||e.state==='search'))AI.track(e,dt);
  if(!see&&(e.state==='idle'||e.state==='patrol')){for(const o of g.enemies){if(o.alive||o.found||o===e)continue;const bx=o.x-e.x,bz=o.z-e.z,bd2=Math.hypot(bx,bz);if(bd2<Dd().vision*0.8&&Math.abs(angDiff(e.a,Math.atan2(bx,bz)))<Dd().cone&&los(e.x,e.z,o.x,o.z)){o.found=1;e.wary=1;AI.poi(e,o.x,o.z,'body');AI.investigate(e,o.x,o.z,1.4);popup(e.x,e.z,'BODY!','#ffd36b');sfx('alert');
   AI.callout(e,6,q=>{if(q.state==='chase')return;q.wary=1;AI.poi(q,o.x,o.z,'body');AI.investigate(q,o.x,o.z,1);});break;}}}
  if(see){const grace=e.bl&&e.bl.src==='see'&&T-e.bl.t<AI.GRACE;AI.know(e,AI.belief.make(p.x,p.z,T,'see',{vx:p.vx,vz:p.vz}));
@@ -117,13 +169,13 @@ function updateEnemy(e,dt){const g=G,p=g.player,T=g.T||0;
   case 'idle':e.turnT-=dt;if(e.turnT<=0){e.turnT=rnd(1.5,4);e.ta=e.a+rnd(-1.3,1.3);}face=e.ta;break;
   case 'patrol':if(e.pauseT>0){e.pauseT-=dt;break;}tvx=Math.sin(e.pa)*1.3;tvz=Math.cos(e.pa)*1.3;face=e.pa;break;
   case 'distract':{const c=e.cashT;if(!c||c.life<=0){e.state='patrol';break;}const ddx=c.x-e.x,ddz=c.z-e.z,dd=Math.hypot(ddx,ddz);face=Math.atan2(ddx,ddz);if(dd>0.8){tvx=ddx/dd*2.2;tvz=ddz/dd*2.2;}break;}
-  case 'search':{const r=AI.search(e,dt,2.6);tvx=r.vx;tvz=r.vz;face=r.face;if(r.end){e.state=e.wary?'idle':'patrol';e.turnT=0;e.searchT=0;}break;}
+  case 'search':{const r=AI.search(e,dt,2.6);tvx=r.vx;tvz=r.vz;face=r.face;if(r.end&&!AI.hunt(e)){e.state=e.wary?'idle':'patrol';e.turnT=0;e.searchT=0;}break;}
   case 'chase':{
    if(!e.weapon){let bi=null,bd=4.5;for(const it of g.items){if(it.flying)continue;const d=Math.hypot(it.x-e.x,it.z-e.z);if(d<bd&&los(e.x,e.z,it.x,it.z)&&WORLD.cell.moveClear(g,e.x,e.z,it.x,it.z)){bd=d;bi=it;}}
     if(bi&&(dist>2.5||!see)){const ddx=bi.x-e.x,ddz=bi.z-e.z;tvx=ddx/(bd||1)*3.2;tvz=ddz/(bd||1)*3.2;face=Math.atan2(ddx,ddz);if(bd<0.5){e.weapon={type:bi.type,ammo:99};g.items.splice(g.items.indexOf(bi),1);e.react=0.5;}break;}}
    // W7: aim at the exposed lean point when the body is behind the corner
    const ap=see&&typeof playerAimPoint==='function'?playerAimPoint(e):p,aang=ap===p?ang:Math.atan2(ap.x-e.x,ap.z-e.z);
-   if(see){face=aang;gaze=aang;e.sb=null;
+   if(see){face=aang;gaze=aang;e.sb=null;e.blT=0;
     if(SET.diff!=='easy'&&!e.boss&&p.weapon&&!WD[p.weapon.type].melee&&dist<10&&!(e.dodgeT>0)&&Math.abs(angDiff(p.a,Math.atan2(-dx,-dz)))<0.09&&Math.random()<dt*(SET.diff==='hard'?1.6:0.7)){e.dodgeT=0.3;e.dodgeD=Math.random()<0.5?-1:1;const s=e.dodgeD*5.2/Math.max(dist,1e-3);e.dodX=dz*s;e.dodZ=-dx*s;}
     if(e.boss){const r=bossAI(e,dt,dist,dx,dz,aang);tvx=r[0];tvz=r[1];}
     else if(wd.melee){const sp=e.weapon?3.6:3.4;if(dist>0.85){tvx=dx/dist*sp;tvz=dz/dist*sp;const pg=p.weapon&&!WD[p.weapon.type].melee;if(pg&&dist>2.2){const zz=Math.sin(g.T*5+e.id*1.7)*0.85;tvx+=dz/dist*sp*zz;tvz-=dx/dist*sp*zz;}}if(dist<1.05&&e.wind<=0&&e.cd<=0){e.wind=0.28*Math.min(Dd().react,1.6);e.alertT=0.3;}}
@@ -139,13 +191,13 @@ function updateEnemy(e,dt){const g=G,p=g.player,T=g.T||0;
     if(t){const tx=t[0]-e.x,tz=t[1]-e.z,d=Math.hypot(tx,tz)||1;tvx=tx/d*sp;tvz=tz/d*sp;if(wd.melee)face=Math.atan2(tx,tz);}else{tvx=tvz=0;}
    }
    if(!see){const b=e.bl,age=b?T-b.t:1e9,sp=wd.melee?3.2:2.6;
-    e.react=Math.max(e.react,b&&b.src==='see'&&age<AI.GRACE?0.15:0.35);
+    e.blT=(e.blT||0)+dt;if(e.blT>.3)e.react=Math.max(e.react,b&&b.src==='see'&&age<AI.GRACE?0.15:0.35);
     if(!wd.melee&&e.pers==='careful'&&b&&b.src==='see'&&age<2.2){face=gaze=Math.atan2(b.x-e.x,b.z-e.z);e.aiming=age<1.2;e.react=Math.max(e.react,0.2);}
     else if(b&&age<AI.KEEP&&e.sb!==b){const q=AI.belief.goal(g,b),r=AI.seek(e,q[0],q[1],sp);
      if(r.done||r.stuck){e.sb=b;const h=Math.hypot(b.vx,b.vz)>.5?Math.atan2(b.vx,b.vz):e.a;
-      if(e.boss){e.sx=q[0];e.sz=q[1];e.arr=1;e.searchT=0;e.srT=0;e.lookT=0;e.pb=null;e.lh=h;}else{e.state='search';AI.investigate(e,q[0],q[1],1,h);}}
+      if(e.boss){e.sx=q[0];e.sz=q[1];e.arr=1;e.searchT=0;e.srT=0;e.lookT=0;e.pb=null;e.lh=h;}else{e.state='search';AI.investigate(e,q[0],q[1],1,h);if(!wd.melee)AI.lurk(e);}}
      else{tvx=r.vx;tvz=r.vz;face=r.face;if(Math.hypot(q[0]-e.x,q[1]-e.z)>.3)gaze=Math.atan2(q[0]-e.x,q[1]-e.z);}}
-    else if(!e.boss){e.state='search';AI.investigate(e,b&&age<AI.KEEP?b.x:e.x,b&&age<AI.KEEP?b.z:e.z,1,e.hd!==undefined?e.hd:e.a);}
+    else if(!e.boss){e.state='search';AI.investigate(e,b&&age<AI.KEEP?b.x:e.x,b&&age<AI.KEEP?b.z:e.z,1,e.hd!==undefined?e.hd:e.a);if(!wd.melee)AI.lurk(e);}
     else{if(e.sb!==b||e.sx===undefined){e.sb=b;e.sx=e.x;e.sz=e.z;e.arr=1;e.searchT=0;e.srT=0;e.lookT=0;e.pb=null;e.lh=e.hd!==undefined?e.hd:e.a;}
      const r=AI.search(e,dt,3);if(r.end){e.sx=e.x;e.sz=e.z;e.srT=0;e.searchT=0;e.lookT=0;}else{tvx=r.vx;tvz=r.vz;face=r.face;}}}
   }break;}

@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const { worldData } = require('./world-snapshot.cjs');
 
 function checkAI() {
-  const { WORLD } = worldData();
+  const { WORLD, LEVELS } = worldData();
   const html = readFileSync(resolve(__dirname, '..', 'index.html'), 'utf8');
   const close = (a, b, eps = 1e-6, m) => assert(Math.abs(a-b) <= eps, m || `${a} != ${b}`);
   // Two rooms split by a tall wall with one door, plus a low-water strip in the right room.
@@ -89,7 +89,61 @@ function checkAI() {
   g.navVer = 1; g.solid[2*g.W+6] = 0; const fresh = AI.nav.field(g, 2.5, 2.5);
   assert(fresh[2*g.W+6] === 4, 'Geometry version bump rebuilds stale fields');
   assert.equal(AI.nav.field(g, -5, -5), false, 'No free cell near target');
-  console.log('AI: belief, attenuation, callouts, seeded rng and per-target nav fields checked');
+
+  // Room belief (W8b): rooms A|B|C in a row (4x4 m each), B-C door lockable, C opens to the outside.
+  const R = AI.rooms, shut = new Set();
+  const gr = { n: 3, area: [16, 16, 16, 1e3], cx: [2, 6, 10, 0], cz: [2, 2, 2, 0], pa: [0, 1, 2], pb: [1, 2, -1], pw: [1, 1, 1],
+    px: [4, 8, 12], pz: [2, 2, 2], at: (x, z) => x < 0 || x >= 12 ? -1 : Math.floor(x/4), adj: i => [[0], [0, 1], [1, 2]][i] || [], open: k => !shut.has(k) };
+  const sum = P => [...P].reduce((a, v) => a+v, 0);
+  let P = R.init(gr, 1, 1); assert.deepEqual([...P], [1, 0, 0, 0]);
+  for (let i = 0; i < 8; i++) R.diffuse(gr, P, .25, 3);
+  close(sum(P), 1, 1e-5, 'Diffusion conserves mass'); assert(P[0] > P[1] && P[1] > P[2] && P[2] > P[3] && P[3] > 0, 'Mass spreads outward in order');
+  P = R.init(gr, 5, 1); shut.add(1); for (let i = 0; i < 40; i++) R.diffuse(gr, P, .25, 3);
+  assert(P[2] === 0 && P[3] === 0 && P[0] > 0, 'Locked portals stop the spread'); shut.clear();
+  P = Float32Array.from([.5, .5, 0, 0]); assert(R.clear(P, 1)); close(P[0], 1, 1e-6, 'Searched room drops out and mass renormalises');
+  assert(!R.clear(Float32Array.from([1, 0, 0, 0]), 0), 'Clearing the last candidate reports lost');
+  assert.equal(R.pick(gr, Float32Array.from([.2, 0, .8, 0]), 1, 2), 2, 'Likelier room wins');
+  assert.equal(R.pick(gr, Float32Array.from([.5, 0, .5, 0]), 1, 2), 0, 'Ties go to the nearer room');
+  const am = R.ambush(gr, Float32Array.from([0, 0, 1, 0]), 1);
+  assert(am.k === 1 && am.x === 6.5 && am.z === 2 && close(am.a, Math.PI/2) === undefined, 'Ambush covers the likely door from inside');
+  shut.add(1); assert.equal(R.ambush(gr, Float32Array.from([0, 0, 1, 0]), 1), null, 'No ambush on a locked door'); shut.clear();
+
+  // Integration on a real legacy stage (WORLD.fromCells): left room 0, right room 1, one door portal at (6.5,5.5).
+  g = make(); ctx.G = g; g.T = 20; ctx.wst = q => q.wst || (q.wst = WORLD.fromCells(q));
+  const rg = AI.graph(); assert(rg && rg.n === 2 && rg.at(6.5, 5.5) === 1, 'Graph from the live stage; doorways map to a side');
+  assert.equal(AI.graph(), rg, 'Graph cached per stage');
+  const hunter = guard(3.5, 3.5, { state: 'search', sx: 3.5, sz: 3.5, wary: 1 });
+  hunter.bl = B.make(8.5, 3.5, 19, 'noise'); AI.track(hunter, 0);
+  assert(hunter.rp[1] > .6 && hunter.rp[0] > 0 && hunter.rp[2] === 0, 'Room belief seeded at the belief room and spread for its age');
+  const before = hunter.rp[0]; AI.track(hunter, .5); assert(hunter.rp[0] < before, 'Own room drains while looking around');
+  assert(AI.hunt(hunter) && hunter.hr === 1 && rg.at(hunter.sx, hunter.sz) === 1 && hunter.rp[0] === 0, 'Searched room ruled out; next search in the likely room');
+  hunter.x = hunter.sx; hunter.z = hunter.sz; assert(!AI.hunt(hunter), 'All rooms ruled out ends the hunt');
+  const stale = guard(3.5, 3.5, { state: 'search', sx: 3.5, sz: 3.5 }); stale.bl = B.make(8.5, 3.5, 20-AI.HUNT-1, 'noise'); AI.track(stale, 0);
+  assert(!AI.hunt(stale), 'Old beliefs are not hunted');
+  const lurkers = [...Array(12)].map((_, id) => { const q = guard(3.5, 4.5, { id, pers: 'careful', state: 'search', sx: 3.5, sz: 4.5 }); q.bl = B.make(8.5, 4.5, 19.5, 'see'); return [q, AI.lurk(q)]; });
+  const amb = lurkers.find(([, ok]) => ok)[0], wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
+  assert(lurkers.filter(([, ok]) => ok).length >= 5, 'Careful agents usually hold');
+  assert(rg.at(amb.amb.x, amb.amb.z) === 0 && Math.hypot(amb.amb.x-6.5, amb.amb.z-5.49) < 1.6 && Math.abs(wrap(amb.amb.a-Math.atan2(6.5-amb.amb.x, 5.49-amb.amb.z))) < 1e-6, 'Ambush inside own room facing the door');
+  assert.deepEqual(lurkers.map(([, ok]) => ok), [...Array(12)].map((_, id) => { const q = guard(3.5, 4.5, { id, pers: 'careful' }); q.bl = B.make(8.5, 4.5, 19.5, 'see'); return AI.lurk(q); }), 'Lurk choice is seeded');
+  const hold = amb; hold.x = hold.amb.x; hold.z = hold.amb.z; let r = AI.search(hold, .1, 2.6);
+  assert(r.vx === 0 && r.vz === 0 && r.face === hold.amb.a, 'Holding the ambush faces the door');
+  g.T += AI.AMB_HOLD+.1; r = AI.search(hold, .1, 2.6); assert(!hold.amb, 'Ambush gives up after the hold');
+  hold.amb = { x: 1, z: 1, a: 0, t: g.T }; AI.investigate(hold, 4, 4, 0); assert(!hold.amb, 'New information breaks the ambush');
+  const melee = guard(3.5, 3.5); assert(!AI.lurk(Object.assign(melee, { boss: 1, bl: B.make(8.5, 3.5, 20, 'see') })), 'Bosses never lurk');
+  // Production levels: every walkable spot (doorway cells included) maps to a room, and ambush spots are in-room and clear.
+  LEVELS.forEach((def, li) => {
+    const q = WORLD.buildGrid(def, li); q.doors = q.doorSpecs.map(d => ({ ...d, th: 0, w: 0, pusher: '' }));
+    const st = WORLD.fromCells(q), gr = AI.rooms.graph(st, WORLD);
+    for (let cz = 0; cz < q.H; cz++) for (let cx = 0; cx < q.W; cx++) if (!WORLD.cell.isBlock(q, cx, cz))
+      assert(gr.at(cx+.5, cz+.5) >= 0, `${def.name}: walkable (${cx},${cz}) has no room`);
+    for (let k = 0; k < gr.pa.length; k++) for (const [mine, o] of [[gr.pa[k], gr.pb[k]], [gr.pb[k], gr.pa[k]]]) {
+      if (mine < 0) continue; const P = new Float32Array(gr.n+1); P[o < 0 ? gr.n : o] = 1;
+      const am = AI.rooms.ambush(gr, P, mine, 1.5); if (!am) continue;
+      assert(gr.at(am.x, am.z) === mine && WORLD.clear(st, am.x, am.z, am.x, am.z, .3), `${def.name}: ambush ${JSON.stringify(am)} outside room ${mine} or blocked`);
+    }
+  });
+  delete ctx.wst; assert.equal(AI.graph(), null, 'No stage graph: room logic is inert');
+  console.log('AI: belief, attenuation, callouts, seeded rng, per-target nav fields, room belief, hunt and ambush checked');
 }
 
 module.exports = { checkAI };
