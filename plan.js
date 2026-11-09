@@ -86,7 +86,7 @@ const PLAN=(()=>{
    for(let k=1;k<cuts.length;k++){
     if((cuts[k]-cuts[k-1])*dist(a,b)<TOL)continue;
     const p=[snap(a[0]+(b[0]-a[0])*cuts[k-1]),snap(a[1]+(b[1]-a[1])*cuts[k-1])],q=[snap(a[0]+(b[0]-a[0])*cuts[k]),snap(a[1]+(b[1]-a[1])*cuts[k])];
-    const [P,Q]=key(p)<key(q)?[p,q]:[q,p],K=`${key(P)}|${key(Q)}`;if(!segs.has(K))segs.set(K,{a:P,b:Q});
+    const [P,Q]=(p[0]-q[0]||p[1]-q[1])<0?[p,q]:[q,p],K=`${key(P)}|${key(Q)}`;if(!segs.has(K))segs.set(K,{a:P,b:Q});
    }
   }
   const pairKey=(a,b)=>[a??'-',b??'-'].sort().join('|');
