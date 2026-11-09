@@ -35,6 +35,7 @@ function checkWorld() {
   checkSight(WORLD, LEVELS);
   require('./world-nav-check.cjs').checkNavigation();
   checkPlan();
+  checkFog(WORLD, LEVELS);
 }
 
 function checkSight(WORLD, LEVELS) {
@@ -153,5 +154,104 @@ function checkPlan() {
   console.log('WORLD: dev SVG and query tooling covers all eight legacy plans');
 }
 
-module.exports = { checkWorld, worldData };
+/* W12a fog: production FOG module and fogSee from index.html, on compiled v2 stages and the legacy adapter. */
+function checkFog(WORLD, LEVELS) {
+  const html = readFileSync(resolve(__dirname, '..', 'index.html'), 'utf8');
+  const start = html.indexOf('/* FOG_BEGIN */'), end = html.indexOf('function fogMode(', start);
+  assert(start >= 0 && end > start, 'FOG production boundary');
+  const ctx = vm.createContext({ WORLD, G: null, Math, Map, Uint8Array, Int16Array, Int32Array, Float32Array, Float64Array, Object });
+  vm.runInContext(html.slice(start, end) + '\nthis.FOG=FOG;this.fogSee=fogSee;', ctx, { timeout: 1000 });
+  const { FOG, fogSee } = ctx;
+  // Q-A difficulty mapping plus the SET.fog toggle; non-combat stages never fog.
+  for (const [diff, set, combat, want] of [['off','auto',true,'off'],['keep','auto',true,'keep'],['grey','auto',true,'grey'],
+    ['off','on',true,'keep'],['grey','on',true,'grey'],['keep','off',true,'off'],['grey','auto',false,'off'],['keep','bogus',true,'keep'],[undefined,'auto',true,'off']])
+    assert.equal(FOG.mode(diff, set, combat), want, `FOG.mode(${diff},${set},${combat})`);
+  const square = (x0,z0,x1,z1) => [[x0,z0],[x1,z0],[x1,z1],[x0,z1]];
+  const DOOR = { kind: 'door', build: 'door_solid', cov: 'full' }, ARCH = { kind: 'arch' };
+  const stage =  (open, extra = {}) => ({
+    id: 'fog-test', bounds: [0,0,12,8], combat: true, ground: [{ id: 'floor', poly: square(0,0,12,8), y: 0, surf: 'tile' }],
+    walls: open === null ? [] : [{ id: 'wall', path: [[6,0],[6,8]], build: 'cbs_ext', cov: 'full', h: 2.8,
+      open: [{ id: 'entry', s0: 1.55, s1: 2.45, y0: 0, y1: 2.2, ...open }] }],
+    props: [], rooms: [{ id: 'left', poly: square(0,0,6,8) }, { id: 'right', poly: square(6,0,12,8) }],
+    portals: [{ id: 'link', a: 'left', b: 'right', open: 'entry' }], ...extra
+  });
+  const run = (st, mode, eye = [3,6]) => {
+    const f = FOG.create(WORLD, st, mode), see = (ax,az,bx,bz) => WORLD.sight(st,ax,az,bx,bz).clear;
+    return { f, see, tick: (dt = FOG.TICK) => FOG.tick(f, dt, eye[0], eye[1], see) };
+  };
+  const door = WORLD.compile(stage(DOOR)), d = run(door, 'keep', [3,2]);
+  d.tick(0);
+  assert.equal(FOG.level(d.f, 0), 2, 'Eye room is live');
+  assert.equal(FOG.level(d.f, 1), 0, 'Closed door hides the room behind it');
+  assert(FOG.hidden(d.f, 10, 7) && !FOG.hidden(d.f, 1, 1), 'Dynamic objects hide only in the unseen room');
+  assert(d.f.rays > 0 && d.f.rays <= FOG.RAYS_ROOM, `Ray cap per candidate room (${d.f.rays})`);
+  door.doors[0].th = Math.PI/2; d.tick(0.05);
+  assert.equal(FOG.level(d.f, 1), 0, 'Reveal runs at 10Hz');
+  assert(d.tick(0.05), 'Opened door: visible portal reveals');
+  assert(!FOG.hidden(d.f, 11.9, 7.9) && !FOG.hidden(d.f, 11.9, 0.1), 'Room reveals whole, not fractionally');
+  door.doors[0].th = 0; for (let i=0;i<10;i++) d.tick();
+  assert.equal(FOG.level(d.f, 1), 2, 'Normal (keep): seen rooms stay live');
+  const hard = run(door, 'grey', [3,2]);
+  door.doors[0].th = Math.PI/2; hard.tick(0); assert.equal(FOG.level(hard.f, 1), 2);
+  door.doors[0].th = 0; hard.tick(); hard.tick();
+  assert.equal(FOG.level(hard.f, 1), 2, 'Hard holds briefly before greying (no flicker)');
+  for (let i=0;i<4;i++) hard.tick();
+  assert.equal(FOG.level(hard.f, 1), 1, 'Hard: room out of sight turns grey');
+  assert(FOG.hidden(hard.f, 10, 7), 'Hard: grey room hides dynamics');
+  FOG.setMode(hard.f, 'keep'); assert.equal(FOG.level(hard.f, 1), 2, 'Switching to keep restores grey rooms');
+  const glass = run(WORLD.compile(stage({ ...DOOR, kind: 'window', y0: 1, build: 'glass_tempered_6', cov: 'glass' })), 'keep'); glass.tick(0);
+  assert.equal(FOG.level(glass.f, 1), 2, 'Glass reveals');
+  const block = run(WORLD.compile(stage({ ...DOOR, kind: 'window', y0: 1, build: 'glass_block', cov: 'full' })), 'keep'); block.tick(0);
+  assert.equal(FOG.level(block.f, 1), 0, 'Opaque glass block hides');
+  const arch = run(WORLD.compile(stage(ARCH)), 'keep'); arch.tick(0);
+  assert.equal(FOG.level(arch.f, 1), 2, 'Arch reveals');
+  const hole = run(WORLD.compile(stage(null, { portals: [{ id: 'hole', a: 'left', b: 'right', seg: [[6,1],[6,3]] }] })), 'keep'); hole.tick(0);
+  assert.equal(FOG.level(hole.f, 1), 2, 'Hole reveals');
+  const far = run(WORLD.compile(stage(ARCH)), 'keep', [3,7.9]); far.tick(0);
+  assert.equal(FOG.level(far.f, 1), 2, 'Oblique view through an opening still reveals');
+  // Pieces of one parent room reveal together; a third room behind a closed door stays dark.
+  const split = WORLD.compile(stage(ARCH, {
+    rooms: [{ id: 'left', poly: square(0,0,6,8) }, { id: 'r1', parent: 'R', poly: square(6,0,12,4) }, { id: 'r2', parent: 'R', poly: square(6,4,12,8) }],
+    portals: [{ id: 'link', a: 'left', b: 'r1', open: 'entry' }] }));
+  const sp = run(split, 'keep', [3,1]); sp.tick(0);
+  assert(!FOG.hidden(sp.f, 11, 7), 'Parent group reveals whole');
+  const calm = WORLD.compile({ ...stage(DOOR), combat: false }), cm = run(calm, 'keep'); cm.tick(0);
+  assert.equal(FOG.level(cm.f, 1), 2, 'Non-combat rooms are never fogged');
+  const pin = WORLD.compile(stage(DOOR, { rooms: [{ id: 'left', poly: square(0,0,6,8) }, { id: 'right', poly: square(6,0,12,8), kind: 'entry' }] }));
+  assert.equal(FOG.level(run(pin, 'grey').f, 1), 2, 'Entry rooms start revealed');
+  assert.equal(FOG.hidden(null, 1, 1), false); assert.equal(FOG.hidden(FOG.create(WORLD, door, 'off'), 10, 7), false, 'Fog off hides nothing');
+  // Legacy adapter: two rooms joined by one door; fogSee is the in-game sight (cells, live leaves, glass transparent).
+  const g = WORLD.buildGrid({ map: ['###########', '#....#....#', '#....#....#', '#....#....#', '#....D....#', '###########'], wall: 1 }, 0);
+  g.doors = g.doorSpecs.map(q => ({ ...q, th: 0, w: 0, pusher: '' })); ctx.G = g;
+  const lst = WORLD.fromCells(g), cellOf = (x,z) => lst.roomTiles[Math.floor(z)*g.W+Math.floor(x)];
+  const lx = g.doors[0].hx-3, lz = g.doors[0].hz+.49;
+  const R = [...Array(g.W*g.H).keys()].reverse().find(i => lst.roomTiles[i] >= 0 && lst.roomTiles[i] !== cellOf(lx,lz)), rx = R%g.W+.5, rz = Math.floor(R/g.W)+.5;
+  const lf = FOG.create(WORLD, lst, 'keep'); FOG.tick(lf, 0, lx, lz, fogSee);
+  assert.equal(FOG.level(lf, cellOf(rx,rz)), 0, 'Legacy: closed door hides');
+  g.doors[0].th = Math.PI/2; FOG.tick(lf, FOG.TICK, lx, lz, fogSee);
+  assert.equal(FOG.level(lf, cellOf(rx,rz)), 2, 'Legacy: opened door reveals');
+  const sx = g.doors[0].hx+Math.cos(g.doors[0].base)*.49, sz = g.doors[0].hz+Math.sin(g.doors[0].base)*.49;
+  assert.equal(FOG.hidden(lf, sx, sz), false, 'Doorway square follows its live neighbours');
+  const wallI = g.solid.findIndex((v,i) => v && i%g.W > 0 && i%g.W < g.W-1 && !g.solid[i-1] && !g.solid[i+1]), wx = wallI%g.W, wz = Math.floor(wallI/g.W);
+  assert.equal(fogSee(wx-.5, wz+.5, wx+1.5, wz+.5), false, 'Legacy wall blocks fog sight');
+  g.glassSet = new Set([wallI]); assert.equal(fogSee(wx-.5, wz+.5, wx+1.5, wz+.5), true, 'Legacy studio glass reveals');
+  ctx.G = null;
+  // Every production level: street rooms start live, rays stay inside the frame budget, every room is reachable by a target.
+  LEVELS.forEach((def, li) => {
+    const q = WORLD.buildGrid(def, li); q.doors = q.doorSpecs.map(o => ({ ...o, th: 0, w: 0, pusher: '' })); ctx.G = q;
+    const st = WORLD.fromCells(q), f = FOG.create(WORLD, st, 'grey');
+    st.rooms.forEach(r => { if (r.zone === 'exterior') assert.equal(FOG.level(f, r.idx), 2, `${def.name}: street starts live`);
+      assert(f.off[r.idx+1] > f.off[r.idx], `${def.name}: room ${r.id} has fog targets`); });
+    let worst = 0;
+    for (let i = 0; i < st.roomTiles.length; i += 7) if (st.roomTiles[i] >= 0) {
+      FOG.tick(f, FOG.TICK, i%q.W+.5, Math.floor(i/q.W)+.5, fogSee); worst = Math.max(worst, f.rays);
+      assert.equal(FOG.level(f, st.roomTiles[i]), 2, `${def.name}: eye room is live`);
+    }
+    assert(worst <= FOG.RAYS_TICK, `${def.name}: ${worst} rays per tick`);
+  });
+  ctx.G = null;
+  console.log('FOG: Q-A mapping, door/glass/arch/hole reveal, keep vs grey, groups, legacy adapter on all eight levels');
+}
+
+module.exports = { checkWorld, checkFog, worldData };
 if (require.main === module) checkWorld();
