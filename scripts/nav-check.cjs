@@ -65,6 +65,59 @@ function checkNav(){
  const flat=ground([[0,0,6,8,0],[6,0,12,8,0]]);assert(W.clear(flat,5,4,7,4,.3));
  const step=ground([[0,0,6,8,0],[6,0,12,8,.2]]);assert(!W.clear(step,5,4,7,4,.3));
  const overlap=ground([[2,2,4,4,0],[0,0,12,8,0]]);assert(W.clear(overlap,1,3,5,3,.3));
+ const shortRayGround=W.compile({id:'short-ray',bounds:[-1,-11,21,11],combat:true,walls:[],props:[],ground:[
+  {id:'a',poly:square(0,0,10,10),y:0,surf:'tile'},{id:'b',poly:square(10,-10,20,10),y:0,surf:'tile'}]});
+ for(const r of [0,1e-7])assert(!W.clear(shortRayGround,9.9995,5e-7,10.0005,5e-7,r),'Short-ray collinearity tolerance survives boundary broadphase');
+ assert(!W.clear(shortRayGround,9.99999,5e-6,10.00001,5e-6,0));
+ const raised=W.compile({id:'raised',bounds:[0,0,8,8],combat:true,walls:[],props:[],ground:[
+  {id:'island',poly:square(4,4,4.1,4.1),y:.3,surf:'tile'},{id:'floor',poly:square(0,0,8,8),y:0,surf:'tile'}]});
+ assert(!W.clear(raised,3.95,3.99999999,4.05,3.99999999,0));
+ assert(!W.clear(raised,4-5e-9,3.99,4+5e-9,3.99,0),'Inverse-length tolerance retains full edge candidates');
+ const spike=W.compile({id:'spike',bounds:[0,0,12,8],combat:true,ground:[{id:'g',poly:square(0,0,12,8),y:0,surf:'tile'}],walls:[],props:[
+  {id:'p',poly:[[4.750001,4],[10.750001,4.0006],[10.750001,3.9994]],build:'sofa',cov:'full',h:2}]});
+ const spikeNav=W.nav(spike),spikeField=W.flow(spikeNav,[4.75,4.2]);
+ assert.equal(W.dist(spikeNav,spikeField,4.75,3.65),1.18,'Radius-zero seeds preserve acute clip tolerance');
+ // Independent all-edge oracle: these rectangular regions have no mid-edge intersections.
+ const cross=(ax,az,bx,bz)=>ax*bz-az*bx;
+ const distance=(ax,az,bx,bz,a,b)=>{
+  const dx=bx-ax,dz=bz-az;
+  if(Math.hypot(dx,dz)<1e-9)return W.geometry.segDist(ax,az,...a,...b);
+  const ex=b[0]-a[0],ez=b[1]-a[1],den=cross(dx,dz,ex,ez);
+  if(Math.abs(den)>1e-9){
+   const t=cross(a[0]-ax,a[1]-az,ex,ez)/den,u=cross(a[0]-ax,a[1]-az,dx,dz)/den;
+   if(t>=-1e-9&&t<=1+1e-9&&u>=-1e-9&&u<=1+1e-9)return 0;
+  }else if(Math.abs(cross(a[0]-ax,a[1]-az,dx,dz))<=1e-9){
+   const L=dx*dx+dz*dz;
+   if([a,b].some(p=>{const t=((p[0]-ax)*dx+(p[1]-az)*dz)/L;return t>=0&&t<=1;}))return 0;
+  }
+  return Math.min(W.geometry.segDist(ax,az,...a,...b),W.geometry.segDist(bx,bz,...a,...b),
+   W.geometry.segDist(...a,ax,az,bx,bz),W.geometry.segDist(...b,ax,az,bx,bz));
+ };
+ let seed=123;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+ for(const regions of [
+  [[-8,-8,2,24,0],[2,-8,24,24,.3]],
+  [[-8,-8,1.999,24,0],[2.001,-8,24,24,0]],
+  [[-8,-8,24,24,0],[2,2,6,6,9]]
+ ]){
+  const st=W.compile({id:'bucket-ground',bounds:[-8,-8,24,24],combat:true,walls:[],props:[],
+   ground:regions.map((r,i)=>({id:'g'+i,poly:square(...r.slice(0,4)),y:r[4],surf:'tile'}))});
+  const edges=[];
+  for(const g of st.ground)for(let i=0;i<g.poly.length;i++){
+   const a=g.poly[i],b=g.poly[(i+1)%g.poly.length],L=Math.hypot(b[0]-a[0],b[1]-a[1]),nx=-(b[1]-a[1])/L,nz=(b[0]-a[0])/L,
+    x=(a[0]+b[0])/2,z=(a[1]+b[1])/2;
+   if(W.groundY(st,x-nx*1e-6,z-nz*1e-6)!==W.groundY(st,x+nx*1e-6,z+nz*1e-6))edges.push([a,b]);
+  }
+  const queries=Array.from({length:500},(_,i)=>[-7+random()*30,-7+random()*30,-7+random()*30,-7+random()*30,[0,.3,2][i%3]]);
+  for(const x of [-2,0,2,4])for(const delta of [-1e-8,-1e-10,0,1e-10,1e-8])queries.push([x+delta,-4,x+delta,16,0]);
+  for(const q of queries){
+   const [ax,az,bx,bz,r]=q,inBounds=Math.min(ax,bx)-r>=-8&&Math.min(az,bz)-r>=-8&&Math.max(ax,bx)+r<=24&&Math.max(az,bz)+r<=24,
+    expected=inBounds&&W.groundY(st,ax,az)!==null&&W.groundY(st,bx,bz)!==null&&edges.every(([a,b])=>{const d=distance(ax,az,bx,bz,a,b);return d>1e-9&&d>=r-1e-8;});
+   assert.equal(W.clear(st,...q),expected,`Boundary bucket parity ${JSON.stringify(q)}`);
+  }
+  const nav=W.nav(st),field=W.flow(nav,[-4.25,4.25]);
+  for(let i=0;i<nav.W*nav.H;i++)if(nav.walkable(i))assert(W.clear(st,...nav.rep(i),...nav.rep(i),.3));
+  if(regions[0][2]===24)assert(W.dist(nav,field,12.25,4.25)>0,'First-listed ground wins in the nav ground broadphase');
+ }
  const snapshot=ground([[0,0,12,8,0]]),snapNav=W.nav(snapshot),snapField=W.flow(snapNav,[9.25,4.25]),snapDistance=W.dist(snapNav,snapField,3.25,4.25);
  snapshot.ground.splice(0);snapshot.buckets.clear();snapshot.panels.splice(0);snapshot.props.splice(0);
  assert.equal(W.dist(snapNav,snapField,3.25,4.25),snapDistance,'Snapshots do not alias geometry collections');

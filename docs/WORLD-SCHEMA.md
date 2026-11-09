@@ -348,6 +348,23 @@ another. Field buffers are reused, but existing scalar geometry helpers still
 allocate temporary candidate arrays; this gate does not claim allocation-free
 runtime queries or enable them in the game's hot path.
 
+Static nav snapshots spatially index ground polygons, ground-height/void
+boundaries, movement-feature bounds and portal crossing segments in 2 m
+buckets. Ground candidates retain authored order (first-listed ground wins);
+the broadphase does not replace exact capsule or boundary tests. Empty swept
+buckets can pass only after endpoint ground and stage-bound checks. Near-zero
+radii and tolerance-sensitive short rays keep the original exhaustive edge
+and feature candidates, including radius-zero target seeding. Node regressions
+cover negative coordinates, bucket edges, height steps, voids, short-ray
+collinearity and acute-vertex clipping.
+
+On the shifted playable Motel benchmark, native-realm lot nav construction
+fell from 9483 ms to 536 ms and f2 from 1365 ms to 114 ms on the same host.
+Walkability, representatives, edge masks, room indexes, portal crossing tags
+and flow costs matched the pre-optimization snapshots exactly. These are
+observed timings, not a hardware-independent load-time guarantee.
+The rebuilt Chromium artifact measured 609 ms for lot and 107 ms for f2.
+
 ## Stage-run envelope v1 (W1eA, no gameplay activation)
 
 `WORLD.stageRun(mission,describe,opts?)` is a pure state machine, not a renderer
