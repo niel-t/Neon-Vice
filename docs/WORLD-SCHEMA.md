@@ -2,8 +2,9 @@
 
 `WORLD.materials` is an additive, DOM/GL-free schema in the ordered classic
 `world.js`. It does **not** migrate legacy levels, change their sight rules, or
-implement penetration, destruction, or rendering. `WORLD.version === 3` adds
-the freeform compiler/query API described below; material schema version stays 1.
+implement penetration, destruction, or rendering itself. `WORLD.version === 3`
+exposes the freeform queries, stage manager and deposited-energy damage core
+described below; material schema version stays 1.
 
 The 21 `MAT` and 38 `BUILD` records exactly match W3's
 [`MATERIALS.md` section 8](research/MATERIALS.md#8-js-literal-proposals-for-w1w5-not-runtime-yet).
@@ -408,3 +409,100 @@ gameplay bridge, bounded capture/hydrate classification, HP checkpoints and
 two-grid lifecycle integration are W1eB, after W14's mission baseline lands.
 Multi-stage clear/finish/grade policy remains gated; no shipped mission gains
 stages and no plan stage is silently replaced by a legacy map.
+
+## Grid-stage gameplay bridge (W1eB, gated)
+
+`enterStage(id,arrive)` is the gameplay entry boundary. Optional
+`MISSIONS[id].stageDefs` supplies grid definitions and the stage-run descriptors;
+the existing mission table has no shipped multistage entries. `startMission`
+uses the bridge for stage-defined missions, while ordinary legacy missions keep
+their existing setup and finish economics. Plan kinds, missing definitions and
+unsupported stage content reject explicitly instead of loading a legacy map.
+Backdrop rendering and playable plans remain W2b/W2c work.
+
+Every activation builds a fresh world and player before changing the run.
+Arrival/body clearance and the bounded prospective snapshot validate first.
+For stairs, the previous world is then used by the existing `runStage` exactly
+once; the same save attempt includes `run.st` and finite positive `run.stageHp`.
+The new world receives that stage kit once and carries fractional HP and armour.
+Storage failures stay visible through `SAVE` and preserve the previous disk
+content; no second writer or silent reset is introduced.
+
+The envelope retains stage-local enemy identities/appearance/damage, doors,
+items and world-mutation data, separately from carried mission tallies. Returning
+to a visited stage restores its retained state. Retry restores the current
+stage's **entry** snapshot/kit/HP; restart-from-beginning and walking away discard
+the stage envelope according to the existing run semantics. Historical absent
+or non-finite checkpoint HP falls back to the fresh player's maximum HP.
+Geometry, GL handles, callbacks and transient projectiles are not saved.
+Initialized adapter cell durability and door build/lock durability/breach state
+are retained sparsely with stable identities and validated after reconstruction.
+Infinite durability uses the explicit JSON tag `"indestructible"`, not JSON's
+ambiguous conversion of Infinity to null.
+
+Stairs freeze simulation before the accepted fade, guard against world/run
+replacement and refuse dead, finishing or otherwise unsupported player states.
+Arrival validation and a trigger latch prevent immediate recursive stairs.
+Managed stages do not run the legacy per-floor clear/payout path: completion
+without a future explicit mission policy is visibly rejected. Injected two-grid
+browser tests cover this lifecycle, not an automated objective/campaign clear.
+The initial bridge rejects backdrops, gifts, objectives/NPCs/hub triggers,
+active cash lures and flying items rather than silently losing their state.
+
+## Deposited-energy damage (W1f, additive core)
+
+`WORLD.damage(st,panelIndex|stringRef,absoluteCellIndex,J,kind)` accepts finite
+nonnegative **deposited** joules and `kind:'bullet'|'blast'|'melee'`. The caller
+owns penetration, interval union, core-energy gating and pellet/blast deposition.
+The target must match the structural cell's panel exactly. HP decreases by J;
+at zero the cell becomes inactive. `Infinity` HP never removes a cell.
+There is no RNG, automatic pane cascade, debris generation or bullet-path
+rollout in this API.
+
+The frozen result is `{removed,cells,dirty,nav,portal}`. Non-removal calls reuse
+one immutable result with empty arrays and `dirty:false`, even when HP changes:
+`dirty` means **geometry** changed, not that HP is unchanged. Removal reports
+absolute removed cell indexes, `dirty:true`, padded dirty tile indexes on the
+default 0.5 m nav layout, and a created/updated breach portal or null. Padding
+covers the supported 2 m maximum radius plus a default diagonal edge's reach.
+These indexes are not interchangeable with custom-size nav layouts; all geometry
+changes still require a fresh nav snapshot. This is not incremental mesh/nav
+repair.
+
+Removal and actual `syncCell` changes advance the stage's private geometry
+revision. Old nav accessors/fields reject explicitly with a rebuild-required
+error; do not keep querying a stale snapshot after a damage notification.
+New snapshots retain exact capsule checks, including uneven 0.7/0.75/0.8/1 m
+breaches. The pre-existing `MOVE_H=1` movement band remains unchanged; a standing
+head-clearance/stance policy is not introduced by destruction.
+
+Compiled breach portals use `kind:'hole'`, retain construction/ref metadata and
+verified room boundaries (including `b:null` outside), and merge contiguous
+collinear movement gaps. Original room/portal indexes stay stable; merged-away
+hole records remain inactive index slots. Refresh `st.portals`/room adjacency
+after removal rather than retaining an old array. Existing opening portals are
+not duplicated; their passability becomes live after damage. A broad authored
+wall portal retains its identity while precise breach intervals supply its
+live passability and navigation axes, rather than testing only its old midpoint.
+`portalOpen` uses
+actual sight rays, or actual body/locked-leaf clearance for a breach; its fourth
+argument in `'move'` mode is an optional radius, default 0.3 m. Nav crossing tags
+include breached wall/window portals and closing a wall reference closes all
+matching breaches. Lock changes, including a locked leaf's motion, require
+recomputing fields.
+
+Legacy cells keep `build:null` and initial `hp:null`: W5 must initialize HP from
+its own material mapping before damage, or the core throws. Removing a legacy
+structural cell updates its source solidity and AI `navVer`; derived region
+indexes are never renumbered. A newly exposed wall tile receives a valid legacy
+floor rather than leaving the renderer's absent-floor sentinel in place.
+Existing `glassSet` panes explicitly require
+`hitGlass` plus `syncCell`, preserving their separate pane bookkeeping. Props
+and leaf trace records with `cell:-1` are not structural panel-cell targets.
+
+`WORLD.damageLock(st,liveDoor,J)` uses the door's BUILD `lockHp`, lazily retaining
+partial lock damage on `door.lockHp`. Missing lock durability is an explicit
+error; infinite vault locks cannot breach. A successful breach returns
+`{breached:true}`, unlocks the opening's leaves together (one lock for a double
+door), and preserves their current angles/slide/velocity. It does not force the
+door open. Caller-owned legacy doors need their material `build` assigned first.
