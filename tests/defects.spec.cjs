@@ -259,6 +259,28 @@ test('nine: full hands deliver to the locker, a sale takes two clicks, and the l
   expect(await page.evaluate(() => ({ guns:kit().guns.map(g => g && g.type), melee:kit().melee, items:myProg().locker.items.map(i => i.type), saved:JSON.parse(localStorage.getItem('nb86prog')).money.locker.items.length })))
     .toEqual({ guns:['pistol', 'smg'], melee:null, items:['bat'], saved:1 });
 });
+test('slots: slot 3 stays hidden until there is a melee weapon, then shows at once', async ({ openGame }) => {
+  const page = await openGame();
+  expect(await page.evaluate(() => {
+    selIdx = 1; const p = myProg();
+    p.kit = { v:1, guns:[{ type:'pistol', mag:15 }, null], active:0, melee:null, armour:null, pool:{}, upg:{}, lost:[] };
+    p.locker = { v:1, items:[], lost:[] };
+    const out = {};
+    openStore('locker'); out.lockerBefore = $('stCars').textContent.includes('MELEE'); out.cards = $('stCars').querySelectorAll('.scard').length;
+    $('bHelp').onclick(); out.helpBefore = $('hSlots').textContent;
+    p.locker.items.push({ type:'knife' }); out.lockerUnlocks = slot3On(); p.locker.items.length = 0;
+    startLevel(0); state = 'play'; G.cine = null; G.freeze = 0;
+    const pl = G.player;
+    out.before = { on:slot3On(), drew:slotHand(pl, 3), hand:G.hand };
+    takeWeapon(pl, 'bat', 0); slotHand(pl, 1);
+    out.after = { on:slot3On(), drew:slotHand(pl, 3), hand:G.hand, w:pl.weapon.type };
+    return out;
+  })).toEqual({
+    lockerBefore:false, cards:3, helpBefore:'1 2', lockerUnlocks:true,
+    before:{ on:false, drew:false, hand:0 },
+    after:{ on:true, drew:true, hand:'melee', w:'bat' }
+  });
+});
 test('slots: in a job Tab switches and R reloads instead of restarting; Backspace restarts', async ({ openGame }) => {
   const page = await openGame();
   await page.evaluate(() => {

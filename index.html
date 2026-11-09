@@ -133,7 +133,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
   <div class="hint" style="opacity:.75">Best in landscape · sound on · Xbox controller supported</div>
 </div>
 <div id="sHelp" class="screen dim"><div class="logo2">HOW TO PLAY</div>
-  <div class="kv"><span>MOVE</span><span>WASD / left thumb</span><span>AIM</span><span>Mouse / right thumb</span><span>ATTACK</span><span>Click / push right thumb</span><span>GRAB / THROW</span><span>E / right-click / GRAB</span><span>PERK</span><span>Space / CASH</span><span>SPRINT</span><span>Shift / LB / push left thumb to the edge</span><span>LOOK AHEAD</span><span>Hold F</span><span>RELOAD</span><span>R / RELOAD (again in the green window: instant)</span><span>SWITCH WEAPON</span><span>Wheel / Tab / 1 2 3 / SWITCH</span><span>RESTART</span><span>Backspace / &#8635;</span><span>PAUSE</span><span>Esc / II</span></div>
+  <div class="kv"><span>MOVE</span><span>WASD / left thumb</span><span>AIM</span><span>Mouse / right thumb</span><span>ATTACK</span><span>Click / push right thumb</span><span>GRAB / THROW</span><span>E / right-click / GRAB</span><span>PERK</span><span>Space / CASH</span><span>SPRINT</span><span>Shift / LB / push left thumb to the edge</span><span>LOOK AHEAD</span><span>Hold F</span><span>RELOAD</span><span>R / RELOAD (again in the green window: instant)</span><span>SWITCH WEAPON</span><span>Wheel / Tab / <span id="hSlots">1 2</span> / SWITCH</span><span>RESTART</span><span>Backspace / &#8635;</span><span>PAUSE</span><span>Esc / II</span></div>
   <div class="logo2" style="font-size:clamp(10px,2vw,14px);margin-top:4px">XBOX CONTROLLER</div><div class="kv"><span>MOVE</span><span>Left stick</span><span>AIM</span><span>Right stick</span><span>ATTACK</span><span>RT (or RB)</span><span>GRAB / THROW</span><span>A</span><span>CASH PERK</span><span>X</span><span>RELOAD</span><span>LT</span><span>SWITCH WEAPON</span><span>Y</span><span>SPRINT</span><span>Hold LB / click L3</span><span>PAUSE / RESTART</span><span>Start / Back</span></div>
   <div class="hint">One hit kills, you included. Red lasers mean a gunman is about to fire.<br>Stand still to shoot straight. Silenced guns don't wake the floor.<br>Slam doors into people. Hit downed enemies to finish them.<br>Your kit carries between jobs. Nine of Nine sells and buys gear; spares wait in your apartment's gun locker.</div>
   <button class="btn" id="bHelpBack">GOT IT<span class="padhint"> (A)</span></button></div>
@@ -1027,7 +1027,10 @@ function drawHand(p,h){const L=G.live;if(h===G.hand)return false;
 /* what the switch cycles through: gun slots, then melee; bare fists only when there is nothing else to switch to */
 function handOpts(){const L=G.live,o=[];for(const i of [0,1])if(L.guns[i]||G.hand===i)o.push(i);if(L.melee||G.hand==='melee')o.push('melee');if(o.length<2)o.push(null);return o;}
 function cycleHand(p){const o=handOpts();if(o.length<2)return false;return drawHand(p,o[(o.indexOf(G.hand)+1)%o.length]);}
-function slotHand(p,n){const L=G.live;return drawHand(p,n===1?0:n===2?1:L.melee||G.hand==='melee'?'melee':null);}
+/* slot 3 (melee) stays hidden until there is a melee weapon to put in it: carried, in hand, or waiting in the locker. Derived, nothing saved. */
+function slot3On(){const L=G&&G.def&&!G.def.hub&&G.live;if(L&&(L.melee||G.hand==='melee'))return true;const p=myProg(),k=p&&p.kit;
+ return !!(k&&k.melee)||!!(p&&p.locker&&Array.isArray(p.locker.items)&&p.locker.items.some(i=>i&&WD[i.type]&&WD[i.type].melee));}
+function slotHand(p,n){const L=G.live;if(n===3&&!slot3On())return false;return drawHand(p,n===1?0:n===2?1:L.melee||G.hand==='melee'?'melee':null);}
 /* once the hand is empty (thrown, last knife gone) the next thing in the kit comes out: active gun, other gun, melee */
 function autoDraw(p){const L=G.live;for(const h of [L.active,1-L.active,'melee'])if(h==='melee'?L.melee:L.guns[h]){drawHand(p,h);return true;}return false;}
 /* a gun in hand holds one magazine; extra rounds it came with go to the matching pool, up to capacity.
@@ -1111,7 +1114,8 @@ function updateHints(dt){const g=G,p=g.player;if(g.hint){g.hint.t+=dt;if(g.hint.
  if(p.hp<p.maxhp&&Dd().regen)hint('hp','You got hit. Stay out of the fight for a few seconds to heal.');
  if(p.weapon&&!WD[p.weapon.type].melee&&p.weapon.ammo===0&&!p.rl)hint('empty','Out of ammo. Attack again to throw the gun - it knocks people down.');
  if(p.rl)hint('reload',(padMode?'LT':touchMode?'RELOAD':'R')+' while reloading: hit it in the green window for an instant reload. Miss and it jams.');
- if(g.live&&(g.live.guns[0]||g.live.guns[1]||g.live.melee))hint('switch',padMode?'Y switches weapons.':touchMode?'SWITCH swaps weapons.':'Mouse wheel / Tab switches weapons; 1 2 3 pick one.');
+ if(g.live&&(g.live.guns[0]||g.live.guns[1]||g.live.melee))hint('switch',padMode?'Y switches weapons.':touchMode?'SWITCH swaps weapons.':'Mouse wheel / Tab switches weapons; '+(slot3On()?'1 2 3 pick one.':'1 2 pick a gun.'));
+ if(HINTSEEN.switch&&!padMode&&!touchMode&&g.live&&(g.live.melee||G.hand==='melee'))hint('slot3','Melee goes in slot 3: press 3 to draw it.');
  if(g.time>2&&nearItemR(p,2.6))hint('grab',padMode?'Weapon nearby. Walk over it, or press A to pick it up.':touchMode?'Weapon nearby. Walk over it to pick it up, or tap GRAB.':'Weapon nearby. Walk over it, or press E to pick it up.');
  if(g.time>3)for(const d of g.doors)if(Math.hypot(d.hx-p.x,d.hz-p.z)<2){hint('door','Run into a door to swing it - it knocks enemies flat.');break;}
  if(g.time>12)hint('sprint',padMode?'Hold LB to sprint. Footsteps are loud though.':touchMode?'Push your left thumb to the edge to sprint.':'Hold Shift to sprint. Guards will hear you.');
@@ -1799,7 +1803,7 @@ function renderLocker(msg){const p=myProg(),k=kit(),L=p.locker.items,full=L.leng
  $('stCarsH').textContent='CARRYING';$('stGoldH').textContent='IN THE LOCKER · '+L.length+'/'+LOCKER_CAP;for(const id of ['stGold','stGoldH'])$(id).style.display='';for(const id of ['stHome','stHomeH'])$(id).style.display='none';$('stHome').innerHTML='';
  const act=full?'LOCKER FULL':'PUT IN LOCKER',empty=lbl=>`<button class="scard" style="opacity:.45"><div class="pn">${lbl}</div><div class="pd">EMPTY</div></button>`;
  $('stCars').innerHTML=[0,1].map(s=>k.guns[s]?lockerCard(k.guns[s],'data-ks="g'+s+'"',k.active===s&&k.guns[1-s]?'GUN '+(s+1)+' · DRAWN FIRST':'GUN '+(s+1),act):empty('GUN '+(s+1))).join('')+
-  (k.melee?lockerCard({type:k.melee},'data-ks="melee"','MELEE',act):empty('MELEE'))+(k.armour?lockerCard({armour:k.armour.type,plates:k.armour.plates},'data-ks="armour"','ARMOUR',act):empty('ARMOUR'));
+  (k.melee?lockerCard({type:k.melee},'data-ks="melee"','MELEE',act):slot3On()?empty('MELEE'):'')+(k.armour?lockerCard({armour:k.armour.type,plates:k.armour.plates},'data-ks="armour"','ARMOUR',act):empty('ARMOUR'));
  const freeGun=!k.guns[0]||!k.guns[1],ag=kitGun(k);
  $('stGold').innerHTML=L.map((it,i)=>{let o=null;if(it.armour){if(k.armour)o=ARMOUR[k.armour.type].name;}else if(WD[it.type].melee){if(k.melee)o=WD[k.melee].name;}else if(!freeGun)o=WD[ag.type].name;return lockerCard(it,'data-lt="'+i+'"',o?'SWAPS WITH '+o:'',o?'SWAP':'TAKE');}).join('')||'<div class="pd">Nothing in here yet. Guns you buy with full hands are delivered here.</div>';
  for(const cv of document.querySelectorAll('#sStore canvas.sic')){const x=cv.getContext('2d');drawIcon(x,cv.dataset.w,6,6,4.5,WD[cv.dataset.w].excl?'#ffd36b':'#f4ecff');}
@@ -3200,7 +3204,7 @@ function togglePause(){if(state==='play'){setMenuMode(false);syncRestartJob();st
 function syncSetBtns(){$('bMute').textContent='SOUND: '+(SET.sound?'ON':'OFF');$('bShake').textContent='SCREEN SHAKE: '+(SET.shake?'ON':'OFF');$('bRetro').textContent='GRAPHICS: '+(ENH()?'ENHANCED':'PS1 RETRO');$('bHints').textContent='HINTS: '+(SET.hints?'ON':'OFF');$('bCoverSet').textContent='COVER (BETA): '+(SET.cover?'ON':'OFF');$('bGore').textContent='GORE: '+(SET.gore==='normal'?'NORMAL':'EXTREME');$('bGrain').textContent='FILM GRAIN: '+(SET.grain<=0?'OFF':SET.grain<0.3?'LOW':SET.grain<0.5?'MEDIUM':'HIGH');$('bGlitch').textContent='VHS GLITCH: '+(SET.glitch?'ON':'OFF');applyTextSize();}
 function toggleMute(){if(contextLost)return;SET.sound=!SET.sound;if(master)master.gain.value=SET.sound?0.6:0;if(SET.sound)resumeAudio();saveSet();syncSetBtns();}
 $('bStart').onclick=()=>{initAudio();sfx('blip');state='select';updateSelect();show('sSelect');};
-$('bHelp').onclick=()=>{initAudio();sfx('blip');state='help';show('sHelp');};
+$('bHelp').onclick=()=>{initAudio();sfx('blip');state='help';$('hSlots').textContent=slot3On()?'1 2 3':'1 2';show('sHelp');};
 $('bHelpBack').onclick=()=>{sfx('blip');state='title';show('sTitle');};
 $('bSettings').onclick=()=>{initAudio();sfx('blip');syncSetBtns();setMenuMode(true);show('sPause');};
 $('bSetBack').onclick=()=>{sfx('blip');setMenuMode(false);state='title';show('sTitle');};
