@@ -117,6 +117,17 @@ function checkCutaway(api) {
   assert(H > 2 && Math.abs(top(undefined, 0) - H) < 1e-6, `cutaway: back wall over void should stay ${H}, got ${top(undefined, 0)}`);
   assert(Math.abs(top(undefined, 5) - 1.2) < 1e-6, `cutaway: occluding wall and door casing should cut to 1.2, got ${top(undefined, 5)}`);
   assert(Math.abs(top(false, 5) - H) < 0.1 && Math.abs(top({ h: 1.5 }, 5) - 1.5) < 1e-6, 'cutaway: cut:false / cut.h');
+  // Astra: the near end of the hidden interval (narrow rooms, walls near eye height) and full-height openings
+  const mk = (room, door) => WORLD.compile(PLAN.fromPlan({ id: 'c2', v: 1, name: 'c2', stages: { s: { bounds: [0, 0, 10, 10],
+    rooms: [{ id: 'y', rect: [0, 0, 10, 10], zone: 'exterior', kind: 'yard', surf: 'concrete' }, { id: 'a', in: 'y', kind: 'office', ...room }],
+    doors: door ? [{ id: 'd', rooms: ['a', 'y'], w: 0.91, kind: 'door_solid', ...door }] : [],
+    spawns: [{ id: 'p', kind: 'player', at: [5, 8] }] } } }, 's').stage);
+  const topOf = (s2, z, x = 5) => { const s = recorder(); MESH.build(s2, { uv: () => [0, 0, 1, 1] }, s); let m = 0; for (let i = 0; i < s.d.length; i += N) if (Math.abs(s.d[i + 2] - z) < 0.3 && Math.abs(s.d[i] - x) < 0.6) m = Math.max(m, s.d[i + 1]); return m; };
+  assert(Math.abs(topOf(mk({ rect: [0, 0, 10, 3], h: 7 }), 3) - 1.2) < 1e-6, `cutaway: 7 m wall in front of a room should cut, got ${topOf(mk({ rect: [0, 0, 10, 3], h: 7 }), 3)}`);
+  assert(Math.abs(topOf(mk({ rect: [0, 0, 10, 1] }), 1) - 1.2) < 1e-6, 'cutaway: 1 m corridor front wall should cut');
+  const fh = mk({ rect: [2, 0, 8, 5] }, { at: [5, 5] }), fy = fh.openings.find(o => o.kind === 'door');
+  if (fy) { const full = mk({ rect: [2, 0, 8, 5] }, { at: [5, 5], y1: Math.max(...fh.cells.map(c => c.y1)) });
+    assert(Math.abs(topOf(full, 5) - 1.2) < 1e-6, `cutaway: full-height opening casing should cut, got ${topOf(full, 5)}`); }
 }
 
 function checkMesh() {
