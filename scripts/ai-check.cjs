@@ -130,7 +130,40 @@ function checkAI() {
   g.T += AI.AMB_HOLD+.1; r = AI.search(hold, .1, 2.6); assert(!hold.amb, 'Ambush gives up after the hold');
   hold.amb = { x: 1, z: 1, a: 0, t: g.T }; AI.investigate(hold, 4, 4, 0); assert(!hold.amb, 'New information breaks the ambush');
   const melee = guard(3.5, 3.5); assert(!AI.lurk(Object.assign(melee, { boss: 1, bl: B.make(8.5, 3.5, 20, 'see') })), 'Bosses never lurk');
-  // Production levels: every walkable spot (doorway cells included) maps to a room, and ambush spots are in-room and clear.
+  // Shot evidence (suppressed fire): witnesses in the same room always react; smart ones back-trace, dumb ones panic-search.
+  {
+    const keep = g.enemies, T0 = g.T, sh = (o) => guard(9.5, 2.5, { state: 'idle', ...o });
+    const smart = sh({ iq: 1 }), dumb = sh({ iq: 0, id: 1 }), far = guard(2, 2, { id: 2 }), victim = guard(8, 4, { id: 3 }), seer = sh({ id: 4 });
+    seer.bl = B.make(1, 1, g.T, 'see'); g.enemies = [smart, dumb, far, seer];
+    assert.equal(AI.shot(7.0, 3.5, 1, 0, 'exit'), 2, 'Two same-room witnesses; other room and a guard already seeing the player are not');
+    for (const e of [smart, dumb]) assert(e.state === 'search' && e.wary && e.bl.src === 'shot', 'Witnesses freak out and search even when the shot was silent');
+    assert(far.state === 'idle' && !far.bl && seer.bl.src === 'see', 'Unwitnessed or already engaged guards unaffected');
+    assert(rg.at(smart.bl.x, smart.bl.z) === 0 && rg.at(smart.sx, smart.sz) === 0 && smart.shK === 'trace', 'Smart witness back-traces through the wall to the room beyond');
+    const bt = AI.backtrace(g, 7.1, 3.5, -1, 0); assert(rg.at(bt[0], bt[1]) === 0 && !WORLD.cell.isBlock(g, Math.floor(bt[0]), Math.floor(bt[1])), 'Back-trace lands in free space beyond the wall');
+    assert(rg.at(dumb.bl.x, dumb.bl.z) === 1 && dumb.bl.sig === 5 && dumb.shK === 'panic', 'Dumb witness panic-searches its own room');
+    g.T += 3; dumb.rp = null; AI.track(dumb, 0); dumb.x = dumb.sx; dumb.z = dumb.sz;
+    assert(AI.hunt(dumb) && dumb.hr === 0, 'Panic search spreads to the adjacent room');
+    g.T = T0;
+    const ally = guard(9, 3, { id: 5 }); g.enemies = [victim, ally];
+    assert(AI.shot(victim.x, victim.z, 1, 0, 'ally', victim) === 1 && victim.state === 'idle' && ally.state === 'search', 'Hit on an ally alarms the room, not the victim twice');
+    const passed = guard(9.5, 3.4, { id: 6 }), b = { dx: 1, dz: 0, hit: [] }; g.enemies = [passed];
+    AI.whiz(b, 7.1, 2.5, 3); assert(passed.state === 'search' && b.nm.length === 1, 'Near miss alarms the enemy it passed');
+    passed.state = 'idle'; AI.whiz(b, 7.1, 2.5, 3); assert(passed.state === 'idle', 'One near-miss reaction per bullet');
+    const rerun = sh({ pers: 'flank', id: 7 }), twin = sh({ pers: 'flank', id: 7 });
+    g.enemies = [rerun]; AI.shot(7.0, 3.5, 1, 0, 'exit'); g.enemies = [twin]; AI.shot(7.0, 3.5, 1, 0, 'exit');
+    assert.deepEqual([rerun.bl.x, rerun.bl.z, rerun.shK], [twin.bl.x, twin.bl.z, twin.shK], 'Smart/dumb choice is seeded');
+    const rush = [...Array(40)].map((_, id) => sh({ pers: 'rush', id })), care = [...Array(40)].map((_, id) => sh({ pers: 'careful', id }));
+    g.enemies = [...rush, ...care]; AI.shot(7.0, 3.5, 1, 0, 'exit');
+    const tr = a => a.filter(e => e.shK === 'trace').length; assert(tr(care) > 30 && tr(rush) < 12, 'Careful agents usually back-trace; rushers usually panic');
+    // Same room alarms regardless of distance (large production halls).
+    const arc = WORLD.buildGrid(LEVELS[4], 4); arc.doors = arc.doorSpecs.map(d => ({ ...d, th: 0, w: 0, pusher: '' })); arc.enemies = []; arc.T = 0;
+    const ag = AI.rooms.graph(WORLD.fromCells(arc), WORLD); let pair = null;
+    for (let i = 0; i < arc.W*arc.H && !pair; i++) for (let j = i+1; j < arc.W*arc.H && !pair; j++) { const ax = i%arc.W+.5, az = (i/arc.W|0)+.5, bx = j%arc.W+.5, bz = (j/arc.W|0)+.5;
+      if (Math.hypot(bx-ax, bz-az) > 20 && !WORLD.cell.isBlock(arc, ax|0, az|0) && !WORLD.cell.isBlock(arc, bx|0, bz|0) && ag.at(ax, az) >= 0 && ag.at(ax, az) === ag.at(bx, bz)) pair = [ax, az, bx, bz]; }
+    assert(pair, 'Large production room exists'); const keepG = ctx.G; ctx.G = arc; const wit = guard(pair[2], pair[3], { id: 9 }); arc.enemies = [wit];
+    assert(AI.shot(pair[0], pair[1], 0, 1, 'ally') === 1 && wit.state === 'search', 'Same-room witness reacts however far away'); ctx.G = keepG;
+    g.enemies = keep;
+  }  // Production levels: every walkable spot (doorway cells included) maps to a room, and ambush spots are in-room and clear.
   LEVELS.forEach((def, li) => {
     const q = WORLD.buildGrid(def, li); q.doors = q.doorSpecs.map(d => ({ ...d, th: 0, w: 0, pusher: '' }));
     const st = WORLD.fromCells(q), gr = AI.rooms.graph(st, WORLD);
@@ -144,7 +177,24 @@ function checkAI() {
   });
   { const g0 = AI.graph(); assert.equal(AI.graph(), g0, 'Graph cached'); g.navVer = (g.navVer|0)+1; assert.notEqual(AI.graph(), g0, 'navVer bump rebuilds the graph');
     const g1 = AI.graph(); g.wst = null; assert.notEqual(AI.graph(), g1, 'Stage swap rebuilds the graph'); }
-  delete ctx.wst; assert.equal(AI.graph(), null, 'No stage graph: room logic is inert');
+  // Breach (W1f): damage replaces st.portals in place on the same stage; the cached graph must follow the new topology.
+  if (typeof WORLD.damage === 'function') {
+    const floor = { id: 'floor', poly: [[0,0],[8,0],[8,8],[0,8]], y: 0, surf: 'tile' };
+    const st = WORLD.compile({ id: 'breach', bounds: [0,0,8,8], combat: true, ground: [floor], props: [], portals: [],
+      walls: [{ id: 'wall', path: [[0,4],[8,4]], build: 'particle_divider', cov: 'full', h: 2.8 }],
+      rooms: [{ id: 'north', poly: [[0,0],[8,0],[8,4],[0,4]] }, { id: 'south', poly: [[0,4],[8,4],[8,8],[0,8]] }] });
+    const keepW = ctx.wst, keepG = ctx.G; ctx.G = { T: 50, enemies: [], navVer: 0 }; ctx.wst = () => st;
+    const g0 = AI.graph(), north = st.rooms.find(r => r.id === 'north' || r.centroid[1] < 4).idx, south = 1 - north;
+    assert(g0 && g0.pa.length === 0, 'Sealed rooms: no portals before the breach');
+    const ws = [...Array(8)].map((_, id) => ({ x: 4, z: 2.5, r: .28, a: 0, alive: true, id, pers: 'careful', state: 'search', sx: 4, sz: 2.5, bl: B.make(4, 6, 49.5, 'see') }));
+    for (const e of ws) AI.track(e, 0);
+    for (const x of [3.75, 4.25]) for (const y of [.25, .75]) { const h = WORLD.trace(st, x, 2, x, 6, y).find(q => q.panel !== null); WORLD.damage(st, h.panel, h.cell, st.cells[h.cell].hp, 'bullet'); }
+    const g1 = AI.graph(); assert(g1 !== g0 && g1.pa.length >= 1, 'Breach rebuilds the room graph');
+    assert.doesNotThrow(() => ws.forEach(e => AI.lurk(e)), 'Lurk/ambush after a breach uses live portal records');
+    const w = ws[0]; w.bl = B.make(4, 6, 50, 'noise'); AI.track(w, 0); ctx.G.T += 2; AI.track(w, 1);
+    assert(w.rp[north] > 0 && w.rp[south] > 0, 'Belief diffuses through the new opening');
+    ctx.wst = keepW; ctx.G = keepG;
+  }  delete ctx.wst; assert.equal(AI.graph(), null, 'No stage graph: room logic is inert');
   console.log('AI: belief, attenuation, callouts, seeded rng, per-target nav fields, room belief, hunt and ambush checked');
 }
 
