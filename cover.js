@@ -15,12 +15,12 @@ function coverGridQ(g){
 }
 function coverCell(q,ax,u,v){return ax==='x'?q.h(u,v):q.h(v,u);}
 function coverWalk(q,ax,u,v){return ax==='x'?q.walk(u,v):q.walk(v,u);}
-/* Find the cover face to hug from (x,z), preferring direction (dx,dz) when it is nonzero. */
+/* Find the nearest cover face to hug from (x,z); direction (dx,dz), when nonzero, only breaks ties toward it
+   (aim follows the mouse, so it must never rule a face out). */
 function coverFind(q,x,z,r,dx,dz){
  const dl=Math.hypot(dx,dz),ux=dl>1e-6?dx/dl:0,uz=dl>1e-6?dz/dl:0;let best=null,bs=Infinity;
  for(const ax of ['x','z'])for(const s of [-1,1]){
-  const u=ax==='x'?x:z,v=ax==='x'?z:x,cu0=Math.floor(u),cv=Math.floor(v),al=s*(ax==='x'?ux:uz);
-  if(dl>1e-6&&al<0.35)continue;
+  const u=ax==='x'?x:z,v=ax==='x'?z:x,cu0=Math.floor(u),cv=Math.floor(v),al=s*(ax==='x'?ux:uz)*0.5;
   for(let k=1;k<=2;k++){const cu=cu0+s*k;
    if(coverCell(q,ax,cu,cv)>0){const face=s>0?cu:cu+1,gap=Math.abs(face-u)-r,sc=gap-al*0.8;if(gap<=COVER_REACH&&sc<bs){bs=sc;best={ax,s,cu,cv,face};}break;}
    if(!coverWalk(q,ax,cu,cv))break;}}
@@ -45,7 +45,7 @@ function coverStep(cv,q,x,z,mx,mz,ax_,az_,fired,dt){
  /* slide along the run, spring onto the face, stop at the run ends */
  let vt=mt;if((v<=cv.lo+COVER_END&&vt<0)||(v>=cv.hi-COVER_END&&vt>0))vt=0;
  const vn=Math.max(-4,Math.min(4,(cv.u-u)*10));
- return{kind:high?'high':'low',crouch,lean,eye,t:vt,vn,v:vc,spd:crouch?0.55:0.8};
+ return{kind:high?'high':'low',crouch,lean,edge:high?side:0,eye,t:vt,vn,v:vc,spd:crouch?0.55:0.8};
 }
 /* W7b stance hooks. t is an actor with stance/eye (eye = lean point when leaning). */
 const stanceOf=t=>t&&t.stance==='crouch'?'crouch':'stand';

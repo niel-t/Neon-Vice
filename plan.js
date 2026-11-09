@@ -404,7 +404,8 @@ const PLAN=(()=>{
    if(p.kind==='door')continue;const segs=(p.segs||[p.seg]).flatMap(s=>p.wall?intact(s,p.wall):free(s));
    segs.forEach((s,k)=>stagePortals.push({id:uniq(segs.length>1?`${p.id}.${k+1}`:p.id),a:p.a,b:p.b,seg:s,...(p.wall?{wall:p.wall}:{})}));}
   const stage=JSON.parse(JSON.stringify({...base,...(v3?{portals:stagePortals}:{}),spawns}));
-  const extras={portals:JSON.parse(JSON.stringify(portals)),...(v3?{}:{stagePortals:JSON.parse(JSON.stringify(stagePortals))}),stairs:S.stairs||[],obj:(S.obj||[]).map(o=>({...o,room:o.room??roomAt(...o.at)})),stash:S.stash||[],items:S.items||[],backdrop:S.backdrop||[],targets:S.targets||{},floorH:S.floorH,briefBounds:S.bounds,elevated:!!S.elevated};
+  const extras={portals:JSON.parse(JSON.stringify(portals)),...(v3?{}:{stagePortals:JSON.parse(JSON.stringify(stagePortals))}),stairs:S.stairs||[],obj:(S.obj||[]).map(o=>({...o,room:o.room??roomAt(...o.at)})),stash:S.stash||[],items:S.items||[],backdrop:S.backdrop||[],targets:S.targets||{},floorH:S.floorH,briefBounds:S.bounds,elevated:!!S.elevated,
+   finish:{wall:{...plan.finish?.wall,...S.finish?.wall},floor:{...plan.finish?.floor,...S.finish?.floor}}};
   return{stage,extras,info:{rooms,edges,chains:cs,junctions,roomAt,pieceAt:SP.pieceAt,pieces:SP.pieces,top:D.top}};
  }
 
@@ -511,6 +512,11 @@ const PLAN=(()=>{
      if(!s.oneWay&&!(to.stairs||[]).some(t=>t.to===sid))err(`${where} stair ${s.id}: no return stair from ${s.to} (pair it or mark oneWay)`);}}
    for(const k of ['obj','stash','items'])for(const o of out.extras[k]){const id=placed(o.at,`${k} ${o.id}`);if(k==='obj'&&id&&o.room!==id)err(`${where} obj ${o.id}: at is in ${id}, not ${o.room}`);}
    for(const o of out.extras.obj)if(!OBJ_KINDS.has(o.kind))err(`${where} obj ${o.id}: kind must be target, use or exit (got ${o.kind})`);
+   {const keys=new Set(['exterior','interior']);for(const r of out.stage.rooms)for(const k of [r.id,r.parent,r.kind])if(k)keys.add(k);
+    for(const g of out.stage.ground)if(g.surf)keys.add(g.surf);
+    for(const side of ['wall','floor'])for(const [k,t] of Object.entries(out.extras.finish[side])){
+     if(!Number.isInteger(t)||t<0||t>255)err(`${where} finish.${side}.${k}: tile must be an integer 0-255 (got ${t})`);
+     if(!keys.has(k))err(`${where} finish.${side}.${k}: not a room id, parent, kind or ground surf`);}}
    for(const [id,m2] of Object.entries(T.area||{})){const r=out.info.rooms.get(id);if(!r){err(`${where} area target: unknown room ${id}`);continue;}
     const ok=Math.abs(r.gross-m2)<=Math.max(.5,m2*.02);R.area.push({id,m2:snap(r.gross),want:m2,ok});if(!ok)err(`${where} room ${id}: ${r.gross.toFixed(1)} m² vs brief ${m2}`);}
    for(const [id,n] of Object.entries(T.ent||{})){if(!g.has(id)){err(`${where} ent target: unknown room ${id}`);continue;}
