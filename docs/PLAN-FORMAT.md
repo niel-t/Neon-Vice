@@ -260,6 +260,7 @@ It is a preview: no shipped mission uses a plan stage until the user's layout re
   consulted for plan collision, LOS or pathing. `MESH.build` replaces the static batch.
 - Spawns: the player spawn (or the arrival), and enemies from `spawns` with weapons by `role`.
 - Plan snapshots are `{v:2,kind:'plan',player,enemies,items,doors:[{i,th,w,pusher}]}`. Grid and plan snapshots reject each other.
-- Explicitly refused: sliding or locked doors; civilians, item/exit spawns, objectives and stashes unless the stage's `def.preview`
+- Sliding doors auto-open when a live actor is within 1.1 m of the closed doorway (2.2 m/s); they never close onto an actor, and their `slide` fraction is saved in the plan snapshot. Pathing treats unlocked doors as open.
+- Explicitly refused: locked doors; civilians, item/exit spawns, objectives and stashes unless the stage's `def.preview`
   is true (the dev gate sets it and the loader then drops them). Not yet supported: cover hugging (disabled on plan stages),
   bosses (a `boss` role spawns a plain enemy), glass shatter, wall damage, backdrops and plan lights.
