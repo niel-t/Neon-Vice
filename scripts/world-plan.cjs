@@ -106,9 +106,11 @@ function point(value) {
 }
 
 // ---- authored plans (plan.js + plans/*.js) ------------------------------------------------------
-const kindColors = { guest: '#3d5a80', bath: '#5fa8d3', service: '#6d597a', office: '#b56576', apartment: '#e56b6f', shaft: '#333',
-  stair: '#ffd166', walk: '#495057', alley: '#343a40', street: '#2b2d42', road: '#22223b', lot: '#3a3a3a', court: '#118ab2',
-  planter: '#2d6a4f', canopy: '#6c757d', yard: '#40434e', roof: '#5c4d3c' };
+const kindColors = { bedroom: '#3d5a80', living: '#e56b6f', dining: '#e56b6f', kitchen: '#5fa8d3', bath: '#5fa8d3', closet: '#3d5a80',
+  reception: '#b56576', lounge: '#c77dff', assembly: '#c77dff', retail: '#f4a261', office: '#b56576', secure: '#9d0208', control: '#9d0208',
+  studio: '#7b2cbf', workshop: '#6d597a', staff: '#6d597a', utility: '#6d597a', store: '#6d597a', plant: '#6d597a', special: '#06d6a0',
+  circulation: '#adb5bd', core: '#333', stair: '#ffd166', walk: '#495057', terrace: '#495057', pier: '#7f5539', alley: '#343a40',
+  street: '#2b2d42', road: '#22223b', lot: '#3a3a3a', court: '#118ab2', planter: '#2d6a4f', canopy: '#6c757d', yard: '#40434e', roof: '#5c4d3c' };
 const buildColors = ['#fe6f9e', '#ae9cff', '#ffad66', '#ffda78', '#82b8fc', '#cb8fc4', '#7bdff2', '#b9fbc0', '#f7aef8'];
 const spawnColors = { player: '#7dff9a', arrive: '#7dff9a', exit: '#fff', enemy: '#ff4d5e', civ: '#b8c0ff', item: '#ffd36b' };
 
