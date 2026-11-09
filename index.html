@@ -250,10 +250,10 @@ const TRS=(x,y,z,ry,sx,sy,sz)=>A.mul(A.mul(A.T(x,y,z),A.RY(ry)),A.S(sx,sy,sz));
 <script src="overworld.js"></script>
 <script>
 'use strict';
-/* W2f dev gate (not shipped to players): ?planplay=motel registers a plan-stage preview errand on the job list */
-(()=>{const id=new URLSearchParams(location.search).get('planplay');if(id!=='motel'||!PLANS[id])return;
+/* W2f dev gate (not shipped to players): ?planplay=motel|penthouse registers a plan-stage preview errand on the job list */
+(()=>{const id=new URLSearchParams(location.search).get('planplay'),names={motel:'Motel Sunset',penthouse:'The Penthouse'};if(!Object.hasOwn(names,id)||!PLANS[id])return;
  const m=PLAN.stageDefs(PLAN.playable(PLANS[id]));for(const s of Object.values(m.stageDefs))s.def.preview=true;
- MISSIONS['plan_'+id]={kind:'side',name:'Motel Sunset (plan preview)',base:0,...m};})();
+ MISSIONS['plan_'+id]={kind:'side',name:names[id]+' (plan preview)',base:0,...m};})();
 if(!gl)throw new Error('no webgl');
 /* ================= AUDIO ================= */
 let AC=null,master,musicG,sfxG,noiseBuf,musTimer=null,musStep=0,musNext=0,audioFailed=false;
