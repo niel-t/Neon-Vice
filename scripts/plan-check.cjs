@@ -47,6 +47,10 @@ function checkPlans() {
     const r = reports[id] = ok(plan, id);
     for (const sid of Object.keys(plan.stages)) {
       const out = r.outs[sid].out;
+      if (WORLD.version >= 3) {
+        const own = new Set([...out.stage.walls.flatMap(w => [w.id, ...w.open.map(o => o.id)]), ...out.stage.rooms.map(r => r.id)]);
+        assert(out.stage.portals.every(p => !own.has(p.id)) && new Set(out.stage.portals.map(p => p.id)).size === out.stage.portals.length, `${id}/${sid}: portal ids unique`);
+      }
       assert.equal(JSON.stringify(PLAN.fromPlan(plan, sid)), JSON.stringify(PLAN.fromPlan(plan, sid)), `${id}/${sid}: deterministic`);
       for (const room of out.stage.rooms) assert(!('holes' in room), `${id}/${sid} room ${room.id}: stage rooms are simple`);
     }

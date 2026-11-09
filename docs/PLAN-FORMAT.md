@@ -70,11 +70,15 @@ wall ends, and the corner mitre inset (WORLD's rule), or fromPlan reports it.
   piece keeps the room id; several become `<id>.1`, `<id>.2`… ordered by min
   z, then min x. Each piece carries `parent` (and `name`/`kind` as
   metadata). Splitting needs the parent and its children to be axis-aligned
-  for now.
+  for now. Seams run through hole vertices and avoid doors and windows, so
+  an opening never straddles two pieces.
 - **Portals** use the strict forms `{id, a, b, open}` (door, window, arch)
   and `{id, a, b, seg, wall?}` (an open shared edge, a see-through wall with
   its `wall` ref, or a split cut). `a`/`b` are stage room (piece) ids. Edge
-  portals are clipped to the pieces they touch. A pair that touches along
+  portals are clipped to the pieces they touch and to the spans free of wall
+  footprints, because mitred wall ends reach into open edges. See-through
+  portals keep only the wall's intact path; its openings have their own
+  portals. A pair that touches along
   several segments emits one record per segment, `<id>.1`, `<id>.2`, and so on
   (with `_2`… appended if that would collide with another portal id).
   When `WORLD.version >= 3` they go in `stage.portals`. Under today's v2
@@ -85,7 +89,9 @@ wall ends, and the corner mitre inset (WORLD's rule), or fromPlan reports it.
   `group` names the logical opening: edge and sight pieces of one plan-room
   boundary share it, so entrance counts, `entries` targets and loops count a
   split boundary once.
-- Portal ids: doors and windows keep their own ids. Open edges are
+- Stage portal ids are unique across the whole stage. An opening portal is
+  `<opening>~p`, and its opening id stays in `open`. In `extras.portals`,
+  doors and windows keep their own ids. Open edges are
   `pieceA~pieceB`, see-through walls `pieceA^pieceB`, and split cuts
   `room.i~room.j` (kind `cut`, same plan room on both sides). Plan room ids
   use letters, digits, `_` and `-`; `.` is reserved for pieces.

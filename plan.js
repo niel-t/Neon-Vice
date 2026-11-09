@@ -198,8 +198,8 @@ const PLAN=(()=>{
 
  // ---- nested parents -> simple stage pieces (WORLD v3 rooms are simple polygons, no holes) ------
  // The net region (parent minus direct children) is rasterised on the grid of its axis-aligned
- // vertex coordinates; if any connected part has an inner ring it is cut into x-slabs at the
- // hole extents. One piece keeps the room id; several become <id>.1, <id>.2... ordered by z then x.
+ // vertex coordinates; if any connected part has an inner ring it is cut by full-length seams
+ // through hole vertices. One piece keeps the room id; several become <id>.1, <id>.2... ordered by z then x.
  function trace(cells,xs,zs,nxs){
   const out=new Map(),edge=(a,b)=>{const k=key(a);if(out.has(k))out.get(k).push(b);else out.set(k,[b]);};
   for(const c of cells){const i=c%nxs,j=Math.floor(c/nxs),has=(di,dj)=>i+di>=0&&i+di<nxs&&cells.has((j+dj)*nxs+i+di);
@@ -228,16 +228,25 @@ const PLAN=(()=>{
    const own=new Set();
    for(let j=0;j+1<zs.length;j++)for(let i=0;i<nxs;i++){const cx=(xs[i]+xs[i+1])/2,cz=(zs[j]+zs[j+1])/2;
     if(inside(r.poly,cx,cz)&&!r.kids.some(k=>inside(D.rooms.get(k).poly,cx,cz)))own.add(j*nxs+i);}
-   const comps=cuts=>{const seen=new Set(),res=[];
+   const comps=(cx,cz=new Set())=>{const seen=new Set(),res=[];
     for(const c0 of own){if(seen.has(c0))continue;const comp=new Set([c0]),q=[c0];seen.add(c0);
-     for(let h=0;h<q.length;h++){const c=q[h],i=c%nxs;
-      for(const [n,ok] of [[c+1,i+1<nxs&&!cuts.has(xs[i+1])],[c-1,i>0&&!cuts.has(xs[i])],[c+nxs,true],[c-nxs,true]])if(ok&&own.has(n)&&!seen.has(n)){seen.add(n);comp.add(n);q.push(n);}}
+     for(let h=0;h<q.length;h++){const c=q[h],i=c%nxs,j=Math.floor(c/nxs);
+      for(const [n,ok] of [[c+1,i+1<nxs&&!cx.has(xs[i+1])],[c-1,i>0&&!cx.has(xs[i])],[c+nxs,!cz.has(zs[j+1])],[c-nxs,!cz.has(zs[j])]])if(ok&&own.has(n)&&!seen.has(n)){seen.add(n);comp.add(n);q.push(n);}}
      res.push(comp);}
     return res.map(comp=>({comp,rings:trace(comp,xs,zs,nxs)}));};
    let parts=comps(new Set());
    if(parts.some(p=>!p.rings||p.rings.length>1)){
-    const cut=new Set();for(const p of parts)for(const ring of p.rings||[])if(area(ring)<0)for(const v of ring)cut.add(v[0]);
-    parts=comps(cut);
+    const holes=parts.flatMap(p=>(p.rings||[]).filter(ring=>area(ring)<0)),bb=k=>[Math.min(...r.poly.map(q=>q[k])),Math.max(...r.poly.map(q=>q[k]))],[bx,bz]=[bb(0),bb(1)];
+    const gaps=[...(D.S.doors||[]),...(D.S.windows||[])].filter(o=>Array.isArray(o.at)&&o.at[0]>bx[0]-.3&&o.at[0]<bx[1]+.3&&o.at[1]>bz[0]-.3&&o.at[1]<bz[1]+.3);
+    const along=(o,k)=>[...D.rooms.values()].some(q=>q.poly.some((a,i)=>{const b=q.poly[(i+1)%q.poly.length];return Math.abs(a[1-k]-b[1-k])<EPS&&Math.abs(a[1-k]-o.at[1-k])<EPS&&o.at[k]>Math.min(a[k],b[k])-EPS&&o.at[k]<Math.max(a[k],b[k])+EPS;}));
+    const hits=(k,cut)=>gaps.some(o=>along(o,k)&&[...cut].some(c=>Math.abs(o.at[k]-c)<(o.w??1)/2+.15));
+    const holesOf=ps=>ps.flatMap(p=>(p.rings||[]).filter(ring=>area(ring)<0));
+    // one seam per hole, through a hole vertex, avoiding doors and windows; else x-slabs at every hole extent
+    const cx=new Set(),cz=new Set();
+    for(let hs=holesOf(parts);hs.length;hs=holesOf(parts=comps(cx,cz))){
+     const v=hs[0].flatMap(v=>[[0,v[0]],[1,v[1]]]).find(([k,c])=>!(k?cz:cx).has(c)&&!hits(k,[c]));
+     if(!v){parts=comps(new Set(holes.flatMap(ring=>ring.map(v=>v[0]))));break;}
+     (v[0]?cz:cx).add(v[1]);}
    }
    if(parts.some(p=>!p.rings||p.rings.length!==1))fail(`${D.where} room ${r.id}`,'could not split the region around its nested rooms into simple pieces');
    const lo=(poly,k)=>Math.min(...poly.map(q=>q[k])),polys2=parts.map(p=>p.rings[0]).sort((a,b)=>lo(a,1)-lo(b,1)||lo(a,0)-lo(b,0));
@@ -369,14 +378,32 @@ const PLAN=(()=>{
   for(const s of spawns)s.room=SP.pieceAt(s.x,s.z);
   portals.push(...SP.cutPortals);
   // strict WORLD v3 portal records; door-on-open-edge portals duplicate the edge portal and are dropped
-  const stagePortals=[],taken=new Set(portals.map(p=>p.id)),uniq=id=>{let u=id;for(let n=2;taken.has(u);n++)u=`${id}_${n}`;taken.add(u);return u;};
-  for(const p of portals){if(p.open){stagePortals.push({id:p.id,a:p.a,b:p.b,open:p.open});continue;}
-   if(p.kind==='door')continue;const segs=p.segs||[p.seg];
-   segs.forEach((s,k)=>stagePortals.push({id:segs.length>1?uniq(`${p.id}.${k+1}`):p.id,a:p.a,b:p.b,seg:s,...(p.wall?{wall:p.wall}:{})}));}
+  for(const k of ['stairs','obj','stash','items'])for(const o of S[k]||[])claim(o.id,`${where} ${k} ${o.id}`);
   const v3=Wd.version>=3;
   const [x0,z0,x1,z1]=S.bounds;
-  const stage=JSON.parse(JSON.stringify({id:sid,bounds:[x0-PAD,z0-PAD,x1+PAD,z1+PAD],combat:S.combat??true,ground,walls,props,rooms:outRooms,...(v3?{portals:stagePortals}:{}),spawns}));
-  for(const k of ['stairs','obj','stash','items'])for(const o of S[k]||[])claim(o.id,`${where} ${k} ${o.id}`);
+  const base={id:sid,bounds:[x0-PAD,z0-PAD,x1+PAD,z1+PAD],combat:S.combat??true,ground,walls,props,rooms:outRooms};
+  // open spans: the shared boundary minus wall footprints (mitred ends reach into open edges)
+  let panels=[];try{panels=Wd.compile(JSON.parse(JSON.stringify({...base,spawns:[]}))).panels;}catch{/* validate() localises compile errors */}
+  const free=([a,b])=>{const dx=b[0]-a[0],dz=b[1]-a[1],cut=[];
+   for(const q of panels){let t0=0,t1=1;const P=q.poly,n=P.length;let s=0;for(let i=0;i<n;i++){const [px,pz]=P[i],[qx,qz]=P[(i+1)%n];s+=px*qz-qx*pz;}
+    for(let i=0;i<n&&t0<t1;i++){const [px,pz]=P[i],[qx,qz]=P[(i+1)%n],ex=qx-px,ez=qz-pz,nx=s>0?ez:-ez,nz=s>0?-ex:ex;// outward normal
+     const num=nx*(a[0]-px)+nz*(a[1]-pz),den=nx*dx+nz*dz;
+     if(Math.abs(den)<1e-12){if(num>1e-9){t0=1;t1=0;}}else{const t=-num/den;if(den<0)t0=Math.max(t0,t);else t1=Math.min(t1,t);}}
+    if(t1-t0>1e-9)cut.push([t0,t1]);}
+   cut.sort((x,y)=>x[0]-y[0]);const out=[];let t=0;
+   for(const [c0,c1] of cut){if(c0>t)out.push([t,c0]);t=Math.max(t,c1);}if(t<1)out.push([t,1]);
+   const L=Math.hypot(dx,dz),at=u=>[snap(a[0]+dx*u),snap(a[1]+dz*u)];
+   return out.filter(([u,v])=>(v-u)*L>=TOL).map(([u,v])=>[at(u),at(v)]);};
+  const intact=([a,b],ref)=>{const dx=b[0]-a[0],dz=b[1]-a[1],L2=dx*dx+dz*dz,L=Math.sqrt(L2),iv=[];// spans on the wall's intact panel path
+   const off=(x,z)=>Math.abs((x-a[0])*dz-(z-a[1])*dx)/L,par=(x,z)=>((x-a[0])*dx+(z-a[1])*dz)/L2;
+   for(const q of panels)if(q.ref===ref&&off(q.ax,q.az)<1e-6&&off(q.bx,q.bz)<1e-6){const u=par(q.ax,q.az),v=par(q.bx,q.bz),u0=Math.max(0,Math.min(u,v)),u1=Math.min(1,Math.max(u,v));if(u1>u0)iv.push([u0,u1]);}
+   iv.sort((x,y)=>x[0]-y[0]);const m=[];for(const [u,v] of iv){const l=m.at(-1);if(l&&u<=l[1]+1e-9)l[1]=Math.max(l[1],v);else m.push([u,v]);}
+   const at=u=>[snap(a[0]+dx*u),snap(a[1]+dz*u)];return m.filter(([u,v])=>(v-u)*L>=TOL).map(([u,v])=>[at(u),at(v)]);};
+  const stagePortals=[],taken=new Set([...ids,...rooms.keys()]),uniq=id=>{let u=id;for(let n=2;taken.has(u);n++)u=`${id}_${n}`;taken.add(u);return u;};
+  for(const p of portals){if(p.open){stagePortals.push({id:uniq(`${p.id}~p`),a:p.a,b:p.b,open:p.open});continue;}
+   if(p.kind==='door')continue;const segs=(p.segs||[p.seg]).flatMap(s=>p.wall?intact(s,p.wall):free(s));
+   segs.forEach((s,k)=>stagePortals.push({id:uniq(segs.length>1?`${p.id}.${k+1}`:p.id),a:p.a,b:p.b,seg:s,...(p.wall?{wall:p.wall}:{})}));}
+  const stage=JSON.parse(JSON.stringify({...base,...(v3?{portals:stagePortals}:{}),spawns}));
   const extras={portals:JSON.parse(JSON.stringify(portals)),...(v3?{}:{stagePortals:JSON.parse(JSON.stringify(stagePortals))}),stairs:S.stairs||[],obj:(S.obj||[]).map(o=>({...o,room:o.room??roomAt(...o.at)})),stash:S.stash||[],items:S.items||[],backdrop:S.backdrop||[],targets:S.targets||{},floorH:S.floorH,briefBounds:S.bounds,elevated:!!S.elevated};
   return{stage,extras,info:{rooms,edges,chains:cs,junctions,roomAt,pieceAt:SP.pieceAt,pieces:SP.pieces,top:D.top}};
  }
