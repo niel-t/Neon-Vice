@@ -15,6 +15,23 @@ const NL=8;
 /* atlas layout (see makeAtlas): 1024², 16×16 cells, quadrant-major tile ids */
 const ATLAS=1024,ACELLS=16,TCELL=t=>{const q=t>>6,k=t&63;return[(k&7)+8*(q&1),(k>>3)+8*(q>>1)];};
 const GLASS=TCELL(20).map(v=>[(v/ACELLS).toFixed(6),((v+1)/ACELLS).toFixed(6)]);
+/* surface variety (W13b). D8: the 8 square symmetries as [a,b,c,d]: (s,t)→(a·s+b·t, c·s+d·t) about the tile centre.
+   TCLS limits each tile to the symmetries that keep its edges matching neighbours (checkers keep parity, trims stay on
+   their side, lit bevels stay on top); VDEF adds variant cells from id 64 (base copy + interior-only marks). */
+const D8=[[1,0,0,1],[0,-1,1,0],[-1,0,0,-1],[0,1,-1,0],[-1,0,0,1],[1,0,0,-1],[0,1,1,0],[0,-1,-1,0]];
+const SXF={d8:[0,1,2,3,4,5,6,7],tr:[0,6],fx:[0,4],ck:[0,2,6,7]},TCLS={};
+for(const [c,ts] of Object.entries({d8:[7,38,14,37],tr:[41,43,61,63],fx:[2,4,5,6,12,13,33,34,48,62],ck:[1,3,27]}))for(const t of ts)TCLS[t]=c;
+const VDEF=[[7,'crack'],[7,'stain'],[1,'chip'],[1,'stain'],[4,'scuff'],[4,'stain'],[27,'stain'],[27,'crack'],[38,'stain'],[38,'scuff'],
+ [63,'crack'],[63,'stain'],[37,'chip'],[37,'stain'],[2,'chip'],[3,'stain'],[14,'stain'],[61,'chip'],[41,'stain'],[43,'scuff'],
+ [5,'crack'],[6,'stain'],[12,'crack'],[13,'scuff'],[34,'stain'],[48,'crack'],[62,'stain']],TVAR={};
+VDEF.forEach(([b],i)=>(TVAR[b]=TVAR[b]||[]).push(64+i));
+const ihash=(x,z,s)=>{let h=Math.imul(x|0,374761393)^Math.imul(z|0,668265263)^Math.imul(s|0,-2048144789);h=Math.imul(h^(h>>>13),1274126177);return((h^(h>>>16))>>>0)/4294967296;};
+/* [tile id, D8 index] for one surface cell; s salts independent faces of the same cell */
+function surfPick(t,x,z,s=0,rate=0.3){const v=TVAR[t],r=ihash(x,z,s*4+1),k=SXF[TCLS[t]];return[v&&r<rate?v[Math.floor(r/rate*v.length)]:t,k?k[Math.floor(ihash(x,z,s*4+2)*k.length)]:0];}
+const vnoise=(x,z,s)=>{const X=Math.floor(x),Z=Math.floor(z),u=x-X,w=z-Z,fu=u*u*(3-2*u),fw=w*w*(3-2*w),a=ihash(X,Z,s),b=ihash(X+1,Z,s),c=ihash(X,Z+1,s),d=ihash(X+1,Z+1,s);
+ return a+(b-a)*fu+(c-a)*fw+(a-b-c+d)*fu*fw;};
+/* low-frequency brightness/warmth multiplier at a world point; continuous, so shared vertices agree and cells don't seam */
+function surfTint(x,z){const n=vnoise(x/6,z/6,11)*0.65+vnoise(x/2.3,z/2.3,12)*0.35,h=vnoise(x/9,z/9,13)-0.5,f=0.91+0.18*n;return[f*(1+0.07*h),f,f*(1-0.07*h)];}
 const VS=`
 attribute vec3 aP;attribute vec3 aN;attribute vec2 aT;attribute vec3 aC;attribute vec4 aS;
 uniform mat4 uVP;uniform vec2 uRes;uniform vec3 uLD;uniform vec3 uLC;uniform vec3 uAmb;uniform float uPix;
@@ -229,7 +246,14 @@ function makeAtlas(){
  const o=new ImageData(ATLAS,ATLAS),d=o.data,M=ATLAS-1,s=LD0;
  for(let j=0;j<ATLAS;j++){const sj=j<512?j:M-j;for(let i=0;i<ATLAS;i++){const si=i<512?i:M-i,k=(j*ATLAS+i)*4,l=(sj*512+si)*4;d[k]=s[l];d[k+1]=s[l+1];d[k+2]=s[l+2];d[k+3]=s[l+3];}}
  const legacy=new Set(ATILES),A=document.createElement('canvas');A.width=A.height=ATLAS;const ax=A.getContext('2d',{willReadFrequently:true});ax.putImageData(o,0,0);cv=A;x=ax;
- /* tiles ≥64 (W13b+) go here */
+ /* W13b variants: base cell copy + marks clipped to the interior (walls keep their top/bottom trims), so edges match */
+ const mk={crack:x=>{x.strokeStyle='rgba(20,14,14,.55)';x.lineWidth=0.6;x.beginPath();let px=6+srand()*20,py=5;x.moveTo(px,py);for(let k=0;k<6;k++){px+=srand()*7-3.5;py+=2.5+srand()*2;x.lineTo(px,py);}x.stroke();
+   x.strokeStyle='rgba(255,255,255,.12)';x.translate(0.6,0.4);x.stroke();},
+  stain:x=>{x.filter='blur(1.6px)';x.fillStyle='rgba(40,26,16,.22)';blob(x,9+srand()*14,9+srand()*14,4+srand()*3);x.fillStyle='rgba(30,22,18,.16)';blob(x,8+srand()*16,8+srand()*16,2+srand()*2);x.filter='none';},
+  scuff:x=>{x.lineWidth=0.5;for(let k=0;k<5;k++){const a=6+srand()*18,b=6+srand()*18,r=2+srand()*5,t=srand()*TAU;x.strokeStyle=k%2?'rgba(255,255,255,.14)':'rgba(0,0,0,.18)';x.beginPath();x.arc(a,b,r,t,t+0.8+srand());x.stroke();}},
+  chip:x=>{const a=8+srand()*14,b=8+srand()*14;x.fillStyle='rgba(30,24,30,.45)';x.beginPath();x.moveTo(a,b);x.lineTo(a+2.5,b+0.6);x.lineTo(a+0.8,b+2.2);x.fill();mk.crack(x);}};
+ VDEF.forEach(([b,kind],i)=>{const [bx,by]=TCELL(b),wall=[5,6,12,13,34,48,62].includes(b);
+  tile(64+i,x=>{x.drawImage(A,bx*64+2,by*64+2,60,60,0,0,32,32);x.beginPath();x.rect(3,3,26,wall?21:26);x.clip();mk[kind](x);});});
  for(const t of ATILES)if(!legacy.has(t)){gutter(t);const [cx,cy]=TCELL(t),n=ax.getImageData(cx*64,cy*64,64,64).data;for(let j=0;j<64;j++)d.set(n.subarray(j*256,j*256+256),((cy*64+j)*ATLAS+cx*64)*4);}
  /* the legacy canvas is uploaded over the top-left quadrant exactly as the old 512 atlas was (a canvas readback round
     trip would shift translucent texels by ±1) */
@@ -262,7 +286,7 @@ const ENH=()=>SET.gfx2!==false;
 /* batches */
 const CI=[];for(let i=0;i<8;i++)CI.push([(i&1)?.5:-.5,(i&2)?.5:-.5,(i&4)?.5:-.5]);
 const CF=[[[1,0,0],[5,1,3,7]],[[-1,0,0],[0,4,6,2]],[[0,1,0],[6,7,3,2]],[[0,-1,0],[0,1,5,4]],[[0,0,1],[4,5,7,6]],[[0,0,-1],[1,0,2,3]]];
-const Q6=[0,1,2,0,2,3];const SCR=new Float32Array(24);
+const Q6=[0,1,2,0,2,3],QST=[[0,1],[1,1],[1,0],[0,0]];const SCR=new Float32Array(24);
 /* Vertex format v2 (48 B): pos3 nrm3 uv2 col3 (f32) + aS RGBA8 normalized at byte 44 = (blendTile, blendW, roomId, 0).
    blendTile/roomId must be constant per triangle (no flat varyings in GLSL ES 1.0). roomId 0 = no room; room r is r+1. */
 const VSTRIDE=12;
@@ -273,7 +297,9 @@ class Batch{
  ensure(k){const need=this.n+k,cap=this.f.length/VSTRIDE;if(need>cap)this.alloc(Math.max(need,cap*2),this.u8);}
  vtx(x,y,z,nx,ny,nz,u,v,c,w){const f=this.f,o=this.n*VSTRIDE,b=o*4+44;f[o]=x;f[o+1]=y;f[o+2]=z;f[o+3]=nx;f[o+4]=ny;f[o+5]=nz;f[o+6]=u;f[o+7]=v;f[o+8]=c[0];f[o+9]=c[1];f[o+10]=c[2];
   const bw=w===undefined?this.blW:Math.round(clamp(w,0,1)*255);if(bw)this.bl=true;const u8=this.u8;u8[b]=this.blT;u8[b+1]=bw;u8[b+2]=this.room;u8[b+3]=0;this.n++;}
- quad4(P,nx,ny,nz,uv,cs){this.ensure(6);const U=[uv[0],uv[2],uv[2],uv[0]],V=[uv[3],uv[3],uv[1],uv[1]];for(const i of Q6)this.vtx(P[i][0],P[i][1],P[i][2],nx,ny,nz,U[i],V[i],cs[i]);}
+ quad4(P,nx,ny,nz,uv,cs,k){this.ensure(6);let U=[uv[0],uv[2],uv[2],uv[0]],V=[uv[3],uv[3],uv[1],uv[1]];
+  if(k){const m=D8[k];U=[];V=[];for(const [s,t] of QST){const a=s-0.5,b=t-0.5;U.push(uv[0]+(m[0]*a+m[1]*b+0.5)*(uv[2]-uv[0]));V.push(uv[1]+(m[2]*a+m[3]*b+0.5)*(uv[3]-uv[1]));}}
+  for(const i of Q6)this.vtx(P[i][0],P[i][1],P[i][2],nx,ny,nz,U[i],V[i],cs[i]);}
  quad(P,nx,ny,nz,uv,c){this.ensure(6);const U=[uv[0],uv[2],uv[2],uv[0]],V=[uv[3],uv[3],uv[1],uv[1]];for(const i of Q6)this.vtx(P[i][0],P[i][1],P[i][2],nx,ny,nz,U[i],V[i],c);}
  box(m,c,em,uv){uv=uv||WUV;this.ensure(36);const T=SCR;
   for(let i=0;i<8;i++){const a=CI[i];T[i*3]=m[0]*a[0]+m[1]*a[1]+m[2]*a[2]+m[3];T[i*3+1]=m[4]*a[0]+m[5]*a[1]+m[6]*a[2]+m[7];T[i*3+2]=m[8]*a[0]+m[9]*a[1]+m[10]*a[2]+m[11];}
