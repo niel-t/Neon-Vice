@@ -99,14 +99,14 @@ const AI=(()=>{
   // Mass leaks through move-open portals at speed*width/area per second, capped so a room never over-drains.
   diffuse(gr,P,dt,speed){const n=gr.n,m=gr.pa.length,d=(gr.dd||(gr.dd=new Float64Array(n+1))).fill(0);let deg=gr.deg;
    if(!deg){deg=gr.deg=new Float64Array(n+1);for(let k=0;k<m;k++){deg[gr.pa[k]]++;deg[gr.pb[k]<0?n:gr.pb[k]]++;}}
-   for(let k=0;k<m;k++){if(!gr.open(k))continue;const a=gr.pa[k],b=gr.pb[k]<0?n:gr.pb[k];
+   for(let k=0;k<m;k++){if(gr.pa[k]<0||!gr.open(k))continue;const a=gr.pa[k],b=gr.pb[k]<0?n:gr.pb[k];
     const fa=P[a]*Math.min(dt*speed*gr.pw[k]/gr.area[a],.9/deg[a]),fb=P[b]*Math.min(dt*speed*gr.pw[k]/gr.area[b],.9/deg[b]);d[a]+=fb-fa;d[b]+=fa-fb;}
    for(let i=0;i<=n;i++)P[i]=Math.max(0,P[i]+d[i]);return P;},
   // Negative information: room i was looked at and the player is not there.
   clear(P,i,f){P[i]*=1-(f==null?1:f);let s=0;for(let j=0;j<P.length;j++)s+=P[j];if(s<1e-6)return false;for(let j=0;j<P.length;j++)P[j]/=s;return true;},
   pick(gr,P,x,z){let best=-1,bs=1e-4;for(let i=0;i<gr.n;i++){const s=P[i]/(1+.1*Math.hypot(gr.cx[i]-x,gr.cz[i]-z));if(s>bs){bs=s;best=i;}}return best;},
   // Ambush: cover the own-room portal facing the most likely neighbour, standing back inside the room.
-  ambush(gr,P,mine,back){back=back||1.5;let best=-1,bp=1e-3;for(const k of gr.adj(mine)){if(!gr.open(k))continue;const o=gr.pa[k]===mine?gr.pb[k]:gr.pa[k],q=P[o<0?gr.n:o];if(q>bp){bp=q;best=k;}}
+  ambush(gr,P,mine,back){back=back||1.5;let best=-1,bp=1e-3;for(const k of gr.adj(mine)){if(k>=gr.pa.length||!gr.open(k))continue;const o=gr.pa[k]===mine?gr.pb[k]:gr.pa[k],q=P[o<0?gr.n:o];if(q>bp){bp=q;best=k;}}
    if(best<0)return null;const mx=gr.px[best],mz=gr.pz[best];
    // Stand back along the portal normal on our side (centroid direction as fallback); the spot must be in our room and clear.
    const nx=gr.pnx?gr.pnx[best]:0,nz=gr.pnz?gr.pnz[best]:0,dirs=[nx,nz,-nx,-nz,gr.cx[mine]-mx,gr.cz[mine]-mz];
@@ -114,10 +114,11 @@ const AI=(()=>{
     for(const s of[back,back*.66,back*.4]){const x=mx+ux*s,z=mz+uz*s;if(gr.at(x,z)!==mine||(gr.ok&&!gr.ok(x,z,.3)))continue;return{k:best,x,z,a:Math.atan2(mx-x,mz-z),p:bp};}}
    return null;}
  };
- const HUNT=30,AMB_HOLD=8,PSPD=3,rg={st:null,gr:null};
+ const HUNT=30,AMB_HOLD=8,PSPD=3,rg={st:null,pt:null,m:0,gr:null};
  // Room graph of the live stage (index.html wst); null on harnesses without one or on roomless stages.
  function graph(){if(typeof wst!=='function')return null;const st=wst(G);if(!st||!st.rooms||!st.rooms.length)return null;
-  if(rg.st!==st){rg.st=st;rg.gr=rooms.graph(st);}return rg.gr;}
+  // W1f damage appends/merges portals in place: rebuild when the portal set changes.
+  if(rg.st!==st||rg.pt!==st.portals||rg.m!==st.portals.length){rg.st=st;rg.pt=st.portals;rg.m=st.portals.length;rg.gr=rooms.graph(st);}return rg.gr;}
  // Room belief follows e.bl: reseeded on new information, spread at player speed, and the agent's own room drains as it looks.
  function track(e,dt){const gr=graph(),b=e.bl;if(!gr||!b)return null;const T=G.T||0;
   if(e.rpB!==b||!e.rp||e.rp.length!==gr.n+1){e.rp=rooms.init(gr,b.x,b.z,e.rp);e.rpB=b;for(let a=Math.min(T-b.t,8);a>1e-3;a-=.25)rooms.diffuse(gr,e.rp,Math.min(.25,a),PSPD);}
