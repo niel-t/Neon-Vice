@@ -102,3 +102,34 @@ test('missions: restart from the beginning appears past the first stage and rewi
     } finally { fadeTo = fade; }
   })).toEqual({ first: 'none', shown: '', retry: { stage: 'yard', weapon: 'shotgun' }, paused: '', stage: 'legacy', w1: ['legacy', ['legacy']], weapon: null, entry: null });
 });
+
+test('missions: after a job, leaving home by the door goes to McWey for the debrief, never back to the finished job (P0 loop)', async ({ openGame }) => {
+  // a pre-MISSIONS save: jobs record and progress with no run, no wflags and no nb86jobs.m
+  const page = await openGame({ nb86jobs: { top: 1, sel: 1, best: { 0: { g: 'B', t: 60, s: 1, c: 1, ch: 'money', d: 'easy' } } }, nb86prog: { money: { lvl: 2, xp: 0, perks: {}, debt: 9000, wallet: 100 } } });
+  expect(await page.evaluate(() => {
+    const fade = fadeTo, out = [];
+    try {
+      fadeTo = f => { f(); return true; };
+      selIdx = CHARS.findIndex(c => c.id === 'money'); sessionReset(Math.min(JOBS.sel, JOBS.top)); NEXTJOB = VISIT.next;
+      for (const lvl of [1, 2]) {
+        startLevel(NEXTJOB);
+        for (const e of G.enemies) e.alive = false;
+        finishLevel(); pendingPerks = 0; $('bNextLvl').click();
+        const home = HUBMODE;
+        onHubTrigger('leave');
+        const viaDoor = { mode: HUBMODE, cine: !!G.cine, hub: G.def.hub };
+        // the car menu offers McWey, not the finished job, while the debrief is still owed
+        loadHub('drive', 'parked'); openCarMenu();
+        const label = $('bCarJob').textContent;
+        $('bCarJob').click();
+        const viaCar = { mode: HUBMODE, cine: !!G.cine };
+        talkMcWey(); CHAT.done = true; chatGo();
+        loadHub('home0', 'home'); onHubTrigger('leave'); openCarMenu();
+        out.push({ lvl, home, viaDoor, label, viaCar, next: NEXTJOB, after: { mode: HUBMODE, label: $('bCarJob').textContent.startsWith('NEXT JOB: ' + LEVELS[lvl + 1].name) } });
+        closeCarMenu();
+      }
+      return out;
+    } finally { fadeTo = fade; }
+  })).toEqual([1, 2].map(lvl => ({ lvl, home: 'home', viaDoor: { mode: 'in', cine: true, hub: 'drive' }, label: expect.stringMatching(/^SEE McWEY/), viaCar: { mode: 'in', cine: true },
+    next: lvl + 1, after: { mode: 'parked', label: true } })));
+});

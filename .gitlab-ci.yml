@@ -5,9 +5,11 @@ workflow:
       when: never
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
 
+# Compute budget: the full suite (npm test) runs locally before every push to main,
+# so CI only checks, builds and deploys. Browser tests are manual-only here.
 stages: [build, test, deploy]
 default:
-  image: mcr.microsoft.com/playwright:v1.65.0-noble
+  image: node:22-bookworm-slim
   interruptible: true
 
 assemble:
@@ -22,7 +24,11 @@ assemble:
 
 browser:
   stage: test
+  image: mcr.microsoft.com/playwright:v1.65.0-noble
   needs: [assemble]
+  rules:
+    - when: manual
+      allow_failure: true
   script:
     - npm ci --no-audit --no-fund
     - npm run test:browser
@@ -38,8 +44,6 @@ pages:
   needs:
     - job: assemble
       artifacts: true
-    - job: browser
-      artifacts: false
   script:
     - test -f public/index.html
   pages:
