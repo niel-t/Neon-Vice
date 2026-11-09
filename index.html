@@ -738,7 +738,7 @@ function thugLook(kind,bodyOverride,lvl){
 const BOSSNAME="VICTOR 'THE SHARK' MOREAU";const bossName=()=>(G&&G.def&&G.def.boss&&G.def.boss.name)||BOSSNAME;
 const BOSSLOOK=()=>({skin:hex(0xd9a37c),jacket:hex(0xf2e6c8),shirt:hex(0xc0182a),pants:hex(0xf2e6c8),shoes:hex(0x5a3a22),hair:hex(0x101010),hs:'slick',stache:true,shades:true,chain:true,cigar:true,watch:true,bw:1.35,bd:1.3,bh:1.0,belly:true});
 function isW(c){return c==='#'||c===' ';}
-function loadLevel(i,dOver){
+function loadLevel(i,dOver,staged=false){
  const def=dOver||LEVELS[i],grid=WORLD.buildGrid(def,levelIdx,{paletteSize:PASTEL.length}),{W,H,rows}=grid;
  const g=Object.assign(grid,{enemies:[],items:[],bullets:[],parts:[],gibs:[],decals:[],decalDirty:true,pools:[],doors:grid.doorSpecs.map(d=>({...d,th:0,w:0,pusher:''})),lights:[],flashes:[],cash:[],popups:[],car:{x:0,z:0},cleared:false,done:false,time:0,score:0,combo:0,comboT:0,maxCombo:0,kills:0,execs:0,shots:0,hits:0,freeze:0,shake:0,flash:0,flashC:[1,0,0],flow:new Int16Array(W*H),nflow:new Int16Array(W*H),flowT:0,deadT:0,aimX:0,aimZ:0,cam:{x:0,z:0,kx:0,kz:0},staticB:Object.assign(new Batch(),{round:0.45}),decalB:new Batch(),T:0,hitT:0,killedBy:'',radar:null,deco:[],npcs:[],trigs:[],hint:null,hurtT:0,kb:{},heads:0,kc:0,cpulse:0,lv:0,lvT:0});
  G=g;
@@ -766,7 +766,8 @@ function loadLevel(i,dOver){
    const melee=!k||WD[k].melee;e.state=Math.random()<(melee?0.6:0.3)?'patrol':'idle';e.pa=e.a;e.ta=e.a;e.turnT=rnd(1,4);e.pauseT=0;e.react=0;e.wind=0;e.id=g.enemies.length;e.pers=pick(['rush','careful','flank','flank']);e.seeT=99;e.lkx=cx;e.lkz=cz;e.burst=0;e.searchT=0;g.enemies.push(e);}
   else if(c in IKIND){const t=IKIND[c];g.items.push({x:cx,z:cz,type:t,ammo:WD[t].ammo||0,vx:0,vz:0,rot:rnd(0,TAU),flying:false,fresh:true,flyT:0});}
  }
- markZones(g);if(!def.hub)addHazards(g,i);
+ markZones(g);if(!def.hub&&!staged)addHazards(g,i);
+ if(staged){g.fans=[];g.pool=new Uint8Array(W*H);g.glass=new Uint8Array(W*H);g.nades=[];}
  if(def.hub)hubSetup(g);g.lights.push({x:g.car.x,y:0.3,z:g.car.z,r:3,c:[1,0.2,0.7]});dressStreet(g);buildStatic(g);buildRadar(g);g.cam.x=g.player.x;g.cam.z=g.player.z-1;computeFlow();return g;
 }
 function furnBox(B,m,c,uv){B.box(m,c,false,uv);}
@@ -1116,7 +1117,7 @@ function updateHints(dt){const g=G,p=g.player;if(g.hint){g.hint.t+=dt;if(g.hint.
  if(Dd().cones&&g.time>8)hint('cone','Yellow cones show where guards are looking. Stay out of them to sneak up.');
  const al=g.enemies.filter(e=>e.alive).length;if(al>0&&al<=3)hint('few','Last few targets - they are marked on your radar and screen edge.');
  if(g.cleared)hint('car','Floor clear. Follow the pink marker back to the car.');}
-function update(dt){const g=G;fountainHum(g.def.hub?g:null);if(g.def.hub){updateHub(dt);return;}
+function update(dt){const g=G;if(g.stageManaged&&(state!=='play'||stageStairs(g)))return;fountainHum(g.def.hub?g:null);if(g.def.hub){updateHub(dt);return;}
  if(g.kc>0){g.kc-=dt;dt*=0.3;}if(g.cpulse>0)g.cpulse=Math.max(0,g.cpulse-dt*4);
  g.T+=dt;
  {const tgt=g.combo>=6?3:g.combo>=4?2:g.combo>=2?1:0;if(tgt>g.lv){g.lv=tgt;g.lvT=2;}else if(g.lv>tgt){g.lvT-=dt;if(g.lvT<=0){g.lv--;g.lvT=1.2;}}}
@@ -1128,8 +1129,8 @@ function update(dt){const g=G;fountainHum(g.def.hub?g:null);if(g.def.hub){update
  if(g.hitT>0)g.hitT-=dt;if(g.np)g.np.t+=dt;
  g.flowT-=dt;if(g.flowT<=0){computeFlow();g.flowT=0.25;}
  updatePlayer(dt);updateHazards(dt);if(g.player.ex){if(g.player.alive)updateExec(g.player,dt);else g.player.ex=null;}for(const e of g.enemies)updateEnemy(e,dt);separate();bodyPhysics();updateDoors(dt);updateBullets(dt);updateNades(dt);updateAct2(dt);updateStash(dt);updateObj(dt);updateItems(dt);updateCash(dt);updateFX(dt);
- if(!g.cleared&&g.enemies.every(e=>!e.alive||e.boss&&g.clear&&g.clear.boss==='optional')){if(g.obj&&!g.obj.done){if(!g.objWarn){g.objWarn=1;banner('GUARDS DOWN','Now: '+g.obj.label);}}else{g.cleared=true;banner('FLOOR CLEAR','Get back to the car');sfx('clear');}}
- if(g.cleared&&g.player.alive&&!g.done&&Math.hypot(g.player.x-g.car.x,g.player.z-g.car.z)<1.8){g.done=true;finishLevel();}
+ if(!g.stageManaged&&!g.cleared&&g.enemies.every(e=>!e.alive||e.boss&&g.clear&&g.clear.boss==='optional')){if(g.obj&&!g.obj.done){if(!g.objWarn){g.objWarn=1;banner('GUARDS DOWN','Now: '+g.obj.label);}}else{g.cleared=true;banner('FLOOR CLEAR','Get back to the car');sfx('clear');}}
+ if(!g.stageManaged&&g.cleared&&g.player.alive&&!g.done&&Math.hypot(g.player.x-g.car.x,g.player.z-g.car.z)<1.8){g.done=true;finishLevel();}
  if(!g.player.alive){g.deadT+=dt;if(g.deadT>1&&state==='play')showDead();}
  updateHints(dt);updateCamera(dt);}
 function stickVec(s){let dx=(s.x-s.ox)/55,dy=(s.y-s.oy)/55;const l=Math.hypot(dx,dy);if(l>1){dx/=l;dy/=l;}return[dx,dy];}
@@ -1749,7 +1750,7 @@ function runWalkAway(p){if(!p.run)return false;delete p.run;return true;}
   if(typeof h==='number'){const s=k.guns[h],wd=WD[s.type];p.weapon={type:s.type,ammo:s.mag};if(s.mag<=0&&isCal(wd.cal)){const n=Math.min(G.live.pool[wd.cal]|0,wd.mag);G.live.pool[wd.cal]-=n;p.weapon.ammo=n;}G.live.guns[h]=null;}
   else if(h==='melee'){p.weapon={type:k.melee,ammo:0};G.live.melee=null;}
   p.kitPlates=k.armour?k.armour.plates:0;p.armLv=k.armour?ARMOUR[k.armour.type].lv:'II';p.armor=(p.armor||0)+p.kitPlates;p.armMax=p.armor;p.armSpd=(k.armour&&ARMOUR[k.armour.type].spd)||1;
-  const gf=myProg().gift;if(gf&&WD[gf])G.items.push({x:p.x+0.7,z:p.z,type:gf,ammo:WD[gf].ammo||0,vx:0,vz:0,rot:0.6,flying:false,fresh:false,flyT:0});}
+  const gf=myProg().gift;if(!G.stageManaged&&gf&&WD[gf])G.items.push({x:p.x+0.7,z:p.z,type:gf,ammo:WD[gf].ammo||0,vx:0,vz:0,rot:0.6,flying:false,fresh:false,flyT:0});}
  function loadoutTxt(){const k=kit(),parts=[];for(const s of k.guns)if(s)parts.push(WD[s.type].name);if(k.melee)parts.push(WD[k.melee].name);
   const am=Object.keys(k.pool).filter(c=>k.pool[c]>0).map(c=>k.pool[c]+' '+CAL[c].name),ar=k.armour&&ARMOUR[k.armour.type];
   return 'LOADOUT: '+(parts.join(' + ')||'BARE HANDS')+(am.length?' · '+am.join(' · '):'')+(ar?' · '+ar.name+(k.armour.plates<ar.plates?' (DAMAGED)':''):'');}
@@ -3157,7 +3158,7 @@ function showBrief(i){levelIdx=i;state='brief';show('sBrief');$('brFrom').textCo
  clearInterval(typeT);typeT=setInterval(()=>{typeI++;$('brMsg').textContent=typeFull.slice(0,typeI);if(typeI%2===0)sfx('type');if(typeI>=typeFull.length)clearInterval(typeT);},28);}
 function startLevel(i){startMission(missionId(i));}
 /* levelIdx stays the map index (grid seeds, decor, par); campaign-only effects key on MISSION */
-function startMission(id){const i=missionIdx(id),b=missionBase(id);clearInterval(typeT);MISSION=id;JOBPICK=null;levelIdx=b;HUBMODE='in';loadLevel(b);
+function startMission(id){if(MISSIONS[id]&&(MISSIONS[id].stageDefs||MISSIONS[id].stages.some(s=>s!=='legacy')||myProg().run?.mission===id&&myProg().run.st))return startGridMission(id);const i=missionIdx(id),b=missionBase(id);clearInterval(typeT);MISSION=id;JOBPICK=null;levelIdx=b;HUBMODE='in';loadLevel(b);
  const ld=runEnter(id);G.mission=id;G.variant=myProg().run.var;G.clear=missionClear(id,G.variant);missionSpawn(G);applyLoadout(ld);
  G.sj=i>=0?myProg().sidejob||null:null;act2Setup(G,i);if(i>=0){placeStash(G,i);if(i===0&&myCar()!=='beater')placeOldCar();}G.track=LEVEL_TRACKS[b][RUNTRACK[b]%LEVEL_TRACKS[b].length];if(MUS.track!==G.track){MUS.track='';MUS.pending=null;}state='play';show(null);
  if(i<0){banner(missionName(id),'Clear the floor · Get back to the car');return;}
@@ -3168,12 +3169,174 @@ function showDead(){G.cameo=null;G.lex=null;if(!G.def.hub){arm();myProg().couchB
  let xp=0;if(!G.xpGiven){G.xpGiven=1;xp=runXP(G,false);awardXP(xp);}const pr=myProg();$('deadXP').innerHTML=(xp?'+'+xp+' XP · ':'')+'LEVEL '+pr.lvl+' <span style="opacity:.7">('+pr.xp+'/'+xpNeed(pr.lvl)+')</span>';
  syncRestartJob();if(pendingPerks>0)showPerkPick('dead');else show('sDead');}
 const KNAME={goldgl:'Gold launcher',goldak:'Golden AK',golddeagle:'Golden Deagles',katana:'Katana',dual:'Dual pistols',fists:'Fists',bat:'Bat',knife:'Knife',machete:'Machete',exec:'Execution',door:'Door slam',throw:'Thrown',pistol:'Pistol',silenced:'Silenced',revolver:'.357',smg:'Uzi',m16:'M16',shotgun:'Shotgun',double:'Double barrel'};
-function finishLevel(){const g=G;state='results';const tb=timeBonus(g.time,levelIdx);const total=g.score+tb;g.take=total;totalScore+=total;totalKills+=g.kills;totalTime+=g.time;
+function finishLevel(){const g=G;if(g.stageManaged){banner('STAGE COMPLETION UNSUPPORTED','Multi-stage finish, grade and payout policy is not enabled');return false;}state='results';const tb=timeBonus(g.time,levelIdx);const total=g.score+tb;g.take=total;totalScore+=total;totalKills+=g.kills;totalTime+=g.time;
  const gden=g.enemies.length*700,gp=(g.gpts||0)+tb,ratio=gp/gden;const gr=GRADES.find(q=>ratio>q[1])[0];const gi=GRADES.findIndex(q=>q[0]===gr);const nextG=gi>0?GRADES[gi-1]:null;const rsty=g.execs>=2?'ruthless':g.heads>=2?'gore':(!g.taken&&g.shots&&g.hits/g.shots>=0.6)?'clean':'mixed';g.style=rsty;runStyle[rsty]=(runStyle[rsty]||0)+1;
  const acc=g.shots?Math.round(Math.min(1,g.hits/g.shots)*100)+'%':'—';
  $('rStats').innerHTML=`DIFFICULTY<b>${Dd().name}</b><br>KILLS<b>${g.kills}</b><br>EXECUTIONS<b>${g.execs}</b><br>BEST COMBO<b>x${g.maxCombo}</b><br>HEADS TAKEN<b>${g.heads}</b><br>STYLE<b>${rsty.toUpperCase()}</b><br>STYLE BONUS<b style="color:#2de2e6">+$${fmt(g.styleB||0)}${g.multis||g.switches?` <span style="opacity:.7">(${g.multis||0} MULTI · ${g.switches||0} SWITCH-UP)</span>`:''}</b><br>BY WEAPON<b>${Object.entries(g.kb).sort((a,b)=>b[1]-a[1]).map(([k,v])=>(KNAME[k]||k)+' '+v).join(' · ')||'—'}</b><br>ACCURACY<b>${acc}</b><br>TIME<b>${mmss(g.time)}  (PAR ${mmss(parOf(levelIdx))})</b><br>KILL MONEY<b>$${fmt(g.score)}</b><br>SPEED BONUS<b>$${fmt(tb)}</b><br>TAKE HOME<b>$${fmt(total)}</b><br>GRADE POINTS<b style="color:#ffd36b">${fmt(gp)}${nextG?'  ·  '+nextG[0]+' AT '+fmt(Math.floor(nextG[1]*gden)+1):'  ·  TOP GRADE'}</b>`;
  let xp=0;if(!g.xpGiven){g.xpGiven=1;xp=runXP(g,true,gr);awardXP(xp);}const pr=myProg();$('rStats').innerHTML+=`<br>XP EARNED<b style="color:#ffd36b">+${xp}</b><br>LEVEL<b style="color:#ffd36b">${pr.lvl}  (${pr.xp}/${xpNeed(pr.lvl)})</b>`;
  if(g.sj){const s=sjState(g);g.sjPay=s.ok?sjPay(g.sj,levelIdx):0;$('rStats').innerHTML+=`<br>SIDE JOB<b style="color:${s.ok?'#7dff9a':'#ff8a95'}">${SIDEJOBS[g.sj].name} · ${s.ok?'PAID +$'+fmt(g.sjPay)+' (NO CUT)':'FAILED'}</b>`;}{const wl=wallet(),ct=missionIsCampaign(MISSION)?cutOf(total):0,ow=myProg().debt;$('rStats').innerHTML+=(ct?`<br>McWEY'S CUT<b style="color:#ff8a95">-$${fmt(ct)}</b><br>STILL OWED<b style="color:#ff8a95">$${fmt(ow-ct)}</b>`:'')+`<br>WALLET<b style="color:#7dff9a">$${fmt(wl)} &rarr; $${fmt(wl+total-ct+(g.sjPay||0))}</b>`;}{const rec={g:gr,t:g.time,s:total,c:g.maxCombo,ch:CHARS[selIdx].id,d:SET.diff},camp=missionIsCampaign(MISSION),mr=camp?null:recordMission(MISSION,g.variant,rec),nb=camp?recordBest(levelIdx,rec):mr.nb,b=camp?JOBS.best[levelIdx]:mr.b;$('rStats').innerHTML+=`<br>PERSONAL BEST<b style="color:#2de2e6">${b.g} · ${mmss(b.t)} · $${fmt(b.s)} · x${b.c}</b>`+(nb.length?`<br>NEW<b style="color:#ff5fb8">${nb.join(' · ')}</b>`:'');}if(missionIsCampaign(MISSION)){const cr=checkChallenges(levelIdx,g);$('rStats').innerHTML+='<br>CHALLENGES<b>'+cr.out.map(c=>`<span style="color:${c.ok?'#7dff9a':'#ff8a95'}">${c.ok?'\u2605':'\u2606'} ${c.n}${c.fresh?' +$'+fmt(CH_PAY):''}</span>`).join(' · ')+'</b>'+(cr.pay?`<br>CHALLENGE BONUS<b style="color:#7dff9a">+$${fmt(cr.pay)} TO WALLET</b>`:'');}G.grade=gr;$('rGrade').textContent=gr;$('bNextLvl').innerHTML='BACK TO McWEY'+'<span class="padhint"> (A)</span>';if(pendingPerks>0)setTimeout(()=>{if(state==='results')showPerkPick('results');},900);show('sResults');sfx('cash');}
+/* W1eB: grid-only checkpoints. Geometry, GPU batches, effects, projectiles and AI work
+   queues are rebuilt, never retained. Mission totals live in the manager bag, not per-floor data. */
+const STAGE_ENEMY=['id','x','z','a','hp','maxhp','alive','look','body','pers','weapon','headless','wounds','splat','down','vx','vz','rmul','spd','r'];
+const STAGE_ITEM=['x','z','type','ammo','vx','vz','rot','flying','fresh','flyT','age'];
+const STAGE_DOOR=['i','th','w','pusher','build','locked','lockHp','breached'];
+const STAGE_STATS=['T','time','score','kills','execs','shots','hits','heads','taken','gpts','styleB','multis','switches','glassBroken','maxCombo','combo','comboT','comboMax','multi','lastKT','lastKType','kb'];
+const STAGE_CELLS=['solid','furn','glass','pool','floorT','wallT','wh','topT','tint','glow','rug'];
+function stageJSON(v,seen=new Set()){
+ if(v===null||typeof v==='string'||typeof v==='boolean')return v;
+ if(typeof v==='number'&&Number.isFinite(v))return v;
+ if(!v||typeof v!=='object'||seen.has(v)||(!Array.isArray(v)&&Object.getPrototypeOf(v)!==Object.prototype))throw new TypeError('Stage data must be finite plain JSON');
+ seen.add(v);const out=Array.isArray(v)?[]:{};for(const k of Reflect.ownKeys(v)){if(Array.isArray(v)&&k==='length')continue;if(typeof k!=='string'||k==='__proto__')throw new TypeError('Invalid stage data key');out[k]=stageJSON(v[k],seen);}seen.delete(v);return out;
+}
+function stagePick(o,keys){const out={};for(const k of keys)if(Object.prototype.hasOwnProperty.call(o,k))out[k]=stageJSON(o[k]);return out;}
+function stageRecord(o,keys,label){if(!o||Array.isArray(o)||typeof o!=='object'||Object.keys(o).some(k=>!keys.includes(k)))throw new TypeError('Invalid '+label);}
+function stageNumber(o,keys){for(const k of keys)if(!Number.isFinite(o[k]))throw new TypeError('Invalid stage number '+k);}
+/* Missing sparse HP means uninitialized; the explicit tag preserves indestructible
+   values without JSON's Infinity-to-null conversion. */
+function stageHP(hp,nullable=false){if(hp==='indestructible'||nullable&&hp===null||Number.isFinite(hp)&&hp>=0)return hp==='indestructible'?Infinity:hp;throw new Error('Invalid stage durability HP');}
+function stageDoor(d,i){
+ stageRecord(d,STAGE_DOOR,'door snapshot');stageNumber(d,['th','w']);
+ if(d.i!==undefined&&d.i!==i||!['','p','e'].includes(d.pusher))throw new Error('Invalid stable door snapshot');
+ if(d.build!==undefined&&WORLD.materials.build(d.build).lockHp===undefined)throw new Error('Stage door build has no lock durability');
+ for(const key of ['locked','breached'])if(d[key]!==undefined&&typeof d[key]!=='boolean')throw new Error('Invalid stage door '+key);
+ if(Object.hasOwn(d,'lockHp')){stageHP(d.lockHp,true);if(d.build===undefined)throw new Error('Stage lock HP requires a door build');}
+ if(d.breached===true&&(d.locked!==false||d.lockHp!==0))throw new Error('Invalid breached door snapshot');
+}
+function stageDurability(g,s,restore=false){
+ const sparse=Object.hasOwn(s,'durability')?s.durability:[];if(!Array.isArray(sparse))throw new Error('Invalid sparse cell durability');
+ const used=new Set(),solid=new Map(s.cells.map(d=>[d.i,d.solid??g.solid[d.i]])),targets=[];
+ for(const d of sparse){
+  stageRecord(d,['i','hp'],'cell durability');if(!Number.isInteger(d.i)||d.i<0||d.i>=g.W*g.H||used.has(d.i))throw new Error('Invalid sparse durability index');
+  used.add(d.i);const hp=stageHP(d.hp);
+  if(hp===0&&(solid.get(d.i)??g.solid[d.i]))throw new Error('Zero durability requires an inactive cell');
+  if(restore){const p=g.wst.panels[g.wst.legacyPanel[d.i]],c=p&&g.wst.cells[p.c0];if(!c||p.ref!==d.i)throw new Error('Durability adapter identity changed');targets.push([c,hp]);}
+ }
+ if(restore)for(const [c,hp] of targets)c.hp=hp;
+}
+function stageRestoreDurability(g,s){
+ s.doors.forEach(stageDoor);
+ stageDurability(g,s,true);
+ s.doors.forEach((d,i)=>{for(const key of ['build','locked','lockHp','breached'])if(Object.hasOwn(d,key))g.doors[i][key]=key==='lockHp'?stageHP(d[key],true):d[key];});
+}
+function stageStats(g){return stagePick(g,STAGE_STATS);}
+function stageBag(b){stageRecord(b,STAGE_STATS,'stage mission stats');stageJSON(b);for(const k of Object.keys(b))if(!['kb','lastKType'].includes(k)&&!Number.isFinite(b[k]))throw new TypeError('Invalid mission stat '+k);
+ if(b.kb){stageRecord(b.kb,Object.keys(b.kb),'weapon tallies');for(const n of Object.values(b.kb))if(!Number.isFinite(n)||n<0)throw new TypeError('Invalid weapon tally');}if(b.lastKType!==undefined&&typeof b.lastKType!=='string')throw new TypeError('Invalid last weapon');return b;}
+function stageManager(id){
+ const m=MISSIONS[id];if(!m||!m.stageDefs)throw new Error('Missing stage definitions; legacy fallback is disabled');
+ return WORLD.stageRun({id,stages:m.stages,start:m.start},sid=>{
+  const raw=m.stageDefs[sid];if(!raw)throw new Error('Missing stage definition '+sid);
+  const {def,...descriptor}=raw;return descriptor;
+ });
+}
+function stageRelease(g){if(!g)return;for(const key of ['staticB','decalB'])if(g[key]?.buf){gl.deleteBuffer(g[key].buf);g[key].buf=null;}}
+function stageCapture(g,armour=g.player.armor){
+ if(g.obj||g.sj||g.fin||g.cine||g.npcs.length||g.trigs.length||g.cash.length||g.items.some(it=>it.flying))throw new Error('Unsupported stage objective, NPC, cash lure or flying item state');
+ const cells=[];for(let i=0;i<g.W*g.H;i++){const d={i};for(const k of STAGE_CELLS)if(g[k][i]!==g.stageBase[k][i])d[k]=g[k][i];if(Object.keys(d).length>1)cells.push(d);}
+ if(!g.wst||g.wst.legacy!==g)throw new Error('Stage durability requires its owning grid adapter');
+ const durability=[];for(const c of g.wst.cells)if(c.hp!==null){const p=g.wst.panels[c.panel];durability.push({i:p.ref,hp:c.hp===Infinity?'indestructible':c.hp});}
+ const doors=g.doors.map((d,i)=>{const out={i,...stagePick(d,STAGE_DOOR.filter(k=>k!=='i'&&k!=='lockHp'))};if(Object.hasOwn(d,'lockHp'))out.lockHp=d.lockHp===Infinity?'indestructible':d.lockHp;return out;});
+ const s=stageJSON({v:1,W:g.W,H:g.H,player:{...stagePick(g.player,['x','z','a']),armor:armour},enemies:g.enemies.map(e=>stagePick(e,STAGE_ENEMY)),items:g.items.map(it=>stagePick(it,STAGE_ITEM)),doors,cells,durability});
+ stageHydrate(g,s,false);return s;
+}
+function stageHydrate(g,s,apply=true){
+ if(apply)stageHydrate(g,s,false);
+ stageJSON(s);stageRecord(s,['v','W','H','player','enemies','items','doors','cells','durability'],'grid snapshot');
+ if(s.v!==1||s.W!==g.W||s.H!==g.H||!Array.isArray(s.enemies)||s.enemies.length!==g.enemies.length||!Array.isArray(s.doors)||s.doors.length!==g.doors.length||!Array.isArray(s.items)||!Array.isArray(s.cells))throw new Error('Grid snapshot layout changed');
+ stageRecord(s.player,['x','z','a','armor'],'entry player');stageNumber(s.player,['x','z','a','armor']);if(s.player.armor<0)throw new Error('Invalid stage armour');if(apply)Object.assign(g.player,stagePick(s.player,['x','z','a']));
+ const weapon=w=>{if(w===null)return;stageRecord(w,['type','ammo'],'enemy weapon');if(!WD[w.type]||!Number.isFinite(w.ammo)||w.ammo<0)throw new Error('Invalid stage weapon');};
+ s.enemies.forEach((e,i)=>{stageRecord(e,STAGE_ENEMY,'enemy snapshot');stageNumber(e,['id','x','z','a','hp','maxhp','r','spd','rmul','vx','vz','down']);if(e.id!==g.enemies[i].id||typeof e.alive!=='boolean'||typeof e.headless!=='boolean'||!['rush','careful','flank'].includes(e.pers)||!plainObj(e.look)||!Array.isArray(e.wounds))throw new Error('Invalid stable enemy snapshot');weapon(e.weapon);if(apply)Object.assign(g.enemies[i],stageJSON(e));});
+ s.items.forEach(it=>{stageRecord(it,STAGE_ITEM,'item snapshot');stageNumber(it,['x','z','ammo','vx','vz','rot','flyT']);if(!WD[it.type]||it.ammo<0||it.flying!==false||typeof it.fresh!=='boolean')throw new Error('Invalid grounded item snapshot');});
+ if(apply)g.items=stageJSON(s.items);
+ s.doors.forEach((d,i)=>{stageDoor(d,i);if(apply)Object.assign(g.doors[i],stagePick(d,['th','w','pusher']));});
+ const used=new Set();for(const d of s.cells){stageRecord(d,['i',...STAGE_CELLS],'world delta');if(!Number.isInteger(d.i)||d.i<0||d.i>=g.W*g.H||used.has(d.i)||Object.keys(d).length<2)throw new Error('Invalid world delta index');used.add(d.i);
+  for(const k of STAGE_CELLS)if(k in d){const n=d[k];if(!Number.isFinite(n)||k!=='wh'&&(!Number.isInteger(n)||n<-128||n>255)||['solid','glass','pool','rug'].includes(k)&&![0,1].includes(n))throw new Error('Invalid world delta '+k);if(apply)g[k][d.i]=n;}}
+ stageDurability(g,s);
+}
+function stageBuild(id,token,snapshot){
+ const desc=token.desc,raw=MISSIONS[id].stageDefs[token.to],def=raw?.def,b=missionBase(id);
+ if(!raw||raw.id!==desc.id||raw.kind!==desc.kind||raw.rev!==desc.rev)throw new Error('Stage descriptor changed; reload or migrate explicitly');
+ if(desc.kind!=='grid')throw new Error('Unsupported playable stage kind '+desc.kind);
+ if(desc.backdrop.length)throw new Error('Stage backdrops require W2c');
+ stageRecord(def,['name','map','wall','floor','legend'],'grid definition');
+ if(!Array.isArray(def.map)||!def.map.length||!def.map.every(r=>typeof r==='string')||def.map.join('').split('P').length!==2)throw new Error('Grid stage requires exactly one player spawn');
+ for(const c of def.map.join(''))if(!isW(c)&&!Object.prototype.hasOwnProperty.call(FLOORCH,c)&&!FURN[c]&&!Object.prototype.hasOwnProperty.call(EKIND,c)&&!IKIND[c]&&![' ','P','C','D','@','*','r','%'].includes(c)&&!def.legend?.[c])throw new Error('Unsupported grid stage glyph '+c);
+ for(const lg of Object.values(def.legend||{}))if(lg.npc||lg.trig)throw new Error('Stage NPCs and hub triggers are unsupported');
+ const prev=G,idx=levelIdx;let fresh;
+ try{
+  levelIdx=b;fresh=loadLevel(b,def,true);fresh.stageManaged=true;fresh.sid=token.to;fresh.mission=id;
+  fresh.panes=[];for(let z=0;z<fresh.H;z++)for(let x=0;x<fresh.W;x++)if(fresh.rows[z][x]==='%'){fresh.panes.push({x:x+.5,z:z+.5,ix:x,iz:z});fresh.solid[z*fresh.W+x]=1;}
+  fresh.stageBase=Object.fromEntries(STAGE_CELLS.map(k=>[k,fresh[k].slice()]));
+  if(snapshot)stageHydrate(fresh,snapshot);
+  // Original grid walls have no floor tile; a destroyed wall exposes the stage floor.
+  for(const d of snapshot?.durability||[])if(d.hp===0&&!fresh.solid[d.i]&&fresh.floorT[d.i]<0)fresh.floorT[d.i]=def.floor||1;
+  fresh.panes=fresh.panes.filter(q=>fresh.solid[q.iz*fresh.W+q.ix]);fresh.glassSet=new Set(fresh.panes.map(q=>q.iz*fresh.W+q.ix));
+  fresh.wst=WORLD.fromCells(fresh);
+  if(snapshot)stageRestoreDurability(fresh,snapshot);
+  const p=fresh.player,a=token.arrival;if(a){p.x=a.at[0];p.z=a.at[1];if(a.dir!==null)p.a=a.dir;}
+  if(!Number.isFinite(p.maxhp)||p.maxhp<=0||!WORLD.clear(fresh.wst,p.x,p.z,p.x,p.z,p.r)||fresh.doors.some(d=>{const end=doorEnd(d);return segDist(p.x,p.z,d.hx,d.hz,end[0],end[1])<p.r;}))throw new Error('Stage arrival lacks bounds/body clearance');
+  fresh.cam.x=p.x;fresh.cam.z=p.z-1;fresh.stairLatch=new Set(desc.stairs.filter(s=>Math.hypot(p.x-s.at[0],p.z-s.at[1])<=s.r).map(s=>s.id));
+  markZones(fresh);buildStatic(fresh);buildRadar(fresh);computeFlow();return fresh;
+ }catch(e){stageRelease(fresh||G!==prev&&G);throw e;}finally{G=prev;levelIdx=idx;}
+}
+function stageKitCheck(k){
+ if(!kitShape(k)||k.guns.length!==2||![0,1].includes(k.active))throw new Error('Invalid stage loadout');
+ stageJSON(k);for(const s of k.guns)if(s&&(!isGunT(s.type)||!Number.isInteger(s.mag)||s.mag<0||s.mag>WD[s.type].mag))throw new Error('Invalid stage gun');
+ if(k.melee!==null&&!isMeleeT(k.melee)||k.armour&&(!ARMOUR[k.armour.type]||!Number.isInteger(k.armour.plates)||k.armour.plates<0))throw new Error('Invalid stage armour/melee');
+}
+function stageActivate(g,manager,kit,hp,bag,armour){
+ G=g;levelIdx=missionBase(g.mission);MISSION=g.mission;JOBPICK=null;HUBMODE='in';
+ g.stageRun=manager;g.runOwner=myProg().run;g.variant=myProg().run.var;g.clear=missionClear(MISSION,g.variant);Object.assign(g,stageJSON(bag));
+ applyLoadout(kit);g.player.hp=hp;g.player.armor=armour;g.track=LEVEL_TRACKS[levelIdx][RUNTRACK[levelIdx]%LEVEL_TRACKS[levelIdx].length];state='play';show(null);banner(missionName(MISSION)+' · '+g.sid,'Grid stage · completion policy not enabled');
+}
+function stageFailure(e){banner('STAGE LOAD REFUSED',e.message);return false;}
+function startGridMission(id){
+ const r=myProg().run;return enterStage(r?.mission===id?r.stage:missionStart(id),null,id);
+}
+function enterStage(id,arrive=null,startingMission=null){
+ const mission=startingMission||MISSION,raw=MISSIONS[mission]?.stageDefs?.[id];
+ if(!raw)return stageFailure(new Error('Missing stage definition '+id+'; legacy fallback is disabled'));
+ if(raw.kind!=='grid')return stageFailure(new Error('Unsupported playable stage kind '+raw.kind));
+ return startingMission?startGridRun(startingMission,arrive):enterGridStage(id,arrive);
+}
+function startGridRun(id,arrive=null){
+ let fresh;try{
+  const p=myProg(),old=p.run,manager=stageManager(id),existing=old&&old.mission===id;
+  if(p.gift)throw new Error('Gift loadouts are unsupported for grid stages');
+  if(existing&&old.st){manager.decode(old.st);if(manager.current!==old.stage||!manager.active)throw new Error('Run stage/checkpoint mismatch');}
+  if(existing&&old.stage!==missionStart(id)&&!old.st)throw new Error('Stage entry snapshot missing');
+  const r=existing?kitClone(old):{v:KIT_V,mission:id,stage:missionStart(id),entryKit:kitClone(p.kit),stageKit:kitClone(p.kit),t:Date.now()};
+  if(!missionVariantOK(id,r.var))r.var=missionVariant(id,missionCtx());
+  if(!missionIsCampaign(id)&&!(Number.isInteger(r.ret)&&r.ret>=0&&r.ret<CAMPAIGN_LEN))r.ret=Number.isInteger(NEXTJOB)?NEXTJOB:Math.min(JOBS.sel,JOBS.top);
+  const retry=manager.active?manager.retry():null,token=manager.prepare(r.stage,arrive),bag=stageBag(retry?retry.bag:{});
+  stageKitCheck(r.stageKit);fresh=stageBuild(id,token,retry?.snapshot||null);
+  const entry=stageCapture(fresh,retry?retry.snapshot.player.armor:fresh.player.armor+(r.stageKit.armour?.plates||0)),hp=Number.isFinite(r.stageHp)&&r.stageHp>0?r.stageHp:fresh.player.maxhp;
+  const envelope=manager.preview(token,retry?.snapshot||null,entry,bag);
+  r.st=envelope;r.stageHp=hp;r.t=Date.now();if(existing)Object.assign(old,r);else p.run=r;saveProg();
+  stageActivate(fresh,manager,r.stageKit,hp,bag,entry.player.armor);manager.commit(token,retry?.snapshot||null,entry,bag);clearInterval(typeT);return true;
+ }catch(e){stageRelease(fresh);return stageFailure(e);}
+}
+function stageCanLeave(g){return !!(g&&g===G&&g.stageManaged&&g.stageRun?.active&&g.mission===MISSION&&myProg().run===g.runOwner&&myProg().run?.mission===MISSION&&myProg().run.stage===g.sid&&g.player.alive&&Number.isFinite(g.player.hp)&&g.player.hp>0&&!g.player.ex&&!g.player.exec&&!g.done&&!g.fin&&!g.cine&&!g.cameo);}
+function enterGridStage(to,arrive=null){
+ const prev=G;let fresh;
+ try{
+  if(!stageCanLeave(prev))throw new Error('Stage checkpoint requires the live, alive owning player');
+  const manager=prev.stageRun,r=myProg().run,token=manager.prepare(to,arrive),leaving=stageCapture(prev),bag=stageBag(stageStats(prev));
+  const held=kitFromPlay();stageKitCheck(held.kit);fresh=stageBuild(MISSION,token,token.snapshot);
+  const entry=stageCapture(fresh,prev.player.armor),hp=prev.player.hp,envelope=manager.preview(token,leaving,entry,bag);
+  G=prev;r.st=envelope;r.stageHp=hp;runStage(to);
+  stageActivate(fresh,manager,r.stageKit,hp,bag,entry.player.armor);manager.commit(token,leaving,entry,bag);stageRelease(prev);return true;
+ }catch(e){G=prev;stageRelease(fresh);return stageFailure(e);}
+}
+function stageStairs(g){
+ if(!stageCanLeave(g)||state!=='play'||fading)return false;
+ for(const s of g.stageRun.describe(g.sid).stairs){
+  const inside=Math.hypot(g.player.x-s.at[0],g.player.z-s.at[1])<=s.r;
+  if(!inside){g.stairLatch.delete(s.id);continue;}if(g.stairLatch.has(s.id))continue;
+  const r=myProg().run,m=MISSION;state='stagefade';
+  const accepted=fadeTo(()=>{if(G!==g||MISSION!==m||myProg().run!==r)return;if(!stageCanLeave(g)){state='play';return;}enterStage(s.to,s.arrive);if(G===g)state='play';});
+  if(!accepted){state='play';return false;}g.stairLatch.add(s.id);return true;
+ }return false;
+}
 /* multi-stage hooks (W14): runStage snapshots what you hold as the new retry point; runRestartMission makes the next retry start from the job's beginning */
 function runStage(id){const p=myProg(),r=p.run;if(!G||G.def.hub||!r||r.mission!==MISSION)return false;const m=kitFromPlay();
  r.stage=String(id);r.stageKit=m.kit;G.live=kitClone(m.kit);G.hand=m.hand;if(typeof m.hand==='number')G.live.guns[m.hand]=null;else if(m.hand==='melee')G.live.melee=null;if(m.stow.length)r.stow=(r.stow||[]).concat(m.stow);saveProg();return true;}

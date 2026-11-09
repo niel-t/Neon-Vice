@@ -95,7 +95,7 @@ const LEGACY_BUILD={
    kit    = {v:1, guns:[{type,mag}|null ×2], active:0|1, melee:type|null, armour:{type,plates}|null,
              pool:{cal:rounds}, upg:{cal:upgrades}, lost:[{item,why}]}
    locker = {v:1, items:[{type,mag}|{type}|{armour,plates}], lost:[]}
-   run    = {v:1, mission:MISSIONS id, stage:one of its stages (start at entry), entryKit, stageKit, t, stow?:[locker items set aside at a stage]}  (absent = not on a job)
+   run    = {v:1, mission:MISSIONS id, stage:one of its stages (start at entry), entryKit, stageKit, t, stow?:[locker items set aside at a stage], stageHp?:positive finite entry HP, st?:WORLD.stageRun v1 envelope}  (absent = not on a job)
    Pure and DOM-free so the save tests and check.cjs can load it. Pool capacity is derived (capOf), never stored. */
 const KIT_V=1,LOCKER_CAP=12;
 const plainObj=o=>!!o&&typeof o==='object'&&!Array.isArray(o);

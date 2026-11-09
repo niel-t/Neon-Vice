@@ -82,10 +82,15 @@ test('missions: restart from the beginning appears past the first stage and rewi
     try {
       fadeTo = () => true;
       MISSIONS.c0.stages.push('yard');
+      const def = { name: 'W14 GRID', wall: 1, floor: 1, map: ['#########', '#P......#', '#.......#', '#########'] };
+      MISSIONS.c0.stageDefs = {
+        legacy: { id: 'legacy', kind: 'grid', rev: 1, def, arrivals: { back: { at: [2.5, 2.5] } }, stairs: [{ id: 'up', to: 'yard', at: [7.5, 3.5], arrive: 'up' }] },
+        yard: { id: 'yard', kind: 'grid', rev: 1, def, arrivals: { up: { at: [2.5, 2.5] } }, stairs: [{ id: 'back', to: 'legacy', at: [7.5, 3.5], arrive: 'back' }] }
+      };
       selIdx = 1; startLevel(0);
       const entry = G.player.weapon ? G.player.weapon.type : null;
       togglePause(); const first = $('bPRestartJob').style.display; togglePause();
-      G.player.weapon = { type: 'shotgun', ammo: 5 }; runStage('yard');
+      G.player.weapon = { type: 'shotgun', ammo: 5 }; enterStage('yard', 'up');
       G.player.alive = false; pendingPerks = 0; showDead();
       const shown = $('bDeadRestartJob').style.display;
       G.player.alive = false; restart();
@@ -93,7 +98,7 @@ test('missions: restart from the beginning appears past the first stage and rewi
       togglePause(); const paused = $('bPRestartJob').style.display;
       Object.assign(myProg().run, { stageHp: 40, st: { w1: 1 } });
       $('bPRestartJob').click();
-      return { first, shown, retry, paused, stage: myProg().run.stage, w1: [myProg().run.stageHp, myProg().run.st], weapon: G.player.weapon ? G.player.weapon.type : null, entry };
+      return { first, shown, retry, paused, stage: myProg().run.stage, w1: [myProg().run.st.current, Object.keys(myProg().run.st.states)], weapon: G.player.weapon ? G.player.weapon.type : null, entry };
     } finally { fadeTo = fade; }
-  })).toEqual({ first: 'none', shown: '', retry: { stage: 'yard', weapon: 'shotgun' }, paused: '', stage: 'legacy', w1: [undefined, undefined], weapon: null, entry: null });
+  })).toEqual({ first: 'none', shown: '', retry: { stage: 'yard', weapon: 'shotgun' }, paused: '', stage: 'legacy', w1: ['legacy', ['legacy']], weapon: null, entry: null });
 });
