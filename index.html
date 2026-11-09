@@ -157,7 +157,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <div id="sEnd" class="screen dim"><div class="logo" style="font-size:clamp(20px,5vw,44px)">THE FAMILY<br>RUNS MIAMI</div><div class="stats" id="eStats"></div><button class="btn" id="bAgain">PLAY AGAIN<span class="padhint"> (A)</span></button></div>
 <div id="sPause" class="screen dim"><div class="logo2" id="pTitle">PAUSED</div><div class="col" style="margin-top:8px">
   <button class="btn" id="bResume">RESUME<span class="padhint"> (START)</span></button><button class="btn alt" id="bPRestart">RESTART FLOOR<span class="padhint"> (BACK)</span></button><button class="btn alt" id="bPRestartJob" style="display:none">RESTART JOB FROM THE BEGINNING</button><button class="btn alt" id="bWalk">WALK AWAY FROM THE JOB<span class="padhint"> (X)</span></button>
-  <button class="btn alt" id="bMute">SOUND: ON</button><button class="btn alt" id="bShake">SCREEN SHAKE: ON</button><button class="btn alt" id="bRetro">GRAPHICS: ENHANCED</button><button class="btn alt" id="bHints">HINTS: ON</button><button class="btn alt" id="bCoverSet">COVER (BETA): OFF</button><button class="btn alt" id="bGrain">FILM GRAIN</button><button class="btn alt" id="bGlitch">VHS GLITCH</button><button class="btn alt" id="bGore">GORE</button><button class="btn alt" id="bText">TEXT SIZE: MEDIUM</button>
+  <button class="btn alt" id="bMute">SOUND: ON</button><button class="btn alt" id="bShake">SCREEN SHAKE: ON</button><button class="btn alt" id="bRetro">GRAPHICS: ENHANCED</button><button class="btn alt" id="bHints">HINTS: ON</button><button class="btn alt" id="bCoverSet">COVER (BETA): OFF</button><button class="btn alt" id="bFog">FOG OF WAR: AUTO</button><button class="btn alt" id="bGrain">FILM GRAIN</button><button class="btn alt" id="bGlitch">VHS GLITCH</button><button class="btn alt" id="bGore">GORE</button><button class="btn alt" id="bText">TEXT SIZE: MEDIUM</button>
   <button class="btn alt" id="bQuit">QUIT TO MENU<span class="padhint"> (Y)</span></button><button class="btn" id="bSetBack" style="display:none">BACK<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div>
 <div id="rotate" class="screen"><div class="logo2">TURN YOUR PHONE<br>SIDEWAYS</div><div class="hint">Landscape works best for the twin-stick controls</div></div>
 <div id="err" class="screen"><div class="logo2">WebGL isn't available<br>in this browser</div></div>
@@ -208,13 +208,13 @@ function savedField(key,o,k,initial,valid){
  if(o[k]===undefined||o[k]===null){o[k]=initial;return;}
  if(!valid(o[k])){saveWarning(key,new Error('Invalid saved field: '+k),true);o[k]=initial;}
 }
-const SET={sound:true,shake:true,retro:true,diff:'easy',hints:true,grain:0.35,glitch:true,gore:'extreme',cover:false};
+const SET={sound:true,shake:true,retro:true,diff:'easy',hints:true,grain:0.35,glitch:true,gore:'extreme',cover:false,fog:'auto'};
 Object.assign(SET,readSave('nb86'));
 function saveSet(){return writeSave('nb86',SET);}
 
-const DIFF={easy:{name:'EASY',hp:3,react:1.9,espr:0.17,ebSpd:15,vision:9,cone:0.85,ecd:1.5,assist:0.3,cones:true,regen:7,lunge:0.6,mult:1,desc:'3 hits, heal when out of fire · slow, sloppy guards · vision cones · aim assist'},
- normal:{name:'NORMAL',hp:2,react:1.35,espr:0.11,ebSpd:18,vision:11,cone:0.95,ecd:1.2,assist:0.16,cones:true,regen:12,lunge:0.4,mult:1.25,desc:'2 hits · sharper guards · vision cones · light aim assist · 1.25x $'},
- hard:{name:'HARD',hp:1,react:1,espr:0.07,ebSpd:22,vision:13,cone:1.0,ecd:1,assist:0,cones:false,regen:0,lunge:0.15,mult:1.6,desc:"One hit and you're dead. Like the old days. 1.6x $"}};
+const DIFF={easy:{name:'EASY',hp:3,react:1.9,espr:0.17,ebSpd:15,vision:9,cone:0.85,ecd:1.5,assist:0.3,cones:true,regen:7,lunge:0.6,mult:1,fog:'off',desc:'3 hits, heal when out of fire · slow, sloppy guards · vision cones · aim assist'},
+ normal:{name:'NORMAL',hp:2,react:1.35,espr:0.11,ebSpd:18,vision:11,cone:0.95,ecd:1.2,assist:0.16,cones:true,regen:12,lunge:0.4,mult:1.25,fog:'keep',desc:'2 hits · sharper guards · vision cones · light aim assist · fog of war · 1.25x $'},
+ hard:{name:'HARD',hp:1,react:1,espr:0.07,ebSpd:22,vision:13,cone:1.0,ecd:1,assist:0,cones:false,regen:0,lunge:0.15,mult:1.6,fog:'grey',desc:"One hit and you're dead. Like the old days. Rooms out of sight go dark. 1.6x $"}};
 const Dd=()=>DIFF[SET.diff]||DIFF.easy;const HINTSEEN={};
 /* ================= MATH ================= */
 const M4={
@@ -1198,6 +1198,7 @@ function updatePlayer(dt){const g=G,p=g.player,ch=CHARS[selIdx];
  if(kitOn(p)&&!(p.exec>0)){if(pressed.swap)cycleHand(p);else if(pressed.slot)slotHand(p,pressed.slot);if(pressed.reload)reloadInput(p);}}
  p.atkHeld=attacking;
  for(const e of g.enemies){e.pvis=e.alive&&Math.hypot(e.x-p.x,e.z-p.z)<15&&los(p.eye.x,p.eye.z,e.x,e.z);}
+ fogUpdate(g,dt);
  if(ch.id==='don'&&Math.random()<dt*5){const sa=Math.sin(p.a),ca=Math.cos(p.a);g.parts.push({t:'m',x:p.x+ca*0.05+sa*0.24,y:0.87,z:p.z-sa*0.05+ca*0.24,vx:rnd(-0.1,0.1),vy:0,vz:rnd(-0.1,0.1),s:rnd(0.04,0.07),c:[0.75,0.72,0.8],life:1.4});}}
 const FORCE={pistol:4.5,silenced:3.5,revolver:7.5,dual:4,smg:3.5,m16:6,shotgun:9.5,double:13,bat:6.5,knife:2.5,machete:4,fists:5.5,exec:1,throw:5,door:6,boss:6};
 const massOf=c=>c.boss?2.6:c.body==='fat'?1.6:c.body==='big'?1.3:c.body==='thin'?0.8:1;
@@ -1229,6 +1230,119 @@ const BAL_Q=(k,ls,v)=>{try{return new RegExp('[?&]'+k+'='+v+'\\b').test(location
 const BAL_LEGACY=BAL_Q('ballistics','nb86bal','legacy'),BAL_EPEN=!BAL_Q('enemypen','nb86epen','0');
 const BPC={};function bProj(t){return BPC[t]||(BPC[t]=BAL.proj(WD[t].cal,WD[t].eMul));}
 function wst(g){if(!g.wst||g.wst.legacy!==g)g.wst=WORLD.fromCells(g);return g.wst;}
+/* ===== W12a fog of war. FOG is DOM-free (world-check runs FOG_BEGIN..FOG_END in node). Rooms reveal whole
+   (grouped by parent||id) when a ray from the eye reaches one of their targets: portal insets and interior samples.
+   Per room state: 0 unseen, 1 seen but out of sight (hard only), 2 live. Street/entry/non-combat rooms start live. ===== */
+/* FOG_BEGIN */
+const FOG=(()=>{
+ const RANGE=24,TICK=0.1,RAYS_ROOM=8,RAYS_TICK=96,HOLD=0.4,RAYS_DYN=16,PORT_T=32,FILL_T=16,PU=[0.5,0.15,0.85],PD=[0,0.8,1.3],PX=[0.6,-0.6,0,0],PZ=[0,0,0.6,-0.6];
+ /* Q-A: easy no fog; normal (keep) seen rooms stay live; hard (grey) rooms out of sight go grey and hide dynamics.
+    SET.fog: 'auto' follows difficulty, 'on' forces at least keep, 'off' disables. Non-combat stages never fog. */
+ function mode(diffFog,setting,combat){if(!combat||setting==='off')return'off';const m=diffFog==='keep'||diffFog==='grey'?diffFog:'off';return setting==='on'&&m==='off'?'keep':m;}
+ function pinned(r){return r.combat===false||r.zone==='exterior'||r.zone==='street'||r.kind==='street'||r.kind==='entry'||r.reveal===true;}
+ function stride(src,max,out){const k=src.length/2,s=Math.max(1,Math.ceil(k/max));for(let i=0;i<k;i+=s)out.push(src[2*i],src[2*i+1]);}
+ function create(W,st,m){
+  const n=st.rooms.length,leg=st.policy==='legacy'?st.legacy:null,group=new Int16Array(n),keys=new Map(),pin=new Uint8Array(n),state=new Uint8Array(n);
+  const roomOf=leg?(x,z)=>{const ix=Math.floor(x),iz=Math.floor(z);return ix<0||iz<0||ix>=leg.W||iz>=leg.H?-1:st.roomTiles[iz*leg.W+ix];}
+   :(x,z)=>{const r=W.roomAt(st,x,z);return r?r.idx:-1;};
+  const tg=[],off=new Int32Array(n+1);
+  for(const r of st.rooms){
+   const key=r.parent||r.id;if(!keys.has(key))keys.set(key,r.idx);group[r.idx]=keys.get(key);
+   if(pinned(r))pin[group[r.idx]]=1;
+   off[r.idx]=tg.length/2;const port=[],fill=[];
+   for(const pi of st.adjacency[r.idx]){const p=st.portals[pi];
+    /* inset off the portal into this room; legacy door squares belong to no room, so fall back to a full cell */
+    found:for(const d of [p.half+0.25,1])for(const s of [1,-1]){const x=p.mid[0]+p.nx*d*s,z=p.mid[1]+p.nz*d*s;if(roomOf(x,z)===r.idx){port.push(x,z);break found;}}}
+   for(const q of r.samples)fill.push(q[0],q[1]);
+   if(leg)for(let i=0;i<st.roomTiles.length;i++)if(st.roomTiles[i]===r.idx){const x=i%leg.W,z=(i/leg.W)|0;if(x%3===1&&z%3===1)fill.push(x+0.5,z+0.5);}
+   stride(port,PORT_T,tg);stride(fill,FILL_T,tg);
+  }
+  off[n]=tg.length/2;
+  for(let r=0;r<n;r++)if(pin[group[r]])state[group[r]]=2;
+  return{W,st,ids:st.rooms.map(r=>r.id),mode:m,n,group,pin,state,roomOf,tx:new Float64Array(tg),off,adj:st.adjacency,portals:st.portals,
+   vis:new Uint8Array(n),gvis:new Uint8Array(n),tested:new Uint8Array(n),unk:new Uint8Array(n),gunk:new Uint8Array(n),hold:new Float32Array(n),queue:new Int32Array(n),
+   bi:new Int32Array(RAYS_ROOM),bd:new Float64Array(RAYS_ROOM),acc:0,primed:false,ver:0,rays:0,rot:0};
+ }
+ function setMode(f,m){if(f.mode===m)return;f.mode=m;if(m!=='grey')for(let r=0;r<f.n;r++)if(f.state[r]===1)f.state[r]=2;f.primed=false;f.ver++;}
+ /* the stage graph was replaced (WORLD.damage breach): rebuild targets, keep what was seen by room id */
+ function refresh(f){const seen=new Map();for(let r=0;r<f.n;r++)seen.set(f.ids[r],f.state[f.group[r]]);const nf=create(f.W,f.st,f.mode);
+  for(let r=0;r<nf.n;r++){const v=seen.get(nf.ids[r]),g=nf.group[r];if(v>nf.state[g])nf.state[g]=v;}
+  Object.assign(f,nf,{acc:f.acc,primed:f.primed,ver:f.ver+1});}
+ /* rays that continue eye->opening (mid, then near each jamb) just past it; catches oblique views. At most 3 per portal. */
+ function probePortal(f,o,p,ex,ez,see){const a=p.ends[0],b=p.ends[1];
+  for(let u=0;u<3&&f.rays<RAYS_TICK;u++){const s=PU[u],px=a[0]+(b[0]-a[0])*s,pz=a[1]+(b[1]-a[1])*s,dx=px-ex,dz=pz-ez,L=Math.hypot(dx,dz);if(L<1e-6||L>RANGE)continue;
+   for(let j=0;j<3;j++){const d=j?PD[j]:p.half+0.3,x=px+dx/L*d,z=pz+dz/L*d;if(f.roomOf(x,z)!==o)continue;f.rays++;if(see(ex,ez,x,z))return true;break;}}
+  return false;}
+ /* the cap nearest static targets of room o within RANGE; first clear ray wins */
+ function probeTargets(f,o,ex,ez,see,cap){const bi=f.bi,bd=f.bd;let k=0;
+  for(let t=f.off[o],e=f.off[o+1];t<e;t++){const d=Math.hypot(f.tx[2*t]-ex,f.tx[2*t+1]-ez);if(d>RANGE)continue;
+   let j=k<cap?k++:cap;if(j===cap&&d>=bd[cap-1])continue;if(j===cap)j--;
+   while(j>0&&bd[j-1]>d){bd[j]=bd[j-1];bi[j]=bi[j-1];j--;}bd[j]=d;bi[j]=t;}
+  if(k&&f.rays+k>RAYS_TICK)return -1;
+  for(let i=0;i<k;i++){f.rays++;if(see(ex,ez,f.tx[2*bi[i]],f.tx[2*bi[i]+1]))return 1;}
+  return 0;}
+ /* pts: optional flat [x,z,...] of live dynamic objects (np of them); one confirmed clear ray to any reveals its room,
+    so a guard with a firing line is never hidden by a gap in the room graph */
+ function tick(f,dt,ex,ez,see,pts,np){
+  f.acc+=dt;if(f.primed&&f.acc<TICK)return false;const step=f.primed?f.acc:0;f.acc=0;f.primed=true;f.rays=0;
+  if(f.mode==='off')return false;
+  if(f.adj!==f.st.adjacency||f.portals!==f.st.portals)refresh(f);
+  const n=f.n,vis=f.vis,tried=f.tested,unk=f.unk,q=f.queue;vis.fill(0);tried.fill(0);unk.fill(0);let qh=0,qt=0;
+  const er=f.roomOf(ex,ez);
+  if(er>=0){vis[er]=1;q[qt++]=er;}
+  else for(let i=0;i<4;i++){const r=f.roomOf(ex+PX[i],ez+PZ[i]);if(r>=0&&!vis[r]){vis[r]=1;q[qt++]=r;}}
+  for(let pass=0;;pass++){
+   /* sight floods through visible rooms: every entrance of a candidate is tried, its static targets once per tick */
+   while(qh<qt){const r=q[qh++],adj=f.adj[r];
+    for(let k=0;k<adj.length;k++){const p=f.portals[adj[k]],o=p.a===r?p.b:p.a;
+     if(o===null||vis[o]||Math.hypot(p.mid[0]-ex,p.mid[1]-ez)>RANGE)continue;
+     if(f.rays>=RAYS_TICK){unk[o]=1;continue;}
+     let ok=probePortal(f,o,p,ex,ez,see);
+     if(!ok&&!tried[o]){tried[o]=1;const t=probeTargets(f,o,ex,ez,see,RAYS_ROOM);if(t<0){unk[o]=1;tried[o]=0;}ok=t===1;}
+     if(ok){vis[o]=1;unk[o]=0;q[qt++]=o;}}}
+   /* sight-only links the graph lacks (low barriers, legacy glass): a few rays per remaining room, rotating start */
+   if(pass)break;const s0=f.rot++%Math.max(1,n);
+   for(let i=0;i<n;i++){const o=(s0+i)%n;if(vis[o]||tried[o]||f.pin[f.group[o]])continue;
+    const t=probeTargets(f,o,ex,ez,see,RAYS_ROOM>>1);if(t<0)unk[o]=1;else if(t===1){vis[o]=1;q[qt++]=o;}}
+   if(qh===qt)break;}
+  const gv=f.gvis;gv.fill(0);for(let r=0;r<n;r++)if(vis[r])gv[f.group[r]]=1;
+  for(let i=0,used=0;i<np&&used<RAYS_DYN;i++){const x=pts[2*i],z=pts[2*i+1],r=f.roomOf(x,z);
+   if(r<0||gv[f.group[r]]||f.state[f.group[r]]===2&&f.mode!=='grey'||Math.hypot(x-ex,z-ez)>RANGE)continue;
+   used++;f.rays++;if(see(ex,ez,x,z))gv[f.group[r]]=1;}
+  const gu=f.gunk;gu.fill(0);for(let r=0;r<n;r++)if(unk[r])gu[f.group[r]]=1;
+  let changed=false;
+  for(let r=0;r<n;r++){if(f.group[r]!==r||f.pin[r])continue;
+   if(gv[r]){f.hold[r]=0;if(f.state[r]!==2){f.state[r]=2;changed=true;}}
+   else if(f.mode==='grey'&&f.state[r]===2&&!gu[r]){f.hold[r]+=step;if(f.hold[r]>=HOLD){f.state[r]=1;changed=true;}}}
+  if(changed)f.ver++;return changed;
+ }
+ function level(f,r){return f.state[f.group[r]];}
+ /* hidden: inside an unseen room (or a grey one on hard). A doorway square is hidden only if every adjoining room is. */
+ function hidden(f,x,z){
+  if(!f||f.mode==='off')return false;const r=f.roomOf(x,z);if(r>=0)return level(f,r)<2;
+  let any=false;for(let i=0;i<4;i++){const o=f.roomOf(x+PX[i],z+PZ[i]);if(o>=0){if(level(f,o)===2)return false;any=true;}}return any;
+ }
+ return Object.freeze({mode,create,setMode,tick,level,hidden,RANGE,TICK,RAYS_ROOM,RAYS_TICK,RAYS_DYN,HOLD});
+})();
+/* FOG_END */
+/* in-game sight for fog: legacy cell walls and live door leaves block, studio glass panes do not */
+function fogSee(ax,az,bx,bz){const g=G,dx=bx-ax,dz=bz-az,n=Math.ceil(Math.hypot(dx,dz)/0.15),gs=g.glassSet;
+ for(let i=1;i<n;i++){const t=i/n,cx=Math.floor(ax+dx*t),cz=Math.floor(az+dz*t);if(WORLD.cell.rayBlock(g,cx,cz,false)&&!(gs&&gs.has(cz*g.W+cx)))return false;}
+ return !WORLD.cell.doorHit(g,ax,az,bx,bz);}
+function fogMode(g){return g.def.hub?'off':FOG.mode(Dd().fog,SET.fog,wst(g).combat);}
+function fogUpdate(g,dt){const m=fogMode(g);if(m==='off'&&!g.fog)return;const st=wst(g);
+ if(!g.fog||g.fog.st!==st)g.fog=FOG.create(WORLD,st,m);else FOG.setMode(g.fog,m);
+ const e=g.player.eye||g.player;let np=0;for(const o of g.enemies)if(o.alive){FOG_PTS[2*np]=o.x;FOG_PTS[2*np+1]=o.z;if(++np>=64)break;}
+ FOG.tick(g.fog,dt,e.x,e.z,fogSee,FOG_PTS,np);}
+const FOG_PTS=new Float64Array(128);
+function fogHid(x,z){return !!(G&&G.fog)&&FOG.hidden(G.fog,x,z);}
+/* a living enemy the player can see (e.pvis, cell los from p.eye) is never hidden: no shots from the dark */
+function fogHidE(e){return !e.pvis&&fogHid(e.x,e.z);}
+/* radar mask: unseen room cells blacked out, grey (hard) rooms dimmed; walls stay drawn */
+function fogRadar(g){const f=g.fog;if(!f||f.mode==='off'||!f.st.roomTiles)return null;if(g.fogRad&&g.fogRadF===f&&g.fogRadV===f.ver)return g.fogRad;
+ const c=g.fogRad||document.createElement('canvas');c.width=g.W*4;c.height=g.H*4;const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);const rt=f.st.roomTiles;
+ for(let i=0;i<rt.length;i++){if(rt[i]<0)continue;const s=FOG.level(f,rt[i]);if(s===2)continue;x.fillStyle=s===0?'rgba(10,4,18,.97)':'rgba(10,4,18,.6)';x.fillRect((i%g.W)*4,((i/g.W)|0)*4,4,4);}
+ g.fogRad=c;g.fogRadF=f;g.fogRadV=f.ver;return c;}
 /* legacy cell -> build: '#' touching out-of-bounds, the void or an outdoor glyph is exterior */
 function legBuild(g,r){const L=LEGACY_BUILD,m=L.levels[g.def.name]||L.def,out=m.out||L.out;if(r.kind==='door')return m.door;if(r.kind==='prop')return L.prop[g.furn[r.ref]]||'counter_cabinet';
  const i=r.ref;if(g.glassSet&&g.glassSet.has(i))return m.pane;const W=g.W,x=i%W,z=(i/W)|0,ch=(cx,cz)=>(g.rows[cz]||'')[cx]||' ';if(ch(x,z)===' ')return L.void;
@@ -2980,8 +3094,8 @@ function render(){if(contextLost||gl.isContextLost())return;PS2C.beginFrame();re
   if(g.drips)for(const d of g.drips)dripQuad(poolB,d,d.len);
   for(const cs of g.cash)if(cs.landed)floorQuad(poolB,cs.x,cs.z,0.5,0.4,TUV[11],[1,1,1],0.015);
   if(g.tankB){const t=g.tankB;tankGlass(poolB,t.x0,t.x1,t.z0+0.02,t.z1,0.32,2.35);}
-  if(Dd().cones&&g.player.alive)for(const e of g.enemies){if(!e.alive||e.down>0||e.state==='chase')continue;const col=e.state==='search'?[1,0.45,0.12]:e.state==='distract'?[0.4,1,0.5]:[1,0.85,0.3];const R=Dd().vision,cn=visionHalfAngle(e),N=QL<2?13:7;let prev=null;for(let i=0;i<=N;i++){const a=e.a-cn+2*cn*i/N,sa=Math.sin(a),ca=Math.cos(a),len=rayLen(e.x,e.z,sa,ca,R),pt=[e.x+sa*len,0.026,e.z+ca*len];if(prev)poolB.quad([[e.x,0.026,e.z],[e.x,0.026,e.z],prev,pt],0,1,0,TUV[20],col);prev=pt;}}
-  const shc=[1,1,1];if(!ENH())for(const e of g.enemies)if(e.alive&&!(e.down>0))floorQuad(poolB,e.x,e.z,0.58,0,TUV[16],shc,0.014);if(g.player.alive&&!ENH())floorQuad(poolB,g.player.x,g.player.z,0.58,0,TUV[16],shc,0.014);drawPanes(poolB);
+  if(Dd().cones&&g.player.alive)for(const e of g.enemies){if(!e.alive||e.down>0||e.state==='chase'||fogHidE(e))continue;const col=e.state==='search'?[1,0.45,0.12]:e.state==='distract'?[0.4,1,0.5]:[1,0.85,0.3];const R=Dd().vision,cn=visionHalfAngle(e),N=QL<2?13:7;let prev=null;for(let i=0;i<=N;i++){const a=e.a-cn+2*cn*i/N,sa=Math.sin(a),ca=Math.cos(a),len=rayLen(e.x,e.z,sa,ca,R),pt=[e.x+sa*len,0.026,e.z+ca*len];if(prev)poolB.quad([[e.x,0.026,e.z],[e.x,0.026,e.z],prev,pt],0,1,0,TUV[20],col);prev=pt;}}
+  const shc=[1,1,1];if(!ENH())for(const e of g.enemies)if(e.alive&&!(e.down>0)&&!fogHidE(e))floorQuad(poolB,e.x,e.z,0.58,0,TUV[16],shc,0.014);if(g.player.alive&&!ENH())floorQuad(poolB,g.player.x,g.player.z,0.58,0,TUV[16],shc,0.014);drawPanes(poolB);
   poolB.upload();gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);poolB.draw();gl.disable(gl.BLEND);gl.disable(gl.POLYGON_OFFSET_FILL);gl.depthMask(true);
   dynB.draw();drawInst();PS2C.flush(VP,RU);
   if(ovB.n){gl.useProgram(P1);for(const k of ['aP','aN','aT','aC'])gl.enableVertexAttribArray(L[k]);gl.disable(gl.DEPTH_TEST);ovB.upload();ovB.draw();gl.enable(gl.DEPTH_TEST);}}
@@ -3047,10 +3161,10 @@ function buildDynamic(){const g=G,B=dynB,O=ovB;B.reset();O.reset();if(g.def.hub)
  drawRide(B,g.car.x,g.car.z,1,0);drawAct2(B,g);if(g.oldCar)drawBeater(B,g.oldCar.x,g.oldCar.z,1,g.oldCar.a,rideId());drawDisco(B,g);drawHazards(B,g);drawStash(B,g);
  if(g.cleared){const y=1.5+Math.sin(g.T*5)*0.15;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.3,0.3,0.3))),[1,0.3,0.75],true);}
  const p=g.player;const near=p.alive?nearItem(p):null;
- for(const it of g.items)drawItem(B,it,it===near);
- for(const e of g.enemies)if(!e.alive&&!e.sunk)drawChar(CB(e),e);if(!p.alive)drawChar(CB(p),p);
- for(const e of g.enemies)if(e.alive)drawChar(CB(e),e);if(g.lex)drawChar(IBhi,g.lex);if(p.alive&&!(p.armorT>0&&Math.floor(g.T*20)%2))drawChar(IBhi,p);
- for(const e of g.enemies){if(!e.alive||!e.aiming||!p.alive)continue;const sa=Math.sin(e.a),ca=Math.cos(e.a);const h=rayWall(e.x,e.z,sa,ca,14,true);const len=h?h.d:14;const st=0.55,rem=Math.max(0,len-st);
+ for(const it of g.items)if(!fogHid(it.x,it.z))drawItem(B,it,it===near);
+ for(const e of g.enemies)if(!e.alive&&!e.sunk&&!fogHid(e.x,e.z))drawChar(CB(e),e);if(!p.alive)drawChar(CB(p),p);
+ for(const e of g.enemies)if(e.alive&&!fogHidE(e))drawChar(CB(e),e);if(g.lex)drawChar(IBhi,g.lex);if(p.alive&&!(p.armorT>0&&Math.floor(g.T*20)%2))drawChar(IBhi,p);
+ for(const e of g.enemies){if(!e.alive||!e.aiming||!p.alive||fogHidE(e))continue;const sa=Math.sin(e.a),ca=Math.cos(e.a);const h=rayWall(e.x,e.z,sa,ca,14,true);const len=h?h.d:14;const st=0.55,rem=Math.max(0,len-st);
   const flick=e.react<0.15?(Math.floor(g.T*30)%2?1:0.4):0.75;B.box(TRS(e.x+sa*(st+rem/2)+ca*0.17,0.74,e.z+ca*(st+rem/2)-sa*0.17,e.a,0.018,0.018,rem),[flick,0.05,0.08],true);}
  for(const b of g.bullets)B.box(TRS(b.x,0.74,b.z,Math.atan2(b.dx,b.dz),0.035,0.035,0.45),b.own==='p'?[1,0.95,0.55]:[1,0.6,0.3],true);
  for(const f of g.flashes){if(f.sil){B.box(TRS(f.x,f.y,f.z,0,0.06,0.06,0.06),[0.9,0.9,0.8],true);continue;}const s=f.big?0.32:0.2;B.box(TRS(f.x,f.y,f.z,rnd(0,TAU),s,s*0.6,s),[1,0.95,0.6],true);}
@@ -3092,9 +3206,10 @@ function drawIcon(c,type,x,y,s,col){const r=WICON[type]||WICON.fists;c.fillStyle
 function drawRadar(c,cx,cy,R){const g=G,p=g.player,s=R/8;
  c.save();c.beginPath();c.arc(cx,cy,R,0,TAU);c.closePath();c.fillStyle='rgba(10,4,18,.82)';c.fill();c.clip();
  c.imageSmoothingEnabled=false;c.drawImage(g.radar,cx-p.x*s,cy-p.z*s,g.W*s,g.H*s);
+ const fr=fogRadar(g);if(fr)c.drawImage(fr,cx-p.x*s,cy-p.z*s,g.W*s,g.H*s);
  const money=CHARS[selIdx].id==='money';
- for(const it of g.items){if(it.flying)continue;const x=cx+(it.x-p.x)*s,y=cy+(it.z-p.z)*s;c.fillStyle='#ffd36b';c.fillRect(x-1.5,y-1.5,3,3);}
- for(const e of g.enemies){if(!e.alive)continue;if(!(money||e.pvis||e.state==='chase'&&e.seeT<1||g.enemies.filter(q=>q.alive).length<=3))continue;const x=cx+(e.x-p.x)*s,y=cy+(e.z-p.z)*s;c.fillStyle=e.down>0?'#ffd36b':e.state==='chase'?'#ff2a3a':'#ff8a95';c.beginPath();c.arc(x,y,Math.max(2.5,s*0.35),0,TAU);c.fill();}
+ for(const it of g.items){if(it.flying||fogHid(it.x,it.z))continue;const x=cx+(it.x-p.x)*s,y=cy+(it.z-p.z)*s;c.fillStyle='#ffd36b';c.fillRect(x-1.5,y-1.5,3,3);}
+ for(const e of g.enemies){if(!e.alive)continue;if(!(money||e.pvis||e.state==='chase'&&e.seeT<1||g.enemies.filter(q=>q.alive).length<=3))continue;if(!money&&fogHidE(e)&&g.enemies.filter(q=>q.alive).length>3)continue;const x=cx+(e.x-p.x)*s,y=cy+(e.z-p.z)*s;c.fillStyle=e.down>0?'#ffd36b':e.state==='chase'?'#ff2a3a':'#ff8a95';c.beginPath();c.arc(x,y,Math.max(2.5,s*0.35),0,TAU);c.fill();}
  c.restore();
  /* objective marker (car) clamped to edge */
  let ox=(g.car.x-p.x)*s,oz=(g.car.z-p.z)*s;const od=Math.hypot(ox,oz);if(od>R-6){ox=ox/od*(R-6);oz=oz/od*(R-6);}
@@ -3141,7 +3256,7 @@ function drawHUD0(){const c=hctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0
  /* context prompt */
  const near=p.alive?nearItem(p):null;if(near){const s=project(near.x,0.9,near.z);if(s){const lbl=(padMode?'(A) ':touchMode?'GRAB: ':'[E] ')+WD[near.type].name+(WD[near.type].ammo!==undefined?' ('+near.ammo+')':'');c.font=VTF(18*u);const tw=c.measureText(lbl).width;c.fillStyle='rgba(10,4,18,.8)';c.fillRect(s[0]-tw/2-6*u,s[1]-22*u,tw+12*u,20*u);txt(c,lbl,s[0],s[1]-20*u,'#fff','center',18*u);}}
  /* enemy alert icons */
- c.font=PXF(12*u);for(const e of g.enemies){if(!e.alive)continue;if(e.alertT>0||e.qT>0){const s=project(e.x,1.35,e.z);if(s)txt(c,e.alertT>0?'!':'?',s[0],s[1]-14*u,e.alertT>0?'#ff2a3a':'#ffd36b','center',12*u);}}
+ c.font=PXF(12*u);for(const e of g.enemies){if(!e.alive||fogHidE(e))continue;if(e.alertT>0||e.qT>0){const s=project(e.x,1.35,e.z);if(s)txt(c,e.alertT>0?'!':'?',s[0],s[1]-14*u,e.alertT>0?'#ff2a3a':'#ffd36b','center',12*u);}}
   if(AI.debug){const ring=(x,z,r,col)=>{c.strokeStyle=col;c.lineWidth=1.5;c.beginPath();for(let i=0;i<=20;i++){const s=project(x+Math.sin(i/20*TAU)*r,0.05,z+Math.cos(i/20*TAU)*r);if(!s){c.beginPath();return;}i?c.lineTo(s[0],s[1]):c.moveTo(s[0],s[1]);}c.stroke();};
    c.font=PXF(6*u);for(const e of g.enemies){if(!e.alive)continue;const b=e.bl,s=project(e.x,1.9,e.z);if(s)txt(c,e.state+(b?' '+b.src+' '+AI.belief.conf(b,g.T).toFixed(2):'')+(e.poi?' poi:'+e.poi.src:'')+(e.hr!==undefined&&e.state==='search'?' room'+e.hr:'')+(e.rp&&e.bl===e.rpB?' p'+e.rp.reduce((a,v,i)=>v>e.rp[a]?i:a,0):'')+(e.amb?' AMB':''),s[0],s[1]-26*u,'#9cf','center',6*u);
     if(e.amb)ring(e.amb.x,e.amb.z,0.45,'#ff4fa6');
@@ -3174,7 +3289,7 @@ function drawHUD0(){const c=hctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0
  /* crosshair with spread */
  if(!touchMode&&mouse.active&&p.alive){const x=mouse.x,y=mouse.y;let gap=6*u;
   if(w&&!wd.melee){const mv=Math.min(1,Math.hypot(p.vx,p.vz)/3.5);const spr=wd.spr+mv*wd.mv+p.bloom;const pp=project(p.x,0.7,p.z);const d=pp?Math.hypot(x-pp[0],y-pp[1]):100;gap=clamp(Math.tan(spr)*d,4*u,80*u);}
-  let over=false;for(const e of g.enemies){if(!e.alive)continue;const s=project(e.x,0.6,e.z);if(s&&Math.hypot(s[0]-x,s[1]-y)<18*u){over=true;break;}}
+  let over=false;for(const e of g.enemies){if(!e.alive||fogHidE(e))continue;const s=project(e.x,0.6,e.z);if(s&&Math.hypot(s[0]-x,s[1]-y)<18*u){over=true;break;}}
   const col=over?'#ff2a3a':'#ff3fa4',L2=7*u;c.lineWidth=4;c.strokeStyle='#000';const draw=()=>{c.beginPath();c.moveTo(x-gap-L2,y);c.lineTo(x-gap,y);c.moveTo(x+gap,y);c.lineTo(x+gap+L2,y);c.moveTo(x,y-gap-L2);c.lineTo(x,y-gap);c.moveTo(x,y+gap);c.lineTo(x,y+gap+L2);c.stroke();};draw();c.lineWidth=2;c.strokeStyle=col;draw();
   c.fillStyle=col;c.fillRect(x-1,y-1,2,2);
   if(g.hitT>0){c.strokeStyle='#fff';c.lineWidth=2;const h=5*u,o=4*u;c.beginPath();c.moveTo(x-o-h,y-o-h);c.lineTo(x-o,y-o);c.moveTo(x+o+h,y-o-h);c.lineTo(x+o,y-o);c.moveTo(x-o-h,y+o+h);c.lineTo(x-o,y+o);c.moveTo(x+o+h,y+o+h);c.lineTo(x+o,y+o);c.stroke();}}
@@ -3394,7 +3509,7 @@ function restart(){if(!G||G.def.hub||fading)return;if(!G.player.alive){RUNTRACK[
 /* the pause screen doubles as the settings screen on the main menu */
 let SETMENU=false;function setMenuMode(on){SETMENU=on;$('pTitle').textContent=on?'SETTINGS':'PAUSED';for(const id of ['bResume','bPRestart','bQuit'])$(id).style.display=on?'none':'';if(on)$('bPRestartJob').style.display='none';$('bWalk').style.display=on||!G||G.def.hub?'none':'';$('bSetBack').style.display=on?'':'none';}
 function togglePause(){if(state==='play'){setMenuMode(false);syncRestartJob();state='pause';show('sPause');}else if(state==='pause'){state='play';show(null);}}
-function syncSetBtns(){$('bMute').textContent='SOUND: '+(SET.sound?'ON':'OFF');$('bShake').textContent='SCREEN SHAKE: '+(SET.shake?'ON':'OFF');$('bRetro').textContent='GRAPHICS: '+(ENH()?'ENHANCED':'PS1 RETRO');$('bHints').textContent='HINTS: '+(SET.hints?'ON':'OFF');$('bCoverSet').textContent='COVER (BETA): '+(SET.cover?'ON':'OFF');$('bGore').textContent='GORE: '+(SET.gore==='normal'?'NORMAL':'EXTREME');$('bGrain').textContent='FILM GRAIN: '+(SET.grain<=0?'OFF':SET.grain<0.3?'LOW':SET.grain<0.5?'MEDIUM':'HIGH');$('bGlitch').textContent='VHS GLITCH: '+(SET.glitch?'ON':'OFF');applyTextSize();}
+function syncSetBtns(){$('bMute').textContent='SOUND: '+(SET.sound?'ON':'OFF');$('bShake').textContent='SCREEN SHAKE: '+(SET.shake?'ON':'OFF');$('bRetro').textContent='GRAPHICS: '+(ENH()?'ENHANCED':'PS1 RETRO');$('bHints').textContent='HINTS: '+(SET.hints?'ON':'OFF');$('bCoverSet').textContent='COVER (BETA): '+(SET.cover?'ON':'OFF');$('bFog').textContent='FOG OF WAR: '+(SET.fog==='on'?'ON':SET.fog==='off'?'OFF':'AUTO ('+(Dd().fog==='off'?'OFF':'ON')+')');$('bGore').textContent='GORE: '+(SET.gore==='normal'?'NORMAL':'EXTREME');$('bGrain').textContent='FILM GRAIN: '+(SET.grain<=0?'OFF':SET.grain<0.3?'LOW':SET.grain<0.5?'MEDIUM':'HIGH');$('bGlitch').textContent='VHS GLITCH: '+(SET.glitch?'ON':'OFF');applyTextSize();}
 function toggleMute(){if(contextLost)return;SET.sound=!SET.sound;if(master)master.gain.value=SET.sound?0.6:0;if(SET.sound)resumeAudio();saveSet();syncSetBtns();}
 $('bStart').onclick=()=>{initAudio();sfx('blip');state='select';updateSelect();show('sSelect');};
 $('bHelp').onclick=()=>{initAudio();sfx('blip');state='help';$('hSlots').textContent=slot3On()?'1 2 3':'1 2';show('sHelp');};
@@ -3417,7 +3532,7 @@ $('bRetry').onclick=()=>restart();$('bDeadQuit').onclick=()=>{state='title';G=nu
 $('bResume').onclick=()=>togglePause();$('bPRestart').onclick=()=>restart();$('bPRestartJob').onclick=$('bDeadRestartJob').onclick=()=>restartJob();$('bMute').onclick=()=>toggleMute();
 $('bShake').onclick=()=>{SET.shake=!SET.shake;saveSet();syncSetBtns();};$('bRetro').onclick=()=>{SET.gfx2=!ENH();saveSet();syncSetBtns();};
 $('bGrain').onclick=()=>{const L=[0,0.2,0.35,0.6];SET.grain=L[(L.indexOf(SET.grain)+1)%L.length];if(SET.grain===undefined)SET.grain=0.35;saveSet();syncSetBtns();};$('bGlitch').onclick=()=>{SET.glitch=!SET.glitch;saveSet();syncSetBtns();};
-$('bHints').onclick=()=>{SET.hints=!SET.hints;saveSet();syncSetBtns();};$('bCoverSet').onclick=()=>{SET.cover=!SET.cover;saveSet();syncSetBtns();};$('bGore').onclick=()=>{SET.gore=SET.gore==='normal'?'extreme':'normal';saveSet();syncSetBtns();};$('bText').onclick=()=>cycleTextSize();
+$('bHints').onclick=()=>{SET.hints=!SET.hints;saveSet();syncSetBtns();};$('bCoverSet').onclick=()=>{SET.cover=!SET.cover;saveSet();syncSetBtns();};$('bFog').onclick=()=>{SET.fog=SET.fog==='on'?'off':SET.fog==='off'?'auto':'on';saveSet();syncSetBtns();};$('bGore').onclick=()=>{SET.gore=SET.gore==='normal'?'extreme':'normal';saveSet();syncSetBtns();};$('bText').onclick=()=>cycleTextSize();
 $('bQuit').onclick=()=>{state='title';G=null;show('sTitle');};
 const tbtn=(id,fn)=>{const el=$(id);el.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();fn();},{passive:false});el.addEventListener('mousedown',e=>{e.stopPropagation();fn();});};
 tbtn('bGrab',()=>pressed.grab=true);tbtn('bReload',()=>pressed.reload=true);tbtn('bSwap',()=>pressed.swap=true);tbtn('bPerk',()=>pressed.perk=true);tbtn('bCover',()=>pressed.cover=true);tbtn('bPause',()=>togglePause());tbtn('bRestart',()=>restart());
