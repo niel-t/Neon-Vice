@@ -55,12 +55,13 @@ function stanceSight(st,ax,az,eyeA,t){const e=t.eye||t;return WORLD.sight(st,ax,
 function coverShotY(muzzleY,t){return stanceOf(t)==='crouch'?Math.min(muzzleY,STANCE.crouch.aim):muzzleY;}
 /* enemy e (eye at e.x/e.z) sees the player's eye. Legacy cell LOS today: no gameplay WORLD state exists until
    W1's mutation-sync checkpoint, after which this becomes stanceSight(st,e.x,e.z,STANCE[stanceOf(e)].eye,p). */
-function playerSeenBy(e){const p=G.player,eye=p.eye||p;return WORLD.cell.los(G,e.x,e.z,eye.x,eye.z);}
+function playerSeenBy(e){const p=G.player,eye=p.eye||p;if(G.plan)return stanceSight(G.wst,e.x,e.z,STANCE[stanceOf(e)].eye,p).clear;return WORLD.cell.los(G,e.x,e.z,eye.x,eye.z);}
 /* a leaning player exposes the lean point: it is hittable, and enemies aim at it when the body is hidden from them */
 const COVER_LEAN_R=0.2;
 const leaning=p=>!!(p&&p.cs&&p.cs.lean&&p.eye);
 function playerHitPoints(p){return leaning(p)?[p,{x:p.eye.x,z:p.eye.z,r:COVER_LEAN_R}]:[p];}
+const COVER_RAY=[];
 /* bullet line clear of walls and bullet-stopping furniture (los ignores furniture; a fridge must count) */
-function coverShotClear(g,x0,z0,x1,z1){const dx=x1-x0,dz=z1-z0,n=Math.ceil(Math.hypot(dx,dz)/0.15);
+function coverShotClear(g,x0,z0,x1,z1){if(g.plan)return !WORLD.trace(g.wst,x0,z0,x1,z1,.7,COVER_RAY).length;const dx=x1-x0,dz=z1-z0,n=Math.ceil(Math.hypot(dx,dz)/0.15);
  for(let i=1;i<n;i++){const t=i/n;if(WORLD.cell.rayBlock(g,Math.floor(x0+dx*t),Math.floor(z0+dz*t),true))return false;}return!WORLD.cell.doorHit(g,x0,z0,x1,z1);}
 function playerAimPoint(e){const p=G.player;return leaning(p)&&!coverShotClear(G,e.x,e.z,p.x,p.z)?p.eye:p;}

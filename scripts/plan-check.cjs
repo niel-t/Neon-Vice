@@ -183,6 +183,18 @@ function checkPlans() {
     const n = PLAN.shift(PLANS.motel);
     assert(Object.values(n.stages).every(S => S.bounds[0] >= 0 && S.bounds[1] >= 0) && Object.values(n.stages).some(S => S.bounds[0] === 0), 'normalised plan bounds start at 0');
     assert.deepEqual(PLAN.shift(n).stages.lot.bounds, n.stages.lot.bounds, 'normalising twice is idempotent');
+    // playable copy: compiled bounds (plan bounds +PAD) start at >= 1 m for the padded compat grid; cached per plan
+    const pl = PLAN.playable(PLANS.motel), lo = Object.values(pl.stages).map(S => S.bounds);
+    assert(Math.min(...lo.map(b => b[0])) - 0.5 < 2 && Math.min(...lo.map(b => b[1])) - 0.5 < 2, 'playable shift is minimal');
+    assert.equal(PLAN.playable(PLANS.motel), pl, 'playable is cached');
+    for (const sid of Object.keys(pl.stages)) {
+      const st = WORLD.compile(PLAN.fromPlan(pl, sid).stage), b = st.bounds, Wn = Math.ceil(b[2]) + 1, Hn = Math.ceil(b[3]) + 1;
+      assert(b[0] >= 1 && b[1] >= 1, `${sid} playable bounds ${b}`);
+      const c = PLAN.cells(st, Wn, Hn);
+      assert(c.solid.some(v => v) && c.ground.some(v => v), `${sid} compat cells have walls and ground`);
+      for (const s of st.spawns) { const i = Math.floor(s.z) * Wn + Math.floor(s.x); assert(c.ground[i], `${sid} spawn ${s.id} on ground cell`); }
+      st.panels.forEach((p, i) => { if (st.cells.slice(p.c0, p.c1).some(k => k.active && k.y0 < 1)) assert(c.solid[Math.floor((p.az + p.bz) / 2) * Wn + Math.floor((p.ax + p.bx) / 2)], `${sid} panel ${i} rastered`); });
+    }
   }
   const sps = clip.stage.portals || clip.extras.stagePortals;
   assert(sps.every(p => p.open ? Object.keys(p).length === 4 : p.seg && !('walk' in p) && !('kind' in p)), 'strict v3 stage portals');

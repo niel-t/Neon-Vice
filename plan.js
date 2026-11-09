@@ -582,9 +582,31 @@ const PLAN=(()=>{
   }
   return P;
  }
+ // the play loader's copy: shifted by whole metres so the compiled bounds (plan bounds +PAD) sit at x,z >= 1, matching
+ // the legacy grid whose map row/col k is cell k+1 (world coords == cell coords). Cached per plan object.
+ const PLAYABLE=new WeakMap();
+ function playable(plan){
+  if(PLAYABLE.has(plan))return PLAYABLE.get(plan);
+  const bs=Object.values(plan.stages).map(S=>S.bounds),need=v=>Math.max(0,Math.ceil(1+PAD-v));
+  const P=shift(plan,need(Math.min(...bs.map(b=>b[0]))),need(Math.min(...bs.map(b=>b[1]))));
+  PLAYABLE.set(plan,P);return P;
+ }
+ // compatibility raster of a compiled stage on a W x H 1 m grid (presentation/legacy-only, never authoritative for plan
+ // collision, sight or pathing): solid = a wall panel with an active cell below 1 m crosses the cell, wh = its tallest
+ // active cell top, ground = the cell centre has ground. Doors and props are left out.
+ function cells(st,GW,GH){
+  const W_=GW,H=GH,N=W_*H,solid=new Uint8Array(N),wh=new Float32Array(N),ground=new Uint8Array(N),Wd=W();
+  st.panels.forEach((p,pi)=>{let top=0,low=false;
+   for(let c=p.c0;c<p.c1;c++){const k=st.cells[c];if(k.panel===pi&&k.active){top=Math.max(top,k.y1);if(k.y0<1)low=true;}}
+   if(!low)return;const len=Math.hypot(p.bx-p.ax,p.bz-p.az),n=Math.max(1,Math.ceil(len/.25));
+   for(let s=0;s<=n;s++){const x=Math.floor(p.ax+(p.bx-p.ax)*s/n),z=Math.floor(p.az+(p.bz-p.az)*s/n);
+    if(x>=0&&z>=0&&x<W_&&z<H){const i=z*W_+x;solid[i]=1;wh[i]=Math.max(wh[i],top);}}});
+  for(let z=0;z<H;z++)for(let x=0;x<W_;x++)if(Wd.groundY(st,x+.5,z+.5)!==null)ground[z*W_+x]=1;
+  return{solid,wh,ground};
+ }
  // MISSIONS-shaped stage set: start is the stage holding the player spawn; def names the plan stage for the loader
  function stageDefs(plan){const ids=Object.keys(plan.stages),start=ids.filter(sid=>(plan.stages[sid].spawns||[]).some(s=>s.kind==='player'));
   if(start.length!==1)throw new RangeError(`plan ${plan.id}: exactly one stage needs the player spawn (found ${start.length})`);
   return{stages:ids,start:start[0],stageDefs:Object.fromEntries(ids.map(sid=>[sid,{...describe(plan,sid),def:{plan:plan.id,stage:sid}}]))};}
- return Object.freeze({version:1,derive,fromPlan,validate,compileLocated,raster,roomGraph,pathRooms,entrances,sightTest,describe,stageDefs,shift,STANCE,ROOM_KINDS,STYLES,area,inside});
+ return Object.freeze({version:1,derive,fromPlan,validate,compileLocated,raster,roomGraph,pathRooms,entrances,sightTest,describe,stageDefs,shift,playable,cells,STANCE,ROOM_KINDS,STYLES,area,inside});
 })();

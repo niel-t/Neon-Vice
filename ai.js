@@ -1,6 +1,10 @@
 'use strict';
 // Enemy perception, knowledge and behaviour. Enemies act on beliefs built from sight, sound, callouts and hits;
 // G.player is read directly only for the senses themselves (vision, proximity, footsteps) and while seen.
+/* W2f plan stages (g.plan): WORLD geometry is authoritative, the cell grid is compatibility only */
+const PL=g=>!!(g&&g.plan&&g.wst&&typeof planNav==='function');
+const mClear=(g,ax,az,bx,bz,r=0)=>PL(g)?WORLD.clear(g.wst,ax,az,bx,bz,r):WORLD.cell.moveClear(g,ax,az,bx,bz,r);
+const blk=(g,x,z)=>PL(g)?!WORLD.clear(g.wst,x,z,x,z,0):WORLD.cell.isBlock(g,Math.floor(x),Math.floor(z));
 const AI=(()=>{
  const SRC={see:{conf:1,sig:.3},step:{conf:.8,sig:.8},noise:{conf:.7,sig:1.5},call:{conf:.75,sig:1.2},hit:{conf:.6,sig:3},shot:{conf:.6,sig:1.5}};
  const TAU_C=4,SIG_RATE=2.5,SIG_MAX=8,PRED_MAX=1,GRACE=3,KEEP=6,WALL_COST=6,DOOR_COST=3;
@@ -12,7 +16,7 @@ const AI=(()=>{
   predict(b,T){const a=Math.min(belief.age(b,T),PRED_MAX);return[b.x+b.vx*a,b.z+b.vz*a];},
   accept:(old,nb,T)=>!old||nb.src==='see'||belief.conf(nb,T)>=belief.conf(old,T),
   // Movement goal: computed once per belief, prediction clamped to 1 s and to a clear straight line.
-  goal(g,b){if(b.gx===undefined){const p=belief.predict(b,b.t+PRED_MAX);const ok=(b.vx||b.vz)&&WORLD.cell.moveClear(g,b.x,b.z,p[0],p[1]);b.gx=ok?p[0]:b.x;b.gz=ok?p[1]:b.z;}return[b.gx,b.gz];}
+  goal(g,b){if(b.gx===undefined){const p=belief.predict(b,b.t+PRED_MAX);const ok=(b.vx||b.vz)&&mClear(g,b.x,b.z,p[0],p[1]);b.gx=ok?p[0]:b.x;b.gz=ok?p[1]:b.z;}return[b.gx,b.gz];}
  };
  function rng(seed){let a=seed>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};}
  function rand(e){if(!e.rng)e.rng=rng(Math.imul((typeof levelIdx==='number'?levelIdx:0)+1,0x9E3779B1)^Math.imul((e.id|0)+1,0x85EBCA77));return e.rng();}
@@ -36,13 +40,18 @@ const AI=(()=>{
   return a;}
  function costAt(a,x,z){const g=a.g,cx=Math.floor(x),cz=Math.floor(z);if(cx<0||cz<0||cx>=g.W||cz>=g.H)return Infinity;const i=cz*g.W+cx;return a.seen[i]===a.cur?a.dist[i]:Infinity;}
  /* per-target navigation fields, shared by target cell, at most BUDGET fresh BFS per frame, oldest request first */
- const nav={BUDGET:4,MAX:32,g:null,cache:new Map(),queue:[],T:NaN,budget:0,built:0,
+ const nav={BUDGET:4,MAX:32,g:null,cache:new Map(),queue:[],T:NaN,budget:0,built:0,pn:null,pc:new Map(),
+  // plan stages: WORLD.flow fields keyed by 0.5 m target tile; null while waiting for budget, false if nav fails
+  pfield(g,x,z){nav.frame(g);let n;try{n=planNav(g);}catch(err){return false;}if(nav.pn!==n){nav.pn=n;nav.pc.clear();}
+   const k=Math.floor(x*2)+','+Math.floor(z*2),c=nav.pc.get(k);if(c){c.used=nav.T;return c.f;}if(nav.budget<=0)return null;
+   if(nav.pc.size>=nav.MAX){let ok=null,ou=Infinity;for(const [kk,v] of nav.pc)if(v.used<ou){ou=v.used;ok=kk;}nav.pc.delete(ok);}
+   let f;try{f=WORLD.flow(n,[[x,z]]);}catch(err){return false;}nav.budget--;nav.built++;nav.pc.set(k,{f,used:nav.T});return f;},
   key(g,x,z){const cx=Math.floor(x),cz=Math.floor(z);if(!WORLD.cell.isBlock(g,cx,cz))return cz*g.W+cx;
    for(const [ox,oz] of NB){if(!WORLD.cell.isBlock(g,cx+ox,cz+oz))return(cz+oz)*g.W+cx+ox;}return -1;},
   build(g,k){let c=nav.cache.get(k);if(!c){if(nav.cache.size>=nav.MAX){let ok=null,ou=Infinity;for(const [kk,v] of nav.cache)if(v.used<ou){ou=v.used;ok=kk;}c=nav.cache.get(ok);nav.cache.delete(ok);}
     else c={f:new Int16Array(g.W*g.H)};nav.cache.set(k,c);}
    WORLD.cell.bfs(g,c.f,k%g.W,(k/g.W)|0);c.ver=g.navVer|0;c.used=nav.T;nav.budget--;nav.built++;return c.f;},
-  frame(g){const T=g.T||0;if(nav.g!==g){nav.g=g;nav.cache.clear();nav.queue.length=0;}if(T===nav.T)return;nav.T=T;nav.budget=nav.BUDGET;
+  frame(g){const T=g.T||0;if(nav.g!==g){nav.g=g;nav.cache.clear();nav.queue.length=0;nav.pc.clear();}if(T===nav.T)return;nav.T=T;nav.budget=nav.BUDGET;
    while(nav.budget>0&&nav.queue.length){const k=nav.queue.shift(),c=nav.cache.get(k);if(!c||c.ver!==(g.navVer|0))nav.build(g,k);}},
   // Int16Array field (fresh or awaiting rebuild), null while waiting for budget, false if no free cell near the target.
   field(g,x,z){nav.frame(g);const k=nav.key(g,x,z);if(k<0)return false;const c=nav.cache.get(k);
@@ -60,14 +69,16 @@ const AI=(()=>{
  function witness(e){const g=G;for(const q of g.enemies){if(q.alive&&q!==e&&!(q.down>0)&&q.state!=='chase'&&Math.hypot(q.x-e.x,q.z-e.z)<4&&los(q.x,q.z,e.x,e.z)){q.wary=1;e.found=1;poi(q,e.x,e.z,'body');investigate(q,e.x,e.z,1.2);}}}
  function seek(e,tx,tz,sp){const g=G,dx=tx-e.x,dz=tz-e.z,d=Math.hypot(dx,dz);if(d<.6)return{vx:0,vz:0,face:null,done:true};
   let px=tx,pz=tz;
-  if(!WORLD.cell.moveClear(g,e.x,e.z,tx,tz,Math.max(0,e.r-.02))){const f=nav.field(g,tx,tz);
+  if(!mClear(g,e.x,e.z,tx,tz,Math.max(0,e.r-.02))){if(PL(g)){const f=nav.pfield(g,tx,tz);if(f===null)return{vx:0,vz:0,face:Math.atan2(dx,dz)};
+    let s=null;try{const v=f?WORLD.dist(nav.pn,f,e.x,e.z):-1;if(v<0)return{vx:0,vz:0,face:null,stuck:true};if(v<.3)return{vx:0,vz:0,face:null,done:true};s=WORLD.step(nav.pn,f,e.x,e.z);}catch(err){nav.pc.clear();}
+    if(!s)return{vx:0,vz:0,face:null,stuck:true};px=s[0];pz=s[1];}else{const f=nav.field(g,tx,tz);
    if(f===null)return{vx:0,vz:0,face:Math.atan2(dx,dz)};
    const cx=Math.floor(e.x),cz=Math.floor(e.z),v=f?f[cz*g.W+cx]:-1;if(v<0)return{vx:0,vz:0,face:null,stuck:true};if(v===0)return{vx:0,vz:0,face:null,done:true};
-   const t=flowStep(f,e,tx,tz);px=t[0];pz=t[1];}
+   const t=flowStep(f,e,tx,tz);px=t[0];pz=t[1];}}
   const ddx=px-e.x,ddz=pz-e.z,l=Math.hypot(ddx,ddz)||1;return{vx:ddx/l*sp,vz:ddz/l*sp,face:Math.atan2(ddx,ddz)};}
  function probe(e){const g=G,s=e.bl?Math.min(4,Math.max(1.5,belief.sig(e.bl,g.T||0))):2.5,h=e.lh!==undefined?e.lh:e.a;
   for(let k=0;k<6;k++){const a=h+(rand(e)-.5)*2.6,d=s*(.5+.5*rand(e)),x=e.sx+Math.sin(a)*d,z=e.sz+Math.cos(a)*d;
-   if(WORLD.cell.isBlock(g,Math.floor(x),Math.floor(z)))continue;
+   if(blk(g,x,z))continue;
    if(Math.abs(angDiff(e.a,Math.atan2(x-e.x,z-e.z)))<visionHalfAngle(e)&&los(e.x,e.z,x,z))continue;
    return[x,z];}
   return null;}
@@ -199,7 +210,7 @@ function updateEnemy(e,dt){const g=G,p=g.player,T=g.T||0;
   case 'distract':{const c=e.cashT;if(!c||c.life<=0){e.state='patrol';break;}const ddx=c.x-e.x,ddz=c.z-e.z,dd=Math.hypot(ddx,ddz);face=Math.atan2(ddx,ddz);if(dd>0.8){tvx=ddx/dd*2.2;tvz=ddz/dd*2.2;}break;}
   case 'search':{const r=AI.search(e,dt,2.6);tvx=r.vx;tvz=r.vz;face=r.face;if(r.end&&!AI.hunt(e)){e.state=e.wary?'idle':'patrol';e.turnT=0;e.searchT=0;}break;}
   case 'chase':{
-   if(!e.weapon){let bi=null,bd=4.5;for(const it of g.items){if(it.flying)continue;const d=Math.hypot(it.x-e.x,it.z-e.z);if(d<bd&&los(e.x,e.z,it.x,it.z)&&WORLD.cell.moveClear(g,e.x,e.z,it.x,it.z)){bd=d;bi=it;}}
+   if(!e.weapon){let bi=null,bd=4.5;for(const it of g.items){if(it.flying)continue;const d=Math.hypot(it.x-e.x,it.z-e.z);if(d<bd&&los(e.x,e.z,it.x,it.z)&&mClear(g,e.x,e.z,it.x,it.z)){bd=d;bi=it;}}
     if(bi&&(dist>2.5||!see)){const ddx=bi.x-e.x,ddz=bi.z-e.z;tvx=ddx/(bd||1)*3.2;tvz=ddz/(bd||1)*3.2;face=Math.atan2(ddx,ddz);if(bd<0.5){e.weapon={type:bi.type,ammo:99};g.items.splice(g.items.indexOf(bi),1);e.react=0.5;}break;}}
    // W7: aim at the exposed lean point when the body is behind the corner
    const ap=see&&typeof playerAimPoint==='function'?playerAimPoint(e):p,aang=ap===p?ang:Math.atan2(ap.x-e.x,ap.z-e.z);
@@ -214,7 +225,7 @@ function updateEnemy(e,dt){const g=G,p=g.player,T=g.T||0;
      if(e.react<=0&&e.cd<=0&&Math.abs(angDiff(e.a,face))<0.22){e.weapon.ammo=99;fireGun(e,e.weapon,false);
       if(wd.burst){e.burst++;if(e.burst>=wd.burst){e.burst=0;e.cd=0.9;}}else if(wd.burst3){e.burst++;if(e.burst<3)e.cd=0.08;else{e.burst=0;e.cd=wd.ecd;}}}}}
    // Seen target only: the shared player field is honest while the player is in sight.
-   if(see&&tvx*dx+tvz*dz>1e-6&&!WORLD.cell.moveClear(g,e.x,e.z,p.x,p.z,Math.max(0,Math.min(e.r,p.r)-0.02))){
+   if(see&&tvx*dx+tvz*dz>1e-6&&!mClear(g,e.x,e.z,p.x,p.z,Math.max(0,Math.min(e.r,p.r)-0.02))){
     const t=flowStep(g.flow,e,p.x,p.z),sp=(tvx*dx+tvz*dz)/dist;
     if(t){const tx=t[0]-e.x,tz=t[1]-e.z,d=Math.hypot(tx,tz)||1;tvx=tx/d*sp;tvz=tz/d*sp;if(wd.melee)face=Math.atan2(tx,tz);}else{tvx=tvz=0;}
    }
