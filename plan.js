@@ -566,9 +566,25 @@ const PLAN=(()=>{
   const stairs=(S.stairs||[]).map(s=>{const o={id:s.id,to:s.to,at:[s.at[0],s.at[1]],arrive:s.arrive,r:s.r??STAIR_R};if(s.oneWay!==undefined)o.oneWay=s.oneWay;return o;});
   return{id:sid,kind:'plan',rev:(h&0x7fffffff)||1,arrivals,stairs,backdrop:[]};
  }
+ // translate every stage of a plan by one offset (stages stay mutually aligned for backdrops); the legacy compatibility grid
+ // of a playable stage needs bounds >= 0, so the loader calls shift(plan) to move the lowest bound of any stage to 0
+ function shift(plan,dx,dz){
+  if(dx===undefined){const bs=Object.values(plan.stages).map(S=>S.bounds);dx=Math.max(0,-Math.min(...bs.map(b=>b[0])));dz=Math.max(0,-Math.min(...bs.map(b=>b[1])));}
+  const P=JSON.parse(JSON.stringify(plan));if(!dx&&!dz)return P;
+  const m=p=>[snap(p[0]+dx),snap(p[1]+dz)],r4=r=>[snap(r[0]+dx),snap(r[1]+dz),snap(r[2]+dx),snap(r[3]+dz)];
+  for(const S of Object.values(P.stages)){
+   S.bounds=r4(S.bounds);
+   for(const r of S.rooms||[]){if(r.rect)r.rect=r4(r.rect);if(r.poly)r.poly=r.poly.map(m);}
+   for(const k of ['doors','windows','spawns','stairs','obj','stash','items','props'])for(const o of S[k]||[]){if(o.at)o.at=m(o.at);if(o.poly)o.poly=o.poly.map(m);}
+   for(const g of S.ground||[])g.poly=g.poly.map(m);
+   for(const w of S.walls||[])w.path=Array.isArray(w.path)?w.path.map(m):{...w.path,arc:[snap(w.path.arc[0]+dx),snap(w.path.arc[1]+dz),...w.path.arc.slice(2)]};
+   for(const s of S.targets?.sight||[])for(const k of ['from','to'])if(Array.isArray(s[k]))s[k]=m(s[k]);
+  }
+  return P;
+ }
  // MISSIONS-shaped stage set: start is the stage holding the player spawn; def names the plan stage for the loader
  function stageDefs(plan){const ids=Object.keys(plan.stages),start=ids.filter(sid=>(plan.stages[sid].spawns||[]).some(s=>s.kind==='player'));
   if(start.length!==1)throw new RangeError(`plan ${plan.id}: exactly one stage needs the player spawn (found ${start.length})`);
   return{stages:ids,start:start[0],stageDefs:Object.fromEntries(ids.map(sid=>[sid,{...describe(plan,sid),def:{plan:plan.id,stage:sid}}]))};}
- return Object.freeze({version:1,derive,fromPlan,validate,compileLocated,raster,roomGraph,pathRooms,entrances,sightTest,describe,stageDefs,STANCE,ROOM_KINDS,STYLES,area,inside});
+ return Object.freeze({version:1,derive,fromPlan,validate,compileLocated,raster,roomGraph,pathRooms,entrances,sightTest,describe,stageDefs,shift,STANCE,ROOM_KINDS,STYLES,area,inside});
 })();

@@ -162,6 +162,28 @@ function checkPlans() {
     assert.notEqual(PLAN.describe(m, 'lot').rev, d.rev, 'stage edit bumps rev');
     assert.equal(PLAN.describe(m, 'f2').rev, PLAN.describe(PLANS.motel, 'f2').rev, 'other stage rev unchanged');
   }
+  {
+    // PLAN.shift moves every coordinate: compiled geometry, rooms, spawns and extras all translate exactly
+    const near = (a, b, dx, dz, what) => assert(Math.abs(a[0] + dx - b[0]) < 1e-6 && Math.abs(a[1] + dz - b[1]) < 1e-6, `${what}: ${a} -> ${b}`);
+    for (const [pid, p] of Object.entries(PLANS)) {
+      const q = PLAN.shift(p, 2, 1);
+      assert.equal(PLAN.validate(q).errors.length, 0, `${pid} shifted validates`);
+      for (const sid of Object.keys(p.stages)) {
+        const A = PLAN.fromPlan(p, sid), B = PLAN.fromPlan(q, sid), a = WORLD.compile(A.stage), b = WORLD.compile(B.stage);
+        assert.equal(a.panels.length, b.panels.length, `${pid}.${sid} panel count`);
+        a.panels.forEach((pa, i) => { near([pa.ax, pa.az], [b.panels[i].ax, b.panels[i].az], 2, 1, `${sid} panel ${i}`); pa.poly.forEach((v, k) => near(v, b.panels[i].poly[k], 2, 1, `${sid} panel poly`)); });
+        a.props.forEach((pa, i) => pa.poly.forEach((v, k) => near(v, b.props[i].poly[k], 2, 1, `${sid} prop ${pa.id}`)));
+        a.rooms.forEach((r, i) => r.poly.forEach((v, k) => near(v, b.rooms[i].poly[k], 2, 1, `${sid} room ${r.id}`)));
+        a.doors.forEach((d, i) => near([d.hx, d.hz], [b.doors[i].hx, b.doors[i].hz], 2, 1, `${sid} door ${d.id}`));
+        A.stage.spawns.forEach((s, i) => near([s.x, s.z], [B.stage.spawns[i].x, B.stage.spawns[i].z], 2, 1, `${sid} spawn ${s.id}`));
+        for (const k of ['stairs', 'obj', 'stash', 'items']) A.extras[k].forEach((o, i) => near(o.at, B.extras[k][i].at, 2, 1, `${sid} ${k} ${o.id}`));
+        assert.deepEqual(A.stage.rooms.map(r => r.id), B.stage.rooms.map(r => r.id), `${sid} same room pieces`);
+      }
+    }
+    const n = PLAN.shift(PLANS.motel);
+    assert(Object.values(n.stages).every(S => S.bounds[0] >= 0 && S.bounds[1] >= 0) && Object.values(n.stages).some(S => S.bounds[0] === 0), 'normalised plan bounds start at 0');
+    assert.deepEqual(PLAN.shift(n).stages.lot.bounds, n.stages.lot.bounds, 'normalising twice is idempotent');
+  }
   const sps = clip.stage.portals || clip.extras.stagePortals;
   assert(sps.every(p => p.open ? Object.keys(p).length === 4 : p.seg && !('walk' in p) && !('kind' in p)), 'strict v3 stage portals');
   const orient = ok(tiny(s => { s.rooms[1].part = 'stud_steel_gyp2'; s.rooms.push({ id: 'a_c', in: 'a', kind: 'closet', rect: [2.5, 2.5, 4, 4] }); s.doors.push({ id: 'd_c', rooms: ['a', 'a_c'], at: [3.25, 4], w: 0.8, kind: 'door_hollow' }); return s; }), 'orient').outs.s.out;
