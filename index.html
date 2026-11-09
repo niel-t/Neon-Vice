@@ -1246,28 +1246,30 @@ function balCrossings(g,b,rem){const st=wst(g);let S=rem+1.5;
    if(grp&&grp.key===key&&d0<=grp.d1+0.02){grp.d1=Math.max(grp.d1,d1);continue;}grp={t:'w',key,build,r,d:d0,d1};ev.push(grp);}
   if(grp&&grp.d<=rem&&grp.d1>=S-0.01&&S<rem+40){S+=8;continue;}return ev;}}
 /* one straight leg: returns distance still to travel after a direction change (deflect/ricochet), else 0 */
+/* W8 shot evidence: player rounds alarm witnesses at impacts, exits, near misses and ally hits, even suppressed */
+const shotEv=(b,x,z,k,s)=>{if(b.own==='p'&&typeof AI!=='undefined'&&AI.shot)AI.shot(x,z,b.dx,b.dz,k,s);};
 function bulletLeg(b,rem){const g=G,p=g.player,ax=b.x,az=b.z,ev=balCrossings(g,b,rem);
  const hitR=(x,z,rr)=>{const t=(x-ax)*b.dx+(z-az)*b.dz,px=ax+b.dx*t-x,pz=az+b.dz*t-z,q=rr*rr-px*px-pz*pz;if(q<0)return null;const d=Math.max(0,t-Math.sqrt(q));return d<=rem&&t+Math.sqrt(q)>=0?d:null;};
  if(b.own==='p'){for(const e of g.enemies){if(!e.alive||b.hit.includes(e))continue;const d=hitR(e.x,e.z,e.r+0.07);if(d!==null)ev.push({t:'e',e,d});}}
  else if(p.alive){let d=null;for(const h of typeof playerHitPoints==='function'?playerHitPoints(p):[p]){const dh=hitR(h.x,h.z,h.r+0.04);if(dh!==null&&(d===null||dh<d))d=dh;}if(d!==null)ev.push({t:'p',d});}
  ev.sort((a,c)=>a.d-c.d);
- const moveTo=d=>{if(b.own==='p')for(let s=0.2;s<d;s+=0.2){b.x=ax+b.dx*s;b.z=az+b.dz*s;shootCorpse(b);}b.x=ax+b.dx*d;b.z=az+b.dz*d;if(b.own==='p')shootCorpse(b);};
+ const moveTo=d=>{if(b.own==='p'&&typeof AI!=='undefined'&&AI.whiz)AI.whiz(b,ax,az,d);if(b.own==='p')for(let s=0.2;s<d;s+=0.2){b.x=ax+b.dx*s;b.z=az+b.dz*s;shootCorpse(b);}b.x=ax+b.dx*d;b.z=az+b.dz*d;if(b.own==='p')shootCorpse(b);};
  // low cover is fired over when the shooter or the standing target hugs it (W7 stance); crouched targets behind it are covered
  const near=(x,z,v)=>Math.min(Math.hypot(x-ax-b.dx*v.d,z-az-b.dz*v.d),Math.hypot(x-ax-b.dx*v.d1,z-az-b.dz*v.d1))<1.2,
   onLine=(x,z,rr)=>{const t=(x-ax)*b.dx+(z-az)*b.dz;return t>=0&&Math.hypot(ax+b.dx*t-x,az+b.dz*t-z)<rr;},
   hugs=v=>near(b.sx,b.sz,v)&&b.st!=='crouch'||(b.own==='p'?g.enemies.some(e=>e.alive&&e.stance!=='crouch'&&!b.hit.includes(e)&&onLine(e.x,e.z,e.r+0.07)&&near(e.x,e.z,v)):p.alive&&p.stance!=='crouch'&&onLine(p.x,p.z,p.r+0.04)&&near(p.x,p.z,v));
  // after a crossing, overlapping constructions (an open leaf over a wall corner) are crossed before leaving
- let ex=null;const leave=()=>{moveTo(ex.d1+0.01);if(!ex.B.pane)balImpact(b.x,b.z,-ex.nx,-ex.nz,ex.look,ex.r.kind,true);
+ let ex=null;const leave=()=>{moveTo(ex.d1+0.01);if(!ex.B.pane)balImpact(b.x,b.z,-ex.nx,-ex.nz,ex.look,ex.r.kind,true);shotEv(b,b.x,b.z,'exit');
   const a=rnd(-ex.look.defl,ex.look.defl),c=Math.cos(a),s=Math.sin(a),dx=b.dx*c-b.dz*s;b.dz=b.dx*s+b.dz*c;b.dx=dx;return Math.max(0,rem-ex.d1-0.01);};
  for(const v of ev){if(ex&&v.d>=ex.d1)return leave();if(v.d>rem&&!ex)break;
-  if(v.t==='e'){hitEnemy(v.e,b.type,[b.dx,b.dz],BAL.damage(b.p,b.e));b.hit.push(v.e);b.e-=BAL.BODY_J;if(b.e<BAL.EMIN){moveTo(v.d);b.life=0;return 0;}continue;}
+  if(v.t==='e'){hitEnemy(v.e,b.type,[b.dx,b.dz],BAL.damage(b.p,b.e));b.hit.push(v.e);shotEv(b,v.e.x,v.e.z,'ally',v.e);b.e-=BAL.BODY_J;if(b.e<BAL.EMIN){moveTo(v.d);b.life=0;return 0;}continue;}
   if(v.t==='p'){moveTo(v.d);hurtPlayer([b.dx,b.dz],b.type,BAL.damage(b.p,b.e),{p:b.p,e:b.e});b.life=0;return 0;}
   const r=v.r;if(r.kind==='prop'&&!TALL_FURN[g.furn[r.ref]]&&hugs(v))continue;
   const look=balLook(v.build),B=WORLD.materials.BUILD[v.build];let nx=r.nx,nz=r.nz;if(nx*b.dx+nz*b.dz>0){nx=-nx;nz=-nz;}
   moveTo(v.d);
-  if(look.hard&&r.cos<0.26&&!B.pane){const k=2*(b.dx*nx+b.dz*nz);b.dx-=k*nx;b.dz-=k*nz;b.e*=0.5;b.x+=nx*0.02;b.z+=nz*0.02;sparks(b.x,0.74,b.z);if(Math.random()<0.5)sfx('ric',0.4);
+  if(look.hard&&r.cos<0.26&&!B.pane){shotEv(b,b.x,b.z,'impact');const k=2*(b.dx*nx+b.dz*nz);b.dx-=k*nx;b.dz-=k*nz;b.e*=0.5;b.x+=nx*0.02;b.z+=nz*0.02;sparks(b.x,0.74,b.z);if(Math.random()<0.5)sfx('ric',0.4);
    if(b.e<BAL.EMIN)b.life=0;return Math.max(0,rem-v.d);}
-  if(B.pane&&r.kind==='wall')hitGlass(r.ref%g.W,(r.ref/g.W)|0);else balImpact(b.x,b.z,nx,nz,look,r.kind,false);
+  if(B.pane&&r.kind==='wall')hitGlass(r.ref%g.W,(r.ref/g.W)|0);else balImpact(b.x,b.z,nx,nz,look,r.kind,false);shotEv(b,b.x,b.z,'impact');
   if(b.own==='e'&&!BAL_EPEN&&!B.pane){b.life=0;return 0;}
   // legacy cells are 1 m: path through merged cells sets the obliquity (a run along a wall costs its length); doors keep the face angle
   const cos=r.kind==='door'?r.cos:1/Math.max(1,v.d1-v.d),alt=!!(B.alt&&hsh(Math.floor(r.x*4),Math.floor(r.z*4),53)<B.alt.p);
