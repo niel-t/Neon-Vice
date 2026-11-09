@@ -1123,8 +1123,8 @@ function update(dt){const g=G;if(g.stageManaged&&(state!=='play'||stageStairs(g)
  if(g.kc>0){g.kc-=dt;dt*=0.3;}if(g.cpulse>0)g.cpulse=Math.max(0,g.cpulse-dt*4);
  g.T+=dt;
  {const tgt=g.combo>=6?3:g.combo>=4?2:g.combo>=2?1:0;if(tgt>g.lv){g.lv=tgt;g.lvT=2;}else if(g.lv>tgt){g.lvT-=dt;if(g.lvT<=0){g.lv--;g.lvT=1.2;}}}
- if(g.freeze>0){g.freeze-=dt;return;}
- if(g.cameo){updateCameo(dt);updateFX(dt);updateCamera(dt);return;}
+ if(g.freeze>0){g.freeze-=dt;fogUpdate(g,dt);return;}
+ if(g.cameo){updateCameo(dt);updateFX(dt);updateCamera(dt);fogUpdate(g,dt);return;}
  if(g.fin){const fe=g.fin.e;updateFin(dt);updateFX(dt);bodyPhysics();for(const e of g.enemies)if(!e.alive)slideBody(e,dt);const k=1-Math.exp(-dt*3);g.cam.x+=(fe.x-g.cam.x)*k;g.cam.z+=(fe.z-g.cam.z)*k;return;}
  if(g.player.alive&&!g.done)g.time+=dt;
  if(g.comboT>0){g.comboT-=dt;if(g.comboT<=0)g.combo=0;}
