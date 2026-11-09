@@ -147,6 +147,21 @@ function checkPlans() {
     assert(!PLAN.validate(m).errors.some(e => /return stair/.test(e)), 'oneWay stairs need no pair');
     m.stages.f2.stairs.forEach(s => delete s.oneWay); bad(m, /no return stair/, 'unpaired stair');
   }
+  {
+    // stageRun descriptor adapter: real WORLD.stageRun accepts every plan's stage set; rev is stable and content-sensitive
+    for (const [pid, p] of Object.entries(PLANS)) {
+      const m = PLAN.stageDefs(p);
+      if (WORLD.stageRun) WORLD.stageRun({ id: pid, stages: m.stages, start: m.start }, sid => { const { def, ...d } = m.stageDefs[sid]; return d; });
+      for (const sid of m.stages) assert.equal(PLAN.describe(p, sid).rev, PLAN.describe(JSON.parse(JSON.stringify(p)), sid).rev, `${pid}.${sid} rev deterministic`);
+    }
+    const m = JSON.parse(JSON.stringify(PLANS.motel)), d = PLAN.describe(m, 'lot');
+    assert.equal(PLAN.stageDefs(m).start, 'lot', 'motel starts on the lot');
+    assert.deepEqual(Object.keys(d.arrivals).sort(), ['arr_e', 'arr_w'], 'arrivals from arrive spawns');
+    assert(d.stairs.every(s => s.r === 0.65 && !('room' in s) && !('rise' in s)), 'stairs keep id/to/at/arrive/r only');
+    m.stages.lot.spawns[0].at = [m.stages.lot.spawns[0].at[0] + 0.1, m.stages.lot.spawns[0].at[1]];
+    assert.notEqual(PLAN.describe(m, 'lot').rev, d.rev, 'stage edit bumps rev');
+    assert.equal(PLAN.describe(m, 'f2').rev, PLAN.describe(PLANS.motel, 'f2').rev, 'other stage rev unchanged');
+  }
   const sps = clip.stage.portals || clip.extras.stagePortals;
   assert(sps.every(p => p.open ? Object.keys(p).length === 4 : p.seg && !('walk' in p) && !('kind' in p)), 'strict v3 stage portals');
   const orient = ok(tiny(s => { s.rooms[1].part = 'stud_steel_gyp2'; s.rooms.push({ id: 'a_c', in: 'a', kind: 'closet', rect: [2.5, 2.5, 4, 4] }); s.doors.push({ id: 'd_c', rooms: ['a', 'a_c'], at: [3.25, 4], w: 0.8, kind: 'door_hollow' }); return s; }), 'orient').outs.s.out;

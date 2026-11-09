@@ -554,5 +554,21 @@ const PLAN=(()=>{
   }
   report.outs=outs;return report;
  }
- return Object.freeze({version:1,derive,fromPlan,validate,compileLocated,raster,roomGraph,pathRooms,entrances,sightTest,STANCE,ROOM_KINDS,STYLES,area,inside});
+ // stageRun v1 descriptor adapter (agreed with W1): rev = deterministic positive 31-bit hash of the plan stage plus
+ // plan-level fields; arrivals from 'arrive' spawns; stairs keep id/to/at/arrive/r/oneWay
+ function stableJSON(v){if(Array.isArray(v))return'['+v.map(stableJSON).join(',')+']';
+  if(v&&typeof v==='object')return'{'+Object.keys(v).sort().filter(k=>v[k]!==undefined).map(k=>JSON.stringify(k)+':'+stableJSON(v[k])).join(',')+'}';return JSON.stringify(v);}
+ function describe(plan,sid){
+  const S=plan&&plan.stages&&plan.stages[sid];if(!S)throw new RangeError(`plan ${plan&&plan.id}: no stage ${sid}`);
+  const {stages,...top}=plan,src=stableJSON({top,stage:S});let h=0x811c9dc5;
+  for(let i=0;i<src.length;i++){h^=src.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0;}
+  const arrivals={};for(const s of S.spawns||[])if(s.kind==='arrive')arrivals[s.id]=s.a===undefined?{at:[s.at[0],s.at[1]]}:{at:[s.at[0],s.at[1]],dir:s.a};
+  const stairs=(S.stairs||[]).map(s=>{const o={id:s.id,to:s.to,at:[s.at[0],s.at[1]],arrive:s.arrive,r:s.r??STAIR_R};if(s.oneWay!==undefined)o.oneWay=s.oneWay;return o;});
+  return{id:sid,kind:'plan',rev:(h&0x7fffffff)||1,arrivals,stairs,backdrop:[]};
+ }
+ // MISSIONS-shaped stage set: start is the stage holding the player spawn; def names the plan stage for the loader
+ function stageDefs(plan){const ids=Object.keys(plan.stages),start=ids.filter(sid=>(plan.stages[sid].spawns||[]).some(s=>s.kind==='player'));
+  if(start.length!==1)throw new RangeError(`plan ${plan.id}: exactly one stage needs the player spawn (found ${start.length})`);
+  return{stages:ids,start:start[0],stageDefs:Object.fromEntries(ids.map(sid=>[sid,{...describe(plan,sid),def:{plan:plan.id,stage:sid}}]))};}
+ return Object.freeze({version:1,derive,fromPlan,validate,compileLocated,raster,roomGraph,pathRooms,entrances,sightTest,describe,stageDefs,STANCE,ROOM_KINDS,STYLES,area,inside});
 })();
