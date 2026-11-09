@@ -62,6 +62,7 @@ function expectedMap(def, data) {
 function check() {
   require('./world-check.cjs').checkWorld();
   require('./plan-check.cjs').checkPlans();
+  require('./decor-check.cjs').checkDecorKits();
   require('./mesh-check.cjs').checkMesh();
   require('./ballistics-check.cjs').checkBallistics();
   require('./missions-check.cjs').checkMissions();

@@ -64,11 +64,11 @@ const DECOR=(()=>{
  I('hotplate_2',[.5,.3,.1],'top','out',0,0,'motel',{on:['counter_run','folding_table']});
  I('microwave',[.5,.38,.3],'top','out',0,0,'all',{on:['counter_run']});
  I('wall_phone',[.1,.08,.22],'mount','out',0,0,'all',{y:1.4});
- I('wc',[.4,.7,.75],'wall','out',0,.6,'all',{side:.4});
+ I('wc',[.4,.7,.75],'wall','out',0,.6,'all',{side:.2,share:['basin_pedestal','vanity']});
  I('urinal',[.4,.35,.6],'wall','out',0,.6,'commercial,deco',{y:.6});
- I('basin_pedestal',[.55,.45,.85],'wall','out',0,.6,'motel');
+ I('basin_pedestal',[.55,.45,.85],'wall','out',0,.6,'motel',{share:['wc']});
  I('vanity',[.9,.55,.85],'wall','out','counter_cabinet/waist',.75,'all');
- I('tub',[1.52,.76,.5],'corner','out','steel_3mm/waist',.75,'all');
+ I('tub',[1.52,.76,.5],'corner','out','steel_3mm/waist',.75,'all',{share:['wc','basin_pedestal','vanity']});
  I('shower_stall',[.9,.9,2],'corner','out',0,.75,'all');
  I('mirror_cabinet',[.6,.12,.75],'mount','out',0,0,'all',{y:1.5});
  I('towel_rail',[.6,.1,.1],'mount','out',0,0,'all',{y:1.2});
@@ -211,7 +211,7 @@ const DECOR=(()=>{
  const K=(kind,styles,kit)=>{kits[kind]??={};for(const s of styles==='all'?STYLES:styles.split(','))kits[kind][s]=kit;};
  const bedSizes={motel:[['bed_double',2],['bed_queen',1],['bed_double',1],['bed_twin',1]],high_end:[['bed_king_platform',1],['bed_queen',1],['bed_double',1],['bed_twin',1]],
   marine:[['bed_queen',1],['bed_double',1],['bed_twin',1]],commercial:[['bed_twin',2],['bed_twin',1]]};
- K('bedroom','motel',{req:[{g:'bed',beds:bedSizes.motel},{i:'dresser',top:'tv_crt'},{i:'ac_sleeve',under:'window'}],
+ K('bedroom','motel',{req:[{i:'ac_sleeve',under:'window'},{g:'bed',beds:bedSizes.motel},{i:'dresser',top:'tv_crt',alt:['tv_console']}],
   opt:[['wardrobe',2],['luggage_rack',2],['armchair',1],[{g:'dine',table:'dining_table_4',chairs:2},1],['bags_luggage',2]],cap:.35,scatter:.5,art:[.25,2],min:9});
  K('bedroom','high_end',{req:[{g:'bed',beds:bedSizes.high_end},'wardrobe_mirror'],
   opt:[[{i:'bench_bed_end',anchor:'bed'},2],[{i:'armchair',n:2},3],['side_table',2],['palm_pot',2],['rug',3],['tv_console',1]],cap:.3,scatter:.3,art:[.15,2],min:12});
@@ -229,7 +229,7 @@ const DECOR=(()=>{
  for(const s of ['commercial','deco'])kits.bath[s]={...kits.bath[s],uses:{private:{},public:bathPublic}};
  K('closet','all',{req:[{i:'wardrobe',wall:'longest'}],opt:[['dresser',2],['bags_luggage',2],[{row:'shelving_steel',use:'coat'},2]],cap:.45,scatter:.4,art:[.1,1],min:2});
  kits.closet.high_end={...kits.closet.high_end,req:[{i:'wardrobe_mirror',wall:'longest'}]};
- K('reception','all',{req:[{i:'reception_desk',face:'door'}],
+ K('reception','all',{req:[{i:'reception_desk',face:'door',unless:/counter|desk|reception/}],
   opt:[[{g:'sofa_tv',tv:false,sofa:'sofa_3'},2],['palm_pot',2],[{i:'bell_ledge',style:'motel'},2],['cigarette_machine',1],[{i:'vending_cola',style:'motel'},1]],cap:.25,scatter:.3,art:[.15,3],min:8});
  K('lounge','deco,high_end',{req:[{g:'booth'}],opt:[[{g:'bar',minA:25},2],[{rep:'cocktail_table',max:4},3],['palm_pot',2],['poker_table',1]],cap:.3,scatter:.2,art:[.15,3],min:12});
  K('lounge','commercial',{req:[{g:'sofa_tv',tv:false,sofa:'sofa_3'}],opt:[['armchair',2],['vending_cola',2],[{i:'gold_disc',use:'studio'},3],[{i:'poker_table',use:'arcade'},3]],
@@ -265,7 +265,7 @@ const DECOR=(()=>{
  K('lot','all',{req:[{g:'car'}],opt:[[{i:'light_pole',n:2},2],['dumpster',1],['trash_can',1],['litter',2]],cap:.3,scatter:.2,art:[0,0],min:0});
  K('street','all',{req:[],opt:[['newspaper_box',2],['payphone',1],['bus_bench',1],['fire_hydrant',2],['trash_can',2],['palm_ground',2]],cap:.05,scatter:.2,art:[0,0],min:0});
  K('road','all',{req:[{g:'parked'}],opt:[],cap:.2,scatter:0,art:[0,0],min:0});
- K('alley','all',{req:[{i:'dumpster',per:{len:25}}],opt:[['drum_55',2],['crate_stack',2],['trash_can',2],['litter',3],['boxes_cardboard',2]],cap:.15,scatter:.6,art:[0,0],min:0});
+ K('alley','all',{req:[{i:'dumpster',per:{len:25},alt:['trash_can','drum_55']}],opt:[['drum_55',2],['crate_stack',2],['trash_can',2],['litter',3],['boxes_cardboard',2]],cap:.15,scatter:.6,art:[0,0],min:0});
  K('yard','commercial,marine',{req:[],opt:[['pallet',3],['drum_55',2],['crate_stack',2],['van_parked',1],[{i:'boat_trailer',style:'marine'},2],['hand_truck',1]],cap:.25,scatter:.4,art:[0,0],min:0});
  K('pier','marine',{req:[{edge:'bollard_cleat',pitch:3},{edge:'pedestal_power',pitch:6}],opt:[[{edge:'dock_box',pitch:6},3],['rope_coil',2],['life_ring',1]],cap:.05,scatter:.2,art:[0,0],min:0});
  K('planter','all',{req:[{i:'palm_ground',per:{m2:12}}],opt:[[{i:'shrub',n:[1,3]},3]],cap:1,scatter:0,art:[0,0],min:0});
@@ -299,10 +299,13 @@ const DECOR=(()=>{
  const rect=(cx,cz,w,d,rot)=>{const c=Math.cos(rot),s=Math.sin(rot);return[[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>{const u=a*w/2,v=b*d/2;return[cx+u*c-v*s,cz+u*s+v*c];});};
  const axesOf=p=>p.map((a,i)=>{const b=p[(i+1)%p.length];return[a[1]-b[1],b[0]-a[0]];});
  const proj=(p,[ax,az])=>{let lo=Infinity,hi=-Infinity;for(const [x,z] of p){const d=x*ax+z*az;if(d<lo)lo=d;if(d>hi)hi=d;}return[lo,hi];};
- const overlap=(p,q,eps=1e-4)=>{for(const ax of [...axesOf(p),...axesOf(q)]){const l=Math.hypot(ax[0],ax[1]);if(l<1e-9)continue;const n=[ax[0]/l,ax[1]/l];
+ const BB=new WeakMap(),bb=p=>{let b=BB.get(p);if(!b){b=[Infinity,Infinity,-Infinity,-Infinity];for(const [x,z] of p){if(x<b[0])b[0]=x;if(z<b[1])b[1]=z;if(x>b[2])b[2]=x;if(z>b[3])b[3]=z;}BB.set(p,b);}return b;};
+ const bbGap=(p,q)=>{const a=bb(p),b=bb(q);return Math.hypot(Math.max(0,a[0]-b[2],b[0]-a[2]),Math.max(0,a[1]-b[3],b[1]-a[3]));};
+ const overlap=(p,q,eps=1e-4)=>{const a=bb(p),b=bb(q);if(a[2]<=b[0]+eps||b[2]<=a[0]+eps||a[3]<=b[1]+eps||b[3]<=a[1]+eps)return false;for(const ax of [...axesOf(p),...axesOf(q)]){const l=Math.hypot(ax[0],ax[1]);if(l<1e-9)continue;const n=[ax[0]/l,ax[1]/l];
   const [a0,a1]=proj(p,n),[b0,b1]=proj(q,n);if(a1<=b0+eps||b1<=a0+eps)return false;}return true;};
  const polyD=(p,q)=>{if(overlap(p,q,0))return 0;let m=Infinity;for(let i=0;i<p.length;i++)for(const x of q)m=Math.min(m,segD(x,p[i],p[(i+1)%p.length]));
   for(let i=0;i<q.length;i++)for(const x of p)m=Math.min(m,segD(x,q[i],q[(i+1)%q.length]));return m;};
+ const near=(p,q,lim)=>bbGap(p,q)<lim;
  const ptPolyD=(pt,p)=>{if(inPoly(p,pt))return 0;let m=Infinity;for(let i=0;i<p.length;i++)m=Math.min(m,segD(pt,p[i],p[(i+1)%p.length]));return m;};
  const shrink=(p,k)=>{const c=centroid(p);return p.map(([x,z])=>{const dx=c[0]-x,dz=c[1]-z,l=Math.hypot(dx,dz)||1;return[x+dx/l*k,z+dz/l*k];});};
  const rotFor=n=>Math.atan2(-n[0],n[1]); // rot whose front (-sin rot, cos rot) equals n
@@ -322,7 +325,7 @@ const DECOR=(()=>{
   for(const e of edges){
    for(const q of e.open){const sc=(q.s0+q.s1)/2,w=q.s1-q.s0;
     if(q.kind==='window'){const d=.6+e.thick/2,c=at(e,sc,d/2);windows.push({poly:rect(c[0],c[1],w,d,rotFor(e.n)),sill:q.y0});}
-    else{const d=(q.exit||e.ext?2:1.2)+e.thick/2,c=at(e,sc,d/2);zones.push(rect(c[0],c[1],w+.6,d,rotFor(e.n)));}}
+    else{const d=(q.exit||e.ext?2:A<6&&(kind==='bath'||kind==='closet')?.8:1.2)+e.thick/2,c=at(e,sc,d/2);zones.push(rect(c[0],c[1],w+.6,d,rotFor(e.n)));}}
    if(!e.wall&&!ext&&e.L<=3.2&&e.L>.3){const c=at(e,e.L/2,.3);zones.push(rect(c[0],c[1],e.L,.6,rotFor(e.n)));}}
   const R={room,id:room.id,kind,style:room.style,use:room.use,poly,A,H,roof:room.roof??!ext,ext,edges,at,zones,windows,
    reserved:(room.reserved??o.reserved??[]).filter(q=>ptPolyD(q.at,poly)<(q.r??.6)+.5).map(q=>({at:q.at,r:q.r??.6})),
@@ -340,38 +343,40 @@ const DECOR=(()=>{
   const segs=[];for(const e of R.edges){if(!e.wall)continue;let s=0;
    for(const q of e.open.filter(q=>q.kind!=='window').sort((a,b)=>a.s0-b.s0)){if(q.s0>s)segs.push([e,s,q.s0]);s=Math.max(s,q.s1);}if(s<e.L)segs.push([e,s,e.L]);}
   const cell=(i,j)=>[x0+i*st,z0+j*st];
-  for(let j=0;j<nz;j++)for(let i=0;i<nx;i++){const c=cell(i,j);if(!inPoly(R.poly,c)){base[j*nx+i]=1;continue;}
-   for(const [e,s0,s1] of segs)if(segD(c,R.at(e,s0,0),R.at(e,s1,0))<r+e.thick/2){base[j*nx+i]=1;break;}}
+  for(let j=0;j<nz;j++)for(let i=0;i<nx;i++)if(!inPoly(R.poly,cell(i,j)))base[j*nx+i]=1;
+  R.nav={x0,z0,st,nx,nz,cell};for(const [e,s0,s1] of segs)navPaint(R,base,[R.at(e,s0,0),R.at(e,s1,0)],r+e.thick/2);
   const pts=[];for(const e of R.edges){for(const q of e.open)if(q.kind!=='window')pts.push(R.at(e,(q.s0+q.s1)/2,.5+e.thick/2));
    if(!e.wall)for(let s=Math.min(1.5,e.L/2);s<e.L;s+=3)pts.push(R.at(e,s,.5));}
   for(const q of R.reserved)pts.push(q.at);
-  const idx=([x,z])=>{const i=Math.round((x-x0)/st),j=Math.round((z-z0)/st);let best=-1,bd=Infinity;
-   for(let dj=-3;dj<=3;dj++)for(let di=-3;di<=3;di++){const a=i+di,b=j+dj;if(a<0||b<0||a>=nx||b>=nz||base[b*nx+a])continue;const d=di*di+dj*dj;if(d<bd){bd=d;best=b*nx+a;}}return best;};
-  const probes=[...new Set(pts.map(idx).filter(k=>k>=0))];
-  R.nav={x0,z0,st,nx,nz,base,probes,cell};
-  const lab=navLabel(R,base);const groups=new Map();for(const p of probes){const l=lab[p];if(!groups.has(l))groups.set(l,[]);groups.get(l).push(p);}
+  const idx=([x,z],G)=>{const i=Math.round((x-x0)/st),j=Math.round((z-z0)/st);let best=-1,bd=Infinity;
+   for(let dj=-3;dj<=3;dj++)for(let di=-3;di<=3;di++){const a=i+di,b=j+dj;if(a<0||b<0||a>=nx||b>=nz||G[b*nx+a])continue;const d=di*di+dj*dj;if(d<bd){bd=d;best=b*nx+a;}}return best;};
+  R.nav={x0,z0,st,nx,nz,base,cell};const cur=R.nav.cur=base.slice();for(const m of R.floor)if(m.solid)navPaint(R,cur,m.poly,r);
+  const probes=R.nav.probes=[...new Set(pts.map(p=>idx(p,cur)).filter(k=>k>=0))];
+  const lab=navLabel(R,cur);const groups=new Map();for(const p of probes){const l=lab[p];if(!groups.has(l))groups.set(l,[]);groups.get(l).push(p);}
   R.nav.groups=[...groups.values()].filter(g=>g.length>1);};
  const navLabel=(R,g)=>{const {nx,nz,probes}=R.nav,lab=new Int32Array(nx*nz).fill(-1);let L=0;
   for(const p of probes){if(g[p]||lab[p]>=0)continue;const q=[p];lab[p]=L;
    while(q.length){const k=q.pop(),i=k%nx,j=(k-i)/nx;
     for(const [a,b] of [[i+1,j],[i-1,j],[i,j+1],[i,j-1]]){if(a<0||b<0||a>=nx||b>=nz)continue;const kk=b*nx+a;if(g[kk]||lab[kk]>=0)continue;lab[kk]=L;q.push(kk);}}L++;}
   return lab;};
- const navPaint=(R,g,poly,r)=>{const {x0,z0,st,nx,nz,cell}=R.nav;let a0=Infinity,b0=Infinity,a1=-Infinity,b1=-Infinity;
+ const navPaint=(R,g,poly,r)=>{const {x0,z0,st,nx,nz,cell}=R.nav;const D=poly.length===2?(c=>segD(c,poly[0],poly[1])):(c=>ptPolyD(c,poly));let a0=Infinity,b0=Infinity,a1=-Infinity,b1=-Infinity;
   for(const [x,z] of poly){a0=Math.min(a0,x);b0=Math.min(b0,z);a1=Math.max(a1,x);b1=Math.max(b1,z);}
   for(let j=Math.max(0,Math.floor((b0-r-z0)/st));j<=Math.min(nz-1,Math.ceil((b1+r-z0)/st));j++)
-   for(let i=Math.max(0,Math.floor((a0-r-x0)/st));i<=Math.min(nx-1,Math.ceil((a1+r-x0)/st));i++)if(!g[j*nx+i]&&ptPolyD(cell(i,j),poly)<r)g[j*nx+i]=1;};
+   for(let i=Math.max(0,Math.floor((a0-r-x0)/st));i<=Math.min(nx-1,Math.ceil((a1+r-x0)/st));i++)if(!g[j*nx+i]&&D(cell(i,j))<r)g[j*nx+i]=1;};
  const navBlocks=(R,m)=>m.solid||R.kind==='circulation'&&!m.it.rug&&!m.it.scatter;
- const navOK=(R,extra)=>{const n=R.nav;if(!n.probes.length)return true;const g=n.base.slice(),r=R.radius;
-  for(const m of [...R.floor,...extra])if(navBlocks(R,m))navPaint(R,g,m.poly,r);
+ // incremental: R.nav.cur holds everything committed; returns the new grid, or null when connectivity/clearance breaks
+ const navOK=(R,extra)=>{const n=R.nav,r=R.radius,g=n.cur.slice();
+  for(const m of extra)if(navBlocks(R,m))navPaint(R,g,m.poly,r);
+  if(!n.probes.length)return g;
   const lab=navLabel(R,g);
-  for(const grp of n.groups){const l=lab[grp[0]];if(g[grp[0]]||grp.some(p=>g[p]||lab[p]!==l))return false;}
+  for(const grp of n.groups){const l=lab[grp[0]];if(g[grp[0]]||grp.some(p=>g[p]||lab[p]!==l))return null;}
   const live=new Set(n.probes.filter(p=>!g[p]).map(p=>lab[p]));
-  for(const m of [...R.floor,...extra]){if(!m.solid||m.plan)continue;for(const c of m.clears){let ok=false;
+  for(const m of R.floor){if(!m.solid||m.plan)continue;for(const c of m.clears){let ok=false;
    const {x0,z0,st,nx,nz,cell}=n;let a0=Infinity,b0=Infinity,a1=-Infinity,b1=-Infinity;for(const [x,z] of c){a0=Math.min(a0,x);b0=Math.min(b0,z);a1=Math.max(a1,x);b1=Math.max(b1,z);}
    for(let j=Math.max(0,Math.floor((b0-r-z0)/st));j<=Math.min(nz-1,Math.ceil((b1+r-z0)/st))&&!ok;j++)
     for(let i=Math.max(0,Math.floor((a0-r-x0)/st));i<=Math.min(nx-1,Math.ceil((a1+r-x0)/st));i++){const k=j*nx+i;if(!g[k]&&live.has(lab[k])&&ptPolyD(cell(i,j),c)<=r){ok=true;break;}}
-   if(!ok)return false;}}
-  return true;};
+   if(!ok)return null;}}
+  return g;};
 
  // ---- member construction and validity ----
  // A unit is one placement decision (a group or a single item); members of one unit may share clears and stand closer than C13.
@@ -379,29 +384,30 @@ const DECOR=(()=>{
   const cs=Math.cos(rot),sn=Math.sin(rot),P=(u,v,w,d)=>rect(at[0]+u*cs-v*sn,at[1]+u*sn+v*cs,w,d,rot);
   if(it.round){out.push(rect(at[0],at[1],it.w+2*c,it.d+2*c,rot));return out;}
   if(c)out.push(P(0,it.d/2+c/2,it.w,c));
-  if(it.side)out.push(P(-it.w/2-it.side/2,0,it.side,it.d),P(it.w/2+it.side/2,0,it.side,it.d));
+  if(it.side){if(it.oneSide!==1)out.push(P(-it.w/2-it.side/2,0,it.side,it.d));if(it.oneSide!==-1)out.push(P(it.w/2+it.side/2,0,it.side,it.d));}
   if(it.back)out.push(P(0,-it.d/2-it.back/2,it.w,it.back));
   return out;};
- const mem=(it,at,rot,x={})=>{const w=x.w??it.w,d=x.d??it.d,I={...it,w,d,...(x.h?{h:x.h}:{})};const fw=it.foot??w,fd=it.foot??d;
+ const mem=(it,at,rot,x={})=>{const w=x.w??it.w,d=x.d??it.d,I={...it,w,d,...(x.h?{h:x.h}:{}),...(x.oneSide?{oneSide:x.oneSide}:{})};const fw=it.foot??w,fd=it.foot??d;
   return{it:I,at,rot,poly:rect(at[0],at[1],fw,fd,rot),solid:!!it.build&&!x.vis,clears:x.noClear?[]:clearsOf(I,at,rot,x.clear??it.clear),...x};};
  const fitsFloor=(R,unit,m)=>{
   const p=m.poly,it=m.it;
   if(!p.every(c=>inPoly(R.poly,c))){const s=shrink(p,.003);if(!s.every(c=>inPoly(R.poly,c)))return'outside';}
   const s=shrink(p,.003);if(R.poly.some(v=>inPoly(s,v)))return'vertex';
-  for(const e of R.edges)if(e.wall&&polyD([e.a,e.b],p)<e.thick/2-.002)return'wall';
   if(R.roof&&it.h>R.H-.1)return'height';
   for(const z of R.zones)if(overlap(z,p))return'door';
   for(const z of R.keepOut)if(overlap(z,p))return'keepout';
   for(const q of R.reserved)if(ptPolyD(q.at,p)<q.r)return'reserved';
+  for(const e of R.edges){if(!e.wall)continue;e.seg??=[e.a,e.b];if(near(e.seg,p,e.thick/2)&&polyD(e.seg,p)<e.thick/2-.002)return'wall';}
   if(m.solid)for(const w of R.windows)if(it.h>w.sill-.05&&overlap(w.poly,p))return'window';
+  if(!it.rug)for(const o of R.mounts){if(o.unit===unit||it.h<=o.y-o.it.h/2-.08)continue;const e=R.edges[o.edge];o.band??=rect(...R.at(e,o.s,e.thick/2+.15),o.it.w,.3,rotFor(e.n));if(overlap(o.band,p))return'under-mount';}
   for(const c of m.clears)if(!shrink(c,.02).every(v=>inPoly(R.poly,v)))return'clear-out';
   for(const f of R.floor){if(f.unit===unit)continue;
    if(it.rug){if(f.it.rug&&overlap(f.poly,p))return'rug';continue;}
    if(f.it.rug)continue;
    if(overlap(f.poly,p))return'overlap';
-   for(const c of f.clears)if(overlap(c,p))return'in-clear';
-   for(const c of m.clears)if(overlap(c,f.poly))return'clear-blocked';
-   if(m.solid&&f.solid){const d=polyD(f.poly,p);if(d<.6&&!(m.edge!=null&&m.edge===f.edge&&d<=.05))return'c13';}}
+   for(const c of f.clears)if(!f.it.share?.includes(it.id)&&overlap(c,p))return'in-clear';
+   for(const c of m.clears)if(!it.share?.includes(f.it.id)&&overlap(c,f.poly))return'clear-blocked';
+   if(m.solid&&f.solid&&near(f.poly,p,.6)){const d=polyD(f.poly,p);if(d<.6&&!(m.edge!=null&&m.edge===f.edge&&d<=.05))return'c13';}}
   return null;};
  const mountOK=(R,unit,m)=>{const e=R.edges[m.edge],it=m.it,b=m.y-it.h/2,t=m.y+it.h/2;
   if(!e||!e.wall||e.h<2)return'host';
@@ -423,7 +429,7 @@ const DECOR=(()=>{
  const wallFrame=(R,e,s)=>({edge:e.i,s,o:R.at(e,s,e.thick/2),n:e.n});
  const wallFrames=(R,w,o={})=>{const out=[];
   for(const e of R.edges){if(!e.wall||o.full&&e.h<2||o.edges&&!o.edges.includes(e.i))continue;if(e.L<w+.24)continue;
-   const ss=[e.L/2];for(let s=w/2+.12;s<=e.L-w/2-.12+1e-9;s+=.1)ss.push(s);for(const s of ss)out.push(wallFrame(R,e,s));}
+   const ss=[e.L/2],st=R.A<6?.05:.1;for(let s=w/2+.12;s<=e.L-w/2-.12+1e-9;s+=st)ss.push(s);for(const s of ss)out.push(wallFrame(R,e,s));}
   if(o.score)return out.map(f=>[o.score(f)+R.rng()*.01,f]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
   return shuffle(R.rng,out);};
  const cornerFrames=(R,w)=>{const out=[];for(const e of R.edges){if(!e.wall||e.L<w+.3)continue;for(const s of [w/2+.14,e.L-w/2-.14])out.push(wallFrame(R,e,s));}return shuffle(R.rng,out);};
@@ -453,21 +459,25 @@ const DECOR=(()=>{
   const m=mem(it,at,th+(sp.r??0),sp);m.kind='floor';if(sp.wall||f.edge!=null&&sp.wall!==false&&!f.edgeHost&&sp.u==null&&sp.v==null)m.edge=f.edge;return m;};
  const placeUnit=(R,name,frames,layout,o={})=>{
   const unit={id:name,members:[],tops:[]};let tries=0;
-  for(const f of frames){if(++tries>(o.max??500))break;const specs=layout(f);if(!specs)continue;
+  const cap=Math.min(o.max??500,R.tryCap??Infinity);for(const f of frames){if(++tries>cap)break;const specs=layout(f);if(!specs)continue;
    const fl=[],mo=[],tops=[];let bad=false;
    for(const sp of specs){if(sp.top!=null){tops.push(sp);continue;}const m=realize(R,f,sp);if(!m){if(sp.opt)continue;bad=true;break;}
     m.unit=unit;if(m.kind==='mount'){mo.push([m,sp]);continue;}
-    if(fitsFloor(R,unit,m)){if(sp.opt){m.drop=1;continue;}bad=true;break;}m.idx=specs.indexOf(sp);fl.push(m);}
+    const why=fitsFloor(R,unit,m);if(why){if(sp.opt){m.drop=1;continue;}if(R.why)R.why[name+'/'+sp.i+':'+why]=(R.why[name+'/'+sp.i+':'+why]??0)+1;bad=true;break;}m.idx=specs.indexOf(sp);fl.push(m);}
    if(bad)continue;
    const sA=fl.filter(m=>m.solid).reduce((a,m)=>a+m.it.w*m.it.d,0);if(o.cap!=null&&sA&&R.solidA+sA>o.cap*R.A+1e-6)return null;
    R.floor.push(...fl);const ok=[];
-   for(const [m,sp] of mo){if(mountOK(R,unit,m)){if(sp.opt)continue;bad=true;break;}m.unit=unit;R.mounts.push(m);ok.push(m);}
-   if(!bad&&fl.some(m=>navBlocks(R,m))&&!navOK(R,[]))bad=true;
+   for(const [m,sp] of mo){const why=mountOK(R,unit,m);if(why){if(sp.opt)continue;if(R.why)R.why[name+':m:'+why]=(R.why[name+':m:'+why]??0)+1;bad=true;break;}m.unit=unit;R.mounts.push(m);ok.push(m);}
+   if(!bad&&fl.some(m=>navBlocks(R,m))){const g=navOK(R,fl);if(g)R.nav.cur=g;else{bad=true;if(R.why)R.why[name+':nav']=(R.why[name+':nav']??0)+1;}}
    if(bad){R.floor.splice(R.floor.length-fl.length,fl.length);for(const m of ok)R.mounts.splice(R.mounts.indexOf(m),1);continue;}
    R.solidA+=sA;unit.members=[...fl,...ok];unit.frame=f;R.units.push(unit);R.placed.push(...fl,...ok);
    for(const sp of tops){const host=fl.find(m=>m.idx===sp.top);if(!host)continue;addTop(R,host,items[sp.i],sp.du);}
    return unit;}
   return null;};
+ const unplace=(R,unit)=>{const ms=new Set([...unit.members,...unit.members.flatMap(m=>m.tops??[])]);
+  R.floor=R.floor.filter(m=>!ms.has(m));R.mounts=R.mounts.filter(m=>!ms.has(m));R.placed=R.placed.filter(m=>!ms.has(m));R.units=R.units.filter(u=>u!==unit);
+  R.solidA-=unit.members.filter(m=>m.kind==='floor'&&m.solid).reduce((a,m)=>a+m.it.w*m.it.d,0);
+  const g=R.nav.cur=R.nav.base.slice();for(const m of R.floor)if(navBlocks(R,m))navPaint(R,g,m.poly,R.radius);};
  const addTop=(R,host,it,du)=>{if(!it)return null;host.tops??=[];if(host.tops.length>=2||it.w>host.it.w+.01||it.d>host.it.d+.01)return null;
   const room=(host.it.w-it.w)/2;du=du??(host.tops.length?-Math.sign(host.tops[0].du||1)*room*.7:(R.rng()-.5)*room);du=Math.max(-room,Math.min(room,du));
   if(host.tops.some(t=>Math.abs(t.du-du)<(t.it.w+it.w)/2+.02))return null;
@@ -476,7 +486,8 @@ const DECOR=(()=>{
 
  // ---- single items by host ----
  const framesFor=(R,it,ent={})=>{
-  if(ent.wall==='longest'){const L=longest(R);return L?wallFrames(R,it.w,{edges:[L.i]}):[];}
+  if(ent.wall==='longest'){const free=e=>e.L-e.open.reduce((a,q)=>a+q.s1-q.s0+.6,0),rank=R.edges.filter(e=>e.wall).sort((a,b)=>free(b)-free(a)||a.i-b.i).map(e=>e.i);
+   return wallFrames(R,it.w,{edges:rank,score:f=>rank.indexOf(f.edge)});}
   const out=[];for(const h of it.host){
    if(h==='wall')out.push(...wallFrames(R,ent.w??it.w));else if(h==='corner')out.push(...cornerFrames(R,ent.w??it.w));
    else if(h==='free')out.push(...freeFrames(R,{faceDoor:ent.face==='door'}));else if(h==='edge')out.push(...edgeFrames(R,{inset:it.d/2+.3}));}
@@ -484,9 +495,9 @@ const DECOR=(()=>{
  const placeItem=(R,id,ent={},o={})=>{const it=items[id];if(!it||it.host.includes('plan'))return null;
   if(it.host[0]==='mount')return placeMount(R,it,ent);if(it.host[0]==='ceiling')return placeCeil(R,it,ent);
   if(it.host[0]==='top')return placeTopAny(R,it,ent);if(it.host[0]==='scatter')return placeScatter(R,it);
-  const sp={i:id,...(ent.w?{w:ent.w}:{})},extra=[];
+  const sp={i:id,...(ent.w?{w:ent.w}:{}),...(ent.clear!=null?{clear:ent.clear}:{})},extra=[];
   if(ent.above)extra.push({mount:ent.above,u:0,opt:1});if(ent.top)extra.push({top:0,i:ent.top});
-  return placeUnit(R,id,framesFor(R,it,ent),f=>f.edge!=null&&!f.edgeHost?[{...sp,wall:true},...extra]:f.edgeHost?[{...sp,v:0}]:[sp,...extra.filter(x=>!x.mount)],{cap:o.cap});};
+  return placeUnit(R,id,framesFor(R,it,ent),f=>f.edge!=null&&!f.edgeHost?[{...sp,wall:true,...(it.back?{gap:it.back}:{})},...extra]:f.edgeHost?[{...sp,v:0}]:[sp,...extra.filter(x=>!x.mount)],{cap:o.cap});};
  const placeMount=(R,it,ent={},pref=[])=>{
   let frames=[];
   if(ent.under==='window'||ent.at==='exit'){for(const e of R.edges)for(const q of e.open){
@@ -516,7 +527,7 @@ const DECOR=(()=>{
    const rot=o.rot??(it.rug?rotFor((longest(R)??R.edges[0]).n):R.rng()*Math.PI*2);const m=mem(sc,p,rot,{noClear:1});m.kind='floor';m.unit=unit;
    if(fitsFloor(R,unit,m))continue;
    if(it.rug&&R.floor.some(f=>!f.it.rug&&overlap(f.poly,m.poly)&&!RUGOK.has(f.it.id)))continue;
-   if(navBlocks(R,m)){R.floor.push(m);if(!navOK(R,[])){R.floor.pop();continue;}R.floor.pop();}
+   if(navBlocks(R,m)){R.floor.push(m);const g=navOK(R,[m]);R.floor.pop();if(!g)continue;R.nav.cur=g;}
    R.floor.push(m);R.placed.push(m);unit.members=[m];R.units.push(unit);return unit;}
   void c;return null;};
  // greedy sweep of single items along walls (arcade cabinets, shelving, laundry pairs, wc/urinal rows)
@@ -527,6 +538,201 @@ const DECOR=(()=>{
     if(u){n++;run++;k++;s+=Math.max(w+.02,o.pitch??0);}else s+=.1;}
    if(o.oneEdge&&run)break;}
   return n;};
-//@@GROUPS
- return{};
+
+ // ---- groups (§3.1): layouts in a frame's local (u along the wall, v into the room) ----
+ const PI=Math.PI;
+ const hasWin=(R,e)=>e.open.some(q=>q.kind==='window');
+ const doorPts=R=>R.edges.flatMap(e=>e.open.filter(q=>q.kind!=='window').map(q=>R.at(e,(q.s0+q.s1)/2,0)));
+ const artPick=R=>{const pool=(ARTPOOL[R.style]??ARTPOOL.commercial).filter(([,,k])=>!k||k.includes(R.kind));if(!pool.length)return null;
+  let t=pool.reduce((a,p)=>a+p[1],0)*R.rng();for(const p of pool)if((t-=p[1])<0)return p[0];return pool[0][0];};
+ const G={
+  bed(R,ent){const opts=ent.beds??[['bed_double',1]],art=artPick(R);
+   const frames=()=>wallFrames(R,1,{score:f=>(hasWin(R,R.edges[f.edge])?2:0)-R.edges[f.edge].L*.05+Math.abs(f.s-R.edges[f.edge].L/2)*.15});
+   for(const [id,cnt] of opts){const it=items[id];if(!it||R.A<(cnt>1?14:0))continue;const W=it.w,D=it.d;
+    const lay=cnt>1?()=>[{i:id,u:-(W/2+.3),v:D/2},{i:id,u:W/2+.3,v:D/2},{i:'nightstand',u:0,v:.2,opt:1},{top:2,i:'lamp_table'},...(art?[{mount:art,u:0,y:1.45,opt:1}]:[])]
+     :()=>[{i:id,u:0,v:D/2},{i:'nightstand',u:-(W/2+.3),v:.2,opt:1},{i:'nightstand',u:W/2+.3,v:.2,opt:1},{top:1,i:'lamp_table'},{top:2,i:'phone_desk'},...(art?[{mount:art,u:0,y:1.45,opt:1}]:[])];
+    const u=placeUnit(R,'bed',frames(),lay,{max:700});if(u){R.bed=u;return u;}}
+   // small rooms: push a single bed into a corner, with access (C7) on the open side only
+   for(const [id,cnt] of opts){const it=items[id];if(!it||cnt>1)continue;const W=it.w,D=it.d;
+    const fr=[];for(const e of R.edges){if(!e.wall||e.L<W+.3)continue;for(const [s,k] of [[W/2+.1,-1],[e.L-W/2-.1,1]]){const f=wallFrame(R,e,s),eu=[f.n[1],-f.n[0]];f.side=Math.sign(eu[0]*e.t[0]+eu[1]*e.t[1])*k;fr.push(f);}}
+    const lay=f=>[{i:id,u:0,v:D/2,oneSide:-f.side},{i:'nightstand',u:-f.side*(W/2+.3),v:.2,opt:1},{top:1,i:'lamp_table'}];
+    const u=placeUnit(R,'bed',shuffle(R.rng,fr),lay);if(u){R.bed=u;return u;}}
+   return null;},
+  sofa_tv(R,ent){const sofa=ent.sofa??'sofa_3',S=items[sofa],tv=ent.tv!==false,sect=sofa==='sofa_sectional';const W=S.w,D=sect?.95:S.d;
+   const tries=tv?[3,2.6,2.4,3.4]:[0];
+   for(const g of tries){const vs=tv?.5+g+D/2:D/2,rs=tv?PI:0,ft=tv?-1:1,vt=vs+ft*(D/2+.45+.3);
+    const lay=()=>[{i:sofa,u:0,v:vs,r:rs,...(sect?{w:W,d:D}:{})},{i:'coffee_table',u:0,v:vt,opt:1},
+     ...(tv?[{i:'tv_console',u:0,v:.25},{top:sect?4:3,i:'tv_crt'}]:[]),
+     ...(sect?[{i:sofa,u:-(W/2-.475),v:vs-1.2,r:rs,w:.95,d:1.45,noClear:1}]:[]),
+     {i:'armchair',u:W/2+.75,v:vt,r:-PI/2*ft,opt:1},...(ent.rug||R.rng()<.5?[{i:'rug',u:0,v:vt,opt:1}]:[]),{top:1,i:'magazine_pile'}];
+    const u=placeUnit(R,'sofa',wallFrames(R,W,{score:f=>(hasWin(R,R.edges[f.edge])?1:0)-R.edges[f.edge].L*.1+Math.abs(f.s-R.edges[f.edge].L/2)*.1}),lay,{max:500});
+    if(u){R.sofa=u;return u;}}
+   return null;},
+  dine(R,ent){const sizes=ent.table?[ent.table]:R.A>=30?['dining_table_12','dining_table_8','dining_table_4']:R.A>=14?['dining_table_8','dining_table_4']:['dining_table_4'];
+   for(const id of sizes){const T=items[id];if(!T.styles.includes(R.style)&&id!=='dining_table_4')continue;
+    const seats=ent.chairs??T.seats??4,lay=()=>{const out=[{i:id}];
+     if(T.w<=1.2){const at=[[0,1],[0,-1],[1,0],[-1,0]].slice(0,seats);for(const [a,b] of at)out.push({i:'dining_chair',u:a*(T.w/2+.25),v:b*(T.d/2+.25),r:b>0?PI:b<0?0:a>0?PI/2:-PI/2});}
+     else{const per=Math.min(Math.floor(T.w/.6),Math.ceil(seats/2));for(let k=0;k<per;k++){const u=(k-(per-1)/2)*.6;out.push({i:'dining_chair',u,v:T.d/2+.25,r:PI},{i:'dining_chair',u,v:-(T.d/2+.25),r:0});}}
+     out.push({top:0,i:'ashtray',opt:1});return out;};
+    const u=placeUnit(R,'dine',freeFrames(R),lay,{max:400});if(u){R.table=u;return u;}}
+   return null;},
+  desk(R,ent){const id=ent.desk??'desk_office',D=items[id],dp=doorPts(R),vd=.9+D.d/2;
+   const score=f=>{if(!dp.length)return 0;const c=[f.o[0]+f.n[0]*3,f.o[1]+f.n[1]*3];return Math.min(...dp.map(p=>Math.hypot(p[0]-c[0],p[1]-c[1])));};
+   const lay=()=>[{i:id,u:0,v:vd},{i:'office_chair',u:0,v:.45},{i:'visitor_chair',u:-.4,v:vd+D.d/2+.45,r:PI,opt:1},{i:'visitor_chair',u:.4,v:vd+D.d/2+.45,r:PI,opt:1},
+    {top:0,i:'phone_desk'},{top:0,i:R.style==='motel'?'typewriter':R.style==='high_end'?'lamp_table':'computer_8bit'},{top:0,i:'paperwork'}];
+   return placeUnit(R,'desk',wallFrames(R,D.w,{score}),lay,{max:500});},
+  kitchen(R){for(const L of [4.2,3.6,3,2.4,1.8]){const x0=-L/2,rest=L-.8,c=(rest-.76)/2;
+    const lay=()=>{const out=[{i:'fridge',u:x0+.4,v:.375},{i:'range',u:x0+.8+rest/2,v:.325}];
+     if(c>=.3)out.push({i:'counter_run',w:c,u:x0+.8+c/2,v:.3},{i:'counter_run',w:c,u:L/2-c/2,v:.3},{top:2,i:'microwave'});return out;};
+    const u=placeUnit(R,'kitchen',wallFrames(R,L),lay,{max:400});if(u)return u;}return null;},
+  bar(R){for(const L of [6,5,4,3]){const n=Math.floor((L-1)/.6);
+    const lay=()=>{const out=[{i:'back_bar',w:L,u:0,v:.25},{i:'bar_counter',w:L-1,u:.5,v:1.725}];
+     for(let k=0;k<n;k++)out.push({i:'bar_stool',u:.5+(k-(n-1)/2)*.6,v:2.3,r:PI,noClear:1});out.push({top:0,i:'glasses_bottles'},{top:1,i:'cash_register'});return out;};
+    const u=placeUnit(R,'bar',wallFrames(R,L),lay,{max:400});if(u)return u;}return null;},
+  console(R){const fr=[];for(const e of R.edges)for(const q of e.open)if(q.kind==='window'&&!e.ext)fr.push({...wallFrame(R,e,(q.s0+q.s1)/2),win:q.s1-q.s0});
+   const frames=fr.length?fr:wallFrames(R,2.6);
+   const lay=f=>[{i:'console_desk',u:0,v:1.15},{i:'office_chair',u:0,v:2.1,r:PI},{i:'producer_desk',u:0,v:3.3,opt:1},
+    {mount:'monitor_soffit',u:-((f.win??1.6)/2+.6),opt:1},{mount:'monitor_soffit',u:(f.win??1.6)/2+.6,opt:1}];
+   return placeUnit(R,'console',frames,lay,{max:300});},
+  count(R){return placeUnit(R,'count',freeFrames(R),()=>[{i:'count_table'},{i:'office_chair',v:.8,r:PI,noClear:1},{i:'office_chair',v:-.8,noClear:1},{top:0,i:'money_counter'},{top:0,i:'paperwork'}],{max:300});},
+  bath(R){const basin=()=>placeItem(R,R.style==='motel'?'basin_pedestal':'vanity',{above:'mirror_cabinet'});
+   let a=R.A>=3.5?placeItem(R,'tub'):null,b=placeItem(R,'wc');
+   if(a&&!b){unplace(R,a);a=null;b=placeItem(R,'wc');}
+   a=a||placeItem(R,'shower_stall');let c=basin();
+   if(b&&!c){unplace(R,b);c=basin();b=placeItem(R,'wc');if(!b){if(c)unplace(R,c);b=placeItem(R,'wc');c=b&&basin();}}
+   if(!a)R.warnings.push(`${R.id}: no tub or shower fits`);if(!b)R.warnings.push(`${R.id}: no wc fits`);
+   return a||b||c?{members:[]}:null;},
+  booth(R){return placeUnit(R,'booth',[...wallFrames(R,1.5),...freeFrames(R)],f=>{const w=f.free?[]:[];void w;
+    return f.free?[{i:'banquette',v:1.05,r:PI},{i:'banquette',v:-1.05},{i:'coffee_table',v:0,noClear:1},{top:2,i:'ashtray',opt:1}]
+     :[{i:'banquette',v:.3},{i:'coffee_table',v:1.35,noClear:1},{i:'banquette',v:2.4,r:PI},{top:1,i:'ashtray',opt:1}];},{max:400});},
+  car(R){if(R.room.props?.some(p=>/car/.test(p.build??'')||/^car/.test(p.id)))return{members:[]};
+   const st=R.room.stalls;if(!st?.length){R.warnings.push(`${R.id}: lot has no stalls; cars not placed`);return{members:[]};}
+   const want=Math.round(st.length*(.4+R.rng()*.3));let n=0;
+   for(const s of shuffle(R.rng,st)){if(n>=want)break;const th=s.rot??0;if(placeUnit(R,'car',[{o:s.at,n:[-Math.sin(th),Math.cos(th)],free:1}],()=>[{i:R.rng()<.15?'van_parked':'car_parked',noClear:1}]))n++;}
+   return{members:[]};},
+  parked(R){for(const l of R.room.parking??[]){const dx=l.b[0]-l.a[0],dz=l.b[1]-l.a[1],L=Math.hypot(dx,dz),n=[-dz/L,dx/L],th=rotFor([dx/L,dz/L]);
+    for(let s=3;s<L-3;s+=6.5)if(R.rng()<.5)placeUnit(R,'car',[{o:[l.a[0]+dx/L*s,l.a[1]+dz/L*s],n:[-Math.sin(th),Math.cos(th)],free:1}],()=>[{i:'car_parked',noClear:1}]);void n;}
+   return{members:[]};},
+ };
+
+ // ---- kit entries ----
+ const ent=e=>typeof e==='string'?{i:e}:e;
+ const entOK=(R,e)=>!(e.style&&e.style!==R.style||e.minA&&R.A<e.minA||e.use&&(e.use==='men'?/women|ladies/.test(R.hint):e.use!==R.use)
+  ||e.unless&&(R.room.props??[]).some(p=>e.unless.test(p.id)));
+ const countOf=(R,e)=>{if(e.per?.m2)return Math.max(1,Math.floor(R.A/e.per.m2));
+  if(e.per?.len){const L=Math.max(...R.edges.map(x=>x.L));return Math.max(1,Math.floor(L/e.per.len));}
+  if(e.per?.pool)return R.keepOut.length?R.keepOut.length*e.per.pool:2;return nOf(R.rng,e.n);};
+ const runEntry=(R,e0,o={})=>{const e=ent(e0);if(!entOK(R,e))return true;
+  if(e.g){const g=G[e.g];return!!(g&&g(R,e));}
+  if(e.edge){let n=0;for(const f of edgeFrames(R,{water:1,pitch:e.pitch,inset:items[e.edge].d/2+.3}))if(placeUnit(R,e.edge,[f],()=>[{i:e.edge,v:0}]))n++;return n>0||!R.edges.some(x=>!x.wall);}
+  if(e.row){const n=countOf(R,e);
+   if(e.row==='cab')return sweep(R,['arcade_upright','arcade_upright','arcade_driver','arcade_upright'],{cap:R.kit.cap})>0;
+   if(e.row==='laundry')return sweep(R,['washer','dryer'],{n:2*n,oneEdge:1})>0;
+   if(e.len){for(const L of e.len)if(placeItem(R,e.row,{w:L},{cap:R.kit.cap}))return true;return false;}
+   if(e.each==='long'){let k=0;for(const x of R.edges.filter(x=>x.wall).sort((a,b)=>b.L-a.L).slice(0,2))k+=sweep(R,[e.row],{edges:[x],n:3,cap:R.kit.cap});return k>0;}
+   return sweep(R,[e.row],{n:e.per?.len?Math.max(1,Math.floor(Math.max(...R.edges.filter(x=>x.wall).map(x=>x.L))/e.per.len)):n,pitch:e.pitch,oneEdge:!!e.pitch,cap:R.kit.cap})>0;}
+  if(e.rows||e.rep){const id=e.rows??e.rep,max=e.max??4;let k=0;for(let t=0;t<max;t++)if(placeItem(R,id,{},{cap:R.kit.cap}))k++;else break;return k>0;}
+  const it=items[e.i];if(!it)return false;
+  if(e.grid)return placeCeilGrid(R,it,e.grid)>0;
+  if(e.anchor==='bed'){const b=R.bed?.members.find(m=>/^bed_/.test(m.it.id));if(!b)return false;
+   const fv=[-Math.sin(b.rot),Math.cos(b.rot)],at=[b.at[0]+fv[0]*(b.it.d/2+.05+it.d/2),b.at[1]+fv[1]*(b.it.d/2+.05+it.d/2)],m=mem(it,at,b.rot);m.kind='floor';m.unit=R.bed;
+   if(fitsFloor(R,R.bed,m))return false;R.floor.push(m);R.placed.push(m);R.bed.members.push(m);return true;}
+  if(e.on){const h=R.floor.filter(m=>m.it.id===e.on);for(const x of h)if(addTop(R,x,it))return true;return false;}
+  if(e.under==='window'&&!R.edges.some(x=>x.ext&&x.open.some(q=>q.kind==='window')))return true;
+  const n=countOf(R,e);let k=0;for(let t=0;t<n;t++)if(placeItem(R,e.i,e,{cap:o.cap??R.kit.cap}))k++;
+  if(!k&&e.alt)for(const a of e.alt)if(placeItem(R,a,e,{cap:o.cap??R.kit.cap}))return true;return k>0;};
+
+ // ---- driver: DECOR.place(room, {levelId, seed, reserved, radius}) -> {props, decor, warnings} ----
+ const variant=(R,k)=>{if(!k.uses)return k;const keys=Object.keys(k.uses);let use=R.room.use;
+  if(use==null)use=keys.find(x=>R.hint.includes(x.replace('_',' '))||R.hint.includes(x));
+  if(use==null){if(R.kind==='bath')use=R.A>8&&['commercial','deco'].includes(R.style)?'public':'private';
+   else if(R.kind==='control')use=R.edges.some(e=>!e.ext&&hasWin(R,e))?'studio':'security';else use=keys[0];}
+  if(!keys.includes(use)){R.warnings.push(`${R.id}: unknown use ${use} for ${R.kind}; using ${keys[0]}`);use=keys[0];}
+  R.use=use;return{...k,...k.uses[use]};};
+ const place=(room,o={})=>{
+  const R=prep(room,o);R.rng=mulberry(fnv(`${o.levelId??''}/${room.id}/${o.seed??0}`));R.placed=[];
+  R.hint=`${room.id} ${room.name??''}`.toLowerCase();if(o.debug){R.why={};R.t0=Date.now();}
+  const out=()=>emit(R);
+  if(NO_DECOR.includes(R.kind))return out();
+  const k0=kitFor(R.kind,R.style);if(!k0){R.warnings.push(`${R.id}: no kit for kind ${R.kind}`);return out();}
+  const kit=R.kit=variant(R,k0);
+  if(R.A<kit.min)R.warnings.push(`${R.id}: ${R.A.toFixed(1)} m² is below the ${R.kind} kit minimum ${kit.min} m²; required items only`);
+  for(const e of kit.req)if(!runEntry(R,e,{cap:1}))R.warnings.push(`${R.id}: dropped required ${ent(e).g??ent(e).i??ent(e).row??ent(e).rows??ent(e).rep??ent(e).edge}`);
+  if(R.A>=kit.min){
+   const opt=[],art=[],ceil=[],scat=[...(SCATTER[R.kind]??[])];
+   for(const [e0,w] of kit.opt){const e=ent(e0),it=items[e.i];
+    if(it&&it.host[0]==='ceiling'&&!e.grid){if(R.rng()<w/(w+1))ceil.push(e);continue;}
+    if(it&&it.host[0]==='scatter'&&!it.rug){scat.push(e.i);continue;}
+    if(it&&ART.has(it.id)&&!e.wall){art.push([e,w]);continue;}opt.push([e,w]);}
+   const budget=Math.min(12,Math.max(1,Math.round(R.A/7)));
+   const order=opt.map(([e,w])=>[e,-Math.log(1-R.rng())/w]).sort((a,b)=>a[1]-b[1]).map(x=>x[0]);
+   R.tryCap=160;let used=0;for(const e of order){if(used>=budget||R.solidA>=kit.cap*R.A)break;if(runEntry(R,e))used++;}
+   // wall art: budget from the free full-height wall run
+   const run=R.ext?0:R.edges.filter(e=>e.wall&&e.h>=2&&!/glass|hull/.test(e.build)).reduce((a,e)=>a+e.L-e.open.reduce((s,q)=>s+q.s1-q.s0,0),0);
+   let na=Math.min(kit.art[1],Math.floor(kit.art[0]*run));
+   for(const [e] of art)if(na>0&&R.rng()<.7&&runEntry(R,e))na--;
+   for(let t=0;t<na*3&&na>0;t++){const id=artPick(R);if(id&&placeMount(R,items[id]))na--;}
+   // ceiling: fans over the bed or sofa, chandeliers over the table, else the room centre; smoke detectors
+   for(const e of ceil){const it=items[e.i],anchor=(e.i==='chandelier'?R.table:R.bed??R.sofa??R.table)?.members[0];placeCeil(R,it,e,anchor?[anchor.at]:[]);}
+   if(R.roof&&!R.ext&&R.A>=6&&!['bath','closet'].includes(R.kind))placeCeil(R,items.smoke_detector,{},[]);
+   // tabletop dressing
+   for(const h of R.floor.slice()){if(h.plan||h.tops?.length||R.rng()>.6)continue;
+    const pool=Object.values(items).filter(t=>t.host[0]==='top'&&t.on?.includes(h.it.id)&&t.styles.includes(R.style));if(pool.length)addTop(R,h,pick(R.rng,pool));}
+   // scatter
+   if(scat.length){const n=Math.min(10,Math.round(kit.scatter*R.A/10));for(let t=0;t<n;t++)placeScatter(R,items[pick(R.rng,scat)]);}
+  }
+  return out();};
+ const emit=R=>{const props=[],decor=[];let np=0,nd=0;const sty=R.style;
+  for(const m of R.placed){const it=m.it,base={kind:it.id,room:R.id};
+   if(m.kind==='floor'&&m.solid){const build=it.buildBy?.[sty]??it.build;
+    props.push({id:`dc_${R.id}_${np++}`,item:it.id,room:R.id,at:[r3(m.at[0]),r3(m.at[1])],size:[r3(it.w),r3(it.d)],rot:r3(m.rot),build,cov:it.cov,h:r3(it.h)});continue;}
+   const y=m.kind==='mount'?m.y-it.h/2:m.kind==='ceil'?m.y:m.kind==='top'?m.y:0;
+   decor.push({id:`dv_${R.id}_${nd++}`,...base,at:[r3(m.at[0]),r3(m.at[1])],size:[r3(it.foot??it.w),r3(it.foot??it.d)],h:r3(it.h),rot:r3(m.rot),y:r3(Math.max(0,y))});}
+  return{props,decor,warnings:R.warnings,use:R.use,...(R.why?{why:R.why,ms:Date.now()-R.t0}:{})};};
+
+ // ---- plan bridge: dress a PLAN stage (PLAN.fromPlan output) room by room ----
+ const thickOf=b=>{const B=typeof WORLD!=='undefined'&&WORLD.materials?.BUILD?.[b];return B?B.layers.reduce((a,l)=>a+l[1],0)/100:.15;};
+ const roomEdges=(piece,walls,pieceAt,rooms)=>{const p=piece.poly,out=[];
+  for(let i=0;i<p.length;i++){const a=p[i],b=p[(i+1)%p.length],dx=b[0]-a[0],dz=b[1]-a[1],L=Math.hypot(dx,dz);if(L<1e-6)continue;const t=[dx/L,dz/L];
+   const par=q=>(q[0]-a[0])*t[0]+(q[1]-a[1])*t[1],off=q=>Math.abs((q[0]-a[0])*t[1]-(q[1]-a[1])*t[0]);const iv=[];
+   for(const w of walls){let S=0;for(let k=0;k+1<w.path.length;k++){const P=w.path[k],Q=w.path[k+1],l=Math.hypot(Q[0]-P[0],Q[1]-P[1]);
+     if(off(P)<2e-3&&off(Q)<2e-3){const tp=par(P),tq=par(Q),lo=Math.max(0,Math.min(tp,tq)),hi=Math.min(L,Math.max(tp,tq));
+      if(hi-lo>1e-3){const dir=tq>=tp?1:-1,open=[];
+       for(const q of w.open??[]){if(q.s1<=S||q.s0>=S+l)continue;const e0=tp+dir*(Math.max(q.s0,S)-S),e1=tp+dir*(Math.min(q.s1,S+l)-S);
+        open.push({s0:Math.min(e0,e1),s1:Math.max(e0,e1),kind:q.kind==='window'?'window':'door',y0:q.y0,y1:q.y1,id:q.id});}
+       iv.push({lo,hi,h:w.h,build:w.build,thick:thickOf(w.build),open});}}S+=l;}}
+   iv.sort((x,y)=>x.lo-y.lo);const cuts=[];let s=0;
+   for(const v of iv){if(v.lo>s+1e-3)cuts.push({lo:s,hi:v.lo});if(v.hi>s+1e-3)cuts.push({...v,lo:Math.max(s,v.lo)});s=Math.max(s,v.hi);}if(L>s+1e-3)cuts.push({lo:s,hi:L});
+   // wall-end stubs (half the thickness of a crossing wall) belong to the neighbouring wall, not to an opening
+   for(let k=0;k<cuts.length;k++){const c=cuts[k];if(c.build!=null||c.hi-c.lo>=.3)continue;const nb=cuts[k-1]?.build!=null?cuts[k-1]:cuts[k+1]?.build!=null?cuts[k+1]:null;
+    if(nb)cuts[k]={...nb,lo:c.lo,hi:c.hi,open:[]};}
+   for(const c of cuts){const A=[a[0]+t[0]*c.lo,a[1]+t[1]*c.lo],B=[a[0]+t[0]*c.hi,a[1]+t[1]*c.hi],m=[(A[0]+B[0])/2,(A[1]+B[1])/2];
+    let n=[-t[1],t[0]];if(!inPoly(p,[m[0]+n[0]*.02,m[1]+n[1]*.02]))n=[-n[0],-n[1]];
+    const d=(c.thick??0)/2+.05,nb=pieceAt(m[0]-n[0]*d,m[1]-n[1]*d),other=nb&&rooms.get(nb),ext=!other||other.zone==='exterior';
+    out.push({a:A,b:B,wall:c.build!=null,h:c.h,build:c.build,thick:c.thick,ext,water:!other,
+     open:(c.open??[]).filter(q=>q.s1>c.lo&&q.s0<c.hi).map(q=>({...q,s0:Math.max(0,q.s0-c.lo),s1:Math.min(c.hi-c.lo,q.s1-c.lo),exit:q.kind==='door'&&ext}))});}}
+  return out;};
+ const dressStage=(plan,sid,o={})=>{const P=o.PLAN??(typeof PLAN!=='undefined'?PLAN:null);if(!P)throw new Error('DECOR.dressStage needs PLAN');
+  const {stage,extras,info}=P.fromPlan(plan,sid),S=plan.stages[sid],H=S.defaults?.h??plan.defaults?.h??2.8;
+  const rooms=new Map(stage.rooms.map(r=>[r.id,r])),src=new Map((S.rooms??[]).map(r=>[r.id,r]));
+  const pts=[...stage.spawns.map(s=>({at:[s.x,s.z],r:.6})),...extras.obj.map(q=>({at:q.at,r:1})),...extras.stash.map(q=>({at:q.at,r:.6})),
+   ...extras.stairs.map(q=>({at:q.at,r:1.2})),...extras.items.map(q=>({at:q.at??[q.x,q.z],r:.6})),...(o.reserved??[])];
+  const water=stage.ground.filter(g=>g.surf==='water'||g.y<0).map(g=>g.poly);
+  const res={props:[],decor:[],warnings:[],rooms:{}};
+  for(const pc of stage.rooms){const kind=o.kindOf?.(pc)??pc.kind;if(NO_DECOR.includes(kind)||!KINDS.includes(kind)){if(!KINDS.includes(kind))res.warnings.push(`${pc.id}: kind ${kind} has no kits`);continue;}
+   const sr=src.get(pc.id)??src.get(pc.parent)??{},c=centroid(pc.poly);
+   const props=stage.props.filter(p=>{const q=centroid(p.poly);return info.pieceAt(q[0],q[1])===pc.id;});
+   const room={id:pc.id,name:pc.name??sr.name,kind,style:pc.style??o.style??'commercial',use:sr.use,poly:pc.poly,h:sr.h??H,roof:pc.roof,
+    edges:roomEdges(pc,stage.walls,info.pieceAt,rooms),reserved:pts,props,keepOut:water.filter(w=>w.some(v=>inPoly(pc.poly,v))||inPoly(w,c)),stalls:sr.stalls,parking:sr.parking};
+   const r=place(room,{levelId:`${plan.id}/${sid}`,seed:o.seed,debug:o.debug});
+   res.props.push(...r.props);res.decor.push(...r.decor);res.warnings.push(...r.warnings);res.rooms[pc.id]={kind,use:r.use,props:r.props.length,decor:r.decor.length,...(r.why?{why:r.why,ms:r.ms}:{})};}
+  return res;};
+ // apply(plan) -> {plan: copy with generated solids appended to each stage's props, decor:{sid:[records]}, warnings}
+ const apply=(plan,o={})=>{const copy=JSON.parse(JSON.stringify(plan)),decor={},warnings=[];
+  for(const sid of Object.keys(plan.stages)){const r=dressStage(plan,sid,o);
+   copy.stages[sid].props=[...(copy.stages[sid].props??[]),...r.props.map(({item,room,...p})=>p)];
+   decor[sid]=r.decor;warnings.push(...r.warnings.map(w=>`${sid}: ${w}`));}
+  return{plan:copy,decor,warnings};};
+ return Object.freeze({version:1,STYLES,KINDS,NO_DECOR,items,kits,ARTPOOL,SCATTER,kitFor,place,dressStage,apply,
+  _:{rect,overlap,inPoly,polyD,area,roomEdges,prep,fitsFloor,wallFrames,realize,navOK}});
 })();
