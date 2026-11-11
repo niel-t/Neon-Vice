@@ -152,7 +152,7 @@ const LEVELS=[
 /*END*/
 
 /* grading: par time per floor (seconds), and grade points that ignore difficulty/perk/character money multipliers */
-const PAR=[60,55,65,60,65,90,65,60];const GRADES=[['S',2.3],['A+',1.8],['A',1.4],['B',1.0],['C',0.65],['D',-1]];
+const PAR=[60,55,120,60,65,90,65,60];const GRADES=[['S',2.3],['A+',1.8],['A',1.4],['B',1.0],['C',0.65],['D',-1]];
 
 /* hidden stashes: [map x, map z, hi-fi track unlocked (or null), cash]. Saved in JOBS.stash[floor]=1 */
 const STASH=[[5,4,'n_nightdrive',1500],[29,5,'n_haze',1500],[12,5,'n_concrete',2000],[37,3,'n_redtide',2000],[37,2,'n_overdrive',2000],[38,4,'n_rampage',2000],[29,1,null,4000],[39,4,null,5000]];

@@ -113,6 +113,7 @@ test('missions: after a job, leaving home by the door goes to McWey for the debr
       selIdx = CHARS.findIndex(c => c.id === 'money'); sessionReset(Math.min(JOBS.sel, JOBS.top)); NEXTJOB = VISIT.next;
       for (const lvl of [1, 2]) {
         startLevel(NEXTJOB);
+        if (G.stageManaged) { enterStage('stair', 'bottom'); enterStage('pent', 'stairs'); } // floor 2 finishes in the penthouse
         for (const e of G.enemies) e.alive = false;
         finishLevel(); pendingPerks = 0; $('bNextLvl').click();
         const home = HUBMODE;

@@ -94,6 +94,8 @@ test('integration: existing startLevel loads all eight floors and advances real 
   expect(await page.evaluate(() => LEVEL_TRACKS.every(list => list.every(track => !!TRACKS[track])))).toBe(true);
   for (let i = 0; i < data.LEVELS.length; i++) {
     const expected = expectedMap(data.LEVELS[i], data);
+    // Floor 2 is a building: startLevel(2) begins on the lobby stage (missions.js), not on the LEVELS[2] map.
+    if (i === 2) Object.assign(expected, { enemies: 7, items: 3, player: [[13.5, 12.5]], car: [[23.5, 12.5]] });
     const actual = await page.evaluate(i => {
       startLevel(i);
       return { enemies: G.enemies.length, items: G.items.length,

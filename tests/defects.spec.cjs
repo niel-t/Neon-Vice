@@ -164,7 +164,7 @@ test('ownership: the kit carries between jobs, retries rewind and walking away r
     try {
       fadeTo = () => true;
       selIdx = 1;
-      startLevel(2);
+      startLevel(2); enterStage('stair', 'bottom'); enterStage('pent', 'stairs'); // floor 2 finishes in the penthouse
       const bare = G.player.weapon;
       G.player.weapon = { type:'shotgun', ammo:37 };
       finishLevel(); pendingPerks = 0; $('bNextLvl').click();

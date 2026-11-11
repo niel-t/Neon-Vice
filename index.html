@@ -538,11 +538,13 @@ const CHX={
  execs:k=>({n:k+' EXECUTIONS',f:g=>g.execs>=k}),
  doors:k=>({n:k+' DOOR KILLS',f:g=>(g.kb.door||0)>=k}),
  slams:k=>({n:k+' AIR HOCKEY SLAMS',f:g=>(g.slams||0)>=k}),
- glass:()=>({n:'NO BROKEN GLASS',f:g=>!g.glassBroken})};
+ glass:()=>({n:'NO BROKEN GLASS',f:g=>!g.glassBroken}),
+ elev:()=>({n:'USE THE ELEVATOR',f:g=>stageSeen(g,'pent')&&!stageSeen(g,'stair')}),
+ stairs:()=>({n:'TAKE THE STAIRS',f:g=>stageSeen(g,'stair')})};
 const CHALLENGES=[
  [CHX.time(45),CHX.noguns(),CHX.untouched()],
  [CHX.combo(6),CHX.doors(2),CHX.time(40)],
- [CHX.untouched(),CHX.execs(3),CHX.time(50)],
+ [CHX.untouched(),CHX.elev(),CHX.stairs()],
  [CHX.combo(8),CHX.time(45),CHX.untouched()],
  [CHX.slams(2),CHX.noguns(),CHX.time(50)],
  [CHX.time(70),CHX.combo(8),CHX.execs(2)],
@@ -1177,9 +1179,9 @@ function update(dt){const g=G;if(g.stageManaged&&(state!=='play'||stageStairs(g)
  if(g.comboT>0){g.comboT-=dt;if(g.comboT<=0)g.combo=0;}
  if(g.hitT>0)g.hitT-=dt;if(g.np)g.np.t+=dt;
  g.flowT-=dt;if(g.flowT<=0){computeFlow();g.flowT=0.25;}
- updatePlayer(dt);updateHazards(dt);if(g.player.ex){if(g.player.alive)updateExec(g.player,dt);else g.player.ex=null;}for(const e of g.enemies)updateEnemy(e,dt);separate();bodyPhysics();updateDoors(dt);updateBullets(dt);updateNades(dt);updateAct2(dt);updateStash(dt);updateObj(dt);updateItems(dt);updateCash(dt);updateFX(dt);
- if(!g.stageManaged&&!g.cleared&&g.enemies.every(e=>!e.alive||e.boss&&g.clear&&g.clear.boss==='optional')){if(g.obj&&!g.obj.done){if(!g.objWarn){g.objWarn=1;banner('GUARDS DOWN','Now: '+g.obj.label);}}else{g.cleared=true;banner('FLOOR CLEAR','Get back to the car');sfx('clear');}}
- if(!g.stageManaged&&g.cleared&&g.player.alive&&!g.done&&Math.hypot(g.player.x-g.car.x,g.player.z-g.car.z)<1.8){g.done=true;finishLevel();}
+ updatePlayer(dt);updateHazards(dt);if(g.player.ex){if(g.player.alive)updateExec(g.player,dt);else g.player.ex=null;}for(const e of g.enemies)updateEnemy(e,dt);separate();bodyPhysics();updateDoors(dt);updateBullets(dt);updateNades(dt);updateAct2(dt);updateStash(dt);updateObj(dt);updateStage(dt);updateItems(dt);updateCash(dt);updateFX(dt);
+ if(stageMayFinish(g)&&!g.cleared&&g.enemies.every(e=>!e.alive||e.boss&&g.clear&&g.clear.boss==='optional')){if(g.obj&&!g.obj.done){if(!g.objWarn){g.objWarn=1;banner('GUARDS DOWN','Now: '+g.obj.label);}}else{g.cleared=true;banner('FLOOR CLEAR',g.def.noCar?'Take the elevator down':'Get back to the car');sfx('clear');}}
+ if(stageMayFinish(g)&&g.cleared&&g.player.alive&&!g.done&&Math.hypot(g.player.x-g.car.x,g.player.z-g.car.z)<1.8){g.done=true;finishLevel();}
  if(!g.player.alive){g.deadT+=dt;if(g.deadT>1&&state==='play')showDead();}
  updateHints(dt);updateCamera(dt);}
 function stickVec(s){let dx=(s.x-s.ox)/55,dy=(s.y-s.oy)/55;const l=Math.hypot(dx,dy);if(l>1){dx/=l;dy/=l;}return[dx,dy];}
@@ -3204,7 +3206,7 @@ function drawHazards(B,g){if(!g.fans)return;const DK=hex(0x1a1820),W=g.W;
 function buildDynamic(){const g=G,B=dynB,O=ovB;B.reset();O.reset();if(g.def.hub){drawHubDyn(B,O);return;}if(ENH())drawMotes(g.cam.x,g.cam.z,levelIdx>=1,g.T);
  for(const d of g.doors){const a=d.base+d.th,e=doorEnd(d),s=d.len===undefined?[d.hx,d.hz]:doorStart(d);const dl=d.len??0.98;B.box(A.mul(A.mul(A.T((s[0]+e[0])/2,0.55,(s[1]+e[1])/2),A.RY(-a)),A.S(dl,1.1,0.07)),[0.95,0.9,0.9],false,TUV[4]);if(d.kind==='slide')continue;
   const kl=d.len===undefined?0.82:dl*0.84,kx=d.hx+Math.cos(a)*kl,kz=d.hz+Math.sin(a)*kl;B.box(TRS(kx,0.55,kz,-a,0.05,0.05,0.12),GOLD);}
- drawRide(B,g.car.x,g.car.z,1,0);drawAct2(B,g);if(g.oldCar)drawBeater(B,g.oldCar.x,g.oldCar.z,1,g.oldCar.a,rideId());drawDisco(B,g);drawHazards(B,g);drawStash(B,g);
+ if(!g.def.noCar)drawRide(B,g.car.x,g.car.z,1,0);drawAct2(B,g);if(g.oldCar)drawBeater(B,g.oldCar.x,g.oldCar.z,1,g.oldCar.a,rideId());drawDisco(B,g);drawHazards(B,g);drawStash(B,g);drawStage(B,g);
  if(g.cleared){const y=1.5+Math.sin(g.T*5)*0.15;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.3,0.3,0.3))),[1,0.3,0.75],true);}
  const p=g.player;const near=p.alive?nearItem(p):null;
  for(const it of g.items)if(!fogHid(it.x,it.z))drawItem(B,it,it===near);
@@ -3270,7 +3272,7 @@ function drawHUD0(){const c=hctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0
  if(g.kc>0){const bh=Math.round(vh*0.085*Math.min(1,g.kc/0.25));c.fillStyle='#000';c.fillRect(0,0,vw,bh);c.fillRect(0,vh-bh,vw,bh);c.globalAlpha=Math.min(1,g.kc/0.5);c.fillStyle='rgba(255,63,164,.12)';c.fillRect(0,0,vw,vh);c.globalAlpha=1;}
  /* objective */
  c.font=PXF(7*u);txt(c,'OBJECTIVE',m,m,'#2de2e6','left',7*u);
- c.font=VTF(20*u);txt(c,g.cleared?'GET BACK TO THE CAR':'ELIMINATE TARGETS  '+(tot-alive)+'/'+tot,m,m+10*u,g.cleared?'#ff5fb8':'#fff','left',20*u);
+ c.font=VTF(20*u);txt(c,g.cleared?(g.def.noCar?'TAKE THE ELEVATOR DOWN':'GET BACK TO THE CAR'):stageGoal(g)||'ELIMINATE TARGETS  '+(tot-alive)+'/'+tot,m,m+10*u,g.cleared?'#ff5fb8':'#fff','left',20*u);
  c.font=VTF(15*u);txt(c,missionIsCampaign(MISSION)?BRIEF_FLOOR(levelIdx):missionName(MISSION),m,m+30*u,'#c9a8e8','left',15*u);
  if(g.obj&&!g.cleared){c.font=VTF(17*u);txt(c,(g.obj.done?'\u2713 ':'\u25a0 ')+g.obj.label+(g.obj.total>1?'  '+g.obj.n+'/'+g.obj.total:''),m,m+46*u,g.obj.done?'#7dff9a':'#ffd36b','left',17*u);}
  if(g.sj){const s=sjState(g);txt(c,'SIDE JOB · '+SIDEJOBS[g.sj].name+' · '+s.txt,m,m+46*u,s.fail?'#ff8a95':s.ok?'#7dff9a':'#ffd36b','left',15*u);}
@@ -3367,8 +3369,8 @@ function showDead(){G.cameo=null;G.lex=null;if(!G.def.hub){arm();myProg().couchB
  let xp=0;if(!G.xpGiven){G.xpGiven=1;xp=runXP(G,false);awardXP(xp);}const pr=myProg();$('deadXP').innerHTML=(xp?'+'+xp+' XP · ':'')+'LEVEL '+pr.lvl+' <span style="opacity:.7">('+pr.xp+'/'+xpNeed(pr.lvl)+')</span>';
  syncRestartJob();if(pendingPerks>0)showPerkPick('dead');else show('sDead');}
 const KNAME={goldgl:'Gold launcher',goldak:'Golden AK',golddeagle:'Golden Deagles',katana:'Katana',dual:'Dual pistols',fists:'Fists',bat:'Bat',knife:'Knife',machete:'Machete',exec:'Execution',door:'Door slam',throw:'Thrown',pistol:'Pistol',silenced:'Silenced',revolver:'.357',smg:'Uzi',m16:'M16',shotgun:'Shotgun',double:'Double barrel'};
-function finishLevel(){const g=G;if(g.stageManaged){banner('STAGE COMPLETION UNSUPPORTED','Multi-stage finish, grade and payout policy is not enabled');return false;}state='results';const tb=timeBonus(g.time,levelIdx);const total=g.score+tb;g.take=total;totalScore+=total;totalKills+=g.kills;totalTime+=g.time;
- const gden=g.enemies.length*700,gp=(g.gpts||0)+tb,ratio=gp/gden;const gr=GRADES.find(q=>ratio>q[1])[0];const gi=GRADES.findIndex(q=>q[0]===gr);const nextG=gi>0?GRADES[gi-1]:null;const rsty=g.execs>=2?'ruthless':g.heads>=2?'gore':(!g.taken&&g.shots&&g.hits/g.shots>=0.6)?'clean':'mixed';g.style=rsty;runStyle[rsty]=(runStyle[rsty]||0)+1;
+function finishLevel(){const g=G;if(g.stageManaged&&!stageFinal(g)){banner('STAGE COMPLETION UNSUPPORTED','Multi-stage finish, grade and payout policy is not enabled');return false;}state='results';const tb=timeBonus(g.time,levelIdx);const total=g.score+tb;g.take=total;totalScore+=total;totalKills+=g.kills;totalTime+=g.time;
+ const gden=stageFoes(g)*700,gp=(g.gpts||0)+tb,ratio=gp/gden;const gr=GRADES.find(q=>ratio>q[1])[0];const gi=GRADES.findIndex(q=>q[0]===gr);const nextG=gi>0?GRADES[gi-1]:null;const rsty=g.execs>=2?'ruthless':g.heads>=2?'gore':(!g.taken&&g.shots&&g.hits/g.shots>=0.6)?'clean':'mixed';g.style=rsty;runStyle[rsty]=(runStyle[rsty]||0)+1;
  const acc=g.shots?Math.round(Math.min(1,g.hits/g.shots)*100)+'%':'—';
  $('rStats').innerHTML=`DIFFICULTY<b>${Dd().name}</b><br>KILLS<b>${g.kills}</b><br>EXECUTIONS<b>${g.execs}</b><br>BEST COMBO<b>x${g.maxCombo}</b><br>HEADS TAKEN<b>${g.heads}</b><br>STYLE<b>${rsty.toUpperCase()}</b><br>STYLE BONUS<b style="color:#2de2e6">+$${fmt(g.styleB||0)}${g.multis||g.switches?` <span style="opacity:.7">(${g.multis||0} MULTI · ${g.switches||0} SWITCH-UP)</span>`:''}</b><br>BY WEAPON<b>${Object.entries(g.kb).sort((a,b)=>b[1]-a[1]).map(([k,v])=>(KNAME[k]||k)+' '+v).join(' · ')||'—'}</b><br>ACCURACY<b>${acc}</b><br>TIME<b>${mmss(g.time)}  (PAR ${mmss(parOf(levelIdx))})</b><br>KILL MONEY<b>$${fmt(g.score)}</b><br>SPEED BONUS<b>$${fmt(tb)}</b><br>TAKE HOME<b>$${fmt(total)}</b><br>GRADE POINTS<b style="color:#ffd36b">${fmt(gp)}${nextG?'  ·  '+nextG[0]+' AT '+fmt(Math.floor(nextG[1]*gden)+1):'  ·  TOP GRADE'}</b>`;
  let xp=0;if(!g.xpGiven){g.xpGiven=1;xp=runXP(g,true,gr);awardXP(xp);}const pr=myProg();$('rStats').innerHTML+=`<br>XP EARNED<b style="color:#ffd36b">+${xp}</b><br>LEVEL<b style="color:#ffd36b">${pr.lvl}  (${pr.xp}/${xpNeed(pr.lvl)})</b>`;
@@ -3424,7 +3426,7 @@ function stageManager(id){
  return WORLD.stageRun({id,stages:m.stages,start:m.start},sid=>{
   const raw=m.stageDefs[sid];if(!raw)throw new Error('Missing stage definition '+sid);
   const {def,...descriptor}=raw;return descriptor;
- });
+ },{maxStageBytes:65536});
 }
 function stageRelease(g){if(!g)return;for(const key of ['staticB','decalB'])if(g[key]?.buf){gl.deleteBuffer(g[key].buf);g[key].buf=null;}}
 function stageCapture(g,armour=g.player.armor){
@@ -3462,9 +3464,9 @@ function stageBuild(id,token,snapshot){
  if(desc.kind!=='grid'&&desc.kind!=='plan')throw new Error('Unsupported playable stage kind '+desc.kind);
  if(desc.backdrop.length)throw new Error('Stage backdrops require W2c');
  if(desc.kind==='plan')return planStageBuild(id,token,snapshot,raw,b);
- stageRecord(def,['name','map','wall','floor','legend'],'grid definition');
+ stageRecord(def,['name','map','wall','floor','legend','sofa','noCar'],'grid definition');
  if(!Array.isArray(def.map)||!def.map.length||!def.map.every(r=>typeof r==='string')||def.map.join('').split('P').length!==2)throw new Error('Grid stage requires exactly one player spawn');
- for(const c of def.map.join(''))if(!isW(c)&&!Object.prototype.hasOwnProperty.call(FLOORCH,c)&&!FURN[c]&&!Object.prototype.hasOwnProperty.call(EKIND,c)&&!IKIND[c]&&![' ','P','C','D','@','*','r','%'].includes(c)&&!def.legend?.[c])throw new Error('Unsupported grid stage glyph '+c);
+ for(const c of def.map.join(''))if(!isW(c)&&!Object.prototype.hasOwnProperty.call(FLOORCH,c)&&!FURN[c]&&!Object.prototype.hasOwnProperty.call(EKIND,c)&&!IKIND[c]&&![' ','P','C','D','@','*','r','%','X'].includes(c)&&!def.legend?.[c])throw new Error('Unsupported grid stage glyph '+c);
  for(const lg of Object.values(def.legend||{}))if(lg.npc||lg.trig)throw new Error('Stage NPCs and hub triggers are unsupported');
  const prev=G,idx=levelIdx;let fresh;
  try{
@@ -3530,7 +3532,7 @@ function stageKitCheck(k){
 function stageActivate(g,manager,kit,hp,bag,armour){
  G=g;levelIdx=missionBase(g.mission);MISSION=g.mission;JOBPICK=null;HUBMODE='in';
  g.stageRun=manager;g.runOwner=myProg().run;g.variant=myProg().run.var;g.clear=missionClear(MISSION,g.variant);Object.assign(g,stageJSON(bag));
- applyLoadout(kit);g.player.hp=hp;g.player.armor=armour;g.track=LEVEL_TRACKS[levelIdx][RUNTRACK[levelIdx]%LEVEL_TRACKS[levelIdx].length];state='play';show(null);banner(missionName(MISSION)+' · '+g.sid,(g.plan?'Plan':'Grid')+' stage · completion policy not enabled');
+ applyLoadout(kit);g.player.hp=hp;g.player.armor=armour;g.track=LEVEL_TRACKS[levelIdx][RUNTRACK[levelIdx]%LEVEL_TRACKS[levelIdx].length];state='play';show(null);if(!stageIntro(g))banner(missionName(MISSION)+' · '+g.sid,(g.plan?'Plan':'Grid')+' stage · completion policy not enabled');
 }
 function stageFailure(e){banner('STAGE LOAD REFUSED',e.message);return false;}
 function startGridMission(id){
@@ -3545,7 +3547,6 @@ function enterStage(id,arrive=null,startingMission=null){
 function startGridRun(id,arrive=null){
  let fresh;try{
   const p=myProg(),old=p.run,manager=stageManager(id),existing=old&&old.mission===id;
-  if(p.gift)throw new Error('Gift loadouts are unsupported for grid stages');
   if(existing&&old.st){manager.decode(old.st);if(manager.current!==old.stage||!manager.active)throw new Error('Run stage/checkpoint mismatch');}
   if(existing&&old.stage!==missionStart(id)&&!old.st)throw new Error('Stage entry snapshot missing');
   const r=existing?kitClone(old):{v:KIT_V,mission:id,stage:missionStart(id),entryKit:kitClone(p.kit),stageKit:kitClone(p.kit),t:Date.now()};
@@ -3553,6 +3554,7 @@ function startGridRun(id,arrive=null){
   if(!missionIsCampaign(id)&&!(Number.isInteger(r.ret)&&r.ret>=0&&r.ret<CAMPAIGN_LEN))r.ret=Number.isInteger(NEXTJOB)?NEXTJOB:Math.min(JOBS.sel,JOBS.top);
   const retry=manager.active?manager.retry():null,token=manager.prepare(r.stage,arrive),bag=stageBag(retry?retry.bag:{});
   stageKitCheck(r.stageKit);fresh=stageBuild(id,token,retry?.snapshot||null);
+  if(!retry&&p.gift&&WD[p.gift])fresh.items.push({x:fresh.player.x+0.7,z:fresh.player.z,type:p.gift,ammo:WD[p.gift].ammo||0,vx:0,vz:0,rot:0.6,flying:false,fresh:false,flyT:0});
   const entry=stageCapture(fresh,retry?retry.snapshot.player.armor:fresh.player.armor+(r.stageKit.armour?.plates||0)),hp=Number.isFinite(r.stageHp)&&r.stageHp>0?r.stageHp:fresh.player.maxhp;
   const envelope=manager.preview(token,retry?.snapshot||null,entry,bag);
   r.st=envelope;r.stageHp=hp;r.t=Date.now();if(existing)Object.assign(old,r);else p.run=r;saveProg();
@@ -3571,11 +3573,40 @@ function enterGridStage(to,arrive=null){
   stageActivate(fresh,manager,r.stageKit,hp,bag,entry.player.armor);manager.commit(token,leaving,entry,bag);stageRelease(prev);return true;
  }catch(e){G=prev;stageRelease(fresh);return stageFailure(e);}
 }
+/* Multi-stage finish (W14): a stage with no stairs out is its mission's last. The floor clears and finishes there and is graded
+   on every enemy in the stages this run actually entered; the run's carried stats already hold the time, score and kills. */
+function stageFinal(g){return !!(g&&g.stageManaged&&g.stageRun&&!g.stageRun.describe(g.sid).stairs.length);}
+function stageMayFinish(g){return !g.stageManaged||stageFinal(g);}
+function stageSeen(g,sid){return !!(g.stageRun&&Object.hasOwn(g.stageRun.encode().states,sid));}
+function stageFoes(g){if(!g.stageManaged||!g.stageRun)return g.enemies.length;let n=0;for(const v of Object.values(g.stageRun.encode().states))n+=v.data.enemies.length;return n;}
+/* c2 Coral Tower (stage defs in missions.js): the lobby guard with the silenced pistol carries the elevator keycard; the stairs are
+   always open. Coming up the elevator alerts the penthouse; coming up the stairs doesn't. Keycard state lives on the stage's G, so a
+   retry from the lobby's entry checkpoint starts without it. */
+const isTower=g=>!!(g&&g.stageManaged&&g.mission==='c2');
+function stageGoal(g){if(!isTower(g))return null;return g.sid==='lobby'?(g.keycard?'TAKE THE ELEVATOR UP':'GET TO THE PENTHOUSE'):g.sid==='stair'?'CLIMB TO THE PENTHOUSE':null;}
+function stageLocked(g,s){return isTower(g)&&s.id==='elev'&&!g.keycard;}
+function stageLockHint(g){const T=g.T||0;if(T<(g.lockT||0))return;g.lockT=T+2.5;popup(g.player.x,g.player.z,'ELEVATOR NEEDS A KEYCARD','#ff8a95');sfx('blip');}
+function stageIntro(g){if(!isTower(g))return false;
+ if(g.sid==='lobby')banner('CORAL TOWER LOBBY','The elevator needs the keycard from the security office. The stairs are open.');
+ else if(g.sid==='stair')banner('STAIRWELL','The service level is above you. One guard per landing.');
+ else{placeStash(g,2);if(stageSeen(g,'stair'))banner('THE PENTHOUSE','You came in through the kitchen. Nobody saw you.');else{g.ambush=0.4;banner('THE PENTHOUSE','The doors open. They were waiting.');}}
+ return true;}
+function updateStage(dt){const g=G;if(!isTower(g))return;const p=g.player;
+ if(g.ambush>0&&(g.ambush-=dt)<=0)alertNoise(p.x,p.z,12,'elev');
+ if(g.sid!=='lobby'||g.keycard)return;
+ if(g.keyEn===undefined)g.keyEn=g.enemies.find(e=>e.weapon&&e.weapon.type==='silenced')||null;
+ if(!g.key&&g.keyEn&&!g.keyEn.alive){g.key={x:g.keyEn.x,z:g.keyEn.z};popup(g.key.x,g.key.z,'KEYCARD DROPPED','#ffd36b');}
+ if(g.key&&p.alive&&Math.hypot(p.x-g.key.x,p.z-g.key.z)<0.8){g.keycard=true;g.key=null;sfx('cash');popup(p.x,p.z,'KEYCARD  -  THE ELEVATOR IS OPEN','#7dff9a');}}
+function drawStage(B,g){if(!isTower(g)||!g.stageRun)return;const bx=(x,y,z,sx,sy,sz,c,em)=>B.box(TRS(x,y,z,0,sx,sy,sz),c,!!em),steel=[0.74,0.77,0.82],brass=[0.85,0.68,0.22];
+ for(const s of g.stageRun.describe(g.sid).stairs){const lock=stageLocked(g,s),x=s.at[0],z=s.at[1];bx(x,0.03,z,0.9,0.015,0.9,s.id==='elev'?(lock?[1,0.25,0.25]:[0.3,1,0.5]):[1,0.85,0.35],true);
+  if(s.id==='elev'){bx(x,0.95,z-0.44,3.2,1.9,0.08,steel);bx(x-1.7,1.0,z-0.42,0.12,2.0,0.12,brass);bx(x+1.7,1.0,z-0.42,0.12,2.0,0.12,brass);bx(x,2.05,z-0.4,0.5,0.12,0.06,lock?[1,0.2,0.2]:[0.3,1,0.5],true);}}
+ if(g.sid==='pent'){const c=g.car;bx(c.x+0.5,0.95,c.z+0.55,2.0,1.9,0.08,steel);bx(c.x-0.5,1.0,c.z+0.5,0.12,2.0,0.12,brass);bx(c.x+1.5,1.0,c.z+0.5,0.12,2.0,0.12,brass);bx(c.x+0.5,2.05,c.z+0.5,0.5,0.12,0.06,g.cleared?[0.3,1,0.5]:[1,0.3,0.3],true);}
+ if(g.key){const y=0.45+Math.sin(g.T*2.6)*0.06;bx(g.key.x,y,g.key.z,0.32,0.03,0.2,[1,0.85,0.3],true);bx(g.key.x,0.03,g.key.z,0.7,0.015,0.7,[1,0.8,0.2],true);}}
 function stageStairs(g){
  if(!stageCanLeave(g)||state!=='play'||fading)return false;
  for(const s of g.stageRun.describe(g.sid).stairs){
   const inside=Math.hypot(g.player.x-s.at[0],g.player.z-s.at[1])<=s.r;
-  if(!inside){g.stairLatch.delete(s.id);continue;}if(g.stairLatch.has(s.id))continue;
+  if(!inside){g.stairLatch.delete(s.id);continue;}if(g.stairLatch.has(s.id))continue;if(stageLocked(g,s)){stageLockHint(g);continue;}
   const r=myProg().run,m=MISSION;state='stagefade';
   const accepted=fadeTo(()=>{if(G!==g||MISSION!==m||myProg().run!==r)return;if(!stageCanLeave(g)){state='play';return;}enterStage(s.to,s.arrive);if(G===g)state='play';});
   if(!accepted){state='play';return false;}g.stairLatch.add(s.id);return true;
@@ -3597,7 +3628,7 @@ function resumeRun(){let best=-1,t=-1;CHARS.forEach((c,i)=>{const r=PROG[c.id]&&
  return {ci:best,id:r.mission,mi,st:mi>=0?mi:Number.isInteger(r.ret)&&r.ret>=0&&r.ret<CAMPAIGN_LEN?r.ret:Math.min(JOBS.sel,JOBS.top)};}
 function syncResume(){const r=resumeRun();$('bResumeJob').style.display=r?'':'none';if(r)$('bResumeJob').innerHTML='RESUME JOB · '+CHARS[r.ci].name+' · '+missionName(r.id);}
 function sessionReset(st){LEXMET=st>1;initAudio();totalScore=0;totalKills=0;totalTime=0;levelIdx=st;VISIT={debrief:null,next:st,grade:null,take:0,style:null};HUBFIRST=true;runStyle={};RUNEND=null;}
-function restart(){if(!G||G.def.hub||fading)return;if(!G.player.alive){RUNTRACK[levelIdx]++;MUS.track='';MUS.pending=null;}if(state==='results'&&G.take){totalScore-=G.take;totalKills-=G.kills;totalTime-=G.time;}startMission(MISSION);}
+function restart(){if(!G||G.def.hub||fading)return;if(!G.player.alive){RUNTRACK[levelIdx]++;MUS.track='';MUS.pending=null;}if(state==='results'&&G.take){totalScore-=G.take;totalKills-=G.kills;totalTime-=G.time;}if(state==='results'&&G.stageManaged)runRestartMission();startMission(MISSION);}
 /* the pause screen doubles as the settings screen on the main menu */
 let SETMENU=false;function setMenuMode(on){SETMENU=on;$('pTitle').textContent=on?'SETTINGS':'PAUSED';for(const id of ['bResume','bPRestart','bQuit'])$(id).style.display=on?'none':'';if(on)$('bPRestartJob').style.display='none';$('bWalk').style.display=on||!G||G.def.hub?'none':'';$('bSetBack').style.display=on?'':'none';}
 function togglePause(){if(state==='play'){setMenuMode(false);syncRestartJob();state='pause';show('sPause');}else if(state==='pause'){state='play';show(null);}}

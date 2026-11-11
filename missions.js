@@ -24,6 +24,24 @@ const MISSIONS={
  c6:{idx:6,kind:'campaign',stages:['legacy'],start:'legacy',briefFlags:['singer_paid']}, // read by brief7; no map change until W2's studio plan
  c7:{idx:7,kind:'campaign',stages:['legacy'],start:'legacy'},
 };
+/* c2 is a building: the lobby, then the elevator (keycard from the security office guard) or the stairwell and service level,
+   then the penthouse (LEVELS[2] with the street walled off), out by the elevator. All three are grid stages on base index 2, so
+   every index-keyed save, score and story structure stays on floor 2. Every stair is one way up; the penthouse has none, which
+   makes it the stage the floor is finished from (stageFinal in index.html). noCar: the exit is the elevator, not your car. */
+if(typeof LEVELS!=='undefined'){
+ const L=LEVELS[2],rows=L.map.slice(),s=rows.findIndex(r=>r[0]==='='),set=(x,z,c)=>{rows[z]=rows[z].slice(0,x)+c+rows[z].slice(x+1);};
+ for(let z=s;z<rows.length;z++)rows[z]='#'.repeat(rows[z].length);
+ set(11,s-2,'P');set(22,s-1,'C');
+ MISSIONS.c2.stages=['lobby','stair','pent'];MISSIONS.c2.start='lobby';
+ MISSIONS.c2.stageDefs={
+  lobby:{id:'lobby',kind:'grid',rev:1,def:{name:'CORAL TOWER LOBBY',wall:42,floor:41,legend:{'.':{f:41},'e':{f:41},'n':{f:41}},map:["####################################", "#KK.....#p.L....eee.....L.p#......n#", "#.....T.#...rrr....rrr.....#.6.....#", "#...h...#.....*.....*.s....#.......#", "#.......#...BBBBBB.........#...k...#", "#.......#................4.#......p#", "#..T....D..g...............D.......#", "#.1.....#.....b*.....u*....#..g....#", "#L......#pS..............Sp#......L#", "################..##################", "====================================", "============P=========C=============", "===================================="]},
+   stairs:[{id:'elev',to:'pent',at:[18.5,2.5],r:1.2,arrive:'elev',oneWay:true},{id:'up',to:'stair',at:[35.5,2.5],r:0.9,arrive:'bottom',oneWay:true}]},
+  stair:{id:'stair',kind:'grid',rev:1,def:{name:'STAIRWELL AND SERVICE LEVEL',noCar:true,wall:42,floor:41,legend:{'.':{f:41},'n':{f:41}},map:["##########################", "#L.......#.KK...........n#", "#..5.....#...s...T.......#", "#....g...D..........b....#", "#........#...............#", "#...SSS..#...............#", "#........D......k........#", "#........#..2........u...#", "#.PC....p#..............L#", "##########################"]},
+   arrivals:{bottom:{at:[3.5,9.5]}},stairs:[{id:'up',to:'pent',at:[25.5,2.5],r:0.9,arrive:'stairs',oneWay:true}]},
+  pent:{id:'pent',kind:'grid',rev:1,def:{name:L.name,noCar:true,wall:L.wall,sofa:L.sofa,map:rows},
+   arrivals:{elev:{at:[23.5,12.5]},stairs:{at:[12.5,12.5]}}}
+ };
+}
 const ownKey=(o,k)=>typeof k==='string'&&Object.prototype.hasOwnProperty.call(o,k);
 const missionId=i=>'c'+i;
 const missionKnown=id=>ownKey(MISSIONS,id);
