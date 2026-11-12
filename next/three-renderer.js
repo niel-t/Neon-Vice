@@ -164,6 +164,16 @@ export function create(N,oldGL){
  function quality(){if(window.QLOCK!==undefined){setQ(window.QLOCK);return;}if(q<0)setQ(0);const now=performance.now(),dt=now-last;last=now;if(dt>250)return;ema=ema*0.95+dt*0.05;
   if(ema>24){slowT+=dt;if(slowT>2500&&q<3){setQ(q+1);slowT=0;}}else if(ema<14){slowT-=dt;if(slowT<-8000&&q>0){setQ(q-1);slowT=0;}}else slowT*=0.98;}
 
+ /* ---- warm-up: the first gameplay frame only hands the level to Three and asks the driver to build every
+    shader in the background (KHR_parallel_shader_compile). The classic renderer keeps drawing until that is
+    done, so the switch to the new renderer does not freeze the game. Programs are built for the HDR target
+    the scene is really drawn into, otherwise Three would build them a second time on the first frame. ---- */
+ let warm=0;
+ function warmUp(){warm=1;N.warming=true;N.live=false;show(false);const t0=performance.now();let p;
+  try{renderer.setRenderTarget(composer.readBuffer);if(renderer.extensions.has('KHR_parallel_shader_compile'))p=renderer.compileAsync(scene,camera);else{renderer.compile(scene,camera);p=Promise.resolve();}}catch(e){p=Promise.resolve();}renderer.setRenderTarget(null);
+  const done=()=>{if(warm===2)return;warm=2;N.warming=false;N.warmMs=Math.round(performance.now()-t0);N.warmPrograms=renderer.info.programs?renderer.info.programs.length:0;};
+  p.then(done,done);setTimeout(done,8000);}
+
  const V=new THREE.Vector3();
  function draw(o){quality();resize();const G=o.G;
   camera.fov=o.fovy*180/Math.PI;camera.near=G.cine?0.3:1;camera.far=G.cine?150:90;camera.position.set(o.eye[0],o.eye[1],o.eye[2]);camera.up.set(0,1,0);camera.lookAt(o.tgt[0],o.tgt[1],o.tgt[2]);camera.updateProjectionMatrix();
@@ -178,6 +188,7 @@ export function create(N,oldGL){
   syncInst(mHi,o.IBhi);syncInst(mLo,o.IBlo);syncChars();
   N._ground.position.x=Math.round(o.tgt[0]/2)*2;N._ground.position.z=Math.round(o.tgt[2]/2)*2;
   film.uniforms.t.value=o.time%10;film.uniforms.grain.value=o.grain||0;const fl=Math.min(Math.max(G.flash||0,0),0.7),fc=G.flashC||[0,0,0];film.uniforms.flash.value.set(fc[0],fc[1],fc[2],fl);
+  if(!warm){warmUp();return;}
   composer.render();N.frames=(N.frames||0)+1;}
  function show(live){canvas.style.display=live?'block':'none';oldCanvas.style.visibility=live?'hidden':'';}
  return{draw,show,LOOK,scene,camera,renderer,bloom,get quality(){return q;}};
