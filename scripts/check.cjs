@@ -86,7 +86,7 @@ function check() {
     assert(!w.base || WD[w.base], `${type}: unknown base weapon`);
   }
   const names = ['MOTEL SUNSET', 'CLUB FLAMINGO', 'THE PENTHOUSE', 'VICE MARINA',
-    'STARLIGHT ARCADE', 'OCEAN VIEW MALL', 'THE RECORDING STUDIO', 'THE ROYAL FLUSH', 'OCEAN DRIVE DEMOLITION', 'THE GRAND BISCAYNE GALA'];
+    'STARLIGHT ARCADE', 'OCEAN VIEW MALL', 'THE RECORDING STUDIO', 'THE ROYAL FLUSH', 'OCEAN DRIVE DEMOLITION', 'THE GRAND BISCAYNE GALA', 'KADE TOWER'];
   assert.equal(LEVELS.length, names.length, 'Review append-only level/save indexes before changing campaign length');
   assert.equal(PAR.length, LEVELS.length);
   assert.equal(LEVEL_TRACKS.length, LEVELS.length);

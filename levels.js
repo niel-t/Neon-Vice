@@ -182,13 +182,28 @@ const LEVELS=[
  "========================================",
  "====P=================C=================",
  "========================================"]},
+ {name:'KADE TOWER',act:3,wall:6,sofa:0xd8d8e8,from:'McWEY',hardhat:true,boss:{name:'DORIAN KADE',look:()=>({skin:[0.91,0.72,0.56],jacket:[0.957,0.945,0.918],shirt:[0.16,0.16,0.19],pants:[0.957,0.945,0.918],shoes:[0.957,0.945,0.918],hair:[0.85,0.85,0.88],hs:'slick',shades:true,watch:true,bw:1.1,bd:1.05,bh:1.0}),weapon:'m16',hp:20,kade:true,intro:'White suit, M16. A crane swings overhead: watch for the red lane.',dead:'THE DEVELOPER IS DEAD'},
+  brief:"Kade is on top of his unfinished tower tonight, signing the last deeds with the whole skyline watching. The hoist needs the foreman's key, and the stairs are only forty floors. Finish this, and I'll finally have my block back.",map:[
+ "####################################",
+ "#..................................#",
+ "#..7...........b..X..b..........2..#",
+ "#.....FF....................FF.....#",
+ "#........s................s........#",
+ "#............F........F............#",
+ "#..Z......Z......FF......Z......Z..#",
+ "#...........g..........g...........#",
+ "#.....FF..........m.........FF.....#",
+ "#...x.........F......F.........x...#",
+ "#.......u.........6........u.......#",
+ "#..........P..........C............#",
+ "####################################"]},
 ];
 /*END*/
 
 /* grading: par time per floor (seconds), and grade points that ignore difficulty/perk/character money multipliers */
-const PAR=[60,55,120,60,65,90,65,60,75,80];const GRADES=[['S',2.3],['A+',1.8],['A',1.4],['B',1.0],['C',0.65],['D',-1]];
+const PAR=[60,55,120,60,65,90,65,60,75,80,130];const GRADES=[['S',2.3],['A+',1.8],['A',1.4],['B',1.0],['C',0.65],['D',-1]];
 
 /* hidden stashes: [map x, map z, hi-fi track unlocked (or null), cash]. Saved in JOBS.stash[floor]=1 */
-const STASH=[[5,4,'n_nightdrive',1500],[29,5,'n_haze',1500],[12,5,'n_concrete',2000],[37,3,'n_redtide',2000],[37,2,'n_overdrive',2000],[38,4,'n_rampage',2000],[29,1,null,4000],[39,4,null,5000],[38,9,null,3000],[38,10,null,3500]];
+const STASH=[[5,4,'n_nightdrive',1500],[29,5,'n_haze',1500],[12,5,'n_concrete',2000],[37,3,'n_redtide',2000],[37,2,'n_overdrive',2000],[38,4,'n_rampage',2000],[29,1,null,4000],[39,4,null,5000],[38,9,null,3000],[38,10,null,3500],[34,1,null,6000]];
 
-const LEVEL_TRACKS=[['game','n_nightdrive','n_haze','n_concrete'],['n_crystal','n_overdrive','n_nightdrive','n_haze'],['n_redtide','n_rampage','n_concrete','n_overdrive'],['n_nightdrive','n_crystal'],['n_overdrive','n_crystal'],['n_haze','n_redtide'],['n_rampage','n_overdrive'],['n_redtide','n_rampage'],['n_concrete','n_overdrive','n_rampage'],['n_nightdrive','n_crystal','n_haze']];
+const LEVEL_TRACKS=[['game','n_nightdrive','n_haze','n_concrete'],['n_crystal','n_overdrive','n_nightdrive','n_haze'],['n_redtide','n_rampage','n_concrete','n_overdrive'],['n_nightdrive','n_crystal'],['n_overdrive','n_crystal'],['n_haze','n_redtide'],['n_rampage','n_overdrive'],['n_redtide','n_rampage'],['n_concrete','n_overdrive','n_rampage'],['n_nightdrive','n_crystal','n_haze'],['n_redtide','n_rampage']];

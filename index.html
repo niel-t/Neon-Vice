@@ -552,7 +552,8 @@ const CHALLENGES=[
  [CHX.glass(),CHX.untouched(),CHX.time(50)],
  [CHX.untouched(),CHX.time(45),CHX.combo(6)],
  [CHX.doors(2),CHX.time(55),CHX.combo(6)],
- [CHX.noguns(),CHX.time(60),CHX.untouched()]];
+ [CHX.noguns(),CHX.time(60),CHX.untouched()],
+ [CHX.untouched(),CHX.elev(),CHX.stairs()]];
 const CH_PAY=2000;
 const chDone=(i,k)=>!!(((JOBS.ch||{})[i]||0)&(1<<k));
 function chStars(i){let n=0;for(let k=0;k<3;k++)if(chDone(i,k))n++;return n;}
@@ -859,7 +860,7 @@ function rayLen(x,z,dx,dz,max){if(G&&G.plan){const r=WORLD.trace(G.wst,x,z,x+dx*
 /* 'front' = park at the main entrance; 'alley' = back door in a service alley. ARR_GO is a one-shot set by startMission (campaign
    map) or startGridRun (a grid mission's first stage) and consumed by loadLevel; maps without two '=' street rows skip it.
    window.NOARRIVE (test harness) keeps the map's P/C spawn. ARR_SEEN skips the drive-in when you retry the same floor. */
-const ARRIVE=['front','alley','front','alley','front','front','alley','front','alley','front'];
+const ARRIVE=['front','alley','front','alley','front','front','alley','front','alley','front','front'];
 let ARR_GO=null,ARR_SEEN=-1;
 function arriveSetup(g,i){const W=g.W,rows=g.rows;let type=ARRIVE[i]||'front';
  const zs=[];for(let z=0;z<g.H;z++)if(rows[z].indexOf('=')>=0)zs.push(z);if(zs.length<2||!g.player)return;
@@ -876,7 +877,7 @@ function arriveSetup(g,i){const W=g.W,rows=g.rows;let type=ARRIVE[i]||'front';
  const cx=Math.max(2.2,Math.min(W-2.2,gx+(fromRight?-0.55:0.55))),cz=zT+(type==='front'?1.15:1.0);
  let ax=null;if(type==='alley'){const lim=gx<mid?Math.min(gx+4,fx-2.5):Math.max(gx-4,fx+2.5);ax=gx<mid?[0,Math.floor(lim)]:[Math.ceil(lim),W-1];}g.arr={type,zT,zB,gx,gap,ax};
  if(gate){g.deco.push({t:'arch',x:gate.a,z:zT-1,fx:gate.b,w:gate.b-gate.a+1});for(const sx of [-1,1])g.lights.push({x:fx+sx*1.3,y:1.8,z:zT+0.1,r:4,c:[0.3,0.9,1]});}
- else{const w=Math.min(front.b-front.a+1.6,4),col=hex([0x2a9ea3,0xe0459a,0x7a1622,0x2a9ea3,0xe0459a,0x2bb7b9,0x8e2a66,0x1c6b3a,0xe0a030,0x6a2a9a][i]||g.def.sofa||0xe0459a);g.deco.push({t:'awning',x:Math.floor(fx),z:zT,fx,w,c:col});if(i===2||i===7||i===5)g.deco.push({t:'carpet',x:Math.floor(fx),z:zT,fx,w:Math.min(front.b-front.a+1,2.2)});for(const sx of [-1,1])g.lights.push({x:fx+sx*(w/2+0.2),y:1.5,z:zT+0.2,r:3.6,c:[1,0.82,0.55]});}
+ else{const w=Math.min(front.b-front.a+1.6,4),col=hex([0x2a9ea3,0xe0459a,0x7a1622,0x2a9ea3,0xe0459a,0x2bb7b9,0x8e2a66,0x1c6b3a,0xe0a030,0x6a2a9a,0xd8d8e8][i]||g.def.sofa||0xe0459a);g.deco.push({t:'awning',x:Math.floor(fx),z:zT,fx,w,c:col});if(i===2||i===7||i===5)g.deco.push({t:'carpet',x:Math.floor(fx),z:zT,fx,w:Math.min(front.b-front.a+1,2.2)});for(const sx of [-1,1])g.lights.push({x:fx+sx*(w/2+0.2),y:1.5,z:zT+0.2,r:3.6,c:[1,0.82,0.55]});}
  g.car={x:cx,z:cz};g.carA=fromRight?Math.PI:0;
  if(type==='alley'){for(let x=ax[0];x<=ax[1];x++){const ii=zB*W+x;if(rows[zB][x]==='='){g.solid[ii]=1;g.wallT[ii]=6;g.wh[ii]=1.7;g.topT[ii]=0;}}}
  /* the player stands at the door from the start (hidden while driving), so stage entry snapshots and retries begin there */
@@ -1098,7 +1099,7 @@ function killEnemy(e,type,dir){type=BT(type);if(!e.alive)return;const g=G;e.aliv
  AI.witness(e);
  addPool(e,type==='exec'||sh);rumble(0.35,0.6,90);sfx('splat');g.freeze=0.045;shake(sh?0.4:0.25);g.kills++;g.kb[type]=(g.kb[type]||0)+1;g.hitT=0.18;addKillScore(e,type);
  if(!g.enemies.some(q=>q.alive)&&!g.cleared){g.kc=1.5;popup(e.x,e.z-0.5,'LAST ONE','#ff3fa4');shake(0.5);}
- if(e.boss){g.freeze=0.35;headPop(e,dir);bloodBurst(e.x,0.8,e.z,dir,120,6);wallSplat(e.x,e.z,dir,4);const bon=Math.round(5000*Dd().mult);g.score+=bon;popup(e.x,e.z-0.6,'THE SHARK IS DEAD  +$'+fmt(bon),'#ff3fa4');shake(0.8);rumble(1,1,600);sfx('boss');}}
+ if(e.boss){g.freeze=0.35;headPop(e,dir);bloodBurst(e.x,0.8,e.z,dir,120,6);wallSplat(e.x,e.z,dir,4);const bon=Math.round(5000*Dd().mult);g.score+=bon;popup(e.x,e.z-0.6,(G.def.boss&&G.def.boss.dead||'THE SHARK IS DEAD')+'  +$'+fmt(bon),'#ff3fa4');shake(0.8);rumble(1,1,600);sfx('boss');}}
 function stagger(e,dir){e.vx+=dir[0]*3;e.vz+=dir[1]*3;e.hitT=0.12;e.wind=0;e.cd=Math.max(e.cd,0.5);AI.hurt(e,dir);sfx('punch');if(!e.boss)popup(e.x,e.z,archLabel(e)+' SHRUGS IT OFF','#ffd36b');if(e.state!=='chase'){e.state='chase';e.react=0.4;e.seeT=0;}}
 function hitEnemy(e,type,dir,dmg){type=BT(type);if(!e.alive)return;if(e.boss)G.bossSeen=true;if(!BAL.dead(e.hp||1,dmg)){e.hp=(e.hp||1)-dmg;e.hitT=0.12;bloodBurst(e.x,0.7,e.z,dir,e.boss?14:10,3);addFloorDecal(e.x+dir[0]*0.4,e.z+dir[1]*0.4,rnd(0.3,0.6),rnd(0,TAU),10,bloodTint());
  const kb=e.boss?0.8:2.5;e.vx+=dir[0]*kb;e.vz+=dir[1]*kb;if(GUNS.includes(type)){e.wounds.push([rnd(-0.14,0.14),rnd(0.48,0.74)]);G.hits++;}sfx('punch');rumble(0.2,0.4,60);G.hitT=0.12;
@@ -3548,7 +3549,7 @@ function stageBuild(id,token,snapshot){
  if(desc.kind!=='grid'&&desc.kind!=='plan')throw new Error('Unsupported playable stage kind '+desc.kind);
  if(desc.backdrop.length)throw new Error('Stage backdrops require W2c');
  if(desc.kind==='plan')return planStageBuild(id,token,snapshot,raw,b);
- stageRecord(def,['name','map','wall','floor','legend','sofa','noCar'],'grid definition');
+ stageRecord(def,['name','map','wall','floor','legend','sofa','noCar','hardhat','boss'],'grid definition');
  if(!Array.isArray(def.map)||!def.map.length||!def.map.every(r=>typeof r==='string')||def.map.join('').split('P').length!==2)throw new Error('Grid stage requires exactly one player spawn');
  for(const c of def.map.join(''))if(!isW(c)&&!Object.prototype.hasOwnProperty.call(FLOORCH,c)&&!FURN[c]&&!Object.prototype.hasOwnProperty.call(EKIND,c)&&!IKIND[c]&&![' ','P','C','D','@','*','r','%','X'].includes(c)&&!def.legend?.[c])throw new Error('Unsupported grid stage glyph '+c);
  for(const lg of Object.values(def.legend||{}))if(lg.npc||lg.trig)throw new Error('Stage NPCs and hub triggers are unsupported');
@@ -3667,24 +3668,35 @@ function stageFoes(g){if(!g.stageManaged||!g.stageRun)return g.enemies.length;le
 /* c2 Coral Tower (stage defs in missions.js): the lobby guard with the silenced pistol carries the elevator keycard; the stairs are
    always open. Coming up the elevator alerts the penthouse; coming up the stairs doesn't. Keycard state lives on the stage's G, so a
    retry from the lobby's entry checkpoint starts without it. */
-const isTower=g=>!!(g&&g.stageManaged&&g.mission==='c2');
-function stageGoal(g){if(!isTower(g))return null;return g.sid==='lobby'?(g.keycard?'TAKE THE ELEVATOR UP':'GET TO THE PENTHOUSE'):g.sid==='stair'?'CLIMB TO THE PENTHOUSE':null;}
+const isTower=g=>!!(g&&g.stageManaged&&(g.mission==='c2'||g.mission==='c10'));const isKade=g=>!!(g&&g.stageManaged&&g.mission==='c10');
+function stageGoal(g){if(!isTower(g))return null;if(isKade(g))return g.sid==='site'?(g.keycard?'TAKE THE HOIST UP':'GET TO THE TOP'):g.sid==='stair'?'CLIMB TO THE TOP':null;return g.sid==='lobby'?(g.keycard?'TAKE THE ELEVATOR UP':'GET TO THE PENTHOUSE'):g.sid==='stair'?'CLIMB TO THE PENTHOUSE':null;}
 function stageLocked(g,s){return isTower(g)&&s.id==='elev'&&!g.keycard;}
-function stageLockHint(g){const T=g.T||0;if(T<(g.lockT||0))return;g.lockT=T+2.5;popup(g.player.x,g.player.z,'ELEVATOR NEEDS A KEYCARD','#ff8a95');sfx('blip');}
+function stageLockHint(g){const T=g.T||0;if(T<(g.lockT||0))return;g.lockT=T+2.5;popup(g.player.x,g.player.z,isKade(g)?'THE HOIST NEEDS THE FOREMAN\'S KEY':'ELEVATOR NEEDS A KEYCARD','#ff8a95');sfx('blip');}
 function stageIntro(g){if(!isTower(g))return false;
+ if(isKade(g)){if(g.sid==='site')banner('KADE TOWER','The hoist needs the foreman\'s key. The stairs are open, and they are long.');else if(g.sid==='stair')banner('STEEL STAIRS','Hard hats on every landing.');else{placeStash(g,10);if(stageSeen(g,'stair'))banner('THE TOP FLOOR','You came up the stairs. Kade does not know yet.');else{g.ambush=0.4;banner('THE TOP FLOOR','The hoist doors open. Kade was watching the lift.');}}return true;}
  if(g.sid==='lobby')banner('CORAL TOWER LOBBY','The elevator needs the keycard from the security office. The stairs are open.');
  else if(g.sid==='stair')banner('STAIRWELL','The service level is above you. One guard per landing.');
  else{placeStash(g,2);if(stageSeen(g,'stair'))banner('THE PENTHOUSE','You came in through the kitchen. Nobody saw you.');else{g.ambush=0.4;banner('THE PENTHOUSE','The doors open. They were waiting.');}}
  return true;}
+/* Kade Tower top floor: a crane drops a load down a red lane (it crushes the player and any hard hat in it), and at half health Kade calls three more hard hats up the hoist */
+function kadeStage(dt,g,p){if(g.sid!=='pent'||!g.boss||!g.boss.alive||!g.bossSeen)return;const b=g.boss,c=g.crane||(g.crane={t:3,ph:0,x:g.W/2,w:2.4});c.t-=dt;
+ if(c.ph===0&&c.t<=0){c.ph=1;c.t=1.5;c.x=clamp(p.x+rnd(-2,2),3,g.W-4);sfx('blip');}
+ else if(c.ph===1&&c.t<=0){c.ph=2;c.t=0.7;shake(0.5);sfx('boss');
+  if(p.alive&&Math.abs(p.x-c.x)<c.w/2)hurtPlayer([0,1],'boss');
+  for(const e of g.enemies)if(e.alive&&!e.boss&&Math.abs(e.x-c.x)<c.w/2)hitEnemy(e,'fists',[0,1],3);}
+ else if(c.ph===2&&c.t<=0){c.ph=0;c.t=b.hp<=b.maxhp/2?4:6;}
+ if(!g.kP2&&b.hp<=b.maxhp/2){g.kP2=1;banner('KADE CALLS FOR HELP','Hard hats up the hoist');for(const [x,z] of [[5.5,2.5],[g.W-5.5,2.5],[g.W/2,g.H-3.5]]){const e=makeEnemy(g,g.def,8,'bat',false,x,z);e.state='chase';e.seeT=0;}}}
 function updateStage(dt){const g=G;if(!isTower(g))return;const p=g.player;
  if(g.ambush>0&&(g.ambush-=dt)<=0)alertNoise(p.x,p.z,12,'elev');
- if(g.sid!=='lobby'||g.keycard)return;
+ if(isKade(g))kadeStage(dt,g,p);
+ if(g.sid!==(isKade(g)?'site':'lobby')||g.keycard)return;
  if(g.keyEn===undefined)g.keyEn=g.enemies.find(e=>e.weapon&&e.weapon.type==='silenced')||null;
- if(!g.key&&g.keyEn&&!g.keyEn.alive){g.key={x:g.keyEn.x,z:g.keyEn.z};popup(g.key.x,g.key.z,'KEYCARD DROPPED','#ffd36b');}
- if(g.key&&p.alive&&Math.hypot(p.x-g.key.x,p.z-g.key.z)<0.8){g.keycard=true;g.key=null;sfx('cash');popup(p.x,p.z,'KEYCARD  -  THE ELEVATOR IS OPEN','#7dff9a');}}
+ if(!g.key&&g.keyEn&&!g.keyEn.alive){g.key={x:g.keyEn.x,z:g.keyEn.z};popup(g.key.x,g.key.z,isKade(g)?'HOIST KEY DROPPED':'KEYCARD DROPPED','#ffd36b');}
+ if(g.key&&p.alive&&Math.hypot(p.x-g.key.x,p.z-g.key.z)<0.8){g.keycard=true;g.key=null;sfx('cash');popup(p.x,p.z,isKade(g)?'HOIST KEY  -  THE HOIST IS OPEN':'KEYCARD  -  THE ELEVATOR IS OPEN','#7dff9a');}}
 function drawStage(B,g){if(!isTower(g)||!g.stageRun)return;const bx=(x,y,z,sx,sy,sz,c,em)=>B.box(TRS(x,y,z,0,sx,sy,sz),c,!!em),steel=[0.74,0.77,0.82],brass=[0.85,0.68,0.22];
  for(const s of g.stageRun.describe(g.sid).stairs){const lock=stageLocked(g,s),x=s.at[0],z=s.at[1];bx(x,0.03,z,0.9,0.015,0.9,s.id==='elev'?(lock?[1,0.25,0.25]:[0.3,1,0.5]):[1,0.85,0.35],true);
   if(s.id==='elev'){bx(x,0.95,z-0.44,3.2,1.9,0.08,steel);bx(x-1.7,1.0,z-0.42,0.12,2.0,0.12,brass);bx(x+1.7,1.0,z-0.42,0.12,2.0,0.12,brass);bx(x,2.05,z-0.4,0.5,0.12,0.06,lock?[1,0.2,0.2]:[0.3,1,0.5],true);}}
+ if(g.crane&&g.crane.ph>0){const c=g.crane;bx(c.x,0.04,g.H/2,c.w,0.02,g.H-3,[1,0.15,0.15],c.ph===2||Math.sin(g.T*20)>0);if(c.ph===2)bx(c.x,0.8,g.H/2,c.w*0.9,1.6,g.H-4,[0.45,0.4,0.2]);}
  if(g.sid==='pent'){const c=g.car;bx(c.x+0.5,0.95,c.z+0.55,2.0,1.9,0.08,steel);bx(c.x-0.5,1.0,c.z+0.5,0.12,2.0,0.12,brass);bx(c.x+1.5,1.0,c.z+0.5,0.12,2.0,0.12,brass);bx(c.x+0.5,2.05,c.z+0.5,0.5,0.12,0.06,g.cleared?[0.3,1,0.5]:[1,0.3,0.3],true);}
  if(g.key){const y=0.45+Math.sin(g.T*2.6)*0.06;bx(g.key.x,y,g.key.z,0.32,0.03,0.2,[1,0.85,0.3],true);bx(g.key.x,0.03,g.key.z,0.7,0.015,0.7,[1,0.8,0.2],true);}}
 function stageStairs(g){

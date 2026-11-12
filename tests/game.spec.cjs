@@ -88,7 +88,7 @@ test('UI journey: title/select/intro/elevator/brief/car/mission, spam and held m
   await progressing(page);
 });
 
-test('integration: existing startLevel loads all ten floors and advances real simulation', async ({ openGame }) => {
+test('integration: existing startLevel loads all eleven floors and advances real simulation', async ({ openGame }) => {
   const page = await openGame();
   const data = gameData();
   expect(await page.evaluate(() => LEVEL_TRACKS.every(list => list.every(track => !!TRACKS[track])))).toBe(true);
@@ -96,6 +96,8 @@ test('integration: existing startLevel loads all ten floors and advances real si
     const expected = expectedMap(data.LEVELS[i], data);
     // Floor 2 is a building: startLevel(2) begins on the lobby stage (missions.js), not on the LEVELS[2] map.
     if (i === 2) Object.assign(expected, { enemies: 7, items: 3, player: [[13.5, 12.5]], car: [[23.5, 12.5]] });
+    // Floor 10 is Kade Tower: startLevel(10) begins on the site stage (missions.js).
+    if (i === 10) Object.assign(expected, { enemies: 13, items: 4, player: [[13.5, 12.5]], car: [[24.5, 12.5]] });
     const actual = await page.evaluate(i => {
       startLevel(i);
       return { enemies: G.enemies.length, items: G.items.length,
@@ -111,7 +113,7 @@ test('integration: existing startLevel loads all ten floors and advances real si
 test('arrival: every floor opens with the car pulling up to a real entrance, skipped on retry', async ({ openGame }) => {
   test.setTimeout(240_000);
   const page = await openGame();
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 11; i++) {
     const a = await page.evaluate(i => {
       NOARRIVE = false; ARR_SEEN = -1; startLevel(i);
       const arriving = !!G.arrive, { type, gx, zT } = G.arr; endArrive();
@@ -180,7 +182,7 @@ test('saves: historical migration, current round-trip, floor stepping and quota 
 
 test('saves: out-of-range floor records are clamped', async ({ openGame }) => {
   const bounds = await openGame({ nb86jobs: { mig: 1, top: 999, sel: -1 } });
-  expect(await bounds.evaluate(() => [JOBS.top, JOBS.sel])).toEqual([9, 0]);
+  expect(await bounds.evaluate(() => [JOBS.top, JOBS.sel])).toEqual([10, 0]);
 });
 
 test('saves: pre-RPG progress preserves purchases and loan history', async ({ openGame }) => {
@@ -270,7 +272,7 @@ test('act 3: the demolition floor needs its charges cut before it clears, and th
   test.setTimeout(120_000);
   const page = await openGame();
   const start = await page.evaluate(() => { NOARRIVE = true; startLevel(8); return { act: G.def.act, rigs: G.rigs.length, obj: G.obj.label, hats: G.enemies.filter(e => e.look.helmet === 'pasgt').length, last: CAMPAIGN_LEN - 1 }; });
-  expect(start).toMatchObject({ act: 3, rigs: 4, obj: 'CUT THE CHARGE WIRES', last: 9 });
+  expect(start).toMatchObject({ act: 3, rigs: 4, obj: 'CUT THE CHARGE WIRES', last: 10 });
   expect(start.hats).toBeGreaterThan(3);
   await page.evaluate(() => { for (const e of G.enemies) if (e.alive) killEnemy(e, 'pistol', [0, 1]); });
   await expect.poll(() => page.evaluate(() => G.enemies.every(e => !e.alive))).toBe(true);
@@ -290,4 +292,33 @@ test('act 3: the gala needs the ledger from the safe before the floor clears', a
   expect(await page.evaluate(() => G.cleared)).toBe(false);
   await page.evaluate(() => { G.player.x = G.safe.x - 1.2; G.player.z = G.safe.z; playerGrab(G.player); });
   await expect.poll(() => page.evaluate(() => ({ done: G.obj.done, cleared: G.cleared }))).toEqual({ done: true, cleared: true });
+});
+
+test('act 3: Kade Tower, the hoist needs the foreman\'s key, the crane drops a load and Kade calls for help at half health', async ({ openGame }) => {
+  test.setTimeout(240_000);
+  const page = await openGame();
+  const go = sid => page.waitForFunction(sid => G && G.def && G.sid === sid && !G.going && state === 'play', sid, { timeout: 60_000 });
+  expect(await page.evaluate(() => { NOARRIVE = true; startLevel(10); return { sid: G.sid, hats: G.enemies.filter(e => e.look.helmet === 'pasgt').length }; })).toMatchObject({ sid: 'site' });
+  // Without the key the hoist stays shut.
+  await page.evaluate(() => { const s = G.stageRun.describe(G.sid).stairs.find(q => q.id === 'elev'); G.player.x = s.at[0]; G.player.z = s.at[1] + 0.3; });
+  await page.waitForTimeout(800);
+  expect(await page.evaluate(() => G.sid)).toBe('site');
+  await page.evaluate(() => { const k = G.enemies.find(e => e.weapon && e.weapon.type === 'silenced'); killEnemy(k, 'pistol', [0, 1]); });
+  await expect.poll(() => page.evaluate(() => !!G.key)).toBe(true);
+  await page.evaluate(() => { G.player.x = G.key.x; G.player.z = G.key.z; });
+  await expect.poll(() => page.evaluate(() => G.keycard)).toBe(true);
+  await page.evaluate(() => { const s = G.stageRun.describe(G.sid).stairs.find(q => q.id === 'elev'); G.player.x = s.at[0]; G.player.z = s.at[1]; });
+  await go('pent');
+  const top = await page.evaluate(() => ({ boss: G.boss && G.boss.name || (G.def.boss && G.def.boss.name), foes: G.enemies.length, alerted: G.enemies.filter(e => e.alive && (e.state === 'chase' || e.alertT > 0)).length }));
+  expect(top.boss).toBe('DORIAN KADE');
+  expect(top.foes).toBeGreaterThan(8);
+  // The crane starts once Kade has seen you; its warning lane lands and crushes anything in it.
+  await page.evaluate(() => { G.bossSeen = true; G.crane = { t: 0.05, ph: 0, x: G.player.x, w: 2.4 }; });
+  await expect.poll(() => page.evaluate(() => G.crane && G.crane.ph), { timeout: 20_000 }).toBeGreaterThan(0);
+  // Half health: the reinforcements come up the hoist.
+  const before = await page.evaluate(() => G.enemies.length);
+  await page.evaluate(() => { G.boss.hp = Math.floor(G.boss.maxhp / 2); });
+  await expect.poll(() => page.evaluate(() => G.enemies.length), { timeout: 20_000 }).toBe(before + 3);
+  await page.evaluate(() => { for (const e of G.enemies) if (e.alive) killEnemy(e, 'pistol', [0, 1]); });
+  await expect.poll(() => page.evaluate(() => G.cleared), { timeout: 20_000 }).toBe(true);
 });

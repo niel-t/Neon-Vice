@@ -12,7 +12,7 @@
    variants: {id:{when:<cond>, spawn?:[x,z] player start cell on the legacy map, clear?}}; the first match wins, else 'base'.
    briefFlags: wflags a mission's McWey brief sets; cleared when that brief starts so the latest choice wins.
    clear: {boss:'required'|'optional'} (default required): whether the floor clears with the boss still standing. */
-const CAMPAIGN_LEN=10;
+const CAMPAIGN_LEN=11;
 const MISSIONS={
  c0:{idx:0,kind:'campaign',stages:['legacy'],start:'legacy'},
  c1:{idx:1,kind:'campaign',stages:['legacy'],start:'legacy',briefFlags:['flamingo_back'],
@@ -25,6 +25,7 @@ const MISSIONS={
  c7:{idx:7,kind:'campaign',stages:['legacy'],start:'legacy'},
  c8:{idx:8,kind:'campaign',stages:['legacy'],start:'legacy'},
  c9:{idx:9,kind:'campaign',stages:['legacy'],start:'legacy'},
+ c10:{idx:10,kind:'campaign',stages:['legacy'],start:'legacy'},
 };
 /* c2 is a building: the lobby, then the elevator (keycard from the security office guard) or the stairwell and service level,
    then the penthouse (LEVELS[2] with the street walled off), out by the elevator. All three are grid stages on base index 2, so
@@ -41,6 +42,21 @@ if(typeof LEVELS!=='undefined'){
   stair:{id:'stair',kind:'grid',rev:1,def:{name:'STAIRWELL AND SERVICE LEVEL',noCar:true,wall:42,floor:41,legend:{'.':{f:41},'n':{f:41}},map:["##########################", "#L.......#.KK...........n#", "#..5.....#...s...T.......#", "#....g...D..........b....#", "#........#...............#", "#...SSS..#...............#", "#........D......k........#", "#........#..2........u...#", "#.PC....p#..............L#", "##########################"]},
    arrivals:{bottom:{at:[3.5,9.5]}},stairs:[{id:'up',to:'pent',at:[25.5,2.5],r:0.9,arrive:'stairs',oneWay:true}]},
   pent:{id:'pent',kind:'grid',rev:1,def:{name:L.name,noCar:true,wall:L.wall,sofa:L.sofa,map:rows},
+   arrivals:{elev:{at:[23.5,12.5]},stairs:{at:[12.5,12.5]}}}
+ };
+}
+/* c10 Kade Tower (Act 3 finale) has the Coral Tower shape: the site, then the hoist (key from the foreman) or the steel stairs, then the top
+   floor with Kade. The top stage keeps the id 'pent' so the tower helpers and the elevator/stairs challenges are shared with c2; the top
+   is LEVELS[10] with its own boss, and it has no stairs out, so it is the stage the floor is finished from. */
+if(typeof LEVELS!=='undefined'&&LEVELS[10]){
+ const K=LEVELS[10];
+ MISSIONS.c10.stages=['site','stair','pent'];MISSIONS.c10.start='site';
+ MISSIONS.c10.stageDefs={
+  site:{id:'site',kind:'grid',rev:1,def:{name:'KADE TOWER: SITE GATE',hardhat:true,wall:6,legend:{'e':{f:1},'n':{f:1}},map:["####################################", "#.......#.......eee........#......n#", "#.KK..4.#.b..............b.#.......#", "#.......#..FF.s.......FF...#..x..s.#", "#....T..#..........x.......#.......#", "#...h...#6...Z.......Z.....#.......#", "#.......D...s.F.........F..D..g....#", "#.b...K.#.F....u....F..g...#....b..#", "#.......#.........2........#.5.....#", "###..###########..##################", "====================================", "============P==========C============", "===================================="]},
+   stairs:[{id:'elev',to:'pent',at:[18.5,2.5],r:1.2,arrive:'elev',oneWay:true},{id:'up',to:'stair',at:[35.5,2.5],r:0.9,arrive:'bottom',oneWay:true}]},
+  stair:{id:'stair',kind:'grid',rev:1,def:{name:'KADE TOWER: STEEL STAIRS',noCar:true,hardhat:true,wall:6,legend:{'n':{f:1}},map:["##########################", "#KK......#..KK..........n#", "#.4......#....2..Z.......#", "#.b..s...D............x..#", "#........#.....g.........#", "#..FFF...#...............#", "#........D........b......#", "#....x...#..s........u...#", "#.PC.....#...............#", "##########################"]},
+   arrivals:{bottom:{at:[3.5,9.5]}},stairs:[{id:'up',to:'pent',at:[25.5,2.5],r:0.9,arrive:'stairs',oneWay:true}]},
+  pent:{id:'pent',kind:'grid',rev:1,def:{name:K.name,noCar:true,hardhat:true,wall:K.wall,sofa:K.sofa,boss:K.boss,map:K.map},
    arrivals:{elev:{at:[23.5,12.5]},stairs:{at:[12.5,12.5]}}}
  };
 }
