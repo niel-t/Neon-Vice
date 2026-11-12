@@ -34,7 +34,8 @@ const test = base.extend({
         ...testInfo.project.use,
         ...(direct ? {} : { storageState: { cookies: [], origins: [{
           origin: artifactURL,
-          localStorage: Object.entries(saves).map(([name, value]) => ({ name, value: typeof value === 'string' ? value : JSON.stringify(value) }))
+          // tests run the classic renderer unless they ask otherwise: software GL is too slow for the new one (pass nvgfx: undefined for the real default)
+          localStorage: Object.entries({ nvgfx: 'old', ...saves }).filter(([, value]) => value !== undefined).map(([name, value]) => ({ name, value: typeof value === 'string' ? value : JSON.stringify(value) }))
         }] } })
       });
       contexts.push(context);
