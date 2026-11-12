@@ -108,6 +108,48 @@ test('integration: existing startLevel loads all eight floors and advances real 
   }
 });
 
+test('arrival: every floor opens with the car pulling up to a real entrance, skipped on retry', async ({ openGame }) => {
+  test.setTimeout(240_000);
+  const page = await openGame();
+  for (let i = 0; i < 8; i++) {
+    const a = await page.evaluate(i => {
+      NOARRIVE = false; ARR_SEEN = -1; startLevel(i);
+      const arriving = !!G.arrive, { type, gx, zT } = G.arr; endArrive();
+      const at = [G.player.x, G.player.z], car = [G.car.x, G.car.z], doors = G.doors.filter(d => d.front).length;
+      const walkable = !G.solid[Math.floor(at[1]) * G.W + Math.floor(at[0])];
+      startLevel(i);
+      return { arriving, type, gx, zT, at, car, doors, walkable, retry: !!G.arrive, again: [G.player.x, G.player.z] };
+    }, i);
+    const front = a.type === 'front';
+    expect(a.arriving, `Floor ${i} opens with the car arrival`).toBe(true);
+    expect(a.walkable, `Floor ${i} entrance is walkable`).toBe(true);
+    expect(a.doors, `Floor ${i} entrance has a real door`).toBeGreaterThan(0);
+    expect(a.at[0], `Floor ${i} player at entrance`).toBeCloseTo(a.gx, 5);
+    expect(a.at[1], `Floor ${i} player at entrance`).toBeCloseTo(a.zT + (front ? 0.45 : 0.15), 5);
+    expect(Math.abs(a.car[0] - a.gx), `Floor ${i} car parked by entrance`).toBeCloseTo(0.55, 5);
+    expect(a.car[1], `Floor ${i} car parked by entrance`).toBeCloseTo(a.zT + (front ? 1.15 : 1), 5);
+    expect(a.retry, `Floor ${i} retry skips the drive-in`).toBe(false);
+    expect(a.again, `Floor ${i} retry starts at the entrance`).toEqual(a.at);
+  }
+  // Real frames: the Marina drive-in plays out by itself and opens through a two-leaf iron gate.
+  await page.evaluate(() => { NOARRIVE = false; ARR_SEEN = -1; startLevel(3); });
+  await expect.poll(() => page.evaluate(() => !G.arrive), { timeout: 45_000 }).toBe(true);
+  expect(await page.evaluate(() => G.doors.filter(d => d.gate).length)).toBe(2);
+  // Doors stop rounds: a pistol shot into the gate and into a wooden door ends at the leaf and swings it.
+  expect(await page.evaluate(() => {
+    G.enemies.forEach(en => { en.alive = false; });
+    const shoot = d => {
+      const e = doorEnd(d), mx = (d.hx + e[0]) / 2, mz = (d.hz + e[1]) / 2, p = bProj('pistol');
+      const b = { x: mx, z: mz + 1.5, dx: 0, dz: -1, sp: 34, life: 1.2, own: 'p', pierce: 1, type: 'pistol', hit: [], p, e: p.e0, tum: 1, y: 1.3, sx: mx, sz: mz + 1.5, st: 'stand' };
+      G.bullets.push(b); for (let k = 0; k < 6; k++) updateBullets(1 / 60);
+      return b.life <= 0 && b.z > d.hz - 0.1 && Math.abs(d.w) > 0 && d.pusher === 'b';
+    };
+    return [G.doors.find(q => q.gate), G.doors.find(q => q.front && !q.gate)].map(shoot);
+  })).toEqual([true, true]);
+  await page.evaluate(() => { NOARRIVE = true; });
+  await progressing(page);
+});
+
 test('saves: historical migration, current round-trip, floor stepping and quota recovery', async ({ openGame }) => {
   const history = await openGame({ nb86prog: { don: { lvl: 4, xp: 120, perks: { tough: 1 }, sharkDead: 1, custom: 'preserve' } } }, ['nb86']);
   expect(await history.evaluate(() => ({ top: JOBS.top, wallet: wallet(), lvl: myProg().lvl, custom: myProg().custom })))
