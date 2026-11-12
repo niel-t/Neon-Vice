@@ -33,6 +33,8 @@ void geomNV(){vec3 c0=vec3(iR0.x,iR1.x,iR2.x),c1=vec3(iR0.y,iR1.y,iR2.y),c2=vec3
 const SKIN=NB=>`
 attribute vec4 aBi;attribute vec4 aBw;uniform mat4 uB[${NB}];
 mat4 boneNV(){return uB[int(aBi.x)]*aBw.x+uB[int(aBi.y)]*aBw.y+uB[int(aBi.z)]*aBw.z+uB[int(aBi.w)]*aBw.w;}`;
+/* the atlas cell the game draws see-through (glass, light cones): renderer.js GLASS, the same test its own shader uses */
+const GL_=typeof GLASS!=='undefined'?GLASS:[['0.25','0.3125'],['0.125','0.1875']];
 /* atlas alpha doubles as a material id in the game: <0.84 wet, <0.9 shiny, else matte */
 const ROUGH=`float roughnessFactor=roughness;{float ta=texture2D(map,vMapUv).a;if(ta<0.84)roughnessFactor=0.2;else if(ta<0.9)roughnessFactor=0.34;}`;
 
@@ -77,7 +79,7 @@ export function create(N,oldGL){
     .replace('#include <color_vertex>','#include <color_vertex>\nvColor.rgb=pow(vColor.rgb,vec3(2.2));');
    s.fragmentShader=s.fragmentShader.replace('#include <common>','#include <common>\nvarying float vEm;uniform float uGlow;')
     .replace('#include <roughnessmap_fragment>',ROUGH)
-    .replace('#include <alphatest_fragment>','#include <alphatest_fragment>\n'+(glass?'diffuseColor.a=(vMapUv.x>0.5&&vMapUv.x<0.625&&vMapUv.y>0.25&&vMapUv.y<0.375)?0.3:1.0;':''))
+    .replace('#include <alphatest_fragment>','#include <alphatest_fragment>\n'+(glass?`diffuseColor.a=(vMapUv.x>${GL_[0][0]}&&vMapUv.x<${GL_[0][1]}&&vMapUv.y>${GL_[1][0]}&&vMapUv.y<${GL_[1][1]})?0.3:1.0;`:''))
     .replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\nif(vEm>0.5){totalEmissiveRadiance=diffuseColor.rgb*uGlow;diffuseColor.rgb=vec3(0.0);roughnessFactor=1.0;}');};
   m.customProgramCacheKey=()=>'nvbatch'+(glass?'g':'');return m;}
  function instPatch(s,lit){s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\n'+GEOM+(lit?'\nvarying vec4 vIC;':''));
@@ -111,7 +113,7 @@ export function create(N,oldGL){
    g.setAttribute('position',new THREE.InterleavedBufferAttribute(ib,3,0));g.setAttribute('normal',new THREE.InterleavedBufferAttribute(ib,3,3));
    g.setAttribute('uv',new THREE.InterleavedBufferAttribute(ib,2,6));g.setAttribute('color',new THREE.InterleavedBufferAttribute(ib,3,8));g.boundingSphere=BIG;mesh.geometry=g;u.arr=B.f;u.ib=ib;u.ver=-1;}
   if(isStatic){const r=N.buf.get(B.buf),v=r?r.ver:0;if(v!==u.ver){u.ver=v;u.ib.needsUpdate=true;}}
-  else{u.ib.clearUpdateRanges();u.ib.addUpdateRange(0,B.n*11);u.ib.needsUpdate=true;}
+  else{u.ib.clearUpdateRanges();u.ib.addUpdateRange(0,B.n*12);u.ib.needsUpdate=true;}
   mesh.geometry.setDrawRange(0,B.n);}
 
  /* ---- game InstBatch (24 floats per rounded box) -> instanced mesh ---- */

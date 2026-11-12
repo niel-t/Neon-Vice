@@ -10,6 +10,9 @@ test('gfx next: the opt-in Three.js renderer is the default, draws gameplay, han
   await expect.poll(() => page.evaluate(() => NX.frames || 0), { timeout: 120_000 }).toBeGreaterThan(2);
   expect(await page.evaluate(() => ({ live: NX.live, failed: NX.failed, chars: NX.chars.length > 0,
     shown: getComputedStyle(document.getElementById('glnext')).display }))).toEqual({ live: true, failed: false, chars: true, shown: 'block' });
+  // the level mesh is read with the game's own vertex spacing (it was garbled when the two differed)
+  expect(await page.evaluate(() => NX.impl.scene.children.filter(m => m.visible && m.geometry && m.geometry.attributes.position && m.geometry.attributes.position.data && !m.geometry.isInstancedBufferGeometry)
+    .map(m => m.geometry.attributes.position.data.stride).every(s => s === VSTRIDE))).toBe(true);
   // shaders were built in the background before the first frame, and drawing built no scene shader a second time
   const warm = await page.evaluate(() => ({ done: NX.warming === false, before: NX.warmPrograms, after: NX.impl.renderer.info.programs.length, ms: NX.warmMs }));
   console.log('gfx next warm-up', JSON.stringify(warm));
