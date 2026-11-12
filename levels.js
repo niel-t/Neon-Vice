@@ -165,13 +165,30 @@ const LEVELS=[
  "========================================",
  "====P=================C=================",
  "========================================"]},
+ {name:'THE GRAND BISCAYNE GALA',act:3,wall:42,floor:41,sofa:0x6a2a9a,from:'McWEY',legend:{'.':{f:41},'N':{f:41}},
+  brief:"Kade is buying the city council tonight at the Grand Biscayne, black tie and free champagne. Somewhere in that building is a ledger of every hand he's greased. Get me that ledger. Wear something nice, or don't.",map:[
+ "########################################",
+ "#........#...*............*..#...#.F.5F#",
+ "#.K.K.K..#...g.....*.........#.T.#...N.#",
+ "#.k......D..T.T......g..T.T..D...D.u...#",
+ "#.Z....Z.#...................#d..###D###",
+ "#..2.....#.......u........u..#.........#",
+ "#.K...K..#4.T.T7......g.T.T..#.T...hT..#",
+ "#......x.#...................#..g......#",
+ "#....h...D....g..........h...D....T..m.#",
+ "#.K.K.K..#..T.T...m*....T.T..#6T....T..#",
+ "#........#...................#.........#",
+ "####..##########........##########..####",
+ "========================================",
+ "====P=================C=================",
+ "========================================"]},
 ];
 /*END*/
 
 /* grading: par time per floor (seconds), and grade points that ignore difficulty/perk/character money multipliers */
-const PAR=[60,55,120,60,65,90,65,60,75];const GRADES=[['S',2.3],['A+',1.8],['A',1.4],['B',1.0],['C',0.65],['D',-1]];
+const PAR=[60,55,120,60,65,90,65,60,75,80];const GRADES=[['S',2.3],['A+',1.8],['A',1.4],['B',1.0],['C',0.65],['D',-1]];
 
 /* hidden stashes: [map x, map z, hi-fi track unlocked (or null), cash]. Saved in JOBS.stash[floor]=1 */
-const STASH=[[5,4,'n_nightdrive',1500],[29,5,'n_haze',1500],[12,5,'n_concrete',2000],[37,3,'n_redtide',2000],[37,2,'n_overdrive',2000],[38,4,'n_rampage',2000],[29,1,null,4000],[39,4,null,5000],[38,9,null,3000]];
+const STASH=[[5,4,'n_nightdrive',1500],[29,5,'n_haze',1500],[12,5,'n_concrete',2000],[37,3,'n_redtide',2000],[37,2,'n_overdrive',2000],[38,4,'n_rampage',2000],[29,1,null,4000],[39,4,null,5000],[38,9,null,3000],[38,10,null,3500]];
 
-const LEVEL_TRACKS=[['game','n_nightdrive','n_haze','n_concrete'],['n_crystal','n_overdrive','n_nightdrive','n_haze'],['n_redtide','n_rampage','n_concrete','n_overdrive'],['n_nightdrive','n_crystal'],['n_overdrive','n_crystal'],['n_haze','n_redtide'],['n_rampage','n_overdrive'],['n_redtide','n_rampage'],['n_concrete','n_overdrive','n_rampage']];
+const LEVEL_TRACKS=[['game','n_nightdrive','n_haze','n_concrete'],['n_crystal','n_overdrive','n_nightdrive','n_haze'],['n_redtide','n_rampage','n_concrete','n_overdrive'],['n_nightdrive','n_crystal'],['n_overdrive','n_crystal'],['n_haze','n_redtide'],['n_rampage','n_overdrive'],['n_redtide','n_rampage'],['n_concrete','n_overdrive','n_rampage'],['n_nightdrive','n_crystal','n_haze']];

@@ -551,7 +551,8 @@ const CHALLENGES=[
  [CHX.time(70),CHX.combo(8),CHX.execs(2)],
  [CHX.glass(),CHX.untouched(),CHX.time(50)],
  [CHX.untouched(),CHX.time(45),CHX.combo(6)],
- [CHX.doors(2),CHX.time(55),CHX.combo(6)]];
+ [CHX.doors(2),CHX.time(55),CHX.combo(6)],
+ [CHX.noguns(),CHX.time(60),CHX.untouched()]];
 const CH_PAY=2000;
 const chDone=(i,k)=>!!(((JOBS.ch||{})[i]||0)&(1<<k));
 function chStars(i){let n=0;for(let k=0;k<3;k++)if(chDone(i,k))n++;return n;}
@@ -576,6 +577,8 @@ function objGrab(p,it){const g=G;if(!g||!g.obj)return false;if(it&&Math.hypot(it
   if(bb){bb.fuse=2.5;sfx('throw');popup(p.x,p.z,'CHARGE SET - GET CLEAR','#ffd36b');return true;}}
  if(g.rigs){let rr=null,rd=2.2;for(const r of g.rigs){if(r.cut)continue;const d=Math.hypot(r.x-p.x,r.z-p.z);if(d<rd){rd=d;rr=r;}}
   if(rr){rr.cut=true;g.obj.n++;g.score+=500;g.gpts=(g.gpts||0)+500;sfx('cash');popup(rr.x,rr.z,'WIRES CUT +$500','#7dff9a');if(g.obj.n>=g.obj.total){g.obj.done=true;banner('ALL CHARGES DEAD',g.enemies.every(e=>!e.alive)?'Get back to the car':'Finish off the crew');}return true;}}
+ if(g.safe&&!g.obj.done&&Math.hypot(g.safe.x-p.x,g.safe.z-p.z)<2.2){g.obj.n=1;g.obj.done=true;g.score+=1500;g.gpts=(g.gpts||0)+1500;sfx('cash');popup(g.safe.x,g.safe.z,'+$1,500','#7dff9a');
+  banner('THE LEDGER','Every name, every payment. '+(g.enemies.every(e=>!e.alive)?'Get back to the car':'Get out before they come for it'));return true;}
  if(g.singer&&!g.obj.done&&Math.hypot(g.singer.x-p.x,g.singer.z-p.z)<2.2){g.obj.n=1;g.obj.done=true;g.score+=1500;g.gpts=(g.gpts||0)+1500;sfx('cash');popup(g.singer.x,g.singer.z,'+$1,500','#7dff9a');
   banner('THE SINGER','"Wait, wait! I only do the vocals!"');
   setTimeout(()=>{if(G===g&&state==='play')banner('"LEX IS ON HIS YACHT"','The Royal Flush, two miles out. "He pays me in exposure!"');},2200);return true;}
@@ -587,6 +590,7 @@ function updateObj(dt){const g=G;if(!g||!g.obj||!g.player)return;const p=g.playe
  if(g.singer){const sg=g.singer;sg.a=Math.atan2(p.x-sg.x,p.z-sg.z);}
  if(p.alive){g.hintT=(g.hintT||0)-dt;if(g.hintT<=0){let h=null;
   if(g.boats&&g.boats.some(b=>!b.sunk&&!(b.fuse>0)&&Math.hypot(b.x-p.x,b.z-p.z)<3.2))h='E: PLANT CHARGE';
+  else if(g.safe&&!g.obj.done&&Math.hypot(g.safe.x-p.x,g.safe.z-p.z)<2.2)h='E: OPEN THE SAFE';
   else if(g.rigs&&g.rigs.some(r=>!r.cut&&Math.hypot(r.x-p.x,r.z-p.z)<2.2))h='E: CUT THE WIRES';
   else if(g.singer&&!g.obj.done&&Math.hypot(g.singer.x-p.x,g.singer.z-p.z)<2.2)h='E: QUESTION HER';
   if(h){g.hintT=2.5;popup(p.x,p.z-0.4,h,'#ffd36b');}}}}
@@ -855,7 +859,7 @@ function rayLen(x,z,dx,dz,max){if(G&&G.plan){const r=WORLD.trace(G.wst,x,z,x+dx*
 /* 'front' = park at the main entrance; 'alley' = back door in a service alley. ARR_GO is a one-shot set by startMission (campaign
    map) or startGridRun (a grid mission's first stage) and consumed by loadLevel; maps without two '=' street rows skip it.
    window.NOARRIVE (test harness) keeps the map's P/C spawn. ARR_SEEN skips the drive-in when you retry the same floor. */
-const ARRIVE=['front','alley','front','alley','front','front','alley','front','alley'];
+const ARRIVE=['front','alley','front','alley','front','front','alley','front','alley','front'];
 let ARR_GO=null,ARR_SEEN=-1;
 function arriveSetup(g,i){const W=g.W,rows=g.rows;let type=ARRIVE[i]||'front';
  const zs=[];for(let z=0;z<g.H;z++)if(rows[z].indexOf('=')>=0)zs.push(z);if(zs.length<2||!g.player)return;
@@ -872,7 +876,7 @@ function arriveSetup(g,i){const W=g.W,rows=g.rows;let type=ARRIVE[i]||'front';
  const cx=Math.max(2.2,Math.min(W-2.2,gx+(fromRight?-0.55:0.55))),cz=zT+(type==='front'?1.15:1.0);
  let ax=null;if(type==='alley'){const lim=gx<mid?Math.min(gx+4,fx-2.5):Math.max(gx-4,fx+2.5);ax=gx<mid?[0,Math.floor(lim)]:[Math.ceil(lim),W-1];}g.arr={type,zT,zB,gx,gap,ax};
  if(gate){g.deco.push({t:'arch',x:gate.a,z:zT-1,fx:gate.b,w:gate.b-gate.a+1});for(const sx of [-1,1])g.lights.push({x:fx+sx*1.3,y:1.8,z:zT+0.1,r:4,c:[0.3,0.9,1]});}
- else{const w=Math.min(front.b-front.a+1.6,4),col=hex([0x2a9ea3,0xe0459a,0x7a1622,0x2a9ea3,0xe0459a,0x2bb7b9,0x8e2a66,0x1c6b3a,0xe0a030][i]||g.def.sofa||0xe0459a);g.deco.push({t:'awning',x:Math.floor(fx),z:zT,fx,w,c:col});if(i===2||i===7||i===5)g.deco.push({t:'carpet',x:Math.floor(fx),z:zT,fx,w:Math.min(front.b-front.a+1,2.2)});for(const sx of [-1,1])g.lights.push({x:fx+sx*(w/2+0.2),y:1.5,z:zT+0.2,r:3.6,c:[1,0.82,0.55]});}
+ else{const w=Math.min(front.b-front.a+1.6,4),col=hex([0x2a9ea3,0xe0459a,0x7a1622,0x2a9ea3,0xe0459a,0x2bb7b9,0x8e2a66,0x1c6b3a,0xe0a030,0x6a2a9a][i]||g.def.sofa||0xe0459a);g.deco.push({t:'awning',x:Math.floor(fx),z:zT,fx,w,c:col});if(i===2||i===7||i===5)g.deco.push({t:'carpet',x:Math.floor(fx),z:zT,fx,w:Math.min(front.b-front.a+1,2.2)});for(const sx of [-1,1])g.lights.push({x:fx+sx*(w/2+0.2),y:1.5,z:zT+0.2,r:3.6,c:[1,0.82,0.55]});}
  g.car={x:cx,z:cz};g.carA=fromRight?Math.PI:0;
  if(type==='alley'){for(let x=ax[0];x<=ax[1];x++){const ii=zB*W+x;if(rows[zB][x]==='='){g.solid[ii]=1;g.wallT[ii]=6;g.wh[ii]=1.7;g.topT[ii]=0;}}}
  /* the player stands at the door from the start (hidden while driving), so stage entry snapshots and retries begin there */
@@ -2181,6 +2185,7 @@ function act2Setup(g,i){g.nades=[];if(!(i>=3))return;const W=g.W,cells=ch=>{cons
  if(i===5){g.manq=cells('n').map((q,k)=>{const m=makeChar(q.x,q.z,{skin:[0.9,0.88,0.84],jacket:hex(pick([0xff9ec7,0x9ae3e6,0xffe39a,0xffffff,0xc9b6f2])),shirt:[0.96,0.96,0.96],pants:hex(pick([0xf2f2f2,0x2a2030,0x9ad8e0])),shoes:[0.9,0.9,0.9],hs:null,bw:1,bd:1,bh:1},false);m.a=pick([0,Math.PI,Math.PI/2,-Math.PI/2]);m.kind='manq';return m;});
   const el=cells('e');sol(el);g.elev=el;g.wreck=1;setTimeout(()=>{if(G===g&&state==='play')banner("THEY TRASHED YOUR "+carName(myCar()),"Lex's goons hit your ride while you shopped. Now it's personal.");},2600);}
  if(i===6){g.panes=cells('%');sol(g.panes);g.glassSet=new Set(g.panes.map(q=>q.iz*W+q.ix));const c=cells('!')[0];g.studioC=c;if(c){const sg=makeChar(c.x+1.0,c.z,{skin:[0.95,0.82,0.7],jacket:hex(0xff4fa6),shirt:[0.96,0.96,0.96],pants:hex(0x2a2030),shoes:[0.9,0.9,0.9],hs:'slick',hair:hex(0xe3c26a),bw:1,bd:1,bh:1},false);sg.kind='singer';sg.a=0;g.singer=sg;g.obj={label:'QUESTION THE SINGER',n:0,total:1,done:false};}}
+ if(i===9){g.safe=cells('N')[0];if(g.safe){sol([g.safe]);g.obj={label:'GET THE LEDGER',n:0,total:1,done:false};}}
  if(i===8){g.rigs=cells('N').map(q=>({x:q.x,z:q.z,cut:false}));g.obj={label:'CUT THE CHARGE WIRES',n:0,total:g.rigs.length,done:false};}
  if(i===7){const y=cells('y');if(y.length){const xs=y.map(q=>q.ix),zs=y.map(q=>q.iz);g.tank={x0:Math.min(...xs),x1:Math.max(...xs)+1,z0:Math.min(...zs),z1:Math.max(...zs)+1};}}}
 function updateAct2(dt){const g=G;
@@ -2224,6 +2229,7 @@ function drawHeli(B,x,z,a,T){const {P}=rideKit(B,x,z,1,a),D1=[0.1,0.1,0.13];P(0,
  P(0,1.02,0,0,0.12,0.12,0.12,D1);for(let i=0;i<2;i++)B.box(A.mul(A.mul(A.T(x,1.08,z),A.RY(T*14+i*Math.PI/2)),A.S(3.8,0.03,0.14)),[0.15,0.15,0.17]);}
 function drawAct2(B,g){const T=g.T,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,ry||0,sx,sy,sz),c,!!em);
  if(g.nades)for(const n of g.nades){B.box(A.mul(A.mul(A.T(n.x,n.y,n.z),A.RY(n.spin)),A.S(0.13,0.13,0.17)),GOLD,true);}
+ if(g.safe){const q=g.safe;bx(q.x,0.45,q.z,0.7,0.9,0.6,[0.28,0.3,0.34]);bx(q.x,0.5,q.z+0.31,0.28,0.28,0.02,g.obj&&g.obj.done?[0.2,0.8,0.3]:[0.9,0.7,0.2],true);}
  if(g.rigs)g.rigs.forEach(r=>{bx(r.x,0.2,r.z,0.5,0.4,0.36,[0.5,0.1,0.1]);bx(r.x,0.45,r.z,0.1,0.1,0.1,r.cut?[0.2,0.8,0.3]:[1,0.1,0.1],r.cut||Math.sin(g.T*8)>0);});
  if(g.boats)g.boats.forEach((q,i)=>{if(q.sunk)return;drawSpeedboat(B,q.x,q.z,i%2?Math.PI:0,[[1,0.3,0.75],[0.2,0.9,1],[1,0.8,0.2]][i%3]);if(q.fuse>0&&Math.sin(g.T*22)>0)bx(q.x,0.9,q.z,0.3,0.3,0.3,[1,0.1,0.1],true);});
  if(g.cabs)g.cabs.forEach((q,i)=>{bx(q.x,0.8,q.z,0.7,1.6,0.6,[0.12,0.05,0.2]);const cc=[[1,0.3,0.75],[0.3,0.9,1],[1,0.85,0.3],[0.5,1,0.5]][(i+Math.floor(T*2))%4];bx(q.x,1.05,q.z+0.31,0.5,0.4,0.01,cc,true);bx(q.x,1.55,q.z+0.31,0.6,0.12,0.01,[1,0.3,0.75],true);bx(q.x,0.75,q.z+0.33,0.55,0.08,0.1,[0.3,0.3,0.35]);});

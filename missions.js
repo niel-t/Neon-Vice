@@ -12,7 +12,7 @@
    variants: {id:{when:<cond>, spawn?:[x,z] player start cell on the legacy map, clear?}}; the first match wins, else 'base'.
    briefFlags: wflags a mission's McWey brief sets; cleared when that brief starts so the latest choice wins.
    clear: {boss:'required'|'optional'} (default required): whether the floor clears with the boss still standing. */
-const CAMPAIGN_LEN=9;
+const CAMPAIGN_LEN=10;
 const MISSIONS={
  c0:{idx:0,kind:'campaign',stages:['legacy'],start:'legacy'},
  c1:{idx:1,kind:'campaign',stages:['legacy'],start:'legacy',briefFlags:['flamingo_back'],
@@ -24,6 +24,7 @@ const MISSIONS={
  c6:{idx:6,kind:'campaign',stages:['legacy'],start:'legacy',briefFlags:['singer_paid']}, // read by brief7; no map change until W2's studio plan
  c7:{idx:7,kind:'campaign',stages:['legacy'],start:'legacy'},
  c8:{idx:8,kind:'campaign',stages:['legacy'],start:'legacy'},
+ c9:{idx:9,kind:'campaign',stages:['legacy'],start:'legacy'},
 };
 /* c2 is a building: the lobby, then the elevator (keycard from the security office guard) or the stairwell and service level,
    then the penthouse (LEVELS[2] with the street walled off), out by the elevator. All three are grid stages on base index 2, so

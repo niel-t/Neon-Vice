@@ -88,7 +88,7 @@ test('UI journey: title/select/intro/elevator/brief/car/mission, spam and held m
   await progressing(page);
 });
 
-test('integration: existing startLevel loads all nine floors and advances real simulation', async ({ openGame }) => {
+test('integration: existing startLevel loads all ten floors and advances real simulation', async ({ openGame }) => {
   const page = await openGame();
   const data = gameData();
   expect(await page.evaluate(() => LEVEL_TRACKS.every(list => list.every(track => !!TRACKS[track])))).toBe(true);
@@ -111,7 +111,7 @@ test('integration: existing startLevel loads all nine floors and advances real s
 test('arrival: every floor opens with the car pulling up to a real entrance, skipped on retry', async ({ openGame }) => {
   test.setTimeout(240_000);
   const page = await openGame();
-  for (let i = 0; i < 9; i++) {
+  for (let i = 0; i < 10; i++) {
     const a = await page.evaluate(i => {
       NOARRIVE = false; ARR_SEEN = -1; startLevel(i);
       const arriving = !!G.arrive, { type, gx, zT } = G.arr; endArrive();
@@ -180,7 +180,7 @@ test('saves: historical migration, current round-trip, floor stepping and quota 
 
 test('saves: out-of-range floor records are clamped', async ({ openGame }) => {
   const bounds = await openGame({ nb86jobs: { mig: 1, top: 999, sel: -1 } });
-  expect(await bounds.evaluate(() => [JOBS.top, JOBS.sel])).toEqual([8, 0]);
+  expect(await bounds.evaluate(() => [JOBS.top, JOBS.sel])).toEqual([9, 0]);
 });
 
 test('saves: pre-RPG progress preserves purchases and loan history', async ({ openGame }) => {
@@ -270,7 +270,7 @@ test('act 3: the demolition floor needs its charges cut before it clears, and th
   test.setTimeout(120_000);
   const page = await openGame();
   const start = await page.evaluate(() => { NOARRIVE = true; startLevel(8); return { act: G.def.act, rigs: G.rigs.length, obj: G.obj.label, hats: G.enemies.filter(e => e.look.helmet === 'pasgt').length, last: CAMPAIGN_LEN - 1 }; });
-  expect(start).toMatchObject({ act: 3, rigs: 4, obj: 'CUT THE CHARGE WIRES', last: 8 });
+  expect(start).toMatchObject({ act: 3, rigs: 4, obj: 'CUT THE CHARGE WIRES', last: 9 });
   expect(start.hats).toBeGreaterThan(3);
   await page.evaluate(() => { for (const e of G.enemies) if (e.alive) killEnemy(e, 'pistol', [0, 1]); });
   await expect.poll(() => page.evaluate(() => G.enemies.every(e => !e.alive))).toBe(true);
@@ -279,4 +279,15 @@ test('act 3: the demolition floor needs its charges cut before it clears, and th
     await page.evaluate(k => { const r = G.rigs[k]; G.player.x = r.x; G.player.z = r.z + 0.6; playerGrab(G.player); }, k);
   }
   await expect.poll(() => page.evaluate(() => ({ n: G.obj.n, done: G.obj.done, cleared: G.cleared }))).toEqual({ n: 4, done: true, cleared: true });
+});
+
+test('act 3: the gala needs the ledger from the safe before the floor clears', async ({ openGame }) => {
+  test.setTimeout(120_000);
+  const page = await openGame();
+  expect(await page.evaluate(() => { NOARRIVE = true; startLevel(9); return { act: G.def.act, obj: G.obj.label, safe: !!G.safe }; })).toEqual({ act: 3, obj: 'GET THE LEDGER', safe: true });
+  await page.evaluate(() => { for (const e of G.enemies) if (e.alive) killEnemy(e, 'pistol', [0, 1]); });
+  await expect.poll(() => page.evaluate(() => G.enemies.every(e => !e.alive))).toBe(true);
+  expect(await page.evaluate(() => G.cleared)).toBe(false);
+  await page.evaluate(() => { G.player.x = G.safe.x - 1.2; G.player.z = G.safe.z; playerGrab(G.player); });
+  await expect.poll(() => page.evaluate(() => ({ done: G.obj.done, cleared: G.cleared }))).toEqual({ done: true, cleared: true });
 });
