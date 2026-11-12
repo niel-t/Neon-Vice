@@ -1,8 +1,10 @@
-# next/ : the Three.js renderer (opt-in)
+# next/ : the Three.js renderer (default)
 
-Open the game with `?gfx=next` to draw gameplay with Three.js. The choice is remembered
-in this browser; `?gfx=old` switches back. While it is on, F9 flips between the two
-renderers so you can compare. Without the switch none of this code runs.
+Gameplay is drawn with Three.js by default. GRAPHICS in the options menu cycles NEW, ENHANCED
+(the classic renderer) and PS1 RETRO; `?gfx=old` and `?gfx=next` do the same from the address bar.
+The choice is remembered in this browser. While the new renderer is on, F9 flips between the two
+so you can compare. With the classic renderer chosen, or when the page is opened from disk, none
+of this code runs. The browser tests run the classic renderer unless a test asks for the new one.
 
 - `../gfxnext.js` is a small classic script loaded before `renderer.js`. It records the textures and
   buffers the game uploads and, while the new renderer is live, turns the old renderer's

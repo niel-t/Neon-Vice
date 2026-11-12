@@ -1,12 +1,17 @@
 'use strict';
-/* Opt-in Three.js renderer hook. Does nothing unless the page is opened with ?gfx=next
-   (remembered in this browser; ?gfx=old switches back). When on, it (1) remembers the
+/* Three.js renderer hook. On by default; ?gfx=old or GRAPHICS in the options menu switches to the
+   classic renderer (remembered in this browser; ?gfx=next switches back). When on, it (1) remembers the
    source of every texture and buffer the game uploads, so next/three-renderer.js can reuse
    the game's own geometry and art, and (2) turns the classic renderer's draw calls into
    no-ops while the new renderer is live. NX is null when the switch is off. See next/README.md. */
+/* the options menu uses this to turn the new renderer on or off; it needs a page reload either way */
+const NXSET={get on(){return !!window.NVNEXT&&window.NVNEXT.on;},set(v){try{localStorage.setItem('nvgfx',v?'next':'old');}catch(e){return false;}
+ location.replace(location.pathname+location.search.replace(/([?&])gfx=(next|old)\b&?/,'$1').replace(/[?&]$/,'')+location.hash);return true;}};
 const NX=(()=>{
- let on=/[?&]gfx=next\b/.test(location.search);
- try{if(/[?&]gfx=old\b/.test(location.search))localStorage.removeItem('nvgfx');else if(on)localStorage.setItem('nvgfx','next');else on=localStorage.getItem('nvgfx')==='next';}catch(e){}
+ /* on by default; ?gfx=old or the options menu turns it off (remembered), ?gfx=next turns it back on.
+    Pages opened straight from disk stay classic, because browsers do not load script modules from file://. */
+ let on=location.protocol!=='file:';const want=/[?&]gfx=(next|old)\b/.exec(location.search);
+ try{if(want)localStorage.setItem('nvgfx',want[1]);on=on&&localStorage.getItem('nvgfx')!=='old';}catch(e){if(want)on=on&&want[1]!=='old';}
  const N=window.NVNEXT={on,live:false,ready:false,failed:false,tex:new WeakMap(),buf:new WeakMap(),chars:[],models:null,impl:null};
  if(!on)return null;
  N.wrapGL=function(gl){
