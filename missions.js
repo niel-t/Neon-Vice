@@ -32,7 +32,7 @@ if(typeof LEVELS!=='undefined'){
  const L=LEVELS[2],rows=L.map.slice(),s=rows.findIndex(r=>r[0]==='='),set=(x,z,c)=>{rows[z]=rows[z].slice(0,x)+c+rows[z].slice(x+1);};
  for(let z=s;z<rows.length;z++)rows[z]='#'.repeat(rows[z].length);
  set(11,s-2,'P');set(22,s-1,'C');
- MISSIONS.c2.stages=['lobby','stair','pent'];MISSIONS.c2.start='lobby';
+ MISSIONS.c2.stages=['lobby','stair','pent'];MISSIONS.c2.start='lobby';MISSIONS.c2.was='legacy';
  MISSIONS.c2.stageDefs={
   lobby:{id:'lobby',kind:'grid',rev:1,def:{name:'CORAL TOWER LOBBY',wall:42,floor:41,legend:{'.':{f:41},'e':{f:41},'n':{f:41}},map:["####################################", "#KK.....#p.L....eee.....L.p#......n#", "#.....T.#...rrr....rrr.....#.6.....#", "#...h...#.....*.....*.s....#.......#", "#.......#...BBBBBB.........#...k...#", "#.......#................4.#......p#", "#..T....D..g...............D.......#", "#.1.....#.....b*.....u*....#..g....#", "#L......#pS..............Sp#......L#", "################..##################", "====================================", "============P=========C=============", "===================================="]},
    stairs:[{id:'elev',to:'pent',at:[18.5,2.5],r:1.2,arrive:'elev',oneWay:true},{id:'up',to:'stair',at:[35.5,2.5],r:0.9,arrive:'bottom',oneWay:true}]},
@@ -54,10 +54,13 @@ const missionStageOK=(id,st)=>missionKnown(id)&&MISSIONS[id].stages.includes(st)
 /* run-resume resolver for W6's normRun: null = unknown mission (drop the run); otherwise {stage, keep}.
    A stage the mission has resumes as-is. A mission that is still one 'legacy' stage resumes there with the stage kit kept,
    whatever stage id was stored: pre-MISSIONS runs saved free-form ids ('s0', 's1', ...) that all meant "this map".
-   Only a stage a migrated mission no longer has restarts it from the beginning (keep:false = entry kit, no stow). */
+   Only a stage a migrated mission no longer has restarts it from the beginning (keep:false = entry kit, no stow).
+   A mission with was:'legacy' used to be one legacy map: a run saved there ('legacy', missing or a pre-MISSIONS 'sN') resumes at the
+   start with its kit and stowed finds (keep), and moved:true tells normRun to drop the old map's checkpoint and flag a notice. */
 const missionStage=(id,st)=>{if(!missionKnown(id))return null;const m=MISSIONS[id];
  if(missionStageOK(id,st))return {stage:st,keep:true};
  if(m.stages.length===1&&m.stages[0]==='legacy')return {stage:'legacy',keep:true};
+ if(m.was==='legacy'&&(st==null||st==='legacy'||/^s\d+$/.test(st)))return {stage:m.start,keep:true,moved:true};
  return {stage:m.start,keep:false};};
 const missionIsCampaign=id=>missionIdx(id)>=0;
 /* the LEVELS index whose map a mission's 'legacy' stage plays on (-1 if none) */

@@ -116,6 +116,8 @@ function checkMissions() {
   assert.equal(missionStart('nope'), null);
   assert.equal(missionStart('toString'), null, 'Prototype keys are not missions');
   assert.equal(missionStage('toString', 'legacy'), null);
+  // floor 2 used to be one map: runs saved there resume in the lobby with their kit, minus the old map's checkpoint
+  for (const st of ['legacy', 's1', undefined]) assert.deepEqual({ ...missionStage('c2', st) }, { stage: 'lobby', keep: true, moved: true }, `c2 run saved at ${st}`);
 }
 
 module.exports = { checkMissions, missionData };

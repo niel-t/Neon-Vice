@@ -3380,7 +3380,7 @@ function finishLevel(){const g=G;if(g.stageManaged&&!stageFinal(g)){banner('STAG
 const STAGE_ENEMY=['id','x','z','a','hp','maxhp','alive','look','body','pers','weapon','headless','wounds','splat','down','vx','vz','rmul','spd','r'];
 const STAGE_ITEM=['x','z','type','ammo','vx','vz','rot','flying','fresh','flyT','age'];
 const STAGE_DOOR=['i','th','w','pusher','build','locked','lockHp','breached'];
-const STAGE_STATS=['T','time','score','kills','execs','shots','hits','heads','taken','gpts','styleB','multis','switches','glassBroken','maxCombo','combo','comboT','comboMax','multi','lastKT','lastKType','kb'];
+const STAGE_STATS=['T','time','score','kills','execs','shots','hits','heads','taken','gpts','styleB','multis','switches','glassBroken','maxCombo','combo','comboT','comboMax','multi','lastKT','lastKType','kb','loudShot'];
 const STAGE_CELLS=['solid','furn','glass','pool','floorT','wallT','wh','topT','tint','glow','rug'];
 function stageJSON(v,seen=new Set()){
  if(v===null||typeof v==='string'||typeof v==='boolean')return v;
@@ -3430,7 +3430,7 @@ function stageManager(id){
 }
 function stageRelease(g){if(!g)return;for(const key of ['staticB','decalB'])if(g[key]?.buf){gl.deleteBuffer(g[key].buf);g[key].buf=null;}}
 function stageCapture(g,armour=g.player.armor){
- if(g.obj||g.sj||g.fin||g.cine||g.npcs.length||g.trigs.length||g.cash.length||g.items.some(it=>it.flying))throw new Error('Unsupported stage objective, NPC, cash lure or flying item state');
+ if(g.obj||g.fin||g.cine||g.npcs.length||g.trigs.length||g.cash.length||g.items.some(it=>it.flying))throw new Error('Unsupported stage objective, NPC, cash lure or flying item state');
  if(g.plan){const s=stageJSON({v:2,kind:'plan',player:{...stagePick(g.player,['x','z','a']),armor:armour},enemies:g.enemies.map(e=>stagePick(e,STAGE_ENEMY)),items:g.items.map(it=>stagePick(it,STAGE_ITEM)),doors:g.doors.map((d,i)=>({i,th:d.th,w:d.w,pusher:d.pusher,slide:d.slide}))});
   stageHydrate(g,s,false);return s;}
  const cells=[];for(let i=0;i<g.W*g.H;i++){const d={i};for(const k of STAGE_CELLS)if(g[k][i]!==g.stageBase[k][i])d[k]=g[k][i];if(Object.keys(d).length>1)cells.push(d);}
@@ -3531,7 +3531,7 @@ function stageKitCheck(k){
 }
 function stageActivate(g,manager,kit,hp,bag,armour){
  G=g;levelIdx=missionBase(g.mission);MISSION=g.mission;JOBPICK=null;HUBMODE='in';
- g.stageRun=manager;g.runOwner=myProg().run;g.variant=myProg().run.var;g.clear=missionClear(MISSION,g.variant);Object.assign(g,stageJSON(bag));
+ g.stageRun=manager;g.runOwner=myProg().run;g.variant=myProg().run.var;g.clear=missionClear(MISSION,g.variant);Object.assign(g,stageJSON(bag));g.sj=missionIsCampaign(MISSION)?myProg().sidejob||null:null;
  applyLoadout(kit);g.player.hp=hp;g.player.armor=armour;g.track=LEVEL_TRACKS[levelIdx][RUNTRACK[levelIdx]%LEVEL_TRACKS[levelIdx].length];state='play';show(null);if(!stageIntro(g))banner(missionName(MISSION)+' · '+g.sid,(g.plan?'Plan':'Grid')+' stage · completion policy not enabled');
 }
 function stageFailure(e){banner('STAGE LOAD REFUSED',e.message);return false;}
@@ -3546,7 +3546,7 @@ function enterStage(id,arrive=null,startingMission=null){
 }
 function startGridRun(id,arrive=null){
  let fresh;try{
-  const p=myProg(),old=p.run,manager=stageManager(id),existing=old&&old.mission===id;
+  const p=myProg(),old=p.run,manager=stageManager(id),existing=old&&old.mission===id,moved=existing&&old.moved===1;if(moved)delete old.moved;
   if(existing&&old.st){manager.decode(old.st);if(manager.current!==old.stage||!manager.active)throw new Error('Run stage/checkpoint mismatch');}
   if(existing&&old.stage!==missionStart(id)&&!old.st)throw new Error('Stage entry snapshot missing');
   const r=existing?kitClone(old):{v:KIT_V,mission:id,stage:missionStart(id),entryKit:kitClone(p.kit),stageKit:kitClone(p.kit),t:Date.now()};
@@ -3558,7 +3558,8 @@ function startGridRun(id,arrive=null){
   const entry=stageCapture(fresh,retry?retry.snapshot.player.armor:fresh.player.armor+(r.stageKit.armour?.plates||0)),hp=Number.isFinite(r.stageHp)&&r.stageHp>0?r.stageHp:fresh.player.maxhp;
   const envelope=manager.preview(token,retry?.snapshot||null,entry,bag);
   r.st=envelope;r.stageHp=hp;r.t=Date.now();if(existing)Object.assign(old,r);else p.run=r;saveProg();
-  stageActivate(fresh,manager,r.stageKit,hp,bag,entry.player.armor);manager.commit(token,retry?.snapshot||null,entry,bag);clearInterval(typeT);return true;
+  stageActivate(fresh,manager,r.stageKit,hp,bag,entry.player.armor);manager.commit(token,retry?.snapshot||null,entry,bag);clearInterval(typeT);
+  if(moved)banner(missionName(id)+' WAS REBUILT','This floor changed since you saved. Starting again from the beginning, with everything you brought.');return true;
  }catch(e){stageRelease(fresh);return stageFailure(e);}
 }
 function stageCanLeave(g){return !!(g&&g===G&&g.stageManaged&&g.stageRun?.active&&g.mission===MISSION&&myProg().run===g.runOwner&&myProg().run?.mission===MISSION&&myProg().run.stage===g.sid&&g.player.alive&&Number.isFinite(g.player.hp)&&g.player.hp>0&&!g.player.ex&&!g.player.exec&&!g.done&&!g.fin&&!g.cine&&!g.cameo);}

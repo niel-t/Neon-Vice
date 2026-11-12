@@ -194,6 +194,50 @@ and fixture case and smoke-tests the renderer.
   - The terrace rail blocks the player, but enemies can be knocked over it.
   - The lift doors stay closed until W2c.
 
+### Floor 2 already ships as a building (main 37f781a)
+
+Campaign floor 2 (`MISSIONS.c2`) is now three grid stages, defined in
+`missions.js`:
+
+1. `lobby`: Coral Tower ground floor. The guard holding the silenced pistol
+   drops a keycard, and the stair `elev` stays locked until the player has
+   it (index.html `stageLocked`). The stair `up` is always open.
+2. `stair`: the service level. It is only played via `up`.
+3. `pent`: `LEVELS[2]` with the street walled off. Arrivals are `elev`
+   (alerts nearby enemies) and `stairs` (silent). The exit is the
+   elevator at `C`.
+
+All stairs are one way up. A stage with no stairs out is the final stage
+(`stageFinal`), so that is where the floor clears, grades and pays out.
+
+To make `ph` the floor-2 penthouse without losing that flow:
+
+- **Mixing kinds.** Swap only `pent` for `{kind:'plan', def:{plan:'penthouse',
+  stage:'ph'}}`. Stages may mix kinds, so the lobby and service level can
+  stay grid stages until the §7.3 `lobby` plan stage exists. Rename the
+  `pent` checks in index.html (`stageIntro`, `drawStage`, the route
+  challenges) to `ph`.
+- **Arrivals.** The lobby's `elev` stair needs a `ph` arrival in the
+  private lift (E1, `p_in`). `up` needs an arrival at a fire stair (E4
+  stair A or E5 stair B, now `arr_e4` and `arr_e5`). These need named
+  arrivals in `PLAN.describe` and must sit outside every stair trigger.
+- **Plan-stage refusals.** `planStageBuild` currently refuses the following
+  outside `?planplay` preview. Each must be supported or removed before
+  `ph` can ship:
+  - civilians (`c_bartender`, `c_cook`, `c_maid`);
+  - exit spawns, stashes and `obj`;
+  - locked doors (D27 panic room ruling).
+- **Exit.** Plan stages have no car glyph, so `g.car` stays at (0, 0).
+  Finishing needs a plan exit spawn (the private lift) that becomes
+  `g.car`.
+- **Stash.** `placeStash(g,2)` uses `STASH[2]`, a cell on the grid map.
+  `ph` needs its own stash spot.
+- **Lifts.** The `lifts` rule keeps lift doors closed until W2c. The
+  arrival lift only has to read as closed behind the player.
+- **Saves.** Changing `pent` to `ph` or bumping `rev` drops runs saved
+  mid-penthouse back to the lobby with the kit they entered the floor
+  with (`missionStage` keep:false). That is safe.
+
 ## 8. Backlog for W2f (map content, from W4)
 
 - Marina: there are toilets on the open dock and in the crate storerooms.
