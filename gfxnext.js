@@ -21,7 +21,7 @@ const NX=(()=>{
   import('./next/three-renderer.js').then(m=>{N.impl=m.create(N,gl);N.ready=true;}).catch(e=>{N.failed=true;console.warn('NVNEXT: new renderer failed to load, using the classic one',e);});
  };
  /* called at the top of the game's render(): decides who draws this frame */
- N.begin=function(menu,enhanced){const live=N.ready&&!N.failed&&!N.paused&&!menu&&enhanced;if(live!==N.live){N.live=live;if(N.impl)N.impl.show(live);}N.chars.length=0;};
+ N.begin=function(menu,enhanced){const live=N.ready&&!N.failed&&!N.paused&&!N.warming&&!menu&&enhanced;if(live!==N.live){N.live=live;if(N.impl)N.impl.show(live);}N.chars.length=0;};
  /* F9 flips between the new and the classic renderer, for comparing */
  addEventListener('keydown',e=>{if(e.key==='F9'){N.paused=!N.paused;e.preventDefault();}});
  /* called from PS2C.flush(): hands over the skinned characters queued this frame */

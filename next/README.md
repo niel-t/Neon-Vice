@@ -18,3 +18,7 @@ Menus, briefings, the elevator, the shop and retro mode still use the classic re
 The game talks to it in four places, all guarded by `NX` (which is null when the switch is off):
 `NX.wrapGL(gl)` after the WebGL context is created in `renderer.js`, `NX.begin(...)` at the top of `render()`,
 `NX.draw({...})` at the end of `render()`, and `NX.takeChars(...)` in `PS2C.flush()` in `models.js`. All three files are listed in `scripts/build.cjs`.
+
+Warm-up: on the first gameplay frame the level is handed to Three and every scene shader is built in the
+background while the classic renderer keeps drawing; the new renderer takes over when they are ready
+(`NX.warmMs` is how long that took).

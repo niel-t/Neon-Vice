@@ -10,6 +10,11 @@ test('gfx next: the opt-in Three.js renderer draws gameplay, hands menus back, a
   await expect.poll(() => page.evaluate(() => NX.frames || 0), { timeout: 120_000 }).toBeGreaterThan(2);
   expect(await page.evaluate(() => ({ live: NX.live, failed: NX.failed, chars: NX.chars.length > 0,
     shown: getComputedStyle(document.getElementById('glnext')).display }))).toEqual({ live: true, failed: false, chars: true, shown: 'block' });
+  // shaders were built in the background before the first frame, and drawing built no scene shader a second time
+  const warm = await page.evaluate(() => ({ done: NX.warming === false, before: NX.warmPrograms, after: NX.impl.renderer.info.programs.length, ms: NX.warmMs }));
+  console.log('gfx next warm-up', JSON.stringify(warm));
+  expect(warm.done).toBe(true);
+  expect(warm.before).toBeGreaterThan(3);
   await page.evaluate(() => { SET.gfx2 = false; });
   await expect.poll(() => page.evaluate(() => NX.live), { timeout: 60_000 }).toBe(false);
   expect(await page.evaluate(() => getComputedStyle(document.getElementById('glnext')).display)).toBe('none');
