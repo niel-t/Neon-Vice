@@ -749,7 +749,7 @@ function thugLook(kind,bodyOverride,lvl){
 const BOSSNAME="VICTOR 'THE SHARK' MOREAU";const bossName=()=>(G&&G.def&&G.def.boss&&G.def.boss.name)||BOSSNAME;
 const BOSSLOOK=()=>({skin:hex(0xd9a37c),jacket:hex(0xf2e6c8),shirt:hex(0xc0182a),pants:hex(0xf2e6c8),shoes:hex(0x5a3a22),hair:hex(0x101010),hs:'slick',stache:true,shades:true,chain:true,cigar:true,watch:true,bw:1.35,bd:1.3,bh:1.0,belly:true});
 function isW(c){return c==='#'||c===' ';}
-function loadLevel(i,dOver,staged=false){
+function loadLevel(i,dOver,staged=false){const arrI=ARR_GO;ARR_GO=null;
  const def=dOver||LEVELS[i],grid=WORLD.buildGrid(def,levelIdx,{paletteSize:PASTEL.length}),{W,H,rows}=grid;
  const g=Object.assign(grid,{enemies:[],items:[],bullets:[],parts:[],gibs:[],decals:[],decalDirty:true,pools:[],doors:grid.doorSpecs.map(d=>({...d,th:0,w:0,pusher:''})),lights:[],flashes:[],cash:[],popups:[],car:{x:0,z:0},cleared:false,done:false,time:0,score:0,combo:0,comboT:0,maxCombo:0,kills:0,execs:0,shots:0,hits:0,freeze:0,shake:0,flash:0,flashC:[1,0,0],flow:new Int16Array(W*H),nflow:new Int16Array(W*H),flowT:0,deadT:0,aimX:0,aimZ:0,cam:{x:0,z:0,kx:0,kz:0},staticB:Object.assign(new Batch(),{round:0.45}),decalB:new Batch(),T:0,hitT:0,killedBy:'',radar:null,deco:[],npcs:[],trigs:[],hint:null,hurtT:0,kb:{},heads:0,kc:0,cpulse:0,lv:0,lvT:0});
  G=g;
@@ -777,7 +777,7 @@ function loadLevel(i,dOver,staged=false){
  }
  markZones(g);if(!def.hub&&!staged)addHazards(g,i);
  if(staged){g.fans=[];g.pool=new Uint8Array(W*H);g.glass=new Uint8Array(W*H);g.nades=[];}
- if(def.hub)hubSetup(g);g.lights.push({x:g.car.x,y:0.3,z:g.car.z,r:3,c:[1,0.2,0.7]});dressStreet(g);buildStatic(g);buildRadar(g);g.cam.x=g.player.x;g.cam.z=g.player.z-1;computeFlow();return g;
+ if(def.hub)hubSetup(g);g.lights.push({x:g.car.x,y:0.3,z:g.car.z,r:3,c:[1,0.2,0.7]});if(arrI!==null&&!def.hub)arriveSetup(g,arrI);dressStreet(g);buildStatic(g);buildRadar(g);g.cam.x=g.player.x;g.cam.z=g.player.z-1;computeFlow();return g;
 }
 /* k = weapon type (null = unarmed); same random-call order as the original inline grid spawn */
 function makeEnemy(g,def,i,k,boss,cx,cz,a){const L0=boss?(def.boss?def.boss.look():BOSSLOOK()):thugLook(k,null,i);const body=boss?(def.boss?'normal':'boss'):L0.body;if(!boss&&def.hawaii){const hc=hex(pick([0xff6fae,0x2de2e6,0xffd36b,0x7dff9a,0xff8a3a]));L0.shirt=hc;L0.jacket=hc;L0.tee=true;L0.torsoTile=29;}
@@ -847,8 +847,72 @@ function markZones(g){const W=g.W,H=g.H,out=new Uint8Array(W*H),q=[];g.out=out;
    out[Z*W+X]=1;q.push(X,Z);}}}
 const isOut=(g,x,z)=>!!(g.out&&g.out[z*g.W+x]);
 function rayLen(x,z,dx,dz,max){if(G&&G.plan){const r=WORLD.trace(G.wst,x,z,x+dx*max,z+dz*max,1.5,PLAN_RAY)[0];return r?r.t0*max:max;}return WORLD.cell.rayLen(G,x,z,dx,dz,max);}
-function dressStreet(g){const W=g.W,H=g.H;
- const street=(x,z)=>x>=0&&z>=0&&x<W&&z<H&&!g.solid[z*W+x]&&g.floorT[z*W+x]===7;
+/* ================= ARRIVALS: a mission's street-level entrance opens with you pulling up ================= */
+/* 'front' = park at the main entrance; 'alley' = back door in a service alley. ARR_GO is a one-shot set by startMission (campaign
+   map) or startGridRun (a grid mission's first stage) and consumed by loadLevel; maps without two '=' street rows skip it.
+   window.NOARRIVE (test harness) keeps the map's P/C spawn. ARR_SEEN skips the drive-in when you retry the same floor. */
+const ARRIVE=['front','alley','front','alley','front','front','alley','front'];
+let ARR_GO=null,ARR_SEEN=-1;
+function arriveSetup(g,i){const W=g.W,rows=g.rows;let type=ARRIVE[i]||'front';
+ const zs=[];for(let z=0;z<g.H;z++)if(rows[z].indexOf('=')>=0)zs.push(z);if(zs.length<2||!g.player)return;
+ const zT=zs[0],zB=zs[zs.length-1],gaps=[];let run=null;if(zT<2)return;
+ for(let x=1;x<W-1;x++){const c=rows[zT-1][x],ok=c!==' '&&!g.solid[(zT-1)*W+x]&&g.floorT[(zT-1)*W+x]>=0&&!g.solid[(zT-2)*W+x];
+  if(ok){if(!run){run={a:x,b:x};gaps.push(run);}else run.b=x;}else run=null;}
+ if(!gaps.length)return;
+ const mid=W/2,ctr=q=>(q.a+q.b+1)/2;gaps.sort((p,q)=>Math.abs(ctr(p)-mid)-Math.abs(ctr(q)-mid));
+ let gate=null;if(g.def.hawaii){const wide=gaps.filter(q=>q.b-q.a>=3).sort((p,q)=>(q.b-q.a)-(p.b-p.a))[0];if(wide){const c=Math.floor(ctr(wide));gate={a:c-1,b:c};for(let x=wide.a;x<=wide.b;x++){if(x>=gate.a&&x<=gate.b)continue;const ii=(zT-1)*W+x;g.solid[ii]=1;g.wallT[ii]=6;g.wh[ii]=0.55;g.topT[ii]=0;g.deco.push({t:'rail',x,z:zT-1});}gaps.splice(gaps.indexOf(wide),1,gate);}}
+ const narrow=gaps.filter(q=>q.b-q.a<=1),front=gate||narrow[0]||gaps[0],fx=ctr(front);
+ let gap=front;if(type==='alley'){const bk=narrow.filter(q=>q!==front&&Math.abs(ctr(q)-fx)>=6);if(bk.length)gap=bk[bk.length-1];else type='front';}
+ const gx=ctr(gap),fromRight=type==='alley'?gx>mid:false;
+ for(const q of type==='alley'?[front,gap]:[front])addGapDoors(g,q,zT-1);if(gate)for(const d of g.doors)if(d.front&&d.hz===zT-0.5&&d.hx>=gate.a&&d.hx<=gate.b+1)d.gate=1;
+ const cx=Math.max(2.2,Math.min(W-2.2,gx+(fromRight?-0.55:0.55))),cz=zT+(type==='front'?1.15:1.0);
+ let ax=null;if(type==='alley'){const lim=gx<mid?Math.min(gx+4,fx-2.5):Math.max(gx-4,fx+2.5);ax=gx<mid?[0,Math.floor(lim)]:[Math.ceil(lim),W-1];}g.arr={type,zT,zB,gx,gap,ax};
+ if(gate){g.deco.push({t:'arch',x:gate.a,z:zT-1,fx:gate.b,w:gate.b-gate.a+1});for(const sx of [-1,1])g.lights.push({x:fx+sx*1.3,y:1.8,z:zT+0.1,r:4,c:[0.3,0.9,1]});}
+ else{const w=Math.min(front.b-front.a+1.6,4),col=hex([0x2a9ea3,0xe0459a,0x7a1622,0x2a9ea3,0xe0459a,0x2bb7b9,0x8e2a66,0x1c6b3a][i]||g.def.sofa||0xe0459a);g.deco.push({t:'awning',x:Math.floor(fx),z:zT,fx,w,c:col});if(i===2||i===7||i===5)g.deco.push({t:'carpet',x:Math.floor(fx),z:zT,fx,w:Math.min(front.b-front.a+1,2.2)});for(const sx of [-1,1])g.lights.push({x:fx+sx*(w/2+0.2),y:1.5,z:zT+0.2,r:3.6,c:[1,0.82,0.55]});}
+ g.car={x:cx,z:cz};g.carA=fromRight?Math.PI:0;
+ if(type==='alley'){for(let x=ax[0];x<=ax[1];x++){const ii=zB*W+x;if(rows[zB][x]==='='){g.solid[ii]=1;g.wallT[ii]=6;g.wh[ii]=1.7;g.topT[ii]=0;}}}
+ /* the player stands at the door from the start (hidden while driving), so stage entry snapshots and retries begin there */
+ const p=g.player,door=[gx,zT+(type==='front'?0.45:0.15)];p.x=door[0];p.z=door[1];p.a=Math.PI;
+ if(ARR_SEEN===i)return;
+ const x0=fromRight?cx+13:cx-13;
+ g.arrive={t:0,ph:'drive',x0,x1:cx,z:cz,door,hide:true,spin:0,lvl:i,then:null,dir:fromRight?-1:1};
+ g.car.x=x0;arriveSfx();}
+/* doors go in both lists: g.doors is what the world trace, collisions and drawing use; doorSpecs feeds the nav/fog portals */
+function addGapDoors(g,q,z){if(q.b-q.a>1)return;const cz=z+0.5;if(g.doors.some(d=>Math.abs(d.hz-cz)<0.6&&d.hx>=q.a-0.1&&d.hx<=q.b+1.1))return;
+ const add=(hx,base)=>{g.doorSpecs.push({hx,hz:cz,base});g.doors.push({hx,hz:cz,base,th:0,w:0,pusher:'',front:1});};
+ if(q.a===q.b)add(q.a,0);else{add(q.a,0);add(q.b+1,Math.PI);}}
+function dressAlley(g){const W=g.W,a=g.arr,zT=a.zT,mid=zT+1,gx=a.gx;const carX=g.arrive?g.arrive.x1:g.car.x;
+ g.deco.push({t:'bulb',x:Math.floor(gx),z:zT,fx:gx});g.lights.push({x:gx,y:1.9,z:zT+0.3,r:4.2,c:[1,0.78,0.45]});
+ const [a0,a1]=a.ax,mouth=gx<W/2?a1:a0;g.lights.push({x:mouth+0.5,y:1.5,z:zT+1.6,r:4.5,c:[0.9,0.2,0.75]});
+ for(let k=0,x=Math.max(2,a0+1);x<Math.min(W-2,a1);x+=3,k++){if(Math.abs(x-gx)<1.5||Math.abs(x-carX)<2.5)continue;if(k%2===0)g.deco.push({t:'dumpster',x,z:zT,c:k%4===0});else g.deco.push({t:'bags',x,z:zT-0.4});}
+ for(let x=a0+2;x<a1-1;x+=4)if(Math.abs(x-gx)>1.5)g.deco.push({t:'escape',x,z:a.zB});
+ for(let x=a0+1;x<a1;x+=2){const u=hsh(x,zT,77);if(u<0.55&&Math.abs(x-carX)>1.6)g.deco.push({t:'puddle',x:x+u,z:mid-0.2+u*0.6,s:0.6+u});}}
+function drawArriveDeco(B,g,d){const cx=d.x+0.5;
+ if(d.t==='awning'){const w=d.w,z0=d.z,col=d.c;for(let k=0;k<6;k++){const xx=d.fx-w/2+(k+0.5)*w/6;B.box(TRS(xx,2.0,z0+0.16,0,w/6+0.01,0.06,0.42),k%2?col:[0.95,0.93,0.9]);}
+  B.box(TRS(d.fx,1.95,z0+0.37,0,w+0.04,0.14,0.04),col.map(v=>v*0.7));for(const s of [-1,1])B.box(TRS(d.fx+s*w/2,1.0,z0+0.36,0,0.05,2.0,0.05),hex(0xc9a24a));}
+ else if(d.t==='carpet'){B.box(TRS(d.fx,0.008,d.z+0.5,0,d.w,0.01,1.0),hex(0x9a1020));for(const s of [-1,1])B.box(TRS(d.fx+s*(d.w/2-0.04),0.012,d.z+0.5,0,0.05,0.012,1.0),hex(0xd9a441));}
+ else if(d.t==='dumpster'){const z=d.z+0.35,col=d.c?hex(0x2f5a3a):hex(0x2a4a7a);B.box(TRS(cx,0.38,z,0,1.3,0.76,0.62),col);B.box(TRS(cx,0.79,z+0.02,0.0,1.34,0.06,0.66),col.map(v=>v*0.7));B.box(TRS(cx-0.45,0.4,z+0.32,0,0.22,0.12,0.02),[0.85,0.85,0.8]);}
+ else if(d.t==='bulb'){const x=d.fx,z=d.z+0.08;B.box(TRS(x,1.95,z+0.12,0,0.06,0.06,0.24),hex(0x3a3a44));B.box(TRS(x,1.88,z+0.24,0,0.11,0.1,0.11),[1,0.85,0.55],true);B.box(TRS(x,1.92,z+0.24,0,0.15,0.03,0.15),hex(0x22222a));}
+ else if(d.t==='escape'){const z=d.z-0.05;for(let y=0.4;y<1.7;y+=0.3)B.box(TRS(cx,y,z,0,0.6,0.025,0.04),hex(0x23232b));for(const s of [-1,1])B.box(TRS(cx+s*0.3,0.95,z,0,0.035,1.5,0.04),hex(0x23232b));}
+ else if(d.t==='rail'){const z=d.z+0.5;B.box(TRS(cx,0.98,z,0,1.0,0.05,0.05),hex(0x1c1c24));B.box(TRS(cx,0.78,z,0,1.0,0.03,0.03),hex(0x1c1c24));for(let k=0;k<4;k++)B.box(TRS(d.x+0.125+k*0.25,0.78,z,0,0.035,0.45,0.035),hex(0x1c1c24));}
+ else if(d.t==='arch'){const x0=d.x,x1=d.fx+1,z=d.z+0.5,mc=hex(0x1c1c24);for(const xx of [x0,x1]){B.box(TRS(xx,1.15,z,0,0.16,2.3,0.16),mc);B.box(TRS(xx,2.33,z,0,0.24,0.08,0.24),[0.3,0.9,1],true);}B.box(TRS((x0+x1)/2,2.2,z,0,x1-x0+0.1,0.1,0.08),mc);B.box(TRS((x0+x1)/2,2.05,z+0.06,0,x1-x0-0.4,0.12,0.02),[0.3,0.9,1],true);}
+ else if(d.t==='puddle'){B.box(TRS(d.x,0.006,d.z,hsh(d.x|0,d.z|0,5)*3,d.s,0.004,d.s*0.55),[0.09,0.08,0.14]);}}
+function updateArrive(dt){const g=G,A0=g.arrive,p=g.player;A0.t+=dt;
+ const skip=A0.t>0.4&&(pressed.perk||pressed.grab||mouse.down||keys.Enter||keys.Space);
+ if(A0.ph==='drive'){const D=2.4,u=Math.min(1,A0.t/D),e=1-Math.pow(1-u,3),nx=A0.x0+(A0.x1-A0.x0)*e;A0.spin+=Math.abs(nx-g.car.x)*3.2;g.car.x=nx;
+  if(u>=1){A0.ph='park';A0.t=0;}}
+ else if(A0.ph==='park'){if(A0.t>0.35){A0.ph='out';A0.t=0;A0.hide=false;p.x=g.car.x-A0.dir*0.35;p.z=A0.z-0.62;p.a=Math.PI;sfx('door');}}
+ else if(A0.ph==='out'){const tx=A0.door[0],tz=A0.door[1],dx=tx-p.x,dz=tz-p.z,dd=Math.hypot(dx,dz),sp=2.6;
+  if(dd>0.04){const st=Math.min(dd,sp*dt);p.x+=dx/dd*st;p.z+=dz/dd*st;p.walk=(p.walk||0)+st*9;p.a=Math.atan2(dx,dz);}else p.a=Math.PI;
+  if(dd<=0.04||A0.t>1.4)return endArrive();}
+ {const k=1-Math.exp(-dt*3),tx=A0.ph==='drive'?A0.x1:p.x,tz=A0.z-1;g.cam.x+=(tx-g.cam.x)*k;g.cam.z+=(tz-g.cam.z)*k;}
+ if(skip){mouse.down=false;keys.Enter=false;keys.Space=false;endArrive();}}
+function endArrive(){const g=G,A0=g&&g.arrive;if(!A0)return;g.arrive=null;g.car.x=A0.x1;g.player.x=A0.door[0];g.player.z=A0.door[1];g.player.a=Math.PI;ARR_SEEN=A0.lvl;if(A0.then)A0.then();}
+function arriveSfx(){if(typeof AC==='undefined'||!AC||!SET.sound)return;try{const t=AC.currentTime;
+ tone(t,2.2,'sawtooth',95,38,0.07,undefined,0.15);tone(t,2.2,'square',48,26,0.04,undefined,0.15);noise(t+1.75,0.45,'bandpass',2600,1400,0.05,undefined,6);}catch(e){}}
+
+function dressStreet(g){const W=g.W,H=g.H;if(g.arr&&g.arr.type==='alley')dressAlley(g);
+ const street=(x,z)=>x>=0&&z>=0&&x<W&&z<H&&!g.solid[z*W+x]&&g.floorT[z*W+x]===7&&!(g.arr&&g.arr.ax&&x>=g.arr.ax[0]&&x<=g.arr.ax[1]&&z>=g.arr.zT-1);
  const occ=(x,z)=>g.rows[z][x]!=='=';
  for(let z=0;z<H;z++)for(let x=0;x<W;x++){if(!street(x,z))continue;
   const top=isSolid(x,z-1),bot=isSolid(x,z+1),mid=street(x,z-1)&&street(x,z+1);
@@ -870,6 +934,7 @@ function drawDeco(B,g,d){const cx=d.x+0.5,cz=d.z+0.5;
   else if(d.t==='cline'){for(const o of [-0.06,0.06])B.box(TRS(cx,0.004,d.z+o,0,1.0,0.006,0.05),hex(0xe8c040));}
   else if(d.t==='lane'){B.box(TRS(cx,0.004,d.z,0,0.55,0.006,0.07),[0.92,0.92,0.9]);}
  else if(d.t==='lamp'){const z=d.z+0.12;B.box(TRS(cx,1.05,z,0,0.07,2.1,0.07),hex(0x3a3a44));B.box(TRS(cx,2.1,z+0.22,0,0.07,0.07,0.5),hex(0x3a3a44));B.box(TRS(cx,2.05,z+0.42,0,0.22,0.08,0.3),[1,0.85,0.55],true);}
+ else if(d.t==='awning'||d.t==='carpet'||d.t==='dumpster'||d.t==='bulb'||d.t==='escape'||d.t==='puddle'||d.t==='rail'||d.t==='arch')drawArriveDeco(B,g,d);
  else if(d.t==='hydrant'){const z=d.z+0.2;B.box(TRS(cx,0.22,z,0,0.18,0.44,0.18),hex(0xc0202a));B.box(TRS(cx,0.46,z,0,0.13,0.08,0.13),hex(0xd03030));B.box(TRS(cx,0.28,z,0,0.3,0.07,0.07),hex(0xa01a22));}
  else if(d.t==='bags'){for(let i=0;i<3;i++){const u=hsh(d.x,d.z,10+i);B.box(TRS(d.x+0.25+u*0.5,0.17,d.z+0.55+hsh(d.x,d.z,20+i)*0.3,u*3,0.38,0.34,0.34),i===1?hex(0x2a3a2a):hex(0x15151a));}}}
 function clutter(B,g,x,z){if(g.def.hub)return;const ch=g.rows[z][x];if(!(ch in FLOORCH)&&ch!=='r')return;if(hsh(x,z,1)>0.14)return;const st=g.floorT[z*g.W+x]===7,out=isOut(g,x,z);
@@ -1174,6 +1239,7 @@ function update(dt){const g=G;if(g.stageManaged&&(state!=='play'||stageStairs(g)
  g.T+=dt;
  {const tgt=g.combo>=6?3:g.combo>=4?2:g.combo>=2?1:0;if(tgt>g.lv){g.lv=tgt;g.lvT=2;}else if(g.lv>tgt){g.lvT-=dt;if(g.lvT<=0){g.lv--;g.lvT=1.2;}}}
  if(g.freeze>0){g.freeze-=dt;fogUpdate(g,dt);return;}
+ if(g.arrive){updateArrive(dt);updateFX(dt);fogUpdate(g,dt);return;}
  if(g.cameo){updateCameo(dt);updateFX(dt);updateCamera(dt);fogUpdate(g,dt);return;}
  if(g.fin){const fe=g.fin.e;updateFin(dt);updateFX(dt);bodyPhysics();for(const e of g.enemies)if(!e.alive)slideBody(e,dt);const k=1-Math.exp(-dt*3);g.cam.x+=(fe.x-g.cam.x)*k;g.cam.z+=(fe.z-g.cam.z)*k;return;}
  if(g.player.alive&&!g.done)g.time+=dt;
@@ -1414,6 +1480,8 @@ function balCrossings(g,b,rem){const st=wst(g);let S=rem+1.5;
 /* one straight leg: returns distance still to travel after a direction change (deflect/ricochet), else 0 */
 /* W8 shot evidence: player rounds alarm witnesses at impacts, exits, near misses and ally hits, even suppressed */
 const shotEv=(b,x,z,k,s)=>{if(b.own==='p'&&typeof AI!=='undefined'&&AI.shot)AI.shot(x,z,b.dx,b.dz,k,s);};
+/* a round that meets a hinged leaf swings it; shotgun pellets push less */
+const doorShot=(d,b)=>{if(!d||d.kind==='slide'||!Number.isFinite(d.th))return;const a=d.base+d.th;d.w+=(-b.dx*Math.sin(a)+b.dz*Math.cos(a))*(b.type==='shotgun'||b.type==='double'?1.6:2.4);d.pusher='b';};
 function bulletLeg(b,rem){const g=G,p=g.player,ax=b.x,az=b.z,ev=balCrossings(g,b,rem);
  const hitR=(x,z,rr)=>{const t=(x-ax)*b.dx+(z-az)*b.dz,px=ax+b.dx*t-x,pz=az+b.dz*t-z,q=rr*rr-px*px-pz*pz;if(q<0)return null;const d=Math.max(0,t-Math.sqrt(q));return d<=rem&&t+Math.sqrt(q)>=0?d:null;};
  if(b.own==='p'){for(const e of g.enemies){if(!e.alive||b.hit.includes(e))continue;const d=hitR(e.x,e.z,e.r+0.07);if(d!==null)ev.push({t:'e',e,d});}}
@@ -1433,6 +1501,8 @@ function bulletLeg(b,rem){const g=G,p=g.player,ax=b.x,az=b.z,ev=balCrossings(g,b
   const r=v.r;if(r.kind==='prop'&&!(g.plan?(g.plan.propH.get(r.ref)??0)>=1.2:TALL_FURN[g.furn[r.ref]])&&hugs(v))continue;
   const look=balLook(v.build),B=WORLD.materials.BUILD[v.build];let nx=r.nx,nz=r.nz;if(nx*b.dx+nz*b.dz>0){nx=-nx;nz=-nz;}
   moveTo(v.d);
+  // hinged doors and gate leaves stop rounds: splinters, a swing, and the bullet ends at the leaf (glazed and sliding doors keep their material rules)
+  if(r.kind==='door'&&r.door&&r.door.kind!=='slide'&&!B.pane){doorShot(r.door,b);balImpact(b.x,b.z,nx,nz,look,'door',false);shotEv(b,b.x,b.z,'impact');b.life=0;return 0;}
   if(look.hard&&r.cos<0.26&&!B.pane){shotEv(b,b.x,b.z,'impact');const k=2*(b.dx*nx+b.dz*nz);b.dx-=k*nx;b.dz-=k*nz;b.e*=0.5;b.x+=nx*0.02;b.z+=nz*0.02;sparks(b.x,0.74,b.z);if(Math.random()<0.5)sfx('ric',0.4);
    if(b.e<BAL.EMIN)b.life=0;return Math.max(0,rem-v.d);}
   if(B.pane&&r.kind==='wall'&&!g.plan)hitGlass(r.ref%g.W,(r.ref/g.W)|0);else balImpact(b.x,b.z,nx,nz,look,r.kind,false);shotEv(b,b.x,b.z,'impact');
@@ -1453,7 +1523,7 @@ function updateBulletsW5(dt){const g=G;
 function updateBullets(dt){if(typeof BAL_LEGACY!=='undefined'&&(!BAL_LEGACY||G&&G.plan))return updateBulletsW5(dt);const g=G;for(const b of g.bullets){const dist=b.sp*dt,steps=Math.ceil(dist/0.2),st=dist/steps;
  for(let s=0;s<steps&&b.life>0;s++){const nx=b.x+b.dx*st,nz=b.z+b.dz*st;const ncx=Math.floor(nx),ncz=Math.floor(nz);
   const door=WORLD.cell.doorHit(g,b.x,b.z,nx,nz);
-  if(door){sparks(door.x+door.nx*0.05,0.74,door.z+door.nz*0.05,[0.7,0.5,0.3]);sfx('thud');b.life=0;break;}
+  if(door){if(typeof doorShot==='function')doorShot(door.door,b);sparks(door.x+door.nx*0.05,0.74,door.z+door.nz*0.05,[0.7,0.5,0.3]);sfx('thud');b.life=0;break;}
   if(G.glassSet&&b.own==='p'&&hitGlass(ncx,ncz)){b.x=nx;b.z=nz;continue;}
   if(WORLD.cell.rayBlock(g,ncx,ncz,true)){const wall=WORLD.cell.rayBlock(g,ncx,ncz,false);const ocx=Math.floor(b.x),ocz=Math.floor(b.z);let wx,wz,nrx=0,nrz=0;
    if(ncx!==ocx){wx=ncx>ocx?ncx:ocx;nrx=ncx>ocx?-1:1;wz=b.z+(wx-b.x)/b.dx*b.dz;}else{wz=ncz>ocz?ncz:ocz;nrz=ncz>ocz?-1:1;wx=b.x+(wz-b.z)/b.dz*b.dx;}
@@ -1992,8 +2062,8 @@ function storeKey(e){const c=e.code,m=/^Digit([1-9])$/.exec(c);if(c==='Escape'||
 function storePad(dir){const cs=document.querySelectorAll('#sStore .scard');if(dir){storeFocus=(storeFocus+dir+cs.length)%cs.length;renderStore($('stMsg').textContent);}if(pdown(0)&&cs[storeFocus])cs[storeFocus].click();else if(pdown(1))closeStore();}
 /* jewelry flags for the low-poly fallback looks; the PS2 models read PROG directly when rebuilt */
 function applyJewelLooks(){for(const c of CHARS){const j=(PROG[c.id]&&PROG[c.id].jewel)||{},L=LOOKS[c.id];if(!L)continue;L.watch=!!j.watch;L.chain=!!j.chain;}}
-function placeOldCar(){const g=G,free=(x,z)=>{for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=0;dz++){const ix=Math.floor(x+dx),iz=Math.floor(z+dz);if(ix<1||iz<1||ix>=g.W-1||iz>=g.H-1||g.solid[iz*g.W+ix]||g.furn[iz*g.W+ix])return false;}return true;};
- for(const [ox,oz] of [[-3,0],[3,0],[0,2.2],[0,-2.2],[-3,2],[3,2]]){const x=g.car.x+ox,z=g.car.z+oz;if(free(x,z)&&Math.hypot(x-g.player.x,z-g.player.z)>2){g.oldCar={x,z,a:0};return;}}}
+function placeOldCar(){const g=G,cx=g.arrive?g.arrive.x1:g.car.x,a=g.arr,lane=(x,z)=>a&&z>=a.zT&&z<a.zT+2&&(g.carA?x>cx:x<cx),free=(x,z)=>{for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=0;dz++){const ix=Math.floor(x+dx),iz=Math.floor(z+dz);if(ix<1||iz<1||ix>=g.W-1||iz>=g.H-1||g.solid[iz*g.W+ix]||g.furn[iz*g.W+ix])return false;}return true;};
+ for(const [ox,oz] of [[-3,0],[3,0],[0,2.2],[0,-2.2],[-3,2],[3,2]]){const x=cx+ox,z=g.car.z+oz;if(free(x,z)&&!lane(x,z)&&Math.hypot(x-g.player.x,z-g.player.z)>2){g.oldCar={x,z,a:0};return;}}}
 /* Nine of Nine */
 const NINE_INTRO="Hello, my friend! I am Nine, last name also Nine, and I bring you exotic machinery of death. Very ludicrous. Only at Nine of Nines.";
 const NINE_HI=["Ah, my friend returns! Capitalism is beautiful, da?","Every piece I calibrate personally, with mathematics.","Is not a gun. Is a statement, written in lead.","Nine guns of ten are boring. I sell you the tenth.","Today's selection is very ludicrous. I am proud."];
@@ -3206,14 +3276,14 @@ function drawHazards(B,g){if(!g.fans)return;const DK=hex(0x1a1820),W=g.W;
   B.box(TRS(f.x,2.78,f.z,0,0.26,0.14,0.26),DK);
   for(let k=0;k<4;k++){const a=f.ph+k*Math.PI/2;B.box(TRS(f.x+Math.cos(a)*0.55,y,f.z+Math.sin(a)*0.55,-a,1.0,0.03,0.14),[0.45,0.36,0.22]);}}}
 function buildDynamic(){const g=G,B=dynB,O=ovB;B.reset();O.reset();if(g.def.hub){drawHubDyn(B,O);return;}if(ENH())drawMotes(g.cam.x,g.cam.z,levelIdx>=1,g.T);
- for(const d of g.doors){const a=d.base+d.th,e=doorEnd(d),s=d.len===undefined?[d.hx,d.hz]:doorStart(d);const dl=d.len??0.98;B.box(A.mul(A.mul(A.T((s[0]+e[0])/2,0.55,(s[1]+e[1])/2),A.RY(-a)),A.S(dl,1.1,0.07)),[0.95,0.9,0.9],false,TUV[4]);if(d.kind==='slide')continue;
+ for(const d of g.doors){const a=d.base+d.th,e=doorEnd(d),s=d.len===undefined?[d.hx,d.hz]:doorStart(d);const dl=d.len??0.98;if(d.gate){const m0=A.mul(A.T((d.hx+e[0])/2,0,(d.hz+e[1])/2),A.RY(-a)),mc=hex(0x24242e);for(const y of [0.1,0.55,1.05])B.box(A.mul(m0,TRS(0,y,0,0,0.98,0.05,0.05)),mc);for(let k=0;k<7;k++)B.box(A.mul(m0,TRS(-0.45+k*0.15,0.58,0,0,0.03,1.0,0.03)),mc);B.box(A.mul(m0,TRS(0.2,0.55,0,0,0.3,0.18,0.02)),[0.3,0.9,1],true);continue;}B.box(A.mul(A.mul(A.T((s[0]+e[0])/2,0.55,(s[1]+e[1])/2),A.RY(-a)),A.S(dl,1.1,0.07)),[0.95,0.9,0.9],false,TUV[4]);if(d.kind==='slide')continue;
   const kl=d.len===undefined?0.82:dl*0.84,kx=d.hx+Math.cos(a)*kl,kz=d.hz+Math.sin(a)*kl;B.box(TRS(kx,0.55,kz,-a,0.05,0.05,0.12),GOLD);}
- if(!g.def.noCar)drawRide(B,g.car.x,g.car.z,1,0);drawAct2(B,g);if(g.oldCar)drawBeater(B,g.oldCar.x,g.oldCar.z,1,g.oldCar.a,rideId());drawDisco(B,g);drawHazards(B,g);drawStash(B,g);drawStage(B,g);
+ if(!g.def.noCar)drawRide(B,g.car.x,g.car.z,1,g.carA||0,undefined,g.arrive?g.arrive.spin:0);drawAct2(B,g);if(g.oldCar)drawBeater(B,g.oldCar.x,g.oldCar.z,1,g.oldCar.a,rideId());drawDisco(B,g);drawHazards(B,g);drawStash(B,g);drawStage(B,g);
  if(g.cleared){const y=1.5+Math.sin(g.T*5)*0.15;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.3,0.3,0.3))),[1,0.3,0.75],true);}
  const p=g.player;const near=p.alive?nearItem(p):null;
  for(const it of g.items)if(!fogHid(it.x,it.z))drawItem(B,it,it===near);
  for(const e of g.enemies)if(!e.alive&&!e.sunk&&!fogHid(e.x,e.z))drawChar(CB(e),e);if(!p.alive)drawChar(CB(p),p);
- for(const e of g.enemies)if(e.alive&&!fogHidE(e))drawChar(CB(e),e);if(g.lex)drawChar(IBhi,g.lex);if(p.alive&&!(p.armorT>0&&Math.floor(g.T*20)%2))drawChar(IBhi,p);
+ for(const e of g.enemies)if(e.alive&&!fogHidE(e))drawChar(CB(e),e);if(g.lex)drawChar(IBhi,g.lex);if(p.alive&&!(g.arrive&&g.arrive.hide)&&!(p.armorT>0&&Math.floor(g.T*20)%2))drawChar(IBhi,p);
  for(const e of g.enemies){if(!e.alive||!e.aiming||!p.alive||fogHidE(e))continue;const sa=Math.sin(e.a),ca=Math.cos(e.a);const h=rayWall(e.x,e.z,sa,ca,14,true);const len=h?h.d:14;const st=0.55,rem=Math.max(0,len-st);
   const flick=e.react<0.15?(Math.floor(g.T*30)%2?1:0.4):0.75;B.box(TRS(e.x+sa*(st+rem/2)+ca*0.17,0.74,e.z+ca*(st+rem/2)-sa*0.17,e.a,0.018,0.018,rem),[flick,0.05,0.08],true);}
  for(const b of g.bullets)B.box(TRS(b.x,0.74,b.z,Math.atan2(b.dx,b.dz),0.035,0.035,0.45),b.own==='p'?[1,0.95,0.55]:[1,0.6,0.3],true);
@@ -3360,13 +3430,13 @@ function showBrief(i){levelIdx=i;state='brief';show('sBrief');$('brFrom').textCo
  clearInterval(typeT);typeT=setInterval(()=>{typeI++;$('brMsg').textContent=typeFull.slice(0,typeI);if(typeI%2===0)sfx('type');if(typeI>=typeFull.length)clearInterval(typeT);},28);}
 function startLevel(i){startMission(missionId(i));}
 /* levelIdx stays the map index (grid seeds, decor, par); campaign-only effects key on MISSION */
-function startMission(id){if(MISSIONS[id]&&(MISSIONS[id].stageDefs||MISSIONS[id].stages.some(s=>s!=='legacy')||myProg().run?.mission===id&&myProg().run.st))return startGridMission(id);const i=missionIdx(id),b=missionBase(id);clearInterval(typeT);MISSION=id;JOBPICK=null;levelIdx=b;HUBMODE='in';loadLevel(b);
- const ld=runEnter(id);G.mission=id;G.variant=myProg().run.var;G.clear=missionClear(id,G.variant);missionSpawn(G);applyLoadout(ld);
+function startMission(id){if(MISSIONS[id]&&(MISSIONS[id].stageDefs||MISSIONS[id].stages.some(s=>s!=='legacy')||myProg().run?.mission===id&&myProg().run.st))return startGridMission(id);const i=missionIdx(id),b=missionBase(id);clearInterval(typeT);MISSION=id;JOBPICK=null;levelIdx=b;HUBMODE='in';ARR_GO=i>=0&&!window.NOARRIVE?b:null;loadLevel(b);
+ const ld=runEnter(id);G.mission=id;G.variant=myProg().run.var;G.clear=missionClear(id,G.variant);if(G.arrive&&missionVar(id,G.variant).spawn){G.car.x=G.arrive.x1;G.arrive=null;}missionSpawn(G);applyLoadout(ld);
  G.sj=i>=0?myProg().sidejob||null:null;act2Setup(G,i);if(i>=0){placeStash(G,i);if(i===0&&myCar()!=='beater')placeOldCar();}G.track=LEVEL_TRACKS[b][RUNTRACK[b]%LEVEL_TRACKS[b].length];if(MUS.track!==G.track){MUS.track='';MUS.pending=null;}state='play';show(null);
  if(i<0){banner(missionName(id),'Clear the floor · Get back to the car');return;}
  banner(i===3?'ACT 2: HOSTILE TAKEOVER':(i<3?'FLOOR '+(i+1):'FLOOR '+(i-2))+': '+LEVELS[i].name,i===3?'Floor 1: Vice Marina · Lex Sterling\'s smuggling hub':padMode?'Clear the floor · A grabs weapons · Get back to the car':touchMode?'Left thumb moves · right thumb aims &amp; attacks':'Clear the floor · E grabs weapons · Get back to the car');
  if(CHALLENGES[i]&&chStars(i)<3)setTimeout(()=>{if(G&&state==='play'&&levelIdx===i&&!G.def.hub&&G.time<4)banner('CHALLENGES',CHALLENGES[i].map((c,k)=>(chDone(i,k)?'\u2605 ':'\u2606 ')+c.n).join(' \u00b7 '));},2600);
- if(i===1&&!LEXMET)startCameo();}
+ if(i===1&&!LEXMET){if(G.arrive)G.arrive.then=startCameo;else startCameo();}}
 function showDead(){G.cameo=null;G.lex=null;if(!G.def.hub){arm();myProg().couchBlood=1;saveProg();}state='dead';const k=G.killedBy;$('deadCause').textContent=DEATHNAME[k]||'KILLED';$('deadTip').textContent='TIP: '+pick(TIPS);
  let xp=0;if(!G.xpGiven){G.xpGiven=1;xp=runXP(G,false);awardXP(xp);}const pr=myProg();$('deadXP').innerHTML=(xp?'+'+xp+' XP · ':'')+'LEVEL '+pr.lvl+' <span style="opacity:.7">('+pr.xp+'/'+xpNeed(pr.lvl)+')</span>';
  syncRestartJob();if(pendingPerks>0)showPerkPick('dead');else show('sDead');}
@@ -3555,14 +3625,14 @@ function startGridRun(id,arrive=null){
   if(!missionVariantOK(id,r.var))r.var=missionVariant(id,missionCtx());
   if(!missionIsCampaign(id)&&!(Number.isInteger(r.ret)&&r.ret>=0&&r.ret<CAMPAIGN_LEN))r.ret=Number.isInteger(NEXTJOB)?NEXTJOB:Math.min(JOBS.sel,JOBS.top);
   const retry=manager.active?manager.retry():null,token=manager.prepare(r.stage,arrive),bag=stageBag(retry?retry.bag:{});
-  stageKitCheck(r.stageKit);fresh=stageBuild(id,token,retry?.snapshot||null);
+  stageKitCheck(r.stageKit);ARR_GO=missionIsCampaign(id)&&r.stage===missionStart(id)&&MISSIONS[id].stageDefs?.[r.stage]?.kind==='grid'&&!window.NOARRIVE?missionBase(id):null;fresh=stageBuild(id,token,retry?.snapshot||null);ARR_GO=null;
   if(!retry&&p.gift&&WD[p.gift])fresh.items.push({x:fresh.player.x+0.7,z:fresh.player.z,type:p.gift,ammo:WD[p.gift].ammo||0,vx:0,vz:0,rot:0.6,flying:false,fresh:false,flyT:0});
   const entry=stageCapture(fresh,retry?retry.snapshot.player.armor:fresh.player.armor+(r.stageKit.armour?.plates||0)),hp=Number.isFinite(r.stageHp)&&r.stageHp>0?r.stageHp:fresh.player.maxhp;
   const envelope=manager.preview(token,retry?.snapshot||null,entry,bag);
   r.st=envelope;r.stageHp=hp;r.t=Date.now();if(existing)Object.assign(old,r);else p.run=r;saveProg();
   stageActivate(fresh,manager,r.stageKit,hp,bag,entry.player.armor);manager.commit(token,retry?.snapshot||null,entry,bag);clearInterval(typeT);
   if(moved)banner(missionName(id)+' WAS REBUILT','This floor changed since you saved. Starting again from the beginning, with everything you brought.');return true;
- }catch(e){stageRelease(fresh);return stageFailure(e);}
+ }catch(e){ARR_GO=null;stageRelease(fresh);return stageFailure(e);}
 }
 function stageCanLeave(g){return !!(g&&g===G&&g.stageManaged&&g.stageRun?.active&&g.mission===MISSION&&myProg().run===g.runOwner&&myProg().run?.mission===MISSION&&myProg().run.stage===g.sid&&g.player.alive&&Number.isFinite(g.player.hp)&&g.player.hp>0&&!g.player.ex&&!g.player.exec&&!g.done&&!g.fin&&!g.cine&&!g.cameo);}
 function enterGridStage(to,arrive=null){

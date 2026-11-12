@@ -63,6 +63,7 @@ const test = base.extend({
         let seed = 123456789;
         Math.random = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
         window.QLOCK = 3;
+        window.NOARRIVE = true; // missions keep the map's P/C spawn; the arrival test opts back in
         addEventListener('unhandledrejection', event => console.error('Unhandled rejection', event.reason));
       });
       const page = await context.newPage();
