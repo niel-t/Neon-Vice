@@ -39,6 +39,8 @@ const ROUGH=`float roughnessFactor=roughness;{float ta=texture2D(map,vMapUv).a;i
 export function create(N,oldGL){
  const oldCanvas=oldGL.canvas;
  const canvas=document.createElement('canvas');canvas.id='glnext';canvas.style.display='none';oldCanvas.after(canvas);
+ /* a phone can drop this second WebGL context at any time: hand the frame back to the classic renderer for good */
+ canvas.addEventListener('webglcontextlost',()=>{N.failed=true;N.live=false;show(false);console.warn('NVNEXT: graphics context lost, using the classic renderer');});
  const renderer=new THREE.WebGLRenderer({canvas,antialias:false,alpha:false,powerPreference:'high-performance'});
  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;
  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=LOOK.exposure;
