@@ -1,6 +1,7 @@
 # next/ : the Three.js renderer (default)
 
-Gameplay is drawn with Three.js by default. GRAPHICS in the options menu cycles NEW, ENHANCED
+Gameplay is drawn with Three.js by default on computers. Phones and tablets keep the classic
+renderer unless the player picks NEW, because the new one did not run on a phone (2026-11-12). GRAPHICS in the options menu cycles NEW, ENHANCED
 (the classic renderer) and PS1 RETRO; `?gfx=old` and `?gfx=next` do the same from the address bar.
 The choice is remembered in this browser. While the new renderer is on, F9 flips between the two
 so you can compare. With the classic renderer chosen, or when the page is opened from disk, none

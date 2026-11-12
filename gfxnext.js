@@ -1,5 +1,5 @@
 'use strict';
-/* Three.js renderer hook. On by default; ?gfx=old or GRAPHICS in the options menu switches to the
+/* Three.js renderer hook. On by default on computers, off by default on phones and tablets; ?gfx=old or GRAPHICS in the options menu switches to the
    classic renderer (remembered in this browser; ?gfx=next switches back). When on, it (1) remembers the
    source of every texture and buffer the game uploads, so next/three-renderer.js can reuse
    the game's own geometry and art, and (2) turns the classic renderer's draw calls into
@@ -10,8 +10,11 @@ const NXSET={get on(){return !!window.NVNEXT&&window.NVNEXT.on;},set(v){try{loca
 const NX=(()=>{
  /* on by default; ?gfx=old or the options menu turns it off (remembered), ?gfx=next turns it back on.
     Pages opened straight from disk stay classic, because browsers do not load script modules from file://. */
- let on=location.protocol!=='file:';const want=/[?&]gfx=(next|old)\b/.exec(location.search);
- try{if(want)localStorage.setItem('nvgfx',want[1]);on=on&&localStorage.getItem('nvgfx')!=='old';}catch(e){if(want)on=on&&want[1]!=='old';}
+ /* phones and tablets (touch is the main pointer) stay on the classic renderer unless the player asks for the new one */
+ let phone=false;try{phone=matchMedia('(pointer:coarse)').matches;}catch(e){}
+ const want=/[?&]gfx=(next|old)\b/.exec(location.search);let pick=want?want[1]:null;
+ try{if(want)localStorage.setItem('nvgfx',want[1]);else pick=localStorage.getItem('nvgfx');}catch(e){}
+ const on=location.protocol!=='file:'&&(pick==='next'||(pick!=='old'&&!phone));
  const N=window.NVNEXT={on,live:false,ready:false,failed:false,tex:new WeakMap(),buf:new WeakMap(),chars:[],models:null,impl:null};
  if(!on)return null;
  N.wrapGL=function(gl){
