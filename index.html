@@ -1087,7 +1087,8 @@ function addKillScore(e,type){const g=G;g.combo++;g.cpulse=1;g.comboT=g.comboMax
  if(g.combo>1&&g.lastKType&&type!==g.lastKType&&type!=='exec'){sb+=200;lbl=lbl?lbl+' · SWITCH-UP':'SWITCH-UP';g.switches=(g.switches||0)+1;}g.lastKT=g.T;if(type!=='exec')g.lastKType=type;
  if(sb){sb=Math.round(sb*Dd().mult);g.score+=sb;g.styleB=(g.styleB||0)+sb;popup(e.x,e.z-0.45,lbl+' +$'+fmt(sb),'#2de2e6');}}
 const GUNS=['dual','pistol','silenced','revolver','smg','m16','shotgun','double','goldak','golddeagle'];
-function killEnemy(e,type,dir){type=BT(type);if(!e.alive)return;const g=G;e.alive=false;if(e.lex&&!g.fin)g.fin={t:0,e,dir,ph:'fin',step:-1,line:null};e.down=0;e.wind=0;dropWeapon(e,dir,true);
+function killEnemy(e,type,dir){type=BT(type);if(!e.alive)return;const g=G;if(e.lex&&!e.mercyAsked&&!g.fin&&!g.mercy){e.mercyAsked=true;e.hp=1;e.vx=e.vz=0;e.down=9999;e.wind=0;g.mercy={e,dir,type,t:0,bt:0};return;}
+ e.alive=false;if(e.lex&&!g.fin)g.fin=e.mercyAsked?{t:0,e,dir,ph:'fin',step:0,line:{who:'',txt:'',t:0},lineT:0}:{t:0,e,dir,ph:'fin',step:-1,line:null};e.down=0;e.wind=0;dropWeapon(e,dir,true);
  const sh=type==='shotgun'||type==='double';e.a=Math.atan2(-dir[0],-dir[1]);launchBody(e,type,dir);
  const n=(GORE()?1.6:1)*(sh?75:type==='exec'?90:['bat','knife','machete'].includes(type)?45:40);bloodBurst(e.x,0.65,e.z,dir,n,sh?7:4.5);
  addFloorDecal(e.x+dir[0]*0.3,e.z+dir[1]*0.3,rnd(0.9,1.3),rnd(0,TAU),8,bloodTint());
@@ -1250,13 +1251,14 @@ function update(dt){const g=G;if(g.stageManaged&&(state!=='play'||stageStairs(g)
  if(g.freeze>0){g.freeze-=dt;fogUpdate(g,dt);return;}
  if(g.arrive){updateArrive(dt);updateFX(dt);fogUpdate(g,dt);return;}
  if(g.cameo){updateCameo(dt);updateFX(dt);updateCamera(dt);fogUpdate(g,dt);return;}
+ if(g.mercy){const fe=g.mercy.e;updateMercy(dt);updateFX(dt);bodyPhysics();const k=1-Math.exp(-dt*3);g.cam.x+=(fe.x-g.cam.x)*k;g.cam.z+=(fe.z-g.cam.z)*k;return;}
  if(g.fin){const fe=g.fin.e;updateFin(dt);updateFX(dt);bodyPhysics();for(const e of g.enemies)if(!e.alive)slideBody(e,dt);const k=1-Math.exp(-dt*3);g.cam.x+=(fe.x-g.cam.x)*k;g.cam.z+=(fe.z-g.cam.z)*k;return;}
  if(g.player.alive&&!g.done)g.time+=dt;
  if(g.comboT>0){g.comboT-=dt;if(g.comboT<=0)g.combo=0;}
  if(g.hitT>0)g.hitT-=dt;if(g.np)g.np.t+=dt;
  g.flowT-=dt;if(g.flowT<=0){computeFlow();g.flowT=0.25;}
  updatePlayer(dt);updateHazards(dt);if(g.player.ex){if(g.player.alive)updateExec(g.player,dt);else g.player.ex=null;}for(const e of g.enemies)updateEnemy(e,dt);separate();bodyPhysics();updateDoors(dt);updateBullets(dt);updateNades(dt);updateAct2(dt);updateStash(dt);updateObj(dt);updateStage(dt);updateItems(dt);updateCash(dt);updateFX(dt);
- if(stageMayFinish(g)&&!g.cleared&&g.enemies.every(e=>!e.alive||e.boss&&g.clear&&g.clear.boss==='optional')){if(g.obj&&!g.obj.done){if(!g.objWarn){g.objWarn=1;banner('GUARDS DOWN','Now: '+g.obj.label);}}else{g.cleared=true;banner('FLOOR CLEAR',g.def.noCar?'Take the elevator down':'Get back to the car');sfx('clear');}}
+ if(stageMayFinish(g)&&!g.cleared&&g.enemies.every(e=>!e.alive||e.spared||e.boss&&g.clear&&g.clear.boss==='optional')){if(g.obj&&!g.obj.done){if(!g.objWarn){g.objWarn=1;banner('GUARDS DOWN','Now: '+g.obj.label);}}else{g.cleared=true;banner('FLOOR CLEAR',g.def.noCar?'Take the elevator down':'Get back to the car');sfx('clear');}}
  if(stageMayFinish(g)&&g.cleared&&g.player.alive&&!g.done&&Math.hypot(g.player.x-g.car.x,g.player.z-g.car.z)<1.8){g.done=true;finishLevel();}
  if(!g.player.alive){g.deadT+=dt;if(g.deadT>1&&state==='play')showDead();}
  updateHints(dt);updateCamera(dt);}
@@ -2186,6 +2188,7 @@ function act2Setup(g,i){g.nades=[];if(!(i>=3))return;const W=g.W,cells=ch=>{cons
  if(i===5){g.manq=cells('n').map((q,k)=>{const m=makeChar(q.x,q.z,{skin:[0.9,0.88,0.84],jacket:hex(pick([0xff9ec7,0x9ae3e6,0xffe39a,0xffffff,0xc9b6f2])),shirt:[0.96,0.96,0.96],pants:hex(pick([0xf2f2f2,0x2a2030,0x9ad8e0])),shoes:[0.9,0.9,0.9],hs:null,bw:1,bd:1,bh:1},false);m.a=pick([0,Math.PI,Math.PI/2,-Math.PI/2]);m.kind='manq';return m;});
   const el=cells('e');sol(el);g.elev=el;g.wreck=1;setTimeout(()=>{if(G===g&&state==='play')banner("THEY TRASHED YOUR "+carName(myCar()),"Lex's goons hit your ride while you shopped. Now it's personal.");},2600);}
  if(i===6){g.panes=cells('%');sol(g.panes);g.glassSet=new Set(g.panes.map(q=>q.iz*W+q.ix));const c=cells('!')[0];g.studioC=c;if(c){const sg=makeChar(c.x+1.0,c.z,{skin:[0.95,0.82,0.7],jacket:hex(0xff4fa6),shirt:[0.96,0.96,0.96],pants:hex(0x2a2030),shoes:[0.9,0.9,0.9],hs:'slick',hair:hex(0xe3c26a),bw:1,bd:1,bh:1},false);sg.kind='singer';sg.a=0;g.singer=sg;g.obj={label:'QUESTION THE SINGER',n:0,total:1,done:false};}}
+ if(i===8||i===9||i===10){const f=lexFate();if(f==='spared'){g.tip=true;const msg=i===8?'Lex calls: "The charges are by the cranes. I owe you."':i===9?'Lex texts: "The safe is in the casino back room. We\'re even."':null;if(msg)setTimeout(()=>{if(G===g&&state==='play')banner('LEX, THE SPARED',msg);},3200);}else if(f==='dead'&&i===8){g.score+=2500;setTimeout(()=>{if(G===g&&state==='play')popup(g.player.x,g.player.z-0.5,"LEX'S ESTATE  +$2,500",'#ffd36b');},3000);}}
  if(i===9){g.safe=cells('N')[0];if(g.safe){sol([g.safe]);g.obj={label:'GET THE LEDGER',n:0,total:1,done:false};}}
  if(i===8){g.rigs=cells('N').map(q=>({x:q.x,z:q.z,cut:false}));g.obj={label:'CUT THE CHARGE WIRES',n:0,total:g.rigs.length,done:false};}
  if(i===7){const y=cells('y');if(y.length){const xs=y.map(q=>q.ix),zs=y.map(q=>q.iz);g.tank={x0:Math.min(...xs),x1:Math.max(...xs)+1,z0:Math.min(...zs),z1:Math.max(...zs)+1};}}}
@@ -2212,6 +2215,15 @@ function explode(n){const g=G,p=g.player;n.done=true;sfx('double');sfx('crash');
 const FIN={consigliere:[['LEX "SILKS" STERLING',"Wait — wait! I can pay you! I've got a Testarossa!"],['P',"You wanted to talk family names, Silks? Here's your ledger."],['P',"Go fetch."]],
  money:[['LEX "SILKS" STERLING',"Wait — wait! I can pay you! I've got a Testarossa!"],['P',"*stuffs a stack of hundreds into his mouth*"],['P',"Keep the change."]],
  don:[['LEX "SILKS" STERLING',"Wait — wait! I can pay you! I've got a Testarossa!"],['P',"Pure gold tie, huh?"],['P',"...Funny. It's leaving a green mark."]]};
+/* The moment before Lex dies: he is down and begging. 1 = spare him, 2 = finish him. Spared, he stays on the deck (e.spared) and the floor
+   clears without him; the payout then records lex_spared (alive) instead of lexDead. Act 3 reads that: see lexFate(). */
+function updateMercy(dt){const g=G,m=g.mercy,e=m.e;m.t+=dt;g.T+=dt;e.down=9999;
+ if(m.t<0.5)return;if(!m.shown){m.shown=1;popup(e.x,e.z,'"WAIT! I CAN PAY YOU!"','#ffd36b');sfx('boss');}
+ if((m.bt-=dt)<=0){m.bt=2.3;banner('LEX BEGS: "I\'VE GOT A TESTAROSSA!"','[1] SPARE HIM        [2] FINISH HIM');}
+ if(m.t<1.2)return;const spare=keys.Digit1||keys.Numpad1||pdown(2),kill=keys.Digit2||keys.Numpad2||pdown(1);
+ if(spare){g.mercy=null;e.spared=true;e.state='idle';popup(e.x,e.z,'SPARED','#7dff9a');banner('YOU SPARED LEX','He stays on the deck, watching you finish the yacht.');sfx('pick');}
+ else if(kill){g.mercy=null;killEnemy(e,m.type,m.dir||[0,1]);}}
+const lexFate=()=>{const p=myProg();return p.lexDead?'dead':(dlgObj(p,'wflags')||{}).lex_spared?'spared':null;};
 function updateFin(dt){const g=G,f=g.fin,id=rideId(),L=FIN[id]||FIN.don,e=f.e,p=g.player;f.t+=dt;g.T+=dt;
  const next=()=>{f.step++;if(f.step>=L.length){g.fin=null;banner('LEX "SILKS" STERLING IS DONE','Clear the yacht, then back to the car');return;}const q=L[f.step];f.line={who:q[0]==='P'?CHARS[selIdx].name:q[0],txt:q[1],t:0};f.lineT=1.2+q[1].length*0.045;
   if(f.step===1){if(id==='money'){for(let i=0;i<40;i++)g.parts.push({t:'c',x:e.x,y:0.7,z:e.z,vx:rnd(-2,2),vy:rnd(0.5,3),vz:rnd(-2,2),s:0.08,c:[0.35,0.8,0.4],life:1.2});sfx('cash');}
@@ -2230,6 +2242,7 @@ function drawHeli(B,x,z,a,T){const {P}=rideKit(B,x,z,1,a),D1=[0.1,0.1,0.13];P(0,
  P(0,1.02,0,0,0.12,0.12,0.12,D1);for(let i=0;i<2;i++)B.box(A.mul(A.mul(A.T(x,1.08,z),A.RY(T*14+i*Math.PI/2)),A.S(3.8,0.03,0.14)),[0.15,0.15,0.17]);}
 function drawAct2(B,g){const T=g.T,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,ry||0,sx,sy,sz),c,!!em);
  if(g.nades)for(const n of g.nades){B.box(A.mul(A.mul(A.T(n.x,n.y,n.z),A.RY(n.spin)),A.S(0.13,0.13,0.17)),GOLD,true);}
+ if(g.tip){for(const r of (g.rigs||[]))if(!r.cut)bx(r.x,1.2,r.z,0.07,2.4,0.07,[0.3,1,0.5],true);if(g.safe&&!(g.obj&&g.obj.done))bx(g.safe.x,1.4,g.safe.z,0.07,2.8,0.07,[0.3,1,0.5],true);}
  if(g.safe){const q=g.safe;bx(q.x,0.45,q.z,0.7,0.9,0.6,[0.28,0.3,0.34]);bx(q.x,0.5,q.z+0.31,0.28,0.28,0.02,g.obj&&g.obj.done?[0.2,0.8,0.3]:[0.9,0.7,0.2],true);}
  if(g.rigs)g.rigs.forEach(r=>{bx(r.x,0.2,r.z,0.5,0.4,0.36,[0.5,0.1,0.1]);bx(r.x,0.45,r.z,0.1,0.1,0.1,r.cut?[0.2,0.8,0.3]:[1,0.1,0.1],r.cut||Math.sin(g.T*8)>0);});
  if(g.boats)g.boats.forEach((q,i)=>{if(q.sunk)return;drawSpeedboat(B,q.x,q.z,i%2?Math.PI:0,[[1,0.3,0.75],[0.2,0.9,1],[1,0.8,0.2]][i%3]);if(q.fuse>0&&Math.sin(g.T*22)>0)bx(q.x,0.9,q.z,0.3,0.3,0.3,[1,0.1,0.1],true);});
@@ -2719,7 +2732,7 @@ function talkMcWey(){if(briefBuilt&&briefKey!==mcHaul()+'|'+briefAct())briefBuil
  else if(vi.debrief===null&&HUBFIRST)m(pick(MC_HI[pr.paid?'partner':'kid']));
  if(vi.next==='end'){let best=vi.style||'mixed';for(const k in runStyle)if(runStyle[k]>(runStyle[best]||0))best=k;RUNEND=END_STYLE[best];}
  if(vi.debrief!==null){const lex=vi.debrief===2&&vi.next===3,busy=lex&&LASTPAY&&LASTPAY.squared;
-  if(!busy)(((DEB_STYLE[vi.style||'mixed']||MC_DEBRIEF)[vi.debrief])||MC_DEBRIEF[vi.debrief]).forEach(m);if(mcPayday(m,dq,MC_GRADE[vi.grade]||MC_GRADE.B,busy))beat=true;
+  if(!busy)(vi.debrief===7&&(pr.wflags||{}).lex_spared?["Lex is still breathing on that deck, and the Royal Flush is riding at anchor off my terrace. Look at her.","You let him live, and I'm told he cried about it. Mercy suits you less than it suits him."]:(((DEB_STYLE[vi.style||'mixed']||MC_DEBRIEF)[vi.debrief])||MC_DEBRIEF[vi.debrief])).forEach(m);if(mcPayday(m,dq,MC_GRADE[vi.grade]||MC_GRADE.B,busy))beat=true;
   if(lex){dq('lex');beat=true;}}
  if(!beat)mcReact(m);
  if(vi.next!=='end'){if(missionBriefReset(missionId(vi.next),pr.wflags))saveProg();dq('brief'+vi.next);}else{m(RUNEND.line);dq('finale');}
@@ -3685,7 +3698,7 @@ function kadeStage(dt,g,p){if(g.sid!=='pent'||!g.boss||!g.boss.alive||!g.bossSee
   if(p.alive&&Math.abs(p.x-c.x)<c.w/2)hurtPlayer([0,1],'boss');
   for(const e of g.enemies)if(e.alive&&!e.boss&&Math.abs(e.x-c.x)<c.w/2)hitEnemy(e,'fists',[0,1],3);}
  else if(c.ph===2&&c.t<=0){c.ph=0;c.t=b.hp<=b.maxhp/2?4:6;}
- if(!g.kP2&&b.hp<=b.maxhp/2){g.kP2=1;banner('KADE CALLS FOR HELP','Hard hats up the hoist');for(const [x,z] of [[5.5,2.5],[g.W-5.5,2.5],[g.W/2,g.H-3.5]]){const e=makeEnemy(g,g.def,8,'bat',false,x,z);e.state='chase';e.seeT=0;}}}
+ if(!g.kP2&&b.hp<=b.maxhp/2){g.kP2=1;banner('KADE CALLS FOR HELP','Hard hats up the hoist');const dead=lexFate()==='dead';if(lexFate()==='spared')setTimeout(()=>{if(G===g&&state==='play')popup(g.player.x,g.player.z-0.5,'LEX: "HE PANICS. HIT HIM HARD!"','#7dff9a');},1500);for(const [x,z] of [[5.5,2.5],[g.W-5.5,2.5],[g.W/2,g.H-3.5],...(dead?[[g.W/2-4,2.5],[g.W/2+4,2.5]]:[])]){const e=makeEnemy(g,g.def,8,'bat',false,x,z);e.state='chase';e.seeT=0;}}}
 function updateStage(dt){const g=G;if(!isTower(g))return;const p=g.player;
  if(g.ambush>0&&(g.ambush-=dt)<=0)alertNoise(p.x,p.z,12,'elev');
  if(isKade(g))kadeStage(dt,g,p);

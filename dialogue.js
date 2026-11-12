@@ -142,7 +142,9 @@ const DLG={
  brief8:dlgScene(["A man in a white suit just bought the block my office sits on, and he's flattening it tonight.","His name is Dorian Kade. Start with the wrecking crew, and cut the wires on his charges before they take the street."],[
   {t:{don:"Tell the crew their shift is over.",consigliere:"I'll serve the eviction notice myself.",money:"Does he own the block, or just the paperwork?"}},
   {t:"Who is Kade?",a:["Real estate. Lex's gold was his money, and the Tower and the Mall are his buildings.",['P',"So he's been getting rent from you."],"Everybody pays somebody rent."]},
-  {t:"What about my cut?",a:"Cut the wires first. Then we'll talk about your cut, and my building."}]),
+  {t:"What about my cut?",a:"Cut the wires first. Then we'll talk about your cut, and my building."},
+  {t:"What about Lex?",req:{flag:'lex_spared'},a:["Lex is breathing, and you let him. He called me crying, and then he called Kade.",['P',"Mercy is expensive."],"Not as expensive as a funeral. Try not to do it twice."]},
+  {t:"What about Lex?",req:{noFlag:'lex_spared'},a:["Lex is feeding the sharks, and his gold went to Kade like water downhill.","His estate is sitting in a Kade account. Make it yours."]}]),
  brief9:dlgScene(["Kade is buying the city council tonight at the Grand Biscayne, black tie and free champagne.","Somewhere in that building is a ledger of every hand he has greased. Bring it to me."],[
   {t:{don:"I'll wear the black tie.",consigliere:"I'll check my coat, and my gun.",money:"Does the champagne come out of my cut?"}},
   {t:"Loud or quiet?",a:["Whatever you like. The councilmen will remember quiet, though.",['P',"And loud?"],"They'll remember that too. They just won't say so."]},
@@ -150,7 +152,8 @@ const DLG={
  brief10:dlgScene(["Kade is on top of his unfinished tower tonight, signing the last of the deeds while the whole skyline watches.","The hoist needs the foreman's key, and the stairs are only forty floors. Finish this, and I get my block back."],[
   {t:{don:"I'll take the hoist.",consigliere:"I'll take the stairs, and a long look.",money:"A tower that tall must be insured."}},
   {t:"What does Kade want?",a:["Every block I ever stood on, and a plaque with his name on it.",['P',"So, a normal day."],"For him, yes."]},
-  {t:"And after Kade?",a:"After Kade the skyline is ours. Do try to leave the tower standing."}]),
+  {t:"And after Kade?",a:"After Kade the skyline is ours. Do try to leave the tower standing."},
+  {t:"Lex sent word.",req:{flag:'lex_spared'},a:"Did he? Good. A man you spared should be a little useful. Don't trust him past the elevator."}]),
  square:dlgScene(["That's it, you're square. The car's yours, and God help the other drivers.","And I'll stop calling you 'kid'. From now on I ask you for favours, and you say yes, because you like me."],[
   {t:{don:"Then we understand each other.",consigliere:"Free advice, then: ask nicely.",money:"Best investment I ever made."}},
   {t:"And if I say no?",a:"Then I'd ask again, nicer. Nobody has ever needed a third time."},

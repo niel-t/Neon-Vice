@@ -322,3 +322,31 @@ test('act 3: Kade Tower, the hoist needs the foreman\'s key, the crane drops a l
   await page.evaluate(() => { for (const e of G.enemies) if (e.alive) killEnemy(e, 'pistol', [0, 1]); });
   await expect.poll(() => page.evaluate(() => G.cleared), { timeout: 20_000 }).toBe(true);
 });
+
+test('lex: the killing blow opens a spare-or-finish choice; sparing leaves him on the deck and the floor still clears', async ({ openGame }) => {
+  test.setTimeout(180_000);
+  const page = await openGame();
+  await page.evaluate(() => { NOARRIVE = true; startLevel(7); killEnemy(G.boss, 'pistol', [0, 1]); });
+  expect(await page.evaluate(() => ({ asking: !!G.mercy, alive: G.boss.alive, fin: !!G.fin }))).toEqual({ asking: true, alive: true, fin: false });
+  await page.keyboard.down('1');
+  await expect.poll(() => page.evaluate(() => !G.mercy), { timeout: 30_000 }).toBe(true);
+  await page.keyboard.up('1');
+  expect(await page.evaluate(() => ({ alive: G.boss.alive, spared: !!G.boss.spared, fin: !!G.fin }))).toEqual({ alive: true, spared: true, fin: false });
+  await page.evaluate(() => { for (const e of G.enemies) if (e.alive && !e.boss) killEnemy(e, 'pistol', [0, 1]); });
+  await expect.poll(() => page.evaluate(() => G.cleared), { timeout: 20_000 }).toBe(true);
+});
+
+test('lex: finishing him plays the old finisher, and Act 3 reads what you chose', async ({ openGame }) => {
+  test.setTimeout(180_000);
+  const page = await openGame();
+  await page.evaluate(() => { NOARRIVE = true; startLevel(7); killEnemy(G.boss, 'pistol', [0, 1]); });
+  await page.keyboard.down('2');
+  await expect.poll(() => page.evaluate(() => !G.mercy), { timeout: 30_000 }).toBe(true);
+  await page.keyboard.up('2');
+  expect(await page.evaluate(() => ({ alive: G.boss.alive, fin: !!G.fin }))).toEqual({ alive: false, fin: true });
+  // Act 3: a spared Lex marks the wires; a dead Lex pays out his estate.
+  const spared = await page.evaluate(() => { const p = myProg(); p.lexDead = 0; dlgObj(p, 'wflags').lex_spared = 1; startLevel(8); return { fate: lexFate(), tip: !!G.tip, score: G.score }; });
+  expect(spared).toEqual({ fate: 'spared', tip: true, score: 0 });
+  const dead = await page.evaluate(() => { const p = myProg(); p.lexDead = 1; delete dlgObj(p, 'wflags').lex_spared; startLevel(8); return { fate: lexFate(), tip: !!G.tip, score: G.score }; });
+  expect(dead).toEqual({ fate: 'dead', tip: false, score: 2500 });
+});
