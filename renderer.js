@@ -2,6 +2,7 @@
 /* ================= GL ================= */
 const cv=$('gl'), hud=$('hud'), hctx=hud.getContext('2d');
 const gl=cv.getContext('webgl',{antialias:false,alpha:false,depth:true});
+if(NX)NX.wrapGL(gl);
 let contextLost=false;
 cv.addEventListener('webglcontextlost',e=>{e.preventDefault();contextLost=true;suspendInputs();if(master)master.gain.value=0;if(musTimer)clearInterval(musTimer);
  for(const element of document.body.children)if(element.id!=='contextWarning')element.inert=true;

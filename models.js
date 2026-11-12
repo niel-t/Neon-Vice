@@ -618,7 +618,7 @@ function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game'
  if(IB&&cash){const hm=handFrame(Wb,true,1);const pr=IB.r,pu=IB.uv;IB.r=0;for(let i=-2;i<=2;i++){const m=A.mul(A.mul(A.mul(hm,A.T(0,0.03,0.04)),A.RY(i*0.26)),A.T(0,0.004*i,0.085));IB.box(A.mul(m,A.S(0.075,0.004,0.16)),[1,1,1],false,TUV[11]);}IB.r=pr;IB.uv=pu;}
  if(IB&&id==='mcwey'&&!gun){const hm=handFrame(Wb,false,1);const pr=IB.r,pu=IB.uv;IB.r=0.6;IB.uv=null;const cm=A.mul(hm,A.mul(A.T(0,0.035,0.02),A.RX(-0.5)));IB.box(A.mul(cm,A.mul(A.T(0,0,0.06),A.S(0.022,0.022,0.15))),[0.42,0.24,0.12]);IB.box(A.mul(cm,A.mul(A.T(0,0,0.0),A.S(0.024,0.024,0.018))),[0.85,0.65,0.25]);IB.box(A.mul(cm,A.mul(A.T(0,0,0.137),A.S(0.024,0.024,0.008))),[1,0.45,0.15],true);c.cig=apply(cm,0,0,0.145);IB.r=pr;IB.uv=pu;}
  return true;}
-function flush(VPm,u){if(!shaderReady||!queue.length||!u){queue.length=0;return;}gl.useProgram(P);
+function flush(VPm,u){if(NX&&NX.live){NX.takeChars(queue,MODELS);queue.length=0;return;}if(!shaderReady||!queue.length||!u){queue.length=0;return;}gl.useProgram(P);
  gl.uniformMatrix4fv(Lc.uVP,false,VPm);gl.uniform4fv(Lc.uPL,LBUF);gl.uniform3fv(Lc.uPC,CBUF);gl.uniform3fv(Lc.uAmb,u.amb.map(v=>v*1.35));gl.uniform3fv(Lc.uLD,u.ld);gl.uniform3fv(Lc.uLC,u.lc);gl.uniform3fv(Lc.uCam,u.eye);gl.uniform2fv(Lc.uFog,u.fog);gl.uniform3fv(Lc.uFogC,u.fogC);
  gl.uniform1i(Lc.uTex,0);gl.activeTexture(gl.TEXTURE0);gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);
  for(const kk of ['aP','aN','aT','aBi','aBw']){const l=Lc[kk];if(l>=0){gl.enableVertexAttribArray(l);if(EXT_I)EXT_I.vertexAttribDivisorANGLE(l,0);}}

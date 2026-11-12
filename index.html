@@ -242,6 +242,7 @@ const A={
 const TRS=(x,y,z,ry,sx,sy,sz)=>A.mul(A.mul(A.T(x,y,z),A.RY(ry)),A.S(sx,sy,sz));
 
 </script>
+<script src="gfxnext.js"></script>
 <script src="renderer.js"></script>
 <script src="weapons.js"></script>
 <script src="ai.js"></script>
@@ -3112,7 +3113,7 @@ function planViewBuild(){const P=PLANV,o=PLAN.fromPlan(PLANS[P.pid],P.sid),st=WO
  if(!P.at){let x0=Infinity,z0=Infinity,x1=-Infinity,z1=-Infinity;for(const m of st.rooms)for(const [x,z] of m.poly){x0=Math.min(x0,x);z0=Math.min(z0,z);x1=Math.max(x1,x);z1=Math.max(z1,z);}P.at=[(x0+x1)/2,(z0+z1)/2];}
  window.planViewInfo={verts:r.verts,ms:r.ms,rooms:st.rooms.length};}
 function render(){if(contextLost||gl.isContextLost())return;PS2C.beginFrame();resize();const asp=vw/vh;let fovy=asp>=1?50*DEG:Math.min(2*Math.atan(Math.tan(25*DEG)*1.25/asp),82*DEG);if(G&&G.cine&&state==='play')fovy=asp>=1?40*DEG:62*DEG;
- const menu=state==='title'||state==='select'||state==='help'||state==='brief'||state==='elev'||state==='shop'||!G;let eye,tgt,fogC,fog,amb,ld,lc,lights;
+ const menu=state==='title'||state==='select'||state==='help'||state==='brief'||state==='elev'||state==='shop'||!G;let eye,tgt,fogC,fog,amb,ld,lc,lights;if(NX)NX.begin(menu,ENH());
  if(menu){if(!stageBuilt)buildStage();const mv=state==='shop'?(nineBuilt||buildNine(),nineView(asp)):state==='brief'?(briefBuilt||buildBrief(),briefView(asp)):state==='elev'?elevView(asp):menuView(asp);eye=mv.eye;tgt=mv.tgt;lights=mv.lights;MSH=mv.shDir||null;SHL=mv.shl===undefined?-1:mv.shl;
   fogC=[0.05,0.02,0.07];fog=[5,15];amb=[0.2,0.16,0.26];ld=[-0.3,-0.8,-0.5];lc=[0.22,0.18,0.24];
   if(PLANV&&state==='title'){if(!PLANV.B)planViewBuild();tgt=[PLANV.at[0],0,PLANV.at[1]];eye=[tgt[0],PLANV.h,tgt[2]+PLANV.h*0.58];lights=[];MSH=null;SHL=-1;fog=[400,500];amb=[0.62,0.58,0.66];lc=[0.55,0.5,0.5];}}
@@ -3158,7 +3159,8 @@ function render(){if(contextLost||gl.isContextLost())return;PS2C.beginFrame();re
  quadPass(P2,L2);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,bloomA?bloomA.tex:rt.tex);gl.uniform1i(L2.uB,1);gl.activeTexture(gl.TEXTURE0);
  gl.bindTexture(gl.TEXTURE_2D,rt.tex);gl.uniform1i(L2.uS,0);gl.uniform2f(L2.uRes,rtW,rtH);gl.uniform1f(L2.uDith,enh?0:1);gl.uniform1f(L2.uVHS,menu?(enh?0.3:1):0);gl.uniform1f(L2.uGrain,SET.grain);gl.uniform1f(L2.uGlitch,SET.glitch?(menu?1:0.3):0);gl.uniform1f(L2.uBloom,enh?(menu?0.9:0.75):0);gl.uniform1f(L2.uEnh,enh?1:0);gl.uniform1f(L2.uTime,menuT);
  const fl=(!menu&&G)?G.flash:0,fc=(!menu&&G)?G.flashC:[0,0,0];gl.uniform4f(L2.uFlash,fc[0],fc[1],fc[2],clamp(fl,0,0.7));
- gl.drawArrays(gl.TRIANGLES,0,6);gl.disableVertexAttribArray(L2.aQ);}
+ gl.drawArrays(gl.TRIANGLES,0,6);gl.disableVertexAttribArray(L2.aQ);
+ if(NX&&NX.live)NX.draw({G,eye,tgt,fovy,asp,lights,amb,lc,ld,fog,fogC,dynB,poolB,ovB,IBhi,IBlo,atlasTex,grain:SET.grain,time:menuT});}
 function rebuildDecals(){const B=G.decalB;B.reset();for(const d of G.decals){if(d.drip){dripQuad(B,d,d.len);continue;}
  if(d.w){const tx=-d.nz,tz=d.nx,h=d.s/2,ox=d.x+d.nx*0.012,oz=d.z+d.nz*0.012;B.quad([[ox-tx*h,d.y-h,oz-tz*h],[ox+tx*h,d.y-h,oz+tz*h],[ox+tx*h,d.y+h,oz+tz*h],[ox-tx*h,d.y+h,oz-tz*h]],d.nx,0,d.nz,TUV[d.t],d.c);}
  else floorQuad(B,d.x,d.z,d.s,d.r,TUV[d.t],d.c,0.01);}B.upload();}
