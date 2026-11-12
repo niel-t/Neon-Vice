@@ -148,13 +148,62 @@ const LEVELS=[
  "==========================================",
  "=====P===================C================",
  "=========================================="]},
+ {name:'OCEAN DRIVE DEMOLITION',act:3,wall:12,sofa:0xe0a030,from:'McWEY',hardhat:true,legend:{'N':{f:1}},
+  brief:"A white suit just bought the block my office sits on, and he's flattening it tonight, one building at a time. His name is Dorian Kade. Start with his wrecking crew, and cut the wires on his charges before they take the street.",map:[
+ "########################################",
+ "#Z.Z..b.....#...s....b...F...#..h..g...#",
+ "#.....4.....#.m..............#....7....#",
+ "#.g...*.....D....Z.....Z.....D....s....#",
+ "#...Z.......#....2...........#..F..Z...#",
+ "#..b........#..x.........N...#.........#",
+ "#####D#######..........N......###D######",
+ "#..2....K....#.....Z....Z.s...#........#",
+ "#..N.....g...D................D..b...N.#",
+ "#.F.....*....#...h......*.u...#...5Z...#",
+ "#..........Z.#......6.........#........#",
+ "######.###########......###########.####",
+ "========================================",
+ "====P=================C=================",
+ "========================================"]},
+ {name:'THE GRAND BISCAYNE GALA',act:3,wall:42,floor:41,sofa:0x6a2a9a,from:'McWEY',legend:{'.':{f:41},'N':{f:41}},
+  brief:"Kade is buying the city council tonight at the Grand Biscayne, black tie and free champagne. Somewhere in that building is a ledger of every hand he's greased. Get me that ledger. Wear something nice, or don't.",map:[
+ "########################################",
+ "#........#...*............*..#...#.F.5F#",
+ "#.K.K.K..#...g.....*.........#.T.#...N.#",
+ "#.k......D..T.T......g..T.T..D...D.u...#",
+ "#.Z....Z.#...................#d..###D###",
+ "#..2.....#.......u........u..#.........#",
+ "#.K...K..#4.T.T7......g.T.T..#.T...hT..#",
+ "#......x.#...................#..g......#",
+ "#....h...D....g..........h...D....T..m.#",
+ "#.K.K.K..#..T.T...m*....T.T..#6T....T..#",
+ "#........#...................#.........#",
+ "####..##########........##########..####",
+ "========================================",
+ "====P=================C=================",
+ "========================================"]},
+ {name:'KADE TOWER',act:3,wall:6,sofa:0xd8d8e8,from:'McWEY',hardhat:true,boss:{name:'DORIAN KADE',look:()=>({skin:[0.91,0.72,0.56],jacket:[0.957,0.945,0.918],shirt:[0.16,0.16,0.19],pants:[0.957,0.945,0.918],shoes:[0.957,0.945,0.918],hair:[0.85,0.85,0.88],hs:'slick',shades:true,watch:true,bw:1.1,bd:1.05,bh:1.0}),weapon:'m16',hp:20,kade:true,intro:'White suit, M16. A crane swings overhead: watch for the red lane.',dead:'THE DEVELOPER IS DEAD'},
+  brief:"Kade is on top of his unfinished tower tonight, signing the last deeds with the whole skyline watching. The hoist needs the foreman's key, and the stairs are only forty floors. Finish this, and I'll finally have my block back.",map:[
+ "####################################",
+ "#..................................#",
+ "#..7...........b..X..b..........2..#",
+ "#.....FF....................FF.....#",
+ "#........s................s........#",
+ "#............F........F............#",
+ "#..Z......Z......FF......Z......Z..#",
+ "#...........g..........g...........#",
+ "#.....FF..........m.........FF.....#",
+ "#...x.........F......F.........x...#",
+ "#.......u.........6........u.......#",
+ "#..........P..........C............#",
+ "####################################"]},
 ];
 /*END*/
 
 /* grading: par time per floor (seconds), and grade points that ignore difficulty/perk/character money multipliers */
-const PAR=[60,55,120,60,65,90,65,60];const GRADES=[['S',2.3],['A+',1.8],['A',1.4],['B',1.0],['C',0.65],['D',-1]];
+const PAR=[60,55,120,60,65,90,65,60,75,80,130];const GRADES=[['S',2.3],['A+',1.8],['A',1.4],['B',1.0],['C',0.65],['D',-1]];
 
 /* hidden stashes: [map x, map z, hi-fi track unlocked (or null), cash]. Saved in JOBS.stash[floor]=1 */
-const STASH=[[5,4,'n_nightdrive',1500],[29,5,'n_haze',1500],[12,5,'n_concrete',2000],[37,3,'n_redtide',2000],[37,2,'n_overdrive',2000],[38,4,'n_rampage',2000],[29,1,null,4000],[39,4,null,5000]];
+const STASH=[[5,4,'n_nightdrive',1500],[29,5,'n_haze',1500],[12,5,'n_concrete',2000],[37,3,'n_redtide',2000],[37,2,'n_overdrive',2000],[38,4,'n_rampage',2000],[29,1,null,4000],[39,4,null,5000],[38,9,null,3000],[38,10,null,3500],[34,1,null,6000]];
 
-const LEVEL_TRACKS=[['game','n_nightdrive','n_haze','n_concrete'],['n_crystal','n_overdrive','n_nightdrive','n_haze'],['n_redtide','n_rampage','n_concrete','n_overdrive'],['n_nightdrive','n_crystal'],['n_overdrive','n_crystal'],['n_haze','n_redtide'],['n_rampage','n_overdrive'],['n_redtide','n_rampage']];
+const LEVEL_TRACKS=[['game','n_nightdrive','n_haze','n_concrete'],['n_crystal','n_overdrive','n_nightdrive','n_haze'],['n_redtide','n_rampage','n_concrete','n_overdrive'],['n_nightdrive','n_crystal'],['n_overdrive','n_crystal'],['n_haze','n_redtide'],['n_rampage','n_overdrive'],['n_redtide','n_rampage'],['n_concrete','n_overdrive','n_rampage'],['n_nightdrive','n_crystal','n_haze'],['n_redtide','n_rampage']];

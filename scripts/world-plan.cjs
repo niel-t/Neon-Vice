@@ -8,7 +8,7 @@ const wallColors = ['#fe6f9e', '#ae9cff', '#ffad66', '#ffda78', '#82b8fc', '#cb8
 
 function loadPlan(idx) {
   const { WORLD, LEVELS, FURN, EKIND, IKIND, WALL_H } = worldData();
-  if (!Number.isInteger(idx) || idx < 0 || idx >= LEVELS.length) throw new RangeError('Level must be an existing campaign index (0-7)');
+  if (!Number.isInteger(idx) || idx < 0 || idx >= LEVELS.length) throw new RangeError('Level must be an existing campaign index (0-10)');
   const def = LEVELS[idx], grid = WORLD.buildGrid(def, idx);
   grid.doors = grid.doorSpecs.map(d => ({ ...d, th: 0, w: 0, pusher: '' }));
   const spawns = [];

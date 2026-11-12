@@ -184,7 +184,7 @@ function bossAI(e,dt,dist,dx,dz,ang){if(e.lex)return lexAI(e,dt,dist,dx,dz,ang);
  if(dist>3){tvx=dx/d*2.3;tvz=dz/d*2.3;}else if(dist<1.35&&e.cd<=0){e.cd=1.0;e.atkT=e.atkDur=0.25;sfx('punch');hurtPlayer([dx/d,dz/d],'boss');shake(0.5);}
  if(dist>=1.35&&e.react<=0&&e.cd<=0&&Math.abs(angDiff(e.a,ang))<0.3){e.weapon.ammo=99;fireGun(e,e.weapon,false);e.burst=(e.burst||0)+1;if(e.burst<(enr?8:5))e.cd=0.085;else{e.burst=0;e.cd=(enr?0.85:1.4)*Dd().ecd;}}
  if(enr&&!e.enraged){e.enraged=true;popup(e.x,e.z,'HE IS PISSED','#ff2a3a');sfx('boss');}return[tvx,tvz];}
-function spot(e){if(e.boss&&!G.bossSeen){G.bossSeen=true;banner(bossName(),G.def.boss?'Gold grenades. Keep moving and never stand still.':'He takes a lot of hits. Keep moving, use cover.');sfx('boss');}
+function spot(e){if(e.boss&&!G.bossSeen){G.bossSeen=true;banner(bossName(),G.def.boss?(G.def.boss.intro||'Gold grenades. Keep moving and never stand still.'):'He takes a lot of hits. Keep moving, use cover.');sfx('boss');}
  if(e.state!=='chase'){e.alertT=0.9;sfx('alert');const b=e.bl;if(b)AI.callout(e,5,o=>{AI.know(o,AI.belief.make(b.x,b.z,b.t,'call'));AI.investigate(o,b.x,b.z,1);});}}
 function visionHalfAngle(e){return e.state==='search'?1.3:Dd().cone+(e.wary?0.35:0);}
 function updateEnemy(e,dt){const g=G,p=g.player,T=g.T||0;

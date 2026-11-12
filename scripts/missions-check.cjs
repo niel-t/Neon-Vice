@@ -37,7 +37,7 @@ const condFlags = (c, out = new Set()) => { if (c && typeof c === 'object') { if
 function checkMissions() {
   const { LEVELS, CAMPAIGN_LEN, MISSIONS, missionIdx, missionStart, missionStage, missionBase, condOK, missionVariant, missionClear, missionBriefReset } = missionData();
   const dlgFlags = dialogueFlags(), briefFlags = new Set(), rewardFlags = new Set();
-  assert.equal(CAMPAIGN_LEN, 8, 'CAMPAIGN_LEN is a save identifier range: review index-keyed saves before changing it');
+  assert.equal(CAMPAIGN_LEN, 11, 'CAMPAIGN_LEN is a save identifier range: review index-keyed saves before changing it');
   assert.equal(LEVELS.length, CAMPAIGN_LEN, 'Every campaign mission wraps one level');
   const ids = Object.keys(MISSIONS);
   for (let i = 0; i < CAMPAIGN_LEN; i++) {
