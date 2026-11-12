@@ -147,7 +147,7 @@ function checkPlan() {
   const wall = sight(loadPlan(0), [1.5,1.5], [2.5,1.5]);
   assert.equal(wall.visible, false);
   assert.equal(wall.firstHit.kind, 'wall');
-  assert.throws(() => loadPlan(8), /existing campaign index/);
+  assert.throws(() => loadPlan(9), /existing campaign index/);
   assert.throws(() => point('1,'), /finite x,z pair/);
   assert.throws(() => point('Infinity,2'), /finite x,z pair/);
   assert.throws(() => sight(plan, [-1, 0], [2, 2]), /plan bounds/);

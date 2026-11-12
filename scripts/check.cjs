@@ -86,7 +86,7 @@ function check() {
     assert(!w.base || WD[w.base], `${type}: unknown base weapon`);
   }
   const names = ['MOTEL SUNSET', 'CLUB FLAMINGO', 'THE PENTHOUSE', 'VICE MARINA',
-    'STARLIGHT ARCADE', 'OCEAN VIEW MALL', 'THE RECORDING STUDIO', 'THE ROYAL FLUSH'];
+    'STARLIGHT ARCADE', 'OCEAN VIEW MALL', 'THE RECORDING STUDIO', 'THE ROYAL FLUSH', 'OCEAN DRIVE DEMOLITION'];
   assert.equal(LEVELS.length, names.length, 'Review append-only level/save indexes before changing campaign length');
   assert.equal(PAR.length, LEVELS.length);
   assert.equal(LEVEL_TRACKS.length, LEVELS.length);
@@ -95,7 +95,7 @@ function check() {
   }
   LEVELS.forEach((def, i) => {
     assert.equal(def.name, names[i], 'Level indexes are persistent save/story identifiers');
-    assert.equal(def.act || 1, i < 3 ? 1 : 2, 'Campaign must retain the 3 + 5 act split');
+    assert.equal(def.act || 1, i < 3 ? 1 : i < 8 ? 2 : 3, 'Campaign must retain the 3 + 5 + 3 act split');
     assert(def.map.length && def.map.every(row => typeof row === 'string' && row.length), `${def.name}: empty map`);
     assert(PAR[i] > 0 && Number.isFinite(PAR[i]), `${def.name}: invalid par`);
     assert(LEVEL_TRACKS[i].length, `${def.name}: missing music`);
@@ -106,7 +106,7 @@ function check() {
     assert(map.enemies > 0, `${def.name}: no combat enemies`);
     console.log(`${i}: ${def.name} (${map.enemies} enemies, ${map.items} items; ragged padding allowed)`);
   });
-  for (const [i, glyphs] of [[3, 'Y'], [4, 'ca'], [5, 'ne'], [6, '%!'], [7, 'y']]) {
+  for (const [i, glyphs] of [[3, 'Y'], [4, 'ca'], [5, 'ne'], [6, '%!'], [7, 'y'], [8, 'N']]) {
     for (const glyph of glyphs) assert(LEVELS[i].map.join('').includes(glyph), `Floor ${i}: missing story glyph ${glyph}`);
   }
 }
