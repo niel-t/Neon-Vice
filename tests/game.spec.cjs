@@ -380,6 +380,20 @@ test('getaway: clearing a floor starts a countdown; leaving in time pays, stayin
   expect(await page.evaluate(sc => G.score - sc, sc)).toBe(1000);
 });
 
+test('lures: a thrown weapon and a shot arcade cabinet draw guards to the noise, and ON AIR makes shots carry', async ({ openGame }) => {
+  test.setTimeout(180_000);
+  const page = await openGame();
+  const r = await page.evaluate(() => { NOARRIVE = true; startLevel(4); const g = G, e = g.enemies.find(q => q.alive && !q.kind && q.state !== 'chase');
+    lureNoise(e.x + 2, e.z, 7, 'CLATTER!'); const out = { lures: g.lures, heard: e.state !== 'chase' && !!(e.poi || e.inv || e.state === 'search' || e.sx !== undefined) };
+    const c = g.cabs[0]; balImpact(c.x, c.z, 0, 1, balLook('cmu_hollow'), 'wall', false); out.cab = !!c.loud; out.lures2 = g.lures; balImpact(c.x, c.z, 0, 1, balLook('cmu_hollow'), 'wall', false); out.once = g.lures; return out; });
+  expect(r).toMatchObject({ lures: 1, cab: true, lures2: 2, once: 2 });
+  await page.evaluate(() => { startLevel(6); G.airT = 0.05; });
+  await expect.poll(() => page.evaluate(() => !!G.onAir), { timeout: 20_000 }).toBe(true);
+  await page.evaluate(() => { startLevel(0); });
+  await page.waitForTimeout(500);
+  expect(await page.evaluate(() => !!G.onAir)).toBe(false);
+});
+
 test('slams: a guard knocked into water, the shark tank or broken glass dies there, and Kade can go off the edge', async ({ openGame }) => {
   test.setTimeout(180_000);
   const page = await openGame();

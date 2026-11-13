@@ -1170,6 +1170,12 @@ function updateEscape(dt){const g=G,x=g.esc,p=g.player;if(!x||!g.cleared||g.done
    const e=makeEnemy(g,g.def,levelIdx,['pistol','shotgun','pistol'][n],false,cx,cz);e.state='chase';e.react=0.6;e.backup=1;AI.know(e,AI.belief.make(p.x,p.z,g.T,'call'));n++;}
   banner('BACKUP IS HERE',n?'Fight your way out':'Get out');return;}
  if(x.kind==='debris'){x.nt-=dt;if(x.nt<=0){x.nt=1.5;if(!g.nades)g.nades=[];const tx=p.x+p.vx*0.8+rnd(-1.3,1.3),tz=p.z+p.vz*0.8+rnd(-1.3,1.3);g.nades.push({sx:tx,sz:tz,x:tx,z:tz,y:3,tx,tz,t:0,dur:1.25,own:'e',spin:0,ring:1});sfx('thud');shake(0.2);}}}
+/* LURES: noise the player makes on purpose. A thrown weapon that lands, or an arcade cabinet that takes a bullet (it blares its attract
+   mode), is heard as a noise at that spot, not as the player: guards in earshot walk over to look. The Studio's ON AIR light does the
+   opposite: while it is lit every one of your shots carries 2.5 times as far. */
+function lureNoise(x,z,r,label){const g=G;alertNoise(x,z,r,'lure');popup(x,z,label,'#2de2e6');g.lures=(g.lures||0)+1;sfx('alert');}
+function updateOnAir(dt){const g=G;if(levelIdx!==6||!g.panes||g.def.hub)return;g.airT=(g.airT===undefined?6:g.airT)-dt;if(g.airT>0)return;g.onAir=!g.onAir;g.airT=g.onAir?7:9;sfx('click');
+ if(g.onAir&&!g.airTip){g.airTip=1;banner('ON AIR','While the red light is on, every shot carries across the whole studio');}}
 function knockdown(e,dir){if(!e.alive)return;{const sl=slamSpot(e,dir);if(sl){doSlam(e,dir,sl);return;}}if(e.kind==='dog'){killEnemy(e,'fists',dir);return;}if(e.boss){stagger(e,dir);hitEnemy(e,'door',dir,1);return;}e.down=3.0;e.fall=0;e.vx=dir[0]*4;e.vz=dir[1]*4;dropWeapon(e,dir,true);e.a=Math.atan2(dir[0],dir[1]);e.state='chase';e.wind=0;e.seeT=0;AI.hurt(e,dir);sfx('hit_fists');bloodBurst(e.x,0.9,e.z,dir,6,2);}
 const DEATHNAME={grenade:'BLOWN UP BY A GOLD GRENADE',dual:'DOUBLE-TAPPED, TWICE',boss:'FLATTENED BY THE SHARK',fists:'BEATEN TO DEATH',bat:'BATTED INTO THE NEXT LIFE',knife:'STABBED',machete:'HACKED APART',pistol:'SHOT WITH A 9MM',silenced:'SILENCED',revolver:'SHOT WITH A .357',shotgun:'BLASTED WITH A SHOTGUN',double:'BOTH BARRELS',smg:'RIDDLED BY AN UZI',m16:'GUNNED DOWN BY AN M16'};
 /* dmg: float HP (1 = a clean hit); hit={p:projectile,e:J at impact} lets armour absorb by level (W5; a 0.1 pass-through keeps the plate); without hit a plate stops the whole hit */
@@ -1192,9 +1198,9 @@ function fireGun(c,w,isP){const g=G,wd=WD[w.type];if(isP&&c.cover){c.cover.pop=C
  const ml=0.4+wd.len;g.flashes.push({x:c.x+sa*ml+ca*(ox||0.17),y:0.74,z:c.z+ca*ml-sa*(ox||0.17),t:0.06,big:wd.pel>1,sil:w.type==='silenced'});
  sfx(wd.snd,isP?1:clamp(1.15-Math.hypot(c.x-g.player.x,c.z-g.player.z)/18,0.2,1));
  if(w.type!=='double'&&w.type!=='shotgun')gib(c.x+ca*0.2,0.72,c.z-sa*0.2,ca*rnd(1.5,2.5),rnd(1.5,2.5),-sa*rnd(1.5,2.5),wd.pel>1?[0.04,0.04,0.08]:[0.03,0.03,0.06],wd.pel>1?[0.8,0.15,0.15]:[0.85,0.65,0.25],true);
- if(isP){rumble(wd.pel>1?0.6:0.12,wd.pel>1?0.8:0.35,wd.pel>1?150:60);shake(wd.kick*1.2);g.cam.kx-=sa*wd.kick*0.6;g.cam.kz-=ca*wd.kick*0.6;alertNoise(c.x,c.z,wd.loud,isP?'p':'');if(wd.loud>=10)g.loudShot=1;}}
+ if(isP){rumble(wd.pel>1?0.6:0.12,wd.pel>1?0.8:0.35,wd.pel>1?150:60);shake(wd.kick*1.2);g.cam.kx-=sa*wd.kick*0.6;g.cam.kz-=ca*wd.kick*0.6;alertNoise(c.x,c.z,wd.loud*(isP&&g.onAir?2.5:1),isP?'p':'');if(wd.loud>=10)g.loudShot=1;}}
 function throwWeapon(p){const w=p.weapon;if(!w)return;p.weapon=null;const sa=Math.sin(p.a),ca=Math.cos(p.a);if(kitOn(p)){G.hand=null;p.rl=null;autoDraw(p);}
- G.items.push({x:p.x+sa*0.3,z:p.z+ca*0.3,type:w.type,ammo:w.ammo,vx:sa*15,vz:ca*15,rot:p.a,flying:true,fresh:false,flyT:0});sfx('throw');p.cd=0.25;p.atkT=p.atkDur=0.15;}
+ G.items.push({x:p.x+sa*0.3,z:p.z+ca*0.3,type:w.type,ammo:w.ammo,vx:sa*15,vz:ca*15,rot:p.a,flying:true,fresh:false,flyT:0,lure:1});sfx('throw');p.cd=0.25;p.atkT=p.atkDur=0.15;}
 /* ================= SLOTS (W6c) =================
    In a job the held weapon is the truth: its place in G.live (guns[G.hand] or melee) is empty while it is in hand, and holster() puts it back.
    G.hand = 0|1 (gun slot), 'melee', or null (fists). */
@@ -1543,7 +1549,8 @@ const BAL_DEFL={glass:5,glass_lam:5,timber:3,ply:3,particle:3,pile:3,steel:3,alu
 function balLook(build){const B=WORLD.materials.BUILD[build],M=WORLD.materials.MAT;let face=null,big=null;
  for(const [m,t] of B.layers){if(!M[m].res)continue;if(!face)face=m;if(!big||M[m].res*t>M[big[0]].res*big[1])big=[m,t];}
  const d=face?M[face].debris:0;return {face,hard:!!(face&&M[face].hard),col:[(d>>16&255)/255,(d>>8&255)/255,(d&255)/255],defl:(BAL_DEFL[big&&big[0]]??4)*Math.PI/180};}
-function balImpact(x,z,nx,nz,look,kind,exit){const y=0.74+rnd(-0.08,0.08);
+function balImpact(x,z,nx,nz,look,kind,exit){if(G&&G.cabs&&!exit)for(const q of G.cabs)if(!q.loud&&Math.hypot(q.x-x,q.z-z)<0.85){q.loud=1;lureNoise(q.x,q.z,9,'ATTRACT MODE!');break;}
+ const y=0.74+rnd(-0.08,0.08);
  if(look.face==='steel'||look.face==='alu'){sparks(x+nx*0.05,y,z+nz*0.05);if(!exit&&Math.random()<0.5)sfx('ric',0.5);return;}
  for(let n=0;n<(exit?3:5);n++)G.parts.push({t:'c',x:x+nx*0.05,y,z:z+nz*0.05,vx:nx*rnd(0.5,2)+rnd(-1,1),vy:rnd(0,2),vz:nz*rnd(0.5,2)+rnd(-1,1),s:0.035,c:look.col,life:rnd(0.3,0.6)});
  if(kind==='wall')addWallDecal(x,y,z,nx,nz,exit?0.12:0.09,10,[0.15,0.13,0.13]);if(!exit&&Math.random()<0.3)sfx('thud');}
@@ -1613,9 +1620,9 @@ function updateBullets(dt){if(typeof BAL_LEGACY!=='undefined'&&(!BAL_LEGACY||G&&
  b.life-=dt;}
  g.bullets=g.bullets.filter(b=>b.life>0);}
 function updateItems(dt){const g=G;for(const it of g.items){it.age=(it.age||0)+dt;
- if(it.flying){it.flyT+=dt;it.rot+=dt*22;const st=4;for(let s=0;s<st&&it.flying;s++){const nx=it.x+it.vx*dt/st,nz=it.z+it.vz*dt/st;if(blockedAt(it.x,it.z,nx,nz)){it.flying=false;it.vx*=-0.3;it.vz*=-0.3;sfx('click');break;}it.x=nx;it.z=nz;
-  for(const e of g.enemies){if(e.alive&&!(e.down>0)&&Math.hypot(e.x-it.x,e.z-it.z)<e.r+0.18){const l=Math.hypot(it.vx,it.vz)||1,dir=[it.vx/l,it.vz/l];if(it.type==='knife'||BT(it.type)==='machete')hitEnemy(e,'throw',dir,2);else if(e.body==='fat'||e.body==='big'||e.boss){stagger(e,dir);if(e.boss)hitEnemy(e,'throw',dir,1);}else{knockdown(e,dir);popup(e.x,e.z,'DOWN!','#ffd36b');}it.flying=false;it.vx*=-0.2;it.vz*=-0.2;break;}}}
-  if(it.flyT>0.7)it.flying=false;}
+ if(it.flying){it.flyT+=dt;it.rot+=dt*22;const st=4;for(let s=0;s<st&&it.flying;s++){const nx=it.x+it.vx*dt/st,nz=it.z+it.vz*dt/st;if(blockedAt(it.x,it.z,nx,nz)){it.flying=false;it.vx*=-0.3;it.vz*=-0.3;sfx('click');if(it.lure){it.lure=0;lureNoise(it.x,it.z,7,'CLATTER!');}break;}it.x=nx;it.z=nz;
+  for(const e of g.enemies){if(e.alive&&!(e.down>0)&&Math.hypot(e.x-it.x,e.z-it.z)<e.r+0.18){const l=Math.hypot(it.vx,it.vz)||1,dir=[it.vx/l,it.vz/l];if(it.type==='knife'||BT(it.type)==='machete')hitEnemy(e,'throw',dir,2);else if(e.body==='fat'||e.body==='big'||e.boss){stagger(e,dir);if(e.boss)hitEnemy(e,'throw',dir,1);}else{knockdown(e,dir);popup(e.x,e.z,'DOWN!','#ffd36b');}it.lure=0;it.flying=false;it.vx*=-0.2;it.vz*=-0.2;break;}}}
+  if(it.flyT>0.7){if(it.flying&&it.lure){it.lure=0;lureNoise(it.x,it.z,7,'CLATTER!');}it.flying=false;}}
  else if(Math.abs(it.vx)+Math.abs(it.vz)>0.01){const nx=it.x+it.vx*dt,nz=it.z+it.vz*dt;if(blockedAt(it.x,it.z,nx,nz)){it.vx=it.vz=0;}else{it.x=nx;it.z=nz;}it.vx*=Math.exp(-dt*6);it.vz*=Math.exp(-dt*6);it.rot+=(Math.abs(it.vx)+Math.abs(it.vz))*dt*3;}}}
 function updateCash(dt){const g=G;for(const c of g.cash){c.t+=dt;
  if(!c.landed){const k=Math.min(c.t/0.4,1);c.x=lerp(c.sx,c.tx,k);c.z=lerp(c.sz,c.tz,k);c.y=0.6+Math.sin(k*Math.PI)*1.2;
@@ -2268,7 +2275,7 @@ function act2Setup(g,i){g.nades=[];if(!(i>=3))return;const W=g.W,cells=ch=>{cons
  if(i===9){g.safe=cells('N')[0];if(g.safe){sol([g.safe]);g.obj={label:'GET THE LEDGER',n:0,total:1,done:false};}}
  if(i===8){g.rigs=cells('N').map(q=>({x:q.x,z:q.z,cut:false}));g.obj={label:'CUT THE CHARGE WIRES',n:0,total:g.rigs.length,done:false};}
  if(i===7){const y=cells('y');if(y.length){const xs=y.map(q=>q.ix),zs=y.map(q=>q.iz);g.tank={x0:Math.min(...xs),x1:Math.max(...xs)+1,z0:Math.min(...zs),z1:Math.max(...zs)+1};}}}
-function updateAct2(dt){const g=G;
+function updateAct2(dt){const g=G;updateOnAir(dt);
  if(g.studioC&&AC&&!MUS.muffled){const p=g.player,d=Math.hypot(p.x-g.studioC.x,p.z-g.studioC.z),k=clamp(1-d/16,0,1);g.mT=(g.mT||0)-dt;if(g.mT<=0){g.mT=0.2;mFilt.frequency.setTargetAtTime(lerp(700,18000,k*k),AC.currentTime,0.3);}}
  if(g.wreck&&Math.random()<dt*30){g.parts.push({t:'c',x:g.car.x+rnd(-0.8,0.8),y:0.6,z:g.car.z+rnd(-0.4,0.4),vx:rnd(-0.2,0.2),vy:rnd(0.8,1.8),vz:rnd(-0.2,0.2),s:0.07,c:Math.random()<0.5?[1,0.55,0.1]:[0.2,0.18,0.18],life:0.7});}}
 /* breakable studio glass: a bullet shatters the pane and carries on */
@@ -3617,7 +3624,7 @@ function drawHUD0(){const c=hctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0
  if(g.kc>0){const bh=Math.round(vh*0.085*Math.min(1,g.kc/0.25));c.fillStyle='#000';c.fillRect(0,0,vw,bh);c.fillRect(0,vh-bh,vw,bh);c.globalAlpha=Math.min(1,g.kc/0.5);c.fillStyle='rgba(255,63,164,.12)';c.fillRect(0,0,vw,vh);c.globalAlpha=1;}
  /* objective */
  c.font=PXF(7*u);txt(c,'OBJECTIVE',m,m,'#2de2e6','left',7*u);
- c.font=VTF(20*u);txt(c,g.cleared?(g.def.noCar?'TAKE THE ELEVATOR DOWN':'GET BACK TO THE CAR')+(g.esc?(g.esc.late?(g.esc.kind==='debris'?'  ·  IT IS COMING DOWN':'  ·  BACKUP IS HERE'):'  ·  '+Math.ceil(g.esc.t)+'s'):''):stageGoal(g)||'ELIMINATE TARGETS  '+(tot-alive)+'/'+tot,m,m+10*u,g.cleared?'#ff5fb8':'#fff','left',20*u);
+ c.font=VTF(20*u);txt(c,g.cleared?(g.def.noCar?'TAKE THE ELEVATOR DOWN':'GET BACK TO THE CAR')+(g.esc?(g.esc.late?(g.esc.kind==='debris'?'  ·  IT IS COMING DOWN':'  ·  BACKUP IS HERE'):'  ·  '+Math.ceil(g.esc.t)+'s'):''):(stageGoal(g)||'ELIMINATE TARGETS  '+(tot-alive)+'/'+tot)+(g.onAir?'   \u25cf ON AIR':''),m,m+10*u,g.cleared?'#ff5fb8':g.onAir?'#ff5a6a':'#fff','left',20*u);
  c.font=VTF(15*u);txt(c,missionIsCampaign(MISSION)?BRIEF_FLOOR(levelIdx):missionName(MISSION),m,m+30*u,'#c9a8e8','left',15*u);
  if(g.obj&&!g.cleared){c.font=VTF(17*u);txt(c,(g.obj.done?'\u2713 ':'\u25a0 ')+g.obj.label+(g.obj.total>1?'  '+g.obj.n+'/'+g.obj.total:''),m,m+46*u,g.obj.done?'#7dff9a':'#ffd36b','left',17*u);}
  if(g.sj){const s=sjState(g);txt(c,'SIDE JOB · '+SIDEJOBS[g.sj].name+' · '+s.txt,m,m+46*u,s.fail?'#ff8a95':s.ok?'#7dff9a':'#ffd36b','left',15*u);}
