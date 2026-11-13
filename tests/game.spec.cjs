@@ -336,6 +336,22 @@ test('lex: the killing blow opens a spare-or-finish choice; sparing leaves him o
   await expect.poll(() => page.evaluate(() => G.cleared), { timeout: 20_000 }).toBe(true);
 });
 
+test('lex: the spare and finish buttons work without a keyboard (touch and mouse)', async ({ openGame }) => {
+  test.setTimeout(180_000);
+  const page = await openGame();
+  await page.evaluate(() => { NOARRIVE = true; startLevel(7); killEnemy(G.boss, 'pistol', [0, 1]); });
+  await expect(page.locator('#bSpare')).toBeVisible({ timeout: 30_000 });
+  await page.locator('#bSpare').click();
+  await expect.poll(() => page.evaluate(() => !G.mercy), { timeout: 30_000 }).toBe(true);
+  expect(await page.evaluate(() => ({ alive: G.boss.alive, spared: !!G.boss.spared }))).toEqual({ alive: true, spared: true });
+  await expect(page.locator('#bSpare')).toBeHidden();
+  await page.evaluate(() => { startLevel(7); killEnemy(G.boss, 'pistol', [0, 1]); });
+  await expect(page.locator('#bFinish')).toBeVisible({ timeout: 30_000 });
+  await page.locator('#bFinish').click();
+  await expect.poll(() => page.evaluate(() => !G.mercy), { timeout: 30_000 }).toBe(true);
+  expect(await page.evaluate(() => ({ alive: G.boss.alive, fin: !!G.fin }))).toEqual({ alive: false, fin: true });
+});
+
 test('lex: finishing him plays the old finisher, and Act 3 reads what you chose', async ({ openGame }) => {
   test.setTimeout(180_000);
   const page = await openGame();
