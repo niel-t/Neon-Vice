@@ -22,15 +22,21 @@ const LOOK={
  pixelRatioMax:1.5,
 };
 
-const GEOM=`
+/* A single not-a-number pixel is smeared over the whole screen by the bloom blur and shows as a black frame, and real
+   graphics chips produce one from a zero-length normal or a negative colour where software GL does not. So normals are
+   normalised safely, colours are clamped before pow(), and every lit material ends with OUTGUARD. */
+const NVN=`vec3 nvN(vec3 v){float l=length(v);return l>1e-6?v/l:vec3(0.0,1.0,0.0);}`;
+const OUTGUARD=`#include <dithering_fragment>
+if(!(gl_FragColor.r>=0.0&&gl_FragColor.g>=0.0&&gl_FragColor.b>=0.0))gl_FragColor.rgb=vec3(0.0);gl_FragColor.rgb=min(gl_FragColor.rgb,vec3(64.0));`;
+const GEOM=NVN+`
 attribute vec4 iR0;attribute vec4 iR1;attribute vec4 iR2;attribute vec4 iC;attribute vec4 iU;attribute vec2 iS;
 vec3 gW;vec3 gN;
 void geomNV(){vec3 c0=vec3(iR0.x,iR1.x,iR2.x),c1=vec3(iR0.y,iR1.y,iR2.y),c2=vec3(iR0.z,iR1.z,iR2.z),tr=vec3(iR0.w,iR1.w,iR2.w);
  vec3 S=vec3(length(c0),length(c1),length(c2))+vec3(1e-6);float tp=1.0-iS.y*(position.y+0.5);vec2 tf=iS.y<0.0?vec2(tp,1.0):vec2(tp);
  vec3 hs=S*0.5;hs.xz*=tf;vec3 q=position*S;q.xz*=tf;float r=iS.x*min(min(hs.x,hs.y),hs.z);
  vec3 cc=clamp(q,-hs+r,hs-r);vec3 d=q-cc;float dl=length(d);vec3 n=normal;vec3 ps=q;if(r>1e-5&&dl>1e-6){n=d/dl;ps=cc+n*r;}
- gW=(c0/S.x)*ps.x+(c1/S.y)*ps.y+(c2/S.z)*ps.z+tr;gN=normalize((c0/S.x)*n.x+(c1/S.y)*n.y+(c2/S.z)*n.z);}`;
-const SKIN=NB=>`
+ gW=(c0/S.x)*ps.x+(c1/S.y)*ps.y+(c2/S.z)*ps.z+tr;gN=nvN((c0/S.x)*n.x+(c1/S.y)*n.y+(c2/S.z)*n.z);}`;
+const SKIN=NB=>NVN+`
 attribute vec4 aBi;attribute vec4 aBw;uniform mat4 uB[${NB}];
 mat4 boneNV(){return uB[int(aBi.x)]*aBw.x+uB[int(aBi.y)]*aBw.y+uB[int(aBi.z)]*aBw.z+uB[int(aBi.w)]*aBw.w;}`;
 /* the atlas cell the game draws see-through (glass, light cones): renderer.js GLASS, the same test its own shader uses */
@@ -76,28 +82,31 @@ export function create(N,oldGL){
   m.onBeforeCompile=s=>{s.uniforms.uGlow=uGlow;
    s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\nvarying float vEm;')
     .replace('#include <beginnormal_vertex>','#include <beginnormal_vertex>\nvEm=dot(objectNormal,objectNormal)<0.01?1.0:0.0;if(vEm>0.5)objectNormal=vec3(0.0,1.0,0.0);')
-    .replace('#include <color_vertex>','#include <color_vertex>\nvColor.rgb=pow(vColor.rgb,vec3(2.2));');
+    .replace('#include <color_vertex>','#include <color_vertex>\nvColor.rgb=pow(max(vColor.rgb,vec3(0.0)),vec3(2.2));');
    s.fragmentShader=s.fragmentShader.replace('#include <common>','#include <common>\nvarying float vEm;uniform float uGlow;')
     .replace('#include <roughnessmap_fragment>',ROUGH)
     .replace('#include <alphatest_fragment>','#include <alphatest_fragment>\n'+(glass?`diffuseColor.a=(vMapUv.x>${GL_[0][0]}&&vMapUv.x<${GL_[0][1]}&&vMapUv.y>${GL_[1][0]}&&vMapUv.y<${GL_[1][1]})?0.3:1.0;`:''))
-    .replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\nif(vEm>0.5){totalEmissiveRadiance=diffuseColor.rgb*uGlow;diffuseColor.rgb=vec3(0.0);roughnessFactor=1.0;}');};
+    .replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\nif(vEm>0.5){totalEmissiveRadiance=diffuseColor.rgb*uGlow;diffuseColor.rgb=vec3(0.0);roughnessFactor=1.0;}')
+    .replace('#include <dithering_fragment>',OUTGUARD);};
   m.customProgramCacheKey=()=>'nvbatch'+(glass?'g':'');return m;}
  function instPatch(s,lit){s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\n'+GEOM+(lit?'\nvarying vec4 vIC;':''));
-  if(lit)s.vertexShader=s.vertexShader.replace('#include <beginnormal_vertex>','geomNV();vec3 objectNormal=gN;vIC=vec4(pow(iC.rgb,vec3(2.2)),iC.w);')
+  if(lit)s.vertexShader=s.vertexShader.replace('#include <beginnormal_vertex>','geomNV();vec3 objectNormal=gN;vIC=vec4(pow(max(iC.rgb,vec3(0.0)),vec3(2.2)),iC.w);')
    .replace('#include <begin_vertex>','vec3 transformed=gW;').replace('#include <uv_vertex>','#include <uv_vertex>\nvMapUv=mix(iU.xy,iU.zw,uv);');
   else s.vertexShader=s.vertexShader.replace('#include <begin_vertex>','geomNV();vec3 transformed=gW;');}
  function instMat(){const m=new THREE.MeshStandardMaterial({alphaTest:0.5,roughness:0.6,metalness:0,side:THREE.DoubleSide});
   m.onBeforeCompile=s=>{s.uniforms.uGlow=uGlow;instPatch(s,true);
    s.fragmentShader=s.fragmentShader.replace('#include <common>','#include <common>\nvarying vec4 vIC;uniform float uGlow;')
     .replace('#include <color_fragment>','#include <color_fragment>\ndiffuseColor.rgb*=vIC.rgb;')
-    .replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\nif(vIC.w>0.5){totalEmissiveRadiance=diffuseColor.rgb*uGlow;diffuseColor.rgb=vec3(0.0);}');};
+    .replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\nif(vIC.w>0.5){totalEmissiveRadiance=diffuseColor.rgb*uGlow;diffuseColor.rgb=vec3(0.0);}')
+    .replace('#include <dithering_fragment>',OUTGUARD);};
   m.customProgramCacheKey=()=>'nvinst';return m;}
  function instDepth(){const m=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking});m.onBeforeCompile=s=>instPatch(s,false);m.customProgramCacheKey=()=>'nvinstd';return m;}
  function skinMats(NB){const uB={value:null};
   const m=new THREE.MeshStandardMaterial({roughness:0.62,metalness:0,side:THREE.DoubleSide});
   m.onBeforeCompile=s=>{s.uniforms.uB=uB;s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\n'+SKIN(NB))
-   .replace('#include <beginnormal_vertex>','mat4 MB=boneNV();vec3 objectNormal=normalize((MB*vec4(normal,0.0)).xyz);')
-   .replace('#include <begin_vertex>','vec3 transformed=(MB*vec4(position,1.0)).xyz;');};
+   .replace('#include <beginnormal_vertex>','mat4 MB=boneNV();vec3 objectNormal=nvN((MB*vec4(normal,0.0)).xyz);')
+   .replace('#include <begin_vertex>','vec3 transformed=(MB*vec4(position,1.0)).xyz;');
+   s.fragmentShader=s.fragmentShader.replace('#include <dithering_fragment>',OUTGUARD);};
   m.customProgramCacheKey=()=>'nvskin'+NB;
   const d=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking});
   d.onBeforeCompile=s=>{s.uniforms.uB=uB;s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\n'+SKIN(NB)).replace('#include <begin_vertex>','vec3 transformed=(boneNV()*vec4(position,1.0)).xyz;');};
