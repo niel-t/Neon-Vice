@@ -866,7 +866,7 @@
           "yyyyyyyyyyyyyyyyyyyyyyyy",
           "yyyyyyyyyyyyyyyyyyyyyyyy",
           "yyyyyyyyyyyyyyyyyyyyyyyy",
-          "#RRRRRRRRRRRRRRRRRRRRRR#",
+          "#RRRRRRRRR..RRRRRRRRRRR#",
           "#......................#",
           "#..........m....g......#",
           "##WW######D##WW###WW####",
@@ -878,13 +878,11 @@
           "#.....#.........f.j..l.#",
           "#.....D.....sr.........#",
           "#.....#..tn..P..m.p....#",
-          "###########xx###########"
+          "########################"
         ],
         "legend": {
           "y": {
-            "w": 7,
-            "h": 0.02,
-            "top": 7
+            "f": 7
           },
           "W": {
             "w": 48,
@@ -959,13 +957,13 @@
         },
         "wall": 48,
         "floor": 27,
-        "floorFn": "(x,z)=>{const X=x-1,Z=z-1;return Z<6?37:Z<11?(X<7?31:27):(X<6&&Z>11?1:27);}",
+        "floorFn": "(x,z)=>{const X=x-1,Z=z-1;return Z<3?7:Z<6?37:Z<11?(X<7?31:27):(X<6&&Z>11?1:27);}",
         "paletteSize": 6
       },
-      "gridHash": "0fb24ad69f2b571d3d2fa7128a1f8a37e1ed90a8c1b7ab1db9c814fe93f38482",
-      "loadedHash": "bf3e258a27d1fa855eb01111c90f0fb0c0838f2f7f0129166c85a37d49ccccf4",
-      "queryHash": "0171220bc42e80c6c43a04fd8f4368239c29999f974df18f52aaa4a79cbdfc10",
-      "cellHash": "6511afdc5d391b3902c83b1c0ce7755d0af64f640cadae5bbe9ec97dd3bc0910"
+      "gridHash": "0e08be41c593f7a37b2db748c6f620d9893971c733c453ed9a519b9446422b70",
+      "loadedHash": "9ed7b4ab4abd1c6d795bae8e842a054112c8666a0436f08dd21693b98a6a35d2",
+      "queryHash": "530f08aa5382752b77b2fb4242ba430d5dd1976f5f3de2b5302defc0f254892a",
+      "cellHash": "899a3619352147c149b25e83074a1f12f79d5ccbefd46c8bb49253bcca9d1525"
     },
     {
       "key": "hub:home0:7",
@@ -975,7 +973,7 @@
           "yyyyyyyyyyyyyyyyyyyyyyyy",
           "yyyyyyyyyyyyyyyyyyyyyyyy",
           "yyyyyyyyyyyyyyyyyyyyyyyy",
-          "#RRRRRRRRRRRRRRRRRRRRRR#",
+          "#RRRRRRRRR..RRRRRRRRRRR#",
           "#......................#",
           "#..........m....g......#",
           "##WW######D##WW###WW####",
@@ -987,13 +985,11 @@
           "#.....#.........f.j..l.#",
           "#.....D.....sr.........#",
           "#.....#..tn..P..m.p....#",
-          "###########xx###########"
+          "########################"
         ],
         "legend": {
           "y": {
-            "w": 7,
-            "h": 0.02,
-            "top": 7
+            "f": 7
           },
           "W": {
             "w": 48,
@@ -1068,13 +1064,13 @@
         },
         "wall": 48,
         "floor": 27,
-        "floorFn": "(x,z)=>{const X=x-1,Z=z-1;return Z<6?37:Z<11?(X<7?31:27):(X<6&&Z>11?1:27);}",
+        "floorFn": "(x,z)=>{const X=x-1,Z=z-1;return Z<3?7:Z<6?37:Z<11?(X<7?31:27):(X<6&&Z>11?1:27);}",
         "paletteSize": 6
       },
-      "gridHash": "0fb24ad69f2b571d3d2fa7128a1f8a37e1ed90a8c1b7ab1db9c814fe93f38482",
-      "loadedHash": "bf3e258a27d1fa855eb01111c90f0fb0c0838f2f7f0129166c85a37d49ccccf4",
-      "queryHash": "0171220bc42e80c6c43a04fd8f4368239c29999f974df18f52aaa4a79cbdfc10",
-      "cellHash": "6511afdc5d391b3902c83b1c0ce7755d0af64f640cadae5bbe9ec97dd3bc0910"
+      "gridHash": "0e08be41c593f7a37b2db748c6f620d9893971c733c453ed9a519b9446422b70",
+      "loadedHash": "9ed7b4ab4abd1c6d795bae8e842a054112c8666a0436f08dd21693b98a6a35d2",
+      "queryHash": "530f08aa5382752b77b2fb4242ba430d5dd1976f5f3de2b5302defc0f254892a",
+      "cellHash": "899a3619352147c149b25e83074a1f12f79d5ccbefd46c8bb49253bcca9d1525"
     },
     {
       "key": "hub:home1:0",
@@ -1101,7 +1097,10 @@
           "#.....D.......s......D.......#",
           "#.....#.....t......p.#.......#",
           "#.....#.....n..P.....#.......#",
-          "##############xx##############"
+          "##############D###############",
+          "#######ex............#########",
+          "#######ex............#########",
+          "##############################"
         ],
         "legend": {
           "~": {
@@ -1122,6 +1121,9 @@
           "R": {
             "w": 62,
             "h": 0.5
+          },
+          "e": {
+            "w": 40
           },
           ".": {
             "f": 61
@@ -1188,13 +1190,13 @@
         },
         "wall": 62,
         "floor": 61,
-        "floorFn": "(x,z)=>{const X=x-1,Z=z-1;return Z<10?37:Z<15?(X<8?4:X>21?1:61):(X<6?3:X>21?4:61);}",
+        "floorFn": "(x,z)=>{const X=x-1,Z=z-1;return Z<10?37:Z>20?31:Z<15?(X<8?4:X>21?1:61):(X<6?3:X>21?4:61);}",
         "paletteSize": 6
       },
-      "gridHash": "a79ede004f39c5c172ee99db0984a4619349bae09c4c192739c44f2a0dc33b7d",
-      "loadedHash": "46d6a9ff670ae5d2c416fbc2b5a3339cc61c73624f5c08dbad72f18a35380486",
-      "queryHash": "952b94581bbbae1d826d317944e4573e9896f9d5bd60b4e5bf5a748c80f37601",
-      "cellHash": "cc06e76702afdff1f47b316d5a024d62b1035d310d5831528b6ecf06cd22e4a7"
+      "gridHash": "ad9b7b3efbc1bbf8da918c6511a1776967d39ff08dcbd21e54e097edb7803bc3",
+      "loadedHash": "c7da335ee8d93a100bb42ec5eb2ca0490bb3ceb6136dedbd8b4eef2a067b94ab",
+      "queryHash": "bb90b235796b7b6f45519900de492b74f21ce4ad0bbda4d71f28c89c5807b693",
+      "cellHash": "7462fb646e7aab6873995fb9e5dab9edabe89070b34d4bd32fd391e9ed446db7"
     },
     {
       "key": "hub:home1:7",
@@ -1221,7 +1223,10 @@
           "#.....D.......s......D.......#",
           "#.....#.....t......p.#.......#",
           "#.....#.....n..P.....#.......#",
-          "##############xx##############"
+          "##############D###############",
+          "#######ex............#########",
+          "#######ex............#########",
+          "##############################"
         ],
         "legend": {
           "~": {
@@ -1242,6 +1247,9 @@
           "R": {
             "w": 62,
             "h": 0.5
+          },
+          "e": {
+            "w": 40
           },
           ".": {
             "f": 61
@@ -1308,13 +1316,13 @@
         },
         "wall": 62,
         "floor": 61,
-        "floorFn": "(x,z)=>{const X=x-1,Z=z-1;return Z<10?37:Z<15?(X<8?4:X>21?1:61):(X<6?3:X>21?4:61);}",
+        "floorFn": "(x,z)=>{const X=x-1,Z=z-1;return Z<10?37:Z>20?31:Z<15?(X<8?4:X>21?1:61):(X<6?3:X>21?4:61);}",
         "paletteSize": 6
       },
-      "gridHash": "a79ede004f39c5c172ee99db0984a4619349bae09c4c192739c44f2a0dc33b7d",
-      "loadedHash": "46d6a9ff670ae5d2c416fbc2b5a3339cc61c73624f5c08dbad72f18a35380486",
-      "queryHash": "952b94581bbbae1d826d317944e4573e9896f9d5bd60b4e5bf5a748c80f37601",
-      "cellHash": "cc06e76702afdff1f47b316d5a024d62b1035d310d5831528b6ecf06cd22e4a7"
+      "gridHash": "ad9b7b3efbc1bbf8da918c6511a1776967d39ff08dcbd21e54e097edb7803bc3",
+      "loadedHash": "c7da335ee8d93a100bb42ec5eb2ca0490bb3ceb6136dedbd8b4eef2a067b94ab",
+      "queryHash": "bb90b235796b7b6f45519900de492b74f21ce4ad0bbda4d71f28c89c5807b693",
+      "cellHash": "7462fb646e7aab6873995fb9e5dab9edabe89070b34d4bd32fd391e9ed446db7"
     },
     {
       "key": "hub:home2:0",
@@ -1341,7 +1349,10 @@
           "#.....#.t......s...p..D........#",
           "#.....#...c...........#......j.#",
           "#.....#....n...P..n.g.#........#",
-          "##############xx################"
+          "##############..################",
+          "##########ex.........###########",
+          "##########ex.........###########",
+          "################################"
         ],
         "legend": {
           "~": {
@@ -1363,6 +1374,9 @@
             "w": 43,
             "h": 0.1,
             "top": 43
+          },
+          "e": {
+            "w": 40
           },
           ".": {
             "f": 63
@@ -1432,10 +1446,10 @@
         "floorFn": "(x,z)=>{const X=x-1,Z=z-1,ck=(X+Z)%2?43:63;return Z<8?59:Z<9?43:Z<14?(X<8?29:X>22?14:ck):Z<15?(X<8?43:ck):(X<6?43:X>22?4:ck);}",
         "paletteSize": 6
       },
-      "gridHash": "14d3d6b82c14d95bbe39dce74326291bc407d6fee2b8579fdde90229a52b0a51",
-      "loadedHash": "e5a02f664e9c3c593d639b3e193365b24d5a8b04debb22b6b2dd30cb20b5f26e",
-      "queryHash": "a6da8a3bcb1ee83d76b222672198005b886c92311191fcb210dc9839d5e437ae",
-      "cellHash": "6530884eb8db679890ee2ba292bf391c0e7a48c7fdd859d4186d6cbf66e6b851"
+      "gridHash": "df1e3fe7d8829db4e2eae522f87b4181306b9ac08573db3ce2fab0bb8d2cc6b6",
+      "loadedHash": "60903b3ff022ba0ec32ce2215ebe44c76a4fe88a75c362d47d7179236e4922f4",
+      "queryHash": "1c8ff551d12bea04d6627d820f1f7341e1bea57010909cf4b13de64abd6b54e9",
+      "cellHash": "6d172bf1b7e4c67811723ea78ce112b4addccaac0bfa5f6ae67000fb0e651be2"
     },
     {
       "key": "hub:home2:7",
@@ -1462,7 +1476,10 @@
           "#.....#.t......s...p..D........#",
           "#.....#...c...........#......j.#",
           "#.....#....n...P..n.g.#........#",
-          "##############xx################"
+          "##############..################",
+          "##########ex.........###########",
+          "##########ex.........###########",
+          "################################"
         ],
         "legend": {
           "~": {
@@ -1484,6 +1501,9 @@
             "w": 43,
             "h": 0.1,
             "top": 43
+          },
+          "e": {
+            "w": 40
           },
           ".": {
             "f": 63
@@ -1553,10 +1573,10 @@
         "floorFn": "(x,z)=>{const X=x-1,Z=z-1,ck=(X+Z)%2?43:63;return Z<8?59:Z<9?43:Z<14?(X<8?29:X>22?14:ck):Z<15?(X<8?43:ck):(X<6?43:X>22?4:ck);}",
         "paletteSize": 6
       },
-      "gridHash": "14d3d6b82c14d95bbe39dce74326291bc407d6fee2b8579fdde90229a52b0a51",
-      "loadedHash": "e5a02f664e9c3c593d639b3e193365b24d5a8b04debb22b6b2dd30cb20b5f26e",
-      "queryHash": "a6da8a3bcb1ee83d76b222672198005b886c92311191fcb210dc9839d5e437ae",
-      "cellHash": "6530884eb8db679890ee2ba292bf391c0e7a48c7fdd859d4186d6cbf66e6b851"
+      "gridHash": "df1e3fe7d8829db4e2eae522f87b4181306b9ac08573db3ce2fab0bb8d2cc6b6",
+      "loadedHash": "60903b3ff022ba0ec32ce2215ebe44c76a4fe88a75c362d47d7179236e4922f4",
+      "queryHash": "1c8ff551d12bea04d6627d820f1f7341e1bea57010909cf4b13de64abd6b54e9",
+      "cellHash": "6d172bf1b7e4c67811723ea78ce112b4addccaac0bfa5f6ae67000fb0e651be2"
     },
     {
       "key": "hub:club:0",
@@ -1887,6 +1907,224 @@
       "loadedHash": "90a5bac467d84ea39954f5f9664f92c0e2bbf43e308789cc504b1d8764dce29e",
       "queryHash": "da65d1829856ba85d82a9bd536487e15694f4e008b4f6542b94d25b64db20e0c",
       "cellHash": "633df588242aa5dc9323c5a9a12dbe692f8b220b74130cffdaf4016ffcbaef8b"
+    },
+    {
+      "key": "hub:slobby:0",
+      "idx": 0,
+      "input": {
+        "map": [
+          "|||||||||||||eeee|||||",
+          "|p.c.........vvvv..p.|",
+          "|...q................|",
+          "|..KKK..........SSS..|",
+          "|p.................p.|",
+          "|.c......P.........c.|",
+          "||||||||..||||||||||||",
+          "sslsssssssNsssssslssss",
+          "======================",
+          "======================",
+          "ssssssssssssssssssssss"
+        ],
+        "legend": {
+          "s": {
+            "f": 37
+          },
+          "l": {
+            "f": 37,
+            "lamp": 1
+          },
+          "|": {
+            "w": 62
+          },
+          "e": {
+            "w": 40
+          },
+          "v": {
+            "f": 61,
+            "trig": "lift"
+          },
+          "c": {
+            "f": 61,
+            "light": "warm"
+          },
+          "N": {
+            "f": 37,
+            "npc": "doorman"
+          },
+          "q": {
+            "f": 61,
+            "npc": "concierge"
+          }
+        },
+        "wall": 62,
+        "floor": 61,
+        "paletteSize": 6
+      },
+      "gridHash": "fa8f7bd127078b4d6d796558e7113db8480ef1217dff0d8c3b34ef4053bf2b12",
+      "loadedHash": "0221909e590378cbb0506867c885a546e38ef3610577a75ac5bedab244f76732",
+      "queryHash": "2cb8f7472d685ba5e900f7067e941f7430e18defc25a3ed336d2f6eb26c9c86d",
+      "cellHash": "452aaf6e0456f9ee0f824a41290451ddb963fa15cfacd7acb65ffde828120396"
+    },
+    {
+      "key": "hub:slobby:7",
+      "idx": 7,
+      "input": {
+        "map": [
+          "|||||||||||||eeee|||||",
+          "|p.c.........vvvv..p.|",
+          "|...q................|",
+          "|..KKK..........SSS..|",
+          "|p.................p.|",
+          "|.c......P.........c.|",
+          "||||||||..||||||||||||",
+          "sslsssssssNsssssslssss",
+          "======================",
+          "======================",
+          "ssssssssssssssssssssss"
+        ],
+        "legend": {
+          "s": {
+            "f": 37
+          },
+          "l": {
+            "f": 37,
+            "lamp": 1
+          },
+          "|": {
+            "w": 62
+          },
+          "e": {
+            "w": 40
+          },
+          "v": {
+            "f": 61,
+            "trig": "lift"
+          },
+          "c": {
+            "f": 61,
+            "light": "warm"
+          },
+          "N": {
+            "f": 37,
+            "npc": "doorman"
+          },
+          "q": {
+            "f": 61,
+            "npc": "concierge"
+          }
+        },
+        "wall": 62,
+        "floor": 61,
+        "paletteSize": 6
+      },
+      "gridHash": "fa8f7bd127078b4d6d796558e7113db8480ef1217dff0d8c3b34ef4053bf2b12",
+      "loadedHash": "0221909e590378cbb0506867c885a546e38ef3610577a75ac5bedab244f76732",
+      "queryHash": "2cb8f7472d685ba5e900f7067e941f7430e18defc25a3ed336d2f6eb26c9c86d",
+      "cellHash": "452aaf6e0456f9ee0f824a41290451ddb963fa15cfacd7acb65ffde828120396"
+    },
+    {
+      "key": "hub:garage:0",
+      "idx": 0,
+      "input": {
+        "map": [
+          "||||||||||eeee||||||||||",
+          "|..c......vvvv......c..|",
+          "|..........n...........|",
+          "|.o....o.....o.....o...|",
+          "|......................|",
+          "|....................P.|",
+          "=======================|",
+          "=======================|",
+          "|......................|",
+          "|.o....o.....o.....o...|",
+          "||||||||||||||||||||||||"
+        ],
+        "legend": {
+          "|": {
+            "w": 34
+          },
+          "o": {
+            "w": 34
+          },
+          "e": {
+            "w": 40
+          },
+          ".": {
+            "f": 37
+          },
+          "v": {
+            "f": 37,
+            "trig": "lift"
+          },
+          "c": {
+            "f": 37,
+            "light": "warm"
+          },
+          "n": {
+            "f": 37,
+            "npc": "gsec"
+          }
+        },
+        "wall": 34,
+        "floor": 37,
+        "paletteSize": 6
+      },
+      "gridHash": "373e3ebf21e7d9201ff0beefec54136b872c2d5610d2f54a83992663261a681a",
+      "loadedHash": "bd463cddff40ac0e3ffc5233e87461ca4e694103118522ad08a27cc46813a75d",
+      "queryHash": "95f3f0c93550070d00f84b9da6cf6cd821b7e3153381400d25ec76bbef77b44d",
+      "cellHash": "1a61b1b0c7177ff6983c810073ce01111b41124b0c00ae1880234e5ab0ce024f"
+    },
+    {
+      "key": "hub:garage:7",
+      "idx": 7,
+      "input": {
+        "map": [
+          "||||||||||eeee||||||||||",
+          "|..c......vvvv......c..|",
+          "|..........n...........|",
+          "|.o....o.....o.....o...|",
+          "|......................|",
+          "|....................P.|",
+          "=======================|",
+          "=======================|",
+          "|......................|",
+          "|.o....o.....o.....o...|",
+          "||||||||||||||||||||||||"
+        ],
+        "legend": {
+          "|": {
+            "w": 34
+          },
+          "o": {
+            "w": 34
+          },
+          "e": {
+            "w": 40
+          },
+          ".": {
+            "f": 37
+          },
+          "v": {
+            "f": 37,
+            "trig": "lift"
+          },
+          "c": {
+            "f": 37,
+            "light": "warm"
+          },
+          "n": {
+            "f": 37,
+            "npc": "gsec"
+          }
+        },
+        "wall": 34,
+        "floor": 37,
+        "paletteSize": 6
+      },
+      "gridHash": "373e3ebf21e7d9201ff0beefec54136b872c2d5610d2f54a83992663261a681a",
+      "loadedHash": "bd463cddff40ac0e3ffc5233e87461ca4e694103118522ad08a27cc46813a75d",
+      "queryHash": "95f3f0c93550070d00f84b9da6cf6cd821b7e3153381400d25ec76bbef77b44d",
+      "cellHash": "1a61b1b0c7177ff6983c810073ce01111b41124b0c00ae1880234e5ab0ce024f"
     }
   ]
 }
