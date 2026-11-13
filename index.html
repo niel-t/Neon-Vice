@@ -70,6 +70,9 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 #bCover{right:182px;bottom:calc(50% - 10px);background:rgba(120,90,220,.38)}
 #bPause{left:50%;top:6px;margin-left:-50px;width:42px;height:38px;border-radius:8px}
 #bRestart{left:50%;top:6px;margin-left:8px;width:42px;height:38px;border-radius:8px}
+#mercyUI{position:fixed;left:0;right:0;bottom:22%;z-index:4;display:none;justify-content:center;gap:28px;pointer-events:none}
+#mercyUI .tb{position:static;width:150px;height:64px;border-radius:12px;font-size:11px}
+#bSpare{background:rgba(60,200,110,.55)}#bFinish{background:rgba(230,40,70,.6)}
 #rotate{z-index:9;background:#0e0614}
 #cine{position:fixed;inset:0;z-index:4;display:none;cursor:pointer}#cine .lb{position:absolute;left:0;right:0;height:11vh;background:#000}#cine .lb.t{top:0}#cine .lb.b{bottom:0}
 #cineT{position:absolute;left:6vw;bottom:15vh;opacity:0;transform:translateX(-40px);transition:opacity .9s,transform .9s}#cineT.on{opacity:1;transform:none}
@@ -123,6 +126,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <body>
 <canvas id="gl"></canvas><canvas id="hud"></canvas>
 <div id="banner"></div><div id="cine"><div class="lb t"></div><div class="lb b"></div><div id="cineT"><div class="c1"></div><div class="c2"></div></div><div class="skp">TAP TO SKIP</div></div><div id="fade"></div><button class="btn sm" id="bSkip">SKIP TO McWEY<span class="kbhint"> (TAB)</span><span class="padhint"> (Y)</span></button>
+<div id="mercyUI"><div class="tb" id="bSpare">SPARE HIM</div><div class="tb" id="bFinish">FINISH HIM</div></div>
 <div id="touchUI"><div class="tb" id="bGrab">GRAB</div><div class="tb" id="bReload">RELOAD</div><div class="tb" id="bSwap">SWITCH</div><div class="tb" id="bPerk">CASH</div><div class="tb" id="bCover" style="display:none">COVER</div><div class="tb" id="bPause">II</div><div class="tb" id="bRestart">&#8635;</div></div>
 <div id="sTitle" class="screen on">
   <div class="logo">NEON VICE</div><div class="logo2">OCEAN DRIVE</div>
@@ -670,7 +674,7 @@ const RUNTRACK=[0,0,0,0,0,0,0,0];
 /* ================= STATE ================= */
 let G=null,state='title',selIdx=2,levelIdx=0,totalScore=0,totalKills=0,totalTime=0,touchMode=false;
 let VP=null,invVP=null,vw=innerWidth,vh=innerHeight,dpr=1;
-const keys={},mouse={x:0,y:0,down:false,active:false},pressed={grab:false,perk:false,restart:false,pause:false,reload:false,swap:false,slot:0,cover:false};
+const keys={},mouse={x:0,y:0,down:false,active:false},pressed={grab:false,perk:false,restart:false,pause:false,reload:false,swap:false,slot:0,cover:false,spare:false,finish:false};
 const sticks={L:null,R:null};
 const PAD={on:false,lx:0,ly:0,rx:0,ry:0,rt:0,b:[],pb:[],aim:false,navT:0,gp:null,rearm:false};let padMode=false,inputSuspended=false;
 function pollPad(){if(inputSuspended){PAD.on=false;return;}let gp=null;try{const gps=navigator.getGamepads?navigator.getGamepads():[];for(const q of gps)if(q&&q.connected){gp=q;break;}}catch(e){}
@@ -2229,8 +2233,8 @@ const FIN={consigliere:[['LEX "SILKS" STERLING',"Wait — wait! I can pay you! I
    clears without him; the payout then records lex_spared (alive) instead of lexDead. Act 3 reads that: see lexFate(). */
 function updateMercy(dt){const g=G,m=g.mercy,e=m.e;m.t+=dt;g.T+=dt;e.down=9999;
  if(m.t<0.5)return;if(!m.shown){m.shown=1;popup(e.x,e.z,'"WAIT! I CAN PAY YOU!"','#ffd36b');sfx('boss');}
- if((m.bt-=dt)<=0){m.bt=2.3;banner('LEX BEGS: "I\'VE GOT A TESTAROSSA!"','[1] SPARE HIM        [2] FINISH HIM');}
- if(m.t<1.2)return;const spare=keys.Digit1||keys.Numpad1||pdown(2),kill=keys.Digit2||keys.Numpad2||pdown(1);
+ if((m.bt-=dt)<=0){m.bt=2.3;banner('LEX BEGS: "I\'VE GOT A TESTAROSSA!"',touchMode?'TAP SPARE OR FINISH':'[1] SPARE HIM        [2] FINISH HIM');}
+ if(m.t<1.2){pressed.spare=pressed.finish=false;return;}m.ask=1;const spare=keys.Digit1||keys.Numpad1||pdown(2)||pressed.spare,kill=keys.Digit2||keys.Numpad2||pdown(1)||pressed.finish;pressed.spare=pressed.finish=false;
  if(spare){g.mercy=null;e.spared=true;e.state='idle';popup(e.x,e.z,'SPARED','#7dff9a');banner('YOU SPARED LEX','He stays on the deck, watching you finish the yacht.');sfx('pick');}
  else if(kill){g.mercy=null;killEnemy(e,m.type,m.dir||[0,1]);}}
 const lexFate=()=>{const p=myProg();return p.lexDead?'dead':(dlgObj(p,'wflags')||{}).lex_spared?'spared':null;};
@@ -3886,7 +3890,7 @@ $('bGrain').onclick=()=>{const L=[0,0.2,0.35,0.6];SET.grain=L[(L.indexOf(SET.gra
 $('bHints').onclick=()=>{SET.hints=!SET.hints;saveSet();syncSetBtns();};$('bCoverSet').onclick=()=>{SET.cover=!SET.cover;saveSet();syncSetBtns();};$('bFog').onclick=()=>{SET.fog=SET.fog==='on'?'off':SET.fog==='off'?'auto':'on';saveSet();syncSetBtns();};$('bGore').onclick=()=>{SET.gore=SET.gore==='normal'?'extreme':'normal';saveSet();syncSetBtns();};$('bText').onclick=()=>cycleTextSize();
 $('bQuit').onclick=()=>{state='title';G=null;show('sTitle');};
 const tbtn=(id,fn)=>{const el=$(id);el.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();fn();},{passive:false});el.addEventListener('mousedown',e=>{e.stopPropagation();fn();});};
-tbtn('bGrab',()=>pressed.grab=true);tbtn('bReload',()=>pressed.reload=true);tbtn('bSwap',()=>pressed.swap=true);tbtn('bPerk',()=>pressed.perk=true);tbtn('bCover',()=>pressed.cover=true);tbtn('bPause',()=>togglePause());tbtn('bRestart',()=>restart());
+tbtn('bSpare',()=>pressed.spare=true);tbtn('bFinish',()=>pressed.finish=true);tbtn('bGrab',()=>pressed.grab=true);tbtn('bReload',()=>pressed.reload=true);tbtn('bSwap',()=>pressed.swap=true);tbtn('bPerk',()=>pressed.perk=true);tbtn('bCover',()=>pressed.cover=true);tbtn('bPause',()=>togglePause());tbtn('bRestart',()=>restart());
 
 /* ================= INPUT ================= */
 addEventListener('keydown',e=>{if(contextLost)return;keys[e.code]=true;if(state==='morning'&&(e.code==='Enter'||e.code==='Space')){$('bMorning').click();e.preventDefault();return;}if(state==='carmenu'||state==='shop'||state==='store'){menuKey(e);e.preventDefault();return;}if((e.code==='Space'||e.code==='Enter')&&state==='play'&&G&&G.cine){cineSkip();e.preventDefault();return;}if(e.code==='Tab'&&state==='play'&&G&&G.def.hub){hubSkip();e.preventDefault();return;}if((e.code==='Enter'||e.code==='Space')&&state==='elev'){skipElev();e.preventDefault();return;}if(state==='perk'&&/^Digit[123]$/.test(e.code)){const cs=document.querySelectorAll('.pcard');const b=cs[+e.code.slice(5)-1];if(b)choosePerk(b.dataset.k);return;}if(padMode&&/^(Key[WASD]|Arrow)/.test(e.code))padMode=false;{const inJob=state==='play'&&G&&!G.def.hub;if(e.code==='KeyR'){if(inJob){if(!e.repeat)pressed.reload=true;}else pressed.restart=true;}if(e.code==='Backspace'&&G&&!G.def.hub&&(inJob||state==='dead'||state==='results')){pressed.restart=true;e.preventDefault();}if(e.code==='Tab'&&inJob){pressed.swap=true;e.preventDefault();}const dg=inJob&&/^(?:Digit|Numpad)([123])$/.exec(e.code);if(dg)pressed.slot=+dg[1];}if(e.code==='KeyE')pressed.grab=true;if(e.code==='Space'&&SET.cover&&state==='play'&&G&&!G.def.hub){if(!e.repeat)pressed.cover=true;}else if(e.code==='Space'||e.code==='KeyQ')pressed.perk=true;if(e.code==='Escape'||e.code==='KeyP')pressed.pause=true;if(SETMENU&&e.code==='Escape')$('bSetBack').click();if(e.code==='KeyM')toggleMute();
@@ -3931,6 +3935,7 @@ function frame(now){if(contextLost||gl.isContextLost())return;requestAnimationFr
  engineOn(state==='play'&&!!G&&G.def.hub==='drive'&&!G.parked&&SET.sound);$('cine').style.display=(state==='play'&&G&&G.cine)?'block':'none';$('bSkip').style.display=(state==='play'&&G&&G.def.hub)?'block':'none';
  pressed.grab=pressed.perk=pressed.restart=pressed.pause=pressed.reload=pressed.swap=pressed.cover=false;pressed.slot=0;
  const tui=touchMode&&state==='play'&&!(G&&G.def.hub);$('touchUI').style.display=tui?'block':'none';
+ {const mu=$('mercyUI'),on=!!(G&&G.mercy&&G.mercy.ask&&state==='play')&&!padMode;if(mu._on!==on){mu._on=on;mu.style.display=on?'flex':'none';}}
  if(tui&&G){$('bPerk').style.display=CHARS[selIdx].id==='money'?'flex':'none';$('bCover').style.display=SET.cover?'flex':'none';const p=G.player,n=p.alive?nearItem(p):null;const lbl=n?'TAKE<br>'+WD[n.type].name.split(' ').pop():p.weapon?'THROW':'GRAB';const b=$('bGrab');if(b.dataset.l!==lbl){b.innerHTML=lbl;b.dataset.l=lbl;}}
  try{render();drawHUD();}catch(err){console.error(err);}}
 syncSetBtns();updateSelect();requestAnimationFrame(frame);
