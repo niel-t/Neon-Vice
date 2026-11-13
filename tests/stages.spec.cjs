@@ -256,3 +256,30 @@ test('stages: Coral Tower changes floor after a bullet has swung a door, and wai
   });
   expect(result).toEqual({ held: false, stateWhileHeld: 'play', started: true, sid: 'stair', state: 'play', refused: [] });
 });
+
+test('stages: a floor change is never refused over fight leftovers', async ({ openGame }) => {
+  const page = await openGame();
+  const result = await page.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)), out = [];
+    const refused = []; const say = banner; banner = (a, b) => { if (a === 'STAGE LOAD REFUSED') refused.push(b); return say(a, b); };
+    const spoil = [
+      g => { g.cash.push({ sx: 3, sz: 3, x: 3, z: 3, tx: 4, tz: 4, t: 1, landed: true, life: 5 }); },
+      g => { g.items.push({ x: 4, z: 4, type: 'pistol', ammo: -1, vx: NaN, vz: 0, rot: 0, flying: false, fresh: false, flyT: 0 }); g.items.push({ x: 5, z: 4, type: 'nosuchgun', ammo: 1, vx: 0, vz: 0, rot: 0, flying: false, fresh: false, flyT: 0 }); },
+      g => { g.doors[0].pusher = 'x'; g.doors[0].th = NaN; g.enemies[0].pers = 'pack'; g.enemies[1].down = Infinity; g.enemies[2].weapon = { type: 'pistol', ammo: -2, jam: 1 }; },
+      g => { g.comboT = NaN; g.kb = { pistol: NaN }; g.lastKType = undefined; },
+      // nothing can tidy this one, so the floor is carried as it was when you walked in
+      g => { g.trigs.push({ x: 2, z: 2, t: 'x' }); },
+    ];
+    for (const s of spoil) {
+      window.NOARRIVE = 1; delete myProg().run; startMission('c2'); if (G.arrive) endArrive();
+      const lobby = G, up = G.stageRun.describe(G.sid).stairs.find(q => q.id === 'up'); s(lobby);
+      lobby.player.x = up.at[0]; lobby.player.z = up.at[1];
+      const started = stageStairs(lobby); await wait(900);
+      out.push(started + ' ' + G.sid + ' ' + state + ' ' + stageFoes(G));
+    }
+    return { out, refused };
+  });
+  expect(result.refused).toEqual([]);
+  expect(new Set(result.out).size).toBe(1);
+  expect(result.out[0]).toMatch(/^true stair play \d+$/);
+});
