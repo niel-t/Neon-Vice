@@ -3635,7 +3635,7 @@ function stageNumber(o,keys){for(const k of keys)if(!Number.isFinite(o[k]))throw
 function stageHP(hp,nullable=false){if(hp==='indestructible'||nullable&&hp===null||Number.isFinite(hp)&&hp>=0)return hp==='indestructible'?Infinity:hp;throw new Error('Invalid stage durability HP');}
 function stageDoor(d,i){
  stageRecord(d,STAGE_DOOR,'door snapshot');stageNumber(d,['th','w']);
- if(d.i!==undefined&&d.i!==i||!['','p','e'].includes(d.pusher))throw new Error('Invalid stable door snapshot');
+ if(d.i!==undefined&&d.i!==i||!['','p','e','b'].includes(d.pusher))throw new Error('Invalid stable door snapshot');
  if(d.build!==undefined&&WORLD.materials.build(d.build).lockHp===undefined)throw new Error('Stage door build has no lock durability');
  for(const key of ['locked','breached'])if(d[key]!==undefined&&typeof d[key]!=='boolean')throw new Error('Invalid stage door '+key);
  if(Object.hasOwn(d,'lockHp')){stageHP(d.lockHp,true);if(d.build===undefined)throw new Error('Stage lock HP requires a door build');}
@@ -3691,7 +3691,7 @@ function stageHydrate(g,s,apply=true){
  s.enemies.forEach((e,i)=>{stageRecord(e,STAGE_ENEMY,'enemy snapshot');stageNumber(e,['id','x','z','a','hp','maxhp','r','spd','rmul','vx','vz','down']);if(e.id!==g.enemies[i].id||typeof e.alive!=='boolean'||typeof e.headless!=='boolean'||!['rush','careful','flank'].includes(e.pers)||!plainObj(e.look)||!Array.isArray(e.wounds))throw new Error('Invalid stable enemy snapshot');weapon(e.weapon);if(apply)Object.assign(g.enemies[i],stageJSON(e));});
  s.items.forEach(it=>{stageRecord(it,STAGE_ITEM,'item snapshot');stageNumber(it,['x','z','ammo','vx','vz','rot','flyT']);if(!WD[it.type]||it.ammo<0||it.flying!==false||typeof it.fresh!=='boolean')throw new Error('Invalid grounded item snapshot');});
  if(apply)g.items=stageJSON(s.items);
- s.doors.forEach((d,i)=>{if(plan){stageRecord(d,['i','th','w','pusher','slide'],'plan door snapshot');stageNumber(d,['th','w','slide']);const sl=g.doors[i].kind==='slide';if(d.i!==i||!['','p','e'].includes(d.pusher)||Math.abs(d.th)>1.57||d.slide<0||d.slide>1||(sl?d.th!==0||d.w!==0:d.slide!==0))throw new Error('Invalid stable door snapshot');}else stageDoor(d,i);if(apply)Object.assign(g.doors[i],stagePick(d,plan?['th','w','pusher','slide']:['th','w','pusher']));});
+ s.doors.forEach((d,i)=>{if(plan){stageRecord(d,['i','th','w','pusher','slide'],'plan door snapshot');stageNumber(d,['th','w','slide']);const sl=g.doors[i].kind==='slide';if(d.i!==i||!['','p','e','b'].includes(d.pusher)||Math.abs(d.th)>1.57||d.slide<0||d.slide>1||(sl?d.th!==0||d.w!==0:d.slide!==0))throw new Error('Invalid stable door snapshot');}else stageDoor(d,i);if(apply)Object.assign(g.doors[i],stagePick(d,plan?['th','w','pusher','slide']:['th','w','pusher']));});
  if(plan)return;
  const used=new Set();for(const d of s.cells){stageRecord(d,['i',...STAGE_CELLS],'world delta');if(!Number.isInteger(d.i)||d.i<0||d.i>=g.W*g.H||used.has(d.i)||Object.keys(d).length<2)throw new Error('Invalid world delta index');used.add(d.i);
   for(const k of STAGE_CELLS)if(k in d){const n=d[k];if(!Number.isFinite(n)||k!=='wh'&&(!Number.isInteger(n)||n<-128||n>255)||['solid','glass','pool','rug'].includes(k)&&![0,1].includes(n))throw new Error('Invalid world delta '+k);if(apply)g[k][d.i]=n;}}
@@ -3847,8 +3847,19 @@ function updateStage(dt){const g=G;if(!isTower(g))return;const p=g.player;
  if(g.keyEn===undefined)g.keyEn=g.enemies.find(e=>e.weapon&&e.weapon.type==='silenced')||null;
  if(!g.key&&g.keyEn&&!g.keyEn.alive){g.key={x:g.keyEn.x,z:g.keyEn.z};popup(g.key.x,g.key.z,isKade(g)?'HOIST KEY DROPPED':'KEYCARD DROPPED','#ffd36b');}
  if(g.key&&p.alive&&Math.hypot(p.x-g.key.x,p.z-g.key.z)<0.8){g.keycard=true;g.key=null;sfx('cash');popup(p.x,p.z,isKade(g)?'HOIST KEY  -  THE HOIST IS OPEN':'KEYCARD  -  THE ELEVATOR IS OPEN','#7dff9a');}}
+/* A flight of stairs up through a doorway in the wall behind its cell (the stair cells sit against the top wall): six steps with lit
+   nosings, a handrail on each side, a dark doorway with a brass frame and a lit sign, and floor chevrons that pulse toward it. Drawn
+   only; the walk-on trigger is still the circle around the cell centre in stageStairs. */
+function drawStairs(B,g,x,z){const bx=(px,py,pz,sx,sy,sz,c,em,ry)=>B.box(TRS(px,py,pz,ry||0,sx,sy,sz),c,!!em),brass=[0.85,0.68,0.22],amber=[1,0.85,0.35],N=6,D=0.15,R=0.1,z0=z+0.45;
+ for(let i=0;i<N;i++){const h=(i+1)*R,zc=z0-(i+0.5)*D;bx(x,h/2,zc,0.86,h,D,i%2?[0.5,0.5,0.56]:[0.44,0.44,0.5]);bx(x,h+0.006,zc+D/2-0.02,0.86,0.012,0.035,amber,true);
+  for(const sx of [-0.45,0.45])bx(x+sx,h+0.62,zc,0.04,0.04,D+0.02,brass);}
+ for(const sx of [-0.45,0.45]){bx(x+sx,0.36,z0-0.03,0.04,0.72,0.04,brass);bx(x+sx,N*R+0.31,z0-N*D+0.03,0.04,0.62,0.04,brass);}
+ const top=N*R,dz=z-0.47;bx(x,top+0.62,dz,0.82,1.24,0.05,[0.02,0.02,0.035]);bx(x-0.45,1.0,dz+0.02,0.08,2.0,0.08,brass);bx(x+0.45,1.0,dz+0.02,0.08,2.0,0.08,brass);bx(x,top+1.28,dz+0.02,0.98,0.08,0.08,brass);
+ bx(x,2.05,dz+0.05,0.62,0.14,0.05,amber,true);
+ for(let k=0;k<2;k++){const on=Math.sin((g.T||0)*5-k*1.6)>0,zc=z0+0.3+k*0.32,c=on?amber:[0.5,0.42,0.18];bx(x-0.13,0.03,zc,0.3,0.012,0.07,c,on,0.6);bx(x+0.13,0.03,zc,0.3,0.012,0.07,c,on,-0.6);}}
 function drawStage(B,g){if(!isTower(g)||!g.stageRun)return;const bx=(x,y,z,sx,sy,sz,c,em)=>B.box(TRS(x,y,z,0,sx,sy,sz),c,!!em),steel=[0.74,0.77,0.82],brass=[0.85,0.68,0.22];
- for(const s of g.stageRun.describe(g.sid).stairs){const lock=stageLocked(g,s),x=s.at[0],z=s.at[1];bx(x,0.03,z,0.9,0.015,0.9,s.id==='elev'?(lock?[1,0.25,0.25]:[0.3,1,0.5]):[1,0.85,0.35],true);
+ for(const s of g.stageRun.describe(g.sid).stairs){const lock=stageLocked(g,s),x=s.at[0],z=s.at[1];
+  if(s.id==='elev')bx(x,0.03,z,0.9,0.015,0.9,lock?[1,0.25,0.25]:[0.3,1,0.5],true);else drawStairs(B,g,x,z);
   if(s.id==='elev'){bx(x,0.95,z-0.44,3.2,1.9,0.08,steel);bx(x-1.7,1.0,z-0.42,0.12,2.0,0.12,brass);bx(x+1.7,1.0,z-0.42,0.12,2.0,0.12,brass);bx(x,2.05,z-0.4,0.5,0.12,0.06,lock?[1,0.2,0.2]:[0.3,1,0.5],true);}}
  if(g.crane&&g.crane.ph>0){const c=g.crane;bx(c.x,0.04,g.H/2,c.w,0.02,g.H-3,[1,0.15,0.15],c.ph===2||Math.sin(g.T*20)>0);if(c.ph===2)bx(c.x,0.8,g.H/2,c.w*0.9,1.6,g.H-4,[0.45,0.4,0.2]);}
  if(g.sid==='pent'){const c=g.car;bx(c.x+0.5,0.95,c.z+0.55,2.0,1.9,0.08,steel);bx(c.x-0.5,1.0,c.z+0.5,0.12,2.0,0.12,brass);bx(c.x+1.5,1.0,c.z+0.5,0.12,2.0,0.12,brass);bx(c.x+0.5,2.05,c.z+0.5,0.5,0.12,0.06,g.cleared?[0.3,1,0.5]:[1,0.3,0.3],true);}
@@ -3858,6 +3869,8 @@ function stageStairs(g){
  for(const s of g.stageRun.describe(g.sid).stairs){
   const inside=Math.hypot(g.player.x-s.at[0],g.player.z-s.at[1])<=s.r;
   if(!inside){g.stairLatch.delete(s.id);continue;}if(g.stairLatch.has(s.id))continue;if(stageLocked(g,s)){stageLockHint(g);continue;}
+  /* a weapon still in the air or a thrown cash lure cannot be saved with the floor: wait for it to land instead of refusing */
+  if(g.items.some(it=>it.flying)||g.cash.length)return false;
   const r=myProg().run,m=MISSION;state='stagefade';
   const accepted=fadeTo(()=>{if(G!==g||MISSION!==m||myProg().run!==r)return;if(!stageCanLeave(g)){state='play';return;}enterStage(s.to,s.arrive);if(G===g)state='play';});
   if(!accepted){state='play';return false;}g.stairLatch.add(s.id);return true;
