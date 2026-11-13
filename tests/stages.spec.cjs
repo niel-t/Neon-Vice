@@ -237,3 +237,22 @@ test('stages: exactly one runStage save sees prospective envelope and HP; storag
   })).toEqual({ activated: true, saves: 1, checkpoints: 1, prepared: true, savedTogether: true, unchangedDisk: true, visibleFailure: true, current: 'yard' });
   await expect(page.locator('#saveWarning')).toBeVisible();
 });
+
+test('stages: Coral Tower changes floor after a bullet has swung a door, and waits for a weapon still in the air', async ({ openGame }) => {
+  const page = await openGame();
+  const result = await page.evaluate(async () => {
+    window.NOARRIVE = 1; startMission('c2'); if (G.arrive) endArrive();
+    const refused = []; const say = banner; banner = (a, b) => { if (a === 'STAGE LOAD REFUSED') refused.push(b); return say(a, b); };
+    const wait = ms => new Promise(r => setTimeout(r, ms)), lobby = G, up = G.stageRun.describe(G.sid).stairs.find(s => s.id === 'up');
+    // exactly what doorShot leaves behind when a bullet hits a door
+    lobby.doors[0].w = 1.2; lobby.doors[0].pusher = 'b';
+    // a dropped weapon in mid-flight holds the floor change until it lands
+    lobby.items.push({ x: 4, z: 4, type: 'pistol', ammo: 3, vx: 0, vz: 0, rot: 0, flying: true, fresh: false, flyT: 0, age: 0 });
+    lobby.player.x = up.at[0]; lobby.player.z = up.at[1];
+    const held = stageStairs(lobby), stateWhileHeld = state;
+    lobby.items[lobby.items.length - 1].flying = false;
+    const started = stageStairs(lobby); await wait(900);
+    return { held, stateWhileHeld, started, sid: G.sid, state, refused };
+  });
+  expect(result).toEqual({ held: false, stateWhileHeld: 'play', started: true, sid: 'stair', state: 'play', refused: [] });
+});
