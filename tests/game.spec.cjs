@@ -263,6 +263,7 @@ test('saves: a job in progress resumes from its stage kit as a retry, and walkin
       return { s0: [s0.stage, s0.stageKit.guns, s0.stow.length, s0.stageHp], gone: [gone.stage, gone.stageKit.guns, gone.stow, gone.stageHp, gone.st], yard: [yard.stage, yard.stageKit.guns, yard.stow.length, yard.stageHp],
         bad: normRun({ mission: 'toString', entryKit: e, stageKit: st }, missionStage, []) }; } finally { MISSIONS.c1.stages = stages; } }, [entry, stage]))
     .toEqual({ s0: ['legacy', stage.guns, 1, 40], gone: ['legacy', entry.guns, undefined, undefined, undefined], yard: ['yard', stage.guns, 1, 40], bad: null });
+  await expect.poll(() => page.evaluate(() => fading)).toBe(false); // walkAway is refused while the resume fade is still running
   expect(await page.evaluate(() => { const f = fadeTo; fadeTo = () => true; try { togglePause(); walkAway(); } finally { fadeTo = f; }
     const s = JSON.parse(localStorage.getItem('nb86prog')).money; return { run: s.run || null, kit: s.kit }; }))
     .toEqual({ run: null, kit: entry });
