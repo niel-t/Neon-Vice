@@ -394,6 +394,15 @@ test('lures: a thrown weapon and a shot arcade cabinet draw guards to the noise,
   expect(await page.evaluate(() => !!G.onAir)).toBe(false);
 });
 
+test('fourth challenges and the new side jobs read slams, lures, the getaway and the ON AIR light', async ({ openGame }) => {
+  const page = await openGame();
+  const r = await page.evaluate(() => { NOARRIVE = true; startLevel(3); const g = G, c = CHALLENGES[3][3], out = { four: CHALLENGES.every(x => x.length === 4), name: c.n, before: c.f(g) };
+    g.slamK = { water: 2 }; g.slams = 2; out.after = c.f(g); g.sj = 'slam'; out.slam = sjState(g).ok; g.sj = 'lure'; out.lure0 = !!sjState(g).ok; g.lures = 2; out.lure = sjState(g).ok;
+    g.sj = 'getaway'; out.get0 = !!sjState(g).ok; g.getaway = true; out.get = sjState(g).ok; g.sj = 'clean'; out.clean = !!sjState(g).ok; g.taken = 1; out.hit = !!sjState(g).fail;
+    out.air = CHALLENGES[6][3].f({}) && !CHALLENGES[6][3].f({ airShots: 1 }); out.keys = Object.keys(SIDEJOBS).length; return out; });
+  expect(r).toEqual({ four: true, name: '2 MEN OVERBOARD', before: false, after: true, slam: true, lure0: false, lure: true, get0: false, get: true, clean: true, hit: true, air: true, keys: 10 });
+});
+
 test('slams: a guard knocked into water, the shark tank or broken glass dies there, and Kade can go off the edge', async ({ openGame }) => {
   test.setTimeout(180_000);
   const page = await openGame();

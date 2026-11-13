@@ -545,22 +545,27 @@ const CHX={
  slams:k=>({n:k+' SLAMS',f:g=>(g.slams||0)>=k}),
  glass:()=>({n:'NO BROKEN GLASS',f:g=>!g.glassBroken}),
  elev:()=>({n:'USE THE ELEVATOR',f:g=>stageSeen(g,'pent')&&!stageSeen(g,'stair')}),
- stairs:()=>({n:'TAKE THE STAIRS',f:g=>stageSeen(g,'stair')})};
+ stairs:()=>({n:'TAKE THE STAIRS',f:g=>stageSeen(g,'stair')}),
+ /* fourth challenges (bit 3 of JOBS.ch[i]): built on slams, lures, the getaway and the ON AIR light */
+ getaway:()=>({n:'CLEAN GETAWAY',f:g=>!!g.getaway}),
+ lures:k=>({n:k>1?k+' LURES':'LURE A GUARD',f:g=>(g.lures||0)>=k}),
+ slamk:(kind,k,n)=>({n,f:g=>((g.slamK||{})[kind]||0)>=k}),
+ quietAir:()=>({n:'NO SHOTS ON AIR',f:g=>!g.airShots})};
 const CHALLENGES=[
- [CHX.time(45),CHX.noguns(),CHX.untouched()],
- [CHX.combo(6),CHX.doors(2),CHX.time(40)],
- [CHX.untouched(),CHX.elev(),CHX.stairs()],
- [CHX.combo(8),CHX.time(45),CHX.untouched()],
- [CHX.slams(2),CHX.noguns(),CHX.time(50)],
- [CHX.time(70),CHX.combo(8),CHX.execs(2)],
- [CHX.glass(),CHX.untouched(),CHX.time(50)],
- [CHX.untouched(),CHX.time(45),CHX.combo(6)],
- [CHX.doors(2),CHX.time(55),CHX.combo(6)],
- [CHX.noguns(),CHX.time(60),CHX.untouched()],
- [CHX.untouched(),CHX.elev(),CHX.stairs()]];
+ [CHX.time(45),CHX.noguns(),CHX.untouched(),CHX.lures(1)],
+ [CHX.combo(6),CHX.doors(2),CHX.time(40),CHX.getaway()],
+ [CHX.untouched(),CHX.elev(),CHX.stairs(),CHX.execs(2)],
+ [CHX.combo(8),CHX.time(45),CHX.untouched(),CHX.slamk('water',2,'2 MEN OVERBOARD')],
+ [CHX.slams(2),CHX.noguns(),CHX.time(50),CHX.lures(2)],
+ [CHX.time(70),CHX.combo(8),CHX.execs(2),CHX.getaway()],
+ [CHX.glass(),CHX.untouched(),CHX.time(50),CHX.quietAir()],
+ [CHX.untouched(),CHX.time(45),CHX.combo(6),CHX.slamk('shark',1,'FEED THE SHARK')],
+ [CHX.doors(2),CHX.time(55),CHX.combo(6),CHX.getaway()],
+ [CHX.noguns(),CHX.time(60),CHX.untouched(),CHX.slams(1)],
+ [CHX.untouched(),CHX.elev(),CHX.stairs(),CHX.slamk('edge',1,'KADE OFF THE EDGE')]];
 const CH_PAY=2000;
 const chDone=(i,k)=>!!(((JOBS.ch||{})[i]||0)&(1<<k));
-function chStars(i){let n=0;for(let k=0;k<3;k++)if(chDone(i,k))n++;return n;}
+function chStars(i){let n=0;for(let k=0;k<(CHALLENGES[i]||[]).length;k++)if(chDone(i,k))n++;return n;}
 function chHTML(i){return (CHALLENGES[i]||[]).map((c,k)=>`<span style="color:${chDone(i,k)?'#7dff9a':'#c9a8e8'}">${chDone(i,k)?'\u2605':'\u2606'} ${c.n}</span>`).join('  ')+'  <span style="color:'+(stashDone(i)?'#7dff9a':'#c9a8e8')+'">'+(stashDone(i)?'\u25c6 STASH FOUND':'\u25c7 HIDDEN STASH')+'</span>';}
 function checkChallenges(i,g){if(!JOBS.ch)JOBS.ch={};const out=[];let pay=0;(CHALLENGES[i]||[]).forEach((c,k)=>{const ok=!!c.f(g),was=chDone(i,k);if(ok&&!was){JOBS.ch[i]=(JOBS.ch[i]||0)|(1<<k);pay+=CH_PAY;}out.push({n:c.n,ok,fresh:ok&&!was});});
  if(pay){const p=myProg();arm();p.wallet+=pay;saveProg();}saveJobs();return {out,pay};}
@@ -1198,7 +1203,7 @@ function fireGun(c,w,isP){const g=G,wd=WD[w.type];if(isP&&c.cover){c.cover.pop=C
  const ml=0.4+wd.len;g.flashes.push({x:c.x+sa*ml+ca*(ox||0.17),y:0.74,z:c.z+ca*ml-sa*(ox||0.17),t:0.06,big:wd.pel>1,sil:w.type==='silenced'});
  sfx(wd.snd,isP?1:clamp(1.15-Math.hypot(c.x-g.player.x,c.z-g.player.z)/18,0.2,1));
  if(w.type!=='double'&&w.type!=='shotgun')gib(c.x+ca*0.2,0.72,c.z-sa*0.2,ca*rnd(1.5,2.5),rnd(1.5,2.5),-sa*rnd(1.5,2.5),wd.pel>1?[0.04,0.04,0.08]:[0.03,0.03,0.06],wd.pel>1?[0.8,0.15,0.15]:[0.85,0.65,0.25],true);
- if(isP){rumble(wd.pel>1?0.6:0.12,wd.pel>1?0.8:0.35,wd.pel>1?150:60);shake(wd.kick*1.2);g.cam.kx-=sa*wd.kick*0.6;g.cam.kz-=ca*wd.kick*0.6;alertNoise(c.x,c.z,wd.loud*(isP&&g.onAir?2.5:1),isP?'p':'');if(wd.loud>=10)g.loudShot=1;}}
+ if(isP){rumble(wd.pel>1?0.6:0.12,wd.pel>1?0.8:0.35,wd.pel>1?150:60);shake(wd.kick*1.2);g.cam.kx-=sa*wd.kick*0.6;g.cam.kz-=ca*wd.kick*0.6;if(isP&&g.onAir)g.airShots=(g.airShots||0)+1;alertNoise(c.x,c.z,wd.loud*(isP&&g.onAir?2.5:1),isP?'p':'');if(wd.loud>=10)g.loudShot=1;}}
 function throwWeapon(p){const w=p.weapon;if(!w)return;p.weapon=null;const sa=Math.sin(p.a),ca=Math.cos(p.a);if(kitOn(p)){G.hand=null;p.rl=null;autoDraw(p);}
  G.items.push({x:p.x+sa*0.3,z:p.z+ca*0.3,type:w.type,ammo:w.ammo,vx:sa*15,vz:ca*15,rot:p.a,flying:true,fresh:false,flyT:0,lure:1});sfx('throw');p.cd=0.25;p.atkT=p.atkDur=0.15;}
 /* ================= SLOTS (W6c) =================
@@ -2416,15 +2421,25 @@ const SIDEJOBS={quiet:{name:'NO WITNESSES',from:'MRS. ORTEGA UPSTAIRS',desc:'Cle
  fast:{name:'IN AND OUT',from:'A CAB DRIVER',desc:'Clear your next floor in under 1:15.',pay:2000},
  combo:{name:'SHOWBOAT',from:'A TV PRODUCER',desc:'Hit a x6 combo on your next floor.',pay:2200},
  execs:{name:'MAKE AN EXAMPLE',from:'A LOAN SHARK',desc:'Execute 3 downed enemies on your next floor.',pay:1800},
- blade:{name:'COLD STEEL',from:'A CHEF IN LITTLE HAVANA',desc:'Get 4 kills with blades or thrown knives.',pay:2000}};
+ blade:{name:'COLD STEEL',from:'A CHEF IN LITTLE HAVANA',desc:'Get 4 kills with blades or thrown knives.',pay:2000},
+ slam:{name:'TAKE OUT THE TRASH',from:'A GARBAGE MAN',desc:'Slam 2 guards into something on your next floor.',pay:2200},
+ getaway:{name:'KEEP THE METER RUNNING',from:"THE CAB DRIVER'S COUSIN",desc:'Make a clean getaway from your next floor.',pay:1800},
+ lure:{name:'MAKE SOME NOISE',from:'A STREET DRUMMER',desc:'Lure guards twice with a thrown weapon or anything loud.',pay:1600},
+ clean:{name:'NOT A SCRATCH',from:'YOUR TAILOR',desc:'Clear your next floor without getting hit.',pay:3000},
+ doors:{name:'KNOCK KNOCK',from:'A LOCKSMITH',desc:'Get 2 door kills on your next floor.',pay:2000}};
 const sjPay=(k,i)=>SIDEJOBS[k].pay*(i>=3?2:1);
-function sjOffers(){const a=arm(),p=myProg();if(!p.sjOff||p.sjOff.key!==a.jobs){p.sjOff={key:a.jobs,list:Object.keys(SIDEJOBS).sort(()=>Math.random()-0.5).slice(0,2)};saveProg();}return p.sjOff.list;}
+function sjOffers(){const a=arm(),p=myProg();if(!p.sjOff||p.sjOff.key!==a.jobs){p.sjOff={key:a.jobs,list:Object.keys(SIDEJOBS).filter(k=>!(k==='getaway'&&!(NEXTJOB>=1))).sort(()=>Math.random()-0.5).slice(0,2)};saveProg();}return p.sjOff.list;}
 function takeSideJob(k){const p=myProg();if(p.sidejob===k)return renderStore('Already on it.');p.sidejob=k;saveProg();sfx('pick');renderStore('SIDE JOB TAKEN: '+SIDEJOBS[k].name+'. Get it done on your next floor.');}
 function sjState(g){const k=g.sj,bl=(g.kb.knife||0)+(g.kb.machete||0)+(g.kb.throw||0);
  if(k==='quiet')return g.loudShot?{fail:1,txt:'A LOUD GUN WENT OFF'}:{ok:1,txt:'NO LOUD GUNS'};
  if(k==='fast')return g.time<75?{ok:1,txt:mmss(75-g.time)+' LEFT'}:{fail:1,txt:'TOO SLOW'};
  if(k==='combo')return {ok:g.maxCombo>=6,txt:'BEST COMBO x'+g.maxCombo+' / x6'};
  if(k==='execs')return {ok:g.execs>=3,txt:'EXECUTIONS '+g.execs+' / 3'};
+ if(k==='slam')return {ok:(g.slams||0)>=2,txt:'SLAMS '+(g.slams||0)+' / 2'};
+ if(k==='getaway')return g.esc&&g.esc.late?{fail:1,txt:'TOO SLOW'}:{ok:!!g.getaway,txt:g.esc?Math.ceil(g.esc.t)+'s LEFT':'CLEAR THE FLOOR, THEN RUN'};
+ if(k==='lure')return {ok:(g.lures||0)>=2,txt:'LURES '+(g.lures||0)+' / 2'};
+ if(k==='clean')return g.taken?{fail:1,txt:'YOU GOT HIT'}:{ok:1,txt:'UNTOUCHED'};
+ if(k==='doors')return {ok:(g.kb.door||0)>=2,txt:'DOOR KILLS '+(g.kb.door||0)+' / 2'};
  return {ok:bl>=4,txt:'BLADE KILLS '+bl+' / 4'};}
 function goHome(){arm();loadHub('home'+(myProg().home||0),'home');}
 const HOME_BED_WORLD=[{x:3.0,z:9.5},{x:3.6,z:13.5},{x:3.3,z:11.5}];
@@ -3715,7 +3730,7 @@ function startMission(id){if(MISSIONS[id]&&(MISSIONS[id].stageDefs||MISSIONS[id]
  G.sj=i>=0?myProg().sidejob||null:null;act2Setup(G,i);if(i>=0){placeStash(G,i);if(i===0&&myCar()!=='beater')placeOldCar();}G.track=LEVEL_TRACKS[b][RUNTRACK[b]%LEVEL_TRACKS[b].length];if(MUS.track!==G.track){MUS.track='';MUS.pending=null;}state='play';show(null);
  if(i<0){banner(missionName(id),'Clear the floor · Get back to the car');return;}
  banner(i===8?'ACT 3: CONDEMNED':i===3?'ACT 2: HOSTILE TAKEOVER':(i<3?'FLOOR '+(i+1):i<8?'FLOOR '+(i-2):'FLOOR '+(i-7))+': '+LEVELS[i].name,i===8?"Floor 1: Ocean Drive Demolition · Dorian Kade's wrecking crew":i===3?'Floor 1: Vice Marina · Lex Sterling\'s smuggling hub':padMode?'Clear the floor · A grabs weapons · Get back to the car':touchMode?'Left thumb moves · right thumb aims &amp; attacks':'Clear the floor · E grabs weapons · Get back to the car');
- if(CHALLENGES[i]&&chStars(i)<3)setTimeout(()=>{if(G&&state==='play'&&levelIdx===i&&!G.def.hub&&G.time<4)banner('CHALLENGES',CHALLENGES[i].map((c,k)=>(chDone(i,k)?'\u2605 ':'\u2606 ')+c.n).join(' \u00b7 '));},2600);
+ if(CHALLENGES[i]&&chStars(i)<CHALLENGES[i].length)setTimeout(()=>{if(G&&state==='play'&&levelIdx===i&&!G.def.hub&&G.time<4)banner('CHALLENGES',CHALLENGES[i].map((c,k)=>(chDone(i,k)?'\u2605 ':'\u2606 ')+c.n).join(' \u00b7 '));},2600);
  if(i===1&&!LEXMET){if(G.arrive)G.arrive.then=startCameo;else startCameo();}}
 function showDead(){G.cameo=null;G.lex=null;if(!G.def.hub){arm();myProg().couchBlood=1;saveProg();}state='dead';const k=G.killedBy;$('deadCause').textContent=DEATHNAME[k]||'KILLED';$('deadTip').textContent='TIP: '+pick(TIPS);
  let xp=0;if(!G.xpGiven){G.xpGiven=1;xp=runXP(G,false);awardXP(xp);}const pr=myProg();$('deadXP').innerHTML=(xp?'+'+xp+' XP · ':'')+'LEVEL '+pr.lvl+' <span style="opacity:.7">('+pr.xp+'/'+xpNeed(pr.lvl)+')</span>';
