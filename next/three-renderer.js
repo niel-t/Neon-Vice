@@ -103,11 +103,11 @@ export function create(N,oldGL){
 
  /* the game's buffers are bigger than what is drawn, so never let Three measure them */
  const BIG=new THREE.Sphere(new THREE.Vector3(),1e6);
- /* ---- game Batch (11 floats per vertex: pos, normal, uv, colour) -> Three mesh, zero copy ---- */
+ /* ---- game Batch (12 floats per vertex, renderer.js VSTRIDE: pos, normal, uv, colour, then 4 packed bytes Three does not read) -> Three mesh, zero copy ---- */
  function batchMesh(mat,opts={}){const mesh=new THREE.Mesh(new THREE.BufferGeometry(),mat);mesh.geometry.boundingSphere=BIG;mesh.frustumCulled=false;mesh.castShadow=!!opts.cast;mesh.receiveShadow=opts.receive!==false;
   if(opts.order!==undefined)mesh.renderOrder=opts.order;mesh.userData={arr:null,ib:null,ver:-1};scene.add(mesh);return mesh;}
  function syncBatch(mesh,B,isStatic){const u=mesh.userData;if(!B||!B.n){mesh.visible=false;return;}mesh.visible=true;
-  if(u.arr!==B.f){mesh.geometry.dispose();const g=new THREE.BufferGeometry(),ib=new THREE.InterleavedBuffer(B.f,11);ib.setUsage(isStatic?THREE.StaticDrawUsage:THREE.DynamicDrawUsage);
+  if(u.arr!==B.f){mesh.geometry.dispose();const g=new THREE.BufferGeometry(),ib=new THREE.InterleavedBuffer(B.f,12);ib.setUsage(isStatic?THREE.StaticDrawUsage:THREE.DynamicDrawUsage);
    g.setAttribute('position',new THREE.InterleavedBufferAttribute(ib,3,0));g.setAttribute('normal',new THREE.InterleavedBufferAttribute(ib,3,3));
    g.setAttribute('uv',new THREE.InterleavedBufferAttribute(ib,2,6));g.setAttribute('color',new THREE.InterleavedBufferAttribute(ib,3,8));g.boundingSphere=BIG;mesh.geometry=g;u.arr=B.f;u.ib=ib;u.ver=-1;}
   if(isStatic){const r=N.buf.get(B.buf),v=r?r.ver:0;if(v!==u.ver){u.ver=v;u.ib.needsUpdate=true;}}
