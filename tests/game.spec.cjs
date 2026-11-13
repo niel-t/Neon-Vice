@@ -403,6 +403,24 @@ test('fourth challenges and the new side jobs read slams, lures, the getaway and
   expect(r).toEqual({ four: true, name: '2 MEN OVERBOARD', before: false, after: true, slam: true, lure0: false, lure: true, get0: false, get: true, clean: true, hit: true, air: true, keys: 10 });
 });
 
+test('night 2: a cleared floor can be replayed with a modifier, keeps its own best, and the daily job picks one floor and modifier', async ({ openGame }) => {
+  test.setTimeout(180_000);
+  const page = await openGame();
+  const r = await page.evaluate(() => { NOARRIVE = true; const out = {};
+    NIGHTMOD = 'shotguns'; startLevel(4); out.locked = G.mod; // not cleared yet: plays as normal
+    JOBS.best[4] = { g: 'B', t: 60, s: 5000, c: 3, ch: 'don', d: 'normal' }; JOBS.top = Math.max(JOBS.top, 5);
+    NIGHTMOD = null; startLevel(4); const base = G.enemies.map(e => e.x.toFixed(1) + ',' + e.z.toFixed(1)).join('|'), n = G.enemies.length;
+    NIGHTMOD = 'shotguns'; startLevel(4); out.mod = G.mod; out.moved = G.enemies.map(e => e.x.toFixed(1) + ',' + e.z.toFixed(1)).join('|') !== base;
+    out.allShot = G.enemies.filter(e => !e.boss && !e.kind && e.weapon && !WD[e.weapon.type].melee && e.weapon.type !== 'silenced').every(e => e.weapon.type === 'shotgun');
+    NIGHTMOD = 'full'; startLevel(4); out.more = G.enemies.length > n;
+    NIGHTMOD = 'glass'; startLevel(4); out.hp = G.player.hp; hurtPlayer([0, 1], 'pistol'); out.dead = !G.player.alive;
+    NIGHTMOD = 'dogs'; startLevel(4); out.dogs = G.enemies.filter(e => e.kind === 'dog').length > 1;
+    const q = dailyPick(); out.daily = !!q && nightOK(q.floor) && !!NIGHT_MODS[q.mod] && q.d === new Date().toISOString().slice(0, 10);
+    const before = JSON.stringify(JOBS.best[4]); const rec = recordNight(4, 'full', { g: 'A', t: 50, s: 9000, c: 5, ch: 'don', d: 'normal' }); out.rec = rec.nb[0]; out.kept = JSON.stringify(JOBS.best[4]) === before;
+    NIGHTMOD = null; return out; });
+  expect(r).toEqual({ locked: null, mod: 'shotguns', moved: true, allShot: true, more: true, hp: 1, dead: true, dogs: true, daily: true, rec: 'FIRST NIGHT CLEAR', kept: true });
+});
+
 test('slams: a guard knocked into water, the shark tank or broken glass dies there, and Kade can go off the edge', async ({ openGame }) => {
   test.setTimeout(180_000);
   const page = await openGame();
