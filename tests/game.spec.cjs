@@ -339,6 +339,22 @@ test('lex: the killing blow opens a spare-or-finish choice; sparing leaves him o
   await expect.poll(() => page.evaluate(() => G.cleared), { timeout: 20_000 }).toBe(true);
 });
 
+test('enemy kinds: dogs, grenadiers, riot shields and spotters appear from the Marina on and behave', async ({ openGame }) => {
+  test.setTimeout(180_000);
+  const page = await openGame();
+  const kinds = await page.evaluate(() => { NOARRIVE = true; const r = {}; for (const i of [0, 1, 3, 6, 9]) { startLevel(i); r[i] = G.enemies.filter(e => e.kind).map(e => e.kind).sort().join(','); } return r; });
+  expect(kinds).toEqual({ 0: '', 1: '', 3: 'dog,dog', 6: 'nade,shield', 9: 'shield,shield,spot' });
+  const r = await page.evaluate(() => { startLevel(9); const g = G, sh = g.enemies.find(e => e.kind === 'shield'); sh.a = 0;
+    const nine = BAL.proj('9mm'), rifle = BAL.proj('556');
+    const out = { front9: shieldBlocks(sh, { p: nine, dx: 0, dz: -1 }), back9: shieldBlocks(sh, { p: nine, dx: 0, dz: 1 }), frontRifle: shieldBlocks(sh, { p: rifle, dx: 0, dz: -1 }) };
+    const dog = setKind(g.enemies.find(e => !e.kind && !e.boss), 'dog'); knockdown(dog, [1, 0]); out.dogDead = !dog.alive;
+    for (const e of g.enemies) if (e.kind !== 'nade') { e.alive = false; e.sunk = true; }
+    let n = g.enemies.find(e => e.kind === 'nade'); if (!n) { n = g.enemies[0]; n.alive = true; n.sunk = false; setKind(n, 'nade'); }
+    g.player.x = 19.5; g.player.z = 11; g.player.hp = 99; n.x = 19.5; n.z = 5.5; n.a = 0; return out; });
+  expect(r).toEqual({ front9: true, back9: false, frontRifle: false, dogDead: true });
+  await expect.poll(() => page.evaluate(() => (G.nades || []).some(n => n.own === 'e' && n.ring)), { timeout: 30_000 }).toBe(true);
+});
+
 test('slams: a guard knocked into water, the shark tank or broken glass dies there, and Kade can go off the edge', async ({ openGame }) => {
   test.setTimeout(180_000);
   const page = await openGame();
