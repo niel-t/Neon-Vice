@@ -863,23 +863,38 @@
       "idx": 0,
       "input": {
         "map": [
-          "##################",
-          "#a.#...#...#h....#",
-          "#..#...#...#.q..l#",
-          "#..#....r........#",
-          "#.cf....s....dj..#",
-          "#.......o........#",
-          "#b............p..#",
-          "#...........m....#",
-          "#t.g.........m...#",
-          "#n....P........g.#",
-          "########xx########"
+          "yyyyyyyyyyyyyyyyyyyyyyyy",
+          "yyyyyyyyyyyyyyyyyyyyyyyy",
+          "yyyyyyyyyyyyyyyyyyyyyyyy",
+          "#RRRRRRRRRRRRRRRRRRRRRR#",
+          "#......................#",
+          "#..........m....g......#",
+          "##WW######D##WW###WW####",
+          "#....c.#b...d...#...h..#",
+          "#a.....#...............#",
+          "#......#....o......q...#",
+          "#......D........#......#",
+          "###D####........########",
+          "#.....#.........f.j..l.#",
+          "#.....D.....sr.........#",
+          "#.....#..tn..P..m.p....#",
+          "###########xx###########"
         ],
         "legend": {
-          ".": {
-            "f": 27
+          "y": {
+            "w": 7,
+            "h": 0.02,
+            "top": 7
           },
-          "w": {
+          "W": {
+            "w": 48,
+            "h": 0.42
+          },
+          "R": {
+            "w": 6,
+            "h": 0.45
+          },
+          ".": {
             "f": 27
           },
           "n": {
@@ -944,35 +959,51 @@
         },
         "wall": 48,
         "floor": 27,
+        "floorFn": "(x,z)=>{const X=x-1,Z=z-1;return Z<6?37:Z<11?(X<7?31:27):(X<6&&Z>11?1:27);}",
         "paletteSize": 6
       },
-      "gridHash": "e16f75dfe8024a1396ec0266523c75e44cc7ed04cc1b376631fdad3b7e1065f7",
-      "loadedHash": "f94e7f4550deff18972e4f04c595f06d56daeb11b7d4dcc88a39c6ed40738f45",
-      "queryHash": "d7205f0760ed7f10a7c9b7b6d7185a0bd65342c73df943cbcca6172a3f94c993",
-      "cellHash": "791ce50c84a1527f887f78e46cf84ee3ef87bec0a5d5724689b0a24546eb69ce"
+      "gridHash": "0fb24ad69f2b571d3d2fa7128a1f8a37e1ed90a8c1b7ab1db9c814fe93f38482",
+      "loadedHash": "bf3e258a27d1fa855eb01111c90f0fb0c0838f2f7f0129166c85a37d49ccccf4",
+      "queryHash": "0171220bc42e80c6c43a04fd8f4368239c29999f974df18f52aaa4a79cbdfc10",
+      "cellHash": "6511afdc5d391b3902c83b1c0ce7755d0af64f640cadae5bbe9ec97dd3bc0910"
     },
     {
       "key": "hub:home0:7",
       "idx": 7,
       "input": {
         "map": [
-          "##################",
-          "#a.#...#...#h....#",
-          "#..#...#...#.q..l#",
-          "#..#....r........#",
-          "#.cf....s....dj..#",
-          "#.......o........#",
-          "#b............p..#",
-          "#...........m....#",
-          "#t.g.........m...#",
-          "#n....P........g.#",
-          "########xx########"
+          "yyyyyyyyyyyyyyyyyyyyyyyy",
+          "yyyyyyyyyyyyyyyyyyyyyyyy",
+          "yyyyyyyyyyyyyyyyyyyyyyyy",
+          "#RRRRRRRRRRRRRRRRRRRRRR#",
+          "#......................#",
+          "#..........m....g......#",
+          "##WW######D##WW###WW####",
+          "#....c.#b...d...#...h..#",
+          "#a.....#...............#",
+          "#......#....o......q...#",
+          "#......D........#......#",
+          "###D####........########",
+          "#.....#.........f.j..l.#",
+          "#.....D.....sr.........#",
+          "#.....#..tn..P..m.p....#",
+          "###########xx###########"
         ],
         "legend": {
-          ".": {
-            "f": 27
+          "y": {
+            "w": 7,
+            "h": 0.02,
+            "top": 7
           },
-          "w": {
+          "W": {
+            "w": 48,
+            "h": 0.42
+          },
+          "R": {
+            "w": 6,
+            "h": 0.45
+          },
+          ".": {
             "f": 27
           },
           "n": {
@@ -1037,12 +1068,13 @@
         },
         "wall": 48,
         "floor": 27,
+        "floorFn": "(x,z)=>{const X=x-1,Z=z-1;return Z<6?37:Z<11?(X<7?31:27):(X<6&&Z>11?1:27);}",
         "paletteSize": 6
       },
-      "gridHash": "e16f75dfe8024a1396ec0266523c75e44cc7ed04cc1b376631fdad3b7e1065f7",
-      "loadedHash": "f94e7f4550deff18972e4f04c595f06d56daeb11b7d4dcc88a39c6ed40738f45",
-      "queryHash": "d7205f0760ed7f10a7c9b7b6d7185a0bd65342c73df943cbcca6172a3f94c993",
-      "cellHash": "791ce50c84a1527f887f78e46cf84ee3ef87bec0a5d5724689b0a24546eb69ce"
+      "gridHash": "0fb24ad69f2b571d3d2fa7128a1f8a37e1ed90a8c1b7ab1db9c814fe93f38482",
+      "loadedHash": "bf3e258a27d1fa855eb01111c90f0fb0c0838f2f7f0129166c85a37d49ccccf4",
+      "queryHash": "0171220bc42e80c6c43a04fd8f4368239c29999f974df18f52aaa4a79cbdfc10",
+      "cellHash": "6511afdc5d391b3902c83b1c0ce7755d0af64f640cadae5bbe9ec97dd3bc0910"
     },
     {
       "key": "hub:home1:0",
