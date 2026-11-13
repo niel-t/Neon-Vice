@@ -1156,6 +1156,20 @@ function drawDog(B,e){const T=G.T,run=e.alive?Math.min(1,Math.hypot(e.vx,e.vz)/2
  for(const [lx,lz] of [[-0.08,0.2],[0.08,0.2],[-0.08,-0.2],[0.08,-0.2]])P(lx,0.11,lz+(lx>0?lg:-lg),0.06,0.22,0.06,t);P(0,0.44,-0.35,0.04,0.04,0.16,c);
  if(e.alive)P(0,0.36,0.3,0.26,0.05,0.05,[0.8,0.1,0.15]);}
 function drawFoe(B,e){if(e.kind==='dog')drawDog(B,e);else drawChar(B,e);}
+/* GETAWAY: the floor does not go quiet after the last kill. From floor 2 on, clearing a floor starts a countdown sized to the walk out. Leave in
+   time for a clean getaway bonus. Late: backup arrives at the exit, or on the demolition floors (ESC_DEBRIS) the building starts coming down
+   and blasts with a red ring land around you until you are out. Nothing here can fail the floor by itself. */
+const ESC_PAY=1000,ESC_DEBRIS={8:1,10:1};
+function startEscape(g){if(g.def.hub||g.esc||!(levelIdx>=1))return;const p=g.player,d=Math.hypot(p.x-g.car.x,p.z-g.car.z);if(d<6)return;
+ const kind=ESC_DEBRIS[levelIdx]?'debris':'backup';g.esc={t:clamp(Math.round(10+d*1.1),15,45),late:false,nt:0,kind};
+ setTimeout(()=>{if(G===g&&state==='play'&&!g.done)banner(kind==='debris'?'THE CHARGES ARE LIVE':'BACKUP IS ON THE WAY','Out in '+Math.ceil(g.esc.t)+'s for a clean getaway  +$'+fmt(ESC_PAY));},1600);}
+function updateEscape(dt){const g=G,x=g.esc,p=g.player;if(!x||!g.cleared||g.done||!p.alive)return;
+ if(!x.late){x.t-=dt;if(x.t>0)return;x.late=true;x.t=0;sfx('alert');
+  if(x.kind==='debris'){banner('IT IS COMING DOWN','Dodge the red rings and get out');return;}
+  let n=0;for(let k=0;k<200&&n<3;k++){const cx=g.car.x+rnd(-4,4),cz=g.car.z+rnd(-4,4);if(blk(g,cx,cz)||Math.hypot(cx-p.x,cz-p.z)<5||!mClear(g,cx,cz,g.car.x,g.car.z))continue;
+   const e=makeEnemy(g,g.def,levelIdx,['pistol','shotgun','pistol'][n],false,cx,cz);e.state='chase';e.react=0.6;e.backup=1;AI.know(e,AI.belief.make(p.x,p.z,g.T,'call'));n++;}
+  banner('BACKUP IS HERE',n?'Fight your way out':'Get out');return;}
+ if(x.kind==='debris'){x.nt-=dt;if(x.nt<=0){x.nt=1.5;if(!g.nades)g.nades=[];const tx=p.x+p.vx*0.8+rnd(-1.3,1.3),tz=p.z+p.vz*0.8+rnd(-1.3,1.3);g.nades.push({sx:tx,sz:tz,x:tx,z:tz,y:3,tx,tz,t:0,dur:1.25,own:'e',spin:0,ring:1});sfx('thud');shake(0.2);}}}
 function knockdown(e,dir){if(!e.alive)return;{const sl=slamSpot(e,dir);if(sl){doSlam(e,dir,sl);return;}}if(e.kind==='dog'){killEnemy(e,'fists',dir);return;}if(e.boss){stagger(e,dir);hitEnemy(e,'door',dir,1);return;}e.down=3.0;e.fall=0;e.vx=dir[0]*4;e.vz=dir[1]*4;dropWeapon(e,dir,true);e.a=Math.atan2(dir[0],dir[1]);e.state='chase';e.wind=0;e.seeT=0;AI.hurt(e,dir);sfx('hit_fists');bloodBurst(e.x,0.9,e.z,dir,6,2);}
 const DEATHNAME={grenade:'BLOWN UP BY A GOLD GRENADE',dual:'DOUBLE-TAPPED, TWICE',boss:'FLATTENED BY THE SHARK',fists:'BEATEN TO DEATH',bat:'BATTED INTO THE NEXT LIFE',knife:'STABBED',machete:'HACKED APART',pistol:'SHOT WITH A 9MM',silenced:'SILENCED',revolver:'SHOT WITH A .357',shotgun:'BLASTED WITH A SHOTGUN',double:'BOTH BARRELS',smg:'RIDDLED BY AN UZI',m16:'GUNNED DOWN BY AN M16'};
 /* dmg: float HP (1 = a clean hit); hit={p:projectile,e:J at impact} lets armour absorb by level (W5; a 0.1 pass-through keeps the plate); without hit a plate stops the whole hit */
@@ -1309,8 +1323,9 @@ function update(dt){const g=G;if(g.stageManaged&&(state!=='play'||stageStairs(g)
  if(g.hitT>0)g.hitT-=dt;if(g.np)g.np.t+=dt;
  g.flowT-=dt;if(g.flowT<=0){computeFlow();g.flowT=0.25;}
  updatePlayer(dt);updateHazards(dt);if(g.player.ex){if(g.player.alive)updateExec(g.player,dt);else g.player.ex=null;}for(const e of g.enemies)updateEnemy(e,dt);separate();bodyPhysics();updateDoors(dt);updateBullets(dt);updateNades(dt);updateAct2(dt);updateStash(dt);updateObj(dt);updateStage(dt);updateItems(dt);updateCash(dt);updateFX(dt);
- if(stageMayFinish(g)&&!g.cleared&&g.enemies.every(e=>!e.alive||e.spared||e.boss&&g.clear&&g.clear.boss==='optional')){if(g.obj&&!g.obj.done){if(!g.objWarn){g.objWarn=1;banner('GUARDS DOWN','Now: '+g.obj.label);}}else{g.cleared=true;banner('FLOOR CLEAR',g.def.noCar?'Take the elevator down':'Get back to the car');sfx('clear');}}
- if(stageMayFinish(g)&&g.cleared&&g.player.alive&&!g.done&&Math.hypot(g.player.x-g.car.x,g.player.z-g.car.z)<1.8){g.done=true;finishLevel();}
+ if(stageMayFinish(g)&&!g.cleared&&g.enemies.every(e=>!e.alive||e.spared||e.boss&&g.clear&&g.clear.boss==='optional')){if(g.obj&&!g.obj.done){if(!g.objWarn){g.objWarn=1;banner('GUARDS DOWN','Now: '+g.obj.label);}}else{g.cleared=true;banner('FLOOR CLEAR',g.def.noCar?'Take the elevator down':'Get back to the car');sfx('clear');startEscape(g);}}
+ updateEscape(dt);
+ if(stageMayFinish(g)&&g.cleared&&g.player.alive&&!g.done&&Math.hypot(g.player.x-g.car.x,g.player.z-g.car.z)<1.8){g.done=true;if(g.esc&&!g.esc.late){g.getaway=true;g.score+=ESC_PAY;g.gpts=(g.gpts||0)+ESC_PAY;}finishLevel();}
  if(!g.player.alive){g.deadT+=dt;if(g.deadT>1&&state==='play')showDead();}
  updateHints(dt);updateCamera(dt);}
 function stickVec(s){let dx=(s.x-s.ox)/55,dy=(s.y-s.oy)/55;const l=Math.hypot(dx,dy);if(l>1){dx/=l;dy/=l;}return[dx,dy];}
@@ -3602,7 +3617,7 @@ function drawHUD0(){const c=hctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0
  if(g.kc>0){const bh=Math.round(vh*0.085*Math.min(1,g.kc/0.25));c.fillStyle='#000';c.fillRect(0,0,vw,bh);c.fillRect(0,vh-bh,vw,bh);c.globalAlpha=Math.min(1,g.kc/0.5);c.fillStyle='rgba(255,63,164,.12)';c.fillRect(0,0,vw,vh);c.globalAlpha=1;}
  /* objective */
  c.font=PXF(7*u);txt(c,'OBJECTIVE',m,m,'#2de2e6','left',7*u);
- c.font=VTF(20*u);txt(c,g.cleared?(g.def.noCar?'TAKE THE ELEVATOR DOWN':'GET BACK TO THE CAR'):stageGoal(g)||'ELIMINATE TARGETS  '+(tot-alive)+'/'+tot,m,m+10*u,g.cleared?'#ff5fb8':'#fff','left',20*u);
+ c.font=VTF(20*u);txt(c,g.cleared?(g.def.noCar?'TAKE THE ELEVATOR DOWN':'GET BACK TO THE CAR')+(g.esc?(g.esc.late?(g.esc.kind==='debris'?'  ·  IT IS COMING DOWN':'  ·  BACKUP IS HERE'):'  ·  '+Math.ceil(g.esc.t)+'s'):''):stageGoal(g)||'ELIMINATE TARGETS  '+(tot-alive)+'/'+tot,m,m+10*u,g.cleared?'#ff5fb8':'#fff','left',20*u);
  c.font=VTF(15*u);txt(c,missionIsCampaign(MISSION)?BRIEF_FLOOR(levelIdx):missionName(MISSION),m,m+30*u,'#c9a8e8','left',15*u);
  if(g.obj&&!g.cleared){c.font=VTF(17*u);txt(c,(g.obj.done?'\u2713 ':'\u25a0 ')+g.obj.label+(g.obj.total>1?'  '+g.obj.n+'/'+g.obj.total:''),m,m+46*u,g.obj.done?'#7dff9a':'#ffd36b','left',17*u);}
  if(g.sj){const s=sjState(g);txt(c,'SIDE JOB · '+SIDEJOBS[g.sj].name+' · '+s.txt,m,m+46*u,s.fail?'#ff8a95':s.ok?'#7dff9a':'#ffd36b','left',15*u);}
@@ -3703,7 +3718,7 @@ function finishLevel(){const g=G;if(g.stageManaged&&!stageFinal(g)){banner('STAG
  const gden=stageFoes(g)*700,gp=(g.gpts||0)+tb,ratio=gp/gden;const gr=GRADES.find(q=>ratio>q[1])[0];const gi=GRADES.findIndex(q=>q[0]===gr);const nextG=gi>0?GRADES[gi-1]:null;const rsty=g.execs>=2?'ruthless':g.heads>=2?'gore':(!g.taken&&g.shots&&g.hits/g.shots>=0.6)?'clean':'mixed';g.style=rsty;runStyle[rsty]=(runStyle[rsty]||0)+1;
  const acc=g.shots?Math.round(Math.min(1,g.hits/g.shots)*100)+'%':'—';
  $('rStats').innerHTML=`DIFFICULTY<b>${Dd().name}</b><br>KILLS<b>${g.kills}</b><br>EXECUTIONS<b>${g.execs}</b><br>BEST COMBO<b>x${g.maxCombo}</b><br>HEADS TAKEN<b>${g.heads}</b><br>STYLE<b>${rsty.toUpperCase()}</b><br>STYLE BONUS<b style="color:#2de2e6">+$${fmt(g.styleB||0)}${g.multis||g.switches?` <span style="opacity:.7">(${g.multis||0} MULTI · ${g.switches||0} SWITCH-UP)</span>`:''}</b><br>BY WEAPON<b>${Object.entries(g.kb).sort((a,b)=>b[1]-a[1]).map(([k,v])=>(KNAME[k]||k)+' '+v).join(' · ')||'—'}</b><br>ACCURACY<b>${acc}</b><br>TIME<b>${mmss(g.time)}  (PAR ${mmss(parOf(levelIdx))})</b><br>KILL MONEY<b>$${fmt(g.score)}</b><br>SPEED BONUS<b>$${fmt(tb)}</b><br>TAKE HOME<b>$${fmt(total)}</b><br>GRADE POINTS<b style="color:#ffd36b">${fmt(gp)}${nextG?'  ·  '+nextG[0]+' AT '+fmt(Math.floor(nextG[1]*gden)+1):'  ·  TOP GRADE'}</b>`;
- let xp=0;if(!g.xpGiven){g.xpGiven=1;xp=runXP(g,true,gr);awardXP(xp);}const pr=myProg();$('rStats').innerHTML+=`<br>XP EARNED<b style="color:#ffd36b">+${xp}</b><br>LEVEL<b style="color:#ffd36b">${pr.lvl}  (${pr.xp}/${xpNeed(pr.lvl)})</b>`;
+ let xp=0;if(!g.xpGiven){g.xpGiven=1;xp=runXP(g,true,gr);awardXP(xp);}const pr=myProg();$('rStats').innerHTML+=(g.getaway?`<br>CLEAN GETAWAY<b style="color:#7dff9a">+$${fmt(ESC_PAY)}</b>`:'')+`<br>XP EARNED<b style="color:#ffd36b">+${xp}</b><br>LEVEL<b style="color:#ffd36b">${pr.lvl}  (${pr.xp}/${xpNeed(pr.lvl)})</b>`;
  if(g.sj){const s=sjState(g);g.sjPay=s.ok?sjPay(g.sj,levelIdx):0;$('rStats').innerHTML+=`<br>SIDE JOB<b style="color:${s.ok?'#7dff9a':'#ff8a95'}">${SIDEJOBS[g.sj].name} · ${s.ok?'PAID +$'+fmt(g.sjPay)+' (NO CUT)':'FAILED'}</b>`;}{const wl=wallet(),ct=missionIsCampaign(MISSION)?cutOf(total):0,ow=myProg().debt;$('rStats').innerHTML+=(ct?`<br>McWEY'S CUT<b style="color:#ff8a95">-$${fmt(ct)}</b><br>STILL OWED<b style="color:#ff8a95">$${fmt(ow-ct)}</b>`:'')+`<br>WALLET<b style="color:#7dff9a">$${fmt(wl)} &rarr; $${fmt(wl+total-ct+(g.sjPay||0))}</b>`;}{const rec={g:gr,t:g.time,s:total,c:g.maxCombo,ch:CHARS[selIdx].id,d:SET.diff},camp=missionIsCampaign(MISSION),mr=camp?null:recordMission(MISSION,g.variant,rec),nb=camp?recordBest(levelIdx,rec):mr.nb,b=camp?JOBS.best[levelIdx]:mr.b;$('rStats').innerHTML+=`<br>PERSONAL BEST<b style="color:#2de2e6">${b.g} · ${mmss(b.t)} · $${fmt(b.s)} · x${b.c}</b>`+(nb.length?`<br>NEW<b style="color:#ff5fb8">${nb.join(' · ')}</b>`:'');}if(missionIsCampaign(MISSION)){const cr=checkChallenges(levelIdx,g);$('rStats').innerHTML+='<br>CHALLENGES<b>'+cr.out.map(c=>`<span style="color:${c.ok?'#7dff9a':'#ff8a95'}">${c.ok?'\u2605':'\u2606'} ${c.n}${c.fresh?' +$'+fmt(CH_PAY):''}</span>`).join(' · ')+'</b>'+(cr.pay?`<br>CHALLENGE BONUS<b style="color:#7dff9a">+$${fmt(cr.pay)} TO WALLET</b>`:'');}G.grade=gr;$('rGrade').textContent=gr;$('bNextLvl').innerHTML='BACK TO McWEY'+'<span class="padhint"> (A)</span>';if(pendingPerks>0)setTimeout(()=>{if(state==='results')showPerkPick('results');},900);show('sResults');sfx('cash');}
 /* W1eB: grid-only checkpoints. Geometry, GPU batches, effects, projectiles and AI work
    queues are rebuilt, never retained. Mission totals live in the manager bag, not per-floor data. */

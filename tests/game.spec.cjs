@@ -355,6 +355,31 @@ test('enemy kinds: dogs, grenadiers, riot shields and spotters appear from the M
   await expect.poll(() => page.evaluate(() => (G.nades || []).some(n => n.own === 'e' && n.ring)), { timeout: 30_000 }).toBe(true);
 });
 
+test('getaway: clearing a floor starts a countdown; leaving in time pays, staying brings backup or falling debris', async ({ openGame }) => {
+  test.setTimeout(180_000);
+  const page = await openGame();
+  const clear = i => page.evaluate(i => { NOARRIVE = true; startLevel(i); { const f = G.enemies.reduce((a, b) => Math.hypot(b.x - G.car.x, b.z - G.car.z) > Math.hypot(a.x - G.car.x, a.z - G.car.z) ? b : a); G.player.x = f.x; G.player.z = f.z; } for (const e of G.enemies) if (e.alive) { e.lex ? (e.spared = true) : killEnemy(e, 'pistol', [0, 1]); } if (G.obj) G.obj.done = true; }, i);
+  await clear(0);
+  await expect.poll(() => page.evaluate(() => G.cleared)).toBe(true);
+  expect(await page.evaluate(() => !!G.esc)).toBe(false); // the first floor stays a gentle tutorial
+  await clear(4);
+  await expect.poll(() => page.evaluate(() => !!(G.cleared && G.esc))).toBe(true);
+  expect(await page.evaluate(() => ({ kind: G.esc.kind, late: G.esc.late, ok: G.esc.t >= 14 && G.esc.t <= 45 }))).toEqual({ kind: 'backup', late: false, ok: true });
+  await page.evaluate(() => { G.esc.t = 0.05; });
+  await expect.poll(() => page.evaluate(() => G.esc.late)).toBe(true);
+  expect(await page.evaluate(() => G.enemies.filter(e => e.backup && e.alive && e.state === 'chase').length)).toBeGreaterThan(0);
+  expect(await page.evaluate(() => G.cleared)).toBe(true);
+  await clear(8);
+  await expect.poll(() => page.evaluate(() => !!(G.cleared && G.esc))).toBe(true);
+  await page.evaluate(() => { G.esc.t = 0.05; G.player.hp = 99; });
+  await expect.poll(() => page.evaluate(() => G.esc.kind === 'debris' && (G.nades || []).some(n => n.ring)), { timeout: 20_000 }).toBe(true);
+  await clear(3);
+  await expect.poll(() => page.evaluate(() => !!(G.cleared && G.esc))).toBe(true);
+  const sc = await page.evaluate(() => { const s = G.score; G.player.x = G.car.x; G.player.z = G.car.z; return s; });
+  await expect.poll(() => page.evaluate(() => !!G.getaway)).toBe(true);
+  expect(await page.evaluate(sc => G.score - sc, sc)).toBe(1000);
+});
+
 test('slams: a guard knocked into water, the shark tank or broken glass dies there, and Kade can go off the edge', async ({ openGame }) => {
   test.setTimeout(180_000);
   const page = await openGame();
