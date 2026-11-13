@@ -319,6 +319,9 @@ test('act 3: Kade Tower, the hoist needs the foreman\'s key, the crane drops a l
   const before = await page.evaluate(() => G.enemies.length);
   await page.evaluate(() => { G.boss.hp = Math.floor(G.boss.maxhp / 2); });
   await expect.poll(() => page.evaluate(() => G.enemies.length), { timeout: 20_000 }).toBe(before + 3);
+  // Killed beside the open edge, Kade goes over it.
+  expect(await page.evaluate(() => { const b = G.boss, sc = G.score; b.x = 2.5; b.z = 6.5; killEnemy(b, 'pistol', [-1, 0]); return { fell: !!G.kadeFell, paid: G.score - sc >= 2000, alive: b.alive }; })).toEqual({ fell: true, paid: true, alive: false });
+  await expect.poll(() => page.evaluate(() => !!G.boss.sunk), { timeout: 20_000 }).toBe(true);
   await page.evaluate(() => { for (const e of G.enemies) if (e.alive) killEnemy(e, 'pistol', [0, 1]); });
   await expect.poll(() => page.evaluate(() => G.cleared), { timeout: 20_000 }).toBe(true);
 });
@@ -334,6 +337,25 @@ test('lex: the killing blow opens a spare-or-finish choice; sparing leaves him o
   expect(await page.evaluate(() => ({ alive: G.boss.alive, spared: !!G.boss.spared, fin: !!G.fin }))).toEqual({ alive: true, spared: true, fin: false });
   await page.evaluate(() => { for (const e of G.enemies) if (e.alive && !e.boss) killEnemy(e, 'pistol', [0, 1]); });
   await expect.poll(() => page.evaluate(() => G.cleared), { timeout: 20_000 }).toBe(true);
+});
+
+test('slams: a guard knocked into water, the shark tank or broken glass dies there, and Kade can go off the edge', async ({ openGame }) => {
+  test.setTimeout(180_000);
+  const page = await openGame();
+  const water = await page.evaluate(() => { NOARRIVE = true; startLevel(3); const g = G, W = g.W;
+    for (let z = 1; z < g.H - 1; z++) for (let x = 1; x < W - 2; x++) { const i = z * W + x;
+      if (!g.solid[i] && g.solid[i + 1] && g.wallT[i + 1] === 39 && g.wh[i + 1] < 0.1) { const e = g.enemies.find(q => q.alive && !q.boss && q.body !== 'fat' && q.body !== 'big'); e.x = x + 0.5; e.z = z + 0.5; knockdown(e, [1, 0]); return { alive: e.alive, sunk: !!e.sunk, slams: g.slams, k: g.slamK }; } }
+    return null; });
+  expect(water).toEqual({ alive: false, sunk: true, slams: 1, k: { water: 1 } });
+  const shark = await page.evaluate(() => { startLevel(7); const g = G, W = g.W;
+    for (let z = 1; z < g.H - 1; z++) for (let x = 1; x < W - 1; x++) if (!g.solid[z * W + x] && g.floorT[z * W + x] === 39) { const e = g.enemies.find(q => q.alive && !q.boss); e.x = x + 0.5; e.z = z + 0.5; knockdown(e, [1, 0]); return { alive: e.alive, k: g.slamK, boss: G.boss.alive }; }
+    return null; });
+  expect(shark).toEqual({ alive: false, k: { shark: 1 }, boss: true });
+  const glass = await page.evaluate(() => { startLevel(1); const g = G, i = g.glass.findIndex(v => v), e = g.enemies.find(q => q.alive && !q.boss);
+    e.x = i % g.W + 0.5; e.z = Math.floor(i / g.W) + 0.5; const sc = g.score; knockdown(e, [0, 1]); return { alive: e.alive, k: g.slamK, paid: g.score - sc >= 300 }; });
+  expect(glass).toEqual({ alive: false, k: { glass: 1 }, paid: true });
+  const plain = await page.evaluate(() => { startLevel(0); const g = G, e = g.enemies.find(q => q.alive && q.body !== 'fat' && q.body !== 'big'); g.glass.fill(0); knockdown(e, [0, 1]); return { alive: e.alive, down: e.down > 0, slams: g.slams || 0 }; });
+  expect(plain).toEqual({ alive: true, down: true, slams: 0 });
 });
 
 test('lex: the spare and finish buttons work without a keyboard (touch and mouse)', async ({ openGame }) => {
