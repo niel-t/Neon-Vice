@@ -263,6 +263,7 @@ test('saves: a job in progress resumes from its stage kit as a retry, and walkin
       return { s0: [s0.stage, s0.stageKit.guns, s0.stow.length, s0.stageHp], gone: [gone.stage, gone.stageKit.guns, gone.stow, gone.stageHp, gone.st], yard: [yard.stage, yard.stageKit.guns, yard.stow.length, yard.stageHp],
         bad: normRun({ mission: 'toString', entryKit: e, stageKit: st }, missionStage, []) }; } finally { MISSIONS.c1.stages = stages; } }, [entry, stage]))
     .toEqual({ s0: ['legacy', stage.guns, 1, 40], gone: ['legacy', entry.guns, undefined, undefined, undefined], yard: ['yard', stage.guns, 1, 40], bad: null });
+  await expect.poll(() => page.evaluate(() => fading)).toBe(false); // walkAway is refused while the resume fade is still running
   expect(await page.evaluate(() => { const f = fadeTo; fadeTo = () => true; try { togglePause(); walkAway(); } finally { fadeTo = f; }
     const s = JSON.parse(localStorage.getItem('nb86prog')).money; return { run: s.run || null, kit: s.kit }; }))
     .toEqual({ run: null, kit: entry });
@@ -353,6 +354,72 @@ test('enemy kinds: dogs, grenadiers, riot shields and spotters appear from the M
     g.player.x = 19.5; g.player.z = 11; g.player.hp = 99; n.x = 19.5; n.z = 5.5; n.a = 0; return out; });
   expect(r).toEqual({ front9: true, back9: false, frontRifle: false, dogDead: true });
   await expect.poll(() => page.evaluate(() => (G.nades || []).some(n => n.own === 'e' && n.ring)), { timeout: 30_000 }).toBe(true);
+});
+
+test('getaway: clearing a floor starts a countdown; leaving in time pays, staying brings backup or falling debris', async ({ openGame }) => {
+  test.setTimeout(180_000);
+  const page = await openGame();
+  const clear = i => page.evaluate(i => { NOARRIVE = true; startLevel(i); { const f = G.enemies.reduce((a, b) => Math.hypot(b.x - G.car.x, b.z - G.car.z) > Math.hypot(a.x - G.car.x, a.z - G.car.z) ? b : a); G.player.x = f.x; G.player.z = f.z; } for (const e of G.enemies) if (e.alive) { e.lex ? (e.spared = true) : killEnemy(e, 'pistol', [0, 1]); } if (G.obj) G.obj.done = true; }, i);
+  await clear(0);
+  await expect.poll(() => page.evaluate(() => G.cleared)).toBe(true);
+  expect(await page.evaluate(() => !!G.esc)).toBe(false); // the first floor stays a gentle tutorial
+  await clear(4);
+  await expect.poll(() => page.evaluate(() => !!(G.cleared && G.esc))).toBe(true);
+  expect(await page.evaluate(() => ({ kind: G.esc.kind, late: G.esc.late, ok: G.esc.t >= 14 && G.esc.t <= 45 }))).toEqual({ kind: 'backup', late: false, ok: true });
+  await page.evaluate(() => { G.esc.t = 0.05; });
+  await expect.poll(() => page.evaluate(() => G.esc.late)).toBe(true);
+  expect(await page.evaluate(() => G.enemies.filter(e => e.backup && e.alive && e.state === 'chase').length)).toBeGreaterThan(0);
+  expect(await page.evaluate(() => G.cleared)).toBe(true);
+  await clear(8);
+  await expect.poll(() => page.evaluate(() => !!(G.cleared && G.esc))).toBe(true);
+  await page.evaluate(() => { G.esc.t = 0.05; G.player.hp = 99; });
+  await expect.poll(() => page.evaluate(() => G.esc.kind === 'debris' && (G.nades || []).some(n => n.ring)), { timeout: 20_000 }).toBe(true);
+  await clear(3);
+  await expect.poll(() => page.evaluate(() => !!(G.cleared && G.esc))).toBe(true);
+  const sc = await page.evaluate(() => { const s = G.score; G.player.x = G.car.x; G.player.z = G.car.z; return s; });
+  await expect.poll(() => page.evaluate(() => !!G.getaway)).toBe(true);
+  expect(await page.evaluate(sc => G.score - sc, sc)).toBe(1000);
+});
+
+test('lures: a thrown weapon and a shot arcade cabinet draw guards to the noise, and ON AIR makes shots carry', async ({ openGame }) => {
+  test.setTimeout(180_000);
+  const page = await openGame();
+  const r = await page.evaluate(() => { NOARRIVE = true; startLevel(4); const g = G, e = g.enemies.find(q => q.alive && !q.kind && q.state !== 'chase');
+    lureNoise(e.x + 2, e.z, 7, 'CLATTER!'); const out = { lures: g.lures, heard: e.state !== 'chase' && !!(e.poi || e.inv || e.state === 'search' || e.sx !== undefined) };
+    const c = g.cabs[0]; balImpact(c.x, c.z, 0, 1, balLook('cmu_hollow'), 'wall', false); out.cab = !!c.loud; out.lures2 = g.lures; balImpact(c.x, c.z, 0, 1, balLook('cmu_hollow'), 'wall', false); out.once = g.lures; return out; });
+  expect(r).toMatchObject({ lures: 1, cab: true, lures2: 2, once: 2 });
+  await page.evaluate(() => { startLevel(6); G.airT = 0.05; });
+  await expect.poll(() => page.evaluate(() => !!G.onAir), { timeout: 20_000 }).toBe(true);
+  await page.evaluate(() => { startLevel(0); });
+  await page.waitForTimeout(500);
+  expect(await page.evaluate(() => !!G.onAir)).toBe(false);
+});
+
+test('fourth challenges and the new side jobs read slams, lures, the getaway and the ON AIR light', async ({ openGame }) => {
+  const page = await openGame();
+  const r = await page.evaluate(() => { NOARRIVE = true; startLevel(3); const g = G, c = CHALLENGES[3][3], out = { four: CHALLENGES.every(x => x.length === 4), name: c.n, before: c.f(g) };
+    g.slamK = { water: 2 }; g.slams = 2; out.after = c.f(g); g.sj = 'slam'; out.slam = sjState(g).ok; g.sj = 'lure'; out.lure0 = !!sjState(g).ok; g.lures = 2; out.lure = sjState(g).ok;
+    g.sj = 'getaway'; out.get0 = !!sjState(g).ok; g.getaway = true; out.get = sjState(g).ok; g.sj = 'clean'; out.clean = !!sjState(g).ok; g.taken = 1; out.hit = !!sjState(g).fail;
+    out.air = CHALLENGES[6][3].f({}) && !CHALLENGES[6][3].f({ airShots: 1 }); out.keys = Object.keys(SIDEJOBS).length; return out; });
+  expect(r).toEqual({ four: true, name: '2 MEN OVERBOARD', before: false, after: true, slam: true, lure0: false, lure: true, get0: false, get: true, clean: true, hit: true, air: true, keys: 10 });
+});
+
+test('night 2: a cleared floor can be replayed with a modifier, keeps its own best, and the daily job picks one floor and modifier', async ({ openGame }) => {
+  test.setTimeout(180_000);
+  const page = await openGame();
+  const r = await page.evaluate(() => { NOARRIVE = true; const out = {};
+    NIGHTMOD = 'shotguns'; startLevel(4); out.locked = G.mod; // not cleared yet: plays as normal
+    JOBS.best[4] = { g: 'B', t: 60, s: 5000, c: 3, ch: 'don', d: 'normal' }; JOBS.top = Math.max(JOBS.top, 5);
+    NIGHTMOD = null; startLevel(4); const base = G.enemies.map(e => e.x.toFixed(1) + ',' + e.z.toFixed(1)).join('|'), n = G.enemies.length;
+    NIGHTMOD = 'shotguns'; startLevel(4); out.mod = G.mod; out.moved = G.enemies.map(e => e.x.toFixed(1) + ',' + e.z.toFixed(1)).join('|') !== base;
+    out.allShot = G.enemies.filter(e => !e.boss && !e.kind && e.weapon && !WD[e.weapon.type].melee && e.weapon.type !== 'silenced').every(e => e.weapon.type === 'shotgun');
+    NIGHTMOD = 'full'; startLevel(4); out.more = G.enemies.length > n;
+    NIGHTMOD = 'glass'; startLevel(4); out.hp = G.player.hp; hurtPlayer([0, 1], 'pistol'); out.dead = !G.player.alive;
+    NIGHTMOD = 'dogs'; startLevel(4); out.dogs = G.enemies.filter(e => e.kind === 'dog').length > 1;
+    const q = dailyPick(); out.daily = !!q && nightOK(q.floor) && !!NIGHT_MODS[q.mod] && q.d === new Date().toISOString().slice(0, 10);
+    const before = JSON.stringify(JOBS.best[4]); const rec = recordNight(4, 'full', { g: 'A', t: 50, s: 9000, c: 5, ch: 'don', d: 'normal' }); out.rec = rec.nb[0]; out.kept = JSON.stringify(JOBS.best[4]) === before;
+    NIGHTMOD = null; return out; });
+  expect(r).toEqual({ locked: null, mod: 'shotguns', moved: true, allShot: true, more: true, hp: 1, dead: true, dogs: true, daily: true, rec: 'FIRST NIGHT CLEAR', kept: true });
 });
 
 test('slams: a guard knocked into water, the shark tank or broken glass dies there, and Kade can go off the edge', async ({ openGame }) => {
