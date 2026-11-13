@@ -78,6 +78,9 @@ test('UI journey: title/select/intro/elevator/brief/car/mission, spam and held m
   for (let i = 0; i < 6; i++) await page.keyboard.press('Tab');
   await expect.poll(() => page.evaluate(() => state === 'carmenu' && !fading)).toBe(true);
   await page.locator('#bCarJob').click();
+  // the car drives off from McWey's kerb first; Enter skips the scene like a player would
+  await page.waitForFunction(() => G.seq && G.seq.t > 0.5, null, { polling: 'raf' });
+  await page.keyboard.press('Enter');
   await expect.poll(() => page.evaluate(() => state === 'play' && G.def === LEVELS[0] && !fading)).toBe(true);
   const x = await page.evaluate(() => G.player.x);
   await page.keyboard.down('d');

@@ -1952,23 +1952,25 @@ const HUBS={
  "|||||||||ee|||||||||"]},
 
  home0:{name:'ROOM 14 · SUNSET MOTEL',hub:'foot',wall:48,floor:27,amb:[0.27,0.25,0.21],lc:[0.42,0.4,0.3],sofa:0x2a9ea3,track:'n_haze',where:'SUNSET MOTEL · ROOM 14',obj:'FURNISH THE PLACE · THEN HEAD OUT',
-  /* the motel suite. North to south: the parking lot (y), a back patio behind a rusty rail (R), then bedroom / TV corner / kitchenette,
+  /* the motel suite, on the ground floor. North to south: the parking lot (y, where your car parks), a back patio behind a rusty rail (R) with a gap to walk through,
+     then bedroom / TV corner / kitchenette,
      then bathroom and the rest of the living room. W is a window sill, D a door. Each room's floor comes from floorFn (world cells, so map + 1) */
-  floorFn:(x,z)=>{const X=x-1,Z=z-1;return Z<6?37:Z<11?(X<7?31:27):(X<6&&Z>11?1:27);},
-  legend:{'y':{w:7,h:0.02,top:7},'W':{w:48,h:0.42},'R':{w:6,h:0.45},'.':{f:27},'n':{f:27,npc:'hguard'},'x':{f:27,trig:'leave'},'a':{f:27},'b':{f:27},'c':{f:27},'d':{f:27},'o':{f:27},'k':{f:27},'f':{f:27},'q':{f:27},'h':{f:27},'s':{f:27},'r':{f:27},'l':{f:27},'j':{f:27},'g':{f:27},'m':{f:27},'p':{f:27},'t':{f:27}},
-  map:["yyyyyyyyyyyyyyyyyyyyyyyy", "yyyyyyyyyyyyyyyyyyyyyyyy", "yyyyyyyyyyyyyyyyyyyyyyyy", "#RRRRRRRRRRRRRRRRRRRRRR#", "#......................#", "#..........m....g......#", "##WW######D##WW###WW####", "#....c.#b...d...#...h..#", "#a.....#...............#", "#......#....o......q...#", "#......D........#......#", "###D####........########", "#.....#.........f.j..l.#", "#.....D.....sr.........#", "#.....#..tn..P..m.p....#", "###########xx###########"]},
+  floorFn:(x,z)=>{const X=x-1,Z=z-1;return Z<3?7:Z<6?37:Z<11?(X<7?31:27):(X<6&&Z>11?1:27);},
+  legend:{'y':{f:7},'W':{w:48,h:0.42},'R':{w:6,h:0.45},'.':{f:27},'n':{f:27,npc:'hguard'},'x':{f:27,trig:'leave'},'a':{f:27},'b':{f:27},'c':{f:27},'d':{f:27},'o':{f:27},'k':{f:27},'f':{f:27},'q':{f:27},'h':{f:27},'s':{f:27},'r':{f:27},'l':{f:27},'j':{f:27},'g':{f:27},'m':{f:27},'p':{f:27},'t':{f:27}},
+  map:["yyyyyyyyyyyyyyyyyyyyyyyy", "yyyyyyyyyyyyyyyyyyyyyyyy", "yyyyyyyyyyyyyyyyyyyyyyyy", "#RRRRRRRRR..RRRRRRRRRRR#", "#......................#", "#..........m....g......#", "##WW######D##WW###WW####", "#....c.#b...d...#...h..#", "#a.....#...............#", "#......#....o......q...#", "#......D........#......#", "###D####........########", "#.....#.........f.j..l.#", "#.....D.....sr.........#", "#.....#..tn..P..m.p....#", "########################"]},
  home1:{name:'OCEAN DRIVE STUDIO',hub:'foot',wall:62,floor:61,amb:[0.34,0.31,0.34],lc:[0.56,0.48,0.47],sofa:0xffffff,track:'n_crystal',where:'OCEAN DRIVE · THE STUDIO',obj:'FURNISH THE PLACE · THEN HEAD OUT',grime:0.3,
   /* a real apartment on the sand. North to south: ocean (~), beach (y), the terrace behind its rail (R), then bedroom / living room / kitchen,
-     then bathroom / living room / den. W is a window sill, D a door. Each room's floor comes from floorFn (world cells, so map + 1) */
-  floorFn:(x,z)=>{const X=x-1,Z=z-1;return Z<10?37:Z<15?(X<8?4:X>21?1:61):(X<6?3:X>21?4:61);},
-  legend:{'~':{w:39,h:0.02,top:39,water:1},'y':{w:38,h:0.03,top:38},'W':{w:62,h:0.42},'R':{w:62,h:0.5},'.':{f:61},'n':{f:61,npc:'hguard'},'x':{f:61,trig:'leave'},'a':{f:61},'b':{f:61},'c':{f:61},'d':{f:61},'o':{f:61},'k':{f:61},'f':{f:61},'q':{f:61},'h':{f:61},'s':{f:61},'r':{f:61},'l':{f:61},'j':{f:61},'g':{f:61},'m':{f:61},'p':{f:61},'t':{f:61}},
-  map:["~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyy", "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyy", "#RRRRRRRRRRRRRRRRRRRRRRRRRRRR#", "#............................#", "#........g.........m.........#", "#............................#", "###WWW######WW..WW####WWW#####", "#.......#.b........c.#....h..#", "#.......#....................#", "#.......D..oa...........q....#", "#.......#...........g#.......#", "###D#####....r.......#########", "#.....#.f.......m....#d..j.l.#", "#.....D.......s......D.......#", "#.....#.....t......p.#.......#", "#.....#.....n..P.....#.......#", "##############xx##############"]},
- home2:{name:'CORAL TOWER PENTHOUSE',hub:'foot',wall:42,floor:63,amb:[0.36,0.32,0.31],lc:[0.6,0.52,0.46],sofa:0xe8dcc0,track:'n_overdrive',where:'CORAL TOWER · PENTHOUSE',obj:'FURNISH THE PLACE · THEN HEAD OUT',grime:0.12,
-  /* fifty floors up. North to south: the bay (~), the city far below (y), the roof terrace behind its glass rail (R), then master bedroom / great room / kitchen,
-     then bathroom / lounge and bar / office. W is a window sill, D a door. Each room's floor comes from floorFn (world cells, so map + 1) */
+     then bathroom / living room / den, and the front door onto the third-floor corridor (e is the elevator). W is a window sill, D a door.
+     Each room's floor comes from floorFn (world cells, so map + 1) */
+  floorFn:(x,z)=>{const X=x-1,Z=z-1;return Z<10?37:Z>20?31:Z<15?(X<8?4:X>21?1:61):(X<6?3:X>21?4:61);},
+  legend:{'~':{w:39,h:0.02,top:39,water:1},'y':{w:38,h:0.03,top:38},'W':{w:62,h:0.42},'R':{w:62,h:0.5},'e':{w:40},'.':{f:61},'n':{f:61,npc:'hguard'},'x':{f:61,trig:'leave'},'a':{f:61},'b':{f:61},'c':{f:61},'d':{f:61},'o':{f:61},'k':{f:61},'f':{f:61},'q':{f:61},'h':{f:61},'s':{f:61},'r':{f:61},'l':{f:61},'j':{f:61},'g':{f:61},'m':{f:61},'p':{f:61},'t':{f:61}},
+  map:["~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyy", "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyy", "#RRRRRRRRRRRRRRRRRRRRRRRRRRRR#", "#............................#", "#........g.........m.........#", "#............................#", "###WWW######WW..WW####WWW#####", "#.......#.b........c.#....h..#", "#.......#....................#", "#.......D..oa...........q....#", "#.......#...........g#.......#", "###D#####....r.......#########", "#.....#.f.......m....#d..j.l.#", "#.....D.......s......D.......#", "#.....#.....t......p.#.......#", "#.....#.....n..P.....#.......#", "##############D###############", "#######ex............#########", "#######ex............#########", "##############################"]},
+ home2:{name:'CORAL TOWER PENTHOUSE',hub:'foot',wall:42,floor:63,amb:[0.36,0.32,0.31],lc:[0.6,0.52,0.46],sofa:0xe8dcc0,track:'n_overdrive',where:'CORAL TOWER · PENTHOUSE · FLOOR 69',obj:'FURNISH THE PLACE · THEN HEAD OUT',grime:0.12,
+  /* sixty-nine floors up. North to south: the bay (~), the city far below (y), the roof terrace behind its glass rail (R), then master bedroom / great room / kitchen,
+     then bathroom / lounge and bar / office, and through the archway the entrance hall with the private elevator (e). W is a window sill, D a door. Each room's floor comes from floorFn (world cells, so map + 1) */
   floorFn:(x,z)=>{const X=x-1,Z=z-1,ck=(X+Z)%2?43:63;return Z<8?59:Z<9?43:Z<14?(X<8?29:X>22?14:ck):Z<15?(X<8?43:ck):(X<6?43:X>22?4:ck);},
-  legend:{'~':{w:39,h:0.02,top:39,water:1},'y':{w:42,h:0.02,top:42},'W':{w:42,h:0.42},'R':{w:43,h:0.1,top:43},'.':{f:63},'n':{f:63,npc:'hguard'},'x':{f:63,trig:'leave'},'a':{f:63},'b':{f:63},'c':{f:63},'d':{f:63},'o':{f:63},'k':{f:63},'f':{f:63},'q':{f:63},'h':{f:63},'s':{f:63},'r':{f:63},'l':{f:63},'j':{f:63},'p':{f:63},'t':{f:63},'g':{f:63},'m':{f:63}},
-  map:["~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy", "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy", "#RRRRRRRRRRRRRRRRRRRRRRRRRRRRRR#", "#..............................#", "#...............m..............#", "#.......g............g.........#", "#..............................#", "###WWW#D##WWW##..##WWW#WWW##D###", "#.......#.........b...#.h......#", "#.......#.............#........#", "#.......#......a......D...q....#", "#.......D..r..........#.......m#", "#.......#.............#........#", "###D##########.....f..##########", "#.....#.......o.......#.l.d....#", "#.....D...............#...k....#", "#.....#.t......s...p..D........#", "#.....#...c...........#......j.#", "#.....#....n...P..n.g.#........#", "##############xx################"]},
+  legend:{'~':{w:39,h:0.02,top:39,water:1},'y':{w:42,h:0.02,top:42},'W':{w:42,h:0.42},'R':{w:43,h:0.1,top:43},'e':{w:40},'.':{f:63},'n':{f:63,npc:'hguard'},'x':{f:63,trig:'leave'},'a':{f:63},'b':{f:63},'c':{f:63},'d':{f:63},'o':{f:63},'k':{f:63},'f':{f:63},'q':{f:63},'h':{f:63},'s':{f:63},'r':{f:63},'l':{f:63},'j':{f:63},'p':{f:63},'t':{f:63},'g':{f:63},'m':{f:63}},
+  map:["~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy", "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy", "#RRRRRRRRRRRRRRRRRRRRRRRRRRRRRR#", "#..............................#", "#...............m..............#", "#.......g............g.........#", "#..............................#", "###WWW#D##WWW##..##WWW#WWW##D###", "#.......#.........b...#.h......#", "#.......#.............#........#", "#.......#......a......D...q....#", "#.......D..r..........#.......m#", "#.......#.............#........#", "###D##########.....f..##########", "#.....#.......o.......#.l.d....#", "#.....D...............#...k....#", "#.....#.t......s...p..D........#", "#.....#...c...........#......j.#", "#.....#....n...P..n.g.#........#", "##############..################", "##########ex.........###########", "##########ex.........###########", "################################"]},
  club:{name:'VELVET PALMS',hub:'foot',wall:25,floor:7,sofa:0xff6fae,track:'n_overdrive',where:'VELVET PALMS · GENTLEMEN\'S CLUB',obj:'TIP THE DANCERS · TALK TO TONY',
   legend:{'b':{w:33,h:'rand',tint:1,top:34},',':{f:7},'L':{f:7,lamp:1},'.':{f:23},'~':{f:28},'S':{f:19},'j':{f:19},'i':{f:28},'u':{f:28},'y':{f:23},'v':{f:23,npc:'guest'},'T':{f:23,npc:'tony'},'K':{f:23,furn:7},'B':{f:23,furn:2},'*':{f:23,light:'neon'},'w':{f:23,light:'warm'}},
   map:["bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "b,,,,,,,,,,,,,,,,,,,,,,,,,,,,b", "b,,L,,,,C,,,,,P,,,,,,,,,,,L,,b", "b,,,,,,,,,,,,,,,,,,,,,,,,,,,,b", "#############,,,,#############", "#*..........................*#", "#...~~~~~~~~~~~~~~~..vw......#", "#...~v~~~~~~~~~~~v~.....K..B.#", "#...~~~~~uiuii~~~~~....yK..B.#", "#...~~~~iSSSSSi~~~~..v..K..B.#", "#...~~~~iSjSjSu~~~~....yKT.B.#", "#...~~~~uSSSSSi~~~~.....K..B.#", "#..v~~~~iSSjSSi~~~~....yK..B.#", "#...~~~~iSSSSSi~~~~.....K..B.#", "#...~~~~~iiiiu~~~~~....yK..B.#", "#...~~v~~~~~~~~~~v~.v........#", "#...~~~~~~~~~~~~~~~...w......#", "#*..........................*#", "##############################"]},
@@ -1989,6 +1991,38 @@ const HUBS={
   "#.BBBBBBBB....BBBBBBBB.#",
   "#*.........c..........*#",
   "########################"]},
+ /* the Studio's building. Street along the bottom (you pull up at the kerb), the doorman outside, the concierge at her desk, the elevator bank on the back wall */
+ slobby:{name:'THE SEABREEZE · LOBBY',hub:'foot',wall:62,floor:61,sofa:0x2bb7b9,track:'n_crystal',where:'OCEAN DRIVE · THE SEABREEZE',obj:'TAKE THE ELEVATOR UP TO YOUR FLOOR',
+  lift:{from:1,to:3,title:'THE SEABREEZE',home:1,dur:2.6},
+  legend:{'s':{f:37},'l':{f:37,lamp:1},'|':{w:62},'e':{w:40},'v':{f:61,trig:'lift'},'c':{f:61,light:'warm'},'N':{f:37,npc:'doorman'},'q':{f:61,npc:'concierge'}},
+  map:[
+ "|||||||||||||eeee|||||",
+ "|p.c.........vvvv..p.|",
+ "|...q................|",
+ "|..KKK..........SSS..|",
+ "|p.................p.|",
+ "|.c......P.........c.|",
+ "||||||||..||||||||||||",
+ "sslsssssssNsssssslssss",
+ "======================",
+ "======================",
+ "ssssssssssssssssssssss"]},
+ /* the penthouse's tower: a private garage under Coral Tower. The ramp comes in from the west, bays between the pillars, the private elevator on the back wall */
+ garage:{name:'CORAL TOWER · PRIVATE GARAGE',hub:'foot',wall:34,floor:37,sofa:0x222228,track:'n_overdrive',where:'CORAL TOWER · GARAGE P1',obj:'TAKE THE PRIVATE ELEVATOR TO 69',
+  lift:{from:'P1',to:69,title:'CORAL TOWER',home:2,dur:5.2},
+  legend:{'|':{w:34},'o':{w:34},'e':{w:40},'.':{f:37},'v':{f:37,trig:'lift'},'c':{f:37,light:'warm'},'n':{f:37,npc:'gsec'}},
+  map:[
+ "||||||||||eeee||||||||||",
+ "|..c......vvvv......c..|",
+ "|..........n...........|",
+ "|.o....o.....o.....o...|",
+ "|......................|",
+ "|....................P.|",
+ "=======================|",
+ "=======================|",
+ "|......................|",
+ "|.o....o.....o.....o...|",
+ "||||||||||||||||||||||||"]},
 };
 let VISIT={debrief:null,next:0,grade:null,take:0,style:null},HUBFIRST=true;let runStyle={},RUNEND=null;
 function hubSetup(g){const d=g.def;g.npcs=g.npcs||[];g.trigs=g.trigs||[];
@@ -2001,21 +2035,159 @@ function hubSetup(g){const d=g.def;g.npcs=g.npcs||[];g.trigs=g.trigs||[];
   g.deco.push({t:'sign',x:g.car.x,z:4.0});for(let x=0;x<g.W;x++){if(!isSolid(x,8))g.deco.push({t:'cline',x,z:8});if(x%2===0&&!isSolid(x,9))g.deco.push({t:'lane',x,z:9});}}
  let tk=[];for(let z=0;z<g.H;z++)for(let x=0;x<g.W;x++)if(g.furn[z*g.W+x]===24)tk.push([x,z]);if(tk.length){const xs=tk.map(t=>t[0]),zs=tk.map(t=>t[1]);g.tank={x0:Math.min(...xs)+0.2,x1:Math.max(...xs)+0.8,z:(Math.min(...zs)+Math.max(...zs)+1)/2};g.tankB={x0:Math.min(...xs),x1:Math.max(...xs)+1,z0:Math.min(...zs),z1:Math.max(...zs)+1};}
  {const fk=[];for(let z=0;z<g.H;z++)for(let x=0;x<g.W;x++)if(g.furn[z*g.W+x]===25)fk.push([x,z]);if(fk.length){const xs=fk.map(t=>t[0]),zs=fk.map(t=>t[1]);g.fount={x:(Math.min(...xs)+Math.max(...xs)+1)/2,z:(Math.min(...zs)+Math.max(...zs)+1)/2};}}
- if(d===HUBS.office)officeSetup(g);else if(d===HUBS.lobby)lobbySetup(g);}
+ if(d===HUBS.office)officeSetup(g);else if(d===HUBS.lobby)lobbySetup(g);else if(d===HUBS.slobby)slobbySetup(g);else if(d===HUBS.garage)garageSetup(g);}
 function loadHub(name,mode){HUBMODE=mode||'in';const d=HUBS[name];loadLevel(levelIdx,d);G.track=d.track;MUS.track='';MUS.pending=null;state='play';show(null);
- const own=hubModeSetup(name);$('bSkip').innerHTML=(HUBMODE==='home'?'LEAVE FOR McWEY':HUBMODE==='in'?'SKIP TO McWEY':'SKIP TO YOUR CAR')+'<span class="kbhint"> (TAB)</span><span class="padhint"> (Y)</span>';if(own)return;
+ const own=hubModeSetup(name);$('bSkip').innerHTML=(G.seq?'SKIP':HUBMODE==='home'?'LEAVE FOR McWEY':HUBMODE==='arrive'?'SKIP TO YOUR APARTMENT':HUBMODE==='in'?'SKIP TO McWEY':'SKIP TO YOUR CAR')+'<span class="kbhint"> (TAB)</span><span class="padhint"> (Y)</span>';if(own)return;
  if(name==='drive')banner('OCEAN DRIVE, MIAMI',touchMode?'Left thumb steers &amp; drives · push to the edge for turbo':padMode?'Left stick steers &amp; drives · LB turbo':'W/S gas &amp; brake · A/D steer · Shift turbo');
  else if(name==='lobby')banner('McWEY TOWER','Take the elevator to the 52nd floor');}
 function goDrive(){const p=PROG[rideId()];if(p&&p.heli){loadHub('lobby');banner('BY HELICOPTER','Landed on McWey Tower · take the elevator up');return;}startCine();}
 let fading=false;function fadeTo(fn){if(contextLost||fading)return false;fading=true;$('fade').classList.add('on');setTimeout(()=>{try{if(!contextLost)fn();}finally{setTimeout(()=>{$('fade').classList.remove('on');fading=false;},60);}},380);return true;}
 /* McWey still owes a debrief/brief (VISIT.next is only taken into NEXTJOB by chatGo): leaving home or taking the job goes to him first, never back to the last job */
 const mcDue=()=>VISIT.next!==NEXTJOB;
-function onHubTrigger(t){if(fading)return false;if(t==='leave'){sfx('blip');return fadeTo(mcDue()?goDrive:()=>loadHub('drive','parked'));}if(t==='exit'){sfx('blip');return fadeTo(()=>loadHub('drive','parked'));}if(t==='tower'){sfx('blip');return fadeTo(()=>loadHub('lobby'));}else if(t==='elevator'){sfx('ding');return fadeTo(enterElevator);}else if(t==='mcwey'){return fadeTo(talkMcWey);}return true;}
+function onHubTrigger(t){if(fading)return false;if(t==='leave')return homeLeave();if(t==='lift')return liftUp();if(t==='exit'){sfx('blip');return fadeTo(()=>loadHub('drive','parked'));}if(t==='tower'){sfx('blip');return fadeTo(()=>loadHub('lobby'));}else if(t==='elevator'){sfx('ding');return fadeTo(enterElevator);}else if(t==='mcwey'){return fadeTo(talkMcWey);}return true;}
 function updateHub(dt){const g=G;g.T+=dt;g.time+=dt;if(g.np)g.np.t+=dt;
+ if(g.seq){updateSeq(dt);if(G!==g)return;if(g.def.hub!=='drive')npcStep(dt);else if(g.parked)parkedStreet(dt);if(g.slots)homeTick(dt);updateFX(dt);seqCam(dt);return;}
  if(g.cine)updateCine(dt);else if(g.def.hub==='drive'&&!g.parked)updateDrive(dt);else{hubInteract();updatePlayer(dt);if(g.solids&&g.player)for(const s of g.solids)boxPush(s,g.player);npcStep(dt);if(g.mcDesk)officeTick(g,dt);if(g.parked)parkedStreet(dt);if(g.slots)homeTick(dt);if(g.club)clubTick(dt);}
  updateFX(dt);
- if(!g.hubDone&&!g.cine){const p=g.def.hub==='drive'?g.pcar:g.player,rr2=g.def.hub==='drive'?1.7:0.75;for(const t of g.trigs){if(!trigOn(t))continue;if(Math.hypot(t.x-p.x,t.z-p.z)<rr2){g.hubDone=onHubTrigger(t.t)!==false;break;}}}
+ if(!g.hubDone&&!g.cine){const p=g.def.hub==='drive'?g.pcar:g.player,rr2=g.def.hub==='drive'?1.7:0.75;
+  /* after a scene leaves you standing on a trigger (stepping out of the elevator onto the way back down), it waits until you have walked off it */
+  if(g.trigLock&&g.trigs.every(t=>!trigOn(t)||Math.hypot(t.x-p.x,t.z-p.z)>1.4))g.trigLock=false;
+  if(!g.trigLock)for(const t of g.trigs){if(!trigOn(t))continue;if(Math.hypot(t.x-p.x,t.z-p.z)<rr2){g.hubDone=onHubTrigger(t.t)!==false;break;}}}
  updateCamera(dt);}
+/* ================= HUB SCENES: short scripted moments between places =================
+   You pull up, get out and walk in; or you walk to your car, get in and drive off while a travel card names where you are going.
+   g.seq runs a list of steps in order. Any tap, click, Enter/Space or pad A (or the SKIP button) jumps every remaining step
+   to its end state, so a skipped scene leaves the world exactly where the full one would have.
+   A car is either the Ocean Drive pcar (heading h) or a plain {x,z,a,spin} (a = yaw, 0 faces +x, PI/2 faces north). */
+function seqPathLen(P){let L=0;for(let i=1;i<P.length;i++)L+=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);return L;}
+function seqPathAt(P,s){for(let i=1;i<P.length;i++){const a=P[i-1],b=P[i],l=Math.hypot(b[0]-a[0],b[1]-a[1]);if(s<=l||i===P.length-1){const k=l>0?clamp(s/l,0,1):1;return[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k];}s-=l;}return P[P.length-1].slice();}
+function seqCarSet(c,x,z,a){const d=Math.hypot(x-c.x,z-c.z);if(c.h!==undefined&&c.v!==undefined){c.h=a+Math.PI/2;c.wr=(c.wr||0)-d/0.25;}else{c.a=a;c.spin=(c.spin||0)+d*3.2;}c.x=x;c.z=z;}
+/* the car faces along the path a little ahead of where it is, so corners come out as smooth turns */
+function seqCarAt(st,s){const P=st.path,L=st.L,q=seqPathAt(P,s),ah=seqPathAt(P,Math.min(L,s+0.9)),bh=seqPathAt(P,Math.max(0,s-0.3));let dx=ah[0]-bh[0],dz=ah[1]-bh[1];
+ if(Math.hypot(dx,dz)<1e-4){const n=P.length,a=P[n-2]||P[0],b=P[n-1];dx=b[0]-a[0];dz=b[1]-a[1];}seqCarSet(st.car,q[0],q[1],Math.atan2(-dz,dx));}
+/* the auto-walk shoulders swinging doors open the way a walking player would */
+function seqDoors(g,p,dx,dz){for(const d of g.doors||[]){if(d.kind==='slide'||Math.abs(d.w)>1)continue;const e=doorEnd(d),mx=(d.hx+e[0])/2,mz=(d.hz+e[1])/2;if(Math.hypot(mx-p.x,mz-p.z)>0.95)continue;
+ const a=d.base+d.th,s=Math.sign(-Math.sin(a)*dx+Math.cos(a)*dz)||1;d.w=s*6;d.pusher='p';sfx('door',0.5);}}
+function startSeq(steps,done,keep){const g=G;g.seq={t:0,i:0,st:0,steps,done:done||null,keep:!!keep,rel:false};g.card=null;g.hideP=steps[0]&&steps[0].k==='hide';g.hubDone=g.hubDone||false;
+ $('banner').classList.remove('on');$('bSkip').innerHTML='SKIP<span class="kbhint"> (ENTER)</span><span class="padhint"> (A)</span>';return g.seq;}
+function seqStep(g,s,dt){const S=g.seq,p=g.player;
+ switch(s.k){
+  case 'hide':g.hideP=true;if(!s.quiet)sfx('door');return true;
+  case 'card':g.card={t1:s.t1,t2:s.t2,t0:S.t};return true;
+  case 'wait':return S.st>=s.dur;
+  case 'drive':{if(s.L===undefined){s.L=seqPathLen(s.path);if(s.sfx!==false)arriveSfx();}const u=Math.min(1,S.st/s.dur),e=s.ease==='in'?u*u:s.ease==='out'?1-Math.pow(1-u,3):u*u*(3-2*u);seqCarAt(s,e*s.L);return u>=1;}
+  case 'out':g.hideP=false;if(p){p.x=s.at[0];p.z=s.at[1];if(s.a!==undefined)p.a=s.a;}if(!s.quiet)sfx('door');return true;
+  case 'walk':{if(!p)return true;s.j=s.j||0;let left=(s.sp||2.6)*dt;while(left>1e-6&&s.j<s.path.length){const q=s.path[s.j],dx=q[0]-p.x,dz=q[1]-p.z,d=Math.hypot(dx,dz);
+    if(d>1e-4){p.a=Math.atan2(dx,dz);seqDoors(g,p,dx/d,dz/d);}const m=Math.min(d,left);if(d>1e-4){p.x+=dx/d*m;p.z+=dz/d*m;}p.walk=(p.walk||0)+m*9;left-=m;if(m>=d)s.j++;}
+   if(s.j>=s.path.length||S.st>(s.max||9)){seqEnd(g,s);return true;}return false;}
+  case 'say':{const n=s.n;if(n){n.said=true;g.talkT=s.lines.length*1.5+0.4;const qg=g.quipGen=(g.quipGen||0)+1;s.lines.forEach((ln,i)=>setTimeout(()=>{if(G===g&&g.quipGen===qg)popup(n.x,n.z,ln,'#ffe9a8');},i*1500));}return true;}
+  case 'call':return s.fn()!==false;}
+ return true;}
+/* where a step leaves the world when it is skipped (and where a finished walk ends) */
+function seqEnd(g,s){const p=g.player;
+ if(s.k==='hide')g.hideP=true;
+ else if(s.k==='drive'){if(s.L===undefined)s.L=seqPathLen(s.path);seqCarAt(s,s.L);}
+ else if(s.k==='out'){g.hideP=false;if(p){p.x=s.at[0];p.z=s.at[1];if(s.a!==undefined)p.a=s.a;}}
+ else if(s.k==='walk'&&p){const n=s.path.length,q=s.path[n-1],o=n>1?s.path[n-2]:[p.x,p.z];if(Math.hypot(q[0]-o[0],q[1]-o[1])>1e-4)p.a=Math.atan2(q[0]-o[0],q[1]-o[1]);p.x=q[0];p.z=q[1];if(s.face!==undefined)p.a=s.face;s.j=n;}
+ else if(s.k==='say'&&s.n)s.n.said=true;}
+function seqFinish(g){const S=g.seq;if(!S)return;if(S.keep){S.i=S.steps.length;return;}g.seq=null;g.card=null;g.trigLock=true;
+ $('bSkip').innerHTML=(HUBMODE==='home'?'LEAVE FOR McWEY':HUBMODE==='arrive'?'SKIP TO YOUR APARTMENT':HUBMODE==='in'?'SKIP TO McWEY':'SKIP TO YOUR CAR')+'<span class="kbhint"> (TAB)</span><span class="padhint"> (Y)</span>';
+ if(S.done)S.done(g);}
+function seqSkip(){const g=G,S=g&&g.seq;if(!S||S.i>=S.steps.length)return;
+ while(S.i<S.steps.length){const s=S.steps[S.i++];if(s.k==='call'){s.fn();if(G!==g)return;continue;}if(s.k==='card')continue;seqEnd(g,s);}
+ seqFinish(g);}
+function updateSeq(dt){const g=G,S=g.seq;S.t+=dt;S.st+=dt;
+ const inp=!!(pressed.perk||pressed.grab||mouse.down||keys.Enter||keys.Space),tap=!!g.click;g.click=null;
+ if(!S.rel){if(!inp)S.rel=true;}else if((inp||tap)&&S.t>0.35&&S.i<S.steps.length){pressed.perk=pressed.grab=false;mouse.down=false;keys.Enter=keys.Space=false;seqSkip();return;}
+ for(let n=0;n<12&&S.i<S.steps.length;n++){const s=S.steps[S.i];if(!seqStep(g,s,dt))break;if(G!==g)return;S.i++;S.st=0;}
+ if(S.i>=S.steps.length&&!S.keep)seqFinish(g);}
+/* the camera stays on the parking spot while a car pulls up (so it never looks at the void past the map edge), and on the car when it leaves */
+function seqCam(dt){const g=G,S=g.seq,s=S&&S.steps[Math.min(S.i,S.steps.length-1)];let tx,tz;
+ if(s&&s.k==='drive'){const c=s.car;if(s.camEnd){const e=s.path[s.path.length-1];tx=e[0];tz=e[1];}else{tx=Math.max(c.x,s.camMin===undefined?-1e9:s.camMin);tz=c.z;}}
+ else if(g.player){tx=g.player.x;tz=g.player.z;}else return;
+ const k=1-Math.exp(-dt*3);g.cam.x+=(tx-g.cam.x)*k;g.cam.z+=(tz-1-g.cam.z)*k;}
+function seqCamTo(g,x,z){g.cam.x=x;g.cam.z=z-1;}
+/* letterbox bars, plus the travel card when there is one */
+function drawSeqHUD(c,g,u){const S=g.seq,k=clamp(S.t/0.45,0,1),bh=Math.round(vh*0.1*k);c.fillStyle='#000';c.fillRect(0,0,vw,bh);c.fillRect(0,vh-bh,vw,bh);
+ const C=g.card;if(!C)return;const a=clamp((S.t-C.t0)/0.5,0,1),y=vh-bh-64*u;c.globalAlpha=a;c.fillStyle='#ff5fb8';c.fillRect(vw/2-70*u,y-8*u,140*u,2*u);
+ c.font=PXF(15*u);txt(c,C.t1,vw/2,y,'#ff5fb8','center',15*u);c.font=VTF(24*u);txt(c,C.t2,vw/2,y+24*u,'#ffd36b','center',24*u);c.globalAlpha=1;}
+
+/* ---- leaving by car: walk to the driver's door, get in, pull out and drive off, then the next place loads ---- */
+function departCar(g){if(!g)return null;if(g.def.hub==='drive'&&g.parked)return g.pcar;return g.hcar||g.park||null;}
+function departTo(go,t1,t2){const g=G;if(!g||!g.def.hub||g.seq||!g.player||fading)return fadeTo(go);const c=departCar(g);if(!c)return fadeTo(go);
+ const p=g.player,heli=c===g.park&&!!myProg().heli,a=c.h!==undefined&&c.v!==undefined?c.h-Math.PI/2:(c.a||0),fx=Math.cos(a),fz=-Math.sin(a),sx=-fz,sz=fx,
+  side=((p.x-c.x)*sx+(p.z-c.z)*sz)>=0?1:-1,door=[c.x+sx*side*0.72-fx*0.15,c.z+sz*side*0.72-fz*0.15],steps=[{k:'walk',path:[door],sp:3.2,max:3},{k:'hide'},{k:'card',t1,t2},{k:'wait',dur:0.25}];
+ if(heli)steps.push({k:'wait',dur:1.4});
+ else steps.push({k:'drive',car:c,path:departPath(g,c,a),dur:2.1,ease:'in'});
+ steps.push({k:'call',fn:()=>fadeTo(go)});g.hubDone=true;startSeq(steps,null,true);return true;}
+/* out of the bay or off the kerb and away down the road */
+function departPath(g,c,a){const x=c.x,z=c.z;
+ if(g.def.hub==='drive')return[[x,z],[x+2.4,z+0.5],[x+5.2,8.5],[x+24,8.5]];
+ const fx=Math.cos(a),fz=-Math.sin(a);if(g.club)return[[x,z],[x+fx*3,z+fz*3+0.7],[x+fx*24,z+fz*24+0.7]];return[[x,z],[x+fx*24,z+fz*24]];}
+/* ---- pulling up at Nine's or the club: drive in along the street, park, walk to the door ---- */
+function hubArrive(g){if(!g||g!==G||!g.park||!g.player||myProg().heli)return;const c=g.park,p=g.player,x1=c.x,z=c.z,end=[p.x,p.z];c.a=0;c.spin=0;seqCamTo(g,x1,z);
+ startSeq([{k:'hide',quiet:1},{k:'drive',car:c,path:[[x1-15,z],[x1,z]],dur:2.3,ease:'out',camEnd:1},{k:'wait',dur:0.3},{k:'out',at:[x1-0.25,z+0.68],a:0},{k:'walk',path:[end],max:4}],g=>{if(g.def===HUBS.club)banner('VELVET PALMS','Tip the dancers · talk to Tony');else banner("NINE OF NINE'S",'Exotic machinery of death');});}
+
+/* ---- coming home ---- */
+/* Room 14: the car pulls into the motel lot; you walk through the gap in the patio rail and in by the back door.
+   The Studio: you pull up outside The Seabreeze, the doorman and the concierge greet you, and the lobby elevator takes you up to 3.
+   The Penthouse: the car rolls down into Coral Tower's private garage, and the private elevator goes from P1 to 69, opening on the entrance hall. */
+const HOME_ARRIVE={1:{hub:'slobby'},2:{hub:'garage'}};
+function goHome(){arm();const h=myProg().home||0;if(HOME_ARRIVE[h]){loadHub(HOME_ARRIVE[h].hub,'arrive');return;}loadHub('home'+h,'home');homeArrive(G);}
+const HOME0_CAR={x:13.0,z:2.2,a:0};
+function homeCar(g){if(g.home!==0)return;const c=HOME0_CAR;g.hcar={x:c.x,z:c.z,a:c.a,spin:0};g.solids=g.solids||[];g.solids.push({x:c.x,z:c.z,w:2.35,d:1.05});
+ g.trigs.push({x:c.x-0.5,z:c.z+0.78,t:'leave'});g.car={x:c.x,z:c.z};}
+function homeArrive(g){if(!g||g.home!==0||!g.hcar)return;const c=g.hcar,c0=HOME0_CAR;seqCamTo(g,c0.x,c0.z+1);
+ startSeq([{k:'hide',quiet:1},{k:'card',t1:'SUNSET MOTEL',t2:'ROUTE 1 · ROOM 14'},{k:'drive',car:c,path:[[-7,c0.z],[c0.x,c0.z]],dur:2.6,ease:'out',camEnd:1},{k:'wait',dur:0.35},
+  {k:'out',at:[c0.x-0.3,c0.z+0.72],a:0},{k:'walk',path:[[12.3,3.6],[11.9,4.5],[11.5,6.3],[11.5,7.5],[11.5,8.8]],face:0}],g=>homeBanner(g));}
+/* stepping out of your own building's elevator into the corridor (studio, floor 3) or the entrance hall (penthouse, floor 69) */
+const HOME_LIFT={1:{at:[9.7,23],path:[[12.4,23],[15.5,22.7],[15.5,21.5],[15.5,20.2]],title:'THE SEABREEZE',from:3,to:1},2:{at:[12.7,23],path:[[14.8,22.9],[15.9,22.5]],title:'CORAL TOWER',from:69,to:'P1'}};
+function enterHomeByLift(t){loadHub('home'+t,'home');const g=G,L=HOME_LIFT[t],p=g.player;if(!L||!p)return;p.x=L.at[0];p.z=L.at[1];p.a=Math.PI/2;seqCamTo(g,p.x+1,p.z);sfx('ding');
+ startSeq([{k:'walk',path:L.path,face:Math.PI,sp:2.4}],g=>homeBanner(g));}
+/* the lobby and the garage: what each place has in it beyond the map, and the scene that plays when you get there */
+function slobbySetup(g){g.slob=1;g.lights.push({x:10,y:1.7,z:6.6,r:5,c:[1,0.78,0.6]},{x:16,y:1.6,z:2.9,r:5,c:[0.9,0.8,0.65]},{x:17.5,y:1.5,z:5,r:5,c:[0.8,0.55,0.7]},{x:10,y:1.4,z:8.6,r:4,c:[0.3,0.9,1]});
+ for(let x=0;x<g.W;x++)g.deco.push({t:'cline',x,z:10});g.deco.push({t:'awning',x:10,z:8,fx:10,w:3.2,c:hex(0x2bb7b9)},{t:'carpet',x:10,z:8,fx:10,w:2});
+ g.car={x:10,z:9.55};}
+function garageSetup(g){g.garage={bar:0};const W=g.W;for(const z of [7,8]){const i=z*W;g.wh[i]=0.02;g.wallT[i]=g.topT[i]=7;}
+ g.lights.push({x:4,y:2,z:5,r:6,c:[0.65,0.8,1]},{x:11,y:2,z:5,r:6,c:[0.65,0.8,1]},{x:18,y:2,z:5,r:6,c:[0.65,0.8,1]},{x:12,y:2,z:9,r:7,c:[0.55,0.7,0.95]},{x:2,y:1.4,z:8,r:4,c:[1,0.35,0.2]});
+ g.parkedCars=[{x:5.5,z:5.75,c:[0.95,0.95,0.92]},{x:11,z:5.75,c:[0.08,0.08,0.1]}];g.solids=g.solids||[];for(const q of g.parkedCars)g.solids.push({x:q.x,z:q.z,w:1.05,d:2.35});
+ g.car={x:17.5,z:5.75};}
+function arriveHubSetup(g,name){const p=g.player;g.hideP=true;if(name==='slobby'){const c=g.hcar={x:-6,z:9.55,a:0,spin:0};g.solids=g.solids||[];g.solids.push({x:10,z:9.55,w:2.35,d:1.05});
+  const cc=g.npcs.find(n=>n.kind==='concierge');seqCamTo(g,10,8.5);
+  startSeq([{k:'hide',quiet:1},{k:'card',t1:'THE SEABREEZE',t2:'OCEAN DRIVE · HOME'},{k:'drive',car:c,path:[[-6,9.55],[10,9.55]],dur:2.5,ease:'out',camEnd:1},{k:'wait',dur:0.3},
+   {k:'out',at:[9.7,8.85],a:Math.PI},{k:'walk',path:[[10,8.2],[10,7.4],[10,6.0]],sp:2.3},{k:'say',n:cc,lines:NPCLINES.concierge[0]}],g=>{g.obj='TAKE THE ELEVATOR UP TO YOUR FLOOR';banner('THE SEABREEZE','Your apartment is on the 3rd floor');});}
+ else if(name==='garage'){const c=g.hcar={x:-9,z:8.1,a:0,spin:0};g.solids=g.solids||[];g.solids.push({x:17.5,z:5.75,w:1.05,d:2.35});seqCamTo(g,8,8);
+  startSeq([{k:'hide',quiet:1},{k:'card',t1:'CORAL TOWER',t2:'PRIVATE GARAGE · LEVEL P1'},{k:'drive',car:c,path:[[-9,8.1],[12.6,8.1],[15.6,7.7],[17.2,6.7],[17.5,5.75]],dur:4.2,ease:'inout',camMin:8},{k:'wait',dur:0.35},
+   {k:'out',at:[16.75,5.6],a:-Math.PI/2},{k:'walk',path:[[16.3,6.3]],sp:2.2}],g=>{g.obj='TAKE THE PRIVATE ELEVATOR TO 69';banner('CORAL TOWER','Private elevator to the penthouse, floor 69');});}
+ else g.hideP=false;
+ if(p)p.a=Math.PI;const lt=g.trigs.filter(t=>t.t==='lift');if(lt.length)g.car={x:lt.reduce((a,t)=>a+t.x,0)/lt.length,z:lt[0].z};return true;}
+/* the lobby elevator: up to the apartment, and the skip button goes straight there */
+function liftUp(){const L=G&&G.def.lift;if(!L)return false;sfx('ding');return fadeTo(()=>enterElevator(false,{from:L.from,to:L.to,title:L.title,dur:L.dur,then:()=>enterHomeByLift(L.home)}));}
+function homeLeave(){const g=G,nx=mcDue()?goDrive:()=>loadHub('drive','parked'),L=HOME_LIFT[g.home];sfx('blip');
+ if(L)return fadeTo(()=>enterElevator(true,{from:L.from,to:L.to,title:L.title,dur:L.from===69?4.4:2.4,then:nx}));
+ if(g.hcar)return departTo(nx,'McWEY TOWER',mcDue()?'THE MAN WANTS A WORD':'OCEAN DRIVE');return fadeTo(nx);}
+function drawSlobby(B,g){/* the concierge desk top with a bell and the guest book, the elevator call panel and floor lights, a rug, the street kerb */
+ B.box(TRS(5.5,0.96,4.5,0,3.1,0.05,0.95),[0.97,0.97,0.96],false,TUV[63]);B.box(TRS(5.5,0.93,4.5,0,3.14,0.03,0.99),GOLD);B.box(TRS(6.6,1.02,4.4,0,0.12,0.07,0.12),GOLD);
+ B.box(TRS(4.6,1.0,4.45,0.2,0.42,0.03,0.3),[0.95,0.92,0.82]);B.box(TRS(5.5,0.6,4.99,0,2.9,0.5,0.02),[0.17,0.72,0.73]);
+ B.box(TRS(13.7,0.7,2.04,0,0.12,0.22,0.04),GOLD);B.box(TRS(13.7,0.74,2.07,0,0.05,0.05,0.02),[1,0.8,0.3],true);
+ for(let i=0;i<4;i++)B.box(TRS(14.5+i,1.05,2.05,0,0.3,0.05,0.02),[1,0.75,0.35],true);
+ B.box(TRS(10,0.008,5.2,0,2.6,0.012,2.6),[0.12,0.5,0.52]);B.box(TRS(10,0.01,5.2,0,2.3,0.012,2.3),[0.62,0.42,0.5]);
+ for(let x=1;x<g.W-1;x++)B.box(TRS(x+0.5,0.06,9.02,0,1.0,0.12,0.06),[0.78,0.76,0.72]);}
+function drawGarage(B,g){const gr=g.garage,c=g.hcar,T=g.T,Y=[1,0.82,0.1],K=[0.08,0.08,0.09],WL=[0.86,0.86,0.82];
+ /* the ramp mouth: dark walls and a lintel, a red/white barrier arm that swings up as your car comes in */
+ for(const z of [6.95,9.05])B.box(TRS(-1.6,0.55,z,0,3.4,1.1,0.12),[0.2,0.2,0.22]);B.box(TRS(0.15,1.08,6.95,0,0.1,0.06,0.14),Y,true);B.box(TRS(0.15,1.08,9.05,0,0.1,0.06,0.14),Y,true);
+ B.box(TRS(-3.4,0.01,8,0,3.0,0.01,2.0),[0.02,0.02,0.03]);
+ const near=!!c&&c.x>-5&&c.x<4;gr.bar=clamp(gr.bar+(near?0.05:-0.03),0,1);const ang=gr.bar*1.35,px=1.7,pz=9.0;B.box(TRS(px,0.5,pz,0,0.22,1.0,0.22),Y);
+ for(let i=0;i<5;i++){const r=0.2+i*0.38,m=A.mul(A.mul(A.T(px,0.92,pz),A.RX(ang)),A.T(0,0,-r));B.box(A.mul(m,A.S(0.07,0.07,0.38)),i%2?[0.95,0.95,0.92]:[0.85,0.1,0.12]);}
+ /* bay lines, a reserved sign on your bay, pillar stripes, the lane arrows */
+ for(const x of [3.5,8.5,14.5,20.5])B.box(TRS(x,0.006,6,0,0.07,0.01,2.1),WL);for(const x of [8.5,14.5])B.box(TRS(x,0.006,10,0,0.07,0.01,1.8),WL);
+ B.box(TRS(17.5,0.007,4.75,0,1.4,0.012,0.4),[0.95,0.8,0.25],true);
+ for(const x of [3.5,8.5,14.5,20.5])for(const z of [4.5,10.5])for(const y of [0.18,0.42])B.box(TRS(x,y,z,0,1.03,0.1,1.03),y<0.3?Y:K);
+ for(let x=3;x<22;x+=4)for(const s of [-1,1])B.box(TRS(x+0.2+s*0.18,0.006,8+s*0.18,s*0.7,0.42,0.008,0.08),WL);
+ for(const q of g.parkedCars)drawLambo(B,q.x,q.z,1,q.s?-Math.PI/2:Math.PI/2,q.c,0);
+ /* the private elevator: a gold surround and a lit 69 over the doors */
+ B.box(TRS(13,1.08,2.04,0,4.2,0.1,0.06),GOLD);B.box(TRS(13,1.08,2.08,0,0.9,0.06,0.02),[1,0.82,0.4],true);for(const x of [10.96,15.04])B.box(TRS(x,0.55,2.05,0,0.08,1.1,0.08),GOLD);
+ B.box(TRS(15.5,0.7,2.04,0,0.12,0.22,0.04),GOLD);B.box(TRS(15.5,0.74,2.07,0,0.05,0.05,0.02),[1,0.3,0.2],true);B.box(TRS(13,0.007,2.75,0,4.2,0.012,1.4),[0.55,0.04,0.12]);}
 function npcStep(dt){const g=G,p=g.player;if(g.talkT>0)g.talkT-=dt;const vi=Math.min(3,VISIT.debrief===null?0:VISIT.debrief+1);
  for(const n of g.npcs){if(n.kind==='guest'&&g.club){clubWalk(n,dt,g,p);}else if(n.kind==='guest'||n.kind==='pgirl')guestStep(n,dt,g,p);if(n.kind==='dancer'||n.kind==='sdancer'||n.kind==='patron')continue;const dx=p.x-n.x,dz=p.z-n.z,d=Math.hypot(dx,dz);
   if(d<(n.kind==='guest'?1.6:3)){const ta=Math.atan2(dx,dz);n.a+=clamp(angDiff(n.a,ta),-4*dt,4*dt);}else if(n.kind!=='guest')n.a+=clamp(angDiff(n.a,n.a0),-2*dt,2*dt);if(n.seat)n.a=n.a0+clamp(angDiff(n.a0,n.a),-0.9,0.9);
@@ -2047,18 +2219,19 @@ function updateDrive(dt){const g=G,c=g.pcar,p=g.player;let thr=0,st=0,turbo=fals
  if(turbo&&Math.random()<dt*25)g.parts.push({t:'c',x:c.x-fx*1.2,y:0.3,z:c.z-fz*1.2,vx:-fx*2+rnd(-0.5,0.5),vy:rnd(0,0.5),vz:-fz*2+rnd(-0.5,0.5),s:0.06,c:[1,0.4,0.9],life:0.3});
  engineRev(c.v,turbo);p.x=c.x;p.z=c.z;p.vx=fx*c.v;p.vz=fz*c.v;p.a=c.h;g.turbo=turbo;}
 function drawHubDyn(B,O){const g=G;
- if(g.def.hub==='drive'){const c=g.pcar;if(g.parked&&myProg().heli)drawHeli(B,c.x,c.z,0,g.T);else drawRide(B,c.x,c.z,1,c.h-Math.PI/2,null,c.wr||0);if(myProg().boat){const T0=g.tower||g.car;drawSpeedboat(B,T0.x+1,14.3+Math.sin(g.T*1.5)*0.05,0,[1,0.3,0.75]);}if(g.parked&&g.player)drawChar(IBhi,g.player);if(g.doorT>0&&rideId()==='money'&&myCar()==='sig')drawCarDoor(B,c.x,c.z,1,c.h-Math.PI/2,g.doorT*1.1);for(const t of g.traffic)drawCar(B,t.x,t.z,t.col,t.dir,t.wr||0);
+ if(g.def.hub==='drive'){const c=g.pcar;if(g.parked&&myProg().heli)drawHeli(B,c.x,c.z,0,g.T);else drawRide(B,c.x,c.z,1,c.h-Math.PI/2,null,c.wr||0);if(myProg().boat){const T0=g.tower||g.car;drawSpeedboat(B,T0.x+1,14.3+Math.sin(g.T*1.5)*0.05,0,[1,0.3,0.75]);}if(g.parked&&g.player&&!g.hideP)drawChar(IBhi,g.player);if(g.doorT>0&&rideId()==='money'&&myCar()==='sig')drawCarDoor(B,c.x,c.z,1,c.h-Math.PI/2,g.doorT*1.1);for(const t of g.traffic)drawCar(B,t.x,t.z,t.col,t.dir,t.wr||0);
   if(g.car){const T0=g.tower||g.car,pcx=T0.x+4.3,pcz=T0.z+0.7;drawLambo(B,pcx,pcz,1,0,[0.82,0.04,0.08],0);for(const sz of [-0.36,0.36])B.box(TRS(pcx,0.14,pcz+sz,0,2.3,0.035,0.05),GOLD,true);B.box(TRS(pcx,0.05,pcz,0,2.5,0.02,0.92),[0.95,0.72,0.25],true);}
   for(const n of g.npcs)drawChar(IBhi,n);
   if(g.cine&&g.cine.shot===1){const e=g.cine.eye,tg=g.cine.tgt,zz=g.H+3.9,k=(zz-e[2])/(tg[2]-e[2]);drawRetroSun(B,e[0]+(tg[0]-e[0])*k+1.5,2.2,zz,2.0,-0.9,0.9);}
-if(!g.cine){const y=2.4+Math.sin(g.T*4)*0.2;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.45,0.45,0.45))),GOLD,true);
+if(!g.cine&&!g.seq){const y=2.4+Math.sin(g.T*4)*0.2;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.45,0.45,0.45))),GOLD,true);
   for(let i=0;i<6;i++)B.box(TRS(g.car.x+Math.sin(g.T*2+i)*0.9,0.02,g.car.z+Math.cos(g.T*2+i)*0.9,0,0.25,0.01,0.25),[1,0.85,0.3],true);}}
- else{for(const n of g.npcs)drawChar(IBhi,n);if(g.player)drawChar(IBhi,g.player);if(g.park){if(myProg().heli)drawHeli(B,g.park.x,g.park.z,0,g.T);else drawRide(B,g.park.x,g.park.z,1,0);}if(g.def===HUBS.bunker)drawBunker(B,g);if(g.slots){drawHomeDecor(B,g);drawHome(B,g);drawHomeX(B,g);drawLocker(B,g);}if(g.club)drawClub(B,g);
+ else{for(const n of g.npcs)drawChar(IBhi,n);if(g.player&&!g.hideP)drawChar(IBhi,g.player);if(g.park){if(myProg().heli)drawHeli(B,g.park.x,g.park.z,0,g.T);else drawRide(B,g.park.x,g.park.z,1,g.park.a||0,undefined,g.park.spin||0);}
+  if(g.hcar)drawRide(B,g.hcar.x,g.hcar.z,1,g.hcar.a||0,undefined,g.hcar.spin||0);if(g.garage)drawGarage(B,g);if(g.slob)drawSlobby(B,g);if(g.def===HUBS.bunker)drawBunker(B,g);if(g.slots){drawHomeDecor(B,g);drawHome(B,g);drawHomeX(B,g);drawLocker(B,g);}if(g.club)drawClub(B,g);
   if(g.tankB){const t=g.tankB;drawTankLife(B,g.T,t.x0,t.x1,(t.z0+t.z1)/2,0.08,1.35,0.35,0.9,0.4,2.15);}
   if(g.fount)drawFountainWater(B,g.fount,g.T);if(g.mcDesk)drawMcOffice(B,g);if(g.tv)drawLobbyTV(B,g);if(g.lounge)drawLounge(B,g);
-  const y=1.6+Math.sin(g.T*4)*0.12;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.22,0.22,0.22))),GOLD,true);}
+  if(!g.seq){const y=1.6+Math.sin(g.T*4)*0.12;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.22,0.22,0.22))),GOLD,true);}}
  for(const q of g.parts)B.box(A.mul(A.T(q.x,q.y,q.z),A.S(q.s,q.s,q.s)),q.c,q.t==='s');}
-function drawHubHUD(c,g,u,m){if(g.cine)return;const d=g.def;c.font=PXF(7*u);txt(c,d.where,m,m,'#ffd36b','left',7*u);c.font=VTF(22*u);txt(c,g.obj||d.obj,m,m+10*u,'#fff','left',22*u);
+function drawHubHUD(c,g,u,m){if(g.cine)return;if(g.seq){drawSeqHUD(c,g,u);return;}const d=g.def;c.font=PXF(7*u);txt(c,d.where,m,m,'#ffd36b','left',7*u);c.font=VTF(22*u);txt(c,g.obj||d.obj,m,m+10*u,'#fff','left',22*u);
  c.font=PXF(13*u);txt(c,'$'+fmt(wallet()),vw-m,m,'#7dff9a','right',13*u);if(myProg().debt>0){c.font=VTF(15*u);txt(c,'OWED TO McWEY $'+fmt(myProg().debt),vw-m,m+38*u,'#ff8a95','right',15*u);}c.font=VTF(16*u);txt(c,CHARS[selIdx].name+' LV'+myProg().lvl,vw-m,m+20*u,'#e9c7ff','right',16*u);
  const R=Math.max(44,Math.min(vw,vh)*0.13),rcx=m+R,rcy=touchMode?m+62*u+R:vh-m-R;drawRadar(c,rcx,rcy,R);
  if(d.hub==='drive'&&!g.parked){const c2=g.pcar,mph=Math.round(Math.abs(c2.v)*9);c.font=PXF(26*u);txt(c,String(mph),vw-m,vh-m-58*u,g.turbo?'#ff5fb8':'#ffd36b','right',26*u);c.font=PXF(8*u);txt(c,'MPH',vw-m,vh-m-26*u,'#e9c7ff','right',8*u);
@@ -2071,8 +2244,8 @@ function drawHubHUD(c,g,u,m){if(g.cine)return;const d=g.def;c.font=PXF(7*u);txt(
  c.font=VTF(18*u);for(const pp of g.popups){const s2=project(pp.x,1.6+pp.t*0.5,pp.z);if(!s2)continue;c.globalAlpha=clamp(2.2-pp.t*1.3,0,1);const tw=c.measureText(pp.txt).width;c.fillStyle='rgba(10,4,18,.75)';c.fillRect(s2[0]-tw/2-6*u,s2[1]-2*u,tw+12*u,22*u);txt(c,pp.txt,s2[0],s2[1],pp.col,'center',18*u);}c.globalAlpha=1;}
 /* ---- after the briefing: lift down, your car, Nine of Nine's gun shop ---- */
 let HUBMODE='in',NEXTJOB=0,MISSION='c0',JOBPICK=null; // MISSION: the job being played; JOBPICK: a non-campaign job taken from McWey's menu
-function trigOn(t){return HUBMODE==='home'?t.t==='leave':HUBMODE==='in'?t.t!=='exit'&&t.t!=='leave':HUBMODE==='out'?t.t==='exit':false;}
-function hubModeSetup(name){const g=G,p=g.player;if(HUBMODE==='home'){homeSetup(g,+name.slice(4));return true;}
+function trigOn(t){return HUBMODE==='home'?t.t==='leave':HUBMODE==='arrive'?t.t==='lift':HUBMODE==='in'?t.t!=='exit'&&t.t!=='leave':HUBMODE==='out'?t.t==='exit':false;}
+function hubModeSetup(name){const g=G,p=g.player;if(HUBMODE==='home'){homeSetup(g,+name.slice(4));return true;}if(HUBMODE==='arrive')return arriveHubSetup(g,name);
  if(HUBMODE==='out'){const el=g.trigs.filter(t=>t.t==='elevator');if(el.length&&p){p.x=el.reduce((a,t)=>a+t.x,0)/el.length;p.z=el[0].z+1.3;p.a=0;g.cam.x=p.x;g.cam.z=p.z-1;}
   g.obj='HEAD OUT TO YOUR CAR';banner('McWEY TOWER','Your car is parked outside');return true;}
  if(HUBMODE==='parked'){g.parked=true;g.tower={x:g.car.x,z:g.car.z};const c=g.pcar;c.x=g.tower.x-5.5;c.z=g.tower.z+1.05;c.h=Math.PI/2;c.v=0;
@@ -2137,11 +2310,12 @@ function runWalkAway(p){if(!p.run)return false;delete p.run;return true;}
 function openCarMenu(){if(state!=='play'||!G)return;sfx('blip');state='carmenu';$('carWallet').textContent='WALLET $'+fmt(wallet())+(myProg().debt>0?'  ·  OWED TO McWEY $'+fmt(myProg().debt):'')+'  ·  RIDE: '+carName(myCar());$('carLoad').textContent=loadoutTxt();
  $('bCarJob').innerHTML=(mcDue()?'SEE McWEY':'NEXT JOB: '+(JOBPICK?missionName(JOBPICK):LEVELS[NEXTJOB].name))+'<span class="kbhint"> (ENTER)</span><span class="padhint"> (A)</span>';$('bCarShop').style.display=G.def===HUBS.bunker?'none':'';$('bCarClub').style.display=G.def===HUBS.club?'none':'';show('sCar');}
 function closeCarMenu(){if(state!=='carmenu')return;sfx('blip');state='play';show(null);}
-$('bCarJob').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);fadeTo(mcDue()?goDrive:()=>JOBPICK?startMission(JOBPICK):startLevel(NEXTJOB));};
-$('bCarShop').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);fadeTo(()=>loadHub('bunker'));};
+$('bCarJob').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);const mc=mcDue();
+ departTo(mc?goDrive:()=>JOBPICK?startMission(JOBPICK):startLevel(NEXTJOB),mc?'McWEY TOWER':JOBPICK?missionName(JOBPICK):LEVELS[NEXTJOB].name,mc?'THE MAN WANTS A WORD':"TONIGHT'S JOB");};
+$('bCarShop').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);departTo(()=>{loadHub('bunker');hubArrive(G);},"NINE OF NINE'S",'EXOTIC MACHINERY OF DEATH');};
 $('bCarBack').onclick=()=>closeCarMenu();
-$('bCarHome').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);fadeTo(goHome);};
-$('bCarClub').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);fadeTo(()=>loadHub('club'));};
+$('bCarHome').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);departTo(goHome,HOMEDEF[myProg().home||0].name,'HOME');};
+$('bCarClub').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);departTo(()=>{loadHub('club');hubArrive(G);},'VELVET PALMS',"GENTLEMEN'S CLUB");};
 $('bCarStore').onclick=()=>{if(state!=='carmenu')return;sfx('pick');openStore();};
 const JEWEL={watch:{name:'GOLD WATCH',price:2500,desc:'Tells time. Mostly tells people you have money.'},chain:{name:'GOLD CHAIN',price:6000,desc:'Real gold. No green marks on this neck.'},rings:{name:'PINKY RINGS',price:9000,desc:'Two rings. One on each hand that matters.'}};
 let storeFocus=0,storeMode='shop';
@@ -2469,7 +2643,6 @@ function sjState(g){const k=g.sj,bl=(g.kb.knife||0)+(g.kb.machete||0)+(g.kb.thro
  if(k==='clean')return g.taken?{fail:1,txt:'YOU GOT HIT'}:{ok:1,txt:'UNTOUCHED'};
  if(k==='doors')return {ok:(g.kb.door||0)>=2,txt:'DOOR KILLS '+(g.kb.door||0)+' / 2'};
  return {ok:bl>=4,txt:'BLADE KILLS '+bl+' / 4'};}
-function goHome(){arm();loadHub('home'+(myProg().home||0),'home');}
 const HOME_BED_WORLD=[{x:3.0,z:9.5},{x:3.6,z:13.5},{x:3.3,z:11.5}];
 function homeBedPos(g){return HOME_BED_WORLD[g.home]||HOME_BED_WORLD[0];}
 /* the gun locker stands against the east wall, one per home */
@@ -2501,8 +2674,9 @@ const HIFI_TRACKS=['n_crystal','n_nightdrive','n_haze','n_redtide','n_overdrive'
 function hifiNext(){const p=myProg(),L=HIFI_TRACKS.filter(tapeOK),i=(L.indexOf(p.homeTrack||G.track)+1)%L.length;p.homeTrack=L[i];saveProg();G.track=p.homeTrack;sfx('click');popup(G.player.x,G.player.z,'NOW PLAYING: '+((TRACKS[p.homeTrack]&&TRACKS[p.homeTrack].title)||p.homeTrack),'#2de2e6');}
 function homeSetup(g,t){g.home=t;g.slots={};g.spots={};g.pets=[];g.spawned={};for(let z=0;z<g.H;z++)for(let x=0;x<g.W;x++){const ch=g.rows[z][x];if('abcdokfqhsrljpt'.includes(ch))g.slots[ch]={x:x+0.5,z:z+0.5};if(ch==='g'||ch==='m')(g.spots[ch]=g.spots[ch]||[]).push({x:x+0.5,z:z+0.5});}
  homeDecorSetup(g,t);{const lp=homeLockerPos(g);g.solid[Math.floor(lp.z)*g.W+Math.floor(lp.x)]=1;}
- const p=myProg();if(t===1&&homeFurn().hifi&&p.homeTrack)g.track=p.homeTrack;homeExtras(g);g.obj=t===0?'CHECK THE PHONE · THEN HEAD OUT':'FURNISH THE PLACE · THEN HEAD OUT';
- banner(HOMEDEF[t].name,touchMode?'Tap the phone for furniture and side jobs · the door leads to your car':'Click the phone for furniture and side jobs · the door leads to your car');}
+ const p=myProg();if(t===1&&homeFurn().hifi&&p.homeTrack)g.track=p.homeTrack;homeExtras(g);homeCar(g);g.obj=t===0?'CHECK THE PHONE · THEN HEAD OUT':'FURNISH THE PLACE · THEN HEAD OUT';
+ homeBanner(g);}
+function homeBanner(g){const t=g.home;banner(HOMEDEF[t].name,(touchMode?'Tap':'Click')+' the phone for furniture and side jobs · '+(t===0?'your car is out in the lot':'the elevator takes you down to your car'));}
 /* big pieces block movement; extra light for the neon sign */
 function homeExtras(g){const f=homeFurn(),S=g.slots,sol=(x0,z0,w,h)=>{for(let z=Math.floor(z0);z<Math.ceil(z0+h);z++)for(let x=Math.floor(x0);x<Math.ceil(x0+w);x++)if(x>0&&z>0&&x<g.W-1&&z<g.H-1)g.solid[z*g.W+x]=1;};
  if(g.home===0)sol(S.a.x-0.4,S.a.z-0.4,2.0,0.9);if(g.home===1&&f.sofa)sol(S.a.x-0.4,S.a.z-0.4,2.6,0.9);
@@ -2573,7 +2747,7 @@ function drawPet(B,q,T){const m0=A.mul(A.T(q.x,0,q.z),A.RY(q.a)),P=(x,y,z,sx,sy,
 /* ---- safehouse dressing: what each place looks like before you buy anything ----
    Room 14 is a dump, the studio is clean Miami pastel, the penthouse is marble, gold and crystal */
 const HOME_SOLID=[
- [[1,12],[5,12],[1,14],[8,9],[9,9],[18,7],[19,7],[21,7],[20,4],[21,4],[1,4]],
+ [[1,12],[5,12],[1,14],[8,9],[9,9],[18,7],[19,7],[21,7],[20,4],[21,4],[1,4],[4,2],[17,2],[20,2],[21,2],[22,2]],
  [[1,12],[2,12],[3,12],[6,11],[7,11],[1,16],[4,16],[5,16],[1,17],[1,18],[1,19],[17,8],[1,7],[28,7],[11,13],[28,11],[22,11],[23,11],[24,11]],
  [[10,4],[11,4],[12,4],[13,4],[10,5],[11,5],[12,5],[13,5],[15,4],[16,4],[20,4],[1,10],[2,10],[3,10],[1,12],[1,15],[2,15],[5,15],[1,17],[2,17],[1,18],[2,18],[9,10],[10,10],[10,9],[9,9],[20,12],[9,15],[10,15],[11,15],[12,15],[13,15],[13,19],[16,19],[26,9],[29,9],[30,9]]];
 function homeDecorSetup(g,t){const n0=g.lights.length;
@@ -2581,15 +2755,15 @@ function homeDecorSetup(g,t){const n0=g.lights.length;
     This has to happen before the furniture below is marked solid, or the rebuild would draw it as wall */
  if(t===1){for(let z=0;z<7;z++)for(let x=0;x<g.W;x++){if(z>0&&x>0&&x<g.W-1)continue;const i=z*g.W+x,sand=z>=5;g.wh[i]=sand?0.03:0.02;g.wallT[i]=g.topT[i]=sand?38:39;g.glow[i]=sand?0:2;}buildStatic(g);}
  /* Room 14: the same for the parking lot behind the patio */
- if(t===0){for(let z=0;z<4;z++)for(let x=0;x<g.W;x++){if(z>0&&x>0&&x<g.W-1)continue;const i=z*g.W+x;g.wh[i]=0.02;g.wallT[i]=g.topT[i]=7;}buildStatic(g);}
+ if(t===0){for(let z=0;z<4;z++)for(let x=0;x<g.W;x++){if(z>0&&x>0&&x<g.W-1)continue;const i=z*g.W+x;g.wh[i]=0.02;g.wallT[i]=g.topT[i]=7;}g.deco=g.deco.filter(d=>d.t!=='dash');buildStatic(g);}
  /* penthouse: the bay and the city run off the edge of the map too */
  if(t===2){for(let z=0;z<4;z++)for(let x=0;x<g.W;x++){if(z>0&&x>0&&x<g.W-1)continue;const i=z*g.W+x,sea=z<2;g.wh[i]=0.02;g.wallT[i]=g.topT[i]=sea?39:42;g.glow[i]=sea?2:0;}buildStatic(g);}
  for(const [x,z] of HOME_SOLID[t])g.solid[(z+1)*g.W+x+1]=1;
- if(t===0){g.bulb={x:12,y:1.75,z:9.5,r:6.5,c:[0.95,0.88,0.5]};g.motelNeon={x:3,y:0.9,z:7.8,r:4.8,c:[1.2,0.5,0.12]};g.lights.push(g.bulb,g.motelNeon,{x:19.5,y:1.7,z:8.8,r:4.5,c:[0.5,0.62,0.42]},{x:3,y:1.6,z:13.2,r:3.8,c:[0.42,0.55,0.36]},{x:14.5,y:1.7,z:13.2,r:5.5,c:[0.6,0.46,0.26]},{x:11,y:1.4,z:4.6,r:6,c:[0.9,0.4,0.12]},{x:19,y:2.4,z:1.5,r:6,c:[0.5,0.42,0.2]});}
+ if(t===0){g.bulb={x:12,y:1.75,z:9.5,r:6.5,c:[0.95,0.88,0.5]};g.motelNeon={x:3,y:0.9,z:7.8,r:4.8,c:[1.2,0.5,0.12]};g.lights.push(g.bulb,g.motelNeon,{x:19.5,y:1.7,z:8.8,r:4.5,c:[0.5,0.62,0.42]},{x:3,y:1.6,z:13.2,r:3.8,c:[0.42,0.55,0.36]},{x:14.5,y:1.7,z:13.2,r:5.5,c:[0.6,0.46,0.26]},{x:11,y:1.4,z:4.6,r:6,c:[0.9,0.4,0.12]},{x:17.6,y:2.4,z:1.9,r:6,c:[0.5,0.42,0.2]});}
  else if(t===1){g.lights.push({x:4.5,y:1.7,z:12.5,r:5,c:[0.7,0.55,0.42]},{x:3.5,y:1.5,z:17.5,r:4.2,c:[0.5,0.9,0.95]},{x:14.5,y:1.9,z:13,r:6.5,c:[0.8,0.66,0.5]},{x:13.5,y:1.9,z:18,r:6,c:[0.75,0.5,0.62]},
-   {x:25.5,y:1.8,z:12.5,r:5,c:[0.62,0.62,0.56]},{x:25.5,y:1.7,z:17.5,r:5,c:[0.72,0.5,0.34]},{x:15,y:1.6,z:8,r:7,c:[0.75,0.4,0.32]},{x:4,y:1.6,z:8,r:6,c:[0.7,0.36,0.34]},{x:26,y:1.6,z:8,r:6,c:[0.7,0.36,0.34]});}
+   {x:25.5,y:1.8,z:12.5,r:5,c:[0.62,0.62,0.56]},{x:25.5,y:1.7,z:17.5,r:5,c:[0.72,0.5,0.34]},{x:15,y:1.6,z:8,r:7,c:[0.75,0.4,0.32]},{x:4,y:1.6,z:8,r:6,c:[0.7,0.36,0.34]},{x:26,y:1.6,z:8,r:6,c:[0.7,0.36,0.34]},{x:14.5,y:1.6,z:22,r:6,c:[0.8,0.62,0.5]});}
  else g.lights.push({x:15.5,y:2.0,z:11.5,r:7,c:[0.85,0.68,0.42]},{x:15,y:2.0,z:17,r:6.5,c:[0.8,0.6,0.42]},{x:11.5,y:1.0,z:15.7,r:4,c:[0.9,0.5,0.18]},{x:4,y:1.8,z:11.3,r:5.5,c:[0.8,0.5,0.42]},
-   {x:3,y:1.7,z:17.2,r:4.5,c:[0.6,0.7,0.8]},{x:26.5,y:1.9,z:11.2,r:6,c:[0.8,0.72,0.6]},{x:26.5,y:1.8,z:17.2,r:5.5,c:[0.75,0.6,0.36]},{x:12,y:0.7,z:5,r:5,c:[0.25,0.8,1.0]},{x:21,y:1.6,z:6,r:6,c:[0.6,0.42,0.5]},{x:5,y:1.6,z:6,r:5.5,c:[0.6,0.42,0.5]});
+   {x:3,y:1.7,z:17.2,r:4.5,c:[0.6,0.7,0.8]},{x:26.5,y:1.9,z:11.2,r:6,c:[0.8,0.72,0.6]},{x:26.5,y:1.8,z:17.2,r:5.5,c:[0.75,0.6,0.36]},{x:12,y:0.7,z:5,r:5,c:[0.25,0.8,1.0]},{x:21,y:1.6,z:6,r:6,c:[0.6,0.42,0.5]},{x:5,y:1.6,z:6,r:5.5,c:[0.6,0.42,0.5]},{x:15.5,y:1.7,z:22,r:5.5,c:[0.95,0.78,0.5]});
  for(let i=n0;i<g.lights.length;i++){g.lights[i].x+=1;g.lights[i].z+=1;}}
 function homeLightTick(g){const T=g.T;if(g.bulb){const n=Math.sin(T*2.3)*Math.sin(T*5.1+1),f=n>0.82?(Math.sin(T*60)>0?0.15:0.6):1-0.06*Math.sin(T*47);g.bulb.c=[0.95*f,0.88*f,0.5*f];g.bulbF=f;}
  if(g.fire){const f=0.85+0.15*Math.sin(T*9)*Math.sin(T*5.3+1);g.fire.c=[1.1*f,0.5*f,0.12*f];}
@@ -2628,10 +2802,10 @@ function drawHomeDecor(B0,g){const t=g.home,T=g.T,W=g.W-2,H=g.H-2,f=homeFurn(),O
   /* ---- the parking lot: faded bays, the motel sign, a dumpster, a lamp post, an oil stain ---- */
   for(let i=0;i<8;i++)bx(1.5+i*3,0.03,1.6,0.1,0.01,2.6,[0.55,0.55,0.5]);bx(12,0.03,0.25,24,0.01,0.1,[0.6,0.5,0.15]);bx(7.6,0.028,1.9,1.3,0.01,0.9,[0.05,0.05,0.06],false,0.4);
   bx(4.5,1.4,2.4,0.12,2.8,0.12,DK);bx(4.5,2.5,2.4,2.6,0.9,0.14,[0.1,0.08,0.1]);for(const [lx,w] of [[-0.9,0.5],[-0.3,0.5],[0.3,0.5],[0.9,0.5]])bx(4.5+lx,2.6,2.48,w*0.7,0.34,0.03,[1.3*nf,0.5*nf,0.12*nf],true);bx(4.5,2.25,2.48,2.0,0.08,0.03,[1*nf,0.2*nf,0.5*nf],true);
-  I.r=0.2;I.box(TRS(14.5,0.5,1.4,0.15,1.9,1.0,1.0),[0.14,0.3,0.2]);I.r=0;bx(14.5,1.02,1.4,1.94,0.05,1.04,[0.1,0.22,0.15],false,0.15);bx(15.3,0.12,2.3,0.4,0.24,0.3,[0.08,0.1,0.08],false,0.7);
-  bx(19,1.5,1.5,0.1,3.0,0.1,DK);bx(19,2.95,1.9,0.1,0.08,0.9,DK);I.r=0.6;I.box(TRS(19,2.86,2.3,0,0.3,0.1,0.4),[1,0.85,0.5],true);I.r=0;
+  I.r=0.2;I.box(TRS(21.5,0.5,2.45,0.05,1.9,1.0,1.0),[0.14,0.3,0.2]);I.r=0;bx(21.5,1.02,2.45,1.94,0.05,1.04,[0.1,0.22,0.15],false,0.05);bx(20.2,0.12,2.75,0.4,0.24,0.3,[0.08,0.1,0.08],false,0.7);
+  bx(17.6,1.5,2.75,0.1,3.0,0.1,DK);bx(17.6,2.95,2.3,0.1,0.08,0.9,DK);I.r=0.6;I.box(TRS(17.6,2.86,1.9,0,0.3,0.1,0.4),[1,0.85,0.5],true);I.r=0;
   /* ---- back patio: a rusty rail, a dead palm, the broken ice machine, two plastic chairs ---- */
-  bx(12,0.455,3.5,22,0.02,1.02,[0.3,0.27,0.28]);for(let x=1;x<=23;x+=2)bx(x,0.7,3.5,0.05,0.5,0.05,RU);for(const y of [0.72,0.95])bx(12,y,3.5,22,0.04,0.04,RU);
+  for(const [rx,rw] of [[5.5,9],[17.5,11]]){bx(rx,0.455,3.5,rw,0.02,1.02,[0.3,0.27,0.28]);for(const y of [0.72,0.95])bx(rx,y,3.5,rw,0.04,0.04,RU);}for(let x=1;x<=23;x+=2)if(x!==11)bx(x,0.7,3.5,0.05,0.5,0.05,RU);for(const x of [10,12])bx(x,0.7,3.5,0.06,0.5,0.06,RU);
   homePalm(B,I,1.5,4.5,1,[0.5,0.3,0.2],true);
   I.r=0.15;I.box(TRS(21.0,0.6,4.42,0,1.5,1.2,0.75),[0.6,0.62,0.64]);I.r=0;bx(21.0,0.95,4.8,1.3,0.3,0.02,[0.25,0.4,0.6]);bx(21.0,0.95,4.815,0.5,0.12,0.01,[0.9,0.95,1],Math.sin(T*9)>0.6);bx(21.0,0.4,4.8,0.9,0.4,0.02,[0.3,0.3,0.32]);bx(21.55,0.2,4.82,0.06,0.06,0.02,[1,0.1,0.1],true);
   bx(20.6,0.012,5.5,1.4,0.02,0.7,[0.2,0.24,0.26],false,0.3);
@@ -2747,6 +2921,10 @@ function drawHomeDecor(B0,g){const t=g.home,T=g.T,W=g.W-2,H=g.H-2,f=homeFurn(),O
   [[1.2,TL],[1.0,PK],[0.55,[0.98,0.95,0.9]]].forEach(([rr,c],k)=>{for(let i=0;i<12;i++)bx(14.5,0.008+k*0.01,17.5,rr*1.8,0.004,rr*1.8,c,false,i*Math.PI/24);});
   I.r=1;I.box(TRS(11.5,0.25,13.5,0,0.4,0.5,0.4),TL);I.r=0;bx(11.5,0.51,13.5,0.46,0.02,0.46,[0.85,0.95,1]);
   homePalm(B,I,7.5,19.4,1,WH);homePalm(B,I,20.45,19.4,1.05,PK);homePalm(B,I,9.45,14.4,0.8,WH);
+  /* ---- the third-floor corridor outside your front door: a runner, sconces, your number, the elevator's lit arrows ---- */
+  bx(14.5,0.012,22,12.6,0.02,1.15,[0.17,0.62,0.66]);bx(14.5,0.014,22,12.2,0.02,0.85,[0.97,0.86,0.9]);for(const sx of [10.5,18.5]){bx(sx,0.82,21.04,0.16,0.22,0.06,[1,0.85,0.6],true);bx(sx,0.7,21.03,0.06,0.06,0.06,GOLD);}
+  bx(15.25,0.82,21.03,0.22,0.14,0.02,GOLD);bx(15.25,0.82,21.045,0.16,0.08,0.01,[0.12,0.1,0.12]);homePalm(B,I,20.5,22.6,0.85,PK);
+  for(const ez of [21.6,22.4])bx(8.03,1.0,ez,0.02,0.07,0.12,[1,0.75,0.35],true);bx(8.03,0.62,22,0.02,0.14,0.08,GOLD);
   /* ---- kitchen: a banquette under the window, herbs on the sill, a lamp over the table ---- */
   I.r=0.3;I.box(TRS(23.5,0.2,11.32,0,2.7,0.4,0.52),WH);I.r=0;bx(23.5,0.42,11.32,2.6,0.05,0.46,TL);for(let i=0;i<3;i++)bx(22.7+i*0.8,0.56,11.12,0.5,0.26,0.1,i%2?PK:[1,0.85,0.4],false,0);
   for(const [hx,hc] of [[22.5,[0.2,0.6,0.25]],[23.5,[0.3,0.7,0.3]],[24.5,[0.25,0.55,0.2]]]){bx(hx,0.5,10.7,0.16,0.1,0.16,[0.85,0.5,0.35]);bx(hx,0.62,10.7,0.2,0.14,0.2,hc);}
@@ -2836,6 +3014,11 @@ function drawHomeDecor(B0,g){const t=g.home,T=g.T,W=g.W-2,H=g.H-2,f=homeFurn(),O
   for(const cx of [13.5,16.5]){const cz=19.5;bx(cx,0.06,cz,0.62,0.12,0.62,GOLD);I.r=1;I.box(TRS(cx,0.6,cz,0,0.42,1.0,0.42),MB);I.r=0;for(let i=0;i<8;i++){const a=i*TAU/8;bx(cx+Math.sin(a)*0.205,0.6,cz+Math.cos(a)*0.205,0.03,0.96,0.03,[0.84,0.82,0.78],false,a);}
    bx(cx,1.1,cz,0.56,0.08,0.56,GOLD);bx(cx,1.17,cz,0.66,0.06,0.66,MB);I.r=1;I.tp=-0.3;I.box(TRS(cx,1.34,cz,0,0.28,0.26,0.28),GOLD);I.tp=0;I.r=0;}
   homePalm(B,I,7.6,19.3,0.95,GOLD);homePalm(B,I,21.3,19.3,0.95,GOLD);drawTorch(B,I,7.5,15.5);drawTorch(B,I,21.4,18.2);
+  /* ---- the entrance hall: a velvet runner from the private elevator, a console with orchids and a mirror, gold numbers by the doors ---- */
+  bx(15.6,0.012,22,8.6,0.02,1.2,VR);bx(15.6,0.014,22,8.3,0.02,0.95,[0.07,0.05,0.07]);for(const ez of [21.45,22.55])bx(15.6,0.016,ez,8.3,0.02,0.04,GOLD);
+  {const cx=18.4,cz=21.25;bx(cx,0.42,cz,1.5,0.06,0.4,BK,false,0,TUV[43]);bx(cx,0.39,cz,1.54,0.02,0.44,GOLD);for(const lx of [-0.65,0.65])bx(cx+lx,0.2,cz,0.05,0.4,0.05,GOLD);
+   bx(cx,0.8,21.03,1.0,0.6,0.02,[0.75,0.8,0.86]);bx(cx,0.8,21.025,1.08,0.68,0.01,GOLD);I.r=0.8;I.box(TRS(cx-0.4,0.55,cz,0,0.12,0.2,0.12),[0.95,0.95,0.97]);I.r=0;for(let i=0;i<3;i++)bx(cx-0.4+(i-1)*0.06,0.7+i*0.03,cz,0.07,0.04,0.07,[0.95,0.55,0.8]);}
+  homePalm(B,I,12.3,22.6,0.85,GOLD);homePalm(B,I,19.6,22.6,0.9,GOLD);bx(11.03,0.95,21.6,0.02,0.16,0.3,GOLD);bx(11.035,0.95,21.6,0.01,0.1,0.22,[0.1,0.08,0.1]);
   I.r=0.4;I.box(TRS(7.45,0.2,17.9,0,0.6,0.34,1.5),VR);I.box(TRS(7.18,0.44,17.9,0,0.14,0.34,1.5),VR);I.r=0;for(const ez of [-0.45,0.45])bx(7.5,0.42,17.9+ez,0.1,0.2,0.36,GOLD);
   /* ---- kitchen: a wine wall, a bar cart, three gold lamps over where the table goes ---- */
   bx(30.05,0.62,9.22,1.7,1.24,0.4,BK);bx(30.05,0.62,9.43,1.56,1.1,0.01,[0.9,0.5,0.2],true);for(let r=0;r<4;r++)for(let i=0;i<7;i++)bx(29.4+i*0.215,0.22+r*0.27,9.45,0.09,0.09,0.04,[[0.3,0.08,0.1],[0.12,0.25,0.14],[0.5,0.38,0.12]][(i+r)%3]);bx(30.05,1.25,9.22,1.76,0.03,0.44,GOLD);
@@ -2967,13 +3150,17 @@ function buildElev(){const B=elevB;B.reset();B.round=0.45;
  B.box(TRS(0,0.95,-1.12,0,2.2,0.04,0.04),GOLD);
  B.quad([[-9,-4,-9],[9,-4,-9],[9,10,-9],[-9,10,-9]],0,0,0,TUV[21],[1,1,1]);
  B.upload(true);elevBuilt=true;}
-let ELEVDOWN=false;function enterElevator(down){fountainHum(null);ELEVDOWN=down===true;if(!elevBuilt)buildElev();state='elev';elevT=0;elevLast=0;show('sElev');document.querySelector('#sElev .elN span').innerHTML=ELEVDOWN?'&#9660;':'&#9650;';$('elFloor').textContent=ELEVDOWN?'52':'01';const ch=CHARS[selIdx];elevChar=makeChar(0,-0.3,LOOKS[ch.id],false);elevChar.pose='stand';elevChar.splat=VISIT.debrief!==null&&menuChars?menuChars[selIdx].splat:{torso:[],legs:[],face:[]};elevChar.a=0.25;}
-let elevLast=0;function updateElev(dt){const nw=performance.now();if(elevLast&&nw-elevLast<300)dt=(nw-elevLast)/1000;elevLast=nw;elevT+=dt;const k=clamp(elevT/ELEV_DUR,0,1),e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;$('elFloor').textContent=String(Math.max(1,Math.round(ELEVDOWN?52-51*e:1+51*e))).padStart(2,'0');
- if(elevT>=ELEV_DUR&&!elevChar.done){elevChar.done=fadeTo(()=>ELEVDOWN?loadHub('lobby','out'):loadHub('office'));if(elevChar.done)sfx('ding');}}
-function skipElev(){if(state==='elev'&&!elevChar.done){elevT=ELEV_DUR;}}
+/* ELEVOPT (null for McWey's 1 <-> 52): {from,to,title,dur,then}; a floor can be a name like 'P1' */
+let ELEVDOWN=false,ELEVOPT=null;const elevDur=()=>ELEVOPT&&ELEVOPT.dur||ELEV_DUR;
+function elevFloor(e){if(!ELEVOPT)return String(Math.max(1,Math.round(ELEVDOWN?52-51*e:1+51*e))).padStart(2,'0');const a=ELEVOPT.from,b=ELEVOPT.to,na=typeof a==='number'?a:0,nb=typeof b==='number'?b:0,v=Math.round(na+(nb-na)*e);
+ return v<1?String(typeof a==='string'?a:b):String(v).padStart(2,'0');}
+function enterElevator(down,opt){fountainHum(null);ELEVDOWN=down===true;ELEVOPT=opt||null;if(!elevBuilt)buildElev();state='elev';elevT=0;elevLast=0;show('sElev');document.querySelector('#sElev .elN span').innerHTML=ELEVDOWN?'&#9660;':'&#9650;';$('elFloor').textContent=elevFloor(0);document.querySelector('#sElev .elT').textContent=ELEVOPT&&ELEVOPT.title||'McWEY TOWER';const ch=CHARS[selIdx];elevChar=makeChar(0,-0.3,LOOKS[ch.id],false);elevChar.pose='stand';elevChar.splat=VISIT.debrief!==null&&menuChars?menuChars[selIdx].splat:{torso:[],legs:[],face:[]};elevChar.a=0.25;}
+let elevLast=0;function updateElev(dt){const nw=performance.now();if(elevLast&&nw-elevLast<300)dt=(nw-elevLast)/1000;elevLast=nw;elevT+=dt;const k=clamp(elevT/elevDur(),0,1),e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;$('elFloor').textContent=elevFloor(e);
+ if(elevT>=elevDur()&&!elevChar.done){const o=ELEVOPT;elevChar.done=fadeTo(()=>o?o.then():ELEVDOWN?loadHub('lobby','out'):loadHub('office'));if(elevChar.done)sfx('ding');}}
+function skipElev(){if(state==='elev'&&!elevChar.done){elevT=elevDur();}}
 function elevView(asp){let eye=[0.45,1.55,3.0],tgt=[0.05,1.15,-0.7];if(asp<1){eye=[0.2,1.6,4.2];}return{eye,tgt,lights:[{x:0,y:2.4,z:0,r:3.2,c:[1.1,0.95,0.8]},{x:0,y:1.2,z:1.6,r:2.6,c:[0.6,0.5,0.7]},{x:-0.8,y:1.6,z:-2,r:3,c:[1,0.3,0.75]}]};}
 function drawElevDyn(B,P){B.reset();P.reset();if(!ENH())floorQuad(P,elevChar.x,elevChar.z,0.9,0,TUV[16],[1,1,1],0.012);hdChar(IBhi,elevChar,menuT);
- const k=clamp(elevT/ELEV_DUR,0,1),e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2,off=(ELEVDOWN?-1:1)*e*40;
+ const k=clamp(elevT/elevDur(),0,1),e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2,off=(ELEVDOWN?-1:1)*e*(ELEVOPT?Math.min(40,8+Math.abs((typeof ELEVOPT.to==='number'?ELEVOPT.to:0)-(typeof ELEVOPT.from==='number'?ELEVOPT.from:0))*0.6):40);
  for(let i=0;i<26;i++){const hx=((i*37)%17)/17,x=-6.5+hx*13,z=-4.5-((i*13)%7)*0.6,w=0.6+((i*7)%5)*0.25,h=4+((i*11)%9)*0.9;let y=((i*5.3-off)%20+20)%20-11;
   B.box(TRS(x,y+h/2,z,0,w,h,w),i%3?[0.3,0.27,0.45]:[0.25,0.4,0.55],true,TUV[i%3?33:35]);}
  for(let i=0;i<10;i++){const x=-6+i*1.3,y=((i*3.1-off*1.6)%14+14)%14-4;B.box(TRS(x,y,-2.2,0,0.04,0.04,0.04),[1,0.9,0.6],true);}}
@@ -3119,7 +3306,15 @@ const NPC_CHAT={guard:["Keep your hands where I can see 'em. Kidding.","Fifty-tw
  recep:["Can I get you anything? Water? A lawyer?","He's on the phone with Bogota. Give him a minute.","Sign the guest book? No? Smart."],
  sitter:["These sofas cost more than my car.","We've been waiting two hours. You just walk in?","Sit with us. Nobody's in a hurry here except you."],
  guest:["Is it true about the motel?","My husband says McWey is a 'businessman'.","Love the suit.","Is that fountain real gold? It's real gold."]};
-NPCLINES.sitter=[["Don't mind us. We're waiting for the man upstairs."],["You're the one from the motel? Sit down a minute."]];NPCLINES.guard2=[["Extra security since Moreau. Can't be too careful."]];
+NPCLINES.sitter=[["Don't mind us. We're waiting for the man upstairs."],["You're the one from the motel? Sit down a minute."]];
+/* the people who greet you at home: The Seabreeze's doorman and concierge, the guard by Coral Tower's private elevator */
+NPCLOOK.doorman=()=>({skin:hex(pick([0x8a5a3a,0xd9a37c,0x6b4226])),jacket:hex(0x1d3557),shirt:hex(0xf4efe6),tie:hex(0xc9a24a),pants:hex(0x1d3557),shoes:hex(0x111111),hs:'slick',hair:hex(0x1a1414),bw:1.08,bd:1.04,bh:1.04});
+NPCLOOK.concierge=()=>({fem:true,calm:1,sleeves:true,heels:true,skirt:0.55,skin:hex(0xd9a37c),jacket:hex(0x2bb7b9),shirt:hex(0xffffff),pants:hex(0xd9a37c),shoes:hex(0xffffff),hs:'long',hair:hex(0x2a1a12),medallion:true,bw:0.85,bd:0.85,bh:1.0});
+NPCLOOK.gsec=()=>NPCLOOK.guard();
+NPCLINES.doorman=[["Welcome home, sir.","Let me get that door for you."]];NPCLINES.concierge=[["Good evening, and welcome home!","Elevator's straight back. Third floor, as always."]];
+NPCLINES.gsec=[["Evening, sir. Straight up to sixty-nine.","Nobody's been up there but the cleaner."]];
+NPC_CHAT.doorman=["Nice night for a drive.","Valet's off tonight. I'm watching the car myself.","Anyone asks, I never saw you."];NPC_CHAT.concierge=["Your dry cleaning came back. Mostly clean.","Mrs. Feld in 2C says hello. And please stop.","Any packages, I'll send them up."];
+NPC_CHAT.gsec=["Private elevator, private floor. Nobody gets past me.","Your car's safe down here. Cameras on every bay.","Sixty-nine floors. I counted once."];NPCLINES.guard2=[["Extra security since Moreau. Can't be too careful."]];
 const RECEP_GRADE={S:["Not a scratch on you, darling.","They're calling it surgical on the radio."],'A+':["Sharp work out there. Very sharp."],A:["Sharp work out there. Very sharp."],B:["Good job. He's in a decent mood."],C:["Bit messy, wasn't it? I saw the news."],D:["Darling... you've got something on your shoes."]};
 function tvHeadline(){const vi=VISIT;if(vi.debrief===null||!LEVELS[vi.debrief])return "McWEY TOWER: MIAMI'S NEW CROWN JEWEL  ·  McWEY HOLDINGS STOCK UP 12%  ·  ";
  const nm=LEVELS[vi.debrief].name,tail={S:'NO WITNESSES, NO SUSPECTS',A:'POLICE BAFFLED','A+':'POLICE BAFFLED',B:'POLICE APPEAL FOR INFORMATION',C:'CLEANUP TO TAKE DAYS',D:'"A BLOODBATH," SAYS CORONER'}[vi.grade]||'POLICE BAFFLED';
@@ -3150,7 +3345,7 @@ TRACKS.muzak=theme({title:'NINE (LOBBY VERSION)',bpm:96,dist:1.0,cut:5200,prog:T
  bass:[0,null,null,7,null,null,12,null,0,null,null,7,null,null,5,null],bassLen:1.5,bv:0.3,arp:[0,2,4,2],arpV:'bell',av:0.025,pad:true,pcut:1500,pv:0.03,lead:'bell',mv:0.06,melSec:0,mo:-12});
 const ARCH_LABEL={bruiser:'BRUISER',bouncer:'BRAWLER',bodyguard:'BODYGUARD',butcher:'BUTCHER',biker:'HEAVY BIKER',disco:'HEAVYWEIGHT',merc:'MERC',mobster:'MOBSTER',dealer:'DEALER',punk:'PUNK',hitman:'HITMAN'};
 const archLabel=e=>e.boss?'THE SHARK':(ARCH_LABEL[e.look&&e.look.arch]||'BRUISER');
-function hubSkip(){if(!(G&&G.def.hub&&state==='play'))return;if(HUBMODE==='home'){if(!G.hubDone)G.hubDone=fadeTo(goDrive);return;}if(HUBMODE==='parked'||HUBMODE==='bunker'){openCarMenu();return;}if(HUBMODE==='out'){if(G.hubDone)return;G.hubDone=fadeTo(()=>{loadHub('drive','parked');openCarMenu();});return;}if(!G.hubDone)G.hubDone=fadeTo(talkMcWey);}
+function hubSkip(){if(!(G&&G.def.hub&&state==='play'))return;if(G.seq){seqSkip();return;}if(HUBMODE==='arrive'){const L=G.def.lift;if(!G.hubDone&&L)G.hubDone=fadeTo(()=>enterHomeByLift(L.home));return;}if(HUBMODE==='home'){if(!G.hubDone)G.hubDone=fadeTo(goDrive);return;}if(HUBMODE==='parked'||HUBMODE==='bunker'){openCarMenu();return;}if(HUBMODE==='out'){if(G.hubDone)return;G.hubDone=fadeTo(()=>{loadHub('drive','parked');openCarMenu();});return;}if(!G.hubDone)G.hubDone=fadeTo(talkMcWey);}
 const SIGN_STROKES={M:[[0,0,0,1],[0,1,0.5,0.45],[0.5,0.45,1,1],[1,1,1,0]],c:[[0.6,0.55,0,0.55],[0,0.55,0,0],[0,0,0.6,0]],W:[[0,1,0.25,0],[0.25,0,0.5,0.6],[0.5,0.6,0.75,0],[0.75,0,1,1]],E:[[0,0,0,1],[0,1,0.8,1],[0,0.5,0.6,0.5],[0,0,0.8,0]],Y:[[0,1,0.5,0.5],[1,1,0.5,0.5],[0.5,0.5,0.5,0]]};
 function strokeBox(B,x0,y0,x1,y1,z,t,col){const dx=x1-x0,dy=y1-y0,L=Math.hypot(dx,dy)||0.01,a=Math.atan2(dy,dx);B.box(A.mul(A.mul(A.T((x0+x1)/2,(y0+y1)/2,z),A.RZ(a)),A.S(L+t,t,t)),col,true);}
 function drawSign(B,cx,z){B.quad([[cx-1.4,4.62,z-1.6],[cx+1.4,4.62,z-1.6],[cx+1.4,4.62,z-4.4],[cx-1.4,4.62,z-4.4]],0,1,0,TUV[36],[1,1,1]);B.box(TRS(cx,4.0,z-0.02,0,4.6,0.95,0.08),hex(0x120e16));B.box(TRS(cx,4.5,z+0.03,0,4.7,0.05,0.05),[1,0.3,0.75],true);B.box(TRS(cx,3.5,z+0.03,0,4.7,0.05,0.05),[1,0.3,0.75],true);

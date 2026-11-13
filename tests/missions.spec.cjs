@@ -122,10 +122,10 @@ test('missions: after a job, leaving home by the door goes to McWey for the debr
         // the car menu offers McWey, not the finished job, while the debrief is still owed
         loadHub('drive', 'parked'); openCarMenu();
         const label = $('bCarJob').textContent;
-        $('bCarJob').click();
+        $('bCarJob').click(); seqSkip(); // driving off from McWey's kerb is a skippable scene
         const viaCar = { mode: HUBMODE, cine: !!G.cine };
         talkMcWey(); CHAT.done = true; chatGo();
-        loadHub('home0', 'home'); onHubTrigger('leave'); openCarMenu();
+        loadHub('home0', 'home'); onHubTrigger('leave'); seqSkip(); openCarMenu();
         out.push({ lvl, home, viaDoor, label, viaCar, next: NEXTJOB, after: { mode: HUBMODE, label: $('bCarJob').textContent.startsWith('NEXT JOB: ' + LEVELS[lvl + 1].name) } });
         closeCarMenu();
       }
