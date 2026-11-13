@@ -788,7 +788,7 @@ function loadLevel(i,dOver,staged=false){const arrI=ARR_GO;ARR_GO=null;
   else if(c in EKIND||c==='X')makeEnemy(g,def,i,c==='X'?((def.boss&&def.boss.weapon)||'m16'):EKIND[c],c==='X',cx,cz);
   else if(c in IKIND)makeItem(g,IKIND[c],cx,cz);
  }
- markZones(g);if(!def.hub&&!staged)addHazards(g,i);
+ markZones(g);if(!def.hub&&!staged)addHazards(g,i);if(!def.hub)assignKinds(g,i);
  if(staged){g.fans=[];g.pool=new Uint8Array(W*H);g.glass=new Uint8Array(W*H);g.nades=[];}
  if(def.hub)hubSetup(g);g.lights.push({x:g.car.x,y:0.3,z:g.car.z,r:3,c:[1,0.2,0.7]});if(arrI!==null&&!def.hub)arriveSetup(g,arrI);dressStreet(g);buildStatic(g);buildRadar(g);g.cam.x=g.player.x;g.cam.z=g.player.z-1;computeFlow();return g;
 }
@@ -1125,7 +1125,38 @@ function doSlam(e,dir,sl){const g=G,S=SLAMS[sl.k];g.score+=S.pay;g.gpts=(g.gpts|
  popup(e.x,e.z,S.n+' +$'+fmt(S.pay),S.c);sfx('thud');shake(sl.k==='glass'?0.25:0.45);e.x=sl.x;e.z=sl.z;killEnemy(e,'door',dir);
  if(S.sink){e.sunk=true;const red=sl.k==='shark';for(let k=0;k<22;k++)g.parts.push({t:'c',x:sl.x,y:0.1,z:sl.z,vx:rnd(-2,2),vy:rnd(1,3.5),vz:rnd(-2,2),s:0.07,c:red&&k%2?[0.8,0.05,0.1]:[0.75,0.95,1],life:0.9});if(red)sfx('boss');}
  else if(sl.k==='glass')sfx('ric');}
-function knockdown(e,dir){if(!e.alive)return;{const sl=slamSpot(e,dir);if(sl){doSlam(e,dir,sl);return;}}if(e.boss){stagger(e,dir);hitEnemy(e,'door',dir,1);return;}e.down=3.0;e.fall=0;e.vx=dir[0]*4;e.vz=dir[1]*4;dropWeapon(e,dir,true);e.a=Math.atan2(dir[0],dir[1]);e.state='chase';e.wind=0;e.seeT=0;AI.hurt(e,dir);sfx('hit_fists');bloodBurst(e.x,0.9,e.z,dir,6,2);}
+/* ENEMY KINDS: from the Marina on, a few guards on each floor are turned into something that asks for a different play. Chosen by a seeded
+   pick so a floor always has the same ones (never the silenced-pistol guard, who carries keys). dog: fast biter that hears further and dies to any knock. nade: lobs grenades at where he last
+   saw you (red ring = where it lands). shield: big, slow to turn, pistol/Uzi/buckshot spark off the front; flank him, slam him or bring a rifle.
+   spot: stands still with a rifle and a visible laser; it takes him a second to lock on, then he rarely misses. Behaviour lives in ai.js. */
+const EKINDS={3:{dog:2},4:{dog:1,nade:1},5:{shield:1,dog:1},6:{nade:1,shield:1},7:{nade:1,dog:1,shield:1},8:{spot:1,dog:2,nade:1},9:{shield:2,spot:1},10:{dog:1,shield:1,spot:1,nade:1}};
+const KIND_INTRO={dog:'GUARD DOG!',nade:'GRENADIER! WATCH THE RED RING',shield:'RIOT SHIELD! GET BEHIND HIM',spot:'SPOTTER! STAY OUT OF THE LASER'};
+function setKind(e,k){e.kind=k;
+ if(k==='dog'){e.weapon=null;e.body='thin';e.hp=e.maxhp=1;e.spd=1.7;e.r=0.22;e.rmul=0.6;e.pers='rush';e.state='idle';}
+ else if(k==='nade'){e.weapon={type:'pistol',ammo:99};e.pers='careful';Object.assign(e.look,{vest:[0.25,0.3,0.18],pouches:true});}
+ else if(k==='shield'){e.weapon={type:'pistol',ammo:99};e.body='big';e.hp=e.maxhp=2;e.spd=0.8;e.r=0.33;e.rmul=1;e.pers='rush';Object.assign(e.look,{body:'big',helmet:'pasgt',helmetC:[0.12,0.14,0.2],hat:null});}
+ else if(k==='spot'){e.weapon={type:'m16',ammo:99};e.state='idle';e.wary=1;e.pers='careful';e.hp=e.maxhp=1;}
+ return e;}
+function assignKinds(g,i){const want=EKINDS[i];if(!want||!g.player)return;const R=srng(0xd06+i*131+(g.enemies.length*17)),p=g.player;
+ const pool=g.enemies.filter(e=>!e.boss&&!e.kind&&!(e.weapon&&e.weapon.type==='silenced')&&e.body!=='fat'&&e.body!=='big'&&Math.hypot(e.x-p.x,e.z-p.z)>6);
+ const take=f=>{const c=pool.filter(f);if(!c.length)return null;const e=c[R()*c.length|0];pool.splice(pool.indexOf(e),1);return e;};
+ const melee=e=>!e.weapon||!!WD[e.weapon.type].melee;
+ for(const k of ['spot','shield','nade','dog'])for(let j=0;j<(want[k]||0);j++){const e=take(k==='dog'?melee:q=>!melee(q))||take(()=>true);if(e)setKind(e,k);}}
+const shieldBlocks=(e,b)=>e.kind==='shield'&&!(e.down>0)&&!b.p.rifle&&b.p.e0<700&&Math.abs(angDiff(e.a,Math.atan2(-b.dx,-b.dz)))<1.0;
+function drawKinds(B,g){const T=g.T;for(const e of g.enemies){if(!e.kind||e.sunk||(e.alive?fogHidE(e):fogHid(e.x,e.z)))continue;
+  if(e.kind==='shield'&&e.alive&&!(e.down>0)){const m=A.mul(A.T(e.x,0,e.z),A.RY(e.a));B.box(A.mul(m,A.mul(A.T(0,0.78,0.4),A.S(0.66,1.15,0.05))),[0.13,0.15,0.22]);B.box(A.mul(m,A.mul(A.T(0,1.12,0.43),A.S(0.34,0.14,0.02))),[0.5,0.8,0.9],true);}
+  if(e.kind==='spot'&&e.alive&&!(e.down>0)){const a=e.state==='chase'?e.ga:e.a,sx=Math.sin(a),cz=Math.cos(a);let L=0.4;const p=g.player,see=e.state==='chase'&&e.seeT<0.1;
+   if(see)L=Math.hypot(p.x-e.x,p.z-e.z);else while(L<16&&!blk(g,e.x+sx*(L+0.25),e.z+cz*(L+0.25)))L+=0.25;
+   const hot=(e.lock||0)>0.55;B.box(A.mul(A.mul(A.T(e.x+sx*L/2,1.05,e.z+cz*L/2),A.RY(a)),A.S(hot?0.05:0.025,hot?0.05:0.025,L)),hot&&Math.sin(T*40)>0?[1,0.8,0.3]:[1,0.1,0.1],true);}}
+ if(g.nades)for(const n of g.nades)if(n.own==='e'&&n.ring){const k=Math.min(1,n.t/n.dur),r=2.2*(0.5+0.5*k);if(Math.sin(T*30)>-0.3)for(let q=0;q<12;q++){const a=q*TAU/12;B.box(A.mul(A.T(n.tx+Math.cos(a)*r,0.04,n.tz+Math.sin(a)*r),A.S(0.22,0.02,0.22)),[1,0.15,0.15],true);}}}
+function drawDog(B,e){const T=G.T,run=e.alive?Math.min(1,Math.hypot(e.vx,e.vz)/2):0,lg=Math.sin(T*20+e.id)*0.09*run,S=1.35;
+ const m0=A.mul(A.mul(A.T(e.x,e.alive?0:0.16,e.z),A.RY(e.a)),e.alive?A.S(S,S,S):A.mul(A.RZ(1.45),A.S(S,S,S)));
+ const P=(x,y,z,sx,sy,sz,c)=>B.box(A.mul(m0,A.mul(A.T(x,y,z),A.S(sx,sy,sz))),c),c=[0.13,0.1,0.09],t=[0.55,0.33,0.16];
+ P(0,0.34,0,0.24,0.24,0.6,c);P(0,0.3,0.05,0.2,0.1,0.4,t);P(0,0.48,0.36,0.2,0.2,0.22,c);P(0,0.43,0.5,0.1,0.09,0.14,t);for(const sd of [-1,1])P(sd*0.07,0.61,0.33,0.05,0.09,0.04,c);
+ for(const [lx,lz] of [[-0.08,0.2],[0.08,0.2],[-0.08,-0.2],[0.08,-0.2]])P(lx,0.11,lz+(lx>0?lg:-lg),0.06,0.22,0.06,t);P(0,0.44,-0.35,0.04,0.04,0.16,c);
+ if(e.alive)P(0,0.36,0.3,0.26,0.05,0.05,[0.8,0.1,0.15]);}
+function drawFoe(B,e){if(e.kind==='dog')drawDog(B,e);else drawChar(B,e);}
+function knockdown(e,dir){if(!e.alive)return;{const sl=slamSpot(e,dir);if(sl){doSlam(e,dir,sl);return;}}if(e.kind==='dog'){killEnemy(e,'fists',dir);return;}if(e.boss){stagger(e,dir);hitEnemy(e,'door',dir,1);return;}e.down=3.0;e.fall=0;e.vx=dir[0]*4;e.vz=dir[1]*4;dropWeapon(e,dir,true);e.a=Math.atan2(dir[0],dir[1]);e.state='chase';e.wind=0;e.seeT=0;AI.hurt(e,dir);sfx('hit_fists');bloodBurst(e.x,0.9,e.z,dir,6,2);}
 const DEATHNAME={grenade:'BLOWN UP BY A GOLD GRENADE',dual:'DOUBLE-TAPPED, TWICE',boss:'FLATTENED BY THE SHARK',fists:'BEATEN TO DEATH',bat:'BATTED INTO THE NEXT LIFE',knife:'STABBED',machete:'HACKED APART',pistol:'SHOT WITH A 9MM',silenced:'SILENCED',revolver:'SHOT WITH A .357',shotgun:'BLASTED WITH A SHOTGUN',double:'BOTH BARRELS',smg:'RIDDLED BY AN UZI',m16:'GUNNED DOWN BY AN M16'};
 /* dmg: float HP (1 = a clean hit); hit={p:projectile,e:J at impact} lets armour absorb by level (W5; a 0.1 pass-through keeps the plate); without hit a plate stops the whole hit */
 function hurtPlayer(dir,type,dmg=1,hit=null){const g=G,p=g.player;if(!p.alive||p.armorT>0)return;g.taken=(g.taken||0)+1;
@@ -1527,6 +1558,7 @@ function bulletLeg(b,rem){const g=G,p=g.player,ax=b.x,az=b.z,ev=balCrossings(g,b
  let ex=null;const leave=()=>{moveTo(ex.d1+0.01);if(!ex.B.pane)balImpact(b.x,b.z,-ex.nx,-ex.nz,ex.look,ex.r.kind,true);shotEv(b,b.x,b.z,'exit');
   const a=rnd(-ex.look.defl,ex.look.defl),c=Math.cos(a),s=Math.sin(a),dx=b.dx*c-b.dz*s;b.dz=b.dx*s+b.dz*c;b.dx=dx;return Math.max(0,rem-ex.d1-0.01);};
  for(const v of ev){if(ex&&v.d>=ex.d1)return leave();if(v.d>rem&&!ex)break;
+  if(v.t==='e'&&v.e.kind==='shield'&&shieldBlocks(v.e,b)){moveTo(v.d);sparks(b.x,0.9,b.z);sfx('ric',0.5);b.hit.push(v.e);AI.hurt(v.e,[b.dx,b.dz]);if(v.e.state!=='chase'){v.e.state='chase';v.e.react=0.4;v.e.seeT=0;}if(!G.shTip){G.shTip=1;popup(v.e.x,v.e.z,'BLOCKED! FLANK HIM','#ffd36b');}b.life=0;return 0;}
   if(v.t==='e'){hitEnemy(v.e,b.type,[b.dx,b.dz],BAL.damage(b.p,b.e));b.hit.push(v.e);shotEv(b,v.e.x,v.e.z,'ally',v.e);b.e-=BAL.BODY_J;if(b.e<BAL.EMIN){moveTo(v.d);b.life=0;return 0;}continue;}
   if(v.t==='p'){moveTo(v.d);hurtPlayer([b.dx,b.dz],b.type,BAL.damage(b.p,b.e),{p:b.p,e:b.e});b.life=0;return 0;}
   const r=v.r;if(r.kind==='prop'&&!(g.plan?(g.plan.propH.get(r.ref)??0)>=1.2:TALL_FURN[g.furn[r.ref]])&&hugs(v))continue;
@@ -3449,8 +3481,8 @@ function buildDynamic(){const g=G,B=dynB,O=ovB;B.reset();O.reset();if(g.def.hub)
  if(g.cleared){const y=1.5+Math.sin(g.T*5)*0.15;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.3,0.3,0.3))),[1,0.3,0.75],true);}
  const p=g.player;const near=p.alive?nearItem(p):null;
  for(const it of g.items)if(!fogHid(it.x,it.z))drawItem(B,it,it===near);
- for(const e of g.enemies)if(!e.alive&&!e.sunk&&!fogHid(e.x,e.z))drawChar(CB(e),e);if(!p.alive)drawChar(CB(p),p);
- for(const e of g.enemies)if(e.alive&&!fogHidE(e))drawChar(CB(e),e);if(g.lex)drawChar(IBhi,g.lex);if(p.alive&&!(g.arrive&&g.arrive.hide)&&!(p.armorT>0&&Math.floor(g.T*20)%2))drawChar(IBhi,p);
+ for(const e of g.enemies)if(!e.alive&&!e.sunk&&!fogHid(e.x,e.z))drawFoe(CB(e),e);if(!p.alive)drawChar(CB(p),p);
+ for(const e of g.enemies)if(e.alive&&!fogHidE(e))drawFoe(CB(e),e);drawKinds(B,g);if(g.lex)drawChar(IBhi,g.lex);if(p.alive&&!(g.arrive&&g.arrive.hide)&&!(p.armorT>0&&Math.floor(g.T*20)%2))drawChar(IBhi,p);
  for(const e of g.enemies){if(!e.alive||!e.aiming||!p.alive||fogHidE(e))continue;const sa=Math.sin(e.a),ca=Math.cos(e.a);const h=rayWall(e.x,e.z,sa,ca,14,true);const len=h?h.d:14;const st=0.55,rem=Math.max(0,len-st);
   const flick=e.react<0.15?(Math.floor(g.T*30)%2?1:0.4):0.75;B.box(TRS(e.x+sa*(st+rem/2)+ca*0.17,0.74,e.z+ca*(st+rem/2)-sa*0.17,e.a,0.018,0.018,rem),[flick,0.05,0.08],true);}
  for(const b of g.bullets)B.box(TRS(b.x,0.74,b.z,Math.atan2(b.dx,b.dz),0.035,0.035,0.45),b.own==='p'?[1,0.95,0.55]:[1,0.6,0.3],true);

@@ -184,7 +184,7 @@ function bossAI(e,dt,dist,dx,dz,ang){if(e.lex)return lexAI(e,dt,dist,dx,dz,ang);
  if(dist>3){tvx=dx/d*2.3;tvz=dz/d*2.3;}else if(dist<1.35&&e.cd<=0){e.cd=1.0;e.atkT=e.atkDur=0.25;sfx('punch');hurtPlayer([dx/d,dz/d],'boss');shake(0.5);}
  if(dist>=1.35&&e.react<=0&&e.cd<=0&&Math.abs(angDiff(e.a,ang))<0.3){e.weapon.ammo=99;fireGun(e,e.weapon,false);e.burst=(e.burst||0)+1;if(e.burst<(enr?8:5))e.cd=0.085;else{e.burst=0;e.cd=(enr?0.85:1.4)*Dd().ecd;}}
  if(enr&&!e.enraged){e.enraged=true;popup(e.x,e.z,'HE IS PISSED','#ff2a3a');sfx('boss');}return[tvx,tvz];}
-function spot(e){if(e.boss&&!G.bossSeen){G.bossSeen=true;banner(bossName(),G.def.boss?(G.def.boss.intro||'Gold grenades. Keep moving and never stand still.'):'He takes a lot of hits. Keep moving, use cover.');sfx('boss');}
+function spot(e){if(e.kind&&typeof KIND_INTRO!=='undefined'&&!(G.kindSeen||(G.kindSeen={}))[e.kind]){G.kindSeen[e.kind]=1;popup(e.x,e.z-0.4,KIND_INTRO[e.kind],'#ffd36b');}if(e.boss&&!G.bossSeen){G.bossSeen=true;banner(bossName(),G.def.boss?(G.def.boss.intro||'Gold grenades. Keep moving and never stand still.'):'He takes a lot of hits. Keep moving, use cover.');sfx('boss');}
  if(e.state!=='chase'){e.alertT=0.9;sfx('alert');const b=e.bl;if(b)AI.callout(e,5,o=>{AI.know(o,AI.belief.make(b.x,b.z,b.t,'call'));AI.investigate(o,b.x,b.z,1);});}}
 function visionHalfAngle(e){return e.state==='search'?1.3:Dd().cone+(e.wary?0.35:0);}
 function updateEnemy(e,dt){const g=G,p=g.player,T=g.T||0;
@@ -194,8 +194,8 @@ function updateEnemy(e,dt){const g=G,p=g.player,T=g.T||0;
  e.cd-=dt;if(e.atkT>0)e.atkT-=dt;if(e.ga===undefined)e.ga=e.a;
  const wd=WD[e.weapon?e.weapon.type:'fists'];const dx=p.x-e.x,dz=p.z-e.z,dist=Math.hypot(dx,dz)||0.001,ang=Math.atan2(dx,dz);
  const chasing=e.state==='chase',look=chasing?e.ga:e.a,half=chasing?Math.max(visionHalfAngle(e),1.4):visionHalfAngle(e);
- let see=false;if(p.alive&&dist<(chasing?13:Dd().vision)){const cone=dist<1.6||Math.abs(angDiff(look,ang))<half;if(cone&&(typeof playerSeenBy==='function'?playerSeenBy(e):los(e.x,e.z,p.x,p.z)))see=true;}
- if(!see&&p.alive){const hear=(p.sprinting?3.2:1.4)*(Math.hypot(p.vx,p.vz)>0.6?1:0);if(dist<hear&&los(e.x,e.z,p.x,p.z)){AI.know(e,AI.belief.make(p.x,p.z,T,'step'));if(!chasing){AI.investigate(e,p.x,p.z,1);e.ta=ang;}}}
+ let see=false;if(p.alive&&dist<(e.kind==='spot'?16:chasing?13:Dd().vision)){const cone=dist<1.6||Math.abs(angDiff(look,ang))<half;if(cone&&(typeof playerSeenBy==='function'?playerSeenBy(e):los(e.x,e.z,p.x,p.z)))see=true;}
+ if(!see&&p.alive){const hear=(p.sprinting?3.2:1.4)*(e.kind==='dog'?2.6:1)*(Math.hypot(p.vx,p.vz)>0.6?1:0);if(dist<hear&&(e.kind==='dog'||los(e.x,e.z,p.x,p.z))){AI.know(e,AI.belief.make(p.x,p.z,T,'step'));if(!chasing){AI.investigate(e,p.x,p.z,1);e.ta=ang;}}}
  if(!see&&e.bl&&(chasing||e.state==='search'))AI.track(e,dt);
  if(!see&&(e.state==='idle'||e.state==='patrol')){for(const o of g.enemies){if(o.alive||o.found||o===e)continue;const bx=o.x-e.x,bz=o.z-e.z,bd2=Math.hypot(bx,bz);if(bd2<Dd().vision*0.8&&Math.abs(angDiff(e.a,Math.atan2(bx,bz)))<Dd().cone&&los(e.x,e.z,o.x,o.z)){o.found=1;e.wary=1;AI.poi(e,o.x,o.z,'body');AI.investigate(e,o.x,o.z,1.4);popup(e.x,e.z,'BODY!','#ffd36b');sfx('alert');
   AI.callout(e,6,q=>{if(q.state==='chase')return;q.wary=1;AI.poi(q,o.x,o.z,'body');AI.investigate(q,o.x,o.z,1);});break;}}}
@@ -210,6 +210,10 @@ function updateEnemy(e,dt){const g=G,p=g.player,T=g.T||0;
   case 'distract':{const c=e.cashT;if(!c||c.life<=0){e.state='patrol';break;}const ddx=c.x-e.x,ddz=c.z-e.z,dd=Math.hypot(ddx,ddz);face=Math.atan2(ddx,ddz);if(dd>0.8){tvx=ddx/dd*2.2;tvz=ddz/dd*2.2;}break;}
   case 'search':{const r=AI.search(e,dt,2.6);tvx=r.vx;tvz=r.vz;face=r.face;if(r.end&&!AI.hunt(e)){e.state=e.wary?'idle':'patrol';e.turnT=0;e.searchT=0;}break;}
   case 'chase':{
+   if(e.kind==='spot'){e.aiming=true;if(see){face=gaze=ang;e.lock=(e.lock||0)+dt;if(e.lock>=1.15*Math.min(Dd().react,1.4)&&e.cd<=0&&Math.abs(angDiff(e.a,ang))<0.12){e.weapon.ammo=99;fireGun(e,e.weapon,false);e.cd=2.4;e.lock=0.3;}}
+    else{e.lock=Math.max(0,(e.lock||0)-dt*2);if(e.bl)face=gaze=Math.atan2(e.bl.x-e.x,e.bl.z-e.z);if(e.seeT>5){e.state='idle';e.turnT=0;}}break;}
+   if(e.kind==='nade'&&e.cd<=0&&(e.react<=0||!see)){const b=e.bl,age=b?T-b.t:1e9,tx=see?p.x:b?b.x:0,tz=see?p.z:b?b.z:0,td=Math.hypot(tx-e.x,tz-e.z);
+    if((see||age<2.5)&&td>3.2&&td<10.5){throwNade(e,'e',tx+rnd(-0.5,0.5),tz+rnd(-0.5,0.5));const n=g.nades[g.nades.length-1];n.dur=Math.max(1.05,n.dur*1.6);n.ring=1;e.atkT=e.atkDur=0.3;e.cd=3.2*Dd().ecd;}}
    if(!e.weapon){let bi=null,bd=4.5;for(const it of g.items){if(it.flying)continue;const d=Math.hypot(it.x-e.x,it.z-e.z);if(d<bd&&los(e.x,e.z,it.x,it.z)&&mClear(g,e.x,e.z,it.x,it.z)){bd=d;bi=it;}}
     if(bi&&(dist>2.5||!see)){const ddx=bi.x-e.x,ddz=bi.z-e.z;tvx=ddx/(bd||1)*3.2;tvz=ddz/(bd||1)*3.2;face=Math.atan2(ddx,ddz);if(bd<0.5){e.weapon={type:bi.type,ammo:99};g.items.splice(g.items.indexOf(bi),1);e.react=0.5;}break;}}
    // W7: aim at the exposed lean point when the body is behind the corner
@@ -222,7 +226,7 @@ function updateEnemy(e,dt){const g=G,p=g.player,T=g.T||0;
      if(dist>want+1.5){tvx=dx/dist*2.2;tvz=dz/dist*2.2;}else if(dist<want-1.5&&e.pers!=='rush'){tvx=-dx/dist*1.8;tvz=-dz/dist*1.8;}
      e.strT=(e.strT||0)-dt;if(e.strT<=0){e.strT=rnd(0.7,1.6);e.strD=Math.random()<0.5?-1:1;}if(SET.diff!=='easy'||e.pers==='rush'){const sv=e.pers==='careful'?1.1:1.5;tvx+=dz/dist*sv*e.strD;tvz-=dx/dist*sv*e.strD;}
      const lead=SET.diff==='hard'?0.9:SET.diff==='normal'?0.5:0;if(lead){const tt=dist/Dd().ebSpd;face=Math.atan2(ap.x-e.x+p.vx*tt*lead,ap.z-e.z+p.vz*tt*lead);}
-     if(e.react<=0&&e.cd<=0&&Math.abs(angDiff(e.a,face))<0.22){e.weapon.ammo=99;fireGun(e,e.weapon,false);
+     if(e.react<=0&&e.cd<=0&&!(e.kind==='nade'&&dist>3.2)&&Math.abs(angDiff(e.a,face))<0.22){e.weapon.ammo=99;fireGun(e,e.weapon,false);
       if(wd.burst){e.burst++;if(e.burst>=wd.burst){e.burst=0;e.cd=0.9;}}else if(wd.burst3){e.burst++;if(e.burst<3)e.cd=0.08;else{e.burst=0;e.cd=wd.ecd;}}}}}
    // Seen target only: the shared player field is honest while the player is in sight.
    if(see&&tvx*dx+tvz*dz>1e-6&&!mClear(g,e.x,e.z,p.x,p.z,Math.max(0,Math.min(e.r,p.r)-0.02))){
@@ -243,7 +247,7 @@ function updateEnemy(e,dt){const g=G,p=g.player,T=g.T||0;
  if(e.wind>0){e.wind-=dt;tvx*=0.3;tvz*=0.3;if(e.wind<=0){e.atkT=e.atkDur=0.2;e.jab=Math.random()<0.5;e.cd=0.8;sfx(wd.snd||'swing_fists',0.8);const d2=Math.hypot(p.x-e.x,p.z-e.z);
   if(p.alive&&d2<1.25&&Math.abs(angDiff(e.a,Math.atan2(p.x-e.x,p.z-e.z)))<1.1){sfx('hit_'+(e.weapon?e.weapon.type:'fists'));hurtPlayer([(p.x-e.x)/(d2||1),(p.z-e.z)/(d2||1)],e.weapon?e.weapon.type:'fists');}}}
  if(e.dodgeT>0){e.dodgeT-=dt;tvx=e.dodX||0;tvz=e.dodZ||0;}
- if(face!==null){const turn=e.state==='chase'?8:3;e.a+=clamp(angDiff(e.a,face),-turn*dt,turn*dt);}
+ if(face!==null){const turn=e.kind==='shield'?2.4:e.state==='chase'?8:3;e.a+=clamp(angDiff(e.a,face),-turn*dt,turn*dt);}
  if(e.state==='chase'){const t=gaze!==null?gaze:e.a;e.ga+=clamp(angDiff(e.ga,t),-10*dt,10*dt);}else e.ga=e.a;
  tvx*=e.spd||1;tvz*=e.spd||1;const k=1-Math.exp(-dt*10);e.vx+=(tvx-e.vx)*k;e.vz+=(tvz-e.vz)*k;const moved=moveChar(e,dt,false);
  if(e.state==='patrol'&&e.pauseT<=0&&moved<1.3*dt*0.4){const opts=[0,Math.PI/2,Math.PI,-Math.PI/2].filter(a=>Math.abs(angDiff(a,e.pa))>0.1);e.pa=pick(opts);e.pauseT=rnd(0.3,1.2);}}
