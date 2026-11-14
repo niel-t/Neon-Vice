@@ -218,11 +218,11 @@ function torsoRows(B){const BP=B.fem?BODYP.fem:BODYP.male;
 function buildBody(B){const M=newMesh(),X=[1,0,0],Y=[0,1,0],Z=[0,0,1],BP=B.fem?BODYP.fem:BODYP.male;
  const tv=y=>((TY1-y)/(TY1-TY0)*ROW.t)/512;
  /* torso: big frame, chest wider than the hips, padded 80s shoulders, open collar */
- const bM = B.dancer ? 1.65 : 1.15;
- const gM = B.dancer ? 1.85 : 1.25;
+ const cv=B.curve||1,bM = B.dancer ? 1.65*cv : 1.15;
+ const gM = B.dancer ? 1.85*cv : 1.25;
  const T=torsoRows(B), BUST={}, SHx=B.shoulders||0;
  for(let k in (BP.bust||{})) BUST[k] = BP.bust[k] * bM;
- loft(M,T.map(r=>({c:[0,r[0],r[3]],s:X,f:Z,rx:r[1]*(B.dancer&&r[0]<0.96?1.12:1),rz:r[2],v:tv(r[0]),w:r[4],mod:(p,ph)=>{if(r[0]>1.44&&r[0]<1.48){p[1]+=0.006*Math.cos(2*ph);}if(B.fem){const b=BUST[r[0]];if(b){const c=Math.max(0,Math.cos(ph));p[2]+=b*c*c*Math.exp(-Math.pow((Math.abs(Math.sin(ph))-0.40)/0.32,2));}if(BP.glute&&r[0]>0.78&&r[0]<0.98){const k=Math.max(0,-Math.cos(ph)),yw=Math.sin(((r[0]-0.78)/0.20)*Math.PI),cheek=0.72+0.45*Math.exp(-Math.pow((Math.abs(Math.sin(ph))-0.38)/0.28,2));p[2]-=(BP.glute*gM)*k*k*yw*cheek;p[1]-=0.014*k*k*yw;}return p;}if(Math.cos(ph)>0.2&&r[0]>1.05&&r[0]<1.4)p[2]+=0.008*Math.cos(ph);return p;}})),BP.segs,{capA:{dir:[0,-1,0],uv:[0.5,0.555]},capB:{dir:[0,1,0],uv:[0.5,0.002],lift:-0.012}});
+ loft(M,T.map(r=>({c:[0,r[0],r[3]],s:X,f:Z,rx:r[1]*(B.dancer&&r[0]<0.96?1+0.12*cv:1),rz:r[2],v:tv(r[0]),w:r[4],mod:(p,ph)=>{if(r[0]>1.44&&r[0]<1.48){p[1]+=0.006*Math.cos(2*ph);}if(B.fem){const b=BUST[r[0]];if(b){const c=Math.max(0,Math.cos(ph));p[2]+=b*c*c*Math.exp(-Math.pow((Math.abs(Math.sin(ph))-0.40)/0.32,2));}if(BP.glute&&r[0]>0.78&&r[0]<0.98){const k=Math.max(0,-Math.cos(ph)),yw=Math.sin(((r[0]-0.78)/0.20)*Math.PI),cheek=0.72+0.45*Math.exp(-Math.pow((Math.abs(Math.sin(ph))-0.38)/0.28,2));p[2]-=(BP.glute*gM)*k*k*yw*cheek;p[1]-=0.014*k*k*yw;}return p;}if(Math.cos(ph)>0.2&&r[0]>1.05&&r[0]<1.4)p[2]+=0.008*Math.cos(ph);return p;}})),BP.segs,{capA:{dir:[0,-1,0],uv:[0.5,0.555]},capB:{dir:[0,1,0],uv:[0.5,0.002],lift:-0.012}});
  /* lapel ridge: a thin raised strip so the lapels catch light (PS2 games modelled these as a few polys) */
  if(!B.fem)for(const s of [1,-1]){GRP++;const pts=[];for(const Y of [1.18,1.3,1.45]){const vw=0.012+(Y-1.12)*0.36,xx=s*(vw+0.04),zz=Math.sqrt(Math.max(0,1-Math.pow(xx/(Y>1.38?0.24:0.25),2)))*0.156+0.008+(Y<1.4?0.008:0);pts.push([xx,Y,zz]);}
   const uvp=p=>[0.5+p[0]*340/512,((TY1-p[1])/(TY1-TY0)*ROW.t)/512];const w=W1(BI.chest),ids=[];for(const p of pts){ids.push(addV(M,V.add(p,[-s*0.03,0,0.004]),uvp(V.add(p,[-s*0.03,0,0])),w),addV(M,V.add(p,[s*0.03,0,0.006]),uvp(V.add(p,[s*0.03,0,0])),w));}
@@ -592,15 +592,30 @@ function paintBodyP(L){const sh=C255(L.shirt),jk=C255(L.jacket),sk=C255(L.skin);
   if(L.tank)for(const sx of [96,416]){x.fillStyle=rgb(sk);x.fillRect(sx-34,0,68,26);}}
  if(L.fem){if(L.dancer){
   fab(0,0,512,290,sk);fab(0,290,512,90,sk);fab(0,381,512,18,sk);fab(0,440,512,72,sk);
+  /* lingerie styles (L.ling): bikini (default), bodysuit, corset, lace; L.hose: stockings or fishnets on the legs */
+  const ling=L.ling||'bikini',dk=jk.map(v=>v*0.6);
   for(const sd of [-1,1]){const g=x.createRadialGradient(256+sd*38,94,4,256+sd*38,102,52);g.addColorStop(0,'rgba(255,255,255,.26)');g.addColorStop(0.55,'rgba(255,255,255,0)');g.addColorStop(0.82,'rgba(0,0,0,.22)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(256+sd*38-55,40,110,115);}
   x.strokeStyle=rgb(sk.map(v=>v*0.62));x.lineWidth=2.5;x.beginPath();x.moveTo(256,68);x.lineTo(256,122);x.stroke();
-  x.fillStyle=rgb(jk);x.fillRect(0,94,512,12);
-  for(const sd of [-1,1]){x.beginPath();x.moveTo(256+sd*8,112);x.lineTo(256+sd*68,112);x.lineTo(256+sd*38,62);x.closePath();x.fill();x.strokeStyle=rgb(sh);x.lineWidth=3;x.stroke();x.beginPath();x.moveTo(256+sd*38,62);x.lineTo(256+sd*18,0);x.stroke();}
-  x.fillStyle=rgb(sk.map(v=>v*0.58));x.beginPath();x.ellipse(256,166,2.5,3.5,0,0,6.3);x.fill();
-  x.fillStyle=rgb(jk);x.fillRect(0,214,512,10);
-  x.beginPath();x.moveTo(222,214);x.lineTo(290,214);x.lineTo(256,272);x.closePath();x.fill();
-  x.beginPath();x.moveTo(0,214);x.lineTo(18,214);x.lineTo(0,268);x.closePath();x.fill();
-  x.beginPath();x.moveTo(512,214);x.lineTo(494,214);x.lineTo(512,268);x.closePath();x.fill();
+  const top=()=>{x.fillStyle=rgb(jk);x.fillRect(0,94,512,12);for(const sd of [-1,1]){x.beginPath();x.moveTo(256+sd*8,112);x.lineTo(256+sd*68,112);x.lineTo(256+sd*38,62);x.closePath();x.fill();x.strokeStyle=rgb(sh);x.lineWidth=3;x.stroke();x.beginPath();x.moveTo(256+sd*38,62);x.lineTo(256+sd*18,0);x.stroke();}};
+  const bottom=()=>{x.fillStyle=rgb(jk);x.fillRect(0,214,512,10);x.beginPath();x.moveTo(222,214);x.lineTo(290,214);x.lineTo(256,272);x.closePath();x.fill();
+   x.beginPath();x.moveTo(0,214);x.lineTo(18,214);x.lineTo(0,268);x.closePath();x.fill();x.beginPath();x.moveTo(512,214);x.lineTo(494,214);x.lineTo(512,268);x.closePath();x.fill();};
+  const lace=(y0,y1)=>{x.strokeStyle=rgb(sh);x.lineWidth=1.5;for(let lx=0;lx<512;lx+=10){x.beginPath();x.arc(lx+5,y1,5,0,Math.PI);x.stroke();}x.globalAlpha=0.35;for(let lx=0;lx<512;lx+=8)for(let ly=y0;ly<y1;ly+=8){x.beginPath();x.arc(lx+(ly/8%2)*4,ly,2.2,0,6.3);x.stroke();}x.globalAlpha=1;};
+  if(ling==='bodysuit'){/* one-piece: bust to hips in one colour, plunging neckline, high-cut legs, a gloss stripe */
+   x.fillStyle=rgb(jk);x.fillRect(0,92,512,140);x.fillStyle=rgb(sk);x.beginPath();x.moveTo(226,92);x.lineTo(286,92);x.lineTo(256,168);x.closePath();x.fill();
+   x.fillStyle=rgb(jk);x.beginPath();x.moveTo(222,232);x.lineTo(290,232);x.lineTo(256,276);x.closePath();x.fill();
+   for(const sd of [-1,1]){x.strokeStyle=rgb(jk);x.lineWidth=5;x.beginPath();x.moveTo(256+sd*40,94);x.lineTo(256+sd*24,0);x.stroke();}
+   x.fillStyle='rgba(255,255,255,.18)';x.fillRect(0,120,512,5);x.fillStyle=rgb(sh);x.fillRect(0,196,512,5);}
+  else if(ling==='corset'){/* cups on top, a laced bodice down to the hips, garter straps */
+   top();x.fillStyle=rgb(jk);x.fillRect(0,108,512,108);x.strokeStyle=rgb(dk);x.lineWidth=2;for(let bx2=16;bx2<512;bx2+=32){x.beginPath();x.moveTo(bx2,108);x.lineTo(bx2,216);x.stroke();}
+   x.strokeStyle=rgb(sh);x.lineWidth=2;for(let ly=114;ly<210;ly+=12){x.beginPath();x.moveTo(248,ly);x.lineTo(264,ly+12);x.moveTo(264,ly);x.lineTo(248,ly+12);x.stroke();}
+   x.fillStyle=rgb(sh);x.fillRect(0,106,512,4);x.fillRect(0,214,512,4);bottom();
+   for(const gx of [40,140,372,472]){x.fillStyle=rgb(sh);x.fillRect(gx,218,4,60);}}
+  else if(ling==='lace'){top();bottom();lace(92,108);lace(212,226);}
+  else{top();bottom();}
+  if(L.hose){/* stockings: sheer colour with a lace top, or fishnets */const hc=C255(L.hoseC||[0.05,0.05,0.07]);
+   if(L.hose==='net'){x.strokeStyle=rgb(hc);x.lineWidth=1.4;for(let k=-80;k<600;k+=9){x.beginPath();x.moveTo(k,440);x.lineTo(k+72,512);x.moveTo(k+72,440);x.lineTo(k,512);x.stroke();}}
+   else{x.fillStyle=rgb(hc);x.globalAlpha=0.55;x.fillRect(0,446,512,66);x.globalAlpha=1;}
+   x.fillStyle=rgb(hc);x.fillRect(0,440,512,7);x.strokeStyle=rgb(hc);x.lineWidth=1.2;for(let lx=0;lx<512;lx+=8){x.beginPath();x.arc(lx+4,447,4,0,Math.PI);x.stroke();}}
   if(L.chain||L.medallion){x.strokeStyle='#e8b84a';x.lineWidth=3;x.beginPath();x.moveTo(220,0);x.quadraticCurveTo(256,46,292,0);x.stroke();if(L.medallion){x.fillStyle='#f0c050';x.beginPath();x.arc(256,36,7,0,6.3);x.fill();}}
  }else{fab(0,0,512,290,jk);
   for(const sx of [128,384]){const g=x.createRadialGradient(sx,40,0,sx,40,80);g.addColorStop(0,'rgba(0,0,0,.2)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(sx-80,0,160,120);}
@@ -628,8 +643,8 @@ function paintBodyP(L){const sh=C255(L.shirt),jk=C255(L.jacket),sk=C255(L.skin);
    fem only: heels:1 pumps; pads:1 80s shoulder pads; crop:1 bare midriff. */
 const ARMOR={vest:1,plate:1},HELMET={pasgt:1,riot:1};
 function lookCfg(L,bodyType){const fb=k=>BODYCFG[L.fem&&k==='thin'?'slim':k],bt=fb(bodyType)||fb(L.body)||BODYCFG.normal,helmet=HELMET[L.helmet]?L.helmet:null;
- return{L,B:{specs:L.glasses?1:0,fluff:!!(L.fluff&&L.beard),hs:(L.hair&&!L.hat&&!helmet)?L.hs:null,watch:L.watch?-1:0,cigar:!!L.cigar,hat:helmet?null:(L.hat||null),shoulders:bt.shoulders||0,belly:bt.belly||(L.belly?0.1:0),rings:L.bling?1:0,fem:!!L.fem,dancer:!!(L.fem&&L.dancer),skirt:L.fem?(L.skirt||0):0,
-  armor:ARMOR[L.armor]?L.armor:null,helmet,heels:!!(L.fem&&L.heels),pads:!!(L.fem&&L.pads),crop:!!(L.fem&&L.crop)},scale:L.fem?bt.scale.map((v,i)=>v*BODYP.fem.scale[i]):bt.scale,gait:(L.fem?BODYP.fem:BODYP.male).gait};}
+ return{L,B:{specs:L.glasses?1:0,fluff:!!(L.fluff&&L.beard),hs:(L.hair&&!L.hat&&!helmet)?L.hs:null,watch:L.watch?-1:0,cigar:!!L.cigar,hat:helmet?null:(L.hat||null),shoulders:bt.shoulders||0,belly:bt.belly||(L.belly?0.1:0),rings:L.bling?1:0,fem:!!L.fem,dancer:!!(L.fem&&L.dancer),curve:L.fem&&L.dancer?(L.curve||1):1,skirt:L.fem?(L.skirt||0):0,
+  armor:ARMOR[L.armor]?L.armor:null,helmet,heels:!!(L.fem&&L.heels),pads:!!(L.fem&&L.pads),crop:!!(L.fem&&L.crop)},scale:(L.fem?bt.scale.map((v,i)=>v*BODYP.fem.scale[i]):bt.scale).map((v,i)=>v*(L.sc?L.sc[i]:1)),gait:(L.fem?BODYP.fem:BODYP.male).gait};}
 /* vertex counts for a look without touching GL (budget checks: female <= 1.25x male) */
 function lookVerts(L,bodyType){const B=lookCfg(L||{},bodyType).B,b=buildBody(B).p.length/3,h=buildHead(B).p.length/3;return{body:b,head:h,total:b+h};}
 let LOOKN=0,lastG=null,buildsThisFrame=0;const failedLooks=new Set();

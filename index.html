@@ -2878,15 +2878,24 @@ function drawAct2(B,g){const T=g.T,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,
 const CLUB_MOVES=['sway','pole','hair','spin','drop','strut'];
 const DANCER_NAMES=['CHERRY','DESTINY','CRYSTAL','ROXANNE','STARR','MONIQUE','JADE','BAMBI'];
 const STAGE_FITS=[[0xff2d95,0xffd36b],[0x2de2e6,0xffffff],[0xc9b6f2,0xff6fae],[0xffd36b,0x1a1a22],[0x7dff9a,0xff2d95]];
-function dancerLook(fit,stage){const f=STAGE_FITS[fit%STAGE_FITS.length],sk=hex(pick([0xefcaa8,0xd9a37c,0x8a5a3a,0xf0c8a0,0x6b4226]));
- const L={fem:true,dancer:true,calm:1,sleeves:false,crop:true,skirt:0,skin:sk,jacket:hex(f[0]),shirt:hex(f[1]),pants:sk,shoes:hex(f[0]),hs:pick(['long','big']),hair:hex(pick([0xe8c860,0x101010,0x6a3a1a,0xa5532a,0xff6fae])),medallion:true,chain:true,heels:true,bw:0.92,bd:0.94,bh:1.02};
+/* every girl is her own person: hair colour and style, skin, body size and lingerie style are rolled once (dancerProf) and kept
+   when she changes outfit colours on stage. ix spreads the styles so the girls on one stage never look alike. */
+const DANCER_HAIR=[0xf3e3a0,0xe8c860,0xc8964a,0x101010,0x3a2214,0x6a3a1a,0xa5332a,0xd2452a,0xff6fae,0x3ab0ff,0x9a5ae0,0xf0f0f4];
+const DANCER_BODY=[{body:'slim',sc:[0.95,0.93,0.95],curve:0.8},{body:'slim',sc:[0.96,1.06,0.96],curve:0.9},{body:'normal',sc:[1,1,1],curve:1},{body:'normal',sc:[1.06,1,1.06],curve:1.25},{body:'normal',sc:[1.13,0.98,1.12],curve:1.45}];
+const DANCER_LING=['bikini','bodysuit','corset','lace'];
+function dancerProf(ix){const sh=a=>a.slice().sort(()=>Math.random()-0.5),k=ix==null?(Math.random()*12|0):ix;
+ return{sk:hex(pick([0xefcaa8,0xd9a37c,0x8a5a3a,0xf0c8a0,0x6b4226,0xb07850])),hair:hex(DANCER_HAIR[(k*5+(Math.random()*3|0))%DANCER_HAIR.length]),hs:pick(['long','long','big','normal']),
+  bod:DANCER_BODY[(k*2+(Math.random()*2|0))%DANCER_BODY.length],ling:DANCER_LING[(k+(Math.random()*2|0)*2)%DANCER_LING.length],hose:pick([null,null,'sheer','net']),hoseC:pick([[0.04,0.04,0.06],[0.55,0.02,0.1],[0.95,0.95,0.97]])};}
+function dancerLook(fit,stage,prof){const f=STAGE_FITS[fit%STAGE_FITS.length],P=prof||dancerProf(fit),sk=P.sk;
+ const L={fem:true,dancer:true,calm:1,sleeves:false,crop:true,skirt:0,skin:sk,jacket:hex(f[0]),shirt:hex(f[1]),pants:sk,shoes:hex(f[0]),hs:P.hs,hair:P.hair,medallion:Math.random()<0.5,chain:true,heels:true,bw:0.92*P.bod.sc[0],bd:0.94*P.bod.sc[2],bh:1.02*P.bod.sc[1],
+  body:P.bod.body,sc:P.bod.sc,curve:P.bod.curve,ling:P.ling,hose:P.hose,hoseC:P.hoseC};
  if(stage>=1){L.jacket=hex(f[1]);L.shirt=hex(f[0]);}return L;}
 function clubSetup(g){const W=g.W,cells=ch=>{const o=[];for(let z=0;z<g.H;z++)for(let x=0;x<W;x++)if(g.rows[z][x]===ch)o.push({x:x+0.5,z:z+0.5});return o;};
  g.park={x:g.car.x,z:g.car.z};const S=cells('S').concat(cells('j'));const xs=S.map(q=>q.x),zs=S.map(q=>q.z);g.stage={x0:Math.min(...xs)-0.5,x1:Math.max(...xs)+0.5,z0:Math.min(...zs)-0.5,z1:Math.max(...zs)+0.5};
  const sc={x:(g.stage.x0+g.stage.x1)/2,z:(g.stage.z0+g.stage.z1)/2};g.disco={x:sc.x,z:sc.z};g.lights.push({x:sc.x,y:2.2,z:sc.z,r:6,c:[1.6,0.15,0.35]});
  for(const q of S)g.solid[Math.floor(q.z)*W+Math.floor(q.x)]=1;
  const names=DANCER_NAMES.slice().sort(()=>Math.random()-0.5);
- const dancers=cells('j').map((q,i)=>{const d=makeChar(q.x,q.z,dancerLook(i+Math.floor(Math.random()*5),0),false);d.kind='sdancer';d.pole=q;d.y=0.36;d.tips=0;d.stage=0;d.boost=0;d.ph=i*2.1;d.fit=i;d.dname=names[i];d.r=0.25;
+ const shuf=a=>a.slice().sort(()=>Math.random()-0.5),lings=shuf(DANCER_LING),bods=shuf(DANCER_BODY),hairs=shuf(DANCER_HAIR);const dancers=cells('j').map((q,i)=>{const prof=Object.assign(dancerProf(i),{ling:lings[i%lings.length],bod:bods[i%bods.length],hair:hex(hairs[i])}),d=makeChar(q.x,q.z,dancerLook(i+Math.floor(Math.random()*5),0,prof),false);d.prof=prof;d.kind='sdancer';d.pole=q;d.y=0.36;d.tips=0;d.stage=0;d.boost=0;d.ph=i*2.1;d.fit=i;d.dname=names[i];d.r=0.25;
   d.move=CLUB_MOVES[i%CLUB_MOVES.length];d.mt=0;d.md=rnd(4,7);d.moveE=1;d.sa=i*2.1;g.npcs.push(d);return d;});
  for(const q of cells('u')){const pt=makeChar(q.x,q.z,Object.assign(NPCLOOK.guest(),{calm:1}),false);pt.kind='patron';pt.a=Math.atan2(sc.x-q.x,sc.z-q.z);pt.r=0.28;g.npcs.push(pt);}
  for(const q of cells('g')){const b=makeChar(q.x,q.z,NPCLOOK.guard(),false);b.kind='bouncer';b.state='idle';b.a=b.a0=Math.PI/2;b.r=0.3;g.npcs.push(b);}
@@ -2976,7 +2985,7 @@ function tipDancer(d){const p=myProg(),g=G;arm();if(p.wallet<100){popup(g.player
  p.wallet-=100;saveProg();d.tips++;d.boost=Math.min(1.6,d.boost+0.7);sfx('cash');
  for(let i=0;i<8;i++){const a=Math.atan2(d.x-g.player.x,d.z-g.player.z)+rnd(-0.4,0.4),v=rnd(2.5,4.5);g.parts.push({t:'c',x:g.player.x,y:1.1,z:g.player.z,vx:Math.sin(a)*v,vy:rnd(1,2.5),vz:Math.cos(a)*v,s:0.08,c:[0.35,0.8,0.4],life:1.0});}
  popup(d.x,d.z,'-$100 · '+pick(['WOO!','OOH, BIG SPENDER','DON\'T STOP NOW','MORE!','THANK YOU, SUGAR']),'#7dff9a');
- if(d.tips===3||d.tips===7){d.stage=Math.min(2,d.stage+1);if(d.stage===1){d.look=dancerLook(d.fit,1);d._ps2k=null;popup(d.x,d.z,d.dname+' DROPS THE JACKET','#ff6fae');}else{popup(d.x,d.z,d.dname+"'S BIG FINALE","#ffd36b");sfx('clear');}}}
+ if(d.tips===3||d.tips===7){d.stage=Math.min(2,d.stage+1);if(d.stage===1){d.look=dancerLook(d.fit,1,d.prof);d._ps2k=null;popup(d.x,d.z,d.dname+' DROPS THE JACKET','#ff6fae');}else{popup(d.x,d.z,d.dname+"'S BIG FINALE","#ffd36b");sfx('clear');}}}
 const TONY_LINES=[()=>"Name's Tony. First drink's on the house; the second one costs you a story.",
  ()=>myProg().debt>0?"Word is you owe McWey $"+fmt(myProg().debt)+". Tip big and pay him slow, that's my advice, but it's your call.":"Heard you're square with McWey. Funny how a drink tastes better when you're debt-free.",
  ()=>"Nine of Nine was in here last week. Paid for a round with a Soviet rifle. I didn't ask.",

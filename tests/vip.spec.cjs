@@ -12,6 +12,7 @@ test('club: book a VIP room with Tony, walk her to a private room, and she goes 
       loadHub('club'); if (G.seq) seqSkip();
       const c = G.club, v = c.vip, p = G.player;
       o.layout = { rooms: c.rooms.length, doors: G.doors.length, bouncer: G.npcs.some(n => n.kind === 'bouncer'), floor: G.floorT[(c.room.z0 + 2) * G.W + 5], wall: G.def.wall };
+      o.girls = ['ling', 'curve'].map(k => new Set(c.dancers.map(d => d.look[k])).size).concat(new Set(c.dancers.map(d => d.look.hair.join())).size);
       p.x = c.tony.x - 1.5; p.z = c.tony.z;
       o.tony = (hubTargets(G).find(t => t.k === 'tony') || {}).lbl;
       openStore('vip');
@@ -43,6 +44,8 @@ test('club: book a VIP room with Tony, walk her to a private room, and she goes 
     return o;
   });
   expect(out.layout).toEqual({ rooms: 3, doors: 5, bouncer: true, floor: 43, wall: 19 });
+  // three different girls: lingerie style, body size and hair colour all differ
+  expect(out.girls).toEqual([3, 3, 3]);
   expect(out.tony).toMatch(/BOOK A VIP ROOM/);
   expect(out.screen).toEqual({ state: 'store', mode: 'vip', girls: 3, chat: true });
   expect(out.booked).toEqual({ escort: true, walking: true, wallet: 100, state: 'play', tip: false });
