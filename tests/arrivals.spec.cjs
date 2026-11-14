@@ -54,7 +54,7 @@ test('arrivals: leaving McWey drives off with a travel card, and Nine and the cl
       return out;
     } finally { fadeTo = fade; }
   }, setup.toString())).toEqual({
-    depart: { scene: true, hub: 'drive', steps: 'walk hide card wait drive call' },
+    depart: { scene: true, hub: 'drive', steps: 'walk in card wait drive call' },
     bunker: { hub: true, scene: true, car: [16.5, 26.5], after: false },
     home: { mode: 'home', scene: true }
   });
