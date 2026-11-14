@@ -190,8 +190,11 @@ function visionHalfAngle(e){return e.state==='search'?1.3:Dd().cone+(e.wary?0.35
 function updateEnemy(e,dt){const g=G,p=g.player,T=g.T||0;
  if(e.hitT>0)e.hitT-=dt;if(e.alertT>0)e.alertT-=dt;if(e.qT>0)e.qT-=dt;
  if(!e.alive){slideBody(e,dt);return;}
+ if(e.bribed){e.vx*=Math.exp(-dt*8);e.vz*=Math.exp(-dt*8);e.aiming=false;moveChar(e,dt,false);return;}
  if(e.down>0){e.down-=dt;if(e.fall!==undefined&&e.fall<1)e.fall=Math.min(1,e.fall+dt*5);e.vx*=Math.exp(-dt*5);e.vz*=Math.exp(-dt*5);moveChar(e,dt,false);if(e.down<=0){e.state='chase';e.react=0.6*Dd().react;e.seeT=0;e.a+=Math.PI;e.ga=e.a;}return;}
  e.cd-=dt;if(e.atkT>0)e.atkT-=dt;if(e.ga===undefined)e.ga=e.a;
+ /* reputation: a gory kill nearby sends him running from you for a moment (index.html repScare) */
+ if(e.fleeT>0){e.fleeT-=dt;const fx=e.x+(e.x-p.x)*2,fz=e.z+(e.z-p.z)*2,r=AI.seek(e,fx,fz,3.4*(e.spd||1));e.vx=r.vx;e.vz=r.vz;if(r.face!=null)e.a=e.ga=r.face;e.aiming=false;moveChar(e,dt,false);if(e.fleeT<=0){e.state='search';AI.investigate(e,p.x,p.z,1);}return;}
  const wd=WD[e.weapon?e.weapon.type:'fists'];const dx=p.x-e.x,dz=p.z-e.z,dist=Math.hypot(dx,dz)||0.001,ang=Math.atan2(dx,dz);
  const chasing=e.state==='chase',look=chasing?e.ga:e.a,half=chasing?Math.max(visionHalfAngle(e),1.4):visionHalfAngle(e);
  let see=false;if(p.alive&&dist<(e.kind==='spot'?16:chasing?13:Dd().vision)){const cone=dist<1.6||Math.abs(angDiff(look,ang))<half;if(cone&&!(!chasing&&typeof playerHidden==='function'&&playerHidden(e,dist))&&(typeof playerSeenBy==='function'?playerSeenBy(e):los(e.x,e.z,p.x,p.z)))see=true;}

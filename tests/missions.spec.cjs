@@ -153,3 +153,36 @@ test('bonus jobs: Pesos follows you once found, the kid must be reached in time,
     return out; });
   expect(r).toEqual({ ids: true, lexLocked: false, pesos: { twist: 'pesos', obj: 'FIND PESOS', lvl: 0 }, found: true, kid: { obj: 'REACH THE KID', t: 60 }, late: true, alarm: 1, reveal: true, noNight: null });
 });
+
+test('arena: waves keep coming, kills pay arena cash, guns can be bought between waves and the car cashes out', async ({ openGame }) => {
+  test.setTimeout(120_000);
+  const page = await openGame();
+  const r = await page.evaluate(() => { NOARRIVE = true; const fade = fadeTo; fadeTo = () => true; const out = {};
+    try {
+      selIdx = 0; sessionReset(3); arm(); startMission('b_arena'); const g = G, p = g.player;
+      out.start = { twist: g.twist, wave: g.arena.wave };
+      for (const e of g.enemies) if (e.alive) { e.alive = false; addKillScore(e, 'fists'); }
+      updateTwist(0.016); out.brk = { cleared: g.cleared, brk: g.arena.brk > 0, offers: g.items.filter(it => it.price).length };
+      const it = g.items.find(q => q.price); g.arena.cash = 0; out.poor = arenaBuy(p, it); g.arena.cash = 99999; out.buy = arenaBuy(p, it) === false && it.price === 0;
+      const n0 = g.enemies.length; updateTwist(ARENA_BRK + 0.1); out.wave2 = { wave: g.arena.wave, more: g.enemies.length > n0, cleared: g.cleared };
+    } finally { fadeTo = fade; }
+    return out; });
+  expect(r).toEqual({ start: { twist: 'arena', wave: 1 }, brk: { cleared: true, brk: true, offers: 3 }, poor: true, buy: true, wave2: { wave: 2, more: true, cleared: false } });
+});
+
+test('night shift: the three bosses come one after another and the job clears after Kade', async ({ openGame }) => {
+  test.setTimeout(120_000);
+  const page = await openGame();
+  const r = await page.evaluate(() => { NOARRIVE = true; const fade = fadeTo; fadeTo = () => true; const out = { names: [] };
+    try {
+      selIdx = 0; sessionReset(3); arm(); startMission('b_rush'); const g = G; g.player.hp = 99;
+      out.empty = g.enemies.length === 0;
+      for (let k = 0; k < 3; k++) { updateTwist(4); const b = g.boss; out.names.push(!!b && b.alive ? (b.lex ? 'lex' : b.look === LEVELS[10].boss ? 'kade' : 'boss') : null); if (b) { b.alive = false; } updateTwist(0.01); }
+      out.done = g.obj.done;
+    } finally { fadeTo = fade; }
+    return out; });
+  expect(r.empty).toBe(true);
+  expect(r.names.every(Boolean)).toBe(true);
+  expect(r.names[1]).toBe('lex');
+  expect(r.done).toBe(true);
+});

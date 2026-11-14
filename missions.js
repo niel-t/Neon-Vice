@@ -69,6 +69,12 @@ Object.assign(MISSIONS,{
   brief:'They are holding Mrs. Ortega\'s grandson at the Flamingo. You have one minute before they decide he is not worth the trouble.'},
  b_ghost:{kind:'bonus',name:"NINE'S WAREHOUSE",base:5,stages:['legacy'],start:'legacy',unlock:{done:'c5'},rewards:[{flag:'nine_ghost'}],rev:1,twist:'ghost',
   brief:'Nine wants the mall cleared without the alarm going off. First guard who sees you calls everyone in. Stay unseen and the bonus is yours.'},
+ b_quiet:{kind:'bonus',name:"McWEY'S QUIET ONE",base:6,stages:['legacy'],start:'legacy',unlock:{flag:'rep_quiet'},rewards:[{flag:'quiet_pro'}],rev:1,twist:'ghost',
+  brief:'Word is you work quiet. A label boss wants the studio emptied and nobody calling the cops. First guard who sees you raises the alarm.'},
+ b_arena:{kind:'bonus',name:'THE SUNSET ARENA',base:0,stages:['legacy'],start:'legacy',unlock:{done:'c3'},rewards:[{flag:'arena_run'}],rev:1,twist:'arena',
+  brief:'Word got out you cleaned out the Sunset. Now every crew in Miami wants a shot at you there. They come in waves. Nine is selling between rounds. Drive off whenever you have had enough.'},
+ b_rush:{kind:'bonus',name:'NIGHT SHIFT',base:4,stages:['legacy'],start:'legacy',unlock:{done:'c10'},rewards:[{flag:'night_shift'}],rev:1,twist:'rush',
+  brief:'Somebody paid to bring them all back for one night at the Starlight. The Shark, Lex, Kade. One after another. Bring the kit you trust.'},
  b_lex:{kind:'story',name:"LEX'S FAVOUR",base:9,stages:['legacy'],start:'legacy',unlock:{all:[{flag:'lex_spared'},{done:'c8'}]},rewards:[{flag:'lex_favour'}],rev:1,twist:'lex',
   brief:'Lex is calling in the favour: another of Kade\'s parties. He is on the radio and he can see every guard in the building.'}});
 const ownKey=(o,k)=>typeof k==='string'&&Object.prototype.hasOwnProperty.call(o,k);

@@ -482,6 +482,44 @@ test('hiding: the Flamingo crowd hides you until the first shot, and standing st
   expect(r).toEqual({ crowd: true, hid: true, close: false, panic: true, gone: true, still: true, moving: false });
 });
 
+test('reputation: loud floors add riot guards, quiet floors unlock a stealth job, a gory reputation makes guards run', async ({ openGame }) => {
+  const page = await openGame();
+  const r = await page.evaluate(() => { NOARRIVE = true; const out = {}, pr = myProg(), keep = pr.rep, wf = Object.assign({}, pr.wflags || {});
+    try {
+      pr.rep = {}; startLevel(2); const base = G.enemies.filter(e => e.kind === 'shield').length;
+      for (let i = 0; i < 3; i++) { G.repDone = 0; G.loudShot = 1; repRecord(G, 'gore'); }
+      out.tags = repTags(pr); startLevel(2); out.riot = G.enemies.filter(e => e.kind === 'shield').length - base;
+      const dead = G.enemies.find(e => !e.boss && !e.kind); const near = G.enemies.filter(e => e !== dead && !e.boss && !e.kind);
+      for (const o of near) { o.x = dead.x + 1; o.z = dead.z; } const rnd = Math.random; Math.random = () => 0.1; repScare(dead); Math.random = rnd;
+      out.flee = near.length > 0 && near.every(o => o.fleeT > 0);
+      pr.rep = {}; for (let i = 0; i < 3; i++) { G.repDone = 0; G.loudShot = 0; repRecord(G, 'clean'); }
+      out.quiet = repTags(pr); out.job = missionUnlocked('b_quiet', missionCtx());
+    } finally { pr.rep = keep; pr.wflags = wf; saveProg(); }
+    return out; });
+  expect(r).toEqual({ tags: ['loud', 'gore'], riot: 2, flee: true, quiet: ['quiet', 'clean'], job: true });
+});
+
+test('speedboat: the Royal Flush arrival comes in by boat, other floors keep the car', async ({ openGame }) => {
+  const page = await openGame();
+  const r = await page.evaluate(() => { NOARRIVE = false; ARR_SEEN = -1; startLevel(7); const out = { boat: boatArrival(G), arriving: !!G.arrive }; buildDynamic(); startLevel(6); out.car = boatArrival(G); return out; });
+  expect(r).toEqual({ boat: true, arriving: true, car: false });
+});
+
+test('character routes: the Consigliere crawls a vent, the Money Man bribes a guard, the Don gets a perch', async ({ openGame }) => {
+  const page = await openGame();
+  const r = await page.evaluate(() => { NOARRIVE = true; const out = {}, keep = selIdx;
+    try {
+      selIdx = 0; startLevel(1); const h = G.route && G.route.hatch, p = G.player; out.vent = !!h;
+      if (h) { p.x = h.a.x; p.z = h.a.z; out.ctx = ctxAction(p).l; routeUse(p); out.through = Math.hypot(p.x - h.b.x, p.z - h.b.z) < 0.01; }
+      selIdx = 1; startLevel(1); const pr = myProg(), w0 = pr.wallet; pr.wallet = 5000; const e = G.route && G.route.e, q = G.player; out.bribe = !!e;
+      if (e) { q.x = e.x + 1; q.z = e.z; e.state = 'idle'; out.ctx2 = ctxAction(q).l; routeUse(q); out.paid = e.bribed === 1 && e.spared === 1 && pr.wallet === 4000; } pr.wallet = w0;
+      selIdx = 2; let lv = -1; for (let i = 0; i < 10 && lv < 0; i++) { startLevel(i); if (G.route && G.route.perch) lv = i; }
+      out.perch = lv >= 0; if (lv >= 0) { const d = G.player, c = G.route.perch; d.x = c.x; d.z = c.z; updateCrowd(0.016); out.hide = G.hideNow; }
+    } finally { selIdx = keep; }
+    return out; });
+  expect(r).toEqual({ vent: true, ctx: 'CRAWL', through: true, bribe: true, ctx2: 'BRIBE', paid: true, perch: true, hide: 'ON THE PERCH' });
+});
+
 test('slams: a guard knocked into water, the shark tank or broken glass dies there, and Kade can go off the edge', async ({ openGame }) => {
   test.setTimeout(180_000);
   const page = await openGame();
