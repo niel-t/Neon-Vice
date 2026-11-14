@@ -126,14 +126,18 @@ function mallSign(B,cx,y,z,lines,col,h,rim){const w=Math.max(...lines.map((l,i)=
  for(const s of [-1,1])B.box(TRS(cx+s*(w/2-0.4),y+H/2+0.5,z,0,0.02,1,0.02),[0.6,0.6,0.65]);}
 
 /* ---------- drawing (called from drawDealer every frame) ---------- */
-function drawMall(B,g){const T=g.T||0,O=1,OZ=O+MALL_DZ,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x+O,y,z+OZ,ry||0,sx,sy,sz),c,!!em);
+/* The mall is drawn in two passes so it doesn't rebuild ~150k vertices every frame: drawMall(staticB,g) once from buildStatic
+   (venues.js venueStatic) with the moving bits sent to MALL_SINK, and drawMall(MALL_SINK,g,B) every frame, where only the moving
+   bits (fountain jets and ripples, escalator steps, glinting gold) reach B through LB / bl(). */
+const MALL_SINK=new Proxy({},{get:(t,k)=>k==='n'?0:()=>{},set:()=>true});
+function drawMall(B,g,LB){LB=LB||MALL_SINK;const T=g.T||0,O=1,OZ=O+MALL_DZ,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x+O,y,z+OZ,ry||0,sx,sy,sz),c,!!em),bl=(x,y,z,sx,sy,sz,c,em,ry)=>LB.box(TRS(x+O,y,z+OZ,ry||0,sx,sy,sz),c,!!em);
  const PINK=[1,0.3,0.75],CYAN=[0.2,0.9,1],GOLDC=[1,0.8,0.3],WH=[0.95,0.95,0.97],CH=[0.78,0.8,0.84],WOOD=[0.55,0.36,0.2],RED=[0.85,0.1,0.16],GREEN=[0.2,0.62,0.28],DK=[0.12,0.11,0.14];
  const palm=(x,z,tall)=>drawPalm(B,x+O,z+OZ,tall,x*1.7+z);
  const bench=(x,z,ry,cush)=>{const c=Math.cos(ry),s=Math.sin(ry),P=(dx,y,dz,sx,sy,sz,col)=>B.box(TRS(x+O+dx*c+dz*s,y,z+OZ-dx*s+dz*c,ry,sx,sy,sz),col);
   P(0,0.42,0,1.5,0.06,0.44,cush?RED:WOOD);P(0,0.66,-0.2,1.5,0.32,0.05,cush?RED:WOOD);for(const sx of [-0.65,0.65]){P(sx,0.21,0,0.05,0.42,0.4,CH);P(sx,0.5,-0.2,0.05,0.5,0.05,CH);}};
  const lamp=(x,z)=>{bx(x,0.05,z,0.3,0.1,0.3,CH);bx(x,1.3,z,0.07,2.5,0.07,WH);for(const s of [-1,1]){bx(x+s*0.3,2.55,z,0.6,0.04,0.04,WH);bx(x+s*0.6,2.62,z,0.22,0.22,0.22,[1.2,1.15,1.0],true);}};
  const shrub=(x,z,s)=>{bx(x,0.35*s,z,0.55*s,0.5*s,0.55*s,GREEN,false,x+z);bx(x,0.55*s,z,0.38*s,0.32*s,0.38*s,[0.3,0.74,0.34],false,x*2);};
- drawMallGlass(B,g);drawVenueLot(B,g);
+ drawMallGlass(B,g);
  /* ===== the atrium ===== */
  /* the mall's name over the front doors, outside, a canopy over the doors, and the directory board just inside */
  mallSign(B,22.5+O,2.9,27.08+OZ,['BISCAYNE GALLERIA'],PINK,0.5,CYAN);
@@ -151,14 +155,14 @@ function drawMall(B,g){const T=g.T||0,O=1,OZ=O+MALL_DZ,bx=(x,y,z,sx,sy,sz,c,em,r
  {const x0=20,x1=25,z0=17,z1=22,cx=22.5;
   for(const [x,z,w,d] of [[cx,z0-0.06,5.3,0.18],[cx,z1+0.06,5.3,0.18],[x0-0.06,(z0+z1)/2,0.18,5.3],[x1+0.06,(z0+z1)/2,0.18,5.3]])bx(x,0.22,z,w,0.44,d,[0.92,0.9,0.88]);
   for(const s of [-1,1])bx(cx+s*3.15,0.32,19.5,0.42,0.18,4.4,RED),bx(cx+s*3.15,0.15,19.5,0.36,0.3,4.3,[0.9,0.9,0.88]);
-  for(let i=0;i<3;i++){const jz=z0+1+i*1.5,jx=cx+(i-1)*0.9;bx(jx,0.12,jz,0.6,0.16,0.6,WH);for(let k=0;k<10;k++){const ph=(T*1.3+k/10)%1,an=k*2.4+i;B.box(TRS(jx+O+Math.sin(an)*0.18*ph,0.25+Math.sin(ph*Math.PI)*0.9,jz+OZ+Math.cos(an)*0.18*ph,0,0.05,0.08,0.05),[0.7,0.92,1.1],true);}}
-  for(let k=0;k<2;k++){const ph=(T*0.4+k/2)%1;for(let j=0;j<8;j++){const an=j*Math.PI/4;B.box(TRS(cx+O+Math.sin(an)*(0.3+ph*1.6),0.035,19.5+OZ+Math.cos(an)*(0.3+ph*1.6),an,0.5,0.004,0.02),[0.7,0.9,1].map(v=>v*(1-ph)),true);}}}
+  for(let i=0;i<3;i++){const jz=z0+1+i*1.5,jx=cx+(i-1)*0.9;bx(jx,0.12,jz,0.6,0.16,0.6,WH);for(let k=0;k<10;k++){const ph=(T*1.3+k/10)%1,an=k*2.4+i;LB.box(TRS(jx+O+Math.sin(an)*0.18*ph,0.25+Math.sin(ph*Math.PI)*0.9,jz+OZ+Math.cos(an)*0.18*ph,0,0.05,0.08,0.05),[0.7,0.92,1.1],true);}}
+  for(let k=0;k<2;k++){const ph=(T*0.4+k/2)%1;for(let j=0;j<8;j++){const an=j*Math.PI/4;LB.box(TRS(cx+O+Math.sin(an)*(0.3+ph*1.6),0.035,19.5+OZ+Math.cos(an)*(0.3+ph*1.6),an,0.5,0.004,0.02),[0.7,0.9,1].map(v=>v*(1-ph)),true);}}}
  /* escalators rising north to a closed upper level */
  for(const ex of [16,29]){const zs=24,zt=17,yt=3.0,L=zs-zt,an=Math.atan2(yt,L),hl=Math.hypot(L,yt);
   B.box(A.mul(A.mul(A.T(ex+O,yt/2-0.25,(zs+zt)/2+OZ),A.RX(an)),A.S(1.5,0.5,hl)),[0.86,0.86,0.9]);
   for(const s of [-1,1]){B.box(A.mul(A.mul(A.T(ex+O+s*0.72,yt/2+0.35,(zs+zt)/2+OZ),A.RX(an)),A.S(0.08,0.9,hl)),[0.55,0.75,0.85]);
    B.box(A.mul(A.mul(A.T(ex+O+s*0.72,yt/2+0.84,(zs+zt)/2+OZ),A.RX(an)),A.S(0.12,0.07,hl+0.3)),DK);}
-  const n=14,off=(T*0.35)%1;for(let i=0;i<n;i++){const u=(i+off)/n,y=u*yt,z=zs-u*L;bx(ex,y+0.02,z,1.3,0.04,0.36,[0.25,0.25,0.28]);bx(ex,y+0.045,z+0.16,1.3,0.012,0.03,[1,0.85,0.2],true);}
+  const n=14,off=(T*0.35)%1;for(let i=0;i<n;i++){const u=(i+off)/n,y=u*yt,z=zs-u*L;bl(ex,y+0.02,z,1.3,0.04,0.36,[0.25,0.25,0.28]);bl(ex,y+0.045,z+0.16,1.3,0.012,0.03,[1,0.85,0.2],true);}
   bx(ex,0.02,zs+0.4,1.5,0.04,0.8,[0.5,0.5,0.55]);
   /* the landing up top: a balcony stub on two columns and the shutter of the closed upper level */
   bx(ex,yt-0.1,zt-0.7,2.2,0.2,1.4,[0.9,0.9,0.92]);for(const s of [-1,1])bx(ex+s*0.95,(yt-0.2)/2,zt-0.7,0.2,yt-0.2,0.2,WH);
@@ -171,13 +175,13 @@ function drawMall(B,g){const T=g.T||0,O=1,OZ=O+MALL_DZ,bx=(x,y,z,sx,sy,sz,c,em,r
  mallSign(B,15.0+O,2.7,7.3+OZ,['GOLD COAST','JEWELERS'],GOLDC,0.36,PINK);
  {/* the long counter: dark base, glass top, gold pieces glinting inside */
   const cz=10.95;bx(4.5,0.45,cz,6.2,0.9,0.7,[0.12,0.06,0.14]);bx(4.5,0.92,cz,6.2,0.04,0.72,[0.75,0.9,1.0]);bx(4.5,0.58,cz+0.36,6.0,0.03,0.01,GOLDC,true);
-  for(let i=0;i<10;i++){const x=1.8+i*0.6,c=i%3===0?[0.9,0.95,1.1]:GOLDC;bx(x,0.82,cz+((i*7)%3-1)*0.15,0.16,0.04,0.16,c,true,T*0.6+i);}
+  for(let i=0;i<10;i++){const x=1.8+i*0.6,c=i%3===0?[0.9,0.95,1.1]:GOLDC;bl(x,0.82,cz+((i*7)%3-1)*0.15,0.16,0.04,0.16,c,true,T*0.6+i);}
   /* wall cabinets with velvet busts wearing chains, a mirror and the diamond sign */
   bx(5.5,1.1,6.35,8.6,2.2,0.5,[0.16,0.06,0.16]);for(let i=0;i<5;i++){const x=1.8+i*1.8;bx(x,1.25,6.62,1.3,1.2,0.04,[0.55,0.75,0.95]);bx(x,1.05,6.5,0.3,0.42,0.22,[0.18,0.05,0.2]);bx(x,1.32,6.5,0.18,0.14,0.18,[0.18,0.05,0.2]);
    bx(x,1.1,6.63,0.26,0.03,0.02,GOLDC,true);bx(x,1.0,6.63,0.07,0.07,0.02,[1,1,1],true);}
   {const y=2.45,dx=5.5,dz=6.62+0.02,s=0.36,col=[0.6,0.9,1.3];strokeBox(B,dx+O-s,y,dx+O,y-s*1.2,dz+OZ,0.05,col);strokeBox(B,dx+O,y-s*1.2,dx+O+s,y,dz+OZ,0.05,col);strokeBox(B,dx+O-s,y,dx+O+s,y,dz+OZ,0.05,col);strokeBox(B,dx+O-s*0.5,y+0.22,dx+O+s*0.5,y+0.22,dz+OZ,0.05,col);strokeBox(B,dx+O-s,y,dx+O-s*0.5,y+0.22,dz+OZ,0.05,col);strokeBox(B,dx+O+s,y,dx+O+s*0.5,y+0.22,dz+OZ,0.05,col);}
   /* the round island case with a turning diamond, the safe, two velvet stools, mirrors */
-  bx(8.5,0.45,13.5,1.1,0.9,1.1,[0.12,0.06,0.14]);bx(8.5,1.05,13.5,1.0,0.3,1.0,[0.7,0.88,1.0]);B.box(A.mul(A.mul(A.T(8.5+O,1.1,13.5+OZ),A.RY(T)),A.mul(A.RX(0.785),A.S(0.16,0.16,0.16))),[1.2,1.2,1.4],true);
+  bx(8.5,0.45,13.5,1.1,0.9,1.1,[0.12,0.06,0.14]);bx(8.5,1.05,13.5,1.0,0.3,1.0,[0.7,0.88,1.0]);LB.box(A.mul(A.mul(A.T(8.5+O,1.1,13.5+OZ),A.RY(T)),A.mul(A.RX(0.785),A.S(0.16,0.16,0.16))),[1.2,1.2,1.4],true);
   bx(1.5,0.5,6.6,0.9,1.0,1.0,[0.3,0.32,0.35]);bx(1.5,0.55,7.12,0.25,0.25,0.03,CH);
   for(const x of [3.2,5.8]){bx(x,0.32,cz+0.75,0.36,0.04,0.36,[0.5,0.05,0.2]);bx(x,0.16,cz+0.75,0.05,0.32,0.05,GOLDC);}
   bx(1.06,1.2,13.5,0.04,1.6,1.0,[0.7,0.85,0.95]);bx(1.04,1.2,13.5,0.02,1.7,1.1,GOLDC);}
@@ -236,7 +240,7 @@ function drawMall(B,g){const T=g.T||0,O=1,OZ=O+MALL_DZ,bx=(x,y,z,sx,sy,sz,c,em,r
   bx(43.5,1.0,18.3,0.06,1.9,0.8,[0.75,0.85,0.95],true);bx(43.2,1.0,17.75,0.4,1.9,0.06,[0.7,0.8,0.9]);bx(42.4,0.25,18.6,0.4,0.5,0.4,[1,0.55,0.75]);
   palm(35.0,25.3,false);palm(43.3,25.3,true);}
  /* Nugget, Schmaltzy's Boston terrier: sits on the jewelry counter next to him in a gold chain */
- {const J=g.mall.keepers.find(n=>n.shop==='jewel');if(J){const x=J.x-O+0.95,z=10.95,y=0.94,BL=[0.12,0.1,0.11],WT=[0.95,0.94,0.92],bob=Math.sin(T*2.2)*0.01;
+ {const J=g.mall.keepers.find(n=>n.shop==='jewel');if(J){const x=J.x-O+0.95,z=10.95,y=0.94,BL=[0.12,0.1,0.11],WT=[0.95,0.94,0.92],bob=0;
   bx(x,y+0.16,z,0.26,0.3,0.24,BL);bx(x,y+0.16,z+0.12,0.12,0.26,0.02,WT);bx(x,y+0.05,z+0.06,0.3,0.1,0.34,BL);for(const sx of [-0.07,0.07])bx(x+sx,y+0.06,z+0.16,0.06,0.12,0.06,WT);
   bx(x,y+0.38+bob,z+0.04,0.24,0.2,0.2,BL);bx(x,y+0.36+bob,z+0.15,0.12,0.1,0.04,WT);bx(x,y+0.33+bob,z+0.17,0.08,0.05,0.03,BL);bx(x,y+0.44+bob,z+0.14,0.04,0.08,0.01,WT);
   for(const sx of [-0.08,0.08])bx(x+sx,y+0.54+bob,z+0.02,0.07,0.14,0.04,BL);for(const sx of [-0.055,0.055])bx(x+sx,y+0.41+bob,z+0.145,0.03,0.03,0.01,[0.25,0.15,0.08]);
