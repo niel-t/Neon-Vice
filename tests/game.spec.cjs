@@ -9,7 +9,7 @@ test('direct-open artifact loads ordered artwork, models and real frames', async
     embedded: Object.values(ART).every(value => value.startsWith('data:image/jpeg;base64,')),
     models: PS2C.ready && !!PI
   }))).toEqual({
-    keys: ['face', 'pais', 'jack', 'money', 'don', 'mcwey', 'nine'],
+    keys: ['face', 'pais', 'jack', 'money', 'don', 'mcwey', 'nine', 'vic'],
     embedded: true,
     models: true
   });
