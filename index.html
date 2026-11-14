@@ -185,7 +185,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <div id="sDead" class="screen dim"><div class="big red">YOU'RE DEAD</div><div class="hint" id="deadCause" style="color:#ffb3bd"></div><div class="hint" id="deadXP" style="color:#ffd36b"></div><div class="hint" id="deadTip"></div><div class="rowc"><button class="btn" id="bRetry">RETRY<span class="kbhint"> (R)</span><span class="padhint"> (A)</span></button><button class="btn alt" id="bDeadRestartJob" style="display:none">RESTART JOB</button><button class="btn alt" id="bDeadWalk">WALK AWAY<span class="padhint"> (X)</span></button><button class="btn alt" id="bDeadQuit">QUIT<span class="padhint"> (B)</span></button></div><div class="hint" style="opacity:.75">Retry keeps what you brought in · Walk away to go home with it</div></div>
 <div id="sResults" class="screen dim"><div class="logo2" id="rTitle">FLOOR CLEAR</div><div class="stats" id="rStats"></div><div class="grade" id="rGrade">A</div><div class="rowc"><button class="btn alt" id="bRetryLvl">RETRY<span class="padhint"> (X)</span></button><button class="btn" id="bNextLvl">NEXT FLOOR</button></div></div>
 <div id="sPerk" class="screen dim"><div class="logo2">LEVEL UP!</div><div class="hint" id="pkLvl"></div><div class="rowc" id="pkCards"></div></div>
-<div id="sCar" class="screen dim"><div class="logo2">YOUR RIDE</div><div class="hint" id="carWallet" style="color:#7dff9a"></div><div class="hint" id="carLoad" style="color:#ffd36b;margin-top:4px"></div><div style="display:flex;flex-direction:column;align-items:center;margin-top:10px"><button class="btn" id="bCarJob">NEXT JOB</button><button class="btn alt" id="bCarShop">NINE OF NINE'S &middot; GUN SHOP<span class="kbhint"> (G)</span><span class="padhint"> (X)</span></button><button class="btn alt" id="bCarClub">VELVET PALMS &middot; STRIP CLUB<span class="kbhint"> (C)</span><span class="padhint"> (RB)</span></button><button class="btn alt" id="bCarDealer">BISCAYNE GALLERIA &middot; MALL &amp; CARS<span class="kbhint"> (D)</span><span class="padhint"> (LB)</span></button><button class="btn alt" id="bCarMcWey">McWEY TOWER</button><button class="btn alt" id="bCarHome">BACK TO YOUR PLACE<span class="kbhint"> (H)</span><span class="padhint"> (RT)</span></button><button class="btn alt" id="bCarBack">NOT YET<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div>
+<div id="sCar" class="screen dim"><div class="logo2">YOUR RIDE</div><div class="hint" id="carWallet" style="color:#7dff9a"></div><div class="hint" id="carLoad" style="color:#ffd36b;margin-top:4px"></div><div style="display:flex;flex-direction:column;align-items:center;margin-top:10px"><button class="btn" id="bCarJob">NEXT JOB</button><button class="btn alt" id="bCarPhone" style="display:none">CAR PHONE &middot; ORDER FROM NINE<span class="kbhint"> (P)</span></button><button class="btn alt" id="bCarShop">NINE OF NINE'S &middot; GUN SHOP<span class="kbhint"> (G)</span><span class="padhint"> (X)</span></button><button class="btn alt" id="bCarClub">VELVET PALMS &middot; STRIP CLUB<span class="kbhint"> (C)</span><span class="padhint"> (RB)</span></button><button class="btn alt" id="bCarDealer">BISCAYNE GALLERIA &middot; MALL &amp; CARS<span class="kbhint"> (D)</span><span class="padhint"> (LB)</span></button><button class="btn alt" id="bCarMcWey">McWEY TOWER</button><button class="btn alt" id="bCarHome">BACK TO YOUR PLACE<span class="kbhint"> (H)</span><span class="padhint"> (RT)</span></button><button class="btn alt" id="bCarBack">NOT YET<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div>
 <div id="sShop" class="screen"><div class="gs"><div class="gsHead"><div><div class="shT">NINE OF NINE'S</div><div class="shS">EXOTIC MACHINERY OF DEATH &middot; GUNS &middot; MODS &middot; RANGE</div></div><div class="shW" id="shWallet"></div></div><div class="shSay" id="shSay"></div><div id="shMain"><div class="gsTabs" id="shTabs"></div><div class="gsList" id="shList"></div></div><div class="gsCard" id="shDetail"></div><div class="gsFoot"><span id="shLoad"></span><span class="gsKeys kbhint">W/S SCROLL &middot; A/D SECTION &middot; ENTER BUY &middot; T TRY</span><button class="btn" id="bShopLeave">LEAVE<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div></div>
 <div id="sStore" class="screen dim"><div class="shop"><div class="shHead"><div class="stHL"><canvas id="stFace" width="56" height="62"></canvas><div><div class="shT">OCEAN DRIVE SHOPPING</div><div class="shS">CARS &middot; GOLD &middot; NO REFUNDS</div></div></div><div><div class="shW" id="stWallet"></div><div class="shS" id="stOwed" style="color:#ff8a95;text-align:right"></div></div></div><div class="shSay" id="stSay" data-who="VICTORY VIC" style="display:none"></div><div class="shS" style="margin-top:12px;align-self:flex-start" id="stCarsH">MIAMI MOTORS</div><div class="rowc" id="stCars"></div><div class="shS" style="margin-top:6px;align-self:flex-start" id="stGoldH">GOLD COAST JEWELERS</div><div class="rowc" id="stGold"></div><div class="shS" style="margin-top:6px;align-self:flex-start" id="stHomeH">SUNSHINE REALTY</div><div class="rowc" id="stHome"></div><div class="shF"><span id="stMsg"></span><button class="btn" id="bStoreLeave">LEAVE<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div></div>
 <div id="sObj" class="screen dim" role="dialog" aria-label="Mission objective"><div class="ojBox"><div class="ojWhere" id="ojWhere"></div><div class="ojName" id="ojName"></div><div class="ojBrief" id="ojBrief"></div><div class="ojHd">OBJECTIVE</div><ul id="ojList"></ul><div id="ojCh"></div><div class="ojGo" id="ojGo"></div></div></div><div id="sMorning" class="screen dim"><div class="phone"><div class="hdr"><span id="mnWho"></span><span>THE MORNING AFTER</span></div><div class="msg" id="mnMsg"></div><div class="floor" id="mnFx"></div></div><button class="btn" id="bMorning">HEAD OUT<span class="kbhint"> (ENTER)</span><span class="padhint"> (A)</span></button></div>
@@ -289,6 +289,7 @@ const TRS=(x,y,z,ry,sx,sy,sz)=>A.mul(A.mul(A.T(x,y,z),A.RY(ry)),A.S(sx,sy,sz));
 <script src="mall.js"></script>
 <script src="venues.js"></script>
 <script src="streets.js"></script>
+<script src="upstairs.js"></script>
 <script>
 'use strict';
 /* W2f dev gate (not shipped to players): ?planplay=motel|penthouse registers a plan-stage preview errand on the job list */
@@ -781,7 +782,7 @@ const PROG=(()=>{const o=readSave('nb86prog');for(const c of CHARS){
  savedField('nb86prog',p,'lvl',1,n=>Number.isInteger(n)&&n>=1&&n<=30);
  savedField('nb86prog',p,'xp',0,n=>Number.isFinite(n)&&n>=0);
  savedField('nb86prog',p,'perks',{},saveObject);
- for(const k of ['jewel','seen','furn','rel','wflags','mast','mods','rep','carx','props','tailor'])if(p[k]!=null)savedField('nb86prog',p,k,{},saveObject);
+ for(const k of ['jewel','seen','furn','rel','wflags','mast','mods','rep','carx','props','tailor','gear','meds','arcade','shades'])if(p[k]!=null)savedField('nb86prog',p,k,{},saveObject);
  if(p.cars!=null)savedField('nb86prog',p,'cars',['beater'],Array.isArray);
  if(p.homes!=null)savedField('nb86prog',p,'homes',[0],Array.isArray);
  if(p.home!=null)savedField('nb86prog',p,'home',0,n=>Number.isInteger(n)&&n>=0&&n<=2&&(p.homes||[0]).includes(n));
@@ -1526,6 +1527,7 @@ function hurtPlayer(dir,type,dmg=1,hit=null){const g=G,p=g.player;if(!p.alive||p
  if(p.armor>0){const ab=hit?BAL.absorb(p.armLv||'II',hit.p,hit.e):1;if(ab>0.1)p.armor--;if(ab>=1){p.armorT=0.9;p.lastHurt=g.time;shake(0.45);g.flash=0.35;g.flashC=[1,1,1];rumble(0.9,0.9,250);sfx('vest');popup(p.x,p.z,'VEST HIT!','#ffd36b');bloodBurst(p.x,0.7,p.z,dir,8,2);return;}dmg*=1-ab;}
  if(!BAL.dead(p.hp,dmg)){p.hp-=dmg;p.armorT=1.1;p.lastHurt=g.time;shake(0.45);g.flash=0.45;g.flashC=[0.9,0,0.05];g.hurtT=0.7;rumble(0.9,0.9,260);sfx('vest');popup(p.x,p.z,p.hp<=1+BAL.HP_EPS?'LAST HIT!':'HIT!','#ff4a5a');bloodBurst(p.x,0.7,p.z,dir,14,3);addFloorDecal(p.x,p.z,rnd(0.4,0.7),rnd(0,TAU),10,bloodTint());p.vx+=dir[0]*5;p.vz+=dir[1]*5;return;}
  if(pk('second')&&!g.secondUsed&&g.mod!=='glass'&&type!=='late'){g.secondUsed=1;p.hp=1;p.armorT=1.6;p.lastHurt=g.time;shake(0.6);g.flash=0.5;g.flashC=[1,0.85,0.3];rumble(1,1,300);sfx('vest');popup(p.x,p.z,'SECOND WIND!','#ffd36b');bloodBurst(p.x,0.7,p.z,dir,14,3);return;}
+ if(g.salts&&!g.saltsUsed&&g.mod!=='glass'&&type!=='late'){g.saltsUsed=1;p.hp=1;p.armorT=1.6;p.lastHurt=g.time;shake(0.6);g.flash=0.5;g.flashC=[0.6,1,0.7];rumble(1,1,300);sfx('vest');popup(p.x,p.z,'SMELLING SALTS!','#7dff9a');bloodBurst(p.x,0.7,p.z,dir,14,3);return;}
  p.alive=false;g.killedBy=type;p.a=Math.atan2(-dir[0],-dir[1]);launchBody(p,type,dir);p.exec=0;bloodBurst(p.x,0.65,p.z,dir,60,5);
  addFloorDecal(p.x+dir[0]*0.3,p.z+dir[1]*0.3,1.2,rnd(0,TAU),8,bloodTint());addFloorDecal(p.x+dir[0],p.z+dir[1],1.5,Math.atan2(dir[1],dir[0]),9,bloodTint());
  wallSplat(p.x,p.z,dir,2);if(type==='shotgun'||type==='double')headPop(p,dir);addPool(p,true);dropWeapon(p,dir,false);
@@ -1703,7 +1705,7 @@ function updatePlayer(dt){const g=G,p=g.player,ch=CHARS[selIdx];
  const sraw=sticks.L?Math.hypot(sticks.L.x-sticks.L.ox,sticks.L.y-sticks.L.oy):0;const wantS=!cs&&(keys.ShiftLeft||keys.ShiftRight||(padMode&&PAD.on&&(PAD.b[4]||PAD.b[10]))||sraw>68)&&ml>0.3;
  if(p.stam===undefined){p.stam=1;p.stamT=0;}p.sprinting=wantS&&p.stam>0.02&&!p.tired&&!(p.exec>0);
  if(p.sprinting){p.stam-=dt*0.42;p.stamT=0.7;if(p.stam<=0){p.stam=0;p.tired=true;}}else{p.stamT-=dt;if(p.stamT<=0)p.stam=Math.min(1,p.stam+dt*0.32);if(p.tired&&p.stam>0.35)p.tired=false;}
- const sp=ch.speed*((p.weapon&&WD[p.weapon.type].spd)||1)*(p.armSpd||1)*(1+0.06*pk('fleet'))*(p.sprinting?1.5:1)*(g.pool&&g.pool[Math.floor(p.z)*g.W+Math.floor(p.x)]?0.5:1);
+ const sp=ch.speed*((p.weapon&&WD[p.weapon.type].spd)||1)*(p.armSpd||1)*(1+0.06*pk('fleet'))*(g.adren?1.1:1)*(p.sprinting?1.5:1)*(g.pool&&g.pool[Math.floor(p.z)*g.W+Math.floor(p.x)]?0.5:1);
  const k=1-Math.exp(-dt*16);let tvx=mx*sp,tvz=mz*sp;if(cs){const t=cs.t*sp*cs.spd;if(p.cover.ax==='x'){tvx=cs.vn;tvz=t;}else{tvx=t;tvz=cs.vn;}}
  p.vx+=(tvx-p.vx)*k;p.vz+=(tvz-p.vz)*k;moveChar(p,dt,true);coverPost(p);
  let attacking=mouse.down&&!touchMode;
@@ -2210,7 +2212,7 @@ function drawChar(B,c){const Lk=c.hitT>0?flashLook(c.look):c.look;const BT=Lk.bo
   if(Lk.stache)PB(B,H,0,0.884+hy,0.113,0.11,0.025,0.02,hc);
   if(Lk.glasses){PB(B,H,0,0.972+hy,0.113,0.22,0.035,0.012,Lk.glasses);PB(B,H,-0.055,0.972+hy,0.115,0.07,0.05,0.008,hex(0x6a8aa0));PB(B,H,0.055,0.972+hy,0.115,0.07,0.05,0.008,hex(0x6a8aa0));}
   else if(Lk.aviators){PB(B,H,0,0.992+hy,0.114,0.23,0.012,0.01,GOLD);PB(B,H,-0.055,0.967+hy,0.115,0.085,0.055,0.008,[0.25,0.15,0.05]);PB(B,H,0.055,0.967+hy,0.115,0.085,0.055,0.008,[0.25,0.15,0.05]);}
-  else if(Lk.shades)PB(B,H,0,0.972+hy,0.113,0.23,0.05,0.012,DARK);
+  else if(Lk.shades){PB(B,H,0,0.972+hy,0.113,0.23,0.05,0.012,Lk.shadeC||DARK);if(Lk.shadeF)PB(B,H,0,0.998+hy,0.115,0.236,0.014,0.012,Lk.shadeF);}
   else{PB(B,H,-0.055,0.972+hy,0.111,0.035,0.025,0.01,DARK);PB(B,H,0.055,0.972+hy,0.111,0.035,0.025,0.01,DARK);PB(B,H,-0.055,1.0+hy,0.112,0.05,0.012,0.01,hc);PB(B,H,0.055,1.0+hy,0.112,0.05,0.012,0.01,hc);}
   if(Lk.glasses||Lk.aviators||Lk.shades){PB(B,H,-0.116,0.975+hy,0.05,0.008,0.012,0.13,DARK);PB(B,H,0.116,0.975+hy,0.05,0.008,0.012,0.13,DARK);}
   if(Lk.earpiece){PB(B,H,0.126,0.93+hy,0.02,0.02,0.04,0.03,DARK);PB(B,H,0.126,0.86+hy,-0.02,0.008,0.1,0.008,DARK);}
@@ -2427,6 +2429,37 @@ const HUBS={
   ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
   ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
   "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"]},
+ mall2:{name:'GALLERIA LEVEL 2',hub:'foot',wall:42,floor:61,sofa:0xff6fae,grime:0.08,amb:[0.42,0.38,0.44],lc:[0.62,0.56,0.6],track:'c_palms',where:'BISCAYNE GALLERIA · LEVEL 2',obj:'ELECTRONICS · ARCADE · CLINIC',
+   /* the mall's upper floor (upstairs.js dresses it): you ride up the escalators onto the balcony (P). Along the back, behind glass shopfronts H:
+      Crazy Ray's Electronics (e, west), the Starlite Zone arcade (a, middle) and Doc Feelgood's clinic (m, east). The atrium opening o looks
+      down on the food court, fenced by a glass balustrade r; the two escalators come up through it. The south windows H look out over the street. */
+   legend:{'H':{w:42,h:0.32,top:43},'r':{w:42,h:0.32,top:43},'o':{w:42,h:0.001},'.':{f:61},'e':{f:43},'a':{f:3},'m':{f:37}},
+   map:[
+  "#############################################",
+  "#eeeeeeeeeeeee#aaaaaaaaaaaaaaa#mmmmmmmmmmmmm#",
+  "#eeeeeeeeeeeee#aaaaaaaaaaaaaaa#mmmmmmmmmmmmm#",
+  "#eeeeeeeeeeeee#aaaaaaaaaaaaaaa#mmmmmmmmmmmmm#",
+  "#eeeeeeeeeeeee#aaaaaaaaaaaaaaa#mmmmmmmmmmmmm#",
+  "#eeeeeeeeeeeee#aaaaaaaaaaaaaaa#mmmmmmmmmmmmm#",
+  "#eeeeeeeeeeeee#aaaaaaaaaaaaaaa#mmmmmmmmmmmmm#",
+  "#eeeeeeeeeeeee#aaaaaaaaaaaaaaa#mmmmmmmmmmmmm#",
+  "#eeeeeeeeeeeee#aaaaaaaaaaaaaaa#mmmmmmmmmmmmm#",
+  "#HHHHHeeeHHHHH#HHHHHaaaaaHHHHH#HHHHHmmmHHHHH#",
+  "#...........................................#",
+  "#...........................................#",
+  "#.............rrrrP.rrrrrr..rrr.............#",
+  "#.............rooooooooooooooor.............#",
+  "#.............rooooooooooooooor.............#",
+  "#.............rooooooooooooooor.............#",
+  "#.............rooooooooooooooor.............#",
+  "#.............rooooooooooooooor.............#",
+  "#.............rooooooooooooooor.............#",
+  "#.............rooooooooooooooor.............#",
+  "#.............rrrrrrrrrrrrrrrrr.............#",
+  "#...........................................#",
+  "#...........................................#",
+  "#...........................................#",
+  "#HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH#"]},
  bunker:{name:"NINE OF NINE'S",hub:'foot',wall:6,floor:43,sofa:0x3a3a44,track:'c_vhs',where:"NINE OF NINE'S · OCEAN DRIVE",obj:'SEE NINE · TRY THE RANGE · THEN BACK TO YOUR CAR',grime:0.2,
    /* Nine's shop in the west two thirds and his shooting range in the east third (gunshop.js dresses it), entered from the front (south):
       the road, your bay (C) in the lay-by, the sidewalk, the front door (D) into the hallway, which runs up past the range door to the
@@ -2682,7 +2715,7 @@ function drawGarage(B,g){const gr=g.garage,c=g.hcar,T=g.T,Y=[1,0.82,0.1],K=[0.08
 function npcStep(dt){const g=G,p=g.player;if(g.talkT>0)g.talkT-=dt;const vi=Math.min(3,VISIT.debrief===null?0:VISIT.debrief+1);
  for(const n of g.npcs){if(n.kind==='guest'&&g.club){clubWalk(n,dt,g,p);}else if(n.kind==='guest'&&g.mall)mallWalk(n,dt,g,p);else if((n.kind==='guest'||n.kind==='pgirl')&&!n.bed)guestStep(n,dt,g,p);else if(n.cast)castStep(n,dt,g,p);if(n.kind==='dancer'||n.kind==='sdancer'||n.kind==='patron')continue;const dx=p.x-n.x,dz=p.z-n.z,d=Math.hypot(dx,dz);
   if(d<(n.kind==='guest'||(n.cast&&(n.vx||n.vz))?1.6:3)){const ta=Math.atan2(dx,dz);n.a+=clamp(angDiff(n.a,ta),-4*dt,4*dt);}else if(n.kind!=='guest')n.a+=clamp(angDiff(n.a,n.a0),-2*dt,2*dt);if(n.seat)n.a=n.a0+clamp(angDiff(n.a0,n.a),-0.9,0.9);
-  if(d<2.2&&!n.said&&!(g.talkT>0)){n.said=true;const L=n.kind==='recep'&&RECEP_GRADE[VISIT.grade]?RECEP_GRADE[VISIT.grade]:n.kind==='hguard'?[hguardLine()]:HOME_NPC_LINES[n.kind]?[pick(HOME_NPC_LINES[n.kind])]:(NPCLINES[n.kind][vi]||NPCLINES[n.kind][0]);g.talkT=L.length*1.5+0.4;const qg=g.quipGen=(g.quipGen||0)+1;let t=0;for(const line of L){setTimeout(()=>{if(G===g&&g.quipGen===qg)popup(n.x,n.z,line,'#ffe9a8');},t);t+=1500;}}
+  if(d<2.2&&!n.said&&!(g.talkT>0)&&(NPCLINES[n.kind]||HOME_NPC_LINES[n.kind]||n.kind==='recep'||n.kind==='hguard')){n.said=true;const L=n.kind==='recep'&&RECEP_GRADE[VISIT.grade]?RECEP_GRADE[VISIT.grade]:n.kind==='hguard'?[hguardLine()]:HOME_NPC_LINES[n.kind]?[pick(HOME_NPC_LINES[n.kind])]:(NPCLINES[n.kind][vi]||NPCLINES[n.kind][0]);g.talkT=L.length*1.5+0.4;const qg=g.quipGen=(g.quipGen||0)+1;let t=0;for(const line of L){setTimeout(()=>{if(G===g&&g.quipGen===qg)popup(n.x,n.z,line,'#ffe9a8');},t);t+=1500;}}
   if(d<n.r+p.r&&d>1e-4){const k=(n.r+p.r-d);p.x+=dx/d*k;p.z+=dz/d*k;}}}
 let ENG=null;
 function engineOn(on){if(!AC)return;if(!ENG){if(!on)return;const o1=AC.createOscillator(),o2=AC.createOscillator(),f=AC.createBiquadFilter(),gg=AC.createGain();o1.type='sawtooth';o2.type='square';f.type='lowpass';f.frequency.value=500;gg.gain.value=0;o1.connect(f);o2.connect(f);f.connect(gg);gg.connect(sfxG);o1.start();o2.start();ENG={o1,o2,f,g:gg,on:false};}
@@ -2717,7 +2750,7 @@ function drawHubDyn(B,O){const g=G;
 if(!g.cine&&!g.seq){const y=2.4+Math.sin(g.T*4)*0.2;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.45,0.45,0.45))),GOLD,true);
   for(let i=0;i<6;i++)B.box(TRS(g.car.x+Math.sin(g.T*2+i)*0.9,0.02,g.car.z+Math.cos(g.T*2+i)*0.9,0,0.25,0.01,0.25),[1,0.85,0.3],true);}}
  else{for(const n of g.npcs)drawChar(IBhi,n);if(g.player&&!g.hideP)drawChar(IBhi,g.player);if(g.park){if(rideHeli())drawHeli(B,g.park.x,g.park.z,0,g.T);else drawRide(B,g.park.x,g.park.z,1,g.park.a||0,undefined,g.park.spin||0);}
-  if(g.hcar)drawRide(B,g.hcar.x,g.hcar.z,1,g.hcar.a||0,undefined,g.hcar.spin||0);if(g.garage)drawGarage(B,g);if(g.slob)drawSlobby(B,g);if(g.def===HUBS.bunker)drawBunker(B,g);if(g.dealer)drawDealer(B,g);if(g.slots){drawHomeDecor(B,g);drawHome(B,g);drawHomeX(B,g);drawLocker(B,g);}if(g.club)drawClub(B,g);
+  if(g.hcar)drawRide(B,g.hcar.x,g.hcar.z,1,g.hcar.a||0,undefined,g.hcar.spin||0);if(g.garage)drawGarage(B,g);if(g.slob)drawSlobby(B,g);if(g.def===HUBS.bunker)drawBunker(B,g);if(g.dealer)drawDealer(B,g);if(g.up2)drawUp2(B,g);if(g.slots){drawHomeDecor(B,g);drawHome(B,g);drawHomeX(B,g);drawLocker(B,g);}if(g.club)drawClub(B,g);
   if(g.tankB){const t=g.tankB;drawTankLife(B,g.T,t.x0,t.x1,(t.z0+t.z1)/2,0.08,1.35,0.35,0.9,0.4,2.15);}
   if(g.fount)drawFountainWater(B,g.fount,g.T);if(g.mcDesk)drawMcOffice(B,g);if(g.tv)drawLobbyTV(B,g);if(g.lounge)drawLounge(B,g);if(g.cast)drawCast(B,g);
   if(!g.seq){const y=1.6+Math.sin(g.T*4)*0.12;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.22,0.22,0.22))),GOLD,true);}}
@@ -2744,24 +2777,25 @@ function hubModeSetup(name){const g=G,p=g.player;if(HUBMODE==='home'){homeSetup(
   g.obj='CLICK YOUR CAR';banner('OCEAN DRIVE',touchMode?'Walk to your car and tap it':'Walk to your car and click it');return true;}
  if(name==='club'){HUBMODE='bunker';clubSetup(g);return true;}
  if(name==='mall'){HUBMODE='bunker';mallSetup(g);return true;}
+ if(name==='mall2'){HUBMODE='bunker';up2Setup(g);return true;}
  if(name==='bunker'){HUBMODE='bunker';bunkerSetup(g);nineSetup(g);g.park={x:g.car.x,z:g.car.z};venueLot(g);const n=g.npcs.find(q=>q.kind==='nine');if(n){g.car={x:n.x,z:n.z};n.a=n.a0=Math.PI;}
   g.obj='SEE NINE · TRY THE RANGE';banner("NINE OF NINE'S",'Exotic machinery of death · shooting range out back');return true;}
  return false;}
 function parkedStreet(dt){const g=G,p=g.player;for(const t of g.traffic){t.x+=t.dir*t.sp*dt;if(t.x>g.W+2)t.x=-2;if(t.x<-2)t.x=g.W+2;
   if(p&&Math.abs(p.x-t.x)<1.6&&Math.abs(p.z-t.z)<0.8){p.z+=Math.sign(p.z-t.z||-1)*0.12;if(!(t.honk>0)){t.honk=1.5;sfx('horn');popup(t.x,t.z,pick(['HEY!','*HONK*','WATCH IT!']),'#ffd36b');}}if(t.honk>0)t.honk-=dt;}}
-function hubTargets(g){const t=[];if(g.club){t.push({k:'car',x:g.park.x,z:g.park.z,r:2.3,lbl:rideHeli()?'YOUR CHOPPER':'YOUR CAR'});for(const d of g.club.dancers)if(!d.walking&&!d.lapDance)t.push({k:'tip',d,x:d.x,z:d.z,r:3.1,lbl:'THROW $100 AT '+d.dname});const v=g.club.vip;if(v.active){t.push({k:'laptip',x:v.chairX,z:v.chairZ,r:2.8,lbl:'THROW $100 AT '+v.dancer.dname+' · MOVE TO STAND UP'});return t;}if(g.club.tony)t.push({k:'tony',x:g.club.tony.x,z:g.club.tony.z,r:3.4,lbl:v.escort?'TALK TO TONY':'TONY · BOOK A VIP ROOM ($500)'});return t;}if(g.slots){const o=g.slots.o;if(o)t.push({k:'catalog',x:o.x,z:o.z,r:1.9,lbl:'PHONE · FURNITURE & SIDE JOBS'});const bp=homeBedPos(g);{const gs=Math.min(bedN()-1,g.npcs.filter(q=>q.kind==='pgirl').length);t.push({k:'bed',x:bp.x,z:bp.z,r:2.0,lbl:gs?'GO TO BED WITH THE GIRL'+(gs>1?'S':''):'GO TO SLEEP'});}const lp=homeLockerPos(g);t.push({k:'locker',x:lp.x,z:lp.z,r:1.8,lbl:'GUN LOCKER · '+myProg().locker.items.length+'/'+LOCKER_CAP});const f=homeFurn();if(g.home===1&&f.hifi&&g.slots.b)t.push({k:'hifi',x:g.slots.b.x-0.4,z:g.slots.b.z+0.3,r:1.9,lbl:'HI-FI · CHANGE TRACK'});return t;}const car=g.park||(g.parked?g.pcar:null);if(car)t.push({k:'car',x:car.x,z:car.z,r:2.3,lbl:rideHeli()?'YOUR CHOPPER':'YOUR CAR'});const n=g.npcs.find(q=>q.kind==='nine');if(n)t.push({k:'nine',x:n.x,z:n.z,r:2.7,lbl:'NINE OF NINE'});if(g.dealer)dealerTargets(g,t);if(g.mall)mallTargets(g,t);if(g.def===HUBS.lobby||g.def===HUBS.office||g.def===HUBS.bunker){const p=g.player;let nb=null,nd=1.9;if(p)for(const q of g.npcs){if(!NPC_CHAT[q.kind])continue;const d=Math.hypot(q.x-p.x,q.z-p.z);if(d<nd){nd=d;nb=q;}}if(nb)t.push({k:'talk',n:nb,x:nb.x,z:nb.z,r:1.9,lbl:'TALK'});if(g.lounge)seatTargets(g,t);}return t;}
+function hubTargets(g){const t=[];if(g.club){t.push({k:'car',x:g.park.x,z:g.park.z,r:2.3,lbl:rideHeli()?'YOUR CHOPPER':'YOUR CAR'});for(const d of g.club.dancers)if(!d.walking&&!d.lapDance)t.push({k:'tip',d,x:d.x,z:d.z,r:3.1,lbl:'THROW $100 AT '+d.dname});const v=g.club.vip;if(v.active){t.push({k:'laptip',x:v.chairX,z:v.chairZ,r:2.8,lbl:'THROW $100 AT '+v.dancer.dname+' · MOVE TO STAND UP'});return t;}if(g.club.tony)t.push({k:'tony',x:g.club.tony.x,z:g.club.tony.z,r:3.4,lbl:v.escort?'TALK TO TONY':'TONY · BOOK A VIP ROOM ($500)'});return t;}if(g.slots){const o=g.slots.o;if(o)t.push({k:'catalog',x:o.x,z:o.z,r:1.9,lbl:'PHONE · FURNITURE & SIDE JOBS'});const bp=homeBedPos(g);{const gs=Math.min(bedN()-1,g.npcs.filter(q=>q.kind==='pgirl').length);t.push({k:'bed',x:bp.x,z:bp.z,r:2.0,lbl:gs?'GO TO BED WITH THE GIRL'+(gs>1?'S':''):'GO TO SLEEP'});}const lp=homeLockerPos(g);t.push({k:'locker',x:lp.x,z:lp.z,r:1.8,lbl:'GUN LOCKER · '+myProg().locker.items.length+'/'+LOCKER_CAP});const f=homeFurn();if(g.home===1&&f.hifi&&g.slots.b)t.push({k:'hifi',x:g.slots.b.x-0.4,z:g.slots.b.z+0.3,r:1.9,lbl:'HI-FI · CHANGE TRACK'});return t;}const car=g.park||(g.parked?g.pcar:null);if(car)t.push({k:'car',x:car.x,z:car.z,r:2.3,lbl:rideHeli()?'YOUR CHOPPER':'YOUR CAR'});const n=g.npcs.find(q=>q.kind==='nine');if(n)t.push({k:'nine',x:n.x,z:n.z,r:2.7,lbl:'NINE OF NINE'});if(g.dealer)dealerTargets(g,t);if(g.mall)mallTargets(g,t);if(g.up2)up2Targets(g,t);if(g.def===HUBS.lobby||g.def===HUBS.office||g.def===HUBS.bunker||g.def===HUBS.mall||g.def===HUBS.mall2){const p=g.player;let nb=null,nd=1.9;if(p)for(const q of g.npcs){if(!NPC_CHAT[q.kind])continue;const d=Math.hypot(q.x-p.x,q.z-p.z);if(d<nd){nd=d;nb=q;}}if(nb)t.push({k:'talk',n:nb,x:nb.x,z:nb.z,r:1.9,lbl:'TALK'});if(g.lounge)seatTargets(g,t);}return t;}
 function hubInteract(){const g=G,p=g.player;if(!p||g.hubDone)return;const ts=hubTargets(g);let best=null,bd=1e9;
  for(const t of ts){const d=Math.hypot(t.x-p.x,t.z-p.z);if(d<t.r&&d<bd){bd=d;best=t;}}g.ia=best;let go=null;
  if(pressed.grab&&best){go=best;pressed.grab=false;}
  if(g.click){const cx=g.click[0],cy=g.click[1];g.click=null;for(const t of ts){const s=project(t.x,0.8,t.z);if(s&&Math.hypot(s[0]-cx,s[1]-cy)<80){if(Math.hypot(t.x-p.x,t.z-p.z)<t.r+3)go=t;else popup(p.x,p.z,'GET CLOSER','#ffd36b');break;}}}
- if(go){mouse.down=false;if(go.k==='car')openCarMenu();else if(go.k==='catalog')openStore('home');else if(go.k==='locker')openStore('locker');else if(go.k==='bed')goSleep();else if(go.k==='hifi')hifiNext();else if(go.k==='tip')tipDancer(go.d);else if(go.k==='tony'){if(g.club.vip.escort)tonyTalk();else openStore('vip');}else if(go.k==='vip_end')stopLapdance();else if(go.k==='laptip')lapTip();else if(go.k==='talk')npcTalk(g,go.n);else if(go.k==='sit')sitDown(g,go.s);else if(go.k==='stand')seatUp(g);else if(go.k==='shop')openMallShop(go.shop);else if(go.k==='dir')mallDirectory();else if(go.k==='vic'||go.k==='show')openDealer(go.car);else openShop();}}
+ if(go){mouse.down=false;if(go.fn)go.fn(go);else if(go.k==='car')openCarMenu();else if(go.k==='catalog')openStore('home');else if(go.k==='locker')openStore('locker');else if(go.k==='bed')goSleep();else if(go.k==='hifi')hifiNext();else if(go.k==='tip')tipDancer(go.d);else if(go.k==='tony'){if(g.club.vip.escort)tonyTalk();else openStore('vip');}else if(go.k==='vip_end')stopLapdance();else if(go.k==='laptip')lapTip();else if(go.k==='talk')npcTalk(g,go.n);else if(go.k==='sit')sitDown(g,go.s);else if(go.k==='stand')seatUp(g);else if(go.k==='shop')openMallShop(go.shop);else if(go.k==='dir')mallDirectory();else if(go.k==='vic'||go.k==='show')openDealer(go.car);else openShop();}}
 /* wallet + armory, saved per character next to lvl/xp/perks */
 function arm(){const p=myProg();if(typeof p.wallet!=='number')p.wallet=0;if(p.debt===undefined){p.debt=MC_LOAN;if(p.paid===undefined)p.paid=false;}
  if(!p.cars)p.cars=['beater'];if(p.car===undefined||!CARS[p.car])p.car='beater';if(!p.carx)p.carx={};if(!p.jewel)p.jewel={};if(!p.seen)p.seen={};
  if(!p.arm)p.arm={};const a=p.arm;for(const [k,v] of Object.entries({owned:[],eq:null,mags:0,vest:0,stock:[],key:-1,met:false,jobs:0}))if(a[k]===undefined)a[k]=v;return a;}
 function wallet(){arm();return myProg().wallet;}
 let LASTPAY=null;function cutOf(take){const p=myProg();arm();return p.debt>0?Math.min(p.debt,Math.ceil(take*MC_CUT)):0;}
-function payout(){if(!G||G.paid||!G.take)return;G.paid=1;const a=arm(),p=myProg();
+function payout(){if(!G||G.paid||!G.take)return;G.paid=1;const a=arm(),p=myProg();medsUsed(p);
  /* non-campaign jobs: no cut, no debt, no story flags; only their own reward flags */
  if(!missionIsCampaign(MISSION)){p.wallet+=G.take;mallRent(p);p.couchBlood=0;for(const r of MISSIONS[MISSION].rewards||[])if(r&&typeof r.flag==='string')dlgObj(p,'wflags')[r.flag]=1;saveProg();return;}
  const cut=cutOf(G.take),before=p.debt;p.debt-=cut;p.wallet+=G.take-cut;
@@ -2794,6 +2828,7 @@ function runWalkAway(p){if(!p.run)return false;delete p.run;return true;}
   if(typeof h==='number'){const s=k.guns[h],wd=WD[s.type];p.weapon={type:s.type,ammo:s.mag};if(s.mag<=0&&isCal(wd.cal)){const n=Math.min(G.live.pool[wd.cal]|0,wd.mag);G.live.pool[wd.cal]-=n;p.weapon.ammo=n;}G.live.guns[h]=null;}
   else if(h==='melee'){p.weapon={type:k.melee,ammo:0};G.live.melee=null;}
   p.kitPlates=k.armour?k.armour.plates:0;p.armLv=k.armour?ARMOUR[k.armour.type].lv:'II';p.armor=(p.armor||0)+p.kitPlates;p.armMax=p.armor;p.armSpd=(k.armour&&ARMOUR[k.armour.type].spd)||1;
+  medsApply(G,p);
   const gf=myProg().gift;if(!G.stageManaged&&gf&&WD[gf])G.items.push({x:p.x+0.7,z:p.z,type:gf,ammo:WD[gf].ammo||0,vx:0,vz:0,rot:0.6,flying:false,fresh:false,flyT:0});}
  function loadoutTxt(){const k=kit(),parts=[];for(const s of k.guns)if(s)parts.push(WD[s.type].name);if(k.melee)parts.push(WD[k.melee].name);
   const am=Object.keys(k.pool).filter(c=>k.pool[c]>0).map(c=>k.pool[c]+' '+CAL[c].name),ar=k.armour&&ARMOUR[k.armour.type];
@@ -2802,11 +2837,12 @@ function runWalkAway(p){if(!p.run)return false;delete p.run;return true;}
 function openCarMenu(){if(state!=='play'||!G)return;sfx('blip');state='carmenu';$('carWallet').textContent='WALLET $'+fmt(wallet())+(myProg().debt>0?'  ·  OWED TO McWEY $'+fmt(myProg().debt):'')+'  ·  RIDE: '+carName(myCar());$('carLoad').textContent=loadoutTxt();
  $('bCarJob').innerHTML=(mcMust()?'SEE McWEY':'NEXT JOB: '+(JOBPICK?missionName(JOBPICK):LEVELS[mcDue()?VISIT.next:NEXTJOB].name))+'<span class="kbhint"> (ENTER)</span><span class="padhint"> (A)</span>';
  $('bCarMcWey').style.display=mcMust()?'none':'';$('bCarMcWey').innerHTML='McWEY TOWER &middot; '+(mcDue()?'DEBRIEF':'MORE WORK')+'<span class="kbhint"> (M)</span><span class="padhint"> (LT)</span>';
- $('bCarHome').style.display=HUBMODE==='home'?'none':'';$('bCarShop').style.display=G.def===HUBS.bunker?'none':'';$('bCarClub').style.display=G.def===HUBS.club?'none':'';$('bCarDealer').style.display=G.def===HUBS.mall?'none':'';show('sCar');}
+ $('bCarHome').style.display=HUBMODE==='home'?'none':'';$('bCarShop').style.display=G.def===HUBS.bunker?'none':'';$('bCarPhone').style.display=hasGear('phone')&&G.def!==HUBS.bunker?'':'none';$('bCarClub').style.display=G.def===HUBS.club?'none':'';$('bCarDealer').style.display=G.def===HUBS.mall?'none':'';show('sCar');}
 function closeCarMenu(){if(state!=='carmenu')return;sfx('blip');state='play';show(null);}
 $('bCarJob').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);const mc=mcDue();
  const must=mcMust();travel(must?goDrive:jobDirect,must?'McWEY TOWER':JOBPICK?missionName(JOBPICK):LEVELS[mc?VISIT.next:NEXTJOB].name,must?'THE MAN WANTS A WORD':"TONIGHT'S JOB");};
 $('bCarMcWey').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);travel(goDrive,'McWEY TOWER',mcDue()?'THE MAN WANTS A WORD':'FIFTY-TWO FLOORS OF GOLD');};
+$('bCarPhone').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('ring');state='play';show(null);SHOP_REMOTE=true;openShop();};
 $('bCarShop').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);travel(()=>{loadHub('bunker');hubArrive(G);},"NINE OF NINE'S",'EXOTIC MACHINERY OF DEATH');};
 $('bCarBack').onclick=()=>closeCarMenu();
 $('bCarHome').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);departTo(goHome,HOMEDEF[myProg().home||0].name,'HOME');};
@@ -2837,7 +2873,7 @@ function buyCar(k){const p=myProg(),c=CARS[k];if(p.car===k)return renderStore('Y
 function buyJewel(k){const p=myProg(),j=JEWEL[k];if(!j)return;if(p.jewel[k]){p.jewel[k]=p.jewel[k]===true?'off':true;saveProg();sfx('pick');applyJewelLooks();PS2C.rebuild(rideId());return renderStore(p.jewel[k]===true?'You put on the '+j.name+'.':'The '+j.name+' goes back in the box.');}
  if(p.wallet<j.price){sfx('blip');if(storeMode==='jewel')return mallPoor();return renderStore('Not enough cash. Come back richer.');}
  p.wallet-=j.price;p.jewel[k]=true;saveProg();sfx('cash');if(storeMode==='jewel')mallSay(pick(MALL_SHOPS.jewel.sold));applyJewelLooks();PS2C.rebuild(rideId());renderStore('SOLD: '+j.name+'. Wear it well.');}
-$('sStore').addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(!b)return;if(b.id==='bStoreLeave'){closeStore();return;}if(b.dataset.car)buyCar(b.dataset.car);else if(b.dataset.jw)buyJewel(b.dataset.jw);else if(b.dataset.ho!==undefined)buyHome(+b.dataset.ho);else if(b.dataset.fu)buyFurn(b.dataset.fu);else if(b.dataset.sj)takeSideJob(b.dataset.sj);else if(b.dataset.ks)lockerStash(b.dataset.ks);else if(b.dataset.lt!==undefined)lockerTake(+b.dataset.lt);else if(b.dataset.cx)buyCarMod(b.dataset.cx);else if(b.dataset.mf){const q=b.dataset.mf.split(':');buyFurnAt(+q[0],q[1]);}else if(b.dataset.inv)buyProp(b.dataset.inv);else if(b.dataset.ts)buySuit(b.dataset.ts);else if(b.dataset.vipchat!==undefined){closeStore();tonyTalk();}else if(b.dataset.vip!==undefined)startLapdance(+b.dataset.vip);});
+$('sStore').addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(!b)return;if(b.id==='bStoreLeave'){closeStore();return;}if(b.dataset.car)buyCar(b.dataset.car);else if(b.dataset.jw)buyJewel(b.dataset.jw);else if(b.dataset.ho!==undefined)buyHome(+b.dataset.ho);else if(b.dataset.fu)buyFurn(b.dataset.fu);else if(b.dataset.sj)takeSideJob(b.dataset.sj);else if(b.dataset.ks)lockerStash(b.dataset.ks);else if(b.dataset.lt!==undefined)lockerTake(+b.dataset.lt);else if(b.dataset.cx)buyCarMod(b.dataset.cx);else if(b.dataset.mf){const q=b.dataset.mf.split(':');buyFurnAt(+q[0],q[1]);}else if(b.dataset.inv)buyProp(b.dataset.inv);else if(b.dataset.ts)buySuit(b.dataset.ts);else if(b.dataset.sg)buyShades(b.dataset.sg);else if(b.dataset.gear)buyGear(b.dataset.gear);else if(b.dataset.med)buyMed(b.dataset.med);else if(b.dataset.arc)arcadeCard(b.dataset.arc);else if(b.dataset.vipchat!==undefined){closeStore();tonyTalk();}else if(b.dataset.vip!==undefined)startLapdance(+b.dataset.vip);});
 function renderVip(msg){const p=myProg(),g=G;
  $('stWallet').textContent='$'+fmt(p.wallet);$('stOwed').textContent='VIP ROOM · $500';
  document.querySelector('#sStore .shT').textContent='TONY · VIP ROOMS';
@@ -2871,10 +2907,14 @@ function lockerTake(i){const p=myProg(),it=p.locker.items[i];if(!it)return;if(!k
 function storeKey(e){const c=e.code,m=/^Digit([1-9])$/.exec(c);if(c==='Escape'||c==='Backspace'){closeStore();return;}if(!m)return;const i=+m[1];if(storeMode==='locker'){const b=document.querySelectorAll('#sStore .scard')[i-1];if(b)b.click();return;}if(storeMode==='home'){const it=catOf(myProg().home||0)[i-1];if(it)buyFurn(it.k);return;}if(storeMode==='dealer'||mallMode()){const b=document.querySelectorAll('#sStore .scard')[i-1];if(b)b.click();return;}if(i<=3)return;else if(i<=6)buyJewel(Object.keys(JEWEL)[i-4]);else buyHome(i-7);}
 function storePad(dir){const cs=document.querySelectorAll('#sStore .scard');if(dir){storeFocus=(storeFocus+dir+cs.length)%cs.length;renderStore($('stMsg').textContent);}if(pdown(0)&&cs[storeFocus])cs[storeFocus].click();else if(pdown(1))closeStore();}
 /* jewelry flags for the low-poly fallback looks; the PS2 models read PROG directly when rebuilt */
-function applyJewelLooks(){for(const c of CHARS){const j=(PROG[c.id]&&PROG[c.id].jewel)||{},L=LOOKS[c.id],w=k=>j[k]===true;if(!L)continue;L.watch=w('watch');L.chain=w('chain')||w('cuban');L.medallion=w('medal');L.bling=w('rings');}}
+function applyJewelLooks(){for(const c of CHARS){const j=(PROG[c.id]&&PROG[c.id].jewel)||{},L=LOOKS[c.id],w=k=>j[k]===true;if(!L)continue;L.watch=w('watch');L.chain=w('chain')||w('cuban');L.medallion=w('medal');L.bling=w('rings');}applyShadeLooks();}
+/* Felix's sunglasses on the classic model: aviators keep the gold-wire look, the rest are a coloured bar; the signature glasses/shades come back when you take them off */
+const SHADE_LENS={amber:[0.55,0.32,0.08],black:[0.07,0.06,0.09],blue:[0.2,0.55,0.95],pink:[0.95,0.35,0.6],smoke:[0.22,0.22,0.26]},SHADE_FRAME={gold:[0.95,0.76,0.3],black:[0.07,0.06,0.09],white:[0.95,0.95,0.95]};
+function applyShadeLooks(){if(typeof SHADES==='undefined')return;for(const c of CHARS){const L=LOOKS[c.id];if(!L)continue;if(!L._sh0)L._sh0={glasses:L.glasses,shades:L.shades,aviators:L.aviators};const k=shadesOn(PROG[c.id]),S=k&&SHADES[k];
+ Object.assign(L,L._sh0);L.shadeC=null;L.shadeF=null;if(S){L.glasses=null;L.aviators=S.shape==='avi';L.shades=!L.aviators;L.shadeC=SHADE_LENS[S.lens];L.shadeF=SHADE_FRAME[S.frame];}}}
 function placeOldCar(){const g=G,cx=g.arrive?g.arrive.x1:g.car.x,a=g.arr,lane=(x,z)=>a&&z>=a.zT&&z<a.zT+2&&(g.carA?x>cx:x<cx),free=(x,z)=>{for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=0;dz++){const ix=Math.floor(x+dx),iz=Math.floor(z+dz);if(ix<1||iz<1||ix>=g.W-1||iz>=g.H-1||g.solid[iz*g.W+ix]||g.furn[iz*g.W+ix])return false;}return true;};
  for(const [ox,oz] of [[-3,0],[3,0],[0,2.2],[0,-2.2],[-3,2],[3,2]]){const x=cx+ox,z=g.car.z+oz;if(free(x,z)&&!lane(x,z)&&Math.hypot(x-g.player.x,z-g.player.z)>2){g.oldCar={x,z,a:0};return;}}}
-function menuKey(e){const c=e.code;if(state==='store'){storeKey(e);return;}if(state==='carmenu'&&c==='KeyM'&&$('bCarMcWey').style.display!=='none'){$('bCarMcWey').click();return;}if(state==='carmenu'&&c==='KeyH'&&$('bCarHome').style.display!=='none'){$('bCarHome').click();return;}if(state==='carmenu'&&(c==='KeyD'||c==='KeyS')&&$('bCarDealer').style.display!=='none'){$('bCarDealer').click();return;}if(state==='carmenu'&&c==='KeyC'&&$('bCarClub').style.display!=='none'){$('bCarClub').click();return;}
+function menuKey(e){const c=e.code;if(state==='store'){storeKey(e);return;}if(state==='carmenu'&&c==='KeyM'&&$('bCarMcWey').style.display!=='none'){$('bCarMcWey').click();return;}if(state==='carmenu'&&c==='KeyP'&&$('bCarPhone').style.display!=='none'){$('bCarPhone').click();return;}if(state==='carmenu'&&c==='KeyH'&&$('bCarHome').style.display!=='none'){$('bCarHome').click();return;}if(state==='carmenu'&&(c==='KeyD'||c==='KeyS')&&$('bCarDealer').style.display!=='none'){$('bCarDealer').click();return;}if(state==='carmenu'&&c==='KeyC'&&$('bCarClub').style.display!=='none'){$('bCarClub').click();return;}
  if(state==='carmenu'){if(c==='Enter'||c==='Space')$('bCarJob').click();else if((c==='KeyG'||c==='Digit2')&&$('bCarShop').style.display!=='none')$('bCarShop').click();else if(c==='Escape'||c==='Backspace')closeCarMenu();return;}
  shopKey(e);}
 /* ================= ACT 2: HOSTILE TAKEOVER ================= */
@@ -3164,7 +3204,7 @@ const SIDEJOBS={quiet:{name:'NO WITNESSES',from:'MRS. ORTEGA UPSTAIRS',desc:'Cle
  clean:{name:'NOT A SCRATCH',from:'YOUR TAILOR',desc:'Clear your next floor without getting hit.',pay:3000},
  doors:{name:'KNOCK KNOCK',from:'A LOCKSMITH',desc:'Get 2 door kills on your next floor.',pay:2000}};
 const sjPay=(k,i)=>SIDEJOBS[k].pay*(i>=3?2:1);
-function sjOffers(){const a=arm(),p=myProg();if(!p.sjOff||p.sjOff.key!==a.jobs){p.sjOff={key:a.jobs,list:Object.keys(SIDEJOBS).filter(k=>!(k==='getaway'&&!(NEXTJOB>=1))).sort(()=>Math.random()-0.5).slice(0,2)};saveProg();}return p.sjOff.list;}
+function sjOffers(){const a=arm(),p=myProg();const nOff=hasGear('pager')?3:2;/* Crazy Ray's pager: a third offer */if(!p.sjOff||p.sjOff.key!==a.jobs||p.sjOff.list.length<nOff){p.sjOff={key:a.jobs,list:Object.keys(SIDEJOBS).filter(k=>!(k==='getaway'&&!(NEXTJOB>=1))).sort(()=>Math.random()-0.5).slice(0,nOff)};saveProg();}return p.sjOff.list;}
 function takeSideJob(k){const p=myProg();if(p.sidejob===k)return renderStore('Already on it.');p.sidejob=k;saveProg();sfx('pick');renderStore('SIDE JOB TAKEN: '+SIDEJOBS[k].name+'. Get it done on your next floor.');}
 function sjState(g){const k=g.sj,bl=(g.kb.knife||0)+(g.kb.machete||0)+(g.kb.throw||0);
  if(k==='quiet')return g.loudShot?{fail:1,txt:'A LOUD GUN WENT OFF'}:{ok:1,txt:'NO LOUD GUNS'};
@@ -4361,7 +4401,8 @@ function drawRadar(c,cx,cy,R){const g=G,p=g.player,s=R/8;
  const fr=fogRadar(g);if(fr)c.drawImage(fr,cx-p.x*s,cy-p.z*s,g.W*s,g.H*s);
  const money=CHARS[selIdx].id==='money';
  for(const it of g.items){if(it.flying||fogHid(it.x,it.z))continue;const x=cx+(it.x-p.x)*s,y=cy+(it.z-p.z)*s;c.fillStyle='#ffd36b';c.fillRect(x-1.5,y-1.5,3,3);}
- for(const e of g.enemies){if(!e.alive)continue;if(!(money||e.pvis||e.state==='chase'&&e.seeT<1||g.enemies.filter(q=>q.alive).length<=3))continue;if(!money&&fogHidE(e)&&g.enemies.filter(q=>q.alive).length>3)continue;const x=cx+(e.x-p.x)*s,y=cy+(e.z-p.z)*s;c.fillStyle=e.down>0?'#ffd36b':e.state==='chase'?'#ff2a3a':'#ff8a95';c.beginPath();c.arc(x,y,Math.max(2.5,s*0.35),0,TAU);c.fill();}
+ const scan=!g.def.hub&&hasGear('scanner');/* Crazy Ray's police scanner: guards within 9m always show */
+ for(const e of g.enemies){if(!e.alive)continue;const near=scan&&Math.hypot(e.x-p.x,e.z-p.z)<9;if(!(near||money||e.pvis||e.state==='chase'&&e.seeT<1||g.enemies.filter(q=>q.alive).length<=3))continue;if(!near&&!money&&fogHidE(e)&&g.enemies.filter(q=>q.alive).length>3)continue;const x=cx+(e.x-p.x)*s,y=cy+(e.z-p.z)*s;c.fillStyle=e.down>0?'#ffd36b':e.state==='chase'?'#ff2a3a':'#ff8a95';c.beginPath();c.arc(x,y,Math.max(2.5,s*0.35),0,TAU);c.fill();}
  c.restore();
  /* objective marker (car) clamped to edge */
  let ox=(g.car.x-p.x)*s,oz=(g.car.z-p.z)*s;const od=Math.hypot(ox,oz);if(od>R-6){ox=ox/od*(R-6);oz=oz/od*(R-6);}

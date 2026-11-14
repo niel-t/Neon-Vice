@@ -199,7 +199,7 @@ export function create(N,oldGL){
   const atlas=texOf(o.atlasTex,true);if(!atlas)return;for(const m of [mStatic,mDecal,mPool,mDyn,mOver,mHi,mLo])if(m.material.map!==atlas){m.material.map=atlas;m.material.needsUpdate=true;}
   syncBatch(mStatic,G.staticB,true);syncBatch(mDecal,G.decalB,true);syncBatch(mPool,o.poolB,false);syncBatch(mDyn,o.dynB,false);syncBatch(mOver,o.ovB,false);
   syncInst(mHi,o.IBhi);syncInst(mLo,o.IBlo);syncChars();
-  N._ground.position.x=Math.round(o.tgt[0]/2)*2;N._ground.position.z=Math.round(o.tgt[2]/2)*2;
+  N._ground.position.y=G.up2?-3.5:-0.03;N._ground.position.x=Math.round(o.tgt[0]/2)*2;N._ground.position.z=Math.round(o.tgt[2]/2)*2;
   film.uniforms.t.value=o.time%10;film.uniforms.grain.value=o.grain||0;const fl=Math.min(Math.max(G.flash||0,0),0.7),fc=G.flashC||[0,0,0];film.uniforms.flash.value.set(fc[0],fc[1],fc[2],fl);
   if(!warm){warmUp();return;}
   composer.render();N.frames=(N.frames||0)+1;}
