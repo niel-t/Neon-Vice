@@ -5026,7 +5026,7 @@ function frame(now){if(contextLost||gl.isContextLost())return;requestAnimationFr
  if(G&&G.climb&&state==='stagefade')climbTick(dt,G);
  if(G&&(state==='play'||state==='dead')&&!portrait)update(dt);
  if(state==='elev')updateElev(dt);else if(state==='brief')updateBrief(dt);else if(state==='shop')updateNine(dt);else if(state==='title'||state==='select'||state==='help'||!G)updateMenu(dt);
- if(AC){let tr;if(state==='play'||state==='dead'||state==='pause'||state==='objcard'){if(G&&G.def.hub)tr=G.track;else if(G&&G.cleared)tr='drone';else if(G&&G.boss&&G.boss.alive&&G.bossSeen)tr='boss';else tr=(G&&G.track)||'game';}else if(state==='carmenu'||state==='shop'||state==='store')tr=(G&&G.track)||'c_palms';else tr=state==='results'?'drone':state==='elev'?'c_pastel':(state==='brief'&&G&&G.def.hub)?'c_tide':'menu';setTrack(tr);setMuffle(state==='dead'||state==='pause'||state==='brief');}
+ if(AC){let tr;if(state==='play'||state==='dead'||state==='pause'||state==='objcard'){if(G&&G.def.hub)tr=G.track;else if(G&&G.cleared)tr=afterTrack();else if(G&&G.boss&&G.boss.alive&&G.bossSeen)tr='boss';else tr=(G&&G.track)||'game';}else if(state==='carmenu'||state==='shop'||state==='store')tr=(G&&G.track)||'c_palms';else tr=state==='results'?afterTrack():state==='elev'?'c_pastel':(state==='brief'&&G&&G.def.hub)?'c_tide':'menu';setTrack(tr);setMuffle(state==='dead'||state==='pause'||state==='brief');}
  engineOn(state==='play'&&!!G&&G.def.hub==='drive'&&!G.parked&&SET.sound);$('cine').style.display=(state==='play'&&G&&G.cine)?'block':'none';$('bSkip').style.display=(state==='play'&&G&&G.def.hub)?'block':'none';
  pressed.grab=pressed.perk=pressed.restart=pressed.pause=pressed.reload=pressed.swap=pressed.cover=false;pressed.slot=0;
  const tui=touchMode&&state==='play'&&!(G&&G.def.hub&&!G.rangeOn);$('touchUI').style.display=tui?'block':'none';
@@ -5035,4 +5035,5 @@ function frame(now){if(contextLost||gl.isContextLost())return;requestAnimationFr
  try{render();drawHUD();}catch(err){console.error(err);}}
 syncSetBtns();updateSelect();requestAnimationFrame(frame);
 </script>
+<script src="music.js"></script>
 </body></html>
