@@ -301,7 +301,10 @@ function resumeAudio(){if(contextLost||!AC||!SET.sound)return;if(AUD.rebuild&&na
  try{AC.resume().then(audioRecovered,audioFailure);}catch(e){audioFailure(e);}}
 function initAudio(){if(contextLost)return;if(AC){resumeAudio();return;}try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){audioFailure(e);return;}
  AC.addEventListener('statechange',audioRecovered);if(!AUD.timer)AUD.timer=setInterval(audioWatch,1000);
- master=AC.createGain();master.gain.value=SET.sound?0.6:0;master.connect(AC.destination);
+ master=AC.createGain();master.gain.value=SET.sound?0.6:0;
+ /* output limiter: many overlapping shots (or a big firefight) can sum past full scale; the hardware then clips them into crackle.
+    This catches the peaks just before the speaker, quietly, and leaves normal levels untouched */
+ const lim=AC.createDynamicsCompressor();lim.threshold.value=-3;lim.knee.value=2;lim.ratio.value=20;lim.attack.value=0.002;lim.release.value=0.09;master.connect(lim);lim.connect(AC.destination);
  try{AUD.probe=AC.createAnalyser();AUD.probe.fftSize=256;AUD.buf=new Float32Array(256);master.connect(AUD.probe);}catch(e){AUD.probe=null;}
  musicG=AC.createGain();musicG.gain.value=0.34;musicG.connect(master);sfxG=AC.createGain();sfxG.gain.value=0.85;sfxG.connect(master);
  noiseBuf=AC.createBuffer(1,AC.sampleRate,AC.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
