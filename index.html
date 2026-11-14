@@ -2559,7 +2559,7 @@ const mcDue=()=>VISIT.next!==NEXTJOB;
 /* You can drive straight to the next job from anywhere: home, Nine's, the club, the dealer, Ocean Drive. McWey only insists on a
    visit for the first meeting (the loan), the start of a new act, and the final debrief. Skipping a debrief only skips his talk:
    the money was settled when the job ended. */
-const mcMust=()=>true; // every next job starts with a visit to McWey
+const mcMust=()=>mcDue()||!(myProg().seen||{}).loan; // a new job waits on McWey: visit him once it is due, and for the loan intro
 /* take McWey's next job without a visit (his talk is skipped, the pay was settled when the last job ended) */
 function takeNextJob(){if(!mcDue())return;const pr=myProg();NEXTJOB=VISIT.next;JOBPICK=null;LASTPAY=null;HUBFIRST=false;VISIT.debrief=null;if(missionBriefReset(missionId(NEXTJOB),pr.wflags))saveProg();}
 /* start the day in your own place (after sleeping, or when PLAY is pressed and McWey has nothing new to hand you) */
