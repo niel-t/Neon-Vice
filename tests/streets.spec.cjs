@@ -6,7 +6,8 @@ test('streets: hub streets are a run of different buildings, the lobby has its c
   expect(await page.evaluate(() => {
     selIdx = 0; sessionReset(Math.min(JOBS.sel, JOBS.top)); arm();
     const out = {};
-    for (const h of ['drive', 'mall', 'bunker', 'club']) {
+    // the venues (mall, club, Nine's) face the camera with their own fronts since #34, so only Ocean Drive has a row of lots
+    for (const h of ['drive']) {
       loadHub(h, h === 'drive' ? 'parked' : undefined);
       const L = G.lots || [], names = L.map(l => l.name), W = G.W;
       // no generic window-box cell is left on the street, and no lot is narrower than two cells
@@ -23,9 +24,6 @@ test('streets: hub streets are a run of different buildings, the lobby has its c
     return out;
   })).toEqual({
     drive: { kinds: true, uniqueNames: true, generic: 0, narrow: 0, kerb: true },
-    mall: { kinds: true, uniqueNames: true, generic: 0, narrow: 0, kerb: true },
-    bunker: { kinds: true, uniqueNames: true, generic: 0, narrow: 0, kerb: true },
-    club: { kinds: true, uniqueNames: true, generic: 0, narrow: 0, kerb: true },
     lobby: { guests: 0, cast: 10, talk: true, moved: true }
   });
 });
@@ -54,4 +52,23 @@ test('lobby: gold McWEY CORP. counter, seats you can sit in, and calm tracks bet
     out.tracks = ['c_pastel', 'c_palms', 'c_tide', 'c_vhs'].every(t => TRACKS[t] && TRACKS[t].bpm <= 96);
     return out;
   })).toEqual({ desk: true, oldDesk: 0, offered: true, seated: true, stood: true, noDouble: true, hubs: [], tracks: true });
+});
+
+test("nine of nine's: regulars with lines, sidewalk furniture you walk round, and the gold sign and street front draw", async ({ openGame }) => {
+  const page = await openGame();
+  expect(await page.evaluate(() => {
+    selIdx = 0; sessionReset(Math.min(JOBS.sel, JOBS.top)); arm();
+    loadHub('bunker');
+    const cast = G.npcs.filter(n => n.cast), out = {};
+    out.cast = new Set(cast.map(n => n.kind)).size;
+    out.lines = cast.every(n => NPC_CHAT[n.kind] && NPCLINES[n.kind]);
+    out.clear = cast.every(n => !isSolid(Math.floor(n.x), Math.floor(n.z)));
+    out.kerb = G.kerb.length >= 6 && G.solids.length >= 6;
+    const p = G.player; const c = cast.find(n => n.kind === 'biker'); p.x = c.x - 1; p.z = c.z;
+    out.talk = hubTargets(G).some(t => t.k === 'talk' && t.n === c);
+    const B = { round: 0.45, n: 0, box() { this.n++; }, quad() { this.n++; } }; drawNineFront(B, G); out.front = B.n > 100 && B.round === 0.45;
+    for (let i = 0; i < 200; i++) npcStep(1 / 30);
+    out.ok = cast.every(n => Number.isFinite(n.x) && Number.isFinite(n.z));
+    return out;
+  })).toEqual({ cast: 5, lines: true, clear: true, kerb: true, talk: true, front: true, ok: true });
 });
