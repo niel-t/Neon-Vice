@@ -897,7 +897,7 @@
           },
           "n": {
             "f": 27,
-            "npc": "hguard"
+            "npc": "smoker"
           },
           "x": {
             "f": 27,
@@ -961,7 +961,7 @@
         "paletteSize": 6
       },
       "gridHash": "0e08be41c593f7a37b2db748c6f620d9893971c733c453ed9a519b9446422b70",
-      "loadedHash": "c4d0e3c53ba25eb5eb6d5d93b3a165607471fc363f26a60bfe89de8d0c26e3e6",
+      "loadedHash": "843b9f1d88ca1137c92a12ebbc6edd9dcd515eeacfd8ce92da66ba00bc7d1103",
       "queryHash": "530f08aa5382752b77b2fb4242ba430d5dd1976f5f3de2b5302defc0f254892a",
       "cellHash": "899a3619352147c149b25e83074a1f12f79d5ccbefd46c8bb49253bcca9d1525"
     },
@@ -1004,7 +1004,7 @@
           },
           "n": {
             "f": 27,
-            "npc": "hguard"
+            "npc": "smoker"
           },
           "x": {
             "f": 27,
@@ -1068,7 +1068,7 @@
         "paletteSize": 6
       },
       "gridHash": "0e08be41c593f7a37b2db748c6f620d9893971c733c453ed9a519b9446422b70",
-      "loadedHash": "c4d0e3c53ba25eb5eb6d5d93b3a165607471fc363f26a60bfe89de8d0c26e3e6",
+      "loadedHash": "843b9f1d88ca1137c92a12ebbc6edd9dcd515eeacfd8ce92da66ba00bc7d1103",
       "queryHash": "530f08aa5382752b77b2fb4242ba430d5dd1976f5f3de2b5302defc0f254892a",
       "cellHash": "899a3619352147c149b25e83074a1f12f79d5ccbefd46c8bb49253bcca9d1525"
     },
@@ -1130,7 +1130,7 @@
           },
           "n": {
             "f": 61,
-            "npc": "hguard"
+            "npc": "smoker"
           },
           "x": {
             "f": 61,
@@ -1194,7 +1194,7 @@
         "paletteSize": 6
       },
       "gridHash": "ad9b7b3efbc1bbf8da918c6511a1776967d39ff08dcbd21e54e097edb7803bc3",
-      "loadedHash": "a099d34e0bb935144e0d4275ef4b17c279d72b4b8de5c8f69b3e98f29bd9f168",
+      "loadedHash": "cd1a04bf5703680b6692b1c2a4a7d8583ac7a713afb0c4ab96daca1fc93bc194",
       "queryHash": "bb90b235796b7b6f45519900de492b74f21ce4ad0bbda4d71f28c89c5807b693",
       "cellHash": "7462fb646e7aab6873995fb9e5dab9edabe89070b34d4bd32fd391e9ed446db7"
     },
@@ -1256,7 +1256,7 @@
           },
           "n": {
             "f": 61,
-            "npc": "hguard"
+            "npc": "smoker"
           },
           "x": {
             "f": 61,
@@ -1320,7 +1320,7 @@
         "paletteSize": 6
       },
       "gridHash": "ad9b7b3efbc1bbf8da918c6511a1776967d39ff08dcbd21e54e097edb7803bc3",
-      "loadedHash": "a099d34e0bb935144e0d4275ef4b17c279d72b4b8de5c8f69b3e98f29bd9f168",
+      "loadedHash": "cd1a04bf5703680b6692b1c2a4a7d8583ac7a713afb0c4ab96daca1fc93bc194",
       "queryHash": "bb90b235796b7b6f45519900de492b74f21ce4ad0bbda4d71f28c89c5807b693",
       "cellHash": "7462fb646e7aab6873995fb9e5dab9edabe89070b34d4bd32fd391e9ed446db7"
     },
@@ -1383,7 +1383,7 @@
           },
           "n": {
             "f": 63,
-            "npc": "hguard"
+            "npc": "smoker"
           },
           "x": {
             "f": 63,
@@ -1447,7 +1447,7 @@
         "paletteSize": 6
       },
       "gridHash": "df1e3fe7d8829db4e2eae522f87b4181306b9ac08573db3ce2fab0bb8d2cc6b6",
-      "loadedHash": "65e5e0710297625d5a7e0082cda57b4e04f03a838ac24708f2f9bdd50a9b2088",
+      "loadedHash": "e0b1801c155e04d6f049c68cf449535b7cfef2ff77f081cf8734708f124ff017",
       "queryHash": "1c8ff551d12bea04d6627d820f1f7341e1bea57010909cf4b13de64abd6b54e9",
       "cellHash": "6d172bf1b7e4c67811723ea78ce112b4addccaac0bfa5f6ae67000fb0e651be2"
     },
@@ -1510,7 +1510,7 @@
           },
           "n": {
             "f": 63,
-            "npc": "hguard"
+            "npc": "smoker"
           },
           "x": {
             "f": 63,
@@ -1574,7 +1574,7 @@
         "paletteSize": 6
       },
       "gridHash": "df1e3fe7d8829db4e2eae522f87b4181306b9ac08573db3ce2fab0bb8d2cc6b6",
-      "loadedHash": "65e5e0710297625d5a7e0082cda57b4e04f03a838ac24708f2f9bdd50a9b2088",
+      "loadedHash": "e0b1801c155e04d6f049c68cf449535b7cfef2ff77f081cf8734708f124ff017",
       "queryHash": "1c8ff551d12bea04d6627d820f1f7341e1bea57010909cf4b13de64abd6b54e9",
       "cellHash": "6d172bf1b7e4c67811723ea78ce112b4addccaac0bfa5f6ae67000fb0e651be2"
     },
