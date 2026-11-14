@@ -360,5 +360,5 @@ function drawBunker(B,g){const T=g.T||0,O=1,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(T
   B.box(TRS(d.hx+Math.cos(a)*0.84,0.56,d.hz+Math.sin(a)*0.84,-a,0.05,0.05,0.16),GOLD);}
  /* bullets, muzzle flashes and spent casings while the range is live (the hub's own draw doesn't know about them) */
  for(const b of g.bullets)B.box(TRS(b.x,0.74,b.z,Math.atan2(b.dx,b.dz),0.035,0.035,0.45),[1,0.95,0.55],true);
- if(g.flashes)for(const f of g.flashes){if(f.sil){B.box(TRS(f.x,f.y,f.z,0,0.06,0.06,0.06),[0.9,0.9,0.8],true);continue;}const s=f.big?0.32:0.2;B.box(TRS(f.x,f.y,f.z,rnd(0,TAU),s,s*0.6,s),[1,0.95,0.6],true);}
+ if(g.flashes)for(const f of g.flashes)drawFlash(B,f);
  if(R&&R.on)for(const q of g.gibs)B.box(A.mul(A.mul(A.T(q.x,q.y,q.z),A.mul(A.RY(q.ry),A.RX(q.rx))),A.S(q.sx,q.sy,q.sz)),q.c);}
