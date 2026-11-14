@@ -2573,9 +2573,11 @@ let fading=false;function fadeTo(fn,o){if(contextLost||fading)return false;fadin
  $('fade').classList.add('on');setTimeout(()=>{try{if(!contextLost)fn();}finally{setTimeout(()=>{$('fade').classList.remove('on');fading=false;},60);}},380);return true;}
 /* McWey still owes a debrief/brief (VISIT.next is only taken into NEXTJOB by chatGo): leaving home or taking the job goes to him first, never back to the last job */
 const mcDue=()=>VISIT.next!==NEXTJOB;
-/* Every new job starts with a visit to McWey (and the first meeting, the loan). Once he has handed it over you can drive straight to it
-   from anywhere: home, Nine's, the club, the mall, Ocean Drive. */
-const mcMust=()=>mcDue()||!(myProg().seen||{}).loan; // a new job waits on McWey: visit him once it is due, and for the loan intro
+/* You can drive straight to the next job from anywhere: home, Nine's, the club, the mall, Ocean Drive. McWey only insists on a
+   visit for the first meeting (the loan), the start of a new act, and the final debrief. Skipping a debrief only skips his talk:
+   the money was settled when the job ended. (Tristan asked for this free travel; a McWey stop before every job also looped,
+   because his TAKE THE JOB led back to the car menu.) */
+const mcMust=()=>mcDue()&&(VISIT.next==='end'||!(myProg().seen||{}).loan||VISIT.next===3||VISIT.next===8);
 /* take McWey's next job without a visit (his talk is skipped, the pay was settled when the last job ended) */
 function takeNextJob(){if(!mcDue())return;const pr=myProg();NEXTJOB=VISIT.next;JOBPICK=null;LASTPAY=null;HUBFIRST=false;VISIT.debrief=null;if(missionBriefReset(missionId(NEXTJOB),pr.wflags))saveProg();}
 /* start the day in your own place (after sleeping, or when PLAY is pressed and McWey has nothing new to hand you) */
