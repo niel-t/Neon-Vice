@@ -2444,7 +2444,11 @@ const mcDue=()=>VISIT.next!==NEXTJOB;
    visit for the first meeting (the loan), the start of a new act, and the final debrief. Skipping a debrief only skips his talk:
    the money was settled when the job ended. */
 const mcMust=()=>mcDue()&&(VISIT.next==='end'||!(myProg().seen||{}).loan||VISIT.next===3||VISIT.next===8);
-function jobDirect(){if(mcDue()){const pr=myProg();NEXTJOB=VISIT.next;JOBPICK=null;LASTPAY=null;HUBFIRST=false;VISIT.debrief=null;if(missionBriefReset(missionId(NEXTJOB),pr.wflags))saveProg();}
+/* take McWey's next job without a visit (his talk is skipped, the pay was settled when the last job ended) */
+function takeNextJob(){if(!mcDue())return;const pr=myProg();NEXTJOB=VISIT.next;JOBPICK=null;LASTPAY=null;HUBFIRST=false;VISIT.debrief=null;if(missionBriefReset(missionId(NEXTJOB),pr.wflags))saveProg();}
+/* start the day in your own place (after sleeping, or when PLAY is pressed and McWey has nothing new to hand you) */
+function wakeAtHome(){const h=myProg().home||0;loadHub('home'+h,'home');banner(HOMEDEF[h].name,mcMust()?'McWey wants a word · your car is outside':'Your car is outside · go wherever you like, the job waits');}
+function jobDirect(){takeNextJob();
  const r=JOBPICK?startMission(JOBPICK):startLevel(NEXTJOB);showObjCard();return r;}
 /* leaving for somewhere from a home rides the elevator down first (the Seabreeze, Coral Tower); everywhere else your car drives off */
 function travel(go,t1,t2){const g=G,L=g&&HUBMODE==='home'&&HOME_LIFT[g.home];
@@ -3013,10 +3017,11 @@ const MORNING=[
  {who:'AN UNKNOWN CALLER',msg:'"They\'re expecting you loud tonight. Go quiet." Click. There\'s something taped under the phone.',fxt:'SILENCED 9MM WAITING ON YOUR NEXT FLOOR',fx:p=>{p.gift='silenced';}},
  {who:'PESOS THE DOG',need:()=>homeFurn().dog,msg:'Pesos drags a soggy roll of hundreds out from under the couch. Whose was it? Who cares. Good boy.',fxt:'+$800',fx:p=>{p.wallet+=800;}}];
 function showMorning(ev){state='morning';$('mnWho').textContent=ev.who;$('mnMsg').textContent=ev.msg;$('mnFx').textContent=ev.fxt;show('sMorning');sfx('blip');}
-$('bMorning').onclick=()=>{if(state!=='morning'||fading)return;sfx('pick');fadeTo(()=>{show(null);state='play';goDrive();});};
+/* waking up keeps you at home: McWey only has to be seen to take on a new act (see mcMust), not every morning */
+$('bMorning').onclick=()=>{if(state!=='morning'||fading)return;sfx('pick');show(null);state='play';banner('GOOD MORNING',mcMust()?'McWey wants a word · your car is outside':'Your car is outside · go wherever you like');};
 function goSleep(){if(!G||!G.slots)return;sfx('pick');popup(G.player.x,G.player.z-0.6,'Z Z Z...','#9fd8ff');
  {const a=arm(),p=myProg();if(p.mornKey!==a.jobs){p.mornKey=a.jobs;const ev=pick(MORNING.filter(m=>!m.need||m.need()));ev.fx(p,a);saveProg();banner('YOU GET SOME SLEEP','Somebody is at the door...');fadeTo(()=>showMorning(ev));return;}}
- banner('YOU GET SOME SLEEP','Waking up to a call from McWey...');fadeTo(goDrive);}
+ fadeTo(()=>banner('YOU GET SOME SLEEP',mcMust()?'McWey wants a word · your car is outside':'Rested · your car is outside when you are ready'));}
 function buyHome(i){const p=myProg(),h=HOMEDEF[i];if(!h)return;p.homes=p.homes||[0];if((p.home||0)===i)return renderStore('You already live there.');
  if(p.homes.includes(i)){p.home=i;saveProg();sfx('pick');return renderStore('Moved back into '+h.name+'. You will wake up there after the next job.');}
  if(h.needs&&!p[h.needs])return renderStore('Moreau is still living in it. Deal with the Shark first.');if(p.wallet<h.price){sfx('blip');return renderStore('Not enough cash. Come back richer.');}
@@ -4663,7 +4668,7 @@ $('cDiff').addEventListener('click',e=>{const d=e.target.dataset&&e.target.datas
 $('pkCards').addEventListener('click',e=>{const b=e.target.closest('.pcard');if(b)choosePerk(b.dataset.k);});
 $('bPrev').onclick=()=>{selIdx=(selIdx+2)%3;updateSelect();sfx('blip');};
 $('bNext').onclick=()=>{selIdx=(selIdx+1)%3;updateSelect();sfx('blip');};
-$('bPlay').onclick=()=>{const st=Math.min(JOBS.sel,JOBS.top),p=myProg();if(p.run){runWalkAway(p);saveProg();}sessionReset(st);sfx('pick');fadeTo(goDrive);};$('bResumeJob').onclick=()=>{const r=resumeRun();if(!r||fading)return;selIdx=r.ci;sessionReset(r.st);NEXTJOB=r.st;sfx('pick');fadeTo(()=>{startMission(r.id);showObjCard();});};$('bDeadWalk').onclick=()=>walkAway();$('bWalk').onclick=()=>walkAway();syncResume();
+$('bPlay').onclick=()=>{const st=Math.min(JOBS.sel,JOBS.top),p=myProg();if(p.run){runWalkAway(p);saveProg();}sessionReset(st);sfx('pick');const nj=NEXTJOB;NEXTJOB=null;const must=mcMust();NEXTJOB=nj;if(must)fadeTo(goDrive);else{takeNextJob();fadeTo(wakeAtHome);}};$('bResumeJob').onclick=()=>{const r=resumeRun();if(!r||fading)return;selIdx=r.ci;sessionReset(r.st);NEXTJOB=r.st;sfx('pick');fadeTo(()=>{startMission(r.id);showObjCard();});};$('bDeadWalk').onclick=()=>walkAway();$('bWalk').onclick=()=>walkAway();syncResume();
 $('sBrief').onclick=e=>{if(CHAT.phase==='choose'||e.target.closest('#bGo,#dlJobs,#bDlSkip,#bDlText,summary,#dlogHist,.dlChoices'))return;chatTap();};$('bDlSkip').onclick=()=>chatSkipAll();$('bDlText').onclick=()=>cycleTextSize();
 $('sObj').onclick=()=>objCardGo();$('sElev').onclick=()=>skipElev();$('cine').onclick=()=>cineSkip();$('bSkip').onclick=()=>hubSkip();
 $('bGo').onclick=()=>chatGo();$('dlJobs').onclick=e=>{const b=e.target.closest('[data-mid]');if(b)chatGo(b.dataset.mid);};
