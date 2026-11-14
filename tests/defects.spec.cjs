@@ -242,14 +242,16 @@ test('nine: full hands deliver to the locker, a sale takes two clicks, and the l
     const a = arm(); a.met = true; a.stock = ['m16', 'katana', 'revolver']; a.key = a.jobs;
     openShop();
   });
-  await page.locator('#shCards [data-k="m16"]').click();
-  expect(await page.evaluate(() => ({ items:myProg().locker.items, guns:kit().guns.map(g => g.type), spent:100000 - myProg().wallet === SHOPP.m16 })))
+  await page.locator('#shList [data-k="m16"]').click();
+  await page.locator('#shBuy').click();
+  expect(await page.evaluate(() => ({ items:myProg().locker.items, guns:kit().guns.map(g => g.type), spent:100000 - myProg().wallet === shopPrice('m16') })))
     .toEqual({ items:[{ type:'m16', mag:30 }], guns:['pistol', 'smg'], spent:true });
-  await page.locator('#shExtra [data-x="sell"]').click();
-  await page.locator('#shExtra [data-s="l0"]').click();
+  await page.locator('#shTabs [data-tab="sell"]').click();
+  await page.locator('#shList [data-row="sell:l0"]').click();
+  await page.locator('#shBuy').click();
   expect(await page.evaluate(() => myProg().locker.items.length)).toBe(1);
-  await page.locator('#shExtra [data-s="l0"]').click();
-  expect(await page.evaluate(() => ({ n:myProg().locker.items.length, paid:myProg().wallet === 100000 - SHOPP.m16 + Math.round(SHOPP.m16 * SELL_FRAC) })))
+  await page.locator('#shBuy').click();
+  expect(await page.evaluate(() => ({ n:myProg().locker.items.length, paid:myProg().wallet === 100000 - shopPrice('m16') + Math.round(SHOPP.m16 * SELL_FRAC) })))
     .toEqual({ n:0, paid:true });
   await page.evaluate(() => { closeShop(); openStore('locker'); });
   await page.locator('#sStore [data-ks="g1"]').click();

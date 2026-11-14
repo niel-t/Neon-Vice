@@ -109,7 +109,29 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 @media (max-height:520px){.dlog{font-size:calc(var(--tx,1)*17px)}.dl{margin:.3em 0}}
 .pcard{font-family:inherit;background:#1a0c2a;border:3px solid #ff2d95;box-shadow:5px 5px 0 #2de2e6;color:#fff;width:min(230px,28vw);min-height:150px;margin:10px;padding:14px 10px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;text-align:center}.pcard:hover{background:#2a1040}.pn{font-family:'Press Start 2P',monospace;font-size:clamp(9px,1.6vw,12px);color:#ffd36b;line-height:1.5}.pd{font-size:clamp(15px,2.4vw,20px);margin:10px 0;color:#f3e6ff}.pkey{font-size:15px;color:#2de2e6}
 @media (max-height:520px){.pcard{min-height:110px;padding:8px;margin:5px}}
-#sShop{align-items:flex-start;padding-left:4vw;background:linear-gradient(90deg,rgba(8,0,16,.86) 0%,rgba(8,0,16,.7) 50%,rgba(8,0,16,0) 72%)}@media (max-aspect-ratio:1/1){#sShop{align-items:center;justify-content:flex-end;padding-left:16px;background:linear-gradient(0deg,rgba(8,0,16,.9) 0%,rgba(8,0,16,.75) 55%,rgba(8,0,16,0) 75%)}#sShop .shop{width:96vw}}.shop{width:min(780px,62vw);display:flex;flex-direction:column;align-items:center}.shHead{display:flex;align-items:flex-end;justify-content:space-between;width:100%;gap:12px}.shT{font-family:'Press Start 2P',monospace;font-size:clamp(14px,3.4vw,30px);color:#ffd36b;text-shadow:3px 3px 0 #7a2b00,5px 5px 0 #000;text-align:left}.shS{font-family:'Press Start 2P',monospace;font-size:clamp(7px,1.3vw,10px);color:#2de2e6;letter-spacing:2px;margin-top:8px;text-align:left}.shW{font-family:'Press Start 2P',monospace;font-size:clamp(12px,2.6vw,20px);color:#7dff9a;text-shadow:2px 2px 0 #000;white-space:nowrap}.shSay{width:100%;box-sizing:border-box;margin-top:12px;background:rgba(14,6,26,.93);border:2px solid #ffd36b;box-shadow:4px 4px 0 rgba(255,45,149,.75);padding:9px 12px;font-size:clamp(17px,2.6vw,22px);line-height:1.15;text-align:left;min-height:2.6em;cursor:pointer}.shSay::before{content:'NINE OF NINE';display:block;font-family:'Press Start 2P',monospace;font-size:9px;color:#ffd36b;margin-bottom:5px}.scard{font-family:inherit;background:#1a0c2a;border:3px solid #ff2d95;box-shadow:5px 5px 0 #2de2e6;color:#fff;width:min(230px,19vw);min-height:190px;margin:8px;padding:12px 10px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;align-items:center;text-align:center}.scard:hover{background:#2a1040}.scard.ex{border-color:#ffd36b;box-shadow:5px 5px 0 #ff2d95;background:linear-gradient(#3a2408,#1a0c2a)}.scard.on{border-color:#7dff9a;box-shadow:5px 5px 0 #7dff9a}#shCards canvas.sic{position:static;width:120px;height:44px;image-rendering:pixelated;margin:6px auto 2px}.sx{font-family:'Press Start 2P',monospace;font-size:8px;color:#1a0c2a;background:#ffd36b;padding:3px 6px;margin-bottom:4px}.pd{font-size:clamp(14px,2vw,17px);color:#c9a8e8;line-height:1.05;margin:4px 0}.sp{font-family:'Press Start 2P',monospace;font-size:clamp(8px,1.4vw,11px);color:#7dff9a;margin-top:6px}.shX{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:4px}.shX button{font-family:'Press Start 2P',monospace;font-size:clamp(8px,1.3vw,10px);background:#24123a;color:#e9c7ff;border:2px solid #4a2a6a;padding:8px 10px;cursor:pointer}.shX button.on{border-color:#7dff9a;color:#7dff9a}.shX .lab{font-family:'Press Start 2P',monospace;font-size:8px;color:#c9a8e8;align-self:center}.shF{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:8px;gap:10px;flex-wrap:wrap}#shLoad{font-size:clamp(15px,2.2vw,19px);color:#ffd36b;text-align:left}.hid{display:none!important}#sStore{overflow-y:auto;justify-content:flex-start;padding-top:18px}#sStore .scard{min-height:112px;margin:5px 7px;padding:8px}#sStore .pd{margin:2px 0}#sStore canvas.sic{position:static;width:96px;height:35px;image-rendering:pixelated;margin:4px auto 0}@media (max-height:520px){.scard{min-height:120px;padding:6px;margin:5px}#shCards canvas.sic{width:84px;height:31px}.shSay{margin-top:6px;padding:5px 9px}}
+#sShop{padding:0;overflow:hidden;background:linear-gradient(90deg,rgba(8,0,16,.94) 0%,rgba(8,0,16,.86) 36%,rgba(8,0,16,0) 56%)}
+.gs{position:absolute;inset:0;box-sizing:border-box;padding:max(10px,2vh) max(12px,2.2vw);display:grid;grid-template-columns:minmax(250px,min(44vw,560px)) 1fr;grid-template-rows:auto auto minmax(0,1fr) auto;grid-template-areas:"head ." "say ." "main card" "foot foot";gap:6px 2vw;text-align:left}
+.gsHead{grid-area:head;display:flex;align-items:flex-end;justify-content:space-between;gap:10px}.gs .shSay{grid-area:say;margin-top:0}
+#shMain{grid-area:main;display:flex;flex-direction:column;min-height:0}#shMain.hid{visibility:hidden}#shMain.hid~.gsCard{visibility:hidden}
+.gsTabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px}.gsTabs button{font-family:'Press Start 2P',monospace;font-size:clamp(6px,0.85vw,8px);padding:5px 6px;background:#1a0c2a;color:#e9c7ff;border:2px solid #4a2a6a;cursor:pointer}.gsTabs button.on{background:#ff2d95;color:#fff;border-color:#ffd36b}
+.gsList{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;border:2px solid #4a2a6a;background:rgba(14,6,26,.8);scrollbar-width:thin;scrollbar-color:#ff2d95 #1a0c2a}
+.gsH{position:sticky;top:0;z-index:1;font-family:'Press Start 2P',monospace;font-size:clamp(7px,0.9vw,9px);color:#2de2e6;letter-spacing:2px;padding:6px 8px 4px;background:#12061f;border-bottom:1px solid #4a2a6a}
+.gsR{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;font-family:inherit;font-size:clamp(15px,1.7vw,19px);color:#fff;background:transparent;border:0;border-left:4px solid transparent;padding:3px 8px;cursor:pointer;text-align:left}
+.gsR:hover{background:rgba(255,45,149,.14)}.gsR.sel{background:linear-gradient(90deg,rgba(255,45,149,.55),rgba(255,45,149,.12));border-left-color:#ffd36b}
+.gsR.ex .gsN{color:#ffd36b}.gsR.lock{opacity:.5}.gsR.own .gsP{color:#7dff9a}
+.gsI{position:static;display:block;width:60px;height:22px;flex:none;image-rendering:pixelated}.gsN{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gsP{white-space:nowrap;color:#ffd36b}
+.gsTag{font-family:'Press Start 2P',monospace;font-size:7px;font-weight:normal;color:#1a0c2a;background:#ffd36b;padding:2px 4px;vertical-align:middle}.gsTag.deal{background:#7dff9a}
+.gsCard{grid-area:card;align-self:end;justify-self:end;width:min(420px,100%);box-sizing:border-box;background:rgba(14,6,26,.9);border:3px solid #ff2d95;box-shadow:5px 5px 0 #2de2e6;padding:9px 12px;max-height:100%;overflow-y:auto}
+.gsDT{font-family:'Press Start 2P',monospace;font-size:clamp(10px,1.5vw,15px);color:#ffd36b;text-shadow:2px 2px 0 #7a2b00}.gsDS{font-family:'Press Start 2P',monospace;font-size:clamp(6px,0.8vw,8px);color:#2de2e6;letter-spacing:1px;margin-top:5px;line-height:1.5}
+.gsQ{font-size:clamp(14px,1.6vw,18px);color:#e9c7ff;margin:4px 0;font-style:italic}
+.gsBars{display:grid;gap:3px;margin:4px 0}.gsBar{display:grid;grid-template-columns:7.5em 1fr;align-items:center;gap:6px;font-family:'Press Start 2P',monospace;font-size:clamp(6px,0.75vw,7px);color:#fff}
+.gsBar i{position:relative;height:8px;background:#2a1a3a;border:1px solid #4a2a6a}.gsBar b{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#ff2d95,#ffd36b)}.gsBar u{position:absolute;top:-3px;bottom:-3px;width:2px;background:#2de2e6;text-decoration:none}
+.gsCmp{font-family:'Press Start 2P',monospace;font-size:6px;color:#2de2e6;margin-bottom:3px}.gsM{font-family:'Press Start 2P',monospace;font-size:clamp(6px,0.75vw,7px);color:#7dff9a;margin:4px 0;line-height:1.5}
+.gsX{display:flex;flex-wrap:wrap;gap:5px;margin:5px 0}.gsX button,.gsA .btn{font-family:inherit}.gsX button{font-size:clamp(13px,1.4vw,16px);background:#1a0c2a;color:#fff;border:2px solid #2de2e6;padding:3px 7px;cursor:pointer}.gsX button.on{border-color:#7dff9a;color:#7dff9a}
+.gsA{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.gsA .btn{margin:0;padding:8px 12px;font-size:clamp(9px,1.1vw,12px)}.gsA .btn s{opacity:.6}.gsA .btn[disabled]{opacity:.45;cursor:default}.gsA .btn.on{background:#ffd36b;color:#1a0c2a}
+.gsFoot{grid-area:foot;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.gsFoot .btn{margin:0;padding:8px 14px}.gsKeys{font-family:'Press Start 2P',monospace;font-size:7px;color:#9a7ab8}
+@media (max-height:520px){.gsTabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.gsTabs button{flex:none}.gs .shT{font-size:14px}.gs .shS{margin-top:3px}.gs .shSay{font-size:15px;min-height:2.3em;padding:4px 8px}.gsR{font-size:14px;padding:1px 6px}.gsI{width:44px;height:16px}.gsCard{padding:6px 9px}.gsQ{font-size:13px;margin:2px 0}.gsBars{gap:2px}.gsA .btn{padding:6px 9px}.gsFoot .btn{padding:6px 10px}}
+@media (max-aspect-ratio:1/1){#sShop{background:linear-gradient(0deg,rgba(8,0,16,.95) 0%,rgba(8,0,16,.88) 62%,rgba(8,0,16,0) 76%)}.gs{grid-template-columns:1fr;grid-template-rows:auto auto 18vh auto minmax(0,1fr) auto;grid-template-areas:"head" "say" "." "card" "main" "foot";padding:10px}.gsCard{justify-self:stretch;width:auto;max-height:36vh}.gsKeys{display:none}}.shop{width:min(780px,62vw);display:flex;flex-direction:column;align-items:center}.shHead{display:flex;align-items:flex-end;justify-content:space-between;width:100%;gap:12px}.shT{font-family:'Press Start 2P',monospace;font-size:clamp(14px,3.4vw,30px);color:#ffd36b;text-shadow:3px 3px 0 #7a2b00,5px 5px 0 #000;text-align:left}.shS{font-family:'Press Start 2P',monospace;font-size:clamp(7px,1.3vw,10px);color:#2de2e6;letter-spacing:2px;margin-top:8px;text-align:left}.shW{font-family:'Press Start 2P',monospace;font-size:clamp(12px,2.6vw,20px);color:#7dff9a;text-shadow:2px 2px 0 #000;white-space:nowrap}.shSay{width:100%;box-sizing:border-box;margin-top:12px;background:rgba(14,6,26,.93);border:2px solid #ffd36b;box-shadow:4px 4px 0 rgba(255,45,149,.75);padding:9px 12px;font-size:clamp(17px,2.6vw,22px);line-height:1.15;text-align:left;min-height:2.6em;cursor:pointer}.shSay::before{content:'NINE OF NINE';display:block;font-family:'Press Start 2P',monospace;font-size:9px;color:#ffd36b;margin-bottom:5px}.scard{font-family:inherit;background:#1a0c2a;border:3px solid #ff2d95;box-shadow:5px 5px 0 #2de2e6;color:#fff;width:min(230px,19vw);min-height:190px;margin:8px;padding:12px 10px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;align-items:center;text-align:center}.scard:hover{background:#2a1040}.scard.ex{border-color:#ffd36b;box-shadow:5px 5px 0 #ff2d95;background:linear-gradient(#3a2408,#1a0c2a)}.scard.on{border-color:#7dff9a;box-shadow:5px 5px 0 #7dff9a}#shCards canvas.sic{position:static;width:120px;height:44px;image-rendering:pixelated;margin:6px auto 2px}.sx{font-family:'Press Start 2P',monospace;font-size:8px;color:#1a0c2a;background:#ffd36b;padding:3px 6px;margin-bottom:4px}.pd{font-size:clamp(14px,2vw,17px);color:#c9a8e8;line-height:1.05;margin:4px 0}.sp{font-family:'Press Start 2P',monospace;font-size:clamp(8px,1.4vw,11px);color:#7dff9a;margin-top:6px}.shX{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:4px}.shX button{font-family:'Press Start 2P',monospace;font-size:clamp(8px,1.3vw,10px);background:#24123a;color:#e9c7ff;border:2px solid #4a2a6a;padding:8px 10px;cursor:pointer}.shX button.on{border-color:#7dff9a;color:#7dff9a}.shX .lab{font-family:'Press Start 2P',monospace;font-size:8px;color:#c9a8e8;align-self:center}.shF{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:8px;gap:10px;flex-wrap:wrap}#shLoad{font-size:clamp(15px,2.2vw,19px);color:#ffd36b;text-align:left}.hid{display:none!important}#sStore{overflow-y:auto;justify-content:flex-start;padding-top:18px}#sStore .scard{min-height:112px;margin:5px 7px;padding:8px}#sStore .pd{margin:2px 0}#sStore canvas.sic{position:static;width:96px;height:35px;image-rendering:pixelated;margin:4px auto 0}@media (max-height:520px){.scard{min-height:120px;padding:6px;margin:5px}#shCards canvas.sic{width:84px;height:31px}.shSay{margin-top:6px;padding:5px 9px}}
 @media (max-height:520px){.screen{justify-content:flex-start;overflow-y:auto;padding:10px}#sPause .col{flex-direction:row;flex-wrap:wrap;justify-content:center}.btn{padding:9px 12px;margin:4px;min-width:0}
  .stats{line-height:1.05;font-size:15px;margin:6px 0}.grade{font-size:34px}.big{font-size:24px}.hint{margin-top:6px;font-size:14px}.logo{font-size:26px}
  #sSelect .selHead{max-width:58vw}#sSelect .selBar{position:fixed;right:10px;bottom:10px}#sSelect .quote{display:none}.kv{font-size:14px;gap:2px 14px;margin:4px auto}}
@@ -156,7 +178,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <div id="sResults" class="screen dim"><div class="logo2" id="rTitle">FLOOR CLEAR</div><div class="stats" id="rStats"></div><div class="grade" id="rGrade">A</div><div class="rowc"><button class="btn alt" id="bRetryLvl">RETRY<span class="padhint"> (X)</span></button><button class="btn" id="bNextLvl">NEXT FLOOR</button></div></div>
 <div id="sPerk" class="screen dim"><div class="logo2">LEVEL UP!</div><div class="hint" id="pkLvl"></div><div class="rowc" id="pkCards"></div></div>
 <div id="sCar" class="screen dim"><div class="logo2">YOUR RIDE</div><div class="hint" id="carWallet" style="color:#7dff9a"></div><div class="hint" id="carLoad" style="color:#ffd36b;margin-top:4px"></div><div style="display:flex;flex-direction:column;align-items:center;margin-top:10px"><button class="btn" id="bCarJob">NEXT JOB</button><button class="btn alt" id="bCarShop">NINE OF NINE'S &middot; GUN SHOP<span class="kbhint"> (G)</span><span class="padhint"> (X)</span></button><button class="btn alt" id="bCarClub">VELVET PALMS &middot; STRIP CLUB<span class="kbhint"> (C)</span><span class="padhint"> (RB)</span></button><button class="btn alt" id="bCarDealer">VICTORY MOTORS &middot; CAR DEALER<span class="kbhint"> (D)</span><span class="padhint"> (LB)</span></button><button class="btn alt" id="bCarStore">OCEAN DRIVE SHOPPING &middot; GOLD &amp; HOMES<span class="kbhint"> (S)</span><span class="padhint"> (Y)</span></button><button class="btn alt" id="bCarHome">BACK TO YOUR PLACE</button><button class="btn alt" id="bCarBack">NOT YET<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div>
-<div id="sShop" class="screen"><div class="shop"><div class="shHead"><div><div class="shT">NINE OF NINE'S</div><div class="shS">EXOTIC MACHINERY OF DEATH &middot; 3 PIECES TODAY</div></div><div class="shW" id="shWallet"></div></div><div class="shSay" id="shSay"></div><div class="rowc" id="shCards"></div><div class="shX" id="shExtra"></div><div class="shF"><span id="shLoad"></span><button class="btn" id="bShopLeave">LEAVE<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div></div>
+<div id="sShop" class="screen"><div class="gs"><div class="gsHead"><div><div class="shT">NINE OF NINE'S</div><div class="shS">EXOTIC MACHINERY OF DEATH &middot; GUNS &middot; MODS &middot; RANGE</div></div><div class="shW" id="shWallet"></div></div><div class="shSay" id="shSay"></div><div id="shMain"><div class="gsTabs" id="shTabs"></div><div class="gsList" id="shList"></div></div><div class="gsCard" id="shDetail"></div><div class="gsFoot"><span id="shLoad"></span><span class="gsKeys kbhint">W/S SCROLL &middot; A/D SECTION &middot; ENTER BUY &middot; T TRY</span><button class="btn" id="bShopLeave">LEAVE<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div></div>
 <div id="sStore" class="screen dim"><div class="shop"><div class="shHead"><div class="stHL"><canvas id="stFace" width="56" height="62"></canvas><div><div class="shT">OCEAN DRIVE SHOPPING</div><div class="shS">CARS &middot; GOLD &middot; NO REFUNDS</div></div></div><div><div class="shW" id="stWallet"></div><div class="shS" id="stOwed" style="color:#ff8a95;text-align:right"></div></div></div><div class="shSay" id="stSay" style="display:none"></div><div class="shS" style="margin-top:12px;align-self:flex-start" id="stCarsH">MIAMI MOTORS</div><div class="rowc" id="stCars"></div><div class="shS" style="margin-top:6px;align-self:flex-start" id="stGoldH">GOLD COAST JEWELERS</div><div class="rowc" id="stGold"></div><div class="shS" style="margin-top:6px;align-self:flex-start" id="stHomeH">SUNSHINE REALTY</div><div class="rowc" id="stHome"></div><div class="shF"><span id="stMsg"></span><button class="btn" id="bStoreLeave">LEAVE<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div></div>
 <div id="sMorning" class="screen dim"><div class="phone"><div class="hdr"><span id="mnWho"></span><span>THE MORNING AFTER</span></div><div class="msg" id="mnMsg"></div><div class="floor" id="mnFx"></div></div><button class="btn" id="bMorning">HEAD OUT<span class="kbhint"> (ENTER)</span><span class="padhint"> (A)</span></button></div>
 <div id="sEnd" class="screen dim"><div class="logo" style="font-size:clamp(20px,5vw,44px)">THE FAMILY<br>RUNS MIAMI</div><div class="stats" id="eStats"></div><button class="btn" id="bAgain">PLAY AGAIN<span class="padhint"> (A)</span></button></div>
@@ -255,6 +277,7 @@ const TRS=(x,y,z,ry,sx,sy,sz)=>A.mul(A.mul(A.T(x,y,z),A.RY(ry)),A.S(sx,sy,sz));
 <script src="dialogue.js"></script>
 <script src="overworld.js"></script>
 <script src="cars.js"></script>
+<script src="gunshop.js"></script>
 <script>
 'use strict';
 /* W2f dev gate (not shipped to players): ?planplay=motel|penthouse registers a plan-stage preview errand on the job list */
@@ -754,7 +777,7 @@ function padMenus(dt){if(!PAD.on)return;PAD.navT-=dt;const ax=PAD.gp.axes[0]||0;
   case 'store':storePad(dir);break;
   case 'morning':if(pdown(0))$('bMorning').click();break;
   case 'carmenu':if(pdown(3)){$('bCarStore').click();break;}if(pdown(4)&&$('bCarDealer').style.display!=='none'){$('bCarDealer').click();break;}if(pdown(5)&&$('bCarClub').style.display!=='none'){$('bCarClub').click();break;}if(pdown(0))$('bCarJob').click();else if(pdown(2)&&$('bCarShop').style.display!=='none')$('bCarShop').click();else if(pdown(1))closeCarMenu();break;
-  case 'shop':{if(pdown(1)){closeShop();break;}if(!shopReady()){if(pdown(0))$('shSay').click();break;}const a=arm(),i=pdown(4)?0:pdown(0)?1:pdown(5)?2:-1;if(i>=0&&a.stock[i])shopPick(a.stock[i]);else if(pdown(2))shopExtra('ammo');else if(pdown(3))shopExtra('vest');else if(dir)shopPad(dir);else if(pdown(7)){const xb=document.querySelectorAll('#shExtra button')[shopFocus];if(xb)xb.click();}}break;
+  case 'shop':shopPadInput(dir,dt);break;
   case 'perk':{const cs=document.querySelectorAll('.pcard');const i=pdown(4)?0:pdown(0)?1:pdown(5)?2:-1;if(i>=0&&cs[i])choosePerk(cs[i].dataset.k);}break;
   case 'pause':if(pdown(9)||pdown(1))togglePause();else if(pdown(8))restart();else if(padWalk())walkAway();else if(pdown(3))$('bQuit').click();break;
   case 'play':if(G&&G.cine&&(pdown(0)||pdown(2))){cineSkip();break;}if(G&&G.def.hub&&pdown(3)){hubSkip();break;}if(pdown(9))togglePause();else if(pdown(8))restart();else{if(pdown(0))pressed.grab=true;if(pdown(1)&&SET.cover&&G&&!G.def.hub)pressed.cover=true;if(pdown(2))pressed.perk=true;if(pdown(3))pressed.swap=true;if(pdown(6))pressed.reload=true;}break;}}
@@ -1596,6 +1619,7 @@ function updatePlayer(dt){const g=G,p=g.player,ch=CHARS[selIdx];
     if(same&&it.ammo<=0)g.items.splice(g.items.indexOf(it),1);if(shared&&hw&&hw.cal===id.cal&&p.weapon.ammo<=0)reloadStart(p);
     sfx('pick');popup(p.x,p.z,'+'+add+' '+(shared?CAL[id.cal].name:'AMMO'),'#ffd36b');break;}}
  if(p.burstQ>0){p.burstT-=dt;if(p.burstT<=0&&p.weapon&&p.weapon.type==='m16'&&p.weapon.ammo>0){fireGun(p,p.weapon,true);p.burstQ--;p.burstT=0.065;p.cd=WD.m16.cd;}else if(!p.weapon||p.weapon.type!=='m16')p.burstQ=0;}
+ if(g.def.hub&&g.rangeOn&&p.weapon&&attacking&&p.cd<=0&&!(p.burstQ>0)&&p.weapon.ammo>0)playerAttack(p);/* Nine's range (gunshop.js) */
  if(!g.def.hub){if(attacking&&p.cd<=0&&!(p.exec>0)&&!(p.burstQ>0))playerAttack(p);
  if(pressed.grab)playerGrab(p);if(pressed.perk)playerPerk(p);
  if(kitOn(p)&&!(p.exec>0)){if(pressed.swap)cycleHand(p);else if(pressed.slot)slotHand(p,pressed.slot);if(pressed.reload)reloadInput(p);}}
@@ -2172,23 +2196,35 @@ const HUBS={
   "#T........KKKK..........T#",
   "#*..........c...........*#",
   "##########################"]},
- bunker:{name:"NINE OF NINE'S",hub:'foot',wall:34,floor:7,sofa:0x3a3a44,track:'n_concrete',where:"NINE OF NINE'S · BUNKER",obj:'SEE NINE · THEN BACK TO YOUR CAR',
-   legend:{'b':{w:33,h:'rand',tint:1,top:34},',':{f:7},'L':{f:7,lamp:1},'.':{f:59},'c':{f:59,light:'warm'},'*':{f:59,light:'neon'},'K':{f:59,furn:7},'B':{f:59,furn:2},'T':{f:59,furn:1},'9':{f:59,npc:'nine'}},
+ bunker:{name:"NINE OF NINE'S",hub:'foot',wall:6,floor:43,sofa:0x3a3a44,track:'n_concrete',where:"NINE OF NINE'S · OCEAN DRIVE",obj:'SEE NINE · TRY THE RANGE · THEN BACK TO YOUR CAR',grime:0.2,
+   /* the street along the top, the storefront, then Nine's shop in the west two thirds and his shooting range in the east third (gunshop.js dresses it).
+      Showroom with the counter, armoury and workshop behind it, a hallway down to the range door. W is the range's glass, D a door. floorFn takes world cells (map + 1) */
+   floorFn:(x,z)=>{const X=x-1,Z=z-1;return Z<5?7:X>21?(Z>15?64:65):Z<15?43:X<8?64:X<16?4:1;},
+   legend:{'b':{w:33,h:'rand',tint:1,top:34},',':{f:7},'L':{f:7,lamp:1},'.':{f:43},'W':{w:6,h:0.5},'9':{f:43,npc:'nine'}},
    map:[
-  "bbbbbbbbbbbbbbbbbbbbbbbb",
-  "b,,,,,,,,,,,,,,,,,,,,,,b",
-  "b,,L,,,,,,,,,,,,,,,,,L,b",
-  "b,,,,,C,,,,P,,,,,,,,,,,b",
-  "b,,,,,,,,,,,,,,,,,,,,,,b",
-  "#########,,,,###########",
-  "#*..........c.........*#",
-  "#.T.................T..#",
-  "#......................#",
-  "#....KKKKKKKKKKKKKK....#",
-  "#..........9...........#",
-  "#.BBBBBBBB....BBBBBBBB.#",
-  "#*.........c..........*#",
-  "########################"]},
+  "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "b,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,b",
+  "b,,L,,,,,,,,,,,,,,,,,,,,,,,,L,,b",
+  "b,,,,,C,,,,P,,,,,,,,,,,,,,,,,,,b",
+  "b,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,b",
+  "#########,,,,###################",
+  "#....................#.........#",
+  "#....................#.........#",
+  "#....................#.........#",
+  "#....................#.........#",
+  "#....................#.........#",
+  "#....................#.........#",
+  "#....................#.........#",
+  "#.........9..........#.........#",
+  "#....................#.........#",
+  "###D#############....W.........#",
+  "#.......#.......#....W.........#",
+  "#.......#.......#....D.........#",
+  "#.......D.......#....W.........#",
+  "#.......#.......D....#.........#",
+  "#.......#.......#....#.........#",
+  "#.......#.......#....#.........#",
+  "################################"]},
  /* the Studio's building. Street along the bottom (you pull up at the kerb), the doorman outside, the concierge at her desk, the elevator bank on the back wall */
  slobby:{name:'THE SEABREEZE · LOBBY',hub:'foot',wall:62,floor:61,sofa:0x2bb7b9,track:'n_crystal',where:'OCEAN DRIVE · THE SEABREEZE',obj:'TAKE THE ELEVATOR UP TO YOUR FLOOR',
   lift:{from:1,to:3,title:'THE SEABREEZE',home:1,dur:2.6},
@@ -2248,7 +2284,7 @@ const mcDue=()=>VISIT.next!==NEXTJOB;
 function onHubTrigger(t){if(fading)return false;if(t==='leave')return homeLeave();if(t==='lift')return liftUp();if(t==='exit'){sfx('blip');return fadeTo(()=>loadHub('drive','parked'));}if(t==='tower'){sfx('blip');return fadeTo(()=>loadHub('lobby'));}else if(t==='elevator'){sfx('ding');return fadeTo(enterElevator);}else if(t==='mcwey'){return fadeTo(talkMcWey);}return true;}
 function updateHub(dt){const g=G;g.T+=dt;g.time+=dt;if(g.np)g.np.t+=dt;
  if(g.seq){updateSeq(dt);if(G!==g)return;if(g.def.hub!=='drive')npcStep(dt);else if(g.parked)parkedStreet(dt);if(g.slots)homeTick(dt);updateFX(dt);seqCam(dt);return;}
- if(g.cine)updateCine(dt);else if(g.def.hub==='drive'&&!g.parked)updateDrive(dt);else{hubInteract();updatePlayer(dt);if(g.solids&&g.player)for(const s of g.solids)boxPush(s,g.player);npcStep(dt);if(g.mcDesk)officeTick(g,dt);if(g.parked)parkedStreet(dt);if(g.slots)homeTick(dt);if(g.club)clubTick(dt);}
+ if(g.cine)updateCine(dt);else if(g.def.hub==='drive'&&!g.parked)updateDrive(dt);else{if(g.range)rangePre(dt);hubInteract();updatePlayer(dt);if(g.range){rangeTick(dt);updateDoors(dt);}if(g.solids&&g.player)for(const s of g.solids)boxPush(s,g.player);npcStep(dt);if(g.mcDesk)officeTick(g,dt);if(g.parked)parkedStreet(dt);if(g.slots)homeTick(dt);if(g.club)clubTick(dt);}
  updateFX(dt);
  if(!g.hubDone&&!g.cine){const p=g.def.hub==='drive'?g.pcar:g.player,rr2=g.def.hub==='drive'?1.7:0.75;
   /* after a scene leaves you standing on a trigger (stepping out of the elevator onto the way back down), it waits until you have walked off it */
@@ -2438,7 +2474,7 @@ function drawHubHUD(c,g,u,m){if(g.cine)return;if(g.seq){drawSeqHUD(c,g,u);return
  if(d.hub==='drive'&&!g.parked){const c2=g.pcar,mph=Math.round(Math.abs(c2.v)*9);c.font=PXF(26*u);txt(c,String(mph),vw-m,vh-m-58*u,g.turbo?'#ff5fb8':'#ffd36b','right',26*u);c.font=PXF(8*u);txt(c,'MPH',vw-m,vh-m-26*u,'#e9c7ff','right',8*u);
   const bw=110*u;c.fillStyle='rgba(0,0,0,.7)';c.fillRect(vw-m-bw,vh-m-12*u,bw,6*u);c.fillStyle='#ff5fb8';c.fillRect(vw-m-bw,vh-m-12*u,bw*c2.boost,6*u);c.font=PXF(6*u);txt(c,'TURBO',vw-m-bw,vh-m-24*u,'#ff5fb8','left',6*u);}
  const s=project(g.car.x,1,g.car.z);if(s&&(s[0]<0||s[0]>vw||s[1]<0||s[1]>vh)){const cx=vw/2,cy=vh/2,a=Math.atan2(s[1]-cy,s[0]-cx),r=Math.min(vw,vh)*0.4;c.save();c.translate(cx+Math.cos(a)*r,cy+Math.sin(a)*r);c.rotate(a);c.fillStyle='#ffd36b';c.strokeStyle='#000';c.lineWidth=3;c.beginPath();c.moveTo(16*u,0);c.lineTo(-9*u,-11*u);c.lineTo(-9*u,11*u);c.closePath();c.stroke();c.fill();c.restore();}
- if(g.tv)drawTVTicker(c,g,u);
+ if(g.tv)drawTVTicker(c,g,u);if(g.range)drawRangeHUD(c,g,u,m);
  if(g.say&&g.say.t<g.say.dur){g.say.t+=1/60;drawSay(c,g.say,u);}
  if(g.ia&&g.ia.k==='talk'){const s3=project(g.ia.x,1.9,g.ia.z);if(s3){const lbl=padMode?'(A)':touchMode?'TAP':'E';c.font=VTF(12*u);const tw=c.measureText(lbl).width;c.fillStyle='rgba(10,4,18,.55)';c.fillRect(s3[0]-tw/2-4*u,s3[1]-17*u,tw+8*u,14*u);txt(c,lbl,s3[0],s3[1]-16*u,'#ffd36b','center',12*u);}}
  else if(g.ia){const s3=project(g.ia.x,1.9,g.ia.z);if(s3){c.font=VTF(18*u);const lbl=(padMode?'(A) ':touchMode?'TAP: ':'[E] / CLICK: ')+g.ia.lbl,tw=c.measureText(lbl).width;c.fillStyle='rgba(10,4,18,.85)';c.fillRect(s3[0]-tw/2-7*u,s3[1]-24*u,tw+14*u,22*u);c.fillStyle='#ffd36b';c.fillRect(s3[0]-tw/2-7*u,s3[1]-24*u,3*u,22*u);txt(c,lbl,s3[0],s3[1]-22*u,'#fff','center',18*u);}}
@@ -2454,8 +2490,8 @@ function hubModeSetup(name){const g=G,p=g.player;if(HUBMODE==='home'){homeSetup(
   g.obj='CLICK YOUR CAR';banner('OCEAN DRIVE',touchMode?'Walk to your car and tap it':'Walk to your car and click it');return true;}
  if(name==='club'){HUBMODE='bunker';clubSetup(g);return true;}
  if(name==='dealer'){HUBMODE='bunker';dealerSetup(g);return true;}
- if(name==='bunker'){HUBMODE='bunker';g.park={x:g.car.x,z:g.car.z};const n=g.npcs.find(q=>q.kind==='nine');if(n){g.car={x:n.x,z:n.z};n.a=n.a0=Math.PI;}
-  g.obj='SEE NINE · THEN BACK TO YOUR CAR';banner("NINE OF NINE'S",'Exotic machinery of death');return true;}
+ if(name==='bunker'){HUBMODE='bunker';bunkerSetup(g);g.park={x:g.car.x,z:g.car.z};const n=g.npcs.find(q=>q.kind==='nine');if(n){g.car={x:n.x,z:n.z};n.a=n.a0=Math.PI;}
+  g.obj='SEE NINE · TRY THE RANGE';banner("NINE OF NINE'S",'Exotic machinery of death · shooting range out back');return true;}
  return false;}
 function parkedStreet(dt){const g=G,p=g.player;for(const t of g.traffic){t.x+=t.dir*t.sp*dt;if(t.x>g.W+2)t.x=-2;if(t.x<-2)t.x=g.W+2;
   if(p&&Math.abs(p.x-t.x)<1.6&&Math.abs(p.z-t.z)<0.8){p.z+=Math.sign(p.z-t.z||-1)*0.12;if(!(t.honk>0)){t.honk=1.5;sfx('horn');popup(t.x,t.z,pick(['HEY!','*HONK*','WATCH IT!']),'#ffd36b');}}if(t.honk>0)t.honk-=dt;}}
@@ -2568,113 +2604,9 @@ function storePad(dir){const cs=document.querySelectorAll('#sStore .scard');if(d
 function applyJewelLooks(){for(const c of CHARS){const j=(PROG[c.id]&&PROG[c.id].jewel)||{},L=LOOKS[c.id];if(!L)continue;L.watch=!!j.watch;L.chain=!!j.chain;}}
 function placeOldCar(){const g=G,cx=g.arrive?g.arrive.x1:g.car.x,a=g.arr,lane=(x,z)=>a&&z>=a.zT&&z<a.zT+2&&(g.carA?x>cx:x<cx),free=(x,z)=>{for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=0;dz++){const ix=Math.floor(x+dx),iz=Math.floor(z+dz);if(ix<1||iz<1||ix>=g.W-1||iz>=g.H-1||g.solid[iz*g.W+ix]||g.furn[iz*g.W+ix])return false;}return true;};
  for(const [ox,oz] of [[-3,0],[3,0],[0,2.2],[0,-2.2],[-3,2],[3,2]]){const x=cx+ox,z=g.car.z+oz;if(free(x,z)&&!lane(x,z)&&Math.hypot(x-g.player.x,z-g.player.z)>2){g.oldCar={x,z,a:0};return;}}}
-/* Nine of Nine */
-const NINE_INTRO="Hello, my friend! I am Nine, last name also Nine, and I bring you exotic machinery of death. Very ludicrous. Only at Nine of Nines.";
-const NINE_HI=["Ah, my friend returns! Capitalism is beautiful, da?","Every piece I calibrate personally, with mathematics.","Is not a gun. Is a statement, written in lead.","Nine guns of ten are boring. I sell you the tenth.","Today's selection is very ludicrous. I am proud."];
-const NINE_BUY=["Excellent choice. Very ballistic.","Da! Treat her well, she is temperamental.","You have taste. Dangerous taste.","Pleasure doing business. Mostly the pleasure is mine."];
-const NINE_EXCL="Ah, you choose the exclusive! This one I smuggle through three borders and past one very angry customs officer.";
-const NINE_POOR="My friend, this costs more than you have. I am sorry, but is simple arithmetic.";
-const SHOPP={pistol:1500,silenced:2200,revolver:2800,dual:3200,smg:3500,shotgun:3800,double:4200,m16:5200,bat:600,knife:500,machete:900,katana:7500,tknife:1100,golddeagle:12000,goldak:15000,goldgl:20000};
-const WDESC={pistol:'Reliable. Boring. Like a Swiss watch.',silenced:'For conversations nobody hears.',revolver:'Six chances. Goes through three men.',dual:'Two pistols, twice the opinions.',smg:'Sprays the room like cologne.',shotgun:'Seven pellets of diplomacy.',double:'Two shells. One argument.',m16:'Three-round bursts, through walls.',bat:'Silent. Swings. Home run.',knife:'Close, quiet, personal.',tknife:'Four blades. Silent across the room. Go pick them up after.',machete:'For cutting through the paperwork.',
- katana:'Folded nine hundred times. By me. On a Tuesday.',goldgl:'I acquire it from a very wet gentleman. Six gold grenades.',golddeagle:'Two solid-gold hand cannons. Through walls, through men.',goldak:'Solid gold. Fully automatic. Zero subtlety.'};
-const EXCL=['goldak','golddeagle','katana'];
-let shopSayT=null,shopDone=null;
-function rollStock(a){const ex=EXCL.concat(myProg().lexDead?['goldgl']:[]),pool=Object.keys(SHOPP).filter(k=>!ex.includes(k)&&k!=='goldgl').sort(()=>Math.random()-0.5),st=pool.slice(0,3);if(Math.random()<(myProg().lexDead?0.5:0.35))st[Math.random()*3|0]=pick(ex);a.stock=st;a.key=a.jobs;}
-function shopReady(){return !$('shCards').classList.contains('hid');}
-function shopType(t,done){clearInterval(shopSayT);const el=$('shSay');let i=0;el.textContent='';shopDone=done||null;
- const fin=()=>{clearInterval(shopSayT);nineTalk=false;el.textContent=t;const f=shopDone;shopDone=null;if(f)f();};el.onclick=fin;
- nineTalk=true;shopSayT=setInterval(()=>{i++;el.textContent=t.slice(0,i);if(i%2===0)sfx('type');if(i>=t.length)fin();},22);}
-function openShop(){if(state!=='play'||!G)return;const a=arm();if(a.key!==a.jobs||a.stock.length!==3)rollStock(a);const first=!a.met;a.met=true;saveProg();
- state='shop';shopSell=false;sellArm=null;shopFocus=0;show('sShop');sfx('ring');renderShop();$('shCards').classList.toggle('hid',first);$('shExtra').classList.toggle('hid',first);
- shopType(first?NINE_INTRO:pick(NINE_HI),()=>{$('shCards').classList.remove('hid');$('shExtra').classList.remove('hid');});}
-function closeShop(){if(state!=='shop')return;clearInterval(shopSayT);shopDone=null;sfx('blip');state='play';show(null);const g=G;if(g.park){g.car={x:g.park.x,z:g.park.z};g.obj='BACK TO YOUR CAR';}
- const n=g.npcs.find(q=>q.kind==='nine');if(n)popup(n.x,n.z,pick(['Do svidaniya, my friend.','Come back alive. Dead customers do not tip.','Shoot responsibly. Or not. Is your business.']),'#ffe9a8');}
-/* Nine's (W6d): a purchase goes into the kit when there is room, otherwise it is driven to the apartment locker; ammo and bigger stashes for every caliber you own;
-   armour bought, repaired or upgraded (the old vest is traded in); anything you own sold for SELL_FRAC of its price, two clicks so a stray tap can't sell a gun */
-function kitGun(k){return k.guns[k.active]||k.guns[1-k.active]||null;}
-function kitHas(k,t){return k.guns.some(g=>g&&g.type===t)||k.melee===t;}
-function lockerHas(t){return myProg().locker.items.some(i=>i.type===t);}
-function ownCals(){const k=kit(),o=[];for(const it of [k.guns[k.active],k.guns[1-k.active],...myProg().locker.items]){const c=it&&it.type&&WD[it.type]&&WD[it.type].cal;if(isCal(c)&&!o.includes(c))o.push(c);}return o;}
-function itemName(it){return it.armour?ARMOUR[it.armour].name:WD[it.type].name;}
-function itemPrice(it){return it.armour?ARMOUR[it.armour].price:SHOPP[it.type]||0;}
-function upgPrice(k,c){return CAL[c].price*3*(1+((k.upg||{})[c]|0));}
-let shopSell=false,sellArm=null,shopFocus=0;
-function shopOutline(){const bs=document.querySelectorAll('#shExtra button');if(shopFocus>=bs.length)shopFocus=0;bs.forEach((b,i)=>{b.style.outline=padMode&&i===shopFocus?'3px solid #ffd36b':'';const h=b.querySelector('.rth');if(h)h.remove();if(padMode&&i===shopFocus)b.insertAdjacentHTML('beforeend','<span class="rth"> (RT)</span>');});}
-function shopPad(dir){const n=document.querySelectorAll('#shExtra button').length;if(!n)return;shopFocus=(shopFocus+dir+n)%n;sfx('blip');shopOutline();}
-const NINE_SELL=['Is good piece. I give you fair price. Fair for me.','Da, I find her a new home. A worse one, probably.','Forty percent. Is not robbery, is economics.'];
-function renderShop(){const a=arm(),k=kit(),pl=myProg().locker.items;$('shWallet').textContent='$'+fmt(wallet());
- $('shCards').innerHTML=a.stock.map((t,i)=>{const w=WD[t],held=kitHas(k,t),inL=lockerHas(t),ex=!!w.excl;const act=held?'IN YOUR KIT':'BUY $'+fmt(SHOPP[t]);
-  return `<button class="scard${ex?' ex':''}${held?' on':''}" data-k="${t}">${ex||inL?'<div class="sx">'+(ex?'EXCLUSIVE':'')+(ex&&inL?' · ':'')+(inL?'1 AT HOME':'')+'</div>':''}<canvas class="sic" width="120" height="44" data-w="${t}"></canvas><div class="pn">${w.name}</div><div class="pd">${WDESC[t]||''}</div><div class="pd" style="color:#e9c7ff">${w.melee?'MELEE · ONE-HIT KILL':(w.cal?CAL[w.cal].name+' · ':'')+'MAG '+w.mag+(w.pierce>1?' · PIERCES '+w.pierce:'')}</div><div class="sp">${act}<span class="kbhint"> (${i+1})</span></div></button>`;}).join('');
- for(const cv of $('shCards').querySelectorAll('canvas')){const x=cv.getContext('2d');drawIcon(x,cv.dataset.w,6,6,4.5,WD[cv.dataset.w].excl?'#ffd36b':'#f4ecff');}
- if(shopSell){const sb=(id,it,home)=>`<button data-s="${id}"${sellArm===id?' class="on"':''}>${sellArm===id?'SURE? SELL ':'SELL '}${itemName(it)}${home?' · HOME':''} +$${fmt(sellValue(it,itemPrice(it)))}</button>`;
-  const ks=[[0,'k0'],[1,'k1'],['melee','kmelee'],['armour','karmour']].map(([s,id])=>{const it=itemOfSlot(k,s);return it?sb(id,it,false):'';}).join('');
-  const ls=pl.map((it,i)=>sb('l'+i,it,true)).join('');
-  $('shExtra').innerHTML=`<span class="lab">SELL TO NINE · ${Math.round(SELL_FRAC*100)}%:</span>`+(ks+ls||'<span class="lab">NOTHING TO SELL</span>')+'<button data-x="buy">DONE SELLING</button>';}
- else{const cs=ownCals(),ar=k.armour&&ARMOUR[k.armour.type];
-  const ammo=cs.map((c,i)=>`<button data-x="ammo" data-c="${c}"${(k.pool[c]|0)>=capOf(k,c)?' class="on"':''}>AMMO ${CAL[c].name} +${CAL[c].box} $${fmt(CAL[c].price)} (${k.pool[c]|0}/${capOf(k,c)})${i?'':'<span class="kbhint"> (4)</span><span class="padhint"> (X)</span>'}</button>`).join('')||'<button data-x="ammo">AMMO BOX (NO GUN)<span class="kbhint"> (4)</span><span class="padhint"> (X)</span></button>';
-  const upg=cs.map(c=>`<button data-x="upg" data-c="${c}">BIGGER ${CAL[c].name} STASH +${CAL[c].up} $${fmt(upgPrice(k,c))}</button>`).join('');
-  const vestB=!ar?'KEVLAR VEST $'+fmt(ARMOUR.vest.price):k.armour.plates<ar.plates?'REPAIR '+ar.name+' $'+fmt(ar.repair):ar.name+' READY';
-  const carB=k.armour&&k.armour.type==='carrier'?'':`<button data-x="carrier">${ar?'TRADE UP: ':''}${ARMOUR.carrier.name} · ${ARMOUR.carrier.plates} PLATES $${fmt(ARMOUR.carrier.price-(ar?sellValue({armour:k.armour.type,plates:k.armour.plates},ar.price):0))}</button>`;
-  $('shExtra').innerHTML=ammo+`<button data-x="vest"${ar&&k.armour.plates>=ar.plates?' class="on"':''}>${vestB}<span class="kbhint"> (5)</span><span class="padhint"> (Y)</span></button>`+carB+upg+(k.guns[0]&&k.guns[1]?'<button data-x="swap">SWAP GUNS</button>':'')+
-   Object.entries(MODS).map(([m,M])=>`<button data-x="mod" data-c="${m}"${hasMod(m)?' class="on"':''}>${M.name}${hasMod(m)?' FITTED':' $'+fmt(M.price)}</button>`).join('')+`<button data-x="sell">SELL GEAR…</button><span class="lab">LOCKER AT HOME ${pl.length}/${LOCKER_CAP}</span>`;}
- $('shLoad').textContent=loadoutTxt();shopOutline();}
-function shopPick(t){if(state!=='shop'||!shopReady())return;const k=kit(),pr=myProg();
- if(kitHas(k,t)){const s=k.guns.findIndex(g=>g&&g.type===t);if(s>=0&&s!==k.active){k.active=s;saveProg();sfx('pick');renderShop();}shopType('She is already in your hands, my friend.');return;}
- const c=SHOPP[t];if(pr.wallet<c){sfx('blip');shopType(NINE_POOR);return;}const w=WD[t];
- const r=kitReceive(k,pr.locker,{type:t,mag:w.melee?0:w.mag});
- if(!r){sfx('blip');shopType('Your hands are full and your locker is full, my friend. Sell something. Or carry less.');return;}
- pr.wallet-=c;saveProg();sfx('cash');renderShop();shopType(r==='locker'?'Your hands are full, so my boy drives her to your apartment. She waits in your locker.':w.excl?NINE_EXCL:pick(NINE_BUY));}
-function shopSellPick(id){if(state!=='shop'||!shopReady())return;if(sellArm!==id){sellArm=id;sfx('blip');renderShop();return;}
- const k=kit(),pr=myProg(),kin=id[0]==='k',s=kin?({k0:0,k1:1,kmelee:'melee',karmour:'armour'})[id]:+id.slice(1);
- const it=kitSell(k,pr.locker,kin?'kit':'locker',s);sellArm=null;if(!it){renderShop();return;}
- pr.wallet+=sellValue(it,itemPrice(it));saveProg();sfx('cash');renderShop();shopType(pick(NINE_SELL));}
-function shopExtra(t,cal){if(state!=='shop'||!shopReady())return;const k=kit(),pr=myProg();let say;
- if(t==='sell'||t==='buy'){shopSell=t==='sell';sellArm=null;sfx('blip');renderShop();return;}
- if(t==='swap'){if(k.guns[0]&&k.guns[1]){k.active=1-k.active;saveProg();sfx('pick');renderShop();}return;}
- if(t==='mod'){const M=MODS[cal];if(!M)return;if(hasMod(cal)){shopType('Already fitted, my friend. I do not sell the same strap twice.');return;}if(pr.wallet<M.price){sfx('blip');shopType(NINE_POOR);return;}
-  pr.wallet-=M.price;(pr.mods||(pr.mods={}))[cal]=1;applyMods();saveProg();sfx('cash');renderShop();shopType(M.say);return;}
- if(t==='ammo'||t==='upg'){const c=cal||ownCals()[0];if(!c){shopType('Bullets need a gun, my friend. This is how bullets work.');return;}
-  if(t==='ammo'){if((k.pool[c]|0)>=capOf(k,c)){shopType('Your bag is full. More is not ammunition, is a hobby.');return;}if(pr.wallet<CAL[c].price){sfx('blip');shopType(NINE_POOR);return;}pr.wallet-=CAL[c].price;poolAdd(k,c,CAL[c].box);say='Fresh rounds. Still warm from the factory. Which factory, I do not say.';}
-  else{const pz=upgPrice(k,c);if((k.upg[c]|0)>=99){shopType('Any more pockets and you are a pocket.');return;}if(pr.wallet<pz){sfx('blip');shopType(NINE_POOR);return;}pr.wallet-=pz;k.upg[c]=(k.upg[c]|0)+1;say='More pouches. Now you rattle with confidence.';}}
- else if(t==='carrier'){const old=k.armour,C=ARMOUR.carrier;if(old&&old.type==='carrier'){shopType('You already wear the big one, my friend.');return;}
-  const tr=old?sellValue({armour:old.type,plates:old.plates},ARMOUR[old.type].price):0,pz=C.price-tr;if(pr.wallet<pz){sfx('blip');shopType(NINE_POOR);return;}
-  pr.wallet-=pz;k.armour={type:'carrier',plates:C.plates};say=old?'I take your old vest as part payment. Two plates now. You walk a little slower, you live a little longer.':'Ceramic plates, front and back. You walk a little slower, you live a little longer.';}
- else{const ar=k.armour&&ARMOUR[k.armour.type];if(ar&&k.armour.plates>=ar.plates){shopType('Is in one piece, my friend. Go and break it first.');return;}
-  const pz=ar?ar.repair:ARMOUR.vest.price;if(pr.wallet<pz){sfx('blip');shopType(NINE_POOR);return;}pr.wallet-=pz;if(ar)k.armour.plates=ar.plates;else k.armour={type:'vest',plates:ARMOUR.vest.plates};
-  say=ar?'Patched. Do not ask with what.':'Kevlar. It stops one bullet. After that, it is just a nice shirt.';}
- saveProg();sfx('cash');renderShop();shopType(say);}
-$('sShop').addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(!b)return;if(b.id==='bShopLeave'){closeShop();return;}
- if(b.dataset.k)shopPick(b.dataset.k);else if(b.dataset.x)shopExtra(b.dataset.x,b.dataset.c);else if(b.dataset.s)shopSellPick(b.dataset.s);});
 function menuKey(e){const c=e.code;if(state==='store'){storeKey(e);return;}if(state==='carmenu'&&c==='KeyS'){$('bCarStore').click();return;}if(state==='carmenu'&&c==='KeyD'&&$('bCarDealer').style.display!=='none'){$('bCarDealer').click();return;}if(state==='carmenu'&&c==='KeyC'&&$('bCarClub').style.display!=='none'){$('bCarClub').click();return;}
  if(state==='carmenu'){if(c==='Enter'||c==='Space')$('bCarJob').click();else if((c==='KeyG'||c==='Digit2')&&$('bCarShop').style.display!=='none')$('bCarShop').click();else if(c==='Escape'||c==='Backspace')closeCarMenu();return;}
- if(c==='Escape'){closeShop();return;}if(!shopReady()){if(c==='Space'||c==='Enter'||c==='KeyE')$('shSay').click();return;}
- const a=arm(),m=/^Digit([1-5])$/.exec(c);if(m){const i=+m[1];if(i<=3&&a.stock[i-1])shopPick(a.stock[i-1]);else if(i===4)shopExtra('ammo');else if(i===5)shopExtra('vest');}else if(c==='Enter')closeShop();}
-/* bunker dressing: guns on the racks behind the counter */
-const RACKGUNS=['m16','shotgun','smg','double','revolver','pistol','silenced','machete','bat','dual'];
-function drawBunker(B,g){let i=0;for(let z=0;z<g.H;z++)for(let x=0;x<g.W;x++){if(g.furn[z*g.W+x]!==2)continue;const t=RACKGUNS[i++%RACKGUNS.length];drawWeapon(B,A.mul(A.mul(A.T(x+0.5,1.12,z+0.5),A.RY(Math.PI/2+(i%2?0.15:-0.15))),A.RZ(Math.PI/2)),t);}
- const n=g.npcs.find(q=>q.kind==='nine');if(n){const ex=arm().stock.find(k=>WD[k]&&WD[k].excl);if(ex)drawWeapon(B,A.mul(A.mul(A.T(n.x+0.9,1.05,n.z-1.05),A.RY(Math.PI/2+g.T*0.8)),A.RZ(Math.PI/2)),ex);}}
-/* ---- Nine of Nine close-up (the shop scene, built like McWey's briefing) ---- */
-const nineB=new Batch();let nineBuilt=false,nineChar=null,nineTalk=false,nineBlinkT=2;
-function buildNine(){const B=nineB;B.reset();B.round=0.45;
- for(let x=-3;x<3;x++)for(let z=-2;z<3;z++)B.quad([[x,0,z+1],[x+1,0,z+1],[x+1,0,z],[x,0,z]],0,1,0,TUV[59],[0.85,0.85,0.9]);
- const wz=-1.3;for(let x=-3;x<3;x++)for(let y=0;y<4;y++)B.quad([[x,y,wz],[x+1,y,wz],[x+1,y+1,wz],[x,y+1,wz]],0,0,1,TUV[34],[0.5,0.5,0.58]);
- B.box(TRS(-1.25,1.62,wz+0.03,0,2.7,1.75,0.04),hex(0x2a2620));for(const gy of [0.74,2.5])B.box(TRS(-1.25,gy,wz+0.06,0,2.78,0.05,0.05),hex(0x5a4a30));
- for(const [t,x,y] of [['m16',-2.05,2.2],['shotgun',-0.75,2.2],['smg',-2.2,1.7],['revolver',-1.55,1.7],['double',-0.6,1.7],['silenced',-2.1,1.2],['machete',-1.15,1.2],['pistol',-0.4,1.2]])
-  drawWeapon(B,A.mul(A.mul(A.T(x,y,wz+0.1),A.RY(Math.PI/2)),A.S(1.8,1.8,1.8)),t);
- /* neon 9 */const pk=[1,0.28,0.72],cy=[0.25,0.9,1];for(let i=0;i<10;i++){const a=i/10*TAU;B.box(A.mul(A.mul(A.T(1.9+Math.cos(a)*0.32,2.35+Math.sin(a)*0.32,wz+0.05),A.RZ(a+Math.PI/2)),A.S(0.22,0.05,0.03)),pk,true);}
- B.box(TRS(2.22,1.85,wz+0.05,0,0.05,1.0,0.03),pk,true);B.box(TRS(1.9,1.25,wz+0.05,0,0.7,0.05,0.03),cy,true);
- /* counter with ammo boxes */B.box(TRS(0,0.45,0.62,0,2.3,0.9,0.62),hex(0x34343e),false,TUV[34]);B.box(TRS(0,0.915,0.62,0,2.38,0.04,0.7),[0.55,0.55,0.62]);
- for(let i=0;i<3;i++)B.box(TRS(-0.8+i*0.03,0.97+i*0.075,0.55,0.1*i,0.22,0.075,0.14),hex(0x4a5a2a));B.box(TRS(-0.8,1.15,0.55,0.2,0.14,0.006,0.08),[0.9,0.85,0.4]);
- B.box(TRS(0.75,0.97,0.55,0.3,0.06,0.07,0.06),[0.75,0.6,0.25]);B.box(TRS(0.85,0.96,0.6,0,0.05,0.05,0.05),[0.75,0.6,0.25]);
- B.box(TRS(0,2.95,0.3,0,0.02,0.6,0.02),hex(0x1a1a1a));B.box(TRS(0,2.62,0.3,0,0.12,0.1,0.12),[1,0.85,0.55],true);
- B.upload(true);
- nineChar=makeChar(0,-0.1,NPCLOOK.nine(),false);nineChar.body='fat';nineChar.pose='sal';nineChar.kind='nine';nineChar.talk=0;nineChar.blink=0;nineChar.a=0;nineChar.splat={torso:[],legs:[],face:[]};nineBuilt=true;}
-function updateNine(dt){if(!nineBuilt)buildNine();const c=nineChar;c.talk=nineTalk?Math.abs(Math.sin(menuT*16))*(0.45+0.55*Math.abs(Math.sin(menuT*4.7))):Math.max(0,c.talk-dt*4);
- nineBlinkT-=dt;if(nineBlinkT<=0){c.blink=0.13;nineBlinkT=rnd(2,4.5);}c.blink-=dt;}
-function nineView(asp){let eye=[-0.35,1.6,2.75],tgt=[-1.05,1.3,0];if(asp<1){eye=[0.2,1.8,3.3];tgt=[0,1.15,0];}const fl=Math.sin(menuT*1.7)>0.96?0.25:1;
- return{eye,tgt,lights:[{x:0,y:2.5,z:0.4,r:3.2,c:[1.25*fl,0.95*fl,0.65*fl]},{x:-2.2,y:1.6,z:0.2,r:3.4,c:[1,0.15,0.3]},{x:2,y:2.0,z:-0.6,r:3.6,c:[1,0.3,0.75]},{x:1.2,y:1.5,z:1.8,r:3.6,c:[0.35,0.8,1.2]}]};}
-function drawNineDyn(B,P){B.reset();P.reset();if(!nineChar)return;if(!PS2C.add(nineChar,'menu',1,menuT,IBhi,'nine')&&PS2C.modelStatus('nine')==='failed')hdChar(B,{...nineChar,pose:'nine'},menuT);
- const ex=arm().stock.find(k=>WD[k]&&WD[k].excl);if(ex)drawWeapon(B,A.mul(A.mul(A.mul(A.T(0.5,0.95,0.62),A.RY(0.5+Math.sin(menuT*0.8)*0.4)),A.RZ(Math.PI/2)),A.S(1.15,1.15,1.15)),ex);}
+ shopKey(e);}
 /* ================= ACT 2: HOSTILE TAKEOVER ================= */
 function act2Setup(g,i){g.nades=[];if(!(i>=3))return;const W=g.W,cells=ch=>{const o=[];for(let z=0;z<g.H;z++)for(let x=0;x<W;x++)if(g.rows[z][x]===ch)o.push({x:x+0.5,z:z+0.5,ix:x,iz:z});return o;};
  const sol=a=>{for(const q of a)g.solid[q.iz*W+q.ix]=1;};
@@ -3858,7 +3790,7 @@ function render(){if(contextLost||gl.isContextLost())return;PS2C.beginFrame();re
  if(menu){if(!stageBuilt)buildStage();const mv=state==='shop'?(nineBuilt||buildNine(),nineView(asp)):state==='brief'?(briefBuilt||buildBrief(),briefView(asp)):state==='elev'?elevView(asp):menuView(asp);eye=mv.eye;tgt=mv.tgt;lights=mv.lights;MSH=mv.shDir||null;SHL=mv.shl===undefined?-1:mv.shl;
   fogC=[0.05,0.02,0.07];fog=[5,15];amb=[0.2,0.16,0.26];ld=[-0.3,-0.8,-0.5];lc=[0.22,0.18,0.24];
   if(PLANV&&state==='title'){if(!PLANV.B)planViewBuild();tgt=[PLANV.at[0],0,PLANV.at[1]];eye=[tgt[0],PLANV.h,tgt[2]+PLANV.h*0.58];lights=[];MSH=null;SHL=-1;fog=[400,500];amb=[0.62,0.58,0.66];lc=[0.55,0.5,0.5];}}
- else{SHL=-1;MSH=null;const g=G,sh=g.shake;tgt=[g.cam.x+g.cam.kx+rnd(-sh,sh)*0.5,0,g.cam.z+g.cam.kz+rnd(-sh,sh)*0.5];eye=[tgt[0],8,tgt[2]+4.6];if(asp<1){eye[1]=10.5;eye[2]=tgt[2]+6;}if(g.tankB){tgt[2]-=1.2;eye=[tgt[0],6.6,tgt[2]+5.6];if(asp<1){eye[1]=9;eye[2]=tgt[2]+7;}}if(g.def.hub==='drive'){eye=[tgt[0],13,tgt[2]+7.5];if(asp<1){eye[1]=17;eye[2]=tgt[2]+10;}}if(g.cine){eye=g.cine.eye.slice();tgt=g.cine.tgt.slice();}
+ else{SHL=-1;MSH=null;const g=G,sh=g.shake;tgt=[g.cam.x+g.cam.kx+rnd(-sh,sh)*0.5,0,g.cam.z+g.cam.kz+rnd(-sh,sh)*0.5];eye=[tgt[0],8,tgt[2]+4.6];if(asp<1){eye[1]=10.5;eye[2]=tgt[2]+6;}if(g.tankB){tgt[2]-=1.2;eye=[tgt[0],6.6,tgt[2]+5.6];if(asp<1){eye[1]=9;eye[2]=tgt[2]+7;}}if(g.range&&g.range.camK>0.001){const k=g.range.camK,d=eye[2]-tgt[2];tgt[2]-=2.3*k;eye=[tgt[0],eye[1]+3.6*k,tgt[2]+d+0.6*k];}if(g.def.hub==='drive'){eye=[tgt[0],13,tgt[2]+7.5];if(asp<1){eye[1]=17;eye[2]=tgt[2]+10;}}if(g.cine){eye=g.cine.eye.slice();tgt=g.cine.tgt.slice();}
   else if(g.cam.lift){const L=g.cam.lift;tgt[1]+=L*0.6;for(let i=0;i<3;i++)eye[i]=tgt[i]+(eye[i]-tgt[i])*(1-0.28*L);eye[1]+=L*0.4;}
   fogC=[0.07,0.03,0.09];fog=g.cine?[45,140]:g.def.hub==='drive'?[18,44]:[11,26];amb=g.def.amb||(g.def.hub==='drive'?[0.5,0.46,0.58]:g.def.hub?[0.34,0.31,0.4]:[0.42,0.36,0.5]);ld=[-0.4,-1,-0.3];lc=g.def.lc||[0.6,0.5,0.52];if(ENH()){amb=amb.map(v=>v*0.72);lc=g.def.lc?lc.map(v=>v*0.85):[0.42,0.47,0.66];}
   const ls=g.lights.concat(discoLights(g)).sort((a,b)=>Math.hypot(a.x-tgt[0],a.z-tgt[2])-Math.hypot(b.x-tgt[0],b.z-tgt[2])).slice(0,6);
@@ -4520,7 +4452,7 @@ addEventListener('mouseup',e=>{if(e.button===0)mouse.down=false;});
 addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;if(padMode&&Math.abs(e.movementX||0)+Math.abs(e.movementY||0)<3)return;padMode=false;if(!touchMode)mouse.active=true;});
 hud.addEventListener('contextmenu',e=>e.preventDefault());
 /* one wheel gesture = one switch (trackpads fire a stream of small deltas) */
-let WHEELT=0;hud.addEventListener('wheel',e=>{if(!(state==='play'&&G&&!G.def.hub))return;e.preventDefault();const n=performance.now();if(n-WHEELT>220&&Math.abs(e.deltaY)>4)pressed.swap=true;WHEELT=n;},{passive:false});
+let WHEELT=0;hud.addEventListener('wheel',e=>{if(!(state==='play'&&G&&(!G.def.hub||G.rangeOn)))return;e.preventDefault();const n=performance.now();if(n-WHEELT>220&&Math.abs(e.deltaY)>4)pressed.swap=true;WHEELT=n;},{passive:false});
 addEventListener('touchstart',()=>{touchMode=true;padMode=false;mouse.active=false;mouse.down=false;},{passive:true,capture:true});
 hud.addEventListener('touchstart',e=>{e.preventDefault();for(const t of e.changedTouches){if(G&&G.def&&G.def.hub&&state==='play')G.click=[t.clientX,t.clientY];if(t.clientX<vw/2&&!sticks.L)sticks.L={id:t.identifier,ox:t.clientX,oy:t.clientY,x:t.clientX,y:t.clientY};else if(t.clientX>=vw/2&&!sticks.R)sticks.R={id:t.identifier,ox:t.clientX,oy:t.clientY,x:t.clientX,y:t.clientY};}},{passive:false});
 hud.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches){for(const k of ['L','R']){const s=sticks[k];if(s&&s.id===t.identifier){s.x=t.clientX;s.y=t.clientY;const dx=s.x-s.ox,dy=s.y-s.oy,l=Math.hypot(dx,dy);if(l>80){s.ox=s.x-dx/l*80;s.oy=s.y-dy/l*80;}}}}},{passive:false});
@@ -4547,7 +4479,7 @@ function frame(now){if(contextLost||gl.isContextLost())return;requestAnimationFr
  if(AC){let tr;if(state==='play'||state==='dead'||state==='pause'){if(G&&G.def.hub)tr=G.track;else if(G&&G.cleared)tr='drone';else if(G&&G.boss&&G.boss.alive&&G.bossSeen)tr='boss';else tr=(G&&G.track)||'game';}else if(state==='carmenu'||state==='shop'||state==='store')tr=(G&&G.track)||'n_concrete';else tr=state==='results'?'drone':state==='elev'?'muzak':(state==='brief'&&G&&G.def.hub)?'n_haze':'menu';setTrack(tr);setMuffle(state==='dead'||state==='pause'||state==='brief');}
  engineOn(state==='play'&&!!G&&G.def.hub==='drive'&&!G.parked&&SET.sound);$('cine').style.display=(state==='play'&&G&&G.cine)?'block':'none';$('bSkip').style.display=(state==='play'&&G&&G.def.hub)?'block':'none';
  pressed.grab=pressed.perk=pressed.restart=pressed.pause=pressed.reload=pressed.swap=pressed.cover=false;pressed.slot=0;
- const tui=touchMode&&state==='play'&&!(G&&G.def.hub);$('touchUI').style.display=tui?'block':'none';
+ const tui=touchMode&&state==='play'&&!(G&&G.def.hub&&!G.rangeOn);$('touchUI').style.display=tui?'block':'none';
  {const mu=$('mercyUI'),on=!!(G&&G.mercy&&G.mercy.ask&&state==='play')&&!padMode;if(mu._on!==on){mu._on=on;mu.style.display=on?'flex':'none';}}
  if(tui&&G){$('bPerk').style.display=CHARS[selIdx].id==='money'?'flex':'none';$('bCover').style.display=SET.cover?'flex':'none';const p=G.player,ca=p.alive?ctxAction(p):{l:'GRAB'},lbl=ca.l;const b=$('bGrab');if(b.dataset.l!==lbl){b.innerHTML=lbl;b.dataset.l=lbl;b.style.background=ca.hot?'rgba(255,211,107,.55)':'';b.style.boxShadow=ca.hot?'0 0 14px #ffd36b':'';}}
  try{render();drawHUD();}catch(err){console.error(err);}}
