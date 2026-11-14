@@ -28,13 +28,14 @@ test('arrivals: each home has its own way in, and a skipped scene ends where the
       seqSkip(); onHubTrigger('lift'); out.pent.floor = $('elFloor').textContent; skipElev(); updateElev(0.016);
       seqSkip(); out.pent.home = [G.def === HUBS.home2, HUBMODE]; out.pent.hall = at();
       // leaving the penthouse goes back down the private elevator before the drive
-      G.trigLock = false; onHubTrigger('leave'); out.pent.down = [state, $('elFloor').textContent];
+      // the door asks where to first; picking a destination rides the private elevator down before the drive
+      G.trigLock = false; onHubTrigger('leave'); out.pent.menu = state; $('bCarShop').click(); out.pent.down = [state, $('elFloor').textContent];
       return out;
     } finally { fadeTo = fade; }
   }, setup.toString())).toEqual({
     room14: { mode: 'home', scene: true, hidden: true, end: [11.5, 8.8], scene2: false, car: true },
     studio: { hub: true, mode: 'arrive', scene: true, greeted: true, lobby: [10, 6], elev: ['elev', '01', 'THE SEABREEZE'], home: [true, 'home', true], inside: [15.5, 20.2] },
-    pent: { hub: true, scene: true, floor: 'P1', home: [true, 'home'], hall: [15.9, 22.5], down: ['elev', '69'] }
+    pent: { hub: true, scene: true, floor: 'P1', home: [true, 'home'], hall: [15.9, 22.5], menu: 'carmenu', down: ['elev', '69'] }
   });
 });
 
