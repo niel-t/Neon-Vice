@@ -99,7 +99,8 @@ test('stages: rejected arrivals, builds and snapshots preserve G, run, storage a
 test('stages: stair fade freezes simulation, refuses dead players, checks ownership and latches retries; finish remains gated', async ({ openGame }) => {
   const page = await openGame(); await inject(page);
   expect(await page.evaluate(() => {
-    selIdx = 1; startLevel(0); const original = G, fade = fadeTo; let callback, count = 0;
+    // the climb is presentation only; this test drives the floor change by hand
+    window.NOCLIMB = 1; selIdx = 1; startLevel(0); const original = G, fade = fadeTo; let callback, count = 0;
     fadeTo = fn => { callback = fn; count++; return true; };
     try {
       Object.assign(G.player, { x: 7.5, z: 4.5, alive: false }); update(.1); const dead = count === 0;
@@ -114,7 +115,7 @@ test('stages: stair fade freezes simulation, refuses dead players, checks owners
       const total = totalScore; finishLevel(); const gated = state === 'play' && totalScore === total && !G.done;
       fadeTo = () => false; G.player.x = 4; update(.1); G.player.x = 7.5; update(.1);
       return { dead, frozenState, frozen, arrived, stale, latched, returned, gated, refused: state === 'play' };
-    } finally { fadeTo = fade; state = 'pause'; }
+    } finally { fadeTo = fade; state = 'pause'; delete window.NOCLIMB; }
   })).toEqual({ dead: true, frozenState: 'stagefade', frozen: true, arrived: 'yard', stale: true, latched: true, returned: true, gated: true, refused: true });
 });
 
@@ -251,7 +252,8 @@ test('stages: Coral Tower changes floor after a bullet has swung a door, and wai
     lobby.player.x = up.at[0]; lobby.player.z = up.at[1];
     const held = stageStairs(lobby), stateWhileHeld = state;
     lobby.items[lobby.items.length - 1].flying = false;
-    const started = stageStairs(lobby); await wait(900);
+    const started = stageStairs(lobby);
+    for (let i = 0; i < 40 && (fading || state !== 'play' || G.climbIn); i++) await wait(100);
     return { held, stateWhileHeld, started, sid: G.sid, state, refused };
   });
   expect(result).toEqual({ held: false, stateWhileHeld: 'play', started: true, sid: 'stair', state: 'play', refused: [] });
@@ -274,7 +276,8 @@ test('stages: a floor change is never refused over fight leftovers', async ({ op
       window.NOARRIVE = 1; delete myProg().run; startMission('c2'); if (G.arrive) endArrive();
       const lobby = G, up = G.stageRun.describe(G.sid).stairs.find(q => q.id === 'up'); s(lobby);
       lobby.player.x = up.at[0]; lobby.player.z = up.at[1];
-      const started = stageStairs(lobby); await wait(900);
+      const started = stageStairs(lobby);
+      for (let i = 0; i < 40 && (fading || state !== 'play' || G.climbIn); i++) await wait(100);
       out.push(started + ' ' + G.sid + ' ' + state + ' ' + stageFoes(G));
     }
     return { out, refused };
@@ -282,4 +285,29 @@ test('stages: a floor change is never refused over fight leftovers', async ({ op
   expect(result.refused).toEqual([]);
   expect(new Set(result.out).size).toBe(1);
   expect(result.out[0]).toMatch(/^true stair play \d+$/);
+});
+
+test('stages: taking the stairs climbs into the next floor with no black screen', async ({ openGame }) => {
+  const page = await openGame();
+  const result = await page.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    window.NOARRIVE = 1; startMission('c2'); if (G.arrive) endArrive();
+    for (const e of G.enemies) { e.x = 20; e.z = 6; e.state = 'idle'; }
+    const lobby = G, up = G.stageRun.describe(G.sid).stairs.find(s => s.id === 'up'), fade = document.getElementById('fade');
+    let black = false, maxY = 0, snap = false, sawArrive = false, lowestIn = 0;
+    const watch = setInterval(() => {
+      if (fade.classList.contains('on')) black = true;
+      const o = document.getElementById('climbSnap'); if (o && o.style.display === 'block') snap = true;
+      if (G !== lobby && G.climbIn) { sawArrive = true; lowestIn = Math.min(lowestIn, G.player.y); }
+    }, 16);
+    // the frame that is held on screen is drawn right after the last climb step, so record the height there
+    const tick = climbTick; climbTick = (dt, g) => { tick(dt, g); if (g === lobby) maxY = Math.max(maxY, g.player.y || 0); };
+    lobby.player.x = up.at[0]; lobby.player.z = up.at[1] + 0.3;
+    for (let i = 0; i < 50 && (G === lobby || fading || G.climbIn); i++) await wait(100);
+    clearInterval(watch); climbTick = tick;
+    const ar = G.stageRun.describe(G.sid).arrivals.bottom.at;
+    return { sid: G.sid, state, black, climbed: maxY > 0.3, snap, sawArrive, cameUp: lowestIn < -0.1,
+      landed: Math.hypot(G.player.x - ar[0], G.player.z - ar[1]) < 0.05 && G.player.y === 0 && !G.cam.lift };
+  });
+  expect(result).toEqual({ sid: 'stair', state: 'play', black: false, climbed: true, snap: true, sawArrive: true, cameUp: true, landed: true });
 });

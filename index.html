@@ -80,7 +80,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 #cineT .c1{font-family:'Mr Dafoe','Brush Script MT',cursive;font-size:clamp(46px,10vw,112px);color:#ff5fb8;text-shadow:3px 3px 0 #2de2e6,0 0 20px rgba(255,95,184,.55);line-height:1;transform:rotate(-6deg);transform-origin:left}
 #cineT .c2{font-family:'Press Start 2P',monospace;font-size:clamp(9px,1.6vw,14px);color:#fff;letter-spacing:4px;margin-top:14px;text-shadow:2px 2px 0 #000}
 #cine .skp{position:absolute;right:16px;bottom:calc(11vh + 10px);font-size:15px;color:#c9a8e8;opacity:.8}
-#fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .35s;z-index:8}#fade.on{opacity:1}
+#climbSnap{position:fixed;inset:0;width:100%;height:100%;display:none;pointer-events:none;z-index:7;opacity:1}#climbSnap.go{opacity:0;transition:opacity .55s ease-out}#fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .35s;z-index:8}#fade.on{opacity:1}
 #bSkip{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:4;display:none;opacity:.85;min-width:0}
 .dlog{position:absolute;top:0;right:0;bottom:0;width:clamp(340px,36vw,820px);display:flex;flex-direction:column;text-align:left;background:linear-gradient(90deg,rgba(8,0,16,0),rgba(8,0,16,.86) 7%,rgba(8,0,16,.94));padding:clamp(10px,2.4vh,30px) clamp(14px,2vw,40px) clamp(10px,2.4vh,30px) clamp(28px,3.2vw,64px);font-size:calc(var(--tx,1)*clamp(19px,1.1vw + 9px,36px))}
 .dlHead{display:flex;justify-content:space-between;align-items:center;gap:10px;font-family:'Press Start 2P',monospace;font-size:clamp(9px,.4em,14px);color:#2de2e6;letter-spacing:1px;padding-bottom:.6em;border-bottom:2px solid rgba(255,45,149,.5)}
@@ -1526,7 +1526,7 @@ function updateHints(dt){const g=G,p=g.player;if(g.hint){g.hint.t+=dt;if(g.hint.
  if(Dd().cones&&g.time>8)hint('cone','Yellow cones show where guards are looking. Stay out of them to sneak up.');
  const al=g.enemies.filter(e=>e.alive).length;if(al>0&&al<=3)hint('few','Last few targets - they are marked on your radar and screen edge.');
  if(g.cleared)hint('car','Floor clear. Follow the pink marker back to the car.');}
-function update(dt){const g=G;if(g.stageManaged&&(state!=='play'||stageStairs(g)))return;fountainHum(g.def.hub?g:null);if(g.def.hub){updateHub(dt);return;}
+function update(dt){const g=G;if(g.climbIn&&state==='play'){climbInTick(dt,g);updateFX(dt);return;}if(g.stageManaged&&(state!=='play'||stageStairs(g)))return;fountainHum(g.def.hub?g:null);if(g.def.hub){updateHub(dt);return;}
  if(g.kc>0){g.kc-=dt;dt*=0.3;}if(g.cpulse>0)g.cpulse=Math.max(0,g.cpulse-dt*4);
  g.T+=dt;
  {const tgt=g.combo>=6?3:g.combo>=4?2:g.combo>=2?1:0;if(tgt>g.lv){g.lv=tgt;g.lvT=2;}else if(g.lv>tgt){g.lvT-=dt;if(g.lvT<=0){g.lv--;g.lvT=1.2;}}}
@@ -2239,7 +2239,10 @@ function loadHub(name,mode){HUBMODE=mode||'in';const d=HUBS[name];loadLevel(leve
  if(name==='drive')banner('OCEAN DRIVE, MIAMI',touchMode?'Left thumb steers &amp; drives · push to the edge for turbo':padMode?'Left stick steers &amp; drives · LB turbo':'W/S gas &amp; brake · A/D steer · Shift turbo');
  else if(name==='lobby')banner('McWEY TOWER','Take the elevator to the 52nd floor');}
 function goDrive(){const p=PROG[rideId()];if(p&&p.heli){loadHub('lobby');banner('BY HELICOPTER','Landed on McWey Tower · take the elevator up');return;}startCine();}
-let fading=false;function fadeTo(fn){if(contextLost||fading)return false;fading=true;$('fade').classList.add('on');setTimeout(()=>{try{if(!contextLost)fn();}finally{setTimeout(()=>{$('fade').classList.remove('on');fading=false;},60);}},380);return true;}
+let fading=false;function fadeTo(fn,o){if(contextLost||fading)return false;fading=true;
+ if(o&&o.climb){setTimeout(()=>{let done=false;const run=snap=>{if(done)return;done=true;SNAP=null;try{if(!contextLost)fn();}finally{climbDissolve(snap);fading=false;}};
+  SNAP=()=>run(climbSnap());setTimeout(()=>run(null),400);},o.ms||800);return true;}
+ $('fade').classList.add('on');setTimeout(()=>{try{if(!contextLost)fn();}finally{setTimeout(()=>{$('fade').classList.remove('on');fading=false;},60);}},380);return true;}
 /* McWey still owes a debrief/brief (VISIT.next is only taken into NEXTJOB by chatGo): leaving home or taking the job goes to him first, never back to the last job */
 const mcDue=()=>VISIT.next!==NEXTJOB;
 function onHubTrigger(t){if(fading)return false;if(t==='leave')return homeLeave();if(t==='lift')return liftUp();if(t==='exit'){sfx('blip');return fadeTo(()=>loadHub('drive','parked'));}if(t==='tower'){sfx('blip');return fadeTo(()=>loadHub('lobby'));}else if(t==='elevator'){sfx('ding');return fadeTo(enterElevator);}else if(t==='mcwey'){return fadeTo(talkMcWey);}return true;}
@@ -3856,6 +3859,7 @@ function render(){if(contextLost||gl.isContextLost())return;PS2C.beginFrame();re
   fogC=[0.05,0.02,0.07];fog=[5,15];amb=[0.2,0.16,0.26];ld=[-0.3,-0.8,-0.5];lc=[0.22,0.18,0.24];
   if(PLANV&&state==='title'){if(!PLANV.B)planViewBuild();tgt=[PLANV.at[0],0,PLANV.at[1]];eye=[tgt[0],PLANV.h,tgt[2]+PLANV.h*0.58];lights=[];MSH=null;SHL=-1;fog=[400,500];amb=[0.62,0.58,0.66];lc=[0.55,0.5,0.5];}}
  else{SHL=-1;MSH=null;const g=G,sh=g.shake;tgt=[g.cam.x+g.cam.kx+rnd(-sh,sh)*0.5,0,g.cam.z+g.cam.kz+rnd(-sh,sh)*0.5];eye=[tgt[0],8,tgt[2]+4.6];if(asp<1){eye[1]=10.5;eye[2]=tgt[2]+6;}if(g.tankB){tgt[2]-=1.2;eye=[tgt[0],6.6,tgt[2]+5.6];if(asp<1){eye[1]=9;eye[2]=tgt[2]+7;}}if(g.def.hub==='drive'){eye=[tgt[0],13,tgt[2]+7.5];if(asp<1){eye[1]=17;eye[2]=tgt[2]+10;}}if(g.cine){eye=g.cine.eye.slice();tgt=g.cine.tgt.slice();}
+  else if(g.cam.lift){const L=g.cam.lift;tgt[1]+=L*0.6;for(let i=0;i<3;i++)eye[i]=tgt[i]+(eye[i]-tgt[i])*(1-0.28*L);eye[1]+=L*0.4;}
   fogC=[0.07,0.03,0.09];fog=g.cine?[45,140]:g.def.hub==='drive'?[18,44]:[11,26];amb=g.def.amb||(g.def.hub==='drive'?[0.5,0.46,0.58]:g.def.hub?[0.34,0.31,0.4]:[0.42,0.36,0.5]);ld=[-0.4,-1,-0.3];lc=g.def.lc||[0.6,0.5,0.52];if(ENH()){amb=amb.map(v=>v*0.72);lc=g.def.lc?lc.map(v=>v*0.85):[0.42,0.47,0.66];}
   const ls=g.lights.concat(discoLights(g)).sort((a,b)=>Math.hypot(a.x-tgt[0],a.z-tgt[2])-Math.hypot(b.x-tgt[0],b.z-tgt[2])).slice(0,6);
   if(g.def.hub==='drive'){const c=g.pcar;ls.push({x:c.x+Math.sin(c.h)*2.2,y:0.6,z:c.z+Math.cos(c.h)*2.2,r:4.5,c:[1.2,1.1,0.9]});}
@@ -3898,7 +3902,8 @@ function render(){if(contextLost||gl.isContextLost())return;PS2C.beginFrame();re
  gl.bindTexture(gl.TEXTURE_2D,rt.tex);gl.uniform1i(L2.uS,0);gl.uniform2f(L2.uRes,rtW,rtH);gl.uniform1f(L2.uDith,enh?0:1);gl.uniform1f(L2.uVHS,menu?(enh?0.3:1):0);gl.uniform1f(L2.uGrain,SET.grain);gl.uniform1f(L2.uGlitch,SET.glitch?(menu?1:0.3):0);gl.uniform1f(L2.uBloom,enh?(menu?0.9:0.75):0);gl.uniform1f(L2.uEnh,enh?1:0);gl.uniform1f(L2.uTime,menuT);
  const fl=(!menu&&G)?G.flash:0,fc=(!menu&&G)?G.flashC:[0,0,0];gl.uniform4f(L2.uFlash,fc[0],fc[1],fc[2],clamp(fl,0,0.7));
  gl.drawArrays(gl.TRIANGLES,0,6);gl.disableVertexAttribArray(L2.aQ);
- if(NX&&NX.live)NX.draw({G,eye,tgt,fovy,asp,lights,amb,lc,ld,fog,fogC,dynB,poolB,ovB,IBhi,IBlo,atlasTex,grain:SET.grain,time:menuT});}
+ if(NX&&NX.live)NX.draw({G,eye,tgt,fovy,asp,lights,amb,lc,ld,fog,fogC,dynB,poolB,ovB,IBhi,IBlo,atlasTex,grain:SET.grain,time:menuT});
+ if(SNAP)SNAP();}
 function rebuildDecals(){const B=G.decalB;B.reset();for(const d of G.decals){if(d.drip){dripQuad(B,d,d.len);continue;}
  if(d.w){const tx=-d.nz,tz=d.nx,h=d.s/2,ox=d.x+d.nx*0.012,oz=d.z+d.nz*0.012;B.quad([[ox-tx*h,d.y-h,oz-tz*h],[ox+tx*h,d.y-h,oz+tz*h],[ox+tx*h,d.y+h,oz+tz*h],[ox-tx*h,d.y+h,oz-tz*h]],d.nx,0,d.nz,TUV[d.t],d.c);}
  else floorQuad(B,d.x,d.z,d.s,d.r,TUV[d.t],d.c,0.01);}B.upload();}
@@ -4396,10 +4401,12 @@ function drawStairs(B,g,x,z){const bx=(px,py,pz,sx,sy,sz,c,em,ry)=>B.box(TRS(px,
 /* The way back down, on the floor you arrived on: a doorway in the nearest wall to the arrival point with the top steps of the flight
    going down inside it, a lit sign, and a landing mat. Looks only; the stairs are one way. Walls to the north, west and east are tried
    before the south one, which the camera cannot see. */
-function drawStairsDown(B,g,ax,az){const brass=[0.85,0.68,0.22],amber=[1,0.85,0.35],ix=Math.floor(ax),iz=Math.floor(az);let best=null;
+function stairsDownSpot(g,ax,az){const ix=Math.floor(ax),iz=Math.floor(az);let best=null;
  for(const [dx,dz] of [[0,-1],[-1,0],[1,0],[0,1]]){for(let k=1;k<=4;k++){const cx=ix+dx*k,cz=iz+dz*k;if(cx<0||cz<0||cx>=g.W||cz>=g.H)break;const i=cz*g.W+cx;
    if(g.solid[i]){if(!g.furn[i]&&!g.glass[i]&&(!best||k<best.k))best={dx,dz,k};break;}}if(best&&best.k<=2)break;}
- if(!best)return;const {dx,dz,k}=best,along=dx?0:1,fx=dx?(dx<0?ix-k+1:ix+k):ix+0.5,fz=dz?(dz<0?iz-k+1:iz+k):iz+0.5;
+ if(!best)return null;const {dx,dz,k}=best;return{dx,dz,along:dx?0:1,fx:dx?(dx<0?ix-k+1:ix+k):ix+0.5,fz:dz?(dz<0?iz-k+1:iz+k):iz+0.5};}
+function drawStairsDown(B,g,ax,az){const brass=[0.85,0.68,0.22],amber=[1,0.85,0.35],sp=stairsDownSpot(g,ax,az);
+ if(!sp)return;const {dx,dz,along,fx,fz}=sp;
  /* u runs along the wall, n out of it toward the room */
  const bx=(u,y,n,su,sy,sn,c,em)=>B.box(TRS(fx+(along?u:-dx*n),y,fz+(along?-dz*n:u),0,along?su:sn,sy,along?sn:su),c,!!em);
  bx(0,0.95,0.03,0.82,1.9,0.05,[0.02,0.02,0.035]);for(let i=0;i<3;i++)bx(0,0.5-i*0.17,0.062+i*0.004,0.7-i*0.12,0.03,0.012,i?[0.55,0.46,0.2]:amber,i===0);
@@ -4414,6 +4421,27 @@ function drawStage(B,g){if(!isTower(g)||!g.stageRun)return;const bx=(x,y,z,sx,sy
  if(isKade(g)&&g.sid==='pent'){const L=craneLeverAt(g),ready=!(g.leverT>0);bx(L.x,0.55,L.z,0.5,1.1,0.4,[0.95,0.75,0.1]);bx(L.x,1.12,L.z+0.05,0.3,0.06,0.3,[0.1,0.1,0.12]);bx(L.x,1.2,L.z+0.05,0.16,0.12,0.16,ready?[1,0.15,0.15]:[0.35,0.1,0.1],ready&&Math.sin(g.T*8)>0);}
  if(g.sid==='pent'){const c=g.car;bx(c.x+0.5,0.95,c.z+0.55,2.0,1.9,0.08,steel);bx(c.x-0.5,1.0,c.z+0.5,0.12,2.0,0.12,brass);bx(c.x+1.5,1.0,c.z+0.5,0.12,2.0,0.12,brass);bx(c.x+0.5,2.05,c.z+0.5,0.5,0.12,0.06,g.cleared?[0.3,1,0.5]:[1,0.3,0.3],true);}
  if(g.key){const y=0.45+Math.sin(g.T*2.6)*0.06;bx(g.key.x,y,g.key.z,0.32,0.03,0.2,[1,0.85,0.3],true);bx(g.key.x,0.03,g.key.z,0.7,0.015,0.7,[1,0.8,0.2],true);}}
+/* The climb (verticality without a loading screen): taking the stairs walks the player up the flight and into the doorway while the
+   camera rises with them. At the top the last frame is held on screen and dissolves into the next floor, where the player walks up out
+   of the stairwell onto the landing. The floor change itself is unchanged; only the black fade is replaced. The elevator keeps its fade. */
+let SNAP=null;
+function climbStart(g,s){const p=g.player;g.climb={t0:performance.now(),dur:0.8,x0:p.x,z0:p.z,sx:s.at[0],sz:s.at[1]+0.45,tz:s.at[1]-0.42};p.vx=p.vz=0;}
+function climbTick(dt,g){const c=g.climb,p=g.player;if(!c)return;const k=Math.min(1,(performance.now()-c.t0)/1000/c.dur),e=k*k*(3-2*k),ox=p.x,oz=p.z;
+ if(k<0.3){const q=k/0.3;p.x=lerp(c.x0,c.sx,q);p.z=lerp(c.z0,c.sz,q);p.y=0;}else{const q=(k-0.3)/0.7;p.x=c.sx;p.z=lerp(c.sz,c.tz,q);p.y=q*0.6;}
+ const m=Math.hypot(p.x-ox,p.z-oz);p.walk=(p.walk||0)+m*9;p.vx=0;p.vz=dt>0?-Math.max(2.5,m/dt):0;p.a=Math.PI;g.cam.lift=e;
+ const kk=1-Math.exp(-Math.max(dt,0.03)*10);g.cam.x+=(p.x-g.cam.x)*kk;g.cam.z+=(p.z-1-g.cam.z)*kk;}
+function climbArrive(g,s){const ar=g.stageRun?.describe(g.sid).arrivals?.[s.arrive];if(!ar)return;const sp=stairsDownSpot(g,ar.at[0],ar.at[1]),p=g.player;if(!sp)return;
+ const sx=sp.along?sp.fx:sp.fx-sp.dx*0.05,sz=sp.along?sp.fz-sp.dz*0.05:sp.fz;g.climbIn={t0:performance.now(),dur:0.55,x0:sx,z0:sz,x1:p.x,z1:p.z,a:Math.atan2(p.x-sx,p.z-sz)};
+ p.x=sx;p.z=sz;p.y=-0.35;p.a=g.climbIn.a;g.cam.x=p.x;g.cam.z=p.z-1;g.cam.lift=1;}
+function climbInTick(dt,g){const c=g.climbIn,p=g.player;const k=Math.min(1,(performance.now()-c.t0)/1000/c.dur),e=k*k*(3-2*k),ox=p.x,oz=p.z;
+ p.x=lerp(c.x0,c.x1,e);p.z=lerp(c.z0,c.z1,e);p.y=Math.min(0,-0.35*(1-k*1.6));p.a=c.a;const m=Math.hypot(p.x-ox,p.z-oz);p.walk=(p.walk||0)+m*9;
+ const sp=dt>0?Math.max(2.5,m/dt):0;p.vx=Math.sin(c.a)*sp;p.vz=Math.cos(c.a)*sp;g.cam.lift=1-e;
+ const kk=1-Math.exp(-Math.max(dt,0.03)*10);g.cam.x+=(p.x-g.cam.x)*kk;g.cam.z+=(p.z-1-g.cam.z)*kk;if(k>=1){g.climbIn=null;g.cam.lift=0;p.y=0;p.vx=p.vz=0;}}
+/* hold the frame just drawn (call only from the end of render, before the browser clears the drawing buffer) */
+function climbSnap(){const nc=document.getElementById('glnext'),src=NX&&NX.live&&nc?nc:gl.canvas;let o=document.getElementById('climbSnap');
+ if(!o){o=document.createElement('canvas');o.id='climbSnap';document.body.appendChild(o);}
+ o.width=src.width;o.height=src.height;try{o.getContext('2d').drawImage(src,0,0);}catch(e){return null;}o.classList.remove('go');o.style.display='block';return o;}
+function climbDissolve(o){if(!o)return;requestAnimationFrame(()=>requestAnimationFrame(()=>{o.classList.add('go');setTimeout(()=>{o.style.display='none';o.classList.remove('go');},650);}));}
 function stageStairs(g){
  if(!stageCanLeave(g)||state!=='play'||fading)return false;
  for(const s of g.stageRun.describe(g.sid).stairs){
@@ -4421,9 +4449,10 @@ function stageStairs(g){
   if(!inside){g.stairLatch.delete(s.id);continue;}if(g.stairLatch.has(s.id))continue;if(stageLocked(g,s)){stageLockHint(g);continue;}
   /* a weapon still in the air cannot be saved with the floor: wait the moment it takes to land. A cash lure is simply left behind. */
   if(g.items.some(it=>it.flying&&it.flyT<=0.7))return false;g.cash=[];
-  const r=myProg().run,m=MISSION;state='stagefade';
-  const accepted=fadeTo(()=>{if(G!==g||MISSION!==m||myProg().run!==r)return;if(!stageCanLeave(g)){state='play';return;}enterStage(s.to,s.arrive);if(G===g)state='play';});
-  if(!accepted){state='play';return false;}g.stairLatch.add(s.id);return true;
+  const r=myProg().run,m=MISSION,climb=s.id!=='elev'&&!window.NOCLIMB;state='stagefade';
+  const accepted=fadeTo(()=>{const back=()=>{g.climb=null;g.cam.lift=0;g.player.y=0;g.player.vx=g.player.vz=0;};if(G!==g||MISSION!==m||myProg().run!==r){back();return;}if(!stageCanLeave(g)){back();state='play';return;}back();
+   enterStage(s.to,s.arrive);if(G===g)state='play';else if(climb)climbArrive(G,s);},climb?{climb:true,ms:800}:undefined);
+  if(!accepted){state='play';return false;}if(climb)climbStart(g,s);g.stairLatch.add(s.id);return true;
  }return false;
 }
 /* multi-stage hooks (W14): runStage snapshots what you hold as the new retry point; runRestartMission makes the next retry start from the job's beginning */
@@ -4512,6 +4541,7 @@ function frame(now){if(contextLost||gl.isContextLost())return;requestAnimationFr
  const portrait=touchMode&&vh>vw&&(state==='play'||state==='pause');$('rotate').classList.toggle('on',portrait);
  if(pressed.pause&&(state==='play'||state==='pause'))togglePause();
  if(pressed.restart&&(state==='play'||state==='dead'||state==='results'))restart();
+ if(G&&G.climb&&state==='stagefade')climbTick(dt,G);
  if(G&&(state==='play'||state==='dead')&&!portrait)update(dt);
  if(state==='elev')updateElev(dt);else if(state==='brief')updateBrief(dt);else if(state==='shop')updateNine(dt);else if(state==='title'||state==='select'||state==='help'||!G)updateMenu(dt);
  if(AC){let tr;if(state==='play'||state==='dead'||state==='pause'){if(G&&G.def.hub)tr=G.track;else if(G&&G.cleared)tr='drone';else if(G&&G.boss&&G.boss.alive&&G.bossSeen)tr='boss';else tr=(G&&G.track)||'game';}else if(state==='carmenu'||state==='shop'||state==='store')tr=(G&&G.track)||'n_concrete';else tr=state==='results'?'drone':state==='elev'?'muzak':(state==='brief'&&G&&G.def.hub)?'n_haze':'menu';setTrack(tr);setMuffle(state==='dead'||state==='pause'||state==='brief');}
