@@ -290,6 +290,7 @@ const TRS=(x,y,z,ry,sx,sy,sz)=>A.mul(A.mul(A.T(x,y,z),A.RY(ry)),A.S(sx,sy,sz));
 <script src="venues.js"></script>
 <script src="streets.js"></script>
 <script src="upstairs.js"></script>
+<script src="guide.js"></script>
 <script>
 'use strict';
 /* W2f dev gate (not shipped to players): ?planplay=motel|penthouse registers a plan-stage preview errand on the job list */
@@ -4368,7 +4369,7 @@ function buildDynamic(){const g=G,B=dynB,O=ovB;B.reset();O.reset();if(g.def.hub)
  for(const d of g.doors){const a=d.base+d.th,e=doorEnd(d),s=d.len===undefined?[d.hx,d.hz]:doorStart(d);const dl=d.len??0.98;if(d.gate){const m0=A.mul(A.T((d.hx+e[0])/2,0,(d.hz+e[1])/2),A.RY(-a)),mc=hex(0x24242e);for(const y of [0.1,0.55,1.05])B.box(A.mul(m0,TRS(0,y,0,0,0.98,0.05,0.05)),mc);for(let k=0;k<7;k++)B.box(A.mul(m0,TRS(-0.45+k*0.15,0.58,0,0,0.03,1.0,0.03)),mc);B.box(A.mul(m0,TRS(0.2,0.55,0,0,0.3,0.18,0.02)),[0.3,0.9,1],true);continue;}B.box(A.mul(A.mul(A.T((s[0]+e[0])/2,0.55,(s[1]+e[1])/2),A.RY(-a)),A.S(dl,1.1,0.07)),[0.95,0.9,0.9],false,TUV[4]);if(d.kind==='slide')continue;
   const kl=d.len===undefined?0.82:dl*0.84,kx=d.hx+Math.cos(a)*kl,kz=d.hz+Math.sin(a)*kl;B.box(TRS(kx,0.55,kz,-a,0.05,0.05,0.12),GOLD);}
  if(boatArrival(g))drawBoatArrival(B,g);else if(!g.def.noCar)drawRide(B,g.car.x,g.car.z,1,g.carA||0,undefined,g.arrive?g.arrive.spin:0);drawAct2(B,g);if(g.oldCar)drawBeater(B,g.oldCar.x,g.oldCar.z,1,g.oldCar.a,rideId());drawDisco(B,g);drawHazards(B,g);drawStash(B,g);drawStage(B,g);
- if(g.cleared){const y=1.5+Math.sin(g.T*5)*0.15;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.3,0.3,0.3))),[1,0.3,0.75],true);}
+ drawGuide3D(B,g);
  const p=g.player;const near=p.alive?nearItem(p):null;
  for(const it of g.items)if(!fogHid(it.x,it.z))drawItem(B,it,it===near);
  for(const e of g.enemies)if(!e.alive&&!e.sunk&&!fogHid(e.x,e.z))drawFoe(CB(e),e);if(!p.alive)drawChar(CB(p),p);
@@ -4427,8 +4428,8 @@ function drawRadar(c,cx,cy,R){const g=G,p=g.player,s=R/8;
  for(const e of g.enemies){if(!e.alive)continue;const near=scan&&Math.hypot(e.x-p.x,e.z-p.z)<9;if(!(near||money||e.pvis||e.state==='chase'&&e.seeT<1||g.enemies.filter(q=>q.alive).length<=3))continue;if(!near&&!money&&fogHidE(e)&&g.enemies.filter(q=>q.alive).length>3)continue;const x=cx+(e.x-p.x)*s,y=cy+(e.z-p.z)*s;c.fillStyle=e.down>0?'#ffd36b':e.state==='chase'?'#ff2a3a':'#ff8a95';c.beginPath();c.arc(x,y,Math.max(2.5,s*0.35),0,TAU);c.fill();}
  c.restore();
  /* objective marker (car) clamped to edge */
- let ox=(g.car.x-p.x)*s,oz=(g.car.z-p.z)*s;const od=Math.hypot(ox,oz);if(od>R-6){ox=ox/od*(R-6);oz=oz/od*(R-6);}
- const pulse=g.cleared?(Math.sin(g.T*8)>0?1:0.5):0.55;c.globalAlpha=pulse;c.fillStyle='#ff3fa4';c.fillRect(cx+ox-4,cy+oz-4,8,8);c.fillStyle='#fff';c.fillRect(cx+ox-1.5,cy+oz-1.5,3,3);c.globalAlpha=1;
+ const gt=guideTarget(g)||g.car;let ox=(gt.x-p.x)*s,oz=(gt.z-p.z)*s;const od=Math.hypot(ox,oz);if(od>R-6){ox=ox/od*(R-6);oz=oz/od*(R-6);}
+ const pulse=gt!==g.car||g.cleared?(Math.sin(g.T*8)>0?1:0.5):0.55;c.globalAlpha=pulse;c.fillStyle=gt.k?GUIDE_COL[gt.k]:'#ff3fa4';c.fillRect(cx+ox-4,cy+oz-4,8,8);c.fillStyle='#fff';c.fillRect(cx+ox-1.5,cy+oz-1.5,3,3);c.globalAlpha=1;
  c.save();c.translate(cx,cy);c.rotate(-p.a+Math.PI);c.fillStyle='#fff';c.strokeStyle='#000';c.lineWidth=2;c.beginPath();c.moveTo(0,-7);c.lineTo(5,5);c.lineTo(0,2);c.lineTo(-5,5);c.closePath();c.stroke();c.fill();c.restore();
  c.strokeStyle='#000';c.lineWidth=5;c.beginPath();c.arc(cx,cy,R,0,TAU);c.stroke();c.strokeStyle='#2de2e6';c.lineWidth=2.5;c.stroke();
  c.font=PXF(Math.max(8,R*0.16));txt(c,'N',cx,cy-R-2-Math.max(8,R*0.16),'#fff','center',8);}
@@ -4499,8 +4500,8 @@ function drawHUD0(){const c=hctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0
  if(g.hint){const al=clamp(Math.min(g.hint.t*4,(5.5-g.hint.t)*2),0,1);c.globalAlpha=al;c.font=VTF(touchMode?17*u:20*u);const tw=Math.min(c.measureText(g.hint.txt).width,vw*0.9);const hy=touchMode?vh-m-30*u:vh-m-2*R-44*u;
   c.fillStyle='rgba(12,4,22,.88)';c.fillRect(vw/2-tw/2-12*u,hy,tw+24*u,28*u);c.fillStyle='#2de2e6';c.fillRect(vw/2-tw/2-12*u,hy,4*u,28*u);txt(c,g.hint.txt,vw/2,hy+4*u,'#fff','center',20*u);c.globalAlpha=1;}
  if(!g.cleared&&alive<=3){for(const e of g.enemies){if(!e.alive)continue;const s=project(e.x,0.8,e.z);if(!s||(s[0]>0&&s[0]<vw&&s[1]>0&&s[1]<vh))continue;const cx=vw/2,cy=vh/2,a=Math.atan2(s[1]-cy,s[0]-cx),r=Math.min(vw,vh)*0.43;c.save();c.translate(cx+Math.cos(a)*r,cy+Math.sin(a)*r);c.rotate(a);c.fillStyle='#ff2a3a';c.strokeStyle='#000';c.lineWidth=3;c.beginPath();c.moveTo(11*u,0);c.lineTo(-7*u,-8*u);c.lineTo(-7*u,8*u);c.closePath();c.stroke();c.fill();c.restore();}}
- /* objective arrow when car offscreen */
- if(g.cleared&&!g.done){const s=project(g.car.x,1,g.car.z);if(s&&(s[0]<0||s[0]>vw||s[1]<0||s[1]>vh)){const cx=vw/2,cy=vh/2,a=Math.atan2(s[1]-cy,s[0]-cx);const r=Math.min(vw,vh)*0.38;c.save();c.translate(cx+Math.cos(a)*r,cy+Math.sin(a)*r);c.rotate(a);c.fillStyle='#ff5fb8';c.strokeStyle='#000';c.lineWidth=3;c.beginPath();c.moveTo(14*u,0);c.lineTo(-8*u,-10*u);c.lineTo(-8*u,10*u);c.closePath();c.stroke();c.fill();c.restore();}}
+ /* where to go next (guide.js) */
+ drawGuideHUD(c,g,u);
  /* crosshair with spread */
  if(!touchMode&&mouse.active&&p.alive){const x=mouse.x,y=mouse.y;let gap=6*u;
   if(w&&!wd.melee){const mv=Math.min(1,Math.hypot(p.vx,p.vz)/3.5);const spr=wd.spr+mv*wd.mv+p.bloom;const pp=project(p.x,0.7,p.z);const d=pp?Math.hypot(x-pp[0],y-pp[1]):100;gap=clamp(Math.tan(spr)*d,4*u,80*u);}
