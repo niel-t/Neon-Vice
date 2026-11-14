@@ -2378,7 +2378,7 @@ const HUBS={
   map:["bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "##############################", "#########*..........*#########", "#########h..........h#########", "#########h..........h#########", "##############D###############", "#*..........................*#", "#h..~~~~~~~~~~~~~~~..vw......#", "#ho.~v~~~~~~~~~~~v~.....K..B.#", "#h..~~~~~uiuii~~~~~....yK..B.#", "#...~~~~iSSSSSi~~~~..v..K..B.#", "#h..~~~~iSjSjSu~~~~....yKT.B.#", "#ho.~~~~uSSSSSi~~~~.....K..B.#", "#h.v~~~~iSSjSSi~~~~....yK..B.#", "#...~~~~iSSSSSi~~~~.....K..B.#", "#h..~~~~~iiiiu~~~~~....yK..B.#", "#ho.~~v~~~~~~~~~~v~.v........#", "#h..~~~~~~~~~~~~~~~...w......#", "#*..........................*#", "####..#######D#####D#####D####", "#*.......h#.....#.....#.....##", "#........h#.....#.....#.....##", "#......g..#.....#.....#.....##", "#*........#.....#.....#.....##", "####D#########################", "#ssssPsssssssssssssssssssssss#", "#sslssssssslssssssslsssssslss#", "pppppppCpppppppppppppppppppppp", ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,", ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,", "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"]},
  mall:{name:'BISCAYNE GALLERIA',hub:'foot',wall:42,floor:61,sofa:0xff6fae,grime:0.08,amb:[0.42,0.38,0.42],lc:[0.64,0.56,0.56],track:'c_palms',where:'BISCAYNE GALLERIA · SHOPPING MALL',obj:'SHOP AROUND · THEN BACK TO YOUR CAR',
    /* the shopping mall (mall.js dresses it), entered from the front: Victory Motors at the back (Vic V, turntables 1-4, desk K) behind its
-      glass front onto the atrium; the atrium (fountain F, reflecting pool ~, shoppers g) with glass shopfronts H (a low kerb; mall.js puts up
+      glass front onto the atrium; the atrium (fountain F, the food court in front of the doors, shoppers g) with glass shopfronts H (a low kerb; mall.js puts up
       the frames and panes): Gold Coast Jewelers (J, Schmaltzy) and Sunshine Realty (E) to the west, Casa Bonita furniture (R, Lola) and Fontaine Tailoring (Q, Felix) to the east; the front
       doors (_), then the sidewalk, the parking lay-by with your bay (C), the road and the verge (venues.js). floorFn takes world cells (map + 1) */
    floorFn:(x,z)=>{const X=x-1,Z=z-1;if(Z<1||Z>=35)return 0;if(Z<=12)return 37;if(X<11)return Z<24?29:4;if(X>33)return Z<24?14:61;const dx=Math.abs(X-22),dz=Math.abs(Z-19);return (dx<=3&&dz<=3&&(dx===3||dz===3))||((X+Z)%6===0&&dx>4)?63:61;},
@@ -2410,11 +2410,11 @@ const HUBS={
   "#..........H......g........g.....H..........#",
   "#..........H.....................H..........#",
   "############..........c..........H##########",
-  "#..........H........~~~~~........H..........#",
-  "#..........H........~~~~~........H.....Q....#",
-  "#....E.....H........~~~~~........H..........#",
-  "#...................~~~~~...................#",
-  "#...................~~~~~...................#",
+  "#..........H.....................H..........#",
+  "#..........H.....................H.....Q....#",
+  "#....E.....H.....................H..........#",
+  "#...........................................#",
+  "#...........................................#",
   "#..........H..g................g.H..........#",
   "#..c.......H..........g..........H..........#",
   "#..........H.....................H......c...#",

@@ -1,6 +1,6 @@
 'use strict';
 /* BISCAYNE GALLERIA: the shopping mall on the car menu. Drive in, park on the street and walk through the glass doors into an
-   open atrium (a gold fountain under palms, a long reflecting pool between two escalators, red-cushioned benches, planters, lamps
+   open atrium (a gold fountain under palms, a food court between two escalators, red-cushioned benches, planters, lamps
    and shoppers). Glass shopfronts open off the atrium, each with its own keeper:
      GOLD COAST JEWELERS (west)  jewelry you wear: it shows on your character (watch, chains, rings, bracelet, medallion)
      SUNSHINE REALTY (west)      homes to buy or move back into, and investment property that pays rent after every job
@@ -69,11 +69,14 @@ function mallSetup(g){dealerSetup(g);const D=g.dealer,O=1;
  /* tailor (south half): Felix's cutting table, the mannequins, the clothes rail, the mirror */
  R(39.5,19.7,3.6,0.9);for(const [x,z] of MALL_MANNEQ)R(x,z,0.6,0.6);R(43.4,22.6,0.6,4.2);
  /* atrium: escalators, landing posts, fountain planters, corner gardens, pool benches */
- R(16,20.5,2.0,7.0);R(29,20.5,2.0,7.0);
+ for(const ex of MALL_ESC)R(ex,20.5,2.0,7.0);
  for(const [x,z] of MALL_PLANTERS)R(x,z,1.3,1.3);
  for(const [x,z] of MALL_GARDENS)R(x,z,2.6,1.8);
- R(19.35,19.5,0.5,4.4);R(25.65,19.5,0.5,4.4);
- g.lights.push({x:23.5,y:2.6,z:28.5,r:5,c:[0.35,0.8,1.25]},{x:6,y:2.4,z:19,r:5,c:[1.25,0.95,0.55]},{x:6,y:2.4,z:30,r:5,c:[1.25,0.6,0.85]},{x:40,y:2.4,z:20,r:6,c:[0.7,1.15,0.85]},{x:39.5,y:2.5,z:30.5,r:6,c:[1.2,0.75,0.95]},{x:23.5,y:2.8,z:33.5,r:6,c:[0.85,0.8,0.75]},{x:23.5,y:3,z:38,r:7,c:[0.8,0.45,0.75]});
+ /* food court: the tables and the two stalls (counter and back) */
+ for(const [x,z] of MALL_TABLES)R(x,z,1.0,1.0);
+ for(const st of MALL_STALLS){R(st.x,st.z,1.0,2.6);R(st.x-st.side*0.9,st.z,0.4,2.6);}
+ mallCourt(g);
+ g.lights.push({x:23.5,y:2.8,z:29.5,r:6,c:[1.25,0.95,0.7]},{x:16.4,y:2.4,z:29.8,r:3.4,c:[1.3,0.8,0.5]},{x:30.6,y:2.4,z:29.8,r:3.4,c:[0.8,1.2,0.6]},{x:6,y:2.4,z:19,r:5,c:[1.25,0.95,0.55]},{x:6,y:2.4,z:30,r:5,c:[1.25,0.6,0.85]},{x:40,y:2.4,z:20,r:6,c:[0.7,1.15,0.85]},{x:39.5,y:2.5,z:30.5,r:6,c:[1.2,0.75,0.95]},{x:23.5,y:2.8,z:33.5,r:6,c:[0.85,0.8,0.75]},{x:23.5,y:3,z:38,r:7,c:[0.8,0.45,0.75]});
  /* the glass runs (H cells): frames and panes are drawn by drawMallGlass */
  g.mall.glass=[];for(let z=0;z<g.H;z++)for(let x=0;x<g.W;x++)if(g.rows[z]&&g.rows[z][x]==='H')g.mall.glass.push([x,z]);
  venueLot(g);
@@ -86,9 +89,18 @@ const MALL_DZ=8;
 const MALL_MANNEQ=[[35.7,20.2,[0.98,0.77,0.67]],[35.7,23.4,[0.63,0.91,0.81]],[38.6,24.8,[0.96,0.96,0.93]],[41.2,24.8,[0.78,0.66,0.93]]];
 const MALL_PLANTERS=[[19.5,9.5],[25.5,9.5],[19.5,14.5],[25.5,14.5]];
 const MALL_GARDENS=[[14.5,8.0],[30.5,8.0],[14.5,24.6],[30.5,24.6]];
+/* the escalators flank the food court, clear of the shop signs that hang in front of the side shops */
+const MALL_ESC=[18.6,26.4];
+/* the food court (old layout coords): round tables either side of the aisle from the front doors to the fountain, and two food stalls */
+const MALL_TABLES=[[20.7,18.4],[24.3,18.4],[20.7,20.8],[24.3,20.8],[20.7,23.2],[24.3,23.2]];
+const MALL_STALLS=[{x:15.4,z:20.8,side:1,name:['PIZZA','PALACE'],col:[1,0.55,0.2],rim:[1,0.2,0.2],awn:[[1,0.2,0.2],[1,1,1]]},
+ {x:29.6,z:20.8,side:-1,name:['TACO','LOCO'],col:[0.5,1,0.45],rim:[1,0.85,0.2],awn:[[0.2,0.75,0.3],[1,0.9,0.3]]}];
+/* the chairs: four round each table; who sits where (the rest stay free) */
+const MALL_CHAIRS=[[0.78,0],[-0.78,0],[0,0.78],[0,-0.78]];
+const MALL_DINERS=[[0,0],[0,2],[1,1],[1,3],[2,0],[3,2],[3,1],[4,0],[4,3],[5,1],[5,2]];
 function mallTargets(g,t){for(const n of g.mall.keepers){const s=MALL_SHOPS[n.shop];t.push({k:'shop',shop:n.shop,x:n.x,z:n.z,r:2.9,lbl:'TALK TO '+s.short+' · '+s.what});}
  const O=1,OZ=O+MALL_DZ;t.push({k:'shop',shop:'jewel',x:8.5+O,z:14.9+OZ,r:1.6,lbl:'GOLD COAST JEWELERS · THE CASE'});t.push({k:'shop',shop:'furn',x:37.5+O,z:14.4+OZ,r:1.6,lbl:'CASA BONITA · LOOK AROUND'});t.push({k:'shop',shop:'tailor',x:37.6+O,z:21.5+OZ,r:1.5,lbl:'FONTAINE TAILORING · THE RAIL'});
- t.push({k:'dir',x:18.4+O,z:25.6+OZ,r:1.5,lbl:'MALL DIRECTORY'});}
+ t.push({k:'dir',x:16.6+O,z:26.0+OZ,r:1.5,lbl:'MALL DIRECTORY'});}
 function mallHello(g){if(!g||!g.mall)return;banner(MALL_NAME,'Jewelry · suits · furniture · real estate · Victory Motors');}
 function mallDirectory(){const g=G;if(!g||!g.player)return;sfx('blip');popup(g.player.x,g.player.z-0.4,'WEST: JEWELRY · REALTY   EAST: FURNITURE · TAILOR   AT THE BACK: VICTORY MOTORS','#2de2e6');}
 /* shoppers wander the atrium only, and walk around the planters and benches */
@@ -143,22 +155,26 @@ function drawMall(B,g,LB){LB=LB||MALL_SINK;const T=g.T||0,O=1,OZ=O+MALL_DZ,bx=(x
  mallSign(B,22.5+O,2.9,27.08+OZ,['BISCAYNE GALLERIA'],PINK,0.5,CYAN);
  for(const dz of [0,1.24])bx(22.5,2.35,27.0+dz,6.4,0.1,0.08,[0.95,0.95,0.97]);for(const sx of [-3.2,3.2])bx(22.5+sx,2.35,27.62,0.08,0.1,1.3,[0.95,0.95,0.97]);bx(22.5,2.28,28.22,6.4,0.06,0.05,PINK,true);for(const sx of [-3,3])bx(22.5+sx,1.17,28.15,0.1,2.34,0.1,CH);
  for(const sx of [-4.6,4.6]){palm(22.5+sx,27.7,false);}
- bx(18.4,0.8,25.2,0.12,1.6,0.12,CH);bx(18.4,1.35,25.25,1.1,1.2,0.06,DK);bx(18.4,1.83,25.3,0.96,0.12,0.02,PINK,true);
- [GOLDC,PINK,[0.5,1,0.6],CYAN].forEach((c,i)=>bx(18.4,1.6-i*0.2,25.3,0.8-i*0.06,0.08,0.02,c,true));
+ bx(16.6,0.8,25.6,0.12,1.6,0.12,CH);bx(16.6,1.35,25.65,1.1,1.2,0.06,DK);bx(16.6,1.83,25.7,0.96,0.12,0.02,PINK,true);
+ [GOLDC,PINK,[0.5,1,0.6],CYAN].forEach((c,i)=>bx(16.6,1.6-i*0.2,25.7,0.8-i*0.06,0.08,0.02,c,true));
  /* fountain planters with palms and red bench cushions facing out */
  for(const [x,z] of MALL_PLANTERS){bx(x,0.3,z,1.3,0.6,1.3,[0.9,0.88,0.84]);bx(x,0.61,z,1.2,0.02,1.2,[0.32,0.22,0.12]);palm(x,z,true);shrub(x+0.38,z+0.38,0.7);shrub(x-0.4,z-0.36,0.6);
   bx(x,0.62,z+(z<12?-0.72:0.72),1.3,0.1,0.22,RED);}
  /* corner gardens: raised beds, palms, a bench on the open side */
  for(const [x,z] of MALL_GARDENS){bx(x,0.25,z,2.6,0.5,1.8,[0.86,0.84,0.8]);bx(x,0.51,z,2.5,0.02,1.7,[0.3,0.2,0.1]);palm(x-0.6,z,true);palm(x+0.7,z-0.2,false);shrub(x+0.3,z+0.45,0.8);shrub(x-1.0,z+0.5,0.6);
   bench(x,z+(z<12?1.45:-1.45),z<12?0:Math.PI,false);}
- /* the reflecting pool: marble rim, three jets on round pedestals, red cushion benches along both sides */
- {const x0=20,x1=25,z0=17,z1=22,cx=22.5;
-  for(const [x,z,w,d] of [[cx,z0-0.06,5.3,0.18],[cx,z1+0.06,5.3,0.18],[x0-0.06,(z0+z1)/2,0.18,5.3],[x1+0.06,(z0+z1)/2,0.18,5.3]])bx(x,0.22,z,w,0.44,d,[0.92,0.9,0.88]);
-  for(const s of [-1,1])bx(cx+s*3.15,0.32,19.5,0.42,0.18,4.4,RED),bx(cx+s*3.15,0.15,19.5,0.36,0.3,4.3,[0.9,0.9,0.88]);
-  for(let i=0;i<3;i++){const jz=z0+1+i*1.5,jx=cx+(i-1)*0.9;bx(jx,0.12,jz,0.6,0.16,0.6,WH);for(let k=0;k<10;k++){const ph=(T*1.3+k/10)%1,an=k*2.4+i;LB.box(TRS(jx+O+Math.sin(an)*0.18*ph,0.25+Math.sin(ph*Math.PI)*0.9,jz+OZ+Math.cos(an)*0.18*ph,0,0.05,0.08,0.05),[0.7,0.92,1.1],true);}}
-  for(let k=0;k<2;k++){const ph=(T*0.4+k/2)%1;for(let j=0;j<8;j++){const an=j*Math.PI/4;LB.box(TRS(cx+O+Math.sin(an)*(0.3+ph*1.6),0.035,19.5+OZ+Math.cos(an)*(0.3+ph*1.6),an,0.5,0.004,0.02),[0.7,0.9,1].map(v=>v*(1-ph)),true);}}}
+ /* ===== the food court: round tables with chairs, trays of food, two stalls, a sign over the way in ===== */
+ for(const [x,z] of MALL_TABLES){bx(x,0.04,z,0.5,0.08,0.5,CH);bx(x,0.38,z,0.08,0.7,0.08,CH);for(let k=0;k<8;k++)bx(x,0.74,z,1.0,0.04,0.42,[0.97,0.97,0.98],false,k*Math.PI/8);
+  bx(x,0.765,z,0.9,0.012,0.9*0.4,[1,0.45,0.7],false,0.3);
+  MALL_CHAIRS.forEach(([dx,dz],k)=>{const cx=x+dx,cz=z+dz,ry=Math.atan2(dx,dz);const c=Math.cos(ry),sn=Math.sin(ry),P=(ox,y,oz,sx,sy,sz,col)=>B.box(TRS(cx+O+ox*c+oz*sn,y,cz+OZ-ox*sn+oz*c,ry,sx,sy,sz),col);
+   P(0,0.44,0,0.44,0.05,0.42,k%2?CYAN.map(v=>v*0.8):PINK.map(v=>v*0.85));P(0,0.72,0.2,0.44,0.5,0.04,k%2?CYAN.map(v=>v*0.8):PINK.map(v=>v*0.85));for(const [lx,lz] of [[-0.18,-0.17],[0.18,-0.17],[-0.18,0.17],[0.18,0.17]])P(lx,0.21,lz,0.03,0.42,0.03,CH);});
+  /* trays: a red tray, a paper cup with a straw, a pizza slice or a taco basket */
+  for(let k=0;k<2;k++){const tx=x+(k?0.2:-0.22),tz=z+(k?-0.18:0.16),r=(x*3+z+k)%3;bx(tx,0.775,tz,0.34,0.02,0.26,[0.85,0.12,0.15],false,k);bx(tx+0.09,0.85,tz-0.05,0.07,0.14,0.07,k?[1,0.85,0.2]:[1,1,1]);bx(tx+0.09,0.95,tz-0.05,0.01,0.1,0.01,PINK);
+   if(r===0)bx(tx-0.06,0.79,tz+0.03,0.16,0.012,0.12,[1,0.75,0.3],false,0.6);else if(r===1){bx(tx-0.06,0.8,tz+0.03,0.14,0.04,0.1,[0.95,0.85,0.5]);bx(tx-0.06,0.83,tz+0.03,0.1,0.02,0.06,[0.35,0.7,0.25]);}else bx(tx-0.06,0.8,tz+0.03,0.12,0.04,0.12,[0.7,0.35,0.15]);}}
+ for(const st of MALL_STALLS)drawMallStall(B,st,O,OZ);
+ mallSign(B,22.5+O,3.2,25.7+OZ,['FOOD COURT'],[1,0.8,0.3],0.36,PINK);
  /* escalators rising north to a closed upper level */
- for(const ex of [16,29]){const zs=24,zt=17,yt=3.0,L=zs-zt,an=Math.atan2(yt,L),hl=Math.hypot(L,yt);
+ for(const ex of MALL_ESC){const zs=24,zt=17,yt=3.0,L=zs-zt,an=Math.atan2(yt,L),hl=Math.hypot(L,yt);
   B.box(A.mul(A.mul(A.T(ex+O,yt/2-0.25,(zs+zt)/2+OZ),A.RX(an)),A.S(1.5,0.5,hl)),[0.86,0.86,0.9]);
   for(const s of [-1,1]){B.box(A.mul(A.mul(A.T(ex+O+s*0.72,yt/2+0.35,(zs+zt)/2+OZ),A.RX(an)),A.S(0.08,0.9,hl)),[0.55,0.75,0.85]);
    B.box(A.mul(A.mul(A.T(ex+O+s*0.72,yt/2+0.84,(zs+zt)/2+OZ),A.RX(an)),A.S(0.12,0.07,hl+0.3)),DK);}
@@ -169,7 +185,7 @@ function drawMall(B,g,LB){LB=LB||MALL_SINK;const T=g.T||0,O=1,OZ=O+MALL_DZ,bx=(x
   bx(ex,yt+0.45,zt-1.38,2.2,0.08,0.04,CH);for(let i=0;i<5;i++)bx(ex-0.9+i*0.45,yt+0.22,zt-1.38,0.03,0.45,0.03,CH);bx(ex,yt+0.6,zt-1.42,2.2,1.2,0.04,[0.5,0.52,0.56]);for(let i=0;i<8;i++)bx(ex,yt+0.08+i*0.15,zt-1.4,2.16,0.015,0.01,[0.36,0.38,0.42]);
   mallSign(B,ex+O,yt+1.2,zt-1.3+OZ,['LEVEL 2','OPENING 1987'],CYAN,0.28,PINK);}
  /* lamps and shoppers' trash cans */
- for(const [x,z] of [[17,7.6],[28,7.6],[17,16.5],[28,16.5],[13.4,20],[31.6,20]])lamp(x,z);
+ for(const [x,z] of [[17,7.6],[28,7.6],[15.6,16.5],[29.4,16.5],[12.9,17.6],[32.1,17.6]])lamp(x,z);
  for(const [x,z] of [[21,15.6],[24,15.6]]){bx(x,0.35,z,0.4,0.7,0.4,[0.85,0.85,0.88]);bx(x,0.72,z,0.44,0.05,0.44,GOLDC);}
  /* ===== GOLD COAST JEWELERS (west, north) ===== */
  mallSign(B,15.0+O,2.7,7.3+OZ,['GOLD COAST','JEWELERS'],GOLDC,0.36,PINK);
@@ -249,6 +265,22 @@ function drawMall(B,g,LB){LB=LB||MALL_SINK;const T=g.T||0,O=1,OZ=O+MALL_DZ,bx=(x
  for(const [x,z,t] of [[2.6,4.2,1],[43.4,4.2,1],[2.6,12.2,0],[43.4,12.2,0]])drawPalm(B,x,z,!!t,x+z);}
 
 /* glass shopfronts: chrome posts at every cell edge, a header rail, a kick plate and pale streaks for the panes (see-through from above) */
+/* a food stall: counter facing the court (side 1 = faces east), a back wall with shelves, a striped awning, the name board facing the camera */
+function drawMallStall(B,st,O,OZ){const {x,z,side}=st,bx=(px,y,pz,sx,sy,sz,c,em)=>B.box(TRS(px+O,y,pz+OZ,0,sx,sy,sz),c,!!em),CH=[0.78,0.8,0.84],WH=[0.97,0.96,0.94];
+ bx(x,0.5,z,0.9,1.0,2.6,WH);bx(x+side*0.02,1.02,z,1.0,0.05,2.7,CH);bx(x+side*0.46,0.55,z,0.02,0.6,2.5,st.col.map(v=>v*0.8));
+ bx(x-side*0.9,1.15,z,0.3,2.3,2.6,[0.92,0.9,0.86]);for(let i=0;i<3;i++)bx(x-side*0.72,0.9+i*0.45,z,0.1,0.03,2.3,CH);
+ for(let i=0;i<6;i++)bx(x-side*0.7,0.98+(i%3)*0.45,z-0.9+(i>>1)*0.55+((i*7)%3)*0.1,0.14,0.16,0.14,[[1,0.3,0.3],[1,0.85,0.2],[0.3,0.8,1],[1,1,1],[0.4,0.85,0.4],[1,0.5,0.75]][i]);
+ bx(x+side*0.25,1.25,z+0.7,0.3,0.4,0.3,[0.75,0.75,0.78]);bx(x+side*0.25,1.25,z+0.7,0.22,0.3,0.31,[0.2,0.2,0.22]);
+ for(let i=0;i<8;i++)B.box(A.mul(A.mul(A.T(x+O-side*0.1,2.15,z+OZ-1.3+i*0.33+0.165),A.RZ(side*0.35)),A.S(1.5,0.04,0.33)),st.awn[i%2]);
+ for(const dz of [-1.25,1.25])bx(x+side*0.4,1.6,z+dz,0.05,1.2,0.05,CH);
+ mallSign(B,x+O-side*0.2,2.7,z+1.32+OZ,st.name,st.col,0.24,st.rim);}
+/* the people of the food court: diners on the chairs, a cook in each stall */
+function mallCourt(g){const O=1,OZ=O+MALL_DZ;if(typeof NPC_CHAT==='object'&&!NPC_CHAT.diner){NPC_CHAT.diner=["Best pizza in Dade County. Don't tell my mother.","We come here for the air conditioning.","Sit anywhere, honey. Not there.","You gonna eat those fries?","They say a whole second floor's opening next year."];
+  NPC_CHAT.cook=["Slice? Two bucks. For you, three.","Fresh this morning. Which morning, I won't say.","Extra cheese is free if you look rich. You look rich.","Hot sauce? It's very hot. Sign here."];}
+ for(const [ti,ci] of MALL_DINERS){const [tx,tz]=MALL_TABLES[ti],[dx,dz]=MALL_CHAIRS[ci],x=tx+dx+O,z=tz+dz+OZ,n=makeChar(x,z,NPCLOOK.guest(),false);
+  Object.assign(n,{kind:'diner',state:'idle',y:SEAT_Y,seatK:1,seat:true,a:Math.atan2(-dx,-dz),a0:Math.atan2(-dx,-dz),r:0.3,said:false});n.body=n.look.body;g.npcs.push(n);}
+ for(const st of MALL_STALLS){const n=makeChar(st.x-st.side*0.45+O,st.z+OZ,Object.assign(NPCLOOK.guest(),{jacket:[0.97,0.97,0.97],shirt:st.rim,hs:'buzz'}),false);
+  Object.assign(n,{kind:'cook',state:'idle',a:st.side*Math.PI/2,a0:st.side*Math.PI/2,r:0.3,said:false});n.body=n.look.body;g.npcs.push(n);}}
 function drawMallGlass(B,g){const H=2.6,CHR=[0.82,0.84,0.88],GL=[0.62,0.85,0.95],has=(x,z)=>g.rows[z]&&g.rows[z][x]==='H';
  for(const [x,z] of g.mall.glass){const ew=has(x-1,z)||has(x+1,z),cx=x+0.5,cz=z+0.5;
   if(ew){B.box(TRS(cx,H,cz,0,1.0,0.1,0.14),CHR);B.box(TRS(x,H/2+0.15,cz,0,0.07,H-0.3,0.07),CHR);if(!has(x+1,z))B.box(TRS(x+1,H/2+0.15,cz,0,0.07,H-0.3,0.07),CHR);
