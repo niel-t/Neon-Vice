@@ -40,13 +40,14 @@ const LOT_TYPES={
 /* which buildings each hub street favours; the first entries come up most */
 const STREET_DECK={drive:['hotel','shop','diner','hotel','apts','liquor','hotel','cinema','shop','pawn','hotel','garage','club','shop','office','hotel','bank'],
  dealer:['office','diner','bank','garage','shop','office','liquor','apts','shop','pawn'],
+ mall:['office','bank','diner','hotel','shop','apts','liquor','garage','shop'],
  bunker:['pawn','liquor','shop','apts','hotel','diner','shop','club','garage'],
  club:['club','liquor','hotel','shop','diner','pawn','shop','apts']};
 const strSeed=s=>{let h=2166136261;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619);return h>>>0;};
 /* lot body colours: their own list, stored in the grid's tint as 100+index (PASTEL stays the grid's random palette) */
 const STREET_TINT=[];
 function tintIdx(hx){const c=shx(hx);for(let i=0;i<STREET_TINT.length;i++){const p=STREET_TINT[i];if(Math.abs(p[0]-c[0])+Math.abs(p[1]-c[1])+Math.abs(p[2]-c[2])<0.01)return 100+i;}if(STREET_TINT.length>=27)return 100;STREET_TINT.push(c);return 100+STREET_TINT.length-1;}
-function streetKey(g){const d=g.def;if(!d||!d.hub)return null;if(d.hub==='drive')return'drive';for(const k of ['dealer','bunker','club'])if(typeof HUBS!=='undefined'&&d===HUBS[k])return k;return'drive';}
+function streetKey(g){const d=g.def;if(!d||!d.hub)return null;if(d.hub==='drive')return'drive';for(const k of ['dealer','mall','bunker','club'])if(typeof HUBS!=='undefined'&&d===HUBS[k])return k;return'drive';}
 
 /* ---- planning: lots, cell materials, kerb furniture ---- */
 function streetPlan(g){g.lots=null;g.kerb=[];const W=g.W,H=g.H,key=streetKey(g);g.wallX=new Uint8Array(W*H);g.topX=new Uint8Array(W*H);
@@ -277,7 +278,7 @@ const LOUNGE_CAST=[
 function castSetup(g){castLines();
  for(const C of LOBBY_CAST){const n=makeChar(C.at[0],C.at[1],C.look(),false);Object.assign(n,{kind:C.kind,state:'idle',a:C.a0||0,a0:C.a0||0,r:0.3,said:false,cast:C,hx:C.at[0],hz:C.at[1],wi:1,wait:ihash(C.at[0]*10|0,3,1)*2,t0:ihash(C.at[1]*10|0,4,1)*6,flashT:0});n.body=n.look.body;g.npcs.push(n);}
  /* the lounge sitters become the banker and Vern */
- const sit=g.npcs.filter(n=>n.kind==='sitter');sit.forEach((s,i)=>{const C=LOUNGE_CAST[i%LOUNGE_CAST.length],n=makeChar(s.x,s.z,C.look(),false);Object.assign(n,{kind:C.kind,state:'idle',y:s.y,seat:true,a:s.a,a0:s.a0,r:0.3,said:false,cast:C,t0:i*2,flashT:0});n.body=n.look.body;g.npcs[g.npcs.indexOf(s)]=n;});
+ const sit=g.npcs.filter(n=>n.kind==='sitter');sit.forEach((s,i)=>{const C=LOUNGE_CAST[i%LOUNGE_CAST.length],n=makeChar(s.x,s.z,C.look(),false);Object.assign(n,{kind:C.kind,state:'idle',y:SEAT_Y,seatK:1,seat:true,a:s.a,a0:s.a0,r:0.3,said:false,cast:C,t0:i*2,flashT:0});n.body=n.look.body;g.npcs[g.npcs.indexOf(s)]=n;});
  g.cast=true;}
 /* the cast's lines go into the game's greeting and TALK tables (defined by the inline script, so on first setup) */
 function castLines(){if(castLines.done)return;castLines.done=1;for(const C of [...LOBBY_CAST,...LOUNGE_CAST]){NPCLINES[C.kind]=[[C.greet[0]],[C.greet[1]||C.greet[0]]];NPC_CHAT[C.kind]=C.chat;}}
@@ -303,4 +304,42 @@ function drawCast(B,g){for(const n of g.npcs){const C=n.cast;if(!C||!C.prop&&!(n
   else if(C.prop==='bags'){at(0.05,0.36,0.17,0.3,0.32,0.12,[1,0.6,0.75]);at(0.15,0.42,0.38,0.2,0.04,0.02,[0.1,0.1,0.1]);at(-0.1,0.4,0.14,0.26,0.26,0.12,[0.95,0.95,0.92]);}
   else if(C.prop==='parcel'){at(0.27,0,0.8,0.36,0.26,0.26,[0.72,0.55,0.36]);at(0.27,0,0.94,0.37,0.02,0.06,[0.85,0.8,0.6]);}
   else if(C.prop==='phone'){at(0.04,0.14,1.24,0.06,0.2,0.08,[0.12,0.12,0.14]);at(0.04,0.14,1.38,0.015,0.12,0.015,[0.1,0.1,0.1]);}
-  else if(C.prop==='paper'){at(0.32,0,0.78+(n.y||0),0.5,0.36,0.02,[0.92,0.9,0.84]);at(0.335,0,0.88+(n.y||0),0.42,0.04,0.005,[0.25,0.25,0.25]);}}}
+  else if(C.prop==='paper'){at(0.32,0,0.68+(n.y||0),0.5,0.36,0.02,[0.92,0.9,0.84]);at(0.335,0,0.78+(n.y||0),0.42,0.04,0.005,[0.25,0.25,0.25]);}}}
+/* ---- McWey reception: a black-lacquer and marble counter with McWEY CORP. in raised gold letters ---- */
+/* 5x7 face for the gold lettering (rows top to bottom, 5 bits each), with a proper lower-case c */
+const MCFONT={M:[17,27,21,21,17,17,17],c:[0,0,14,16,16,16,14],W:[17,17,17,21,21,27,17],E:[31,16,16,30,16,16,31],Y:[17,17,10,4,4,4,4],
+ C:[15,16,16,16,16,16,15],O:[14,17,17,17,17,17,14],R:[30,17,17,30,20,18,17],P:[30,17,17,30,16,16,16],'.':[0,0,0,0,0,0,4],' ':[0,0,0,0,0,0,0]};
+const MC_GOLD=[1,0.8,0.32],MC_GOLDD=[0.72,0.52,0.16];
+/* raised letters on a plane facing +z at z; one box per lit run, with a thin bright bevel along the top of each run */
+function goldText(B,s,cx,cy,z,px){const adv=6*px,W=s.length*adv-px;
+ for(let k=0;k<s.length;k++){const gl=MCFONT[s[k]];if(!gl)continue;const ox=cx-W/2+k*adv;
+  for(let r=0;r<7;r++){const row=gl[r];let c=0;while(c<5){if(row>>(4-c)&1){let e=c;while(e+1<5&&(row>>(3-e)&1))e++;const x0=ox+c*px,x1=ox+(e+1)*px,y=cy+(3-r)*px;
+    B.box(TRS((x0+x1)/2,y,z+0.012,0,x1-x0,px*0.98,0.024),MC_GOLD);B.box(TRS((x0+x1)/2,y+px*0.4,z+0.025,0,x1-x0,px*0.14,0.004),[1,0.95,0.7],true);c=e+1;}else c++;}}}}
+/* the desk's cells (furn 7 in the lobby) are left empty by buildFurniture; this draws the whole counter over them */
+function drawMcDesk(B,g){let x0=99,x1=-1,z0=0;for(let i=0;i<g.furn.length;i++)if(g.furn[i]===7){const x=i%g.W;x0=Math.min(x0,x);x1=Math.max(x1,x);z0=(i/g.W)|0;}
+ if(x1<0)return;const r0=B.round;B.round=0;const L=x0,R=x1+1,cx=(L+R)/2,w=R-L,zf=z0+0.96,zb=z0+0.06,zc=(zf+zb)/2,d=zf-zb;
+ const LAC=[0.07,0.06,0.08],NERO=[0.13,0.11,0.13],MARB=[0.95,0.92,0.86],MARBV=[0.82,0.78,0.72],box=(x,y,z,sx,sy,sz,c,em)=>B.box(TRS(x,y,z,0,sx,sy,sz),c,!!em);
+ box(cx,0.04,zc-0.03,w-0.12,0.08,d-0.06,LAC);box(cx,0.085,zf-0.02,w-0.14,0.012,0.012,MC_GOLD,true);
+ box(cx,0.52,zc,w,0.88,d,LAC);box(cx,0.53,zf+0.005,w-0.08,0.74,0.012,NERO);
+ for(const y of [0.15,0.9])box(cx,y,zf+0.014,w-0.04,0.035,0.012,MC_GOLD);
+ for(const x of [L+0.04,R-0.04]){box(x,0.52,zf+0.01,0.06,0.88,0.03,MC_GOLDD);box(x,0.52,zc,0.06,0.88,d+0.03,MC_GOLDD);}
+ for(const x of [L+0.55,R-0.55])for(let k=0;k<3;k++)box(x+(k-1)*0.09,0.53,zf+0.016,0.03,0.6,0.012,MC_GOLDD);
+ box(cx,1.06,zf-0.12,w+0.06,0.06,0.34,MARB);box(cx,1.03,zf+0.05,w+0.06,0.012,0.012,MC_GOLD);box(cx,0.99,zf-0.06,w-0.1,0.08,0.06,NERO);
+ for(let k=0;k<6;k++)box(L+0.3+((k*1.37)%1)*(w-0.6),1.092,zf-0.12+((k*0.61)%1-0.5)*0.24,0.5,0.003,0.012,MARBV);
+ box(cx,0.97,zb+0.32,w-0.08,0.04,0.56,[0.9,0.88,0.84]);
+ goldText(B,'McWEY CORP.',cx,0.53,zf+0.012,Math.min(0.06,(w-1.5)/65));
+ /* on top: a brass service bell, a lamp with a green glass shade, a vase of birds of paradise; behind, the clerk's terminal */
+ box(cx+1.2,1.11,zf-0.14,0.16,0.02,0.16,MC_GOLDD);box(cx+1.2,1.15,zf-0.14,0.12,0.07,0.12,MC_GOLD);box(cx+1.2,1.2,zf-0.14,0.02,0.03,0.02,MC_GOLD);
+ box(L+0.5,1.11,zf-0.2,0.18,0.03,0.18,MC_GOLD);box(L+0.5,1.25,zf-0.2,0.03,0.28,0.03,MC_GOLD);box(L+0.5,1.4,zf-0.2,0.34,0.09,0.2,[0.15,0.75,0.4],true);
+ box(R-0.55,1.2,zf-0.18,0.14,0.22,0.14,[0.1,0.1,0.12]);box(R-0.55,1.32,zf-0.18,0.15,0.03,0.15,MC_GOLD);
+ for(const [dx,dy,c] of [[-0.06,0.5,[0.2,0.55,0.25]],[0.05,0.56,[0.2,0.55,0.25]],[0,0.62,[1,0.5,0.1]],[-0.07,0.58,[1,0.5,0.1]],[0.08,0.66,[0.25,0.4,1]]])box(R-0.55+dx,1.0+dy,zf-0.18,0.05,0.12,0.05,c);
+ box(cx-1.0,1.21,zb+0.32,0.42,0.32,0.36,[0.85,0.82,0.72]);box(cx-1.0,1.22,zb+0.135,0.32,0.22,0.01,[0.25,0.9,0.5],true);box(cx-1.0,1.0,zb+0.2,0.46,0.03,0.18,[0.78,0.75,0.66]);
+ B.round=r0;}
+/* ---- lobby seats: the free spots on the lounge sofas and the armchair, sat in with E / tap like the club's VIP chair ---- */
+function lobbySeats(g){const L=g.lounge;if(!L)return[];return[{x:L.x+0.55,z:L.z-1.18,a:0,lbl:'SIT ON THE SOFA'},{x:2.68,z:L.z-0.45,a:Math.PI/2,lbl:'SIT ON THE SOFA'},{x:L.x+1.97,z:L.z,a:-Math.PI/2,lbl:'SIT IN THE ARMCHAIR'}];}
+function seatTargets(g,t){const p=g.player;if(g.seatP){t.push({k:'stand',x:g.seatP.x,z:g.seatP.z,r:1.2,lbl:'STAND UP'});return;}
+ for(const s of lobbySeats(g)){if(g.npcs.some(n=>Math.hypot(n.x-s.x,n.z-s.z)<0.5))continue;t.push({k:'sit',s,x:s.x,z:s.z,r:1.45,lbl:s.lbl});}}
+function sitDown(g,s){const p=g.player;g.seatP=s;g.seatFrom={x:p.x,z:p.z};seatHold(g);sfx('click');}
+function seatUp(g){const p=g.player,s=g.seatP;if(!s)return;g.seatP=null;p.y=0;p.crouchK=0;p.seatK=0;p.x=s.x+Math.sin(s.a)*0.75;p.z=s.z+Math.cos(s.a)*0.75;p.vx=p.vz=0;}
+function seatHold(g){const p=g.player,s=g.seatP;p.x=s.x;p.z=s.z;p.y=SEAT_Y;p.vx=p.vz=0;p.a=s.a;p.crouchK=0;p.seatK=1;}
+const SEAT_Y=0.1;
