@@ -556,7 +556,7 @@ void main(){vec3 c=texture2D(uTex,vT).rgb*vL+vec3(vS)*0.5;gl_FragColor=vec4(mix(
 function sh(t,src){const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){const message=gl.getShaderInfoLog(s);gl.deleteShader(s);throw new Error(message);}return s;}
 function mkTex(cnv){const t=gl.createTexture();try{gl.bindTexture(gl.TEXTURE_2D,t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cnv);gl.generateMipmap(gl.TEXTURE_2D);
  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return t;}catch(e){gl.deleteTexture(t);throw e;}}
-function freeModel(parts){for(const m of parts||[]){for(const b of ['p','n','t','bi','bw','i'])if(m[b])gl.deleteBuffer(m[b]);if(m.tex)gl.deleteTexture(m.tex);}}
+function freeModel(parts){if(parts&&window.NVNEXT&&NVNEXT.impl&&NVNEXT.impl.free)NVNEXT.impl.free(parts);for(const m of parts||[]){for(const b of ['p','n','t','bi','bw','i'])if(m[b])gl.deleteBuffer(m[b]);if(m.tex)gl.deleteTexture(m.tex);}}
 function upload(Mh,tex){const o={tex,n_i:Mh.idx.length};const mk=(key,d)=>{const b=o[key]=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,d,gl.STATIC_DRAW);};
  try{mk('p',new Float32Array(Mh.p));mk('n',normals(Mh));mk('t',new Float32Array(Mh.uv));mk('bi',new Float32Array(Mh.bi));mk('bw',new Float32Array(Mh.bw));o.i=gl.createBuffer();
  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,o.i);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(Mh.idx),gl.STATIC_DRAW);return o;}catch(e){freeModel([o]);throw e;}}
@@ -692,8 +692,18 @@ function bloodify(key,lvl,c){const C=CH[key];if(!C||!C.bc)return;C.dirty=true;co
  const re=(cv,tex)=>{gl.bindTexture(gl.TEXTURE_2D,tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cv);gl.generateMipmap(gl.TEXTURE_2D);};re(C.bc,MODELS[key][0].tex);re(C.hc,MODELS[key][1].tex);gl.bindTexture(gl.TEXTURE_2D,atlasTex);}
 function buildLook(key,c){const Lk=c.look,bt=c.boss?'boss':(c.body||Lk.body);const cfg=lookCfg(Lk,bt);
  const ht=paintHeadP(Lk),btx=paintBodyP(Lk),parts=[];try{parts.push(upload(buildBody(cfg.B),mkTex(btx)));parts.push(upload(buildHead(cfg.B),mkTex(ht)));}catch(e){freeModel(parts);throw e;}
- MODELS[key]=parts;CH[key]={scale:cfg.scale,gait:cfg.gait,npc:true,bc:btx,hc:ht};}
-function freeLooks(){failedLooks.clear();for(const k in MODELS)if(CH[k]&&CH[k].npc){freeModel(MODELS[k]);delete MODELS[k];delete CH[k];}}
+ MODELS[key]=parts;CH[key]={scale:cfg.scale,gait:cfg.gait,npc:true,bc:btx,hc:ht,sig:lookSig(c)};}
+/* NPC models are kept between levels: building one (painting two 512px textures, lofting the body and head, uploading) costs
+   20-45 ms and only one is built per frame, so every hub visit used to stutter for seconds while the same lobby regulars and
+   shoppers were rebuilt. Clean models go into a small pool keyed by their look and are handed straight to the next character
+   with that look. Bloodied ones (bloodify painted their textures) are freed as before. Each model holds ~2.7 MB of textures, hence the cap. */
+const LOOKPOOL=new Map(),LOOKPOOL_MAX=24;let lookPoolN=0;
+function lookSig(c){try{return (c.boss?'boss':(c.body||c.look.body))+'|'+JSON.stringify(c.look);}catch(e){return null;}}
+function lookFromPool(sig){const a=sig&&LOOKPOOL.get(sig);if(!a||!a.length)return null;const e=a.pop();if(!a.length)LOOKPOOL.delete(sig);lookPoolN--;return e;}
+function freeLooks(){failedLooks.clear();for(const k in MODELS)if(CH[k]&&CH[k].npc){const C=CH[k];
+  if(C.sig&&!C.dirty){let a=LOOKPOOL.get(C.sig);if(a)LOOKPOOL.delete(C.sig);else a=[];a.push({parts:MODELS[k],ch:C});LOOKPOOL.set(C.sig,a);lookPoolN++;}else freeModel(MODELS[k]);
+  delete MODELS[k];delete CH[k];}
+ while(lookPoolN>LOOKPOOL_MAX){const [sig,a]=LOOKPOOL.entries().next().value;freeModel(a.shift().parts);lookPoolN--;if(!a.length)LOOKPOOL.delete(sig);}}
 function applySuit(id){const C=CH[id];if(!shaderReady||!C||!C.bcBase||!MODELS[id])return;const sk=suitOK(PROG[id],PROG[id]&&PROG[id].suit)?PROG[id].suit:'default';if(C.suitOn===sk)return;C.suitOn=sk;
  const x=C.bc0.getContext('2d');x.globalCompositeOperation='source-over';x.globalAlpha=1;x.drawImage(C.bcBase,0,0);
  if(sk!=='default'){const zones=[[0,0,200,290],[312,0,200,290],[0,290,512,90],[0,440,512,72]];x.save();x.beginPath();for(const z of zones)x.rect(...z);x.clip();
@@ -711,6 +721,7 @@ function resetMain(){for(const id in CH){const C=CH[id];if(C.npc||!C.bc0||!C.dir
   for(const [cv,tex] of [[C.bc,MODELS[id][0].tex],[C.hc,MODELS[id][1].tex]]){gl.bindTexture(gl.TEXTURE_2D,tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cv);gl.generateMipmap(gl.TEXTURE_2D);}}gl.bindTexture(gl.TEXTURE_2D,atlasTex);}
 function levelCheck(){if(G!==lastG){lastG=G;freeLooks();resetMain();applySuit(CHARS[selIdx].id);}}
 function ensureLook(c){levelCheck();const k=lookKey(c);if(!k||failedLooks.has(k))return null;if(MODELS[k])return k;
+ {const p=lookFromPool(lookSig(c));if(p){MODELS[k]=p.parts;CH[k]=p.ch;return k;}}
  if(buildsThisFrame>=1)return null;buildsThisFrame++;try{buildLook(k,c);}catch(e){failedLooks.add(k);$('modelWarning').style.display='block';console.error('PS2 look',e);return null;}finally{gl.bindTexture(gl.TEXTURE_2D,atlasTex);}return k;}
 
 function has(id){return !!CH[id];}

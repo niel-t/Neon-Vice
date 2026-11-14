@@ -141,6 +141,10 @@ export function create(N,oldGL){
  function geoOf(mm){let g=charGeo.get(mm);if(g)return g;const d=k=>{const r=N.buf.get(mm[k]);return r&&r.data;};const p=d('p'),n=d('n'),t=d('t'),bi=d('bi'),bw=d('bw'),ix=d('i');if(!p||!n||!t||!bi||!bw||!ix)return null;
   g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(p,3));g.setAttribute('normal',new THREE.BufferAttribute(n,3));g.setAttribute('uv',new THREE.BufferAttribute(t,2));
   g.setAttribute('aBi',new THREE.BufferAttribute(bi,4));g.setAttribute('aBw',new THREE.BufferAttribute(bw,4));g.setIndex(new THREE.BufferAttribute(ix,1));g.boundingSphere=BIG;charGeo.set(mm,g);return g;}
+ /* the game freed a character model (models.js freeModel): let go of its geometry and texture here too, or every hub visit
+    left a few dozen 512px textures and meshes on the GPU */
+ function free(parts){for(const mm of parts||[]){const g=charGeo.get(mm);if(g){g.dispose();charGeo.delete(mm);}
+   const e=mm.tex&&texCache.get(mm.tex);if(e){e.t.dispose();texCache.delete(mm.tex);}}}
  function syncChars(){let k=0;const M=N.models;
   if(M)for(const q of N.chars){const parts=M[q.id];if(!parts)continue;const NB=q.B.length/16;
    for(const mm of parts){const g=geoOf(mm),tx=texOf(mm.tex,false);if(!g||!tx)continue;let s=charPool[k];
@@ -152,6 +156,8 @@ export function create(N,oldGL){
  const mDecal=batchMesh(batchMat({depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-2}),{order:1});
  const mPool=batchMesh(batchMat({transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-2}),{order:2});
  const mDyn=batchMesh(batchMat({}),{cast:true,order:3});
+ /* a hub's fixed geometry (index.html hubFixStart): built and uploaded once, drawn like the dynamic batch */
+ const mFix=batchMesh(batchMat({}),{cast:true,order:3});
  const mOver=batchMesh(batchMat({depthTest:false,depthWrite:false,transparent:true}),{order:10,receive:false});
  const mHi=instMesh(3),mLo=instMesh(1);
 
@@ -196,13 +202,13 @@ export function create(N,oldGL){
   {const s=30/sun.shadow.mapSize.x*4,tx=Math.round(o.tgt[0]/s)*s,tz=Math.round(o.tgt[2]/s)*s;sun.target.position.set(tx,0,tz);sun.position.set(tx-o.ld[0]*30,-o.ld[1]*30,tz-o.ld[2]*30);}
   const ls=o.lights||[];for(let i=0;i<points.length;i++){const p=points[i],l=ls[i];if(!l){p.intensity=0;continue;}p.position.set(l.x,l.y,l.z);p.color.setRGB(Math.min(l.c[0],1),Math.min(l.c[1],1),Math.min(l.c[2],1),THREE.SRGBColorSpace);
    p.intensity=LOOK.pointLight*Math.max(1,l.c[0],l.c[1],l.c[2]);p.distance=l.r*1.35;}
-  const atlas=texOf(o.atlasTex,true);if(!atlas)return;for(const m of [mStatic,mDecal,mPool,mDyn,mOver,mHi,mLo])if(m.material.map!==atlas){m.material.map=atlas;m.material.needsUpdate=true;}
-  syncBatch(mStatic,G.staticB,true);syncBatch(mDecal,G.decalB,true);syncBatch(mPool,o.poolB,false);syncBatch(mDyn,o.dynB,false);syncBatch(mOver,o.ovB,false);
+  const atlas=texOf(o.atlasTex,true);if(!atlas)return;for(const m of [mStatic,mDecal,mPool,mDyn,mFix,mOver,mHi,mLo])if(m.material.map!==atlas){m.material.map=atlas;m.material.needsUpdate=true;}
+  syncBatch(mStatic,G.staticB,true);syncBatch(mDecal,G.decalB,true);syncBatch(mPool,o.poolB,false);syncBatch(mDyn,o.dynB,false);syncBatch(mFix,G.def&&G.def.hub&&G.fixB&&G.fixB.buf?G.fixB:null,true);syncBatch(mOver,o.ovB,false);
   syncInst(mHi,o.IBhi);syncInst(mLo,o.IBlo);syncChars();
   N._ground.position.y=G.up2?-3.5:-0.03;N._ground.position.x=Math.round(o.tgt[0]/2)*2;N._ground.position.z=Math.round(o.tgt[2]/2)*2;
   film.uniforms.t.value=o.time%10;film.uniforms.grain.value=o.grain||0;const fl=Math.min(Math.max(G.flash||0,0),0.7),fc=G.flashC||[0,0,0];film.uniforms.flash.value.set(fc[0],fc[1],fc[2],fl);
   if(!warm){warmUp();return;}
   composer.render();N.frames=(N.frames||0)+1;}
  function show(live){canvas.style.display=live?'block':'none';oldCanvas.style.visibility=live?'hidden':'';}
- return{draw,show,LOOK,scene,camera,renderer,bloom,get quality(){return q;}};
+ return{draw,show,free,LOOK,scene,camera,renderer,bloom,get quality(){return q;}};
 }

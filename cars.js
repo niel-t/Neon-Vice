@@ -104,9 +104,24 @@ const CAR_SHAPES={
 
 /* traffic and parked cars: a shape picked from the colour (stable per car) unless the caller names one */
 const TRAFFIC_TYPES=['sedan','hatch','coupe','wagon','pickup','sedan','hatch'];
+/* ---------- car geometry cache ----------
+   A lofted car is ~12k vertices of maths, and Ocean Drive had 14 of them in traffic: rebuilding every car every frame was the
+   biggest CPU cost in the game. Each body is now built once at the origin (keyed by everything that shapes it) and copied
+   turned and moved into place. The wheels are left out of the cached body (rideKit's W() records them instead of drawing)
+   and are put back at the car's current spin, so rolling wheels still roll; a car whose spin did not change copies those too. */
+let CARREC=null;const CARBODY=new Map(),CARBODY_MAX=32;
+function carCache(B,key,x,z,s,a,spin,draw){const k=key+'|'+s+'|'+(B.round||0)+'|'+(ENH()?1:0);let e=CARBODY.get(k);
+ if(e){CARBODY.delete(k);CARBODY.set(k,e);}
+ else{const src=Batch.cpu(16384);src.round=B.round;CARREC={B:src,wheels:[]};try{draw(src,0,0,s,0,0);}finally{e={src,wheels:CARREC.wheels,spin:null,wb:null};CARREC=null;}if(src.n)src.alloc(src.n,src.u8);
+  CARBODY.set(k,e);if(CARBODY.size>CARBODY_MAX)CARBODY.delete(CARBODY.keys().next().value);}
+ batchCopyYaw(B,e.src,x,z,a);if(!e.wheels.length)return;
+ const sp=spin||0;if(e.spin!==sp){const wb=e.wb||(e.wb=Batch.cpu(4096));wb.reset();const {W}=rideKit(wb,0,0,s,0),r0=wb.round;
+  for(const w of e.wheels){const q=w.a;wb.round=w.round;W(q[0],q[1],q[2],q[3],q[4],(q[5]||0)+sp,q[6]);}wb.round=r0;e.spin=sp;}
+ batchCopyYaw(B,e.wb,x,z,a);}
 function drawCar(B,x,z,col,dir,spin,type){const C=col||[0.86,0.1,0.16];let t=type;if(t===undefined){const h=Math.floor((C[0]*7.1+C[1]*13.3+C[2]*5.7)*97);t=TRAFFIC_TYPES[h%TRAFFIC_TYPES.length];}else if(typeof t==='number')t=TRAFFIC_TYPES[t%TRAFFIC_TYPES.length];
  drawCarShape(B,x,z,1,(dir||1)<0?Math.PI:0,t,{col:C},spin);}
-function drawCarShape(B,x,z,s,a,type,over,spin){const o=Object.assign({},CAR_SHAPES[type]||CAR_SHAPES.sedan,over||{});const r0=B.round;B.round=0.35;
+function drawCarShape(B,x,z,s,a,type,over,spin){carCache(B,'shape|'+type+'|'+JSON.stringify(over||null),x,z,s,a,spin,(K,X,Z,S,A_,sp)=>drawCarShapeRaw(K,X,Z,S,A_,type,over,sp));}
+function drawCarShapeRaw(B,x,z,s,a,type,over,spin){const o=Object.assign({},CAR_SHAPES[type]||CAR_SHAPES.sedan,over||{});const r0=B.round;B.round=0.35;
  const K=carKit(B,x,z,s,a,o,spin);carLamps(K,o);carExtras(K,o);B.round=r0;return K;}
 
 /* model-specific bits: wood panels, vinyl roof, stripes, spoilers, rust and primer, pickup bed rails, roof lights */
@@ -149,7 +164,7 @@ function drawRide(B,x,z,s,a,id,spin){const mx=id?{}:carMods();const mc=id?'sig':
  if(mc==='mid'){drawCarShape(B,x,z,s,a,null,Object.assign({},MIDCAR,rideOver(MIDCAR,mx)),spin);return;}
  if(DEALER_CARS[mc]){const d=DEALER_CARS[mc];drawCarShape(B,x,z,s,a,null,Object.assign({},d.shape,rideOver(d.shape,mx)),spin);return;}
  B.round=0.5;const o=rideOver({},mx);
- if(who==='don')drawRolls(B,x,z,s,a,spin,o);else if(who==='consigliere')drawEscalade(B,x,z,s,a,spin,o);else drawLambo(B,x,z,s,a,o.col||null,spin);B.round=r0;}
+ carCache(B,'sig|'+who+'|'+JSON.stringify(o),x,z,s,a,spin,(K,X,Z,S,A_,sp)=>{if(who==='don')drawRolls(K,X,Z,S,A_,sp,o);else if(who==='consigliere')drawEscalade(K,X,Z,S,A_,sp,o);else drawLambo(K,X,Z,S,A_,o.col||null,sp);});B.round=r0;}
 const CAR_GLOWS=[null,[1,0.2,0.75],[0.2,0.9,1],[0.6,0.3,1]];
 
 /* The Don's signature: the stately two-tone saloon */
@@ -218,7 +233,7 @@ function dealerWord(B,word,cx,y,z,h,col){const w=h*0.62,gap=h*0.32;let x=cx-(wor
 /* the turning showroom cars: each car is built once at the origin and copied rotated every frame (rebuilding a lofted car is ~16k vertices of maths) */
 const LOTCAR_CACHE={};
 function lotCarSpin(B,k,x,z,a){const key=k+'|'+(DEALER_CARS[k]||k==='mid'?'':rideId());let src=LOTCAR_CACHE[key];
- if(!src){src=new Batch();src.round=0.35;drawLotCar(src,k,0,0,0);LOTCAR_CACHE[key]=src;}
+ if(!src){src=Batch.cpu(16384);src.round=0.35;drawLotCar(src,k,0,0,0);LOTCAR_CACHE[key]=src;}
  batchCopyYaw(B,src,x,z,a);}
 function batchCopyYaw(B,src,x,z,a){const n=src.n;if(!n)return;B.ensure(n);const S=src.f,D=B.f,V=VSTRIDE,o0=B.n*V,c=Math.cos(a),s=Math.sin(a);
  D.set(S.subarray(0,n*V),o0);
@@ -229,7 +244,7 @@ function drawDealer(B,g){const D=g.dealer,T=g.T||0,PINK=[1,0.3,0.75],CYAN=[0.2,0
   /* turntable: a low dais with a neon rim, the car turning slowly on top */
   for(let k=0;k<8;k++)B.box(TRS(s.x,0.05,s.z,k*Math.PI/8,2.7,0.1,1.12),[0.85,0.85,0.88]);
   for(let k=0;k<16;k++){const an=k*Math.PI/8;B.box(TRS(s.x+Math.cos(an)*1.36,0.09,s.z+Math.sin(an)*1.36,-an+Math.PI/2,0.56,0.03,0.04),k%2?PINK:CYAN,true);}
-  lotCarSpin(B,s.k,s.x,s.z,s.a0+T*0.3);
+  if(inView(s.x,0.6,s.z,2.6))lotCarSpin(B,s.k,s.x,s.z,s.a0+T*0.3);
   /* price stand in front */
   B.box(TRS(s.x+1.15,0.45,s.z+1.25,0,0.04,0.9,0.04),[0.2,0.2,0.22]);B.box(TRS(s.x+1.15,0.95,s.z+1.27,0,0.42,0.28,0.02),[0.98,0.96,0.9]);B.box(TRS(s.x+1.15,1.06,s.z+1.285,0,0.36,0.05,0.01),myProg().cars.includes(s.k)?CYAN:PINK,true)}
  /* the storefront sign inside the glass, and the pylon out on the lot */

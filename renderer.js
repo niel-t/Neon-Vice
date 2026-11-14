@@ -423,12 +423,12 @@ class Batch{
  quad4(P,nx,ny,nz,uv,cs,k,ws){this.ensure(6);let U=[uv[0],uv[2],uv[2],uv[0]],V=[uv[3],uv[3],uv[1],uv[1]];
   if(k){const m=D8[k];U=[];V=[];for(const [s,t] of QST){const a=s-0.5,b=t-0.5;U.push(uv[0]+(m[0]*a+m[1]*b+0.5)*(uv[2]-uv[0]));V.push(uv[1]+(m[2]*a+m[3]*b+0.5)*(uv[3]-uv[1]));}}
   for(const i of Q6)this.vtx(P[i][0],P[i][1],P[i][2],nx,ny,nz,U[i],V[i],cs[i],ws?ws[i]:undefined);}
- quad(P,nx,ny,nz,uv,c){this.ensure(6);const U=[uv[0],uv[2],uv[2],uv[0]],V=[uv[3],uv[3],uv[1],uv[1]];for(const i of Q6)this.vtx(P[i][0],P[i][1],P[i][2],nx,ny,nz,U[i],V[i],c);}
+ quad(P,nx,ny,nz,uv,c){this.ensure(6);const u0=uv[0],u2=uv[2],v1=uv[1],v3=uv[3];for(let j=0;j<6;j++){const i=Q6[j],p=P[i];this.vtx(p[0],p[1],p[2],nx,ny,nz,(i===0||i===3)?u0:u2,i<2?v3:v1,c);}}
  box(m,c,em,uv){uv=uv||WUV;this.ensure(36);const T=SCR;
   for(let i=0;i<8;i++){const a=CI[i];T[i*3]=m[0]*a[0]+m[1]*a[1]+m[2]*a[2]+m[3];T[i*3+1]=m[4]*a[0]+m[5]*a[1]+m[6]*a[2]+m[7];T[i*3+2]=m[8]*a[0]+m[9]*a[1]+m[10]*a[2]+m[11];}
-  const U=[uv[0],uv[2],uv[2],uv[0]],V=[uv[3],uv[3],uv[1],uv[1]];
-  for(const [n,ci] of CF){let nx=0,ny=0,nz=0;if(!em){nx=m[0]*n[0]+m[1]*n[1]+m[2]*n[2];ny=m[4]*n[0]+m[5]*n[1]+m[6]*n[2];nz=m[8]*n[0]+m[9]*n[1]+m[10]*n[2];const l=Math.hypot(nx,ny,nz)||1;nx/=l;ny/=l;nz/=l;}
-   for(const q of Q6){const k=ci[q]*3;this.vtx(T[k],T[k+1],T[k+2],nx,ny,nz,U[q],V[q],c);}}}
+  const u0=uv[0],u2=uv[2],v1=uv[1],v3=uv[3];
+  for(let f=0;f<6;f++){const n=CF[f][0],ci=CF[f][1];let nx=0,ny=0,nz=0;if(!em){nx=m[0]*n[0]+m[1]*n[1]+m[2]*n[2];ny=m[4]*n[0]+m[5]*n[1]+m[6]*n[2];nz=m[8]*n[0]+m[9]*n[1]+m[10]*n[2];const l=Math.hypot(nx,ny,nz)||1;nx/=l;ny/=l;nz/=l;}
+   for(let j=0;j<6;j++){const q=Q6[j],k=ci[q]*3;this.vtx(T[k],T[k+1],T[k+2],nx,ny,nz,(q===0||q===3)?u0:u2,q<2?v3:v1,c);}}}
  upload(st){gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);gl.bufferData(gl.ARRAY_BUFFER,this.f.subarray(0,this.n*VSTRIDE),st?gl.STATIC_DRAW:gl.DYNAMIC_DRAW);}
  draw(){if(!this.n)return;gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);
   gl.vertexAttribPointer(L.aP,3,gl.FLOAT,false,48,0);gl.vertexAttribPointer(L.aN,3,gl.FLOAT,false,48,12);
@@ -437,6 +437,8 @@ class Batch{
   gl.drawArrays(gl.TRIANGLES,0,this.n);if(s>=0)gl.disableVertexAttribArray(s);}
 }
 Batch.blOn=false;/* cached P1 uBlend (GL default 0) */
+/* a vertex list with no GL buffer behind it, for geometry built once and copied into other batches (cars.js carCache) */
+Batch.cpu=function(nv){const b=Object.create(Batch.prototype);b.n=0;b.alloc(nv||2048);b.buf=null;b.blT=0;b.blW=0;b.room=0;b.bl=false;return b;};
 function floorQuad(B,x,z,s,r,uv,c,y){const h=s/2,cc=Math.cos(r)*h,ss=Math.sin(r)*h;
  B.quad([[x-cc-ss,y,z-ss+cc],[x+cc-ss,y,z+ss+cc],[x+cc+ss,y,z+ss-cc],[x-cc+ss,y,z-ss-cc]],0,1,0,uv,c);}
 const dynB=new Batch(), poolB=new Batch(), ovB=new Batch(), stageB=new Batch();
@@ -473,11 +475,18 @@ function makeTemplate(N){const v=[],ix=[];const F=[[0,1,2,1],[0,1,2,-1],[1,2,0,1
  const ib=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ib);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(ix),gl.STATIC_DRAW);return{vb,ib,count:ix.length,v,ix};}
 const CPU_T2=(()=>{const N=2,v=[],ix=[];const F=[[0,1,2,1],[0,1,2,-1],[1,2,0,1],[1,2,0,-1],[2,0,1,1],[2,0,1,-1]];for(const [ax,ua,va,sg] of F){const b=v.length;for(let j=0;j<=N;j++)for(let i=0;i<=N;i++){const u=i/N,w=j/N,p=[0,0,0],n=[0,0,0];p[ax]=0.5*sg;p[ua]=(u-0.5)*sg;p[va]=w-0.5;n[ax]=sg;v.push({p,n,u,w});}
  for(let j=0;j<N;j++)for(let i=0;i<N;i++){const a=b+j*(N+1)+i,c=a+N+1;ix.push(a,a+1,c+1,a,c+1,c);}}return{v,ix};})();
-Batch.prototype.rbox=function(m,c,uv,S,r){uv=uv||WUV;this.ensure(CPU_T2.ix.length);const hs=[S[0]/2,S[1]/2,S[2]/2],out=CPU_T2.v.map(t=>{const q=[t.p[0]*S[0],t.p[1]*S[1],t.p[2]*S[2]];const cc=q.map((x,k)=>clamp(x,-hs[k]+r,hs[k]-r));let d=[q[0]-cc[0],q[1]-cc[1],q[2]-cc[2]],dl=Math.hypot(d[0],d[1],d[2]);let n=t.n,ps=q;if(dl>1e-6){n=[d[0]/dl,d[1]/dl,d[2]/dl];ps=[cc[0]+n[0]*r,cc[1]+n[1]*r,cc[2]+n[2]*r];}
-  const lx=ps[0]/S[0],ly=ps[1]/S[1],lz=ps[2]/S[2];const w=[m[0]*lx+m[1]*ly+m[2]*lz+m[3],m[4]*lx+m[5]*ly+m[6]*lz+m[7],m[8]*lx+m[9]*ly+m[10]*lz+m[11]];
-  let nx=(m[0]*n[0])/S[0]+(m[1]*n[1])/S[1]+(m[2]*n[2])/S[2],ny=(m[4]*n[0])/S[0]+(m[5]*n[1])/S[1]+(m[6]*n[2])/S[2],nz=(m[8]*n[0])/S[0]+(m[9]*n[1])/S[1]+(m[10]*n[2])/S[2];const nl=Math.hypot(nx,ny,nz)||1;
-  return[w,nx/nl,ny/nl,nz/nl,lerp(uv[0],uv[2],t.u),lerp(uv[3],uv[1],t.w)];});
- for(const i of CPU_T2.ix){const o=out[i];this.vtx(o[0][0],o[0][1],o[0][2],o[1],o[2],o[3],o[4],o[5],c);}};
+/* rounded box on the CPU (the classic renderer's ENHANCED look): the same maths as before, but into reused scratch arrays,
+   because this runs for thousands of boxes a frame and the old version made ~300 small arrays per box */
+const RB_T=(()=>{const n=CPU_T2.v.length,P=new Float64Array(n*3),Nn=new Float64Array(n*3),U=new Float64Array(n),Wt=new Float64Array(n);
+ CPU_T2.v.forEach((t,i)=>{for(let k=0;k<3;k++){P[i*3+k]=t.p[k];Nn[i*3+k]=t.n[k];}U[i]=t.u;Wt[i]=t.w;});return{n,P,N:Nn,U,W:Wt,ix:Uint16Array.from(CPU_T2.ix),O:new Float64Array(n*8)};})();
+Batch.prototype.rbox=function(m,c,uv,S,r){uv=uv||WUV;this.ensure(RB_T.ix.length);const {n:NV,P,N:TN,U,W:TW,O,ix}=RB_T,S0=S[0],S1=S[1],S2=S[2],h0=S0/2,h1=S1/2,h2=S2/2;
+ for(let i=0;i<NV;i++){const i3=i*3,q0=P[i3]*S0,q1=P[i3+1]*S1,q2=P[i3+2]*S2;
+  const c0=clamp(q0,-h0+r,h0-r),c1=clamp(q1,-h1+r,h1-r),c2=clamp(q2,-h2+r,h2-r);const d0=q0-c0,d1=q1-c1,d2=q2-c2,dl=Math.hypot(d0,d1,d2);
+  let n0=TN[i3],n1=TN[i3+1],n2=TN[i3+2],p0=q0,p1=q1,p2=q2;if(dl>1e-6){n0=d0/dl;n1=d1/dl;n2=d2/dl;p0=c0+n0*r;p1=c1+n1*r;p2=c2+n2*r;}
+  const lx=p0/S0,ly=p1/S1,lz=p2/S2,o=i*8;O[o]=m[0]*lx+m[1]*ly+m[2]*lz+m[3];O[o+1]=m[4]*lx+m[5]*ly+m[6]*lz+m[7];O[o+2]=m[8]*lx+m[9]*ly+m[10]*lz+m[11];
+  const nx=(m[0]*n0)/S0+(m[1]*n1)/S1+(m[2]*n2)/S2,ny=(m[4]*n0)/S0+(m[5]*n1)/S1+(m[6]*n2)/S2,nz=(m[8]*n0)/S0+(m[9]*n1)/S1+(m[10]*n2)/S2,nl=Math.hypot(nx,ny,nz)||1;
+  O[o+3]=nx/nl;O[o+4]=ny/nl;O[o+5]=nz/nl;O[o+6]=lerp(uv[0],uv[2],U[i]);O[o+7]=lerp(uv[3],uv[1],TW[i]);}
+ for(let k=0;k<ix.length;k++){const o=ix[k]*8;this.vtx(O[o],O[o+1],O[o+2],O[o+3],O[o+4],O[o+5],O[o+6],O[o+7],c);}};
 {const ob=Batch.prototype.box;Batch.prototype.box=function(m,c,em,uv){if(this.round&&!em&&ENH()){const S=[Math.hypot(m[0],m[4],m[8]),Math.hypot(m[1],m[5],m[9]),Math.hypot(m[2],m[6],m[10])],mn=Math.min(S[0],S[1],S[2]);if(mn>0.045){this.rbox(m,c,uv,S,Math.min(0.07,mn*0.5*this.round));return;}}ob.call(this,m,c,em,uv);};}
 Batch.prototype.drawDepth=function(loc){if(!this.n)return;gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,3,gl.FLOAT,false,48,0);gl.drawArrays(gl.TRIANGLES,0,this.n);gl.disableVertexAttribArray(loc);};
 class InstBatch{constructor(N){this.mesh=PI?makeTemplate(N):null;this.f=new Float32Array(24*2048);this.n=0;this.buf=gl.createBuffer();this.r=0.5;this.tp=0;this.uv=null;this.room=0;}
