@@ -421,6 +421,8 @@ const CH={
   B:{jacket:[240,236,228],pants:[234,230,222],shirt:[112,42,172],chain:true,cigar:true,watch:1,shoe:[96,60,34],square:'#7b2fc0',pin:false,belly:0.13},scale:[1.34,0.97,1.28]},
  nine:{face:'nine',F:{EM:[176,192],prof:[[0,0],[43,2],[70,4],[153,2]],glassesSwatch:1,smile:1,hl:106,hr:104,skin:[[150,118],[200,118],[176,100],[118,212],[236,212]],hairPt:[176,62],beardPt:[176,322],beardTop:1.69,beardBot:1.53},
   B:{jacket:[24,24,30],pants:[42,44,58],shirt:[204,90,42],dolphin:true,pin:false,shoe:[30,24,22],belly:0.12,shoulders:0.06,specs:1,fluff:'photo',hairVol:true},scale:[1.24,0.98,1.2]},
+ vic:{face:'vic',F:{EM:[174,192],prof:[[0,0],[50,-10],[86,-4],[150,0]],hl:96,hr:94,skin:[[135,245],[215,245],[175,110],[150,130],[200,130]],hairPt:[175,40]},
+  B:{jacket:[246,150,170],pants:[238,234,226],shirt:[22,20,26],watch:1,chain:true,shoe:[236,232,224],pin:false,square:'#2de2e6',shoulders:0.1,hairVol:true},scale:[1.12,1.02,1.1]},
  mcwey:{face:'mcwey',F:{...FACECFG.mcwey,hl:100,hr:126,beardBot:1.545,skin:[[120,235],[232,235],[176,100],[140,130],[212,130]],beardPt:[130,305],beardTop:1.69},
   B:{jacket:[228,218,198],pants:[222,212,192],shirt:'tropical',deepV:true,chains:true,rings:2,watch:1,shoe:[196,180,156],pin:false,square:'#e8dcc8'},scale:[1.06,1.0,1.06]},
 };
