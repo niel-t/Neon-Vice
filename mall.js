@@ -31,13 +31,33 @@ const MALL_SHOPS={
   sold:["Congratulations! Keys, deed, and a fruit basket.","SOLD! I'll put the sign out myself.","Pleasure doing business. Mostly the commission."],
   poor:["Oh honey. The bank won't touch you and neither will I.","Maybe start with something smaller. Like a parking space."],
   bye:["Bye now! Tell your friends with cash.","Don't forget, Miami's only going up!","Ta-ta! Keep those payments coming."]},
- tailor:{name:'FONTAINE TAILORING',sub:'SUITS · LINEN · SILK · MADE TO MEASURE',who:"FELIX 'FABULOSO' FONTAINE",short:'FABULOSO FELIX',npc:'tailor',what:'SUITS',col:'#ff9ec7',
+ tailor:{name:'FONTAINE TAILORING',sub:'SUITS · LINEN · SILK · SUNGLASSES',who:"FELIX 'FABULOSO' FONTAINE",short:'FABULOSO FELIX',npc:'tailor',what:'SUITS',col:'#ff9ec7',
   intro:"Welcome, welcome! Felix Fontaine, but the whole of Ocean Drive calls me Fabuloso. Arms out, chin up. Honey, we are going to make you unforgettable.",
+  shades:["Oh, those frame your face like a Monet, darling.","Now you look like trouble with a trust fund.","Sunglasses indoors? Honey, that's the whole point.","The sun is jealous. Let it be."],
   hi:["There's my favourite silhouette! Turn around, let me see.","Linen breathes, silk shines, polyester confesses. Choose wisely.","A good suit walks into a room before you do.","Pastel is not a colour, darling, it's an attitude."],
   sold:["Look at those shoulders! Wear it out, I insist.","Fabuloso! Miami is not ready for you.","Perfect fit. I'd tell you you're welcome, but just look in the mirror."],
   poor:["Ooh, darling, love the ambition, not the budget.","Come back when the wallet matches the cheekbones."],
-  bye:["Ciao, gorgeous! Stand up straight out there.","Strut, don't walk!","Come back for a fitting, any time."]}};
-const MALL_MODES=['jewel','furn','realty','tailor'],mallMode=()=>MALL_MODES.includes(storeMode);
+  bye:["Ciao, gorgeous! Stand up straight out there.","Strut, don't walk!","Come back for a fitting, any time."]},
+ /* upstairs (upstairs.js): Crazy Ray's, Doc Feelgood's and the Starlite Zone arcade */
+ elec:{name:"CRAZY RAY'S ELECTRONICS",sub:'TVs · VCRs · CAR PHONES · SCANNERS',who:"RAY 'CRAZY RAY' RUSSO",short:'CRAZY RAY',npc:'ray',what:'ELECTRONICS',col:'#2de2e6',
+  intro:"Crazy Ray! My prices are INSANE! Pagers, car phones, a police scanner that fell off a truck. The truck was a police truck. You didn't hear that from me.",
+  hi:["Prices so low I should be arrested! Again!","Everything works. Mostly. Ninety-day warranty on the box.","You look like a man who needs to know when the cops are coming.","Car phone! In a car! It's the future, my friend!"],
+  sold:["SOLD! Batteries not included. Okay, included. For you.","Crazy deal, crazy guy, crazy you!","Pleasure. Don't tell anybody what you paid, they'll think I'm nuts."],
+  poor:["Even crazy has limits, pal.","Come back with real money and I'll go INSANE on you."],
+  bye:["Stay crazy!","Tell your friends! Not the cop friends!","Come back, I got VCRs coming in Tuesday."]},
+ clinic:{name:"DOC FEELGOOD'S",sub:'PHARMACY · PATCH-UPS · NO PAPERWORK',who:"DR. MAXWELL 'DOC FEELGOOD' GOODE",short:'DOC FEELGOOD',npc:'doc',what:'PHARMACY',col:'#7dff9a',
+  intro:"Doc Feelgood. Board certified, more or less. Something for the pain, something for the nerves, something for when you should be dead. Cash, no names.",
+  hi:["Back again? Let me guess. You fell on some bullets.","Open wide. Kidding. I don't do teeth.","Take two of these and don't call me in the morning.","My waiting room's empty. My best customers don't wait."],
+  sold:["Next job only. After that you're on your own again.","There you go. Don't mix it with anything. Or do, I'm not your mother.","Good choice. The dead ones never come back to complain."],
+  poor:["No money, no medicine. That's the Hippocratic oath, right?","Try the free clinic. They ask a lot of questions."],
+  bye:["Stay healthy. Or at least alive.","Come back in one piece. Or a few, I can work with that.","Doctor's orders: duck."]},
+ arcade:{name:'STARLITE ZONE',sub:'ARCADE · TOKENS · HIGH SCORES',who:'STARLA NOVA',short:'STARLA',npc:'starla',what:'ARCADE',col:'#c9b6f2',
+  intro:"Welcome to the Starlite Zone! I'm Starla. Tokens are twenty bucks a game, high scores go on the board, and the Quickdraw jackpot hasn't been hit all summer.",
+  hi:["Back for the jackpot? Everybody's back for the jackpot.","The kids say you're fast. Prove it.","Quickdraw '86, best cabinet in Florida. Don't hit the screen.","No running, no smoking, no shooting. Real guns, I mean."],
+  sold:["Good luck, gunslinger.","Insert token. Breathe. Draw.","Machine's warm. Go get it."],
+  poor:["Twenty bucks a game, hon. Come back with twenty bucks.","Even the kids have quarters."],
+  bye:["See you, space cowboy.","Come back and beat your score!","Game over, man. Come back soon."]}};
+const MALL_MODES=['jewel','furn','realty','tailor','elec','clinic','arcade'],mallMode=()=>MALL_MODES.includes(storeMode);
 /* investment property from Sunshine Realty: each one pays rent after every finished job (payout in index.html calls mallRent) */
 const MALL_PROPS=[
  {k:'laundro',name:'SUDS-O-RAMA LAUNDROMAT',price:15000,rent:500,desc:'Twenty coin machines on Collins. Very clean money.'},
@@ -67,7 +87,7 @@ function mallSetup(g){dealerSetup(g);const D=g.dealer,O=1;
  /* furniture showroom (north half): counter, living set, bedroom set */
  R(41.5,9.95,4.0,0.7);R(37.5,13.4,3.0,1.1);R(41.7,13.5,2.2,2.4);
  /* tailor (south half): Felix's cutting table, the mannequins, the clothes rail, the mirror */
- R(39.5,19.7,3.6,0.9);for(const [x,z] of MALL_MANNEQ)R(x,z,0.6,0.6);R(43.4,22.6,0.6,4.2);
+ R(39.5,19.7,3.6,0.9);for(const [x,z] of MALL_MANNEQ)R(x,z,0.6,0.6);R(43.4,22.6,0.6,4.2);R(41.4,22.4,0.7,0.7);
  /* atrium: escalators, landing posts, fountain planters, corner gardens, pool benches */
  for(const ex of MALL_ESC)R(ex,20.5,2.0,7.0);
  for(const [x,z] of MALL_PLANTERS)R(x,z,1.3,1.3);
@@ -100,7 +120,9 @@ const MALL_CHAIRS=[[0.78,0],[-0.78,0],[0,0.78],[0,-0.78]];
 const MALL_DINERS=[[0,0],[0,2],[1,1],[1,3],[2,0],[3,2],[3,1],[4,0],[4,3],[5,1],[5,2]];
 function mallTargets(g,t){for(const n of g.mall.keepers){const s=MALL_SHOPS[n.shop];t.push({k:'shop',shop:n.shop,x:n.x,z:n.z,r:2.9,lbl:'TALK TO '+s.short+' · '+s.what});}
  const O=1,OZ=O+MALL_DZ;t.push({k:'shop',shop:'jewel',x:8.5+O,z:14.9+OZ,r:1.6,lbl:'GOLD COAST JEWELERS · THE CASE'});t.push({k:'shop',shop:'furn',x:37.5+O,z:14.4+OZ,r:1.6,lbl:'CASA BONITA · LOOK AROUND'});t.push({k:'shop',shop:'tailor',x:37.6+O,z:21.5+OZ,r:1.5,lbl:'FONTAINE TAILORING · THE RAIL'});
- t.push({k:'dir',x:16.6+O,z:26.0+OZ,r:1.5,lbl:'MALL DIRECTORY'});}
+ t.push({k:'dir',x:16.6+O,z:26.0+OZ,r:1.5,lbl:'MALL DIRECTORY'});
+ /* the escalators go up to level 2 (upstairs.js) */
+ MALL_ESC.forEach((ex,i)=>t.push({k:'up',fn:()=>mallRide('up',i),x:ex+O,z:25.0+OZ,r:1.3,lbl:'RIDE UP · LEVEL 2: ELECTRONICS · ARCADE · CLINIC'}));}
 function mallHello(g){if(!g||!g.mall)return;banner(MALL_NAME,'Jewelry · suits · furniture · real estate · Victory Motors');}
 function mallDirectory(){const g=G;if(!g||!g.player)return;sfx('blip');popup(g.player.x,g.player.z-0.4,'WEST: JEWELRY · REALTY   EAST: FURNITURE · TAILOR   AT THE BACK: VICTORY MOTORS','#2de2e6');}
 /* shoppers wander the atrium only, and walk around the planters and benches */
@@ -115,6 +137,9 @@ function mallLook(k){const hx=v=>[(v>>16&255)/255,(v>>8&255)/255,(v&255)/255];
  if(k==='jeweler')return{calm:1,skin:hx(0xd8a07a),jacket:hx(0xf6d6be),shirt:hx(0x2a8f8a),torsoTile:32,pants:hx(0xf0d0b8),shoes:hx(0xc8aa82),hs:'big',hair:hx(0x1a1210),chain:true,medallion:true,watch:true,bling:true,aviators:true,bw:1.0,bd:1.0,bh:0.98};
  if(k==='tailor')return{calm:1,skin:hx(0xe0aa80),jacket:hx(0xf4a8be),shirt:hx(0xd98aa4),torsoTile:32,pants:hx(0xf0a4ba),shoes:hx(0xf6f4ee),hs:'big',hair:hx(0x6a4426),stache:true,chain:true,watch:true,aviators:true,bw:1.0,bd:1.0,bh:1.02};
  if(k==='furnman')return{fem:true,calm:1,sleeves:true,pads:true,heels:true,skirt:0.55,skin:hx(0xe0b088),jacket:hx(0xb21c34),shirt:hx(0x161418),pants:hx(0x962032),shoes:hx(0x281418),hs:'big',hair:hx(0xa8784a),chain:true,watch:true,bw:0.86,bd:0.86,bh:1.02};
+ if(k==='ray')return{calm:1,skin:hx(0xe8b890),jacket:hx(0x2de2e6),shirt:hx(0xff6fae),torsoTile:32,pants:hx(0x2a2a33),shoes:hx(0xffffff),hs:'big',hair:hx(0x2a1a10),stache:true,glasses:true,watch:true,bw:1.08,bd:1.1,bh:0.98};
+ if(k==='doc')return{calm:1,skin:hx(0xf0c8a8),jacket:hx(0xf6f6f6),shirt:hx(0x7dff9a),torsoTile:32,pants:hx(0x8a8a96),shoes:hx(0x2a1a14),hs:'slick',hair:hx(0xd8d8d8),glasses:true,watch:true,bw:0.96,bd:0.98,bh:1.02};
+ if(k==='starla')return{fem:true,calm:1,sleeves:true,pads:true,heels:true,skirt:0.5,skin:hx(0xc88a5a),jacket:hx(0x9a5ad8),shirt:hx(0x2de2e6),pants:hx(0x1a1a22),shoes:hx(0xffffff),hs:'big',hair:hx(0x101010),chain:true,bw:0.86,bd:0.86,bh:1.0};
  return{fem:true,calm:1,sleeves:true,pads:true,heels:true,skirt:0.6,skin:hx(0xf0c8a0),jacket:hx(0xff6fae),shirt:hx(0xffffff),pants:hx(0xf0c8a0),shoes:hx(0xffffff),hs:'long',hair:hx(0xf0d070),medallion:true,bw:0.86,bd:0.86,bh:1.02};}
 
 /* ---------- signs: a stroke font for the neon lettering (unit cell, y up) ---------- */
@@ -164,13 +189,7 @@ function drawMall(B,g,LB){LB=LB||MALL_SINK;const T=g.T||0,O=1,OZ=O+MALL_DZ,bx=(x
  for(const [x,z] of MALL_GARDENS){bx(x,0.25,z,2.6,0.5,1.8,[0.86,0.84,0.8]);bx(x,0.51,z,2.5,0.02,1.7,[0.3,0.2,0.1]);palm(x-0.6,z,true);palm(x+0.7,z-0.2,false);shrub(x+0.3,z+0.45,0.8);shrub(x-1.0,z+0.5,0.6);
   bench(x,z+(z<12?1.45:-1.45),z<12?0:Math.PI,false);}
  /* ===== the food court: round tables with chairs, trays of food, two stalls, a sign over the way in ===== */
- for(const [x,z] of MALL_TABLES){bx(x,0.04,z,0.5,0.08,0.5,CH);bx(x,0.38,z,0.08,0.7,0.08,CH);for(let k=0;k<8;k++)bx(x,0.74,z,1.0,0.04,0.42,[0.97,0.97,0.98],false,k*Math.PI/8);
-  bx(x,0.765,z,0.9,0.012,0.9*0.4,[1,0.45,0.7],false,0.3);
-  MALL_CHAIRS.forEach(([dx,dz],k)=>{const cx=x+dx,cz=z+dz,ry=Math.atan2(dx,dz);const c=Math.cos(ry),sn=Math.sin(ry),P=(ox,y,oz,sx,sy,sz,col)=>B.box(TRS(cx+O+ox*c+oz*sn,y,cz+OZ-ox*sn+oz*c,ry,sx,sy,sz),col);
-   P(0,0.44,0,0.44,0.05,0.42,k%2?CYAN.map(v=>v*0.8):PINK.map(v=>v*0.85));P(0,0.72,0.2,0.44,0.5,0.04,k%2?CYAN.map(v=>v*0.8):PINK.map(v=>v*0.85));for(const [lx,lz] of [[-0.18,-0.17],[0.18,-0.17],[-0.18,0.17],[0.18,0.17]])P(lx,0.21,lz,0.03,0.42,0.03,CH);});
-  /* trays: a red tray, a paper cup with a straw, a pizza slice or a taco basket */
-  for(let k=0;k<2;k++){const tx=x+(k?0.2:-0.22),tz=z+(k?-0.18:0.16),r=(x*3+z+k)%3;bx(tx,0.775,tz,0.34,0.02,0.26,[0.85,0.12,0.15],false,k);bx(tx+0.09,0.85,tz-0.05,0.07,0.14,0.07,k?[1,0.85,0.2]:[1,1,1]);bx(tx+0.09,0.95,tz-0.05,0.01,0.1,0.01,PINK);
-   if(r===0)bx(tx-0.06,0.79,tz+0.03,0.16,0.012,0.12,[1,0.75,0.3],false,0.6);else if(r===1){bx(tx-0.06,0.8,tz+0.03,0.14,0.04,0.1,[0.95,0.85,0.5]);bx(tx-0.06,0.83,tz+0.03,0.1,0.02,0.06,[0.35,0.7,0.25]);}else bx(tx-0.06,0.8,tz+0.03,0.12,0.04,0.12,[0.7,0.35,0.15]);}}
+ drawMallTables(B,O,OZ);
  for(const st of MALL_STALLS)drawMallStall(B,st,O,OZ);
  mallSign(B,22.5+O,3.2,25.7+OZ,['FOOD COURT'],[1,0.8,0.3],0.36,PINK);
  /* escalators rising north to a closed upper level */
@@ -180,10 +199,10 @@ function drawMall(B,g,LB){LB=LB||MALL_SINK;const T=g.T||0,O=1,OZ=O+MALL_DZ,bx=(x
    B.box(A.mul(A.mul(A.T(ex+O+s*0.72,yt/2+0.84,(zs+zt)/2+OZ),A.RX(an)),A.S(0.12,0.07,hl+0.3)),DK);}
   const n=14,off=(T*0.35)%1;for(let i=0;i<n;i++){const u=(i+off)/n,y=u*yt,z=zs-u*L;bl(ex,y+0.02,z,1.3,0.04,0.36,[0.25,0.25,0.28]);bl(ex,y+0.045,z+0.16,1.3,0.012,0.03,[1,0.85,0.2],true);}
   bx(ex,0.02,zs+0.4,1.5,0.04,0.8,[0.5,0.5,0.55]);
-  /* the landing up top: a balcony stub on two columns and the shutter of the closed upper level */
-  bx(ex,yt-0.1,zt-0.7,2.2,0.2,1.4,[0.9,0.9,0.92]);for(const s of [-1,1])bx(ex+s*0.95,(yt-0.2)/2,zt-0.7,0.2,yt-0.2,0.2,WH);
-  bx(ex,yt+0.45,zt-1.38,2.2,0.08,0.04,CH);for(let i=0;i<5;i++)bx(ex-0.9+i*0.45,yt+0.22,zt-1.38,0.03,0.45,0.03,CH);bx(ex,yt+0.6,zt-1.42,2.2,1.2,0.04,[0.5,0.52,0.56]);for(let i=0;i<8;i++)bx(ex,yt+0.08+i*0.15,zt-1.4,2.16,0.015,0.01,[0.36,0.38,0.42]);
-  mallSign(B,ex+O,yt+1.2,zt-1.3+OZ,['LEVEL 2','OPENING 1987'],CYAN,0.28,PINK);}
+  /* the landing up top: a balcony stub on two columns with glass rails, and level 2 opening up behind it (upstairs.js) */
+  bx(ex,yt-0.1,zt-0.7,2.2,0.2,1.4,[0.9,0.9,0.92]);for(const s of [-1,1]){bx(ex+s*0.95,(yt-0.2)/2,zt-0.7,0.2,yt-0.2,0.2,WH);bx(ex+s*1.05,yt+0.5,zt-0.7,0.04,0.8,1.4,[0.6,0.85,0.95],true);bx(ex+s*1.05,yt+0.92,zt-0.7,0.08,0.06,1.4,CH);}
+  bx(ex,yt+0.02,zt-1.45,2.4,0.24,0.1,DK);bx(ex,yt+0.15,zt-1.39,2.4,0.03,0.02,CYAN,true);
+  mallSign(B,ex+O,yt+1.3,zt-1.3+OZ,['LEVEL 2',ex<22?'ELECTRONICS · ARCADE':'ARCADE · CLINIC'],CYAN,0.28,PINK);}
  /* lamps and shoppers' trash cans */
  for(const [x,z] of [[17,7.6],[28,7.6],[15.6,16.5],[29.4,16.5],[12.9,17.6],[32.1,17.6]])lamp(x,z);
  for(const [x,z] of [[21,15.6],[24,15.6]]){bx(x,0.35,z,0.4,0.7,0.4,[0.85,0.85,0.88]);bx(x,0.72,z,0.44,0.05,0.44,GOLDC);}
@@ -252,6 +271,15 @@ function drawMall(B,g,LB){LB=LB||MALL_SINK;const T=g.T||0,O=1,OZ=O+MALL_DZ,bx=(x
   bx(43.4,1.6,22.6,0.05,0.05,4.2,CH);for(const zz of [20.5,24.7])bx(43.4,0.8,zz,0.05,1.6,0.05,CH);
   const RAIL=[[0.98,0.77,0.67],[1,0.55,0.75],[0.63,0.91,0.81],[0.55,0.75,1],[0.96,0.96,0.93],[0.78,0.66,0.93],[1,0.85,0.45],[0.2,0.2,0.3],[0.95,0.6,0.5],[0.5,0.9,0.95]];
   RAIL.forEach((c,i)=>bx(43.35,1.12,20.8+i*0.38,0.36,0.9,0.12,c));
+  /* the SHADES tower: a mirrored column on a chrome base, five shelves of sunglasses facing the shop floor, a small pink neon word on top */
+  {const tx=41.4,tz=22.4,LN={amber:[0.55,0.32,0.08],black:[0.06,0.06,0.08],blue:[0.25,0.6,1],pink:[1,0.4,0.65],smoke:[0.25,0.25,0.3]},FR={gold:[1,0.8,0.3],black:[0.08,0.08,0.1],white:[0.97,0.97,0.97]},SK=Object.keys(SHADES);
+   bx(tx,0.05,tz,0.66,0.1,0.66,CH);bx(tx,1.0,tz,0.5,1.8,0.5,[0.14,0.11,0.18]);bx(tx,1.0,tz+0.252,0.42,1.7,0.01,[0.2,0.16,0.26]);for(const e of [-0.22,0.22])bx(tx+e,1.0,tz+0.256,0.015,1.7,0.015,[1,0.35,0.65],true);
+   for(let r=0;r<5;r++){const y=0.45+r*0.32;for(const sd of [-1,1]){const fz=sd>0?tz+0.27:tz,fx=sd>0?tx:tx+0.27;
+     bx(sd>0?tx:tx+0.3,y-0.06,sd>0?tz+0.3:tz,sd>0?0.5:0.1,0.015,sd>0?0.1:0.5,CH);
+     for(let k=0;k<2;k++){const S=SHADES[SK[(r*2+k+(sd>0?0:1))%SK.length]],o=-0.12+k*0.24,ln=LN[S.lens],fr=FR[S.frame];
+      if(sd>0){bx(tx+o-0.05,y,fz+0.04,0.085,0.06,0.012,ln,S.lens==='blue'||S.lens==='pink');bx(tx+o+0.05,y,fz+0.04,0.085,0.06,0.012,ln,S.lens==='blue'||S.lens==='pink');bx(tx+o,y+0.038,fz+0.044,0.2,0.016,0.012,fr,S.frame!=='black');}
+      else{bx(fx+0.04,y,tz+o-0.045,0.01,0.045,0.07,ln);bx(fx+0.04,y,tz+o+0.045,0.01,0.045,0.07,ln);bx(fx+0.042,y+0.03,tz+o,0.01,0.012,0.19,fr);}}}}
+   bx(tx,2.02,tz,0.6,0.24,0.6,[0.08,0.04,0.1]);mallWord(B,'SHADES',tx+O,1.94,tz+0.31+OZ,0.11,[1,0.35,0.65]);}
   /* the three-way mirror in the corner and a stool for fittings */
   bx(43.5,1.0,18.3,0.06,1.9,0.8,[0.75,0.85,0.95],true);bx(43.2,1.0,17.75,0.4,1.9,0.06,[0.7,0.8,0.9]);bx(42.4,0.25,18.6,0.4,0.5,0.4,[1,0.55,0.75]);
   palm(35.0,25.3,false);palm(43.3,25.3,true);}
@@ -265,6 +293,16 @@ function drawMall(B,g,LB){LB=LB||MALL_SINK;const T=g.T||0,O=1,OZ=O+MALL_DZ,bx=(x
  for(const [x,z,t] of [[2.6,4.2,1],[43.4,4.2,1],[2.6,12.2,0],[43.4,12.2,0]])drawPalm(B,x,z,!!t,x+z);}
 
 /* glass shopfronts: chrome posts at every cell edge, a header rail, a kick plate and pale streaks for the panes (see-through from above) */
+/* the food court's tables, chairs and trays (old layout coords); upstairs draws them again far below through the atrium opening */
+function drawMallTables(B,O,OZ){const bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x+O,y,z+OZ,ry||0,sx,sy,sz),c,!!em),CH=[0.78,0.8,0.84],PINK=[1,0.3,0.75],CYAN=[0.2,0.9,1];
+ for(const [x,z] of MALL_TABLES){bx(x,0.04,z,0.5,0.08,0.5,CH);bx(x,0.38,z,0.08,0.7,0.08,CH);for(let k=0;k<8;k++)bx(x,0.74,z,1.0,0.04,0.42,[0.97,0.97,0.98],false,k*Math.PI/8);
+  bx(x,0.765,z,0.9,0.012,0.9*0.4,[1,0.45,0.7],false,0.3);
+  MALL_CHAIRS.forEach(([dx,dz],k)=>{const cx=x+dx,cz=z+dz,ry=Math.atan2(dx,dz);const c=Math.cos(ry),sn=Math.sin(ry),P=(ox,y,oz,sx,sy,sz,col)=>B.box(TRS(cx+O+ox*c+oz*sn,y,cz+OZ-ox*sn+oz*c,ry,sx,sy,sz),col);
+   P(0,0.44,0,0.44,0.05,0.42,k%2?CYAN.map(v=>v*0.8):PINK.map(v=>v*0.85));P(0,0.72,0.2,0.44,0.5,0.04,k%2?CYAN.map(v=>v*0.8):PINK.map(v=>v*0.85));for(const [lx,lz] of [[-0.18,-0.17],[0.18,-0.17],[-0.18,0.17],[0.18,0.17]])P(lx,0.21,lz,0.03,0.42,0.03,CH);});
+  /* trays: a red tray, a paper cup with a straw, a pizza slice or a taco basket */
+  for(let k=0;k<2;k++){const tx=x+(k?0.2:-0.22),tz=z+(k?-0.18:0.16),r=(x*3+z+k)%3;bx(tx,0.775,tz,0.34,0.02,0.26,[0.85,0.12,0.15],false,k);bx(tx+0.09,0.85,tz-0.05,0.07,0.14,0.07,k?[1,0.85,0.2]:[1,1,1]);bx(tx+0.09,0.95,tz-0.05,0.01,0.1,0.01,PINK);
+   if(r===0)bx(tx-0.06,0.79,tz+0.03,0.16,0.012,0.12,[1,0.75,0.3],false,0.6);else if(r===1){bx(tx-0.06,0.8,tz+0.03,0.14,0.04,0.1,[0.95,0.85,0.5]);bx(tx-0.06,0.83,tz+0.03,0.1,0.02,0.06,[0.35,0.7,0.25]);}else bx(tx-0.06,0.8,tz+0.03,0.12,0.04,0.12,[0.7,0.35,0.15]);}}
+}
 /* a food stall: counter facing the court (side 1 = faces east), a back wall with shelves, a striped awning, the name board facing the camera */
 function drawMallStall(B,st,O,OZ){const {x,z,side}=st,bx=(px,y,pz,sx,sy,sz,c,em)=>B.box(TRS(px+O,y,pz+OZ,0,sx,sy,sz),c,!!em),CH=[0.78,0.8,0.84],WH=[0.97,0.96,0.94];
  bx(x,0.5,z,0.9,1.0,2.6,WH);bx(x+side*0.02,1.02,z,1.0,0.05,2.7,CH);bx(x+side*0.46,0.55,z,0.02,0.6,2.5,st.col.map(v=>v*0.8));
@@ -306,7 +344,7 @@ function paintKeeperFace(cv,shop){if(!cv)return;delete cv.dataset.done;if(MALL_P
 function mallSay(t){mallSayTxt=t;const el=$('stSay');if(el)el.textContent=t;}
 function openMallShop(shop){if(state!=='play'||!G||!MALL_SHOPS[shop])return;const p=myProg();arm();if(!p.seen)p.seen={};const s=MALL_SHOPS[shop],first=!p.seen['mall_'+shop];p.seen['mall_'+shop]=1;saveProg();
  storeMode=shop;storeFocus=0;G.say=null;state='store';show('sStore');sfx('ring');mallSay(first?s.intro:pick(s.hi));paintKeeperFace($('stFace'),shop);renderStore('');}
-function closeMallShop(){const shop=storeMode;state='play';show(null);storeMode='shop';const g=G;if(!g||!g.mall)return;const n=g.mall.keepers.find(q=>q.shop===shop);if(n)popup(n.x,n.z,pick(MALL_SHOPS[shop].bye),'#ffe9a8');}
+function closeMallShop(){const shop=storeMode;state='play';show(null);storeMode='shop';const g=G,M=g&&(g.mall||g.up2);if(!M)return;const n=M.keepers.find(q=>q.shop===shop);if(n)popup(n.x,n.z,pick(MALL_SHOPS[shop].bye),'#ffe9a8');}
 function mallCard(data,name,desc,act,on,dim,i){return `<button class="scard${on?' on':''}" ${data}${dim?' style="opacity:.55"':''}><div class="pn">${name}</div><div class="pd">${desc}</div><div class="sp">${act}${i<9?`<span class="kbhint"> (${i+1})</span>`:''}</div></button>`;}
 function renderMallShop(msg){const p=myProg(),s=MALL_SHOPS[storeMode],sec=(id,on)=>{$(id).style.display=on?'':'none';$(id+'H').style.display=on?'':'none';};
  $('stWallet').textContent='$'+fmt(p.wallet);$('stOwed').textContent=p.debt>0?'OWED TO McWEY $'+fmt(p.debt):'DEBT CLEARED';
@@ -315,11 +353,14 @@ function renderMallShop(msg){const p=myProg(),s=MALL_SHOPS[storeMode],sec=(id,on
  if(storeMode==='jewel'){sec('stCars',1);sec('stGold',0);sec('stHome',0);$('stCarsH').textContent='IN THE CASE · WHAT YOU WEAR SHOWS ON YOU';
   $('stCars').innerHTML=Object.keys(JEWEL).map(k=>{const j=JEWEL[k],own=!!p.jewel[k],on=jewelWorn(p,k);return mallCard(`data-jw="${k}"`,j.name,j.desc,on?'WEARING · TAKE OFF':own?'IN THE BOX · WEAR':'BUY $'+fmt(j.price),on,false,n++);}).join('');}
  else if(storeMode==='tailor'){sec('stCars',1);sec('stGold',0);sec('stHome',0);const cur=mySuit();$('stCarsH').textContent='MADE TO MEASURE · WHAT YOU WEAR SHOWS ON YOU';
-  $('stCars').innerHTML=SUITKEYS.filter(k=>SUITS[k].shop).map(k=>{const S=SUITS[k],own=suitOK(p,k),on=cur===k;return mallCard(`data-ts="${k}"`,S.name,S.desc,on?'WEARING · BACK TO SIGNATURE':own?'IN THE WARDROBE · WEAR':'BUY $'+fmt(S.price),on,false,n++);}).join('');}
+  $('stCars').innerHTML=SUITKEYS.filter(k=>SUITS[k].shop).map(k=>{const S=SUITS[k],own=suitOK(p,k),on=cur===k;return mallCard(`data-ts="${k}"`,S.name,S.desc,on?'WEARING · BACK TO SIGNATURE':own?'IN THE WARDROBE · WEAR':'BUY $'+fmt(S.price),on,false,n++);}).join('');
+  sec('stGold',1);$('stGoldH').textContent='SUNGLASSES · ONE PAIR ON AT A TIME';const so=(p.shades&&p.shades.own)||{},sw=shadesOn(p);
+  $('stGold').innerHTML=Object.keys(SHADES).map(k=>{const it=SHADES[k];return mallCard(`data-sg="${k}"`,it.name,it.desc,sw===k?'WEARING · TAKE OFF':so[k]?'IN YOUR POCKET · WEAR':'BUY $'+fmt(it.price),sw===k,false,n++);}).join('');}
  else if(storeMode==='furn'){const ids=['stCars','stGold','stHome'];ids.forEach((id,t)=>{sec(id,1);const own=(p.homes||[0]).includes(t),here=(p.home||0)===t,f=furnAt(t);
    $(id+'H').textContent=HOMEDEF[t].name+(here?' · YOU LIVE HERE':own?' · YOURS':' · NOT YOURS YET');
    $(id).innerHTML=own?catOf(t).filter(it=>!MALL_NOFURN.includes(it.k)).map(it=>mallCard(`data-mf="${t}:${it.k}"`,it.name,it.desc,f[it.k]?'DELIVERED':'BUY $'+fmt(it.price),!!f[it.k],false,n++)).join('')
     :`<div class="pd">Buy it at Sunshine Realty first, then Lola's boys deliver.</div>`;});}
+ else if(storeMode==='elec'||storeMode==='clinic'||storeMode==='arcade')up2Render(storeMode,p,sec);
  else{sec('stCars',1);sec('stGold',1);sec('stHome',0);const pr=mallProps(p);$('stCarsH').textContent='HOMES · YOU WAKE UP IN THE ONE YOU LIVE IN';
   $('stCars').innerHTML=HOMEDEF.map((h,i)=>{const own=(p.homes||[0]).includes(i),cur=(p.home||0)===i,lock=h.needs&&!p[h.needs];return mallCard(`data-ho="${i}"`,h.name,h.desc,cur?'LIVING HERE':own?'MOVE BACK IN':lock?'AFTER THE SHARK IS DEAD':'BUY $'+fmt(h.price),cur,lock,n++);}).join('');
   const rent=MALL_PROPS.reduce((a,q)=>a+(pr[q.k]?q.rent:0),0);$('stGoldH').textContent='INVESTMENT PROPERTY · RENT AFTER EVERY JOB'+(rent?' · $'+fmt(rent)+' A JOB · EARNED $'+fmt(p.rentTot||0):'');
@@ -329,9 +370,23 @@ function furnAt(t){const p=myProg();p.furn=p.furn||{};return p.furn[t]||(p.furn[
 function mallPoor(){sfx('blip');mallSay(pick(MALL_SHOPS[storeMode].poor));return renderStore('Not enough cash. Come back richer.');}
 function buyFurnAt(t,k){const p=myProg(),it=catOf(t).find(q=>q.k===k);if(!it||MALL_NOFURN.includes(k)||!(p.homes||[0]).includes(t))return;const f=furnAt(t);if(f[k])return renderStore('Already delivered.');
  if(p.wallet<it.price)return mallPoor();p.wallet-=it.price;f[k]=1;saveProg();sfx('cash');mallSay(pick(MALL_SHOPS.furn.sold));renderStore('DELIVERED TO '+HOMEDEF[t].name+': '+it.name+'.');}
+/* Felix's sunglasses (the SHADES rack in Fontaine Tailoring): own any number, wear one pair at a time; p.shades={own:{k:1},on:k}.
+   look: lens/frame colours and shape for the PS2 model (models.js sunB) and the classic model (index.html applyShadeLooks) */
+const SHADES={
+ avi:{name:'GOLD COAST AVIATORS',price:1200,desc:'Gold wire, amber teardrops. Every TV detective owns a pair.',lens:'amber',frame:'gold',shape:'avi'},
+ way:{name:'NIGHT SHIFT CLASSICS',price:800,desc:'Thick black frames, black lenses. Wear them at night. Especially at night.',lens:'black',frame:'black',shape:'way'},
+ wrap:{name:'KEY BISCAYNE WRAPS',price:1500,desc:'One mirrored blue visor that wraps round your head. Speedboat approved.',lens:'blue',frame:'black',shape:'wrap'},
+ round:{name:'FLAMINGO ROUNDS',price:1000,desc:'Little round pink lenses on a gold bridge. Very art school.',lens:'pink',frame:'gold',shape:'round'},
+ shield:{name:'STARLITE SHIELDS',price:2000,desc:'White flat-top frames, smoke lenses. Seen at every rooftop party on the beach.',lens:'smoke',frame:'white',shape:'way'}};
+function shadesOn(p){const s=p&&p.shades;return s&&s.on&&SHADES[s.on]&&s.own&&s.own[s.on]?s.on:null;}
+function buyShades(k){const p=myProg(),it=SHADES[k];if(!it)return;const s=p.shades=p.shades||{};s.own=s.own||{};const id=rideId();
+ if(s.own[k]){s.on=s.on===k?null:k;saveProg();sfx('pick');applyJewelLooks();PS2C.rebuild(id);return renderStore(s.on?'You slide on the '+it.name+'.':'The '+it.name+' go in your top pocket.');}
+ if(p.wallet<it.price)return mallPoor();p.wallet-=it.price;s.own[k]=1;s.on=k;saveProg();sfx('cash');mallSay(pick(MALL_SHOPS.tailor.shades));applyJewelLooks();PS2C.rebuild(id);renderStore('SOLD: '+it.name+'. '+it.desc);}
 /* the tailor: buying a suit puts it on; clicking the one you wear goes back to your signature look, any other owned one swaps */
 function buySuit(k){const p=myProg(),S=SUITS[k];if(!S||!S.shop)return;p.tailor=p.tailor||{};const id=rideId();
  if(p.tailor[k]){p.suit=mySuit()===k?'default':k;saveProg();sfx('pick');PS2C.applySuit(id);return renderStore(p.suit===k?'You change into the '+S.name+'.':'Back in your signature look.');}
  if(p.wallet<S.price)return mallPoor();p.wallet-=S.price;p.tailor[k]=1;p.suit=k;saveProg();sfx('cash');mallSay(pick(MALL_SHOPS.tailor.sold));PS2C.applySuit(id);renderStore('MADE TO MEASURE: '+S.name+'. '+S.desc+'.');}
 function buyProp(k){const p=myProg(),q=MALL_PROPS.find(o=>o.k===k),pr=mallProps(p);if(!q)return;if(pr[k])return renderStore('Already yours. The rent comes in after every job.');
  if(p.wallet<q.price)return mallPoor();p.wallet-=q.price;pr[k]=1;saveProg();sfx('cash');mallSay(pick(MALL_SHOPS.realty.sold));renderStore('SOLD: '+q.name+'. $'+fmt(q.rent)+' rent after every job.');}
+/* sunglasses bought earlier show from the first frame (index.html ran applyJewelLooks before this file loaded) */
+if(typeof applyShadeLooks==='function')applyShadeLooks();
