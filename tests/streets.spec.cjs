@@ -11,7 +11,9 @@ test('streets: hub streets are a run of different buildings, the lobby has its c
       const L = G.lots || [], names = L.map(l => l.name), W = G.W;
       // no generic window-box cell is left on the street, and no lot is narrower than two cells
       let generic = 0; for (let i = 0; i < W * G.H; i++) if (G.solid[i] && G.wallT[i] === 33 && G.tint[i] >= 0 && !G.wallX[i]) generic++;
-      out[h] = { kinds: new Set(L.map(l => l.t)).size >= 4, uniqueNames: new Set(names).size === names.length, generic, narrow: L.filter(l => l.x1 - l.x0 < 1).length, kerb: G.kerb.length > 4 };
+      // the venues (mall, Nine's, the club) face the camera onto their own sidewalk and parking lay-by (venues.js) instead of a street of shops
+      out[h] = h === 'drive' ? { kinds: new Set(L.map(l => l.t)).size >= 4, uniqueNames: new Set(names).size === names.length, generic, narrow: L.filter(l => l.x1 - l.x0 < 1).length, kerb: G.kerb.length > 4 }
+        : { generic, front: !!(G.lot && G.park && Math.abs(G.park.z - G.lot.bayZ) < 1) };
     }
     loadHub('lobby');
     const kinds = G.npcs.map(n => n.kind);
@@ -23,9 +25,9 @@ test('streets: hub streets are a run of different buildings, the lobby has its c
     return out;
   })).toEqual({
     drive: { kinds: true, uniqueNames: true, generic: 0, narrow: 0, kerb: true },
-    mall: { kinds: true, uniqueNames: true, generic: 0, narrow: 0, kerb: true },
-    bunker: { kinds: true, uniqueNames: true, generic: 0, narrow: 0, kerb: true },
-    club: { kinds: true, uniqueNames: true, generic: 0, narrow: 0, kerb: true },
+    mall: { generic: 0, front: true },
+    bunker: { generic: 0, front: true },
+    club: { generic: 0, front: true },
     lobby: { guests: 0, cast: 10, talk: true, moved: true }
   });
 });

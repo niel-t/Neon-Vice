@@ -1194,7 +1194,7 @@ function buildStatic(g){const B=g.staticB;B.reset();const W=g.W,H=g.H;
   if(!any){for(const [ox,oz] of [[-1,-1],[1,-1],[-1,1],[1,1]]){const nx=x+ox,nz=z+oz;if(nx>=0&&nz>=0&&nx<W&&nz<H&&!g.solid[nz*W+nx])any=true;}}
   B.room=0;const tt=g.topX&&g.topX[i]||g.topT[i];if(any||tt)B.quad([[x,h,z+1],[x+1,h,z+1],[x+1,h,z],[x,h,z]],0,1,0,tt?TUV[tt]:WUV,tt?(g.glow[i]===2?[0.85,0.95,1.15]:[1,1,1]):top);
  }
- for(const d of g.deco)drawDeco(B,g,d);drawStreetscape(B,g);if(g.def===HUBS.lobby)drawMcDesk(B,g);if(g.def.hub==='drive'){drawSign(B,g.car.x,g.car.z-0.47);drawEntrance(B,g.car.x,g.car.z-0.5);drawCineSky(B,g);}
+ for(const d of g.deco)drawDeco(B,g,d);drawStreetscape(B,g);venueStatic(B,g);if(g.def===HUBS.lobby)drawMcDesk(B,g);if(g.def.hub==='drive'){drawSign(B,g.car.x,g.car.z-0.47);drawEntrance(B,g.car.x,g.car.z-0.5);drawCineSky(B,g);}
  B.upload(true);}
 function buildRadar(g){const c=document.createElement('canvas');c.width=g.W*4;c.height=g.H*4;const x=c.getContext('2d');
  for(let z=0;z<g.H;z++)for(let xx=0;xx<g.W;xx++){const i=z*g.W+xx;if(g.solid[i]){let edge=false;for(const [a,b] of [[1,0],[-1,0],[0,1],[0,-1]])if(!isSolid(xx+a,z+b))edge=true;if(edge){x.fillStyle='#e07ab4';x.fillRect(xx*4,z*4,4,4);}}
@@ -3121,7 +3121,7 @@ function drawClub(B,g){const T=g.T,st=g.stage,bx=(x,y,z,sx,sy,sz,col,em,ry)=>B.b
  for(const sx of [-0.65,0.65]){for(const z of [fz-0.9,fz-2.0,fz-3.1])bx(ox+sx,0.45,z,0.07,0.9,0.07,GOLD);bx(ox+sx,0.72,fz-2.0,0.03,0.04,2.2,red);}
  bx(ox,0.012,fz-2.5,0.9,0.02,5.0,[0.6,0.03,0.08]);
  for(const x of [3.2,8.6]){bx(x,0.9,24.06,0.9,1.0,0.04,GOLD);bx(x,0.9,24.09,0.76,0.86,0.03,[0.62,0.6,0.68]);}
- drawVenueLot(B,g);
+
  /* the VIP rooms: a red throne, velvet side curtains, a neon heart on the back wall, a gold pole and champagne */
  for(const r of c.rooms){const cx=r.chairX,cz=r.chairZ;
   bx(cx,0.28,cz,0.85,0.28,0.75,[0.65,0.05,0.22]);bx(cx,0.62,cz+0.32,0.85,0.55,0.14,[0.65,0.05,0.22]);

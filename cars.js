@@ -215,13 +215,21 @@ function drawLotCar(B,k,x,z,a){if(k==='mid'){drawCarShape(B,x,z,1,a,null,MIDCAR,
 const DEALER_FONT={V:[[0,1,0.5,0],[0.5,0,1,1]],I:[[0.5,0,0.5,1]],C:[[1,1,0,1],[0,1,0,0],[0,0,1,0]],T:[[0,1,1,1],[0.5,1,0.5,0]],O:[[0,0,1,0],[1,0,1,1],[1,1,0,1],[0,1,0,0]],
  R:[[0,0,0,1],[0,1,1,1],[1,1,1,0.5],[1,0.5,0,0.5],[0.3,0.5,1,0]],Y:[[0,1,0.5,0.5],[1,1,0.5,0.5],[0.5,0.5,0.5,0]],M:[[0,0,0,1],[0,1,0.5,0.45],[0.5,0.45,1,1],[1,1,1,0]],S:[[1,1,0,1],[0,1,0,0.5],[0,0.5,1,0.5],[1,0.5,1,0],[1,0,0,0]]};
 function dealerWord(B,word,cx,y,z,h,col){const w=h*0.62,gap=h*0.32;let x=cx-(word.length*(w+gap)-gap)/2;for(const ch of word){const S=DEALER_FONT[ch];if(S)for(const q of S)strokeBox(B,x+q[0]*w,y+q[1]*h,x+q[2]*w,y+q[3]*h,z,h*0.11,col);x+=w+gap;}}
-function drawDealer(B,g){const D=g.dealer,T=g.T||0,PINK=[1,0.3,0.75],CYAN=[0.2,0.9,1];if(g.mall)drawMall(B,g);
+/* the turning showroom cars: each car is built once at the origin and copied rotated every frame (rebuilding a lofted car is ~16k vertices of maths) */
+const LOTCAR_CACHE={};
+function lotCarSpin(B,k,x,z,a){const key=k+'|'+(DEALER_CARS[k]||k==='mid'?'':rideId());let src=LOTCAR_CACHE[key];
+ if(!src){src=new Batch();src.round=0.35;drawLotCar(src,k,0,0,0);LOTCAR_CACHE[key]=src;}
+ batchCopyYaw(B,src,x,z,a);}
+function batchCopyYaw(B,src,x,z,a){const n=src.n;if(!n)return;B.ensure(n);const S=src.f,D=B.f,V=VSTRIDE,o0=B.n*V,c=Math.cos(a),s=Math.sin(a);
+ D.set(S.subarray(0,n*V),o0);
+ for(let i=0;i<n;i++){const o=o0+i*V,px=D[o],pz=D[o+2],nx=D[o+3],nz=D[o+5];D[o]=x+c*px+s*pz;D[o+2]=z-s*px+c*pz;D[o+3]=c*nx+s*nz;D[o+5]=-s*nx+c*nz;}
+ if(src.bl)B.bl=true;B.n+=n;}
+function drawDealer(B,g){const D=g.dealer,T=g.T||0,PINK=[1,0.3,0.75],CYAN=[0.2,0.9,1];if(g.mall)drawMall(MALL_SINK,g,B);
  for(const s of D.slots){
   /* turntable: a low dais with a neon rim, the car turning slowly on top */
   for(let k=0;k<8;k++)B.box(TRS(s.x,0.05,s.z,k*Math.PI/8,2.7,0.1,1.12),[0.85,0.85,0.88]);
   for(let k=0;k<16;k++){const an=k*Math.PI/8;B.box(TRS(s.x+Math.cos(an)*1.36,0.09,s.z+Math.sin(an)*1.36,-an+Math.PI/2,0.56,0.03,0.04),k%2?PINK:CYAN,true);}
-  B.round=0.35;
-  drawLotCar(B,s.k,s.x,s.z,s.a0+T*0.3);
+  lotCarSpin(B,s.k,s.x,s.z,s.a0+T*0.3);
   /* price stand in front */
   B.box(TRS(s.x+1.15,0.45,s.z+1.25,0,0.04,0.9,0.04),[0.2,0.2,0.22]);B.box(TRS(s.x+1.15,0.95,s.z+1.27,0,0.42,0.28,0.02),[0.98,0.96,0.9]);B.box(TRS(s.x+1.15,1.06,s.z+1.285,0,0.36,0.05,0.01),myProg().cars.includes(s.k)?CYAN:PINK,true)}
  /* the storefront sign inside the glass, and the pylon out on the lot */

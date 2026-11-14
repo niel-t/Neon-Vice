@@ -289,7 +289,7 @@ function drawBunker(B,g){const T=g.T||0,O=1,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(T
  for(const sx of [8.9,13.1])bx(sx,1.2,5.1,0.08,2.4,0.12,ST);
  /* ---- the front door onto the sidewalk (south): the shop's name over it, cyan strips and a red mat ---- */
  bx(19.5,2.3,23.04,4.8,0.66,0.05,[0.06,0.03,0.08]);nineWord(B,"NINE OF NINE'S",20.5,2.1,24.1,0.34,[1.2*fl,0.35*fl,0.85*fl]);bx(19.5,2.58,23.09,4.5,0.03,0.03,CYAN,true);bx(19.5,2.02,23.09,4.5,0.03,0.03,CYAN,true);
- bx(19.5,0.012,23.6,1.2,0.012,0.7,[0.4,0.05,0.11]);drawVenueLot(B,g);
+ bx(19.5,0.012,23.6,1.2,0.012,0.7,[0.4,0.05,0.11]);
  /* ---- showroom: red runner from the door to the counter ---- */
  bx(10.5,0.012,9.2,2.2,0.012,6.4,[0.3,0.03,0.08]);bx(10.5,0.016,9.2,2.0,0.012,6.2,[0.4,0.05,0.11]);for(const sx of [9.45,11.55])bx(sx,0.02,9.2,0.05,0.012,6.2,GOLD);
  /* north wall pegboards either side of the door, handguns and SMGs hung side-on */
