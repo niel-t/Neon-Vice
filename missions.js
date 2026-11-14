@@ -60,6 +60,17 @@ if(typeof LEVELS!=='undefined'&&LEVELS[10]){
    arrivals:{elev:{at:[23.5,12.5]},stairs:{at:[12.5,12.5]}}}
  };
 }
+/* bonus jobs (idea 6): odd jobs on existing maps with a twist that index.html applies after the map loads (applyTwist). They have no
+   index, so they never touch campaign saves or story; their rewards set flags on the character. */
+Object.assign(MISSIONS,{
+ b_pesos:{kind:'bonus',name:'PESOS IS MISSING',base:0,stages:['legacy'],start:'legacy',unlock:{done:'c1'},rewards:[{flag:'pesos_saved'}],rev:1,twist:'pesos',
+  brief:'A new crew moved into the Sunset and somebody grabbed a dog off the street. Brown, red collar, answers to Pesos. Go get him.'},
+ b_kid:{kind:'side',name:"MRS. ORTEGA'S GRANDSON",base:1,stages:['legacy'],start:'legacy',unlock:{done:'c2'},rewards:[{flag:'kid_saved'}],rev:1,twist:'kid',
+  brief:'They are holding Mrs. Ortega\'s grandson at the Flamingo. You have one minute before they decide he is not worth the trouble.'},
+ b_ghost:{kind:'bonus',name:"NINE'S WAREHOUSE",base:5,stages:['legacy'],start:'legacy',unlock:{done:'c5'},rewards:[{flag:'nine_ghost'}],rev:1,twist:'ghost',
+  brief:'Nine wants the mall cleared without the alarm going off. First guard who sees you calls everyone in. Stay unseen and the bonus is yours.'},
+ b_lex:{kind:'story',name:"LEX'S FAVOUR",base:9,stages:['legacy'],start:'legacy',unlock:{all:[{flag:'lex_spared'},{done:'c8'}]},rewards:[{flag:'lex_favour'}],rev:1,twist:'lex',
+  brief:'Lex is calling in the favour: another of Kade\'s parties. He is on the radio and he can see every guard in the building.'}});
 const ownKey=(o,k)=>typeof k==='string'&&Object.prototype.hasOwnProperty.call(o,k);
 const missionId=i=>'c'+i;
 const missionKnown=id=>ownKey(MISSIONS,id);
