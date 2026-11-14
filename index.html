@@ -784,6 +784,7 @@ const PROG=(()=>{const o=readSave('nb86prog');for(const c of CHARS){
  for(const k of ['jewel','seen','furn','rel','wflags','mast','mods','rep','carx','props','tailor'])if(p[k]!=null)savedField('nb86prog',p,k,{},saveObject);
  if(p.cars!=null)savedField('nb86prog',p,'cars',['beater'],Array.isArray);
  if(p.homes!=null)savedField('nb86prog',p,'homes',[0],Array.isArray);
+ if(p.home!=null)savedField('nb86prog',p,'home',0,n=>Number.isInteger(n)&&n>=0&&n<=2&&(p.homes||[0]).includes(n));
  if(p.arm!=null){savedField('nb86prog',p,'arm',{},saveObject);for(const k of ['owned','stock'])savedField('nb86prog',p.arm,k,[],Array.isArray);}
  if(p.kit!=null)savedField('nb86prog',p,'kit',null,kitShape);
  if(p.locker!=null)savedField('nb86prog',p,'locker',null,lockerShape);
