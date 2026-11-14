@@ -281,16 +281,17 @@ function drawRangeHUD(c,g,u,m){const R=g.range,p=g.player;if(!R||!R.on||!p||!p.w
  c.font=PXF(5.5*u);txt(c,(touchMode?'SWITCH: NEXT GUN · RELOAD':padMode?'Y: NEXT GUN · X: RELOAD':'Q: NEXT GUN · R: RELOAD')+(R.list.length>1?' ('+R.list.length+' GUNS)':''),x+8*u,y+54*u,'#e9c7ff','left',5.5*u);
  if(!touchMode&&!padMode&&mouse.active){const cx=mouse.x,cy=mouse.y;c.strokeStyle='#000';c.lineWidth=4;const d=()=>{c.beginPath();c.moveTo(cx-10*u,cy);c.lineTo(cx-3*u,cy);c.moveTo(cx+3*u,cy);c.lineTo(cx+10*u,cy);c.moveTo(cx,cy-10*u);c.lineTo(cx,cy-3*u);c.moveTo(cx,cy+3*u);c.lineTo(cx,cy+10*u);c.stroke();};d();c.strokeStyle='#ffd36b';c.lineWidth=2;d();}}
 /* the bunker's dressing, drawn every frame like the apartments (world coordinates = map + 1) */
-function drawBunker(B,g){const T=g.T||0,O=1,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x+O,y,z+O,ry||0,sx,sy,sz),c,!!em),PINK=[1,0.3,0.75],CYAN=[0.2,0.9,1],RED=[1,0.2,0.25],
+function drawBunker(D,g,F){const B=F===undefined?D:F,T=g.T||0,O=1,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x+O,y,z+O,ry||0,sx,sy,sz),c,!!em),dx=(x,y,z,sx,sy,sz,c,em,ry)=>D.box(TRS(x+O,y,z+O,ry||0,sx,sy,sz),c,!!em),PINK=[1,0.3,0.75],CYAN=[0.2,0.9,1],RED=[1,0.2,0.25],
   BR=[0.42,0.3,0.2],DK=[0.12,0.11,0.13],ST=[0.32,0.33,0.36],OL=[0.27,0.33,0.2],fl=Math.sin(T*1.7)>0.97?0.3:1;
+ /* F: the fixed batch (drawHubDyn builds it once with everything that never moves), false once it is built, undefined to draw it all into D */
  const gun=(t,x,y,z,ry,s,lay)=>drawWeapon(B,A.mul(A.mul(A.mul(A.T(x+O,y,z+O),A.RY(ry)),lay?A.RZ(Math.PI/2):A.T(0,0,0)),A.S(s,s,s)),t);
- /* ---- storefront: the street sign and the shutter tracks ---- */
+ if(B){/* ---- storefront: the street sign and the shutter tracks ---- */
  /* ---- the showroom's back wall: black marble with NINE OF NINE'S in raised gold, like McWey's counter ---- */
  {const r0=B.round;B.round=0;bx(10.5,1.15,6.03,3.7,2.1,0.05,[0.07,0.06,0.08]);for(const y of [0.12,2.18])bx(10.5,y,6.07,3.8,0.05,0.04,MC_GOLD);for(const x of [8.62,12.38])bx(x,1.15,6.07,0.06,2.1,0.04,MC_GOLDD);
   for(let k=0;k<5;k++)bx(8.9+((k*1.37)%1)*3.2,0.4+((k*0.73)%1)*1.5,6.06,0.5,0.004,0.01,[0.3,0.28,0.32]);
   goldText(B,'NINE OF',10.5+O,1.74,6.06+O,0.068);goldText(B,"NINE'S",10.5+O,1.06,6.06+O,0.068);bx(10.5,0.6,6.08,2.6,0.03,0.02,MC_GOLD,true);goldText(B,'9',10.5+O,0.34,6.06+O,0.03);B.round=r0;}
  /* ---- the front door onto the sidewalk (south): the shop's name over it, cyan strips and a red mat ---- */
- bx(19.5,2.3,23.04,4.8,0.66,0.05,[0.06,0.03,0.08]);nineWord(B,"NINE OF NINE'S",20.5,2.1,24.1,0.34,[1.2*fl,0.35*fl,0.85*fl]);bx(19.5,2.58,23.09,4.5,0.03,0.03,CYAN,true);bx(19.5,2.02,23.09,4.5,0.03,0.03,CYAN,true);
+ bx(19.5,2.3,23.04,4.8,0.66,0.05,[0.06,0.03,0.08]);bx(19.5,2.58,23.09,4.5,0.03,0.03,CYAN,true);bx(19.5,2.02,23.09,4.5,0.03,0.03,CYAN,true);
  bx(19.5,0.012,23.6,1.2,0.012,0.7,[0.4,0.05,0.11]);
  /* ---- showroom: red runner from the door to the counter ---- */
  bx(10.5,0.012,9.2,2.2,0.012,6.4,[0.3,0.03,0.08]);bx(10.5,0.016,9.2,2.0,0.012,6.2,[0.4,0.05,0.11]);for(const sx of [9.45,11.55])bx(sx,0.02,9.2,0.05,0.012,6.2,GOLD);
@@ -311,9 +312,9 @@ function drawBunker(B,g){const T=g.T||0,O=1,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(T
   for(const [ex,ez] of [[-1.88,-0.38],[1.88,-0.38],[-1.88,0.38],[1.88,0.38]])bx(cx+ex,1.0,8.5+ez,0.03,0.38,0.03,[0.75,0.8,0.85]);bx(cx,1.19,8.12,3.8,0.025,0.025,[0.75,0.8,0.85]);bx(cx,1.19,8.88,3.8,0.025,0.025,[0.75,0.8,0.85]);
   bx(cx-1.9,1.19,8.5,0.025,0.025,0.8,[0.75,0.8,0.85]);bx(cx+1.9,1.19,8.5,0.025,0.025,0.8,[0.75,0.8,0.85]);bx(cx,0.06,8.92,3.8,0.08,0.02,GOLD);}
  /* the exclusive pedestal under its spotlight, the piece turning on top (an empty plinth and a gold 9 when nothing came in) */
- {const px=11,pz=9.5,ex=arm().stock.find(k=>WD[k]&&WD[k].excl);bx(px,0.5,pz,1.0,1.0,0.8,[0.08,0.07,0.09]);bx(px,1.015,pz,1.0,0.03,0.8,[0.32,0.04,0.1]);for(const ez of [-0.41,0.41])bx(px,1.03,pz+ez,1.04,0.03,0.03,GOLD);for(const ex2 of [-0.51,0.51])bx(px+ex2,1.03,pz,0.03,0.03,0.84,GOLD);bx(px,0.62,pz+0.405,0.6,0.07,0.01,ex?[1,0.75,0.3]:[0.4,0.4,0.45],true);
+ {const px=11,pz=9.5;bx(px,0.5,pz,1.0,1.0,0.8,[0.08,0.07,0.09]);bx(px,1.015,pz,1.0,0.03,0.8,[0.32,0.04,0.1]);for(const ez of [-0.41,0.41])bx(px,1.03,pz+ez,1.04,0.03,0.03,GOLD);for(const ex2 of [-0.51,0.51])bx(px+ex2,1.03,pz,0.03,0.03,0.84,GOLD);
   for(let k=0;k<12;k++){const an=k/12*TAU;bx(px+Math.cos(an)*0.66,0.02,pz+Math.sin(an)*0.54,0.06,0.01,0.06,[1,0.85,0.4],true);}
-  if(ex){const bb=showBox(ex),s=0.75/bb.len;drawWeapon(B,A.mul(A.mul(A.mul(A.T(px+O,1.38+Math.sin(T*2)*0.04,pz+O),A.RY(T*0.9)),A.S(s,s,s)),A.T(0,-bb.cy,-bb.cz)),ex);}else nineWord(B,'9',px+O,1.15,pz+O,0.3,GOLD);}
+}
  /* the counter: glass front lit from inside, brass rail, cash register, bell; Nine's back shelf with boxed pieces on top */
  bx(10.5,0.47,12.5,11,0.94,0.8,[0.07,0.06,0.08]);bx(10.5,0.97,12.5,11.2,0.06,0.92,[0.93,0.9,0.85]);for(let k=0;k<9;k++)bx(5.6+((k*1.37)%1)*9.8,1.003,12.5+((k*0.61)%1-0.5)*0.6,0.6,0.003,0.012,[0.75,0.72,0.68]);
  bx(10.5,0.94,12.95,11.2,0.03,0.025,GOLD,true);bx(10.5,0.06,12.92,11,0.08,0.02,GOLD);bx(10.5,0.06,12.08,11,0.08,0.02,GOLD);for(let i=0;i<6;i++){const x=5.05+i*2.18;bx(x,0.47,12.5,0.06,0.94,0.84,MC_GOLDD);}bx(10.5,0.55,12.09,10.6,0.55,0.01,[0.2,0.32,0.45],true);bx(10.5,0.97,12.06,11.1,0.025,0.025,GOLD,true);
@@ -333,7 +334,7 @@ function drawBunker(B,g){const T=g.T||0,O=1,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(T
  bx(12.5,0.74,19.5,1.8,0.06,0.85,hex(0x4a2a1a));for(const [lx,lz] of [[-0.82,-0.36],[0.82,-0.36],[-0.82,0.36],[0.82,0.36]])bx(12.5+lx,0.36,19.5+lz,0.07,0.72,0.07,hex(0x2a1a10));
  bx(12.2,0.79,19.45,0.5,0.03,0.34,[0.9,0.88,0.8]);bx(12.95,0.86,19.4,0.32,0.12,0.22,[0.15,0.15,0.17]);bx(12.5,0.5,20.35,0.5,0.06,0.5,[0.6,0.08,0.1]);bx(12.5,0.85,20.58,0.5,0.6,0.06,[0.6,0.08,0.1]);
  bx(15.4,0.5,21.35,0.8,1.0,0.6,hex(0x2a2a30));bx(15.4,0.55,21.03,0.25,0.25,0.02,[0.7,0.7,0.72]);
- {const on=Math.floor(T*1.5)%2;bx(9.6,1.9,20.5,0.4,0.32,0.4,[0.14,0.14,0.16]);bx(9.82,1.9,20.5,0.02,0.24,0.32,on?[0.35,0.55,0.45]:[0.3,0.45,0.4],true);}
+ bx(9.6,1.9,20.5,0.4,0.32,0.4,[0.14,0.14,0.16]);
  bx(14.5,1.6,16.07,0.6,0.8,0.02,[0.75,0.1,0.12]);bx(14.5,1.72,16.06,0.18,0.18,0.01,[1,0.85,0.3],true);
  /* ---- hallway to the range: trophy frames, a bench and a water cooler ---- */
  for(let i=0;i<4;i++)bx(17.06,1.5,16.3+i*1.3,0.03,0.5,0.7,[0.75,0.6,0.3]),bx(17.08,1.5,16.3+i*1.3,0.02,0.4,0.58,[0.15,0.2,0.3]);
@@ -341,30 +342,34 @@ function drawBunker(B,g){const T=g.T||0,O=1,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(T
  nineWord(B,'RANGE',19+O,2.0,16.08+O,0.2,RED);
  /* ---- the range: backstop berm, lane numbers, floor lines, paper targets on carriers, the bench and booth dividers ---- */
  bx(26.5,0.45,6.35,9,0.9,0.7,[0.12,0.11,0.1]);bx(26.5,1.2,6.15,9,0.8,0.3,[0.16,0.14,0.12]);bx(26.5,2.15,6.1,9,1.1,0.1,[0.22,0.2,0.18]);
- nineWord(B,"NINE'S RANGE",27.5,2.15,6.2+O,0.26,[1*fl,0.25*fl,0.3*fl]);
  BK.lanes.forEach((lx,i)=>nineWord(B,String(i+1),lx+O,1.75,6.32+O,0.22,[1,1,1]));
  for(const lx of [25,28]){bx(lx,0.012,10.5,0.06,0.012,9,[0.9,0.85,0.3],true);bx(lx,0.75,15.1,0.06,1.5,1.2,hex(0x3a3a44));}
  for(let z=8;z<=14;z+=2)for(const lx of BK.lanes)bx(lx,0.014,z,0.6,0.012,0.04,[0.85,0.85,0.9]);
  bx(26.5,0.5,15.2,9,0.08,0.7,[0.36,0.36,0.4]);for(const lx of [22.2,30.8])bx(lx,0.25,15.2,0.08,0.5,0.6,ST);
  for(const lx of BK.lanes){bx(lx,0.6,15.0,0.5,0.04,0.3,[0.2,0.6,0.25]);bx(lx+0.6,0.57,15.25,0.24,0.08,0.18,[0.12,0.12,0.14]);bx(lx-0.6,0.58,15.3,0.22,0.1,0.14,OL);}
+ }
  const R=g.range;if(R)for(const L of R.lanes){const x=L.x,z=L.z,dn=L.down,hl=L.flash>0?1:0;
-  B.box(TRS(L.base,2.45,z,0,0.04,0.03,0.04),DK);B.box(TRS(x,2.4,z,0,0.12,0.06,0.12),ST);B.box(TRS(x,2.1,z,0,0.01,0.6,0.01),[0.6,0.6,0.62]);
-  const m=A.mul(A.T(x,1.78,z),A.RX(dn*1.35)),P=(px,py,pz,sx,sy,sz,c,em)=>B.box(A.mul(m,TRS(px,py,pz,0,sx,sy,sz)),c,em);
+  D.box(TRS(L.base,2.45,z,0,0.04,0.03,0.04),DK);D.box(TRS(x,2.4,z,0,0.12,0.06,0.12),ST);D.box(TRS(x,2.1,z,0,0.01,0.6,0.01),[0.6,0.6,0.62]);
+  const m=A.mul(A.T(x,1.78,z),A.RX(dn*1.35)),P=(px,py,pz,sx,sy,sz,c,em)=>D.box(A.mul(m,TRS(px,py,pz,0,sx,sy,sz)),c,em);
   P(0,0,0,0.8,0.03,0.03,[0.3,0.3,0.32]);P(0,-0.6,0.01,0.72,1.2,0.012,hl?[1.2,1.15,1]:[0.92,0.9,0.85],hl);P(0,-0.12,0.02,0.3,0.28,0.01,[0.1,0.1,0.12]);P(0,-0.8,0.02,0.56,0.8,0.01,[0.1,0.1,0.12]);
   P(0,-0.74,0.025,0.34,0.46,0.01,[0.9,0.9,0.86]);P(0,-0.74,0.03,0.13,0.18,0.01,RED,true);P(0,-0.12,0.025,0.13,0.13,0.01,[0.9,0.9,0.86]);
-  for(const pz of [0.03])B.box(TRS(L.base,0.012,z,0,2.2,0.012,0.05),[0.5,0.5,0.52]);}
+  for(const pz of [0.03])D.box(TRS(L.base,0.012,z,0,2.2,0.012,0.05),[0.5,0.5,0.52]);}
  /* the monitor over the bench, showing hits as lit bars */
- {const n=R?Math.min(10,Math.round(R.fired?R.hits/R.fired*10:0)):0;bx(26.5,2.45,14.7,2.2,0.6,0.08,DK);bx(26.5,2.45,14.75,2.05,0.48,0.01,[0.05,0.08,0.12],true);for(let i=0;i<10;i++)bx(25.6+i*0.2,2.45,14.76,0.14,0.32,0.01,i<n?(i<4?RED:i<7?[1,0.8,0.25]:[0.3,1,0.5]):[0.12,0.14,0.18],i<n);
-  bx(26.5,3.0,14.7,0.04,0.5,0.04,DK);}
- /* behind the line: lockers, an ear-defender rack, a bench and a rules board */
+ {const n=R?Math.min(10,Math.round(R.fired?R.hits/R.fired*10:0)):0;if(B){bx(26.5,2.45,14.7,2.2,0.6,0.08,DK);bx(26.5,2.45,14.75,2.05,0.48,0.01,[0.05,0.08,0.12],true);bx(26.5,3.0,14.7,0.04,0.5,0.04,DK);}for(let i=0;i<10;i++)dx(25.6+i*0.2,2.45,14.76,0.14,0.32,0.01,i<n?(i<4?RED:i<7?[1,0.8,0.25]:[0.3,1,0.5]):[0.12,0.14,0.18],i<n);}
+ if(B){/* behind the line: lockers, an ear-defender rack, a bench and a rules board */
  for(let i=0;i<3;i++){const z=19.4+i;bx(30.65,1.0,z,0.6,2.0,0.92,[0.35,0.4,0.48]);bx(30.33,1.0,z,0.02,1.9,0.86,[0.3,0.35,0.42]);for(let k=0;k<3;k++)bx(30.32,1.7-k*0.08,z,0.01,0.03,0.5,DK);}
  bx(22.2,1.6,19.5,0.08,0.06,1.4,ST);for(let i=0;i<4;i++){bx(22.3,1.45,19.0+i*0.33,0.14,0.2,0.08,[0.9,0.3,0.15]);bx(22.3,1.58,19.0+i*0.33,0.05,0.04,0.24,DK);}
  bx(26,0.42,21.3,3,0.1,0.45,BR);for(const lx of [24.7,27.3])bx(lx,0.2,21.3,0.08,0.4,0.4,ST);
- bx(26.5,1.6,18.4,0.02,0,0,DK);
+ bx(26.5,1.6,18.4,0.02,0,0,DK);}
  /* the doors (world coordinates, they swing when you walk into them): steel grey with a red stripe on the range door */
- for(const d of g.doors||[]){const a=d.base+d.th,e=doorEnd(d),m0=A.mul(A.T((d.hx+e[0])/2,0,(d.hz+e[1])/2),A.RY(-a)),rng=d.hx>21.5;B.box(A.mul(m0,TRS(0,0.56,0,0,0.98,1.1,0.06)),[0.3,0.31,0.34]);B.box(A.mul(m0,TRS(0,0.6,0,0,0.7,0.8,0.075)),rng?[0.75,0.12,0.14]:[0.22,0.23,0.26]);
-  B.box(TRS(d.hx+Math.cos(a)*0.84,0.56,d.hz+Math.sin(a)*0.84,-a,0.05,0.05,0.16),GOLD);}
+ for(const d of g.doors||[]){const a=d.base+d.th,e=doorEnd(d),m0=A.mul(A.T((d.hx+e[0])/2,0,(d.hz+e[1])/2),A.RY(-a)),rng=d.hx>21.5;D.box(A.mul(m0,TRS(0,0.56,0,0,0.98,1.1,0.06)),[0.3,0.31,0.34]);D.box(A.mul(m0,TRS(0,0.6,0,0,0.7,0.8,0.075)),rng?[0.75,0.12,0.14]:[0.22,0.23,0.26]);
+  D.box(TRS(d.hx+Math.cos(a)*0.84,0.56,d.hz+Math.sin(a)*0.84,-a,0.05,0.05,0.16),GOLD);}
  /* bullets, muzzle flashes and spent casings while the range is live (the hub's own draw doesn't know about them) */
- for(const b of g.bullets)B.box(TRS(b.x,0.74,b.z,Math.atan2(b.dx,b.dz),0.035,0.035,0.45),[1,0.95,0.55],true);
- if(g.flashes)for(const f of g.flashes)drawFlash(B,f);
- if(R&&R.on)for(const q of g.gibs)B.box(A.mul(A.mul(A.T(q.x,q.y,q.z),A.mul(A.RY(q.ry),A.RX(q.rx))),A.S(q.sx,q.sy,q.sz)),q.c);}
+ for(const b of g.bullets)D.box(TRS(b.x,0.74,b.z,Math.atan2(b.dx,b.dz),0.035,0.035,0.45),[1,0.95,0.55],true);
+ if(g.flashes)for(const f of g.flashes)drawFlash(D,f);
+ if(R&&R.on)for(const q of g.gibs)D.box(A.mul(A.mul(A.T(q.x,q.y,q.z),A.mul(A.RY(q.ry),A.RX(q.rx))),A.S(q.sx,q.sy,q.sz)),q.c);
+ /* the moving and changing bits: the flickering neon, the exclusive piece turning on its pedestal, the CCTV light */
+ nineWord(D,"NINE OF NINE'S",20.5,2.1,24.1,0.34,[1.2*fl,0.35*fl,0.85*fl]);nineWord(D,"NINE'S RANGE",27.5,2.15,6.2+O,0.26,[1*fl,0.25*fl,0.3*fl]);
+ {const px=11,pz=9.5,ex=arm().stock.find(k=>WD[k]&&WD[k].excl);dx(px,0.62,pz+0.405,0.6,0.07,0.01,ex?[1,0.75,0.3]:[0.4,0.4,0.45],true);
+  if(ex){const bb=showBox(ex),s=0.75/bb.len;drawWeapon(D,A.mul(A.mul(A.mul(A.T(px+O,1.38+Math.sin(T*2)*0.04,pz+O),A.RY(T*0.9)),A.S(s,s,s)),A.T(0,-bb.cy,-bb.cz)),ex);}else nineWord(D,'9',px+O,1.15,pz+O,0.3,GOLD);}
+ {const on=Math.floor(T*1.5)%2;dx(9.82,1.9,20.5,0.02,0.24,0.32,on?[0.35,0.55,0.45]:[0.3,0.45,0.4],true);}}

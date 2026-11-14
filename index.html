@@ -2663,18 +2663,21 @@ function drawSlobby(B,g){/* the concierge desk top with a bell and the guest boo
  for(let i=0;i<4;i++)B.box(TRS(14.5+i,1.05,2.05,0,0.3,0.05,0.02),[1,0.75,0.35],true);
  B.box(TRS(10,0.008,5.2,0,2.6,0.012,2.6),[0.12,0.5,0.52]);B.box(TRS(10,0.01,5.2,0,2.3,0.012,2.3),[0.62,0.42,0.5]);
  for(let x=1;x<g.W-1;x++)B.box(TRS(x+0.5,0.06,9.02,0,1.0,0.12,0.06),[0.78,0.76,0.72]);}
-function drawGarage(B,g){const gr=g.garage,c=g.hcar,T=g.T,Y=[1,0.82,0.1],K=[0.08,0.08,0.09],WL=[0.86,0.86,0.82];
+function drawGarage(D,g,F){const B=F===undefined?D:F,gr=g.garage,c=g.hcar,T=g.T,Y=[1,0.82,0.1],K=[0.08,0.08,0.09],WL=[0.86,0.86,0.82];
+ /* the barrier arm moves; everything else goes into the fixed batch F once (see drawHubDyn) */
+ {const near=!!c&&c.x>-5&&c.x<4;gr.bar=clamp(gr.bar+(near?0.05:-0.03),0,1);const ang=gr.bar*1.35,px=1.7,pz=9.0;
+  for(let i=0;i<5;i++){const r=0.2+i*0.38,m=A.mul(A.mul(A.T(px,0.92,pz),A.RX(ang)),A.T(0,0,-r));D.box(A.mul(m,A.S(0.07,0.07,0.38)),i%2?[0.95,0.95,0.92]:[0.85,0.1,0.12]);}}
+ if(!B)return;
  /* the ramp mouth: dark walls and a lintel, a red/white barrier arm that swings up as your car comes in */
  for(const z of [6.95,9.05])B.box(TRS(-1.6,0.55,z,0,3.4,1.1,0.12),[0.2,0.2,0.22]);B.box(TRS(0.15,1.08,6.95,0,0.1,0.06,0.14),Y,true);B.box(TRS(0.15,1.08,9.05,0,0.1,0.06,0.14),Y,true);
  B.box(TRS(-3.4,0.01,8,0,3.0,0.01,2.0),[0.02,0.02,0.03]);
- const near=!!c&&c.x>-5&&c.x<4;gr.bar=clamp(gr.bar+(near?0.05:-0.03),0,1);const ang=gr.bar*1.35,px=1.7,pz=9.0;B.box(TRS(px,0.5,pz,0,0.22,1.0,0.22),Y);
- for(let i=0;i<5;i++){const r=0.2+i*0.38,m=A.mul(A.mul(A.T(px,0.92,pz),A.RX(ang)),A.T(0,0,-r));B.box(A.mul(m,A.S(0.07,0.07,0.38)),i%2?[0.95,0.95,0.92]:[0.85,0.1,0.12]);}
+ B.box(TRS(1.7,0.5,9.0,0,0.22,1.0,0.22),Y);
  /* bay lines, a reserved sign on your bay, pillar stripes, the lane arrows */
  for(const x of [3.5,8.5,14.5,20.5])B.box(TRS(x,0.006,6,0,0.07,0.01,2.1),WL);for(const x of [8.5,14.5])B.box(TRS(x,0.006,10,0,0.07,0.01,1.8),WL);
  B.box(TRS(17.5,0.007,4.75,0,1.4,0.012,0.4),[0.95,0.8,0.25],true);
  for(const x of [3.5,8.5,14.5,20.5])for(const z of [4.5,10.5])for(const y of [0.18,0.42])B.box(TRS(x,y,z,0,1.03,0.1,1.03),y<0.3?Y:K);
  for(let x=3;x<22;x+=4)for(const s of [-1,1])B.box(TRS(x+0.2+s*0.18,0.006,8+s*0.18,s*0.7,0.42,0.008,0.08),WL);
- for(const q of g.parkedCars)drawLambo(B,q.x,q.z,1,q.s?-Math.PI/2:Math.PI/2,q.c,0);
+ for(const q of g.parkedCars)carCache(B,'lambo|'+q.c,q.x,q.z,1,q.s?-Math.PI/2:Math.PI/2,0,(K,x,z,sc,a,sp)=>drawLambo(K,x,z,sc,a,q.c,sp));
  /* the private elevator: a gold surround and a lit 69 over the doors */
  B.box(TRS(13,1.08,2.04,0,4.2,0.1,0.06),GOLD);B.box(TRS(13,1.08,2.08,0,0.9,0.06,0.02),[1,0.82,0.4],true);for(const x of [10.96,15.04])B.box(TRS(x,0.55,2.05,0,0.08,1.1,0.08),GOLD);
  B.box(TRS(15.5,0.7,2.04,0,0.12,0.22,0.04),GOLD);B.box(TRS(15.5,0.74,2.07,0,0.05,0.05,0.02),[1,0.3,0.2],true);B.box(TRS(13,0.007,2.75,0,4.2,0.012,1.4),[0.55,0.04,0.12]);}
@@ -2708,19 +2711,28 @@ function updateDrive(dt){const g=G,c=g.pcar,p=g.player;let thr=0,st=0,turbo=fals
  if(Math.abs(st)>0.6&&Math.abs(c.v)>9&&Math.random()<dt*30)addFloorDecal(c.x-fx*0.8,c.z-fz*0.8,0.35,c.h,10,[0.05,0.05,0.06]);
  if(turbo&&Math.random()<dt*25)g.parts.push({t:'c',x:c.x-fx*1.2,y:0.3,z:c.z-fz*1.2,vx:-fx*2+rnd(-0.5,0.5),vy:rnd(0,0.5),vz:-fz*2+rnd(-0.5,0.5),s:0.06,c:[1,0.4,0.9],life:0.3});
  engineRev(c.v,turbo);p.x=c.x;p.z=c.z;p.vx=fx*c.v;p.vz=fz*c.v;p.a=c.h;g.turbo=turbo;}
-function drawHubDyn(B,O){const g=G;
- if(g.def.hub==='drive'){const c=g.pcar;if(g.parked&&rideHeli())drawHeli(B,c.x,c.z,0,g.T);else drawRide(B,c.x,c.z,1,c.h-Math.PI/2,null,c.wr||0);if(myProg().boat){const T0=g.tower||g.car;drawSpeedboat(B,T0.x+1,14.3+Math.sin(g.T*1.5)*0.05,0,[1,0.3,0.75]);}if(g.parked&&g.player&&!g.hideP)drawChar(IBhi,g.player);if(g.doorT>0&&rideId()==='money'&&myCar()==='sig')drawCarDoor(B,c.x,c.z,1,c.h-Math.PI/2,g.doorT*1.1);for(const t of g.traffic)drawCar(B,t.x,t.z,t.col,t.dir,t.wr||0);
-  if(g.car){const T0=g.tower||g.car,pcx=T0.x+4.3,pcz=T0.z+0.7;drawLambo(B,pcx,pcz,1,0,[0.82,0.04,0.08],0);for(const sz of [-0.36,0.36])B.box(TRS(pcx,0.14,pcz+sz,0,2.3,0.035,0.05),GOLD,true);B.box(TRS(pcx,0.05,pcz,0,2.5,0.02,0.92),[0.95,0.72,0.25],true);}
+/* Fixed hub geometry: the parts of a hub's per-frame drawing that never move (Nine's shop, the club, the garage) are built once
+   into g.fixB, uploaded once and drawn every frame next to dynB, instead of being rebuilt and re-uploaded every frame.
+   hubFixStart returns the batch to build into when it needs (re)building, or false when it is current; hubFixEnd uploads it. */
+let FIXB_LAST=null;
+function hubFixStart(g){const want=g.garage||g.club||g.def===HUBS.bunker;if(!want)return undefined;const k=ENH()?1:0;
+ if(g.fixB&&g.fixB.buf&&g.fixK===k)return false;
+ if(FIXB_LAST&&FIXB_LAST!==g&&FIXB_LAST.fixB&&FIXB_LAST.fixB.buf){gl.deleteBuffer(FIXB_LAST.fixB.buf);FIXB_LAST.fixB.buf=null;}FIXB_LAST=g;
+ if(!g.fixB||!g.fixB.buf)g.fixB=new Batch();g.fixB.reset();g.fixB.round=dynB.round;g.fixK=k;return g.fixB;}
+function hubFixEnd(g,F){if(F)F.upload(true);}
+function drawHubDyn(B,O){const g=G;const FX=g.def.hub==='drive'?undefined:hubFixStart(g);
+ if(g.def.hub==='drive'){const c=g.pcar;if(g.parked&&rideHeli())drawHeli(B,c.x,c.z,0,g.T);else drawRide(B,c.x,c.z,1,c.h-Math.PI/2,null,c.wr||0);if(myProg().boat){const T0=g.tower||g.car;drawSpeedboat(B,T0.x+1,14.3+Math.sin(g.T*1.5)*0.05,0,[1,0.3,0.75]);}if(g.parked&&g.player&&!g.hideP)drawChar(IBhi,g.player);if(g.doorT>0&&rideId()==='money'&&myCar()==='sig')drawCarDoor(B,c.x,c.z,1,c.h-Math.PI/2,g.doorT*1.1);for(const t of g.traffic)if(inView(t.x,0.6,t.z,2.6))drawCar(B,t.x,t.z,t.col,t.dir,t.wr||0);
+  if(g.car){const T0=g.tower||g.car,pcx=T0.x+4.3,pcz=T0.z+0.7;carCache(B,'lambo|red',pcx,pcz,1,0,0,(K,x,z,sc,a,sp)=>drawLambo(K,x,z,sc,a,[0.82,0.04,0.08],sp));for(const sz of [-0.36,0.36])B.box(TRS(pcx,0.14,pcz+sz,0,2.3,0.035,0.05),GOLD,true);B.box(TRS(pcx,0.05,pcz,0,2.5,0.02,0.92),[0.95,0.72,0.25],true);}
   for(const n of g.npcs)drawChar(IBhi,n);
   if(g.cine&&g.cine.shot===1){const e=g.cine.eye,tg=g.cine.tgt,zz=g.H+3.9,k=(zz-e[2])/(tg[2]-e[2]);drawRetroSun(B,e[0]+(tg[0]-e[0])*k+1.5,2.2,zz,2.0,-0.9,0.9);}
 if(!g.cine&&!g.seq){const y=2.4+Math.sin(g.T*4)*0.2;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.45,0.45,0.45))),GOLD,true);
   for(let i=0;i<6;i++)B.box(TRS(g.car.x+Math.sin(g.T*2+i)*0.9,0.02,g.car.z+Math.cos(g.T*2+i)*0.9,0,0.25,0.01,0.25),[1,0.85,0.3],true);}}
  else{for(const n of g.npcs)drawChar(IBhi,n);if(g.player&&!g.hideP)drawChar(IBhi,g.player);if(g.park){if(rideHeli())drawHeli(B,g.park.x,g.park.z,0,g.T);else drawRide(B,g.park.x,g.park.z,1,g.park.a||0,undefined,g.park.spin||0);}
-  if(g.hcar)drawRide(B,g.hcar.x,g.hcar.z,1,g.hcar.a||0,undefined,g.hcar.spin||0);if(g.garage)drawGarage(B,g);if(g.slob)drawSlobby(B,g);if(g.def===HUBS.bunker)drawBunker(B,g);if(g.dealer)drawDealer(B,g);if(g.slots){drawHomeDecor(B,g);drawHome(B,g);drawHomeX(B,g);drawLocker(B,g);}if(g.club)drawClub(B,g);
+  if(g.hcar)drawRide(B,g.hcar.x,g.hcar.z,1,g.hcar.a||0,undefined,g.hcar.spin||0);if(g.garage)drawGarage(B,g,FX);if(g.slob)drawSlobby(B,g);if(g.def===HUBS.bunker)drawBunker(B,g,FX);if(g.dealer)drawDealer(B,g);if(g.slots){drawHomeDecor(B,g);drawHome(B,g);drawHomeX(B,g);drawLocker(B,g);}if(g.club)drawClub(B,g,FX);
   if(g.tankB){const t=g.tankB;drawTankLife(B,g.T,t.x0,t.x1,(t.z0+t.z1)/2,0.08,1.35,0.35,0.9,0.4,2.15);}
   if(g.fount)drawFountainWater(B,g.fount,g.T);if(g.mcDesk)drawMcOffice(B,g);if(g.tv)drawLobbyTV(B,g);if(g.lounge)drawLounge(B,g);if(g.cast)drawCast(B,g);
   if(!g.seq){const y=1.6+Math.sin(g.T*4)*0.12;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.22,0.22,0.22))),GOLD,true);}}
- for(const q of g.parts)B.box(A.mul(A.T(q.x,q.y,q.z),A.S(q.s,q.s,q.s)),q.c,q.t==='s');}
+ for(const q of g.parts)B.box(A.mul(A.T(q.x,q.y,q.z),A.S(q.s,q.s,q.s)),q.c,q.t==='s');hubFixEnd(g,FX);}
 function drawHubHUD(c,g,u,m){if(g.cine)return;if(g.seq){drawSeqHUD(c,g,u);return;}const d=g.def;c.font=PXF(7*u);txt(c,d.where,m,m,'#ffd36b','left',7*u);c.font=VTF(22*u);txt(c,g.obj||d.obj,m,m+10*u,'#fff','left',22*u);
  c.font=PXF(13*u);txt(c,'$'+fmt(wallet()),vw-m,m,'#7dff9a','right',13*u);if(myProg().debt>0){c.font=VTF(15*u);txt(c,'OWED TO McWEY $'+fmt(myProg().debt),vw-m,m+38*u,'#ff8a95','right',15*u);}c.font=VTF(16*u);txt(c,CHARS[selIdx].name+' LV'+myProg().lvl,vw-m,m+20*u,'#e9c7ff','right',16*u);
  const R=Math.max(44,Math.min(vw,vh)*0.13),rcx=m+R,rcy=touchMode?m+62*u+R:vh-m-R;drawRadar(c,rcx,rcy,R);
@@ -3092,31 +3104,36 @@ function tonyTalk(){const g=G,c=g.club;sfx('blip');const L=TONY_LINES[c.talkI%TO
 function drawSay(c,S,u){const k=textScale(),fs=20*u*k;c.font=VTF(fs);const maxW=Math.min(vw*0.8,560*u*k),words=S.txt.split(' '),lines=[];let cur='';for(const w of words){const t2=cur?cur+' '+w:w;if(c.measureText(t2).width>maxW&&cur){lines.push(cur);cur=w;}else cur=t2;}if(cur)lines.push(cur);
  const lh=fs,bh=(lines.length+1)*lh+16*u,bx=vw/2-maxW/2-12*u,by=vh-bh-70*u;c.fillStyle='rgba(12,4,22,.92)';c.fillRect(bx,by,maxW+24*u,bh);c.fillStyle='#ffd36b';c.fillRect(bx,by,4*u,bh);
  c.font=PXF(8*u*k);txt(c,S.who,bx+12*u,by+8*u,'#ffd36b','left',8*u*k);c.font=VTF(fs);lines.forEach((ln,i)=>txt(c,ln,bx+12*u,by+8*u+(i+1)*lh,'#fff','left',fs));}
-function drawClub(B,g){const T=g.T,st=g.stage,bx=(x,y,z,sx,sy,sz,col,em,ry)=>B.box(TRS(x,y,z,ry||0,sx,sy,sz),col,!!em);if(!st)return;
+function drawClub(D,g,F){const B=F===undefined?D:F,T=g.T,st=g.stage,bx=(x,y,z,sx,sy,sz,col,em,ry)=>B.box(TRS(x,y,z,ry||0,sx,sy,sz),col,!!em),dx=(x,y,z,sx,sy,sz,col,em,ry)=>D.box(TRS(x,y,z,ry||0,sx,sy,sz),col,!!em);if(!st)return;
+ /* F: the fixed batch (built once by drawHubDyn with everything that never moves), false once built, undefined to draw it all into D */
+ const c=g.club,R=c.room,red=[0.55,0.02,0.07],red2=[0.42,0.01,0.05],neon=[1,0.12,0.25],pink=[1,0.3,0.7],H=WALL_H,fx=15,fd=c.front||{x:5,z:29},ox=fd.x+0.5,fz=fd.z;
+ const heart=(o,x,y,z,s2,col)=>{for(let i=0;i<20;i++){const t=i/20*TAU,hx=16*Math.pow(Math.sin(t),3),hy=13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);o(x+hx*s2,y+hy*s2,z,0.05,0.05,0.03,col,true);}};
+ {const cx=(st.x0+st.x1)/2,cz=(st.z0+st.z1)/2,w=st.x1-st.x0;
+  for(let i=0;i<14;i++){const k=i/14,on=Math.floor(T*6+i)%2;const c2=on?[1,0.3,0.75]:[1,0.85,0.3];dx(st.x0+k*w+w/28,0.2,st.z0-0.01,0.12,0.08,0.02,c2,true);dx(st.x0+k*w+w/28,0.2,st.z1+0.01,0.12,0.08,0.02,c2,true);}
+  drawDisco(D,g);
+  for(let i=0;i<6;i++){const an=T*0.9+i*TAU/6;dx(cx+Math.cos(an)*3.2,0.012,cz+Math.sin(an)*3.2,0.5,0.01,0.5,i%2?[1,0.1,0.25]:[1,0.35,0.7],true);}
+  const on=Math.floor(T*3)%2;dx(24.98,0.16,R.z0+6,0.03,0.05,8,on?neon:pink,true);
+  for(let i=0;i<14;i++){const lit=(Math.floor(T*8)+i)%3>0,col=lit?[1,0.85,0.4]:[0.3,0.2,0.1];dx(ox-1.7+i*3.4/13,H+0.92,fz+0.1,0.07,0.07,0.04,col,lit);dx(ox-1.7+i*3.4/13,H+0.18,fz+0.1,0.07,0.07,0.04,col,lit);}
+  for(const r of c.rooms){heart(dx,r.chairX,0.85,r.z1-0.05,0.02,(Math.floor(T*2)+r.n)%2?neon:pink);dx(r.doorX,H+0.06,r.doorZ,0.9,0.1,0.5,(Math.floor(T*2)+r.n)%2?neon:pink,true);}}
+ if(!B)return;
  const cx=(st.x0+st.x1)/2,cz=(st.z0+st.z1)/2,w=st.x1-st.x0,d=st.z1-st.z0;bx(cx,0.17,cz,w,0.34,d,[0.25,0.04,0.12]);bx(cx,0.345,cz,w-0.1,0.01,d-0.1,[0.22,0.04,0.12]);
- for(let i=0;i<14;i++){const k=i/14,on=Math.floor(T*6+i)%2;const c2=on?[1,0.3,0.75]:[1,0.85,0.3];bx(st.x0+k*w+w/28,0.2,st.z0-0.01,0.12,0.08,0.02,c2,true);bx(st.x0+k*w+w/28,0.2,st.z1+0.01,0.12,0.08,0.02,c2,true);}
- drawDisco(B,g);
  for(const q of g.club.dancers){bx(q.pole.x,1.6,q.pole.z,0.05,2.5,0.05,GOLD);bx(q.pole.x,0.36,q.pole.z,0.5,0.02,0.5,[1,0.3,0.75],true);}
  for(const q of g.club.stools){bx(q.x,0.3,q.z,0.04,0.6,0.04,[0.75,0.75,0.8]);bx(q.x,0.62,q.z,0.34,0.06,0.34,[0.7,0.05,0.2]);}
- for(let i=0;i<6;i++){const an=T*0.9+i*TAU/6;bx(cx+Math.cos(an)*3.2,0.012,cz+Math.sin(an)*3.2,0.5,0.01,0.5,i%2?[1,0.1,0.25]:[1,0.35,0.7],true);}
- const c=g.club,R=c.room,red=[0.55,0.02,0.07],red2=[0.42,0.01,0.05],neon=[1,0.12,0.25],pink=[1,0.3,0.7],H=WALL_H;
  /* bottles behind the bar */
  for(let z=R.z0+2;z<R.z0+10;z++)bx(27.5,1.45,z+0.5,0.06,0.25,0.06,[[0.3,0.8,0.4],[0.8,0.6,0.2],[0.6,0.2,0.2],[0.9,0.9,0.95]][z%4]);
  /* red velvet curtains with gold tie-backs along the north wall, a gold valance on top */
  const curt=(x0,x1,z,ry)=>{for(let x=x0;x<x1-0.01;x+=0.34){const k=Math.floor(x/0.34)%2;bx(x+0.17,H*0.5,z,0.34,H,0.07+k*0.04,k?red:red2,false,ry);}bx((x0+x1)/2,H+0.03,z,x1-x0,0.08,0.13,GOLD,false,ry);};
- const door=c.rooms[0]?Math.floor(c.rooms[0].doorX):15,fx=15;curt(R.x0+1,fx-0.2,R.z0+0.06);curt(fx+1.2,R.x1,R.z0+0.06);
+ curt(R.x0+1,fx-0.2,R.z0+0.06);curt(fx+1.2,R.x1,R.z0+0.06);
  for(const x of [R.x0+3,R.x0+7,fx-1,fx+2,R.x1-7,R.x1-3])bx(x,0.55,R.z0+0.13,0.12,0.06,0.04,GOLD);
  /* neon heart over the inner door, neon strips along the bar front and the booth tables' red lamps */
- const heart=(x,y,z,s2,col)=>{for(let i=0;i<20;i++){const t=i/20*TAU,hx=16*Math.pow(Math.sin(t),3),hy=13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);bx(x+hx*s2,y+hy*s2,z,0.05,0.05,0.03,col,true);}};
- heart(fx+0.5,H+0.45,R.z0+0.05,0.018,neon);
- const on=Math.floor(T*3)%2;bx(24.98,0.16,R.z0+6,0.03,0.05,8,on?neon:pink,true);bx(24.98,0.9,R.z0+6,0.03,0.04,8,neon,true);
+ heart(bx,fx+0.5,H+0.45,R.z0+0.05,0.018,neon);
+ bx(24.98,0.9,R.z0+6,0.03,0.04,8,neon,true);
  for(let z=0;z<g.H;z++)for(let x=0;x<g.W;x++){if(g.rows[z][x]!=='o')continue;bx(x+0.5,0.84,z+0.5,0.09,0.14,0.09,[1,0.15,0.2],true);bx(x+0.5,0.94,z+0.5,0.16,0.05,0.16,red);}
  /* outside the front door (south, onto the sidewalk): a red carpet and awning, gold ropes and a blinking marquee */
- const fd=c.front||{x:5,z:29},ox=fd.x+0.5,fz=fd.z;bx(ox,0.012,fz+1.0,1.3,0.02,2.0,[0.6,0.03,0.08]);bx(ox,2.05,fz+0.35,2.4,0.1,0.7,red);bx(ox,1.99,fz+0.7,2.4,0.14,0.04,GOLD);
+ bx(ox,0.012,fz+1.0,1.3,0.02,2.0,[0.6,0.03,0.08]);bx(ox,2.05,fz+0.35,2.4,0.1,0.7,red);bx(ox,1.99,fz+0.7,2.4,0.14,0.04,GOLD);
  for(const sx of [-1,1]){bx(ox+sx*1.15,1.03,fz+0.68,0.05,2.05,0.05,GOLD);for(const z of [fz+0.9,fz+1.8])bx(ox+sx*0.95,0.45,z,0.06,0.9,0.06,GOLD);bx(ox+sx*0.95,0.72,fz+1.35,0.03,0.03,0.9,red);}
  bx(ox,H+0.55,fz+0.05,3.6,0.75,0.08,[0.1,0.01,0.03]);bx(ox,H+0.6,fz+0.1,2.6,0.16,0.03,neon,true);bx(ox,H+0.38,fz+0.1,1.8,0.06,0.03,pink,true);
- for(let i=0;i<14;i++){const lit=(Math.floor(T*8)+i)%3>0,col=lit?[1,0.85,0.4]:[0.3,0.2,0.1];bx(ox-1.7+i*3.4/13,H+0.92,fz+0.1,0.07,0.07,0.04,col,lit);bx(ox-1.7+i*3.4/13,H+0.18,fz+0.1,0.07,0.07,0.04,col,lit);}
- heart(ox-1.5,H+0.55,fz+0.11,0.012,pink);heart(ox+1.5,H+0.55,fz+0.11,0.012,pink);
+ heart(bx,ox-1.5,H+0.55,fz+0.11,0.012,pink);heart(bx,ox+1.5,H+0.55,fz+0.11,0.012,pink);
  /* foyer: velvet ropes along the runner from the door to the arch, gold mirrors on its north wall */
  for(const sx of [-0.65,0.65]){for(const z of [fz-0.9,fz-2.0,fz-3.1])bx(ox+sx,0.45,z,0.07,0.9,0.07,GOLD);bx(ox+sx,0.72,fz-2.0,0.03,0.04,2.2,red);}
  bx(ox,0.012,fz-2.5,0.9,0.02,5.0,[0.6,0.03,0.08]);
@@ -3127,10 +3144,8 @@ function drawClub(B,g){const T=g.T,st=g.stage,bx=(x,y,z,sx,sy,sz,col,em,ry)=>B.b
   bx(cx,0.28,cz,0.85,0.28,0.75,[0.65,0.05,0.22]);bx(cx,0.62,cz+0.32,0.85,0.55,0.14,[0.65,0.05,0.22]);
   bx(cx-0.38,0.45,cz,0.12,0.25,0.75,GOLD);bx(cx+0.38,0.45,cz,0.12,0.25,0.75,GOLD);
   for(const x of [r.x0+0.04,r.x1-0.04])for(let z=r.z0+0.2;z<r.z1-0.1;z+=0.34){const k=Math.floor(z/0.34)%2;bx(x,H*0.5,z+0.17,0.07+k*0.04,H,0.34,k?red:red2);}
-  heart(cx,0.85,r.z1-0.05,0.02,(Math.floor(T*2)+r.n)%2?neon:pink);
   bx(r.x0+0.7,H*0.5+0.1,r.z0+0.7,0.05,H+0.2,0.05,GOLD);bx(r.x0+0.7,0.02,r.z0+0.7,0.4,0.04,0.4,GOLD);
-  bx(r.x1-0.6,0.35,r.z1-0.6,0.42,0.7,0.42,[0.1,0.02,0.04]);bx(r.x1-0.6,0.78,r.z1-0.6,0.18,0.16,0.18,[0.75,0.75,0.8]);bx(r.x1-0.6,0.95,r.z1-0.6,0.05,0.22,0.05,[0.1,0.35,0.15]);
-  bx(r.doorX,H+0.06,r.doorZ,0.9,0.1,0.5,(Math.floor(T*2)+r.n)%2?neon:pink,true);}}
+  bx(r.x1-0.6,0.35,r.z1-0.6,0.42,0.7,0.42,[0.1,0.02,0.04]);bx(r.x1-0.6,0.78,r.z1-0.6,0.18,0.16,0.18,[0.75,0.75,0.8]);bx(r.x1-0.6,0.95,r.z1-0.6,0.05,0.22,0.05,[0.1,0.35,0.15]);}}
 /* ---- safehouses: Room 14, the Ocean Drive studio, the Coral Tower penthouse ---- */
 const HOMEDEF=[{name:'ROOM 14 · SUNSET MOTEL',price:0,desc:'The gutter. Orange neon through cheap blinds.'},{name:'OCEAN DRIVE STUDIO',price:12000,desc:'The come-up. Pastel rooms, a real kitchen, a terrace on the sand.'},{name:'CORAL TOWER PENTHOUSE',price:40000,needs:'sharkDead',desc:"The kingpin. Moreau's old place, black marble and gold."}];
 const FURN_X=[
@@ -3917,7 +3932,7 @@ const CHR=[0.9,0.91,0.94],LENS_W=[1,0.97,0.86],LENS_R=[1,0.07,0.12],LENS_A=[1,0.
 function rideKit(B,x,z,s,a){const b=A.mul(A.mul(A.T(x,0,z),A.RY(a||0)),A.S(s,s,s));
  const P=(px,py,pz,rz,sx,sy,sz,c,uv,em)=>B.box(A.mul(A.mul(A.mul(b,A.T(px,py,pz)),A.RZ(rz)),A.S(sx,sy,sz)),c,!!em,uv);
  const ring=(m0,zo,rad,th,n,w,col,uv,spin)=>{const L=2*rad*Math.tan(Math.PI/n)*1.04,rr=rad-th/2;for(let k=0;k<n;k++){const an=spin+k*TAU/n;B.box(A.mul(m0,A.mul(A.T(Math.cos(an)*rr,Math.sin(an)*rr,zo),A.mul(A.RZ(an),A.S(th,L,w)))),col,false,uv);}};
- const W=(wx,wz,R,w,rim,spin,opt)=>{opt=opt||{};const m0=A.mul(b,A.T(wx,R,wz)),sd=Math.sign(wz)||1,f=sd*(w/2),lite=opt.lite;
+ const W=(wx,wz,R,w,rim,spin,opt)=>{if(CARREC&&CARREC.B===B){CARREC.wheels.push({a:[wx,wz,R,w,rim,spin,opt],round:B.round});return;}opt=opt||{};const m0=A.mul(b,A.T(wx,R,wz)),sd=Math.sign(wz)||1,f=sd*(w/2),lite=opt.lite;
   ring(m0,0,R,R*0.3,lite?10:14,w,[1,1,1],TUV[59],spin);for(let k=0;k<(lite?2:3);k++)B.box(A.mul(A.mul(m0,A.RZ(spin+k*Math.PI/(lite?4:6))),A.S(R*1.34,R*1.34,w*0.94)),[0.09,0.09,0.1]);
   if(opt.white)ring(m0,f+sd*0.003,R*0.84,R*0.17,14,0.008,[0.96,0.95,0.92],null,spin);
   ring(m0,f+sd*0.004,R*0.66,R*0.12,lite?8:12,0.014,rim,TUV[58],spin);
@@ -4243,7 +4258,7 @@ function render(){if(contextLost||gl.isContextLost())return;PS2C.beginFrame();re
   if(Dd().cones&&g.player.alive)for(const e of g.enemies){if(!e.alive||e.down>0||e.state==='chase'||fogHidE(e))continue;const col=e.state==='search'?[1,0.45,0.12]:e.state==='distract'?[0.4,1,0.5]:[1,0.85,0.3];const R=Dd().vision,cn=visionHalfAngle(e),N=QL<2?13:7;let prev=null;for(let i=0;i<=N;i++){const a=e.a-cn+2*cn*i/N,sa=Math.sin(a),ca=Math.cos(a),len=rayLen(e.x,e.z,sa,ca,R),pt=[e.x+sa*len,0.026,e.z+ca*len];if(prev)poolB.quad([[e.x,0.026,e.z],[e.x,0.026,e.z],prev,pt],0,1,0,TUV[20],col);prev=pt;}}
   const shc=[1,1,1];if(!ENH())for(const e of g.enemies)if(e.alive&&!(e.down>0)&&!fogHidE(e))floorQuad(poolB,e.x,e.z,0.58,0,TUV[16],shc,0.014);if(g.player.alive&&!ENH())floorQuad(poolB,g.player.x,g.player.z,0.58,0,TUV[16],shc,0.014);drawPanes(poolB);
   poolB.upload();gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);poolB.draw();gl.disable(gl.BLEND);gl.disable(gl.POLYGON_OFFSET_FILL);gl.depthMask(true);
-  dynB.draw();drawInst();PS2C.flush(VP,RU);
+  if(g.def.hub&&g.fixB&&g.fixB.buf)g.fixB.draw();dynB.draw();drawInst();PS2C.flush(VP,RU);
   if(ovB.n){gl.useProgram(P1);for(const k of ['aP','aN','aT','aC'])gl.enableVertexAttribArray(L[k]);gl.disable(gl.DEPTH_TEST);ovB.upload();ovB.draw();gl.enable(gl.DEPTH_TEST);}}
  gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,cv.width,cv.height);gl.disable(gl.DEPTH_TEST);
  gl.disableVertexAttribArray(L.aN);gl.disableVertexAttribArray(L.aT);gl.disableVertexAttribArray(L.aC);gl.disableVertexAttribArray(L.aP);
@@ -4326,6 +4341,11 @@ function buildDynamic(){const g=G,B=dynB,O=ovB;B.reset();O.reset();if(g.def.hub)
  if(((touchMode&&sticks.R)||(padMode&&PAD.aim))&&p.alive){for(let i=1;i<=4;i++)O.box(TRS(p.x+Math.sin(p.a)*(0.6+i*0.6),0.72,p.z+Math.cos(p.a)*(0.6+i*0.6),p.a,0.05,0.05,0.12),[1,0.3,0.7],true);}}
 
 /* ================= HUD ================= */
+/* is a box around (x,y,z) of half-size r inside this frame's camera view (VP)? Used to skip building moving things nobody can see;
+   r includes a margin for their shadows. True when unsure (no camera yet, or a corner behind the camera). */
+function inView(x,y,z,r){if(!VP)return true;let o0=0,o1=0,o2=0,o3=0;
+ for(let i=0;i<8;i++){const p=M4.x4(VP,x+(i&1?r:-r),y+(i&2?r:-r),z+(i&4?r:-r),1),w=p[3];if(w<=0)return true;if(p[0]<-w)o0++;if(p[0]>w)o1++;if(p[1]<-w)o2++;if(p[1]>w)o3++;}
+ return o0<8&&o1<8&&o2<8&&o3<8;}
 function project(x,y,z){if(!VP)return null;const p=M4.x4(VP,x,y,z,1);if(p[3]<=0)return null;return[(p[0]/p[3]*0.5+0.5)*vw,(1-(p[1]/p[3]*0.5+0.5))*vh];}
 const PXF=n=>Math.round(n)+'px "Press Start 2P", monospace',VTF=n=>Math.round(n)+'px VT323, monospace';
 function txt(c,s,x,y,col,al,sz){c.textAlign=al||'left';c.fillStyle='rgba(0,0,0,.85)';c.fillText(s,x+Math.max(1,sz*0.12),y+Math.max(1,sz*0.12));c.fillStyle=col;c.fillText(s,x,y);}
