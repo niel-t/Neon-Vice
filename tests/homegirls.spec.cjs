@@ -28,6 +28,18 @@ test('home: hire party girls one by one, the bed grows, and they come to bed wit
         r.girlsUp = inBed.every(c => !c.bed);
         o.homes.push(r);
       }
+      // with the bed for three in place every door of the Studio and the Penthouse can still be reached, and you lie in the middle
+      o.doors = []; o.middle = [];
+      for (const h of [1, 2]) {
+        p.home = h; p.furn = {}; p.furn[h] = { girlsN: 3 }; loadHub('home' + h, 'home'); if (G.seq) seqSkip();
+        const g = G, W = g.W, doors = [];
+        HUBS['home' + h].map.forEach((row, z) => [...row].forEach((ch, x) => { if (ch === 'D') doors.push((x + 1) + ',' + (z + 1)); }));
+        const st = Math.floor(g.player.x) + ',' + Math.floor(g.player.z), seen = new Set([st]), q = [st];
+        while (q.length) { const [x, z] = q.shift().split(',').map(Number); for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, nz = z + dz, k = nx + ',' + nz; if (seen.has(k) || nx < 0 || nz < 0 || nx >= W || nz >= g.H) continue; if (g.solid[nz * W + nx] && !doors.includes(k)) continue; seen.add(k); q.push(k); } }
+        o.doors.push(doors.filter(d => !seen.has(d)));
+        tuckIn(G); const zs = [G.player].concat(G.npcs.filter(n => n.bed)).map(c => c.z).sort((a, b) => a - b);
+        o.middle.push(zs.length === 3 && zs[1] === G.player.z);
+      }
       // old saves that bought the pair keep both girls
       o.legacy = girlsN({ girls: 1 });
     } finally { fadeTo = fade; }
@@ -49,4 +61,6 @@ test('home: hire party girls one by one, the bed grows, and they come to bed wit
     expect(r.girlsUp).toBe(true);
   }
   expect(out.legacy).toBe(2);
+  expect(out.doors).toEqual([[], []]);
+  expect(out.middle).toEqual([true, true]);
 });

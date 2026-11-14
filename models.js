@@ -223,11 +223,15 @@ function torsoRows(B){const BP=B.fem?BODYP.fem:BODYP.male;
 function buildBody(B){const M=newMesh(),X=[1,0,0],Y=[0,1,0],Z=[0,0,1],BP=B.fem?BODYP.fem:BODYP.male;
  const tv=y=>((TY1-y)/(TY1-TY0)*ROW.t)/512;
  /* torso: big frame, chest wider than the hips, padded 80s shoulders, open collar */
- const cv=B.curve||1,bM = B.dancer ? 1.65*cv : 1.15;
- const gM = B.dancer ? 1.85*cv : 1.25;
+ /* dancers: fuller bust and seat, capped and spread over three rows so a big figure stays round instead of coming to a point */
+ const cv=B.curve||1,bM = B.dancer ? Math.min(2.1,1.3*(0.8+0.2*cv)*(B.bustK||1)) : 1.15;
+ const gM = B.dancer ? Math.min(3.0,1.75*(0.75+0.25*cv)*(B.hipK||1)) : 1.25;
+ /* dancers: a cinched waist (narrowest at the navel, easing out into the ribs and the hips) */
+ const wq=y=>B.dancer?1-(1-(B.waist||1))*Math.exp(-Math.pow((y-1.1)/0.085,2)):1;
  const T=torsoRows(B), BUST={}, SHx=B.shoulders||0;
- for(let k in (BP.bust||{})) BUST[k] = BP.bust[k] * bM;
- loft(M,T.map(r=>({c:[0,r[0],r[3]],s:X,f:Z,rx:r[1]*(B.dancer&&r[0]<0.96?1+0.12*cv:1),rz:r[2],v:tv(r[0]),w:r[4],mod:(p,ph)=>{if(r[0]>1.44&&r[0]<1.48){p[1]+=0.006*Math.cos(2*ph);}if(B.fem){const b=BUST[r[0]];if(b){const c=Math.max(0,Math.cos(ph));p[2]+=b*c*c*Math.exp(-Math.pow((Math.abs(Math.sin(ph))-0.40)/0.32,2));}if(BP.glute&&r[0]>0.78&&r[0]<0.98){const k=Math.max(0,-Math.cos(ph)),yw=Math.sin(((r[0]-0.78)/0.20)*Math.PI),cheek=0.72+0.45*Math.exp(-Math.pow((Math.abs(Math.sin(ph))-0.38)/0.28,2));p[2]-=(BP.glute*gM)*k*k*yw*cheek;p[1]-=0.014*k*k*yw;}return p;}if(Math.cos(ph)>0.2&&r[0]>1.05&&r[0]<1.4)p[2]+=0.008*Math.cos(ph);return p;}})),BP.segs,{capA:{dir:[0,-1,0],uv:[0.5,0.555]},capB:{dir:[0,1,0],uv:[0.5,0.002],lift:-0.012}});
+ const BSH=B.dancer&&BP.bust?{1.2:0.075,1.28:0.112,1.36:0.08}:(BP.bust||{});
+ for(let k in BSH) BUST[k] = BSH[k] * bM;
+ loft(M,T.map(r=>({c:[0,r[0],r[3]],s:X,f:Z,rx:r[1]*(B.dancer&&r[0]<0.96?1+0.12*cv*(B.hipK||1):1)*wq(r[0]),rz:r[2]*(0.4+0.6*wq(r[0])),v:tv(r[0]),w:r[4],mod:(p,ph)=>{if(r[0]>1.44&&r[0]<1.48){p[1]+=0.006*Math.cos(2*ph);}if(B.fem){const b=BUST[r[0]];if(b){const c=Math.max(0,Math.cos(ph));p[2]+=b*c*c*Math.exp(-Math.pow((Math.abs(Math.sin(ph))-0.40)/0.32,2));}if(BP.glute&&r[0]>0.78&&r[0]<0.98){const k=Math.max(0,-Math.cos(ph)),yw=Math.sin(((r[0]-0.78)/0.20)*Math.PI),cheek=0.72+0.45*Math.exp(-Math.pow((Math.abs(Math.sin(ph))-0.38)/0.28,2));p[2]-=(BP.glute*gM)*k*k*yw*cheek;p[1]-=0.014*k*k*yw;}return p;}if(Math.cos(ph)>0.2&&r[0]>1.05&&r[0]<1.4)p[2]+=0.008*Math.cos(ph);return p;}})),BP.segs,{capA:{dir:[0,-1,0],uv:[0.5,0.555]},capB:{dir:[0,1,0],uv:[0.5,0.002],lift:-0.012}});
  /* lapel ridge: a thin raised strip so the lapels catch light (PS2 games modelled these as a few polys) */
  if(!B.fem)for(const s of [1,-1]){GRP++;const pts=[];for(const Y of [1.18,1.3,1.45]){const vw=0.012+(Y-1.12)*0.36,xx=s*(vw+0.04),zz=Math.sqrt(Math.max(0,1-Math.pow(xx/(Y>1.38?0.24:0.25),2)))*0.156+0.008+(Y<1.4?0.008:0);pts.push([xx,Y,zz]);}
   const uvp=p=>[0.5+p[0]*340/512,((TY1-p[1])/(TY1-TY0)*ROW.t)/512];const w=W1(BI.chest),ids=[];for(const p of pts){ids.push(addV(M,V.add(p,[-s*0.03,0,0.004]),uvp(V.add(p,[-s*0.03,0,0])),w),addV(M,V.add(p,[s*0.03,0,0.006]),uvp(V.add(p,[s*0.03,0,0])),w));}
@@ -396,7 +400,7 @@ const X=[1,0,0],Y=[0,1,0],Z=[0,0,1];
    lot later (follow-through), dip the knee dip as the weight crosses over, b the beat phase. Shared with the jiggle springs. */
 function danceGroove(t,lap){const b=t*(lap?1.7:1.95)*Math.PI*0.5,sh=x=>Math.sign(x)*Math.pow(Math.abs(x),0.55),s=Math.sin(b);
  return{b,ws:sh(s),wl:sh(Math.sin(b-0.6)),wl2:sh(Math.sin(b-1.2)),dip:Math.pow(Math.max(0,1-Math.abs(s)*1.25),2)};}
-function pose(t,anim,jab,arms,kick,gait){const R={},rot=(b,ax,a)=>{R[b]=M4.mul(M4.R(ax,a),R[b]||M4.id());};let root=[0,0,0];const fem=gait==='fem';
+function pose(t,anim,jab,arms,kick,gait){const R={},rot=(b,ax,a)=>{R[b]=M4.mul(M4.R(ax,a),R[b]||M4.id());};let root=[0,0,0];const run=gait==='runway',fem=gait==='fem'||run;
  const armHinge=s=>V.norm(V.cross([AD[0]*s,AD[1],0],Z));
  const lower=(s,a)=>rot(s>0?'uarmL':'uarmR',Z,-a*s);
  if(anim==='idle'&&fem){/* contrapposto: weight on the right leg, hip up on that side, left knee eased, shoulders counter-tilted */
@@ -406,6 +410,17 @@ function pose(t,anim,jab,arms,kick,gait){const R={},rot=(b,ax,a)=>{R[b]=M4.mul(M
   root=[-0.022,0.003*br-0.004,0];}
  else if(anim==='idle'){const br=Math.sin(t*1.6);lower(1,0.5);lower(-1,0.5);rot('uarmL',X,-0.05);rot('uarmR',X,-0.05);rot('farmL',armHinge(1),0.25);rot('farmR',armHinge(-1),0.25);
   rot('chest',X,-0.02*br);rot('neck',Y,Math.sin(t*0.5)*0.06);rot('head',X,Math.sin(t*0.37)*0.06);rot('spine',X,0.02);root=[0,0.004*br,0];rot('thighL',Z,0.03);rot('thighR',Z,-0.03);}
+ else if(anim==='walk'&&run){/* runway walk for the dancers and the girls at home: each foot is placed on one line in front of the other,
+   so the hips swing and drop over the stance leg; the knee straightens as the heel lands, the chest stays lifted, shoulders back and
+   counter-turning a little, arms hang loose and swing softly from the shoulder with relaxed wrists, the head stays level */
+  const w=t*2*Math.PI*0.95,s=Math.sin(w),c=Math.cos(w),roll=-0.12*c,shift=-0.042*c;
+  rot('thighL',X,-0.38*s);rot('thighR',X,0.38*s);
+  rot('shinL',X,0.04+0.66*Math.pow(Math.max(0,Math.sin(w+1.9)),1.4));rot('shinR',X,0.04+0.66*Math.pow(Math.max(0,Math.sin(w+1.9+Math.PI)),1.4));
+  rot('footL',X,0.22*Math.max(0,-Math.sin(w+0.6)));rot('footR',X,0.22*Math.max(0,Math.sin(w+0.6)));
+  const legZ=(-shift-0.83*roll)/0.83;rot('thighL',Z,legZ-0.12);rot('thighR',Z,legZ+0.12);
+  lower(1,0.48);lower(-1,0.48);rot('uarmL',X,0.2*s);rot('uarmR',X,-0.2*s);rot('farmL',armHinge(1),0.26+0.12*Math.max(0,-s));rot('farmR',armHinge(-1),0.26+0.12*Math.max(0,s));
+  rot('pelvis',Z,roll);rot('pelvis',Y,0.22*s);rot('spine',Z,-roll*1.2);rot('spine',Y,-0.08*s);rot('chest',Y,-0.1*s);rot('spine',X,-0.03);rot('chest',X,-0.07);rot('neck',Z,roll*0.45);rot('neck',X,0.04);
+  root=[shift,0.012*Math.abs(c)-0.012,0];rot('head',X,-0.04);rot('head',Z,-roll*0.2);}
  else if(anim==='walk'&&fem){/* hip-led walk: pelvis shifts over the stance leg and drops on the swing side, feet track a narrow line,
    smaller arm swing close to the body, upright chest with little counter-rotation, steady head */
   const w=t*2*Math.PI*0.95,s=Math.sin(w),c=Math.cos(w),roll=-0.07*c,shift=-0.026*c;
@@ -676,8 +691,8 @@ function paintBodyP(L){const sh=C255(L.shirt),jk=C255(L.jacket),sk=C255(L.skin);
    fem only: heels:1 pumps; pads:1 80s shoulder pads; crop:1 bare midriff. */
 const ARMOR={vest:1,plate:1},HELMET={pasgt:1,riot:1};
 function lookCfg(L,bodyType){const fb=k=>BODYCFG[L.fem&&k==='thin'?'slim':k],bt=fb(bodyType)||fb(L.body)||BODYCFG.normal,helmet=HELMET[L.helmet]?L.helmet:null;
- return{L,B:{specs:L.glasses?1:0,fluff:!!(L.fluff&&L.beard),hs:(L.hair&&!L.hat&&!helmet)?L.hs:null,watch:L.watch?-1:0,cigar:!!L.cigar,hat:helmet?null:(L.hat||null),shoulders:bt.shoulders||0,belly:bt.belly||(L.belly?0.1:0),rings:L.bling?1:0,fem:!!L.fem,dancer:!!(L.fem&&L.dancer),curve:L.fem&&L.dancer?(L.curve||1):1,skirt:L.fem?(L.skirt||0):0,
-  armor:ARMOR[L.armor]?L.armor:null,helmet,heels:!!(L.fem&&L.heels),pads:!!(L.fem&&L.pads),crop:!!(L.fem&&L.crop)},scale:(L.fem?bt.scale.map((v,i)=>v*BODYP.fem.scale[i]):bt.scale).map((v,i)=>v*(L.sc?L.sc[i]:1)),gait:(L.fem?BODYP.fem:BODYP.male).gait};}
+ return{L,B:{specs:L.glasses?1:0,fluff:!!(L.fluff&&L.beard),hs:(L.hair&&!L.hat&&!helmet)?L.hs:null,watch:L.watch?-1:0,cigar:!!L.cigar,hat:helmet?null:(L.hat||null),shoulders:bt.shoulders||0,belly:bt.belly||(L.belly?0.1:0),rings:L.bling?1:0,fem:!!L.fem,dancer:!!(L.fem&&L.dancer),curve:L.fem&&L.dancer?(L.curve||1):1,waist:L.fem&&L.dancer?(L.waist||1):1,bustK:L.fem&&L.dancer?(L.bust||1):1,hipK:L.fem&&L.dancer?(L.hips||1):1,skirt:L.fem?(L.skirt||0):0,
+  armor:ARMOR[L.armor]?L.armor:null,helmet,heels:!!(L.fem&&L.heels),pads:!!(L.fem&&L.pads),crop:!!(L.fem&&L.crop)},scale:(L.fem?bt.scale.map((v,i)=>v*BODYP.fem.scale[i]):bt.scale).map((v,i)=>v*(L.sc?L.sc[i]:1)),gait:L.fem&&L.dancer?'runway':(L.fem?BODYP.fem:BODYP.male).gait};}
 /* vertex counts for a look without touching GL (budget checks: female <= 1.25x male) */
 function lookVerts(L,bodyType){const B=lookCfg(L||{},bodyType).B,b=buildBody(B).p.length/3,h=buildHead(B).p.length/3;return{body:b,head:h,total:b+h};}
 let LOOKN=0,lastG=null,buildsThisFrame=0;const failedLooks=new Set();
