@@ -38,10 +38,12 @@ function shopReady(){const m=document.getElementById('shMain');return !!m&&!m.cl
 function shopType(t,done){clearInterval(shopSayT);const el=$('shSay');let i=0;el.textContent='';shopDone=done||null;
  const fin=()=>{clearInterval(shopSayT);nineTalk=false;el.textContent=t;const f=shopDone;shopDone=null;if(f)f();};el.onclick=fin;
  nineTalk=true;shopSayT=setInterval(()=>{i++;el.textContent=t.slice(0,i);if(i%2===0)sfx('type');if(i>=t.length)fin();},22);}
+/* the car phone (Crazy Ray's, upstairs at the mall) opens this screen from the car menu anywhere: no range to try guns at */
+let SHOP_REMOTE=false;
 function openShop(){if(state!=='play'||!G)return;const a=arm();if(a.key!==a.jobs||a.stock.length!==3)rollStock(a);const first=!a.met;a.met=true;saveProg();
  state='shop';sellArm=null;shopRows=[];shopSel=1;show('sShop');sfx('ring');renderShop();$('shMain').classList.toggle('hid',first);
  shopType(first?NINE_INTRO:pick(NINE_HI),()=>{$('shMain').classList.remove('hid');shopScroll();});}
-function closeShop(quiet){if(state!=='shop')return;clearInterval(shopSayT);shopDone=null;nineTalk=false;sfx('blip');state='play';show(null);const g=G;if(g.park){g.car={x:g.park.x,z:g.park.z};g.obj='BACK TO YOUR CAR';}
+function closeShop(quiet){if(state!=='shop')return;const remote=SHOP_REMOTE;SHOP_REMOTE=false;if(remote)quiet=true;clearInterval(shopSayT);shopDone=null;nineTalk=false;sfx('blip');state='play';show(null);const g=G;if(g.park){g.car={x:g.park.x,z:g.park.z};g.obj='BACK TO YOUR CAR';}
  if(quiet)return;const n=g.npcs.find(q=>q.kind==='nine');if(n)popup(n.x,n.z,pick(['Do svidaniya, my friend.','Come back alive. Dead customers do not tip.','Shoot responsibly. Or not. Is your business.']),'#ffe9a8');}
 /* Nine's (W6d): a purchase goes into the kit when there is room, otherwise it is driven to the apartment locker; ammo and bigger stashes for every caliber you own;
    armour bought, repaired or upgraded (the old vest is traded in); anything you own sold for SELL_FRAC of its price, two clicks so a stray tap can't sell a gun */
@@ -105,7 +107,7 @@ function shopCard(q){const k=kit(),pr=myProg();
   const mast=w.toss?'':`<div class="gsM">MASTERY ${ml?ROMAN[ml]:'-'} · ${n} KILLS${ml<3?' · '+ROMAN[ml+1]+' AT '+MAST[ml]+': '+MASTD[ml+1]:' · GOLD FINISH'}</div>`;
   const buy=own?'IN YOUR KIT':!av?'NEXT SHIPMENT':'BUY $'+fmt(shopPrice(t))+(shopDeal(t)?` <s>$${fmt(SHOPP[t])}</s>`:'');
   return `<div class="gsDT">${w.name}</div><div class="gsDS">${sub}</div><div class="gsQ">"${WDESC[t]||''}"</div>${shopBars(t)}${mast}${mods||ammo?`<div class="gsX">${mods}${ammo}</div>`:''}
-   <div class="gsA"><button class="btn${own?' alt':''}" id="shBuy" data-act="buy"${!av&&!own?' disabled':''}>${buy}${KEYH('ENTER','A')}</button>${rangeOK(t)&&av?`<button class="btn alt" id="shTry" data-act="try">TRY AT THE RANGE${KEYH('T','X')}</button>`:''}</div>`;}
+   <div class="gsA"><button class="btn${own?' alt':''}" id="shBuy" data-act="buy"${!av&&!own?' disabled':''}>${buy}${KEYH('ENTER','A')}</button>${rangeOK(t)&&av&&!SHOP_REMOTE?`<button class="btn alt" id="shTry" data-act="try">TRY AT THE RANGE${KEYH('T','X')}</button>`:''}</div>`;}
  const L=rowLabel(q),act=(lbl,attr)=>`<div class="gsA"><button class="btn" id="shBuy" ${attr}>${lbl}${KEYH('ENTER','A')}</button></div>`;
  if(q.k==='mod'){const M=MODS[q.m],g=MOD_GUN[q.m];return `<div class="gsDT">${M.name}</div><div class="gsDS">ATTACHMENT · ${g?'FITS THE '+WD[g].name:'FITS EVERY GUN'} · BOUGHT ONCE, ALWAYS FITTED</div><div class="gsQ">${MOD_INFO[q.m]}</div>`+act(hasMod(q.m)?'FITTED':'BUY $'+fmt(M.price),`data-x="mod" data-c="${q.m}"`);}
  if(q.k==='ammo'){if(!q.c)return `<div class="gsDT">AMMO</div><div class="gsQ">Bullets need a gun, my friend. Buy one first.</div>`;const C=CAL[q.c];return `<div class="gsDT">${C.name} AMMO</div><div class="gsDS">+${C.box} ROUNDS A BOX · YOU CARRY ${k.pool[q.c]|0}/${capOf(k,q.c)}</div><div class="gsQ">Fresh rounds. Still warm from the factory.</div>`+act('BUY $'+fmt(C.price),`data-x="ammo" data-c="${q.c}"`);}
