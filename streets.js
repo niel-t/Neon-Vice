@@ -275,13 +275,13 @@ const LOUNGE_CAST=[
   prop:'paper',greet:["Hm? Oh. Rates are up. Everything's up."],chat:["McWey Holdings, up again. I don't ask how.","I'm told this is a bank meeting. In a lobby. With a fountain.","Don't block my light, I'm reading the futures."]},
  {kind:'retiree',look:()=>({skin:hex(0xf0c8a0),jacket:hex(0xff8fb8),shirt:hex(0xffffff),pants:hex(0xf2f2f2),shoes:hex(0xffffff),hs:'normal',hair:hex(0xe0e0e0),glasses:true,hat:'fedora',hatC:hex(0xe8dcb8),bw:1.0,bd:1.04,bh:0.96,belly:true}),
   greet:["Sit, sit! Doris and I are waiting on the man upstairs."],chat:["Forty years in Newark. This is our reward.","Doris wants a picture with the fountain. I want a sandwich.","You're the one from the news? Doris! It's the one from the news!"]}];
-function castSetup(g){castLines();
- for(const C of LOBBY_CAST){const n=makeChar(C.at[0],C.at[1],C.look(),false);Object.assign(n,{kind:C.kind,state:'idle',a:C.a0||0,a0:C.a0||0,r:0.3,said:false,cast:C,hx:C.at[0],hz:C.at[1],wi:1,wait:ihash(C.at[0]*10|0,3,1)*2,t0:ihash(C.at[1]*10|0,4,1)*6,flashT:0});n.body=n.look.body;g.npcs.push(n);}
+function castSetup(g,list){castLines();
+ for(const C of list||LOBBY_CAST){const n=makeChar(C.at[0],C.at[1],C.look(),false);Object.assign(n,{kind:C.kind,state:'idle',a:C.a0||0,a0:C.a0||0,r:0.3,said:false,cast:C,hx:C.at[0],hz:C.at[1],wi:1,wait:ihash(C.at[0]*10|0,3,1)*2,t0:ihash(C.at[1]*10|0,4,1)*6,flashT:0});n.body=n.look.body;g.npcs.push(n);}
  /* the lounge sitters become the banker and Vern */
  const sit=g.npcs.filter(n=>n.kind==='sitter');sit.forEach((s,i)=>{const C=LOUNGE_CAST[i%LOUNGE_CAST.length],n=makeChar(s.x,s.z,C.look(),false);Object.assign(n,{kind:C.kind,state:'idle',y:SEAT_Y,seatK:1,seat:true,a:s.a,a0:s.a0,r:0.3,said:false,cast:C,t0:i*2,flashT:0});n.body=n.look.body;g.npcs[g.npcs.indexOf(s)]=n;});
  g.cast=true;}
 /* the cast's lines go into the game's greeting and TALK tables (defined by the inline script, so on first setup) */
-function castLines(){if(castLines.done)return;castLines.done=1;for(const C of [...LOBBY_CAST,...LOUNGE_CAST]){NPCLINES[C.kind]=[[C.greet[0]],[C.greet[1]||C.greet[0]]];NPC_CHAT[C.kind]=C.chat;}}
+function castLines(){if(castLines.done)return;castLines.done=1;for(const C of [...LOBBY_CAST,...LOUNGE_CAST,...NINE_CAST]){NPCLINES[C.kind]=[[C.greet[0]],[C.greet[1]||C.greet[0]]];NPC_CHAT[C.kind]=C.chat;}}
 function castStep(n,dt,g,p){const C=n.cast,d=Math.hypot(p.x-n.x,p.z-n.z);n.vx=0;n.vz=0;n.t0+=dt;if(n.flashT>0)n.flashT-=dt;
  const walkTo=(tx,tz,sp)=>{const dx=tx-n.x,dz=tz-n.z,L=Math.hypot(dx,dz);if(L<0.08)return true;const s=Math.min(sp,L/dt);n.vx=dx/L*s;n.vz=dz/L*s;const ox=n.x,oz=n.z;n.x+=n.vx*dt;n.z+=n.vz*dt;collideGrid(n);
   const m=Math.hypot(n.x-ox,n.z-oz);n.walk=(n.walk||0)+m*9;if(m<s*dt*0.3)n.stuck=(n.stuck||0)+dt;else n.stuck=0;n.a0=Math.atan2(dx,dz);n.a+=clamp(angDiff(n.a,n.a0),-5*dt,5*dt);return false;};
@@ -303,12 +303,14 @@ function drawCast(B,g){for(const n of g.npcs){const C=n.cast;if(!C||!C.prop&&!(n
   else if(C.prop==='camera'){at(0.26,0.06,1.1,0.13,0.09,0.07,[0.1,0.1,0.12]);if(n.flashT>0){at(0.32,0.06,1.16,0.1,0.06,0.03,[1,1,1],true);}}
   else if(C.prop==='bags'){at(0.05,0.36,0.17,0.3,0.32,0.12,[1,0.6,0.75]);at(0.15,0.42,0.38,0.2,0.04,0.02,[0.1,0.1,0.1]);at(-0.1,0.4,0.14,0.26,0.26,0.12,[0.95,0.95,0.92]);}
   else if(C.prop==='parcel'){at(0.27,0,0.8,0.36,0.26,0.26,[0.72,0.55,0.36]);at(0.27,0,0.94,0.37,0.02,0.06,[0.85,0.8,0.6]);}
+  else if(C.prop==='crate'){at(0.36,0,0.86,0.52,0.3,0.36,[0.42,0.47,0.28]);at(0.36,0,1.02,0.53,0.02,0.37,[0.3,0.34,0.2]);at(0.55,0,0.86,0.01,0.1,0.2,[0.9,0.85,0.5]);}
   else if(C.prop==='phone'){at(0.04,0.14,1.24,0.06,0.2,0.08,[0.12,0.12,0.14]);at(0.04,0.14,1.38,0.015,0.12,0.015,[0.1,0.1,0.1]);}
   else if(C.prop==='paper'){at(0.32,0,0.68+(n.y||0),0.5,0.36,0.02,[0.92,0.9,0.84]);at(0.335,0,0.78+(n.y||0),0.42,0.04,0.005,[0.25,0.25,0.25]);}}}
 /* ---- McWey reception: a black-lacquer and marble counter with McWEY CORP. in raised gold letters ---- */
 /* 5x7 face for the gold lettering (rows top to bottom, 5 bits each), with a proper lower-case c */
 const MCFONT={M:[17,27,21,21,17,17,17],c:[0,0,14,16,16,16,14],W:[17,17,17,21,21,27,17],E:[31,16,16,30,16,16,31],Y:[17,17,10,4,4,4,4],
- C:[15,16,16,16,16,16,15],O:[14,17,17,17,17,17,14],R:[30,17,17,30,20,18,17],P:[30,17,17,30,16,16,16],'.':[0,0,0,0,0,0,4],' ':[0,0,0,0,0,0,0]};
+ C:[15,16,16,16,16,16,15],O:[14,17,17,17,17,17,14],R:[30,17,17,30,20,18,17],P:[30,17,17,30,16,16,16],'.':[0,0,0,0,0,0,4],' ':[0,0,0,0,0,0,0],
+ N:[17,25,21,19,17,17,17],I:[14,4,4,4,4,4,14],F:[31,16,16,30,16,16,16],S:[15,16,16,14,1,1,30],"'":[4,4,8,0,0,0,0],'9':[14,17,17,15,1,2,12]};
 const MC_GOLD=[1,0.8,0.32],MC_GOLDD=[0.72,0.52,0.16];
 /* raised letters on a plane facing +z at z; one box per lit run, with a thin bright bevel along the top of each run */
 function goldText(B,s,cx,cy,z,px){const adv=6*px,W=s.length*adv-px;
@@ -343,3 +345,32 @@ function sitDown(g,s){const p=g.player;g.seatP=s;g.seatFrom={x:p.x,z:p.z};seatHo
 function seatUp(g){const p=g.player,s=g.seatP;if(!s)return;g.seatP=null;p.y=0;p.crouchK=0;p.seatK=0;p.x=s.x+Math.sin(s.a)*0.75;p.z=s.z+Math.cos(s.a)*0.75;p.vx=p.vz=0;}
 function seatHold(g){const p=g.player,s=g.seatP;p.x=s.x;p.z=s.z;p.y=SEAT_Y;p.vx=p.vz=0;p.a=s.a;p.crouchK=0;p.seatK=1;}
 const SEAT_Y=0.1;
+/* ---- Nine of Nine's regulars (world coordinates = map + 1): browsing the cases, the ammo wall and the counter; his cousin restocks ---- */
+const NINE_CAST=[
+ {kind:'yuppie',at:[5.4,10.7],a0:Math.PI,look:()=>({skin:hex(0xf0c8a8),jacket:hex(0xf2f2ee),shirt:hex(0x7ad7f0),tee:true,torsoTile:29,pants:hex(0xf2f2ee),shoes:hex(0xd8c8a8),hs:'slick',hair:hex(0x8a5a2a),shades:true,watch:true,bw:0.96,bd:0.94,bh:1.03}),
+  job:'idle',fidget:1,greet:["Is this the one from the TV show? I need the one from the TV show."],chat:["My broker carries. My dentist carries. I'm falling behind.","Does it come in white? To match the car.","I'm not scared of Miami. I just like to accessorize."]},
+ {kind:'biker',at:[20.5,10.4],a0:Math.PI/2,look:()=>({skin:hex(0xd9a07a),jacket:hex(0x1a1a1e),shirt:hex(0x3a3a3e),vest:hex(0x2a2018),pants:hex(0x2a3a5a),shoes:hex(0x1a1210),hs:'big',hair:hex(0x5a4a3a),beard:hex(0x5a4a3a),shades:true,body:'big',bw:1.16,bd:1.12,bh:1.04,belly:true}),
+  job:'idle',fidget:1,greet:["Twelve-gauge. Bulk. Don't ask."],chat:["Nine keeps the good shells on the bottom shelf. Bend your knees, kid.","Rode down from Daytona for this. Worth it.","You ever try buckshot on a gator? Don't."]},
+ {kind:'granny',at:[3.4,11.4],look:()=>femWear({fem:true,calm:1,sleeves:true,skirt:0.65,skin:hex(0xf2d2bc),jacket:hex(0x9ad0b8),shirt:hex(0x9ad0b8),pants:hex(0xf2d2bc),shoes:hex(0xf2f2f2),hs:'big',hair:hex(0xd8d0e8),glasses:true,medallion:true,bw:0.9,bd:0.95,bh:0.92}),
+  job:'pace',path:[[3.4,11.4],[3.4,8.4]],sp:0.45,greet:["Something for my purse, dear. Something with stopping power."],chat:["Sixty years in Hialeah. Nobody's taking my television.","My grandson says the double-barrel. My grandson is an idiot.","Nine gives me the senior discount. I make him flan."]},
+ {kind:'cousin',at:[9.2,8.3],look:()=>({skin:hex(0xe8c0a0),jacket:hex(0x3a4a2e),shirt:hex(0x3a4a2e),tee:true,torsoTile:29,pants:hex(0x2a2a2e),shoes:hex(0x1a1a1a),hs:'buzz',hair:hex(0x2a1a10),stache:true,bw:1.04,bd:1.02,bh:0.97}),
+  job:'loop',path:[[9.2,8.3],[14.2,8.3],[14.2,11.8],[9.2,11.8]],sp:0.7,prop:'crate',greet:["Cousin of Nine. Also Nine. Is family name."],chat:["I restock. Nine talks. Is good system.","Do not touch the gold one on the plinth. Nine counts fingerprints.","Range is in back. Lane three is mine on Sundays."]},
+ {kind:'offcop',at:[8.6,12.25],look:()=>({skin:hex(0x8a5a3a),jacket:hex(0x6a4a2a),shirt:hex(0xe8e0c8),tie:hex(0x3a2a1a),pants:hex(0x4a4a50),shoes:hex(0x1a1210),hs:'buzz',hair:hex(0x1a1414),stache:true,watch:true,bw:1.02,bd:1.02,bh:1.02}),
+  job:'idle',fidget:1,greet:["Off duty. Just browsing. Let's not make it weird."],chat:["Department issue jams. Nine's doesn't. Do the math.","I didn't see you, you didn't see me. Nice jacket.","Every badge in Dade county shops here. Nobody talks about it."]}];
+/* the street front, the sidewalk furniture and the regulars; called from the bunker's hub setup */
+function nineSetup(g){castSetup(g,NINE_CAST);g.solids=g.solids||[];g.kerb=g.kerb||[];
+ for(const [t,x,z,o] of [['bench',6.5,24.35],['news',10.4,24.3,{n:3}],['trash',13.3,24.3],['planter',23.4,24.3],['phone',26.6,24.25],['planter',29.6,24.3]]){g.kerb.push(Object.assign({t,x,z},o||{}));g.solids.push({x,z,w:t==='bench'?0.9:0.5,d:0.45});}}
+/* drawn into the static batch: the street front (display windows with bars, the awning, the range's sign) */
+function drawNineFront(B,g){const r0=B.round;B.round=0;const z=24.0,DK=[0.06,0.05,0.07],BAR=[0.55,0.56,0.6],box=(x,y,zz,sx,sy,sz,c,em)=>B.box(TRS(x,y,zz,0,sx,sy,sz),c,!!em);
+ for(const [x0,x1,guns] of [[2.6,7.6,['shotgun','pistol','m16','revolver']],[9.8,15.4,['smg','double','silenced','dual']]]){const cx=(x0+x1)/2,w=x1-x0;
+  box(cx,1.15,z+0.02,w+0.2,1.5,0.04,DK);box(cx,1.15,z+0.04,w,1.3,0.01,[0.1,0.16,0.24],true);box(cx,0.4,z+0.08,w+0.2,0.1,0.12,[0.35,0.36,0.4]);
+  guns.forEach((t,i)=>drawWeapon(B,A.mul(A.mul(A.T(x0+w*(i+0.5)/guns.length,1.2+(i%2?0.22:-0.18),z+0.06),A.RY(Math.PI/2)),A.S(1.6,1.6,1.6)),t));
+  for(let x=x0+0.12;x<x1;x+=0.24)box(x,1.15,z+0.12,0.025,1.32,0.025,BAR);for(const y of [0.55,1.75])box(cx,y,z+0.12,w,0.03,0.03,BAR);
+  neonText(B,'GUNS AMMO KNIVES',cx,2.05,z+0.06,0.045,[1.4,0.35,0.9]);}
+ /* striped awning over the door, CCTV, a lit OPEN sign */
+ for(let i=0;i<6;i++){const x=19.0+i*0.5+0.25;B.box(A.mul(A.mul(A.T(x,1.9,z+0.26),A.RX(0.5)),A.S(0.5,0.03,0.55)),i%2?[0.1,0.08,0.1]:[0.62,0.14,0.42]);}box(20.5,1.77,z+0.5,3.0,0.08,0.02,[0.1,0.08,0.1]);
+ box(18.1,2.75,z+0.18,0.3,0.14,0.3,[0.8,0.8,0.78]);box(18.1,2.75,z+0.34,0.08,0.08,0.04,[1,0.15,0.15],true);neonText(B,'OPEN',16.7,1.55,z+0.05,0.05,[1.5,0.2,0.25]);
+ /* the range's own frontage: a target and NINE'S RANGE in cyan */
+ box(26.5,1.6,z+0.02,6.6,1.4,0.04,DK);for(const [r,c] of [[0.48,[1,1,1]],[0.36,[1,0.2,0.25]],[0.24,[1,1,1]],[0.12,[1,0.2,0.25]]])box(24.0,1.6,z+0.05+(0.5-r)*0.02,r*2,r*2,0.01,c,true);
+ neonText(B,"NINE'S",27.4,1.85,z+0.05,0.07,[0.3,1.3,1.5]);neonText(B,'RANGE',27.4,1.25,z+0.05,0.07,[0.3,1.3,1.5]);
+ B.round=r0;}

@@ -237,7 +237,7 @@ const BK={lanes:[23.5,26.5,29.5],tz:[11.4,9.2,7.4],strip:[22,31,16,18]};
 const BK_SOLID=[[5,12,15,12],[5,14,15,14],[3,8,6,8],[14,8,17,8],[10,9,11,9],[1,7,1,10],[20,7,20,10],[22,15,30,15],[30,19,30,21],[5,16,7,16],[1,19,2,21],[10,16,14,16],[12,19,13,19],[17,21,18,21]];
 function bunkerSetup(g){for(const [x0,z0,x1,z1] of BK_SOLID)for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++)g.solid[(z+1)*g.W+x+1]=1;
  const L=(x,z,r,c,y)=>g.lights.push({x:x+1,y:y||2.2,z:z+1,r,c});g.lights.length=0;
- L(5,8.5,6,[1.1,0.85,0.6]);L(16,8.5,6,[1.1,0.85,0.6]);L(10.5,6.8,5,[1.2,0.3,0.8]);L(10.5,11.5,4.5,[1.2,1.0,0.75]);L(10.5,9,3,[1.3,1.1,0.6],1.6);
+ L(5,8.5,6,[1.1,0.85,0.6]);L(16,8.5,6,[1.1,0.85,0.6]);L(10.5,6.8,5,[1.2,0.3,0.8]);L(10.5,11.5,4.5,[1.2,1.0,0.75]);L(10.5,9,3,[1.3,1.1,0.6],1.6);L(10.5,7.2,2.6,[1.3,0.95,0.45],1.4);
  L(4,18.5,5,[0.75,0.7,0.55]);L(12,18.5,5,[0.95,0.8,0.55]);L(18.5,18,4.5,[0.6,0.5,0.9]);
  L(26.5,9.5,7,[0.95,1.0,1.1],2.5);L(26.5,6.6,5,[1.2,0.25,0.25],1.8);L(26.5,17,5.5,[0.9,0.95,1.05]);L(26.5,20,4.5,[0.5,0.6,0.9]);L(19.5,23.4,4.5,[1.1,0.45,0.9],2.6);L(15,25,7,[0.75,0.6,0.85],3);
  g.range={lanes:BK.lanes.map((x,i)=>({x:x+1,z:BK.tz[i]+1,base:x+1,down:0,t:0,flash:0})),on:false,loan:null,prev:null,list:[],i:0,rl:0,fired:0,hits:0,pts:0,best:0,last:null,lastAmmo:0};}
@@ -285,8 +285,10 @@ function drawBunker(B,g){const T=g.T||0,O=1,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(T
   BR=[0.42,0.3,0.2],DK=[0.12,0.11,0.13],ST=[0.32,0.33,0.36],OL=[0.27,0.33,0.2],fl=Math.sin(T*1.7)>0.97?0.3:1;
  const gun=(t,x,y,z,ry,s,lay)=>drawWeapon(B,A.mul(A.mul(A.mul(A.T(x+O,y,z+O),A.RY(ry)),lay?A.RZ(Math.PI/2):A.T(0,0,0)),A.S(s,s,s)),t);
  /* ---- storefront: the street sign and the shutter tracks ---- */
- bx(10.5,2.3,6.04,4.6,0.66,0.05,[0.06,0.03,0.08]);nineWord(B,"NINE OF NINE'S",11.5,2.1,7.1,0.34,[1.2*fl,0.35*fl,0.85*fl]);bx(10.5,2.58,6.09,4.3,0.03,0.03,CYAN,true);bx(10.5,2.02,6.09,4.3,0.03,0.03,CYAN,true);
- for(const sx of [8.9,13.1])bx(sx,1.2,5.1,0.08,2.4,0.12,ST);
+ /* ---- the showroom's back wall: black marble with NINE OF NINE'S in raised gold, like McWey's counter ---- */
+ {const r0=B.round;B.round=0;bx(10.5,1.15,6.03,3.7,2.1,0.05,[0.07,0.06,0.08]);for(const y of [0.12,2.18])bx(10.5,y,6.07,3.8,0.05,0.04,MC_GOLD);for(const x of [8.62,12.38])bx(x,1.15,6.07,0.06,2.1,0.04,MC_GOLDD);
+  for(let k=0;k<5;k++)bx(8.9+((k*1.37)%1)*3.2,0.4+((k*0.73)%1)*1.5,6.06,0.5,0.004,0.01,[0.3,0.28,0.32]);
+  goldText(B,'NINE OF',10.5+O,1.74,6.06+O,0.068);goldText(B,"NINE'S",10.5+O,1.06,6.06+O,0.068);bx(10.5,0.6,6.08,2.6,0.03,0.02,MC_GOLD,true);goldText(B,'9',10.5+O,0.34,6.06+O,0.03);B.round=r0;}
  /* ---- the front door onto the sidewalk (south): the shop's name over it, cyan strips and a red mat ---- */
  bx(19.5,2.3,23.04,4.8,0.66,0.05,[0.06,0.03,0.08]);nineWord(B,"NINE OF NINE'S",20.5,2.1,24.1,0.34,[1.2*fl,0.35*fl,0.85*fl]);bx(19.5,2.58,23.09,4.5,0.03,0.03,CYAN,true);bx(19.5,2.02,23.09,4.5,0.03,0.03,CYAN,true);
  bx(19.5,0.012,23.6,1.2,0.012,0.7,[0.4,0.05,0.11]);
@@ -313,7 +315,8 @@ function drawBunker(B,g){const T=g.T||0,O=1,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(T
   for(let k=0;k<12;k++){const an=k/12*TAU;bx(px+Math.cos(an)*0.66,0.02,pz+Math.sin(an)*0.54,0.06,0.01,0.06,[1,0.85,0.4],true);}
   if(ex){const bb=showBox(ex),s=0.75/bb.len;drawWeapon(B,A.mul(A.mul(A.mul(A.T(px+O,1.38+Math.sin(T*2)*0.04,pz+O),A.RY(T*0.9)),A.S(s,s,s)),A.T(0,-bb.cy,-bb.cz)),ex);}else nineWord(B,'9',px+O,1.15,pz+O,0.3,GOLD);}
  /* the counter: glass front lit from inside, brass rail, cash register, bell; Nine's back shelf with boxed pieces on top */
- bx(10.5,0.47,12.5,11,0.94,0.8,hex(0x2a2430));bx(10.5,0.96,12.5,11.1,0.05,0.9,[0.2,0.22,0.27]);bx(10.5,0.55,12.09,10.6,0.55,0.01,[0.2,0.32,0.45],true);bx(10.5,0.97,12.06,11.1,0.025,0.025,GOLD,true);
+ bx(10.5,0.47,12.5,11,0.94,0.8,[0.07,0.06,0.08]);bx(10.5,0.97,12.5,11.2,0.06,0.92,[0.93,0.9,0.85]);for(let k=0;k<9;k++)bx(5.6+((k*1.37)%1)*9.8,1.003,12.5+((k*0.61)%1-0.5)*0.6,0.6,0.003,0.012,[0.75,0.72,0.68]);
+ bx(10.5,0.94,12.95,11.2,0.03,0.025,GOLD,true);bx(10.5,0.06,12.92,11,0.08,0.02,GOLD);bx(10.5,0.06,12.08,11,0.08,0.02,GOLD);for(let i=0;i<6;i++){const x=5.05+i*2.18;bx(x,0.47,12.5,0.06,0.94,0.84,MC_GOLDD);}bx(10.5,0.55,12.09,10.6,0.55,0.01,[0.2,0.32,0.45],true);bx(10.5,0.97,12.06,11.1,0.025,0.025,GOLD,true);
  for(let i=0;i<7;i++)gun(['pistol','smg','revolver','silenced','dual','knife','pistol'][i],6.4+i*1.35,0.62,12.07,Math.PI/2,1.4);
  bx(13.4,1.12,12.5,0.45,0.3,0.4,hex(0x3a3a40));bx(13.4,1.3,12.42,0.38,0.1,0.16,hex(0x1a1a1e));bx(13.4,1.31,12.31,0.22,0.05,0.005,[0.3,1,0.5],true);bx(8,1.02,12.4,0.12,0.06,0.12,GOLD);
  bx(10.5,0.6,14.5,11,1.2,0.8,hex(0x3a2a20));bx(10.5,1.22,14.5,11.1,0.05,0.85,BR);for(let i=0;i<10;i++){const x=5.6+i*1.0;if(i%2)bx(x,1.31,14.5,0.5,0.14,0.3,i%4===1?OL:[0.45,0.1,0.12]);else gun(['m16','shotgun','smg','double','revolver'][i/2],x,1.27,14.5,Math.PI/2+0.3,1.3,true);}
