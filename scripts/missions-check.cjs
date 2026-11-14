@@ -36,7 +36,8 @@ const condFlags = (c, out = new Set()) => { if (c && typeof c === 'object') { if
 // MISSIONS v1 (roadmap 2.4): campaign ids/indexes are save identifiers; every reference must resolve and nothing may be unreachable.
 function checkMissions() {
   const { LEVELS, CAMPAIGN_LEN, MISSIONS, missionIdx, missionStart, missionStage, missionBase, condOK, missionVariant, missionClear, missionBriefReset } = missionData();
-  const dlgFlags = dialogueFlags(), briefFlags = new Set(), rewardFlags = new Set();
+  // flags the game itself sets outside dialogue (payout in index.html): lex_spared when you spare Lex on the Royal Flush
+  const dlgFlags = new Set([...dialogueFlags(), 'lex_spared', 'rep_quiet']), briefFlags = new Set(), rewardFlags = new Set();
   assert.equal(CAMPAIGN_LEN, 11, 'CAMPAIGN_LEN is a save identifier range: review index-keyed saves before changing it');
   assert.equal(LEVELS.length, CAMPAIGN_LEN, 'Every campaign mission wraps one level');
   const ids = Object.keys(MISSIONS);

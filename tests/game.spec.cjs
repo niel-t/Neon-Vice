@@ -425,6 +425,101 @@ test('night 2: a cleared floor can be replayed with a modifier, keeps its own be
   expect(r).toEqual({ locked: null, mod: 'shotguns', moved: true, allShot: true, more: true, hp: 1, dead: true, dogs: true, daily: true, rec: 'FIRST NIGHT CLEAR', kept: true });
 });
 
+test('context button: the touch GRAB button names the objective, a weapon to take, a slam, a throw or a lure', async ({ openGame }) => {
+  const page = await openGame();
+  const r = await page.evaluate(() => { NOARRIVE = true; const out = {}; startLevel(8); const p = G.player, rg = G.rigs[0];
+    p.x = rg.x; p.z = rg.z; out.obj = ctxAction(p); p.x = 1.5; p.z = 1.5; p.weapon = null; G.items.length = 0; out.none = ctxAction(p).l;
+    startLevel(3); const q = G.player, W = G.W; q.weapon = { type: 'pistol', ammo: 5 }; G.items.length = 0;
+    for (const b of G.boats) b.sunk = true; for (const e of G.enemies) { e.alive = false; } out.lure = ctxAction(q).l;
+    for (let z = 1; z < G.H - 1 && !out.slam; z++) for (let x = 4; x < W - 2; x++) { const i = z * W + x;
+      if (!G.solid[i] && G.solid[i + 1] && G.wallT[i + 1] === 39 && G.wh[i + 1] < 0.1 && !G.solid[i - 1] && !G.solid[i - 2] && !G.solid[i - 3]) {
+        const e = G.enemies.find(k => k.body !== 'fat' && k.body !== 'big' && !k.boss); e.alive = true; e.down = 0; e.x = x + 0.5; e.z = z + 0.5; q.x = x - 2.5; q.z = z + 0.5; q.a = Math.PI / 2; out.slam = ctxAction(q); break; } }
+    return out; });
+  expect(r).toEqual({ obj: { l: 'CUT', hot: 1 }, none: 'GRAB', lure: 'LURE', slam: { l: 'SLAM', hot: 1 } });
+});
+
+test('boss second acts: the yacht floods once Lex is enraged, and Kade can be crushed with the crane console', async ({ openGame }) => {
+  test.setTimeout(240_000);
+  const page = await openGame();
+  await page.evaluate(() => { NOARRIVE = true; startLevel(7); G.player.hp = 99; G.boss.enraged = true; });
+  await expect.poll(() => page.evaluate(() => !!G.flood && G.pool.some(v => v)), { timeout: 20_000 }).toBe(true);
+  const go = sid => page.waitForFunction(sid => G && G.def && G.sid === sid && !G.going && state === 'play', sid, { timeout: 60_000 });
+  await page.evaluate(() => { startLevel(10); G.keycard = true; const s = G.stageRun.describe(G.sid).stairs.find(q => q.id === 'elev'); G.player.x = s.at[0]; G.player.z = s.at[1]; });
+  await go('pent');
+  const a = await page.evaluate(() => { const p = G.player, L = craneLeverAt(G); p.x = L.x; p.z = L.z; p.hp = 99; const ctx = ctxAction(p).l; const hp = G.boss.hp; playerGrab(p); return { ctx, mine: !!G.crane.mine, x: Math.abs(G.crane.x - Math.max(3, Math.min(G.W - 4, G.boss.x))) < 0.01, hp }; });
+  expect(a).toMatchObject({ ctx: 'CRANE', mine: true, x: true });
+  await page.evaluate(() => { G.boss.spd = 0.0001; G.boss.x = G.crane.x; });
+  await expect.poll(() => page.evaluate(hp => G.boss.hp < hp || !G.boss.alive, a.hp), { timeout: 20_000 }).toBe(true);
+});
+
+test('mastery, mods and capstones: kills level a weapon, Nine fits mods, Second Wind saves one fatal hit, Ghost keeps shots silent', async ({ openGame }) => {
+  const page = await openGame();
+  const r = await page.evaluate(() => { NOARRIVE = true; const out = {}, pr = myProg(), keep = { perks: pr.perks, mast: pr.mast, mods: pr.mods, lvl: pr.lvl };
+    try {
+      pr.lvl = 5; pr.perks = {}; out.capsEarly = perkOpts(pr).some(k => PERKS[k].cap); pr.lvl = 12; out.capsLate = ['second', 'slammer', 'phantom'].every(k => perkOpts(pr).includes(k));
+      startLevel(3); const p = G.player; pr.mast = {}; p.weapon = { type: 'pistol', ammo: 9 };
+      for (let i = 0; i < 20; i++) addKillScore(G.enemies[0], 'pistol'); out.mast = [mastLv('pistol'), mastLv('smg')];
+      p.weapon = { type: 'smg', ammo: 9 }; addKillScore(G.enemies[0], 'pistol'); out.wrongGun = pr.mast.pistol;
+      pr.mods = { xmag: 1, supp: 1 }; applyMods(); out.mag = WD.smg.mag; G.firstKill = 1; out.quiet = gunLoud({ type: 'pistol' }, G);
+      pr.mods = {}; applyMods(); out.magBack = WD.smg.mag;
+      pr.perks = { phantom: 1 }; G.firstKill = 0; out.ghost = gunLoud({ type: 'shotgun' }, G); G.firstKill = 1; out.ghostAfter = gunLoud({ type: 'shotgun' }, G) > 0;
+      pr.perks = { second: 1 }; p.armor = 0; p.armorT = 0; p.hp = 1; hurtPlayer([0, 1], 'pistol', 5); out.saved = p.alive && G.secondUsed === 1;
+      p.armorT = 0; hurtPlayer([0, 1], 'pistol', 5); out.second = p.alive;
+    } finally { Object.assign(pr, keep); applyMods(); }
+    return out; });
+  expect(r).toEqual({ capsEarly: false, capsLate: true, mast: [1, 0], wrongGun: 20, mag: 48, quiet: 2.5, magBack: 32, ghost: 0, ghostAfter: true, saved: true, second: false });
+});
+
+test('hiding: the Flamingo crowd hides you until the first shot, and standing still by a Mall mannequin hides you', async ({ openGame }) => {
+  const page = await openGame();
+  const r = await page.evaluate(() => { NOARRIVE = true; const out = {}; startLevel(1); const c = G.crowd, p = G.player, e = G.enemies.find(q => !q.boss);
+    out.crowd = !!c && c.ppl.length >= 6; p.x = c.x; p.z = c.z; p.vx = p.vz = 0; updateCrowd(0.016); out.hid = playerHidden(e, 6); out.close = playerHidden(e, 1);
+    G.shots = (G.shots || 0) + 1; updateCrowd(0.016); updateCrowd(0.016); out.panic = !!G.crowd.panic && !playerHidden(e, 6);
+    for (let i = 0; i < 300; i++) updateCrowd(0.02); out.gone = G.crowd === null;
+    startLevel(5); const q = G.player, m = G.manq[0], f = G.enemies.find(k => !k.boss); q.x = m.x + 0.6; q.z = m.z; q.vx = q.vz = 0; updateCrowd(0.016); out.still = playerHidden(f, 5);
+    q.vx = 3; updateCrowd(0.016); out.moving = playerHidden(f, 5);
+    return out; });
+  expect(r).toEqual({ crowd: true, hid: true, close: false, panic: true, gone: true, still: true, moving: false });
+});
+
+test('reputation: loud floors add riot guards, quiet floors unlock a stealth job, a gory reputation makes guards run', async ({ openGame }) => {
+  const page = await openGame();
+  const r = await page.evaluate(() => { NOARRIVE = true; const out = {}, pr = myProg(), keep = pr.rep, wf = Object.assign({}, pr.wflags || {});
+    try {
+      pr.rep = {}; startLevel(2); const base = G.enemies.filter(e => e.kind === 'shield').length;
+      for (let i = 0; i < 3; i++) { G.repDone = 0; G.loudShot = 1; repRecord(G, 'gore'); }
+      out.tags = repTags(pr); startLevel(2); out.riot = G.enemies.filter(e => e.kind === 'shield').length - base;
+      const dead = G.enemies.find(e => !e.boss && !e.kind); const near = G.enemies.filter(e => e !== dead && !e.boss && !e.kind);
+      for (const o of near) { o.x = dead.x + 1; o.z = dead.z; } const rnd = Math.random; Math.random = () => 0.1; repScare(dead); Math.random = rnd;
+      out.flee = near.length > 0 && near.every(o => o.fleeT > 0);
+      pr.rep = {}; for (let i = 0; i < 3; i++) { G.repDone = 0; G.loudShot = 0; repRecord(G, 'clean'); }
+      out.quiet = repTags(pr); out.job = missionUnlocked('b_quiet', missionCtx());
+    } finally { pr.rep = keep; pr.wflags = wf; saveProg(); }
+    return out; });
+  expect(r).toEqual({ tags: ['loud', 'gore'], riot: 2, flee: true, quiet: ['quiet', 'clean'], job: true });
+});
+
+test('speedboat: the Royal Flush arrival comes in by boat, other floors keep the car', async ({ openGame }) => {
+  const page = await openGame();
+  const r = await page.evaluate(() => { NOARRIVE = false; ARR_SEEN = -1; startLevel(7); const out = { boat: boatArrival(G), arriving: !!G.arrive }; buildDynamic(); startLevel(6); out.car = boatArrival(G); return out; });
+  expect(r).toEqual({ boat: true, arriving: true, car: false });
+});
+
+test('character routes: the Consigliere crawls a vent, the Money Man bribes a guard, the Don gets a perch', async ({ openGame }) => {
+  const page = await openGame();
+  const r = await page.evaluate(() => { NOARRIVE = true; const out = {}, keep = selIdx;
+    try {
+      selIdx = 0; startLevel(1); const h = G.route && G.route.hatch, p = G.player; out.vent = !!h;
+      if (h) { p.x = h.a.x; p.z = h.a.z; out.ctx = ctxAction(p).l; routeUse(p); out.through = Math.hypot(p.x - h.b.x, p.z - h.b.z) < 0.01; }
+      selIdx = 1; startLevel(1); const pr = myProg(), w0 = pr.wallet; pr.wallet = 5000; const e = G.route && G.route.e, q = G.player; out.bribe = !!e;
+      if (e) { q.x = e.x + 1; q.z = e.z; e.state = 'idle'; out.ctx2 = ctxAction(q).l; routeUse(q); out.paid = e.bribed === 1 && e.spared === 1 && pr.wallet === 4000; } pr.wallet = w0;
+      selIdx = 2; let lv = -1; for (let i = 0; i < 10 && lv < 0; i++) { startLevel(i); if (G.route && G.route.perch) lv = i; }
+      out.perch = lv >= 0; if (lv >= 0) { const d = G.player, c = G.route.perch; d.x = c.x; d.z = c.z; updateCrowd(0.016); out.hide = G.hideNow; }
+    } finally { selIdx = keep; }
+    return out; });
+  expect(r).toEqual({ vent: true, ctx: 'CRAWL', through: true, bribe: true, ctx2: 'BRIBE', paid: true, perch: true, hide: 'ON THE PERCH' });
+});
+
 test('slams: a guard knocked into water, the shark tank or broken glass dies there, and Kade can go off the edge', async ({ openGame }) => {
   test.setTimeout(180_000);
   const page = await openGame();
