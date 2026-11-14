@@ -829,7 +829,7 @@ function loadLevel(i,dOver,staged=false){const arrI=ARR_GO;ARR_GO=null;
   else if(c in EKIND||c==='X')makeEnemy(g,def,i,c==='X'?((def.boss&&def.boss.weapon)||'m16'):EKIND[c],c==='X',cx,cz);
   else if(c in IKIND)makeItem(g,IKIND[c],cx,cz);
  }
- markZones(g);if(!def.hub&&!staged)addHazards(g,i);applyMods();if(!def.hub){assignKinds(g,i);applyNight(g,i);applyTwist(g);}
+ markZones(g);if(!def.hub&&!staged)addHazards(g,i);applyMods();if(!def.hub){assignKinds(g,i);applyNight(g,i);applyTwist(g);applyCrowd(g,i);}
  if(staged){g.fans=[];g.pool=new Uint8Array(W*H);g.glass=new Uint8Array(W*H);g.nades=[];}
  if(def.hub)hubSetup(g);g.lights.push({x:g.car.x,y:0.3,z:g.car.z,r:3,c:[1,0.2,0.7]});if(arrI!==null&&!def.hub)arriveSetup(g,arrI);dressStreet(g);buildStatic(g);buildRadar(g);g.cam.x=g.player.x;g.cam.z=g.player.z-1;computeFlow();return g;
 }
@@ -1240,6 +1240,29 @@ function updateTwist(dt){const g=G,p=g.player,tw=g.twist;if(!tw||!p||!p.alive)re
   if(Math.hypot(p.x-g.kid.x,p.z-g.kid.z)<1.4){g.obj.n=1;g.obj.done=true;g.score+=2000;g.gpts=(g.gpts||0)+2000;sfx('cash');popup(g.kid.x,g.kid.z,'SAFE! +$2,000','#7dff9a');banner('YOU FOUND HIM','"Grandma said you would come." Clear the club and get out');}
   else if(g.kidT<=0){g.kidT=0;g.killedBy='late';p.armorT=0;p.armor=0;hurtPlayer([0,1],'late',99);}}}
 function drawTwist(B,g){if(g.pesos)drawPet(B,g.pesos,g.T);if(g.kid)drawChar(B,g.kid);}
+/* HIDING (idea 8). Club Flamingo and the Gala get a dancing crowd on their biggest open floor: stand inside it and guards who are not
+   already chasing you cannot pick you out (unless they are right on top of you). The first gunshot, or a kill near the floor, and the
+   crowd panics and runs for the walls, then is gone. At the Mall, standing still beside a mannequin works the same way.
+   ai.js asks playerHidden(e,dist) before a guard spots you. */
+const CROWD_FLOORS=[1,9];
+function applyCrowd(g,i){g.crowd=null;g.hideNow=null;if(!CROWD_FLOORS.includes(i)||!g.player||g.stageManaged)return;const W=g.W,p=g.player;
+ const open=(x,z)=>x>0&&z>0&&x<W-1&&z<g.H-1&&!g.solid[z*W+x]&&!isOut(g,x,z)&&!g.furn[z*W+x];let best=null,bs=0;
+ for(let z=2;z<g.H-2;z++)for(let x=2;x<W-2;x++){if(!open(x,z)||Math.hypot(x+0.5-p.x,z+0.5-p.z)<7)continue;let n=0;for(let dz=-2;dz<=2;dz++)for(let dx=-2;dx<=2;dx++)if(open(x+dx,z+dz))n++;
+  if(g.enemies.some(e=>Math.hypot(e.x-x-0.5,e.z-z-0.5)<2.2))n-=6;if(n>bs){bs=n;best={x:x+0.5,z:z+0.5};}}
+ if(!best||bs<16)return;const ppl=[];
+ for(let k=0;k<40&&ppl.length<10;k++){const a=Math.random()*TAU,r=0.5+Math.random()*1.9,x=best.x+Math.sin(a)*r,z=best.z+Math.cos(a)*r;
+  if(!open(Math.floor(x),Math.floor(z))||ppl.some(q=>Math.hypot(q.x-x,q.z-z)<0.6))continue;
+  const d=makeChar(x,z,ppl.length%3===0?dancerLook(ppl.length+(Math.random()*5|0),0):Object.assign(NPCLOOK.guest(),{calm:1}),false);d.kind='crowd';d.ph=Math.random()*TAU;d.a=Math.random()*TAU;ppl.push(d);}
+ g.crowd={x:best.x,z:best.z,r:2.3,ppl,panic:0,shots:g.shots||0,kills:g.kills||0};}
+function updateCrowd(dt){const g=G,c=g.crowd,p=g.player;g.hideNow=null;if(p&&p.alive&&!g.cleared){if(c&&!c.panic&&Math.hypot(p.x-c.x,p.z-c.z)<c.r)g.hideNow='IN THE CROWD';
+  else if(g.manq&&Math.hypot(p.vx,p.vz)<0.4&&g.manq.some(m=>Math.hypot(m.x-p.x,m.z-p.z)<1.1))g.hideNow='FROZEN LIKE A MANNEQUIN';}
+ if(!c)return;
+ if(!c.panic){if((g.shots||0)>c.shots||g.loudShot||((g.kills||0)>c.kills&&p&&Math.hypot(p.x-c.x,p.z-c.z)<6)){c.panic=1;sfx('alert');popup(c.x,c.z,'SCREAMS!','#ff8a95');}
+  else{c.kills=g.kills||0;for(const d of c.ppl){d.ph+=dt*6;d.walk=(d.walk||0)+dt*5;d.a+=Math.sin(d.ph*0.5)*dt*1.5;d.y=Math.abs(Math.sin(d.ph))*0.05;}return;}}
+ c.panic+=dt;for(const d of c.ppl){const dx=d.x-(p?p.x:c.x),dz=d.z-(p?p.z:c.z),l=Math.hypot(dx,dz)||1,sp=dt*4.2;const nx=d.x+dx/l*sp,nz=d.z+dz/l*sp;d.y=0;
+  if(!blk(g,nx,nz)){d.x=nx;d.z=nz;}else if(!blk(g,nx,d.z))d.x=nx;else if(!blk(g,d.x,nz))d.z=nz;d.a=Math.atan2(dx,dz);d.walk=(d.walk||0)+dt*12;}
+ if(c.panic>4.5)g.crowd=null;}
+function playerHidden(e,dist){const g=G;return !!g&&!!g.hideNow&&dist>(g.hideNow==='IN THE CROWD'?2.2:1.6)&&!e.boss;}
 function lureNoise(x,z,r,label){const g=G;alertNoise(x,z,r,'lure');popup(x,z,label,'#2de2e6');g.lures=(g.lures||0)+1;sfx('alert');}
 function updateOnAir(dt){const g=G;if(levelIdx!==6||!g.panes||g.def.hub)return;g.airT=(g.airT===undefined?6:g.airT)-dt;if(g.airT>0)return;g.onAir=!g.onAir;g.airT=g.onAir?7:9;sfx('click');
  if(g.onAir&&!g.airTip){g.airTip=1;banner('ON AIR','While the red light is on, every shot carries across the whole studio');}}
@@ -2549,7 +2572,7 @@ function act2Setup(g,i){g.nades=[];if(!(i>=3))return;const W=g.W,cells=ch=>{cons
  if(i===9){g.safe=cells('N')[0];if(g.safe){sol([g.safe]);g.obj={label:'GET THE LEDGER',n:0,total:1,done:false};}}
  if(i===8){g.rigs=cells('N').map(q=>({x:q.x,z:q.z,cut:false}));g.obj={label:'CUT THE CHARGE WIRES',n:0,total:g.rigs.length,done:false};}
  if(i===7){const y=cells('y');if(y.length){const xs=y.map(q=>q.ix),zs=y.map(q=>q.iz);g.tank={x0:Math.min(...xs),x1:Math.max(...xs)+1,z0:Math.min(...zs),z1:Math.max(...zs)+1};}}}
-function updateAct2(dt){const g=G;updateOnAir(dt);updateFlood(dt);updateTwist(dt);
+function updateAct2(dt){const g=G;updateOnAir(dt);updateFlood(dt);updateTwist(dt);updateCrowd(dt);
  if(g.studioC&&AC&&!MUS.muffled){const p=g.player,d=Math.hypot(p.x-g.studioC.x,p.z-g.studioC.z),k=clamp(1-d/16,0,1);g.mT=(g.mT||0)-dt;if(g.mT<=0){g.mT=0.2;mFilt.frequency.setTargetAtTime(lerp(700,18000,k*k),AC.currentTime,0.3);}}
  if(g.wreck&&Math.random()<dt*30){g.parts.push({t:'c',x:g.car.x+rnd(-0.8,0.8),y:0.6,z:g.car.z+rnd(-0.4,0.4),vx:rnd(-0.2,0.2),vy:rnd(0.8,1.8),vz:rnd(-0.2,0.2),s:0.07,c:Math.random()<0.5?[1,0.55,0.1]:[0.2,0.18,0.18],life:0.7});}}
 /* breakable studio glass: a bullet shatters the pane and carries on */
@@ -3868,7 +3891,7 @@ function buildDynamic(){const g=G,B=dynB,O=ovB;B.reset();O.reset();if(g.def.hub)
  const p=g.player;const near=p.alive?nearItem(p):null;
  for(const it of g.items)if(!fogHid(it.x,it.z))drawItem(B,it,it===near);
  for(const e of g.enemies)if(!e.alive&&!e.sunk&&!fogHid(e.x,e.z))drawFoe(CB(e),e);if(!p.alive)drawChar(CB(p),p);
- for(const e of g.enemies)if(e.alive&&!fogHidE(e))drawFoe(CB(e),e);drawKinds(B,g);drawFlood(B,g);drawTwist(B,g);if(g.lex)drawChar(IBhi,g.lex);if(p.alive&&!(g.arrive&&g.arrive.hide)&&!(p.armorT>0&&Math.floor(g.T*20)%2))drawChar(IBhi,p);
+ for(const e of g.enemies)if(e.alive&&!fogHidE(e))drawFoe(CB(e),e);drawKinds(B,g);drawFlood(B,g);drawTwist(B,g);if(g.crowd)for(const d of g.crowd.ppl)drawChar(CB(d),d);if(g.lex)drawChar(IBhi,g.lex);if(p.alive&&!(g.arrive&&g.arrive.hide)&&!(p.armorT>0&&Math.floor(g.T*20)%2))drawChar(IBhi,p);
  for(const e of g.enemies){if(!e.alive||!e.aiming||!p.alive||fogHidE(e))continue;const sa=Math.sin(e.a),ca=Math.cos(e.a);const h=rayWall(e.x,e.z,sa,ca,14,true);const len=h?h.d:14;const st=0.55,rem=Math.max(0,len-st);
   const flick=e.react<0.15?(Math.floor(g.T*30)%2?1:0.4):0.75;B.box(TRS(e.x+sa*(st+rem/2)+ca*0.17,0.74,e.z+ca*(st+rem/2)-sa*0.17,e.a,0.018,0.018,rem),[flick,0.05,0.08],true);}
  for(const b of g.bullets)B.box(TRS(b.x,0.74,b.z,Math.atan2(b.dx,b.dz),0.035,0.035,0.45),b.own==='p'?[1,0.95,0.55]:[1,0.6,0.3],true);
@@ -3929,7 +3952,7 @@ function drawHUD0(){const c=hctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0
  if(g.kc>0){const bh=Math.round(vh*0.085*Math.min(1,g.kc/0.25));c.fillStyle='#000';c.fillRect(0,0,vw,bh);c.fillRect(0,vh-bh,vw,bh);c.globalAlpha=Math.min(1,g.kc/0.5);c.fillStyle='rgba(255,63,164,.12)';c.fillRect(0,0,vw,vh);c.globalAlpha=1;}
  /* objective */
  c.font=PXF(7*u);txt(c,'OBJECTIVE',m,m,'#2de2e6','left',7*u);
- c.font=VTF(20*u);txt(c,g.cleared?(g.def.noCar?'TAKE THE ELEVATOR DOWN':'GET BACK TO THE CAR')+(g.esc?(g.esc.late?(g.esc.kind==='debris'?'  ·  IT IS COMING DOWN':'  ·  BACKUP IS HERE'):'  ·  '+Math.ceil(g.esc.t)+'s'):''):(stageGoal(g)||'ELIMINATE TARGETS  '+(tot-alive)+'/'+tot)+(g.kid&&!g.obj.done?'   \u25cf KID: '+Math.ceil(g.kidT)+'s':'')+(g.twist==='ghost'?(g.alarm?'   \u25cf ALARM':'   \u25cf UNSEEN'):'')+(g.onAir?'   \u25cf ON AIR':''),m,m+10*u,g.cleared?'#ff5fb8':g.onAir?'#ff5a6a':'#fff','left',20*u);
+ c.font=VTF(20*u);txt(c,g.cleared?(g.def.noCar?'TAKE THE ELEVATOR DOWN':'GET BACK TO THE CAR')+(g.esc?(g.esc.late?(g.esc.kind==='debris'?'  ·  IT IS COMING DOWN':'  ·  BACKUP IS HERE'):'  ·  '+Math.ceil(g.esc.t)+'s'):''):(stageGoal(g)||'ELIMINATE TARGETS  '+(tot-alive)+'/'+tot)+(g.kid&&!g.obj.done?'   \u25cf KID: '+Math.ceil(g.kidT)+'s':'')+(g.twist==='ghost'?(g.alarm?'   \u25cf ALARM':'   \u25cf UNSEEN'):'')+(g.hideNow?'   \u25cf HIDDEN '+g.hideNow:'')+(g.onAir?'   \u25cf ON AIR':''),m,m+10*u,g.cleared?'#ff5fb8':g.onAir?'#ff5a6a':'#fff','left',20*u);
  c.font=VTF(15*u);txt(c,missionIsCampaign(MISSION)?BRIEF_FLOOR(levelIdx):missionName(MISSION),m,m+30*u,'#c9a8e8','left',15*u);
  if(g.obj&&!g.cleared){c.font=VTF(17*u);txt(c,(g.obj.done?'\u2713 ':'\u25a0 ')+g.obj.label+(g.obj.total>1?'  '+g.obj.n+'/'+g.obj.total:''),m,m+46*u,g.obj.done?'#7dff9a':'#ffd36b','left',17*u);}
  if(g.sj){const s=sjState(g);txt(c,'SIDE JOB · '+SIDEJOBS[g.sj].name+' · '+s.txt,m,m+46*u,s.fail?'#ff8a95':s.ok?'#7dff9a':'#ffd36b','left',15*u);}

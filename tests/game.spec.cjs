@@ -470,6 +470,18 @@ test('mastery, mods and capstones: kills level a weapon, Nine fits mods, Second 
   expect(r).toEqual({ capsEarly: false, capsLate: true, mast: [1, 0], wrongGun: 20, mag: 48, quiet: 2.5, magBack: 32, ghost: 0, ghostAfter: true, saved: true, second: false });
 });
 
+test('hiding: the Flamingo crowd hides you until the first shot, and standing still by a Mall mannequin hides you', async ({ openGame }) => {
+  const page = await openGame();
+  const r = await page.evaluate(() => { NOARRIVE = true; const out = {}; startLevel(1); const c = G.crowd, p = G.player, e = G.enemies.find(q => !q.boss);
+    out.crowd = !!c && c.ppl.length >= 6; p.x = c.x; p.z = c.z; p.vx = p.vz = 0; updateCrowd(0.016); out.hid = playerHidden(e, 6); out.close = playerHidden(e, 1);
+    G.shots = (G.shots || 0) + 1; updateCrowd(0.016); updateCrowd(0.016); out.panic = !!G.crowd.panic && !playerHidden(e, 6);
+    for (let i = 0; i < 300; i++) updateCrowd(0.02); out.gone = G.crowd === null;
+    startLevel(5); const q = G.player, m = G.manq[0], f = G.enemies.find(k => !k.boss); q.x = m.x + 0.6; q.z = m.z; q.vx = q.vz = 0; updateCrowd(0.016); out.still = playerHidden(f, 5);
+    q.vx = 3; updateCrowd(0.016); out.moving = playerHidden(f, 5);
+    return out; });
+  expect(r).toEqual({ crowd: true, hid: true, close: false, panic: true, gone: true, still: true, moving: false });
+});
+
 test('slams: a guard knocked into water, the shark tank or broken glass dies there, and Kade can go off the edge', async ({ openGame }) => {
   test.setTimeout(180_000);
   const page = await openGame();
