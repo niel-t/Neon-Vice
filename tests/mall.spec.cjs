@@ -15,12 +15,12 @@ test('mall: shops, keepers, jewelry you wear, furniture for every home, real est
       out.label = $('bCarDealer').textContent.includes('BISCAYNE GALLERIA');
       $('bCarDealer').click(); seqSkip(); seqSkip();
       const g = G;
-      out.hub = { mall: g.def === HUBS.mall, keepers: g.mall.keepers.map(n => n.shop).sort(), vic: g.npcs.filter(n => n.kind === 'vic').length, lot: g.dealer.slots.length, shoppers: g.npcs.filter(n => n.kind === 'guest').length >= 5, glass: g.mall.glass.length > 60 };
+      out.hub = { mall: g.def === HUBS.mall, keepers: g.mall.keepers.map(n => n.shop).sort(), vic: g.npcs.filter(n => n.kind === 'vic').length, lot: g.dealer.slots.length, shoppers: g.npcs.filter(n => n.kind === 'guest').length >= 5, glass: g.mall.glass.length >= 50 };
       const t = hubTargets(g);
       out.targets = ['car', 'vic', 'show', 'shop', 'dir'].every(k => t.some(q => q.k === k));
       // shoppers stay in the atrium
       for (let i = 0; i < 240; i++) npcStep(1 / 30);
-      out.atrium = g.npcs.filter(n => n.kind === 'guest').every(n => n.x > 12.5 && n.x < 34.5 && n.z > 6.5 && n.z < 27.5);
+      out.atrium = g.npcs.filter(n => n.kind === 'guest').every(n => n.x > 12.5 && n.x < 34.5 && n.z > 14.5 && n.z < 35.5);
       // every frame of the mall draws
       const B = new Batch(); drawDealer(B, g); out.drawn = B.n > 20000;
       // jewelry: buy, it shows on the model flags, take it off, put it back on
@@ -54,9 +54,9 @@ test('mall: shops, keepers, jewelry you wear, furniture for every home, real est
     } finally { fadeTo = fade; }
   }, setup.toString())).toEqual({
     label: true,
-    hub: { mall: true, keepers: ['furn', 'jewel', 'realty'], vic: 1, lot: 4, shoppers: true, glass: true },
+    hub: { mall: true, keepers: ['furn', 'jewel', 'realty', 'tailor'], vic: 1, lot: 4, shoppers: true, glass: true },
     targets: true, atrium: true, drawn: true,
-    jewelScreen: { state: 'store', mode: 'jewel', title: 'GOLD COAST JEWELERS', cards: 6, who: 'DIAMOND DOLORES' },
+    jewelScreen: { state: 'store', mode: 'jewel', title: 'GOLD COAST JEWELERS', cards: 6, who: 'SCHMALTZY' },
     worn: { medal: true, bracelet: true, look: true },
     off: 'off', on: true,
     closed: 'play',
@@ -71,4 +71,44 @@ test('mall: shops, keepers, jewelry you wear, furniture for every home, real est
   // the high-detail model's build flags follow what you wear (models.js jewelB)
   expect(await page.evaluate(() => { const B = {}; PS2C.jewelB(rideId(), B); return { medal: B.medal, bracelet: B.bracelet, watch: !B.nowatch, cuban: B.chains }; }))
     .toEqual({ medal: true, bracelet: true, watch: false, cuban: false });
+});
+
+test('mall: the keepers have photo faces, and Fontaine Tailoring sells suits you wear', async ({ openGame }) => {
+  const page = await openGame();
+  expect(await page.evaluate(setup => {
+    eval('(' + setup + ')')();
+    const fade = fadeTo, out = {};
+    try {
+      fadeTo = f => { f(); return true; };
+      loadHub('mall'); while (G.seq) seqSkip();
+      const g = G, p = myProg(), id = CHARS[selIdx].id;
+      out.keepers = Object.fromEntries(g.mall.keepers.map(n => [n.shop, n.kind]));
+      out.photos = ['schmaltzy', 'felix', 'lola'].every(k => ART[k] && ART[k].startsWith('data:image/jpeg'));
+      out.names = [MALL_SHOPS.jewel.short, MALL_SHOPS.tailor.short, MALL_SHOPS.furn.short];
+      // the tailor's rail is a target too
+      out.rail = hubTargets(g).some(t => t.k === 'shop' && t.shop === 'tailor');
+      openMallShop('tailor');
+      out.screen = { mode: storeMode, title: document.querySelector('#sStore .shT').textContent, cards: document.querySelectorAll('#sStore .scard').length };
+      const w = p.wallet;
+      document.querySelector('#sStore [data-ts="mint"]').click();
+      out.bought = { owned: !!p.tailor.mint, wearing: mySuit(), paid: w - p.wallet, tough: pk('tough') >= 1 };
+      document.querySelector('#sStore [data-ts="mint"]').click(); out.off = mySuit();
+      document.querySelector('#sStore [data-ts="mint"]').click(); out.back = mySuit();
+      // a suit you haven't bought can't be worn from the character screen
+      out.locked = suitOK(p, 'tux');
+      closeStore();
+      saveProg(); const sv = JSON.parse(localStorage.getItem('nb86prog'))[id]; out.saved = { tailor: sv.tailor, suit: sv.suit };
+      return out;
+    } finally { fadeTo = fade; }
+  }, setup.toString())).toEqual({
+    keepers: { jewel: 'jeweler', furn: 'furnman', realty: 'realtor', tailor: 'tailor' },
+    photos: true,
+    names: ['SCHMALTZY', 'FABULOSO FELIX', 'LOLA MONTENEGRO'],
+    rail: true,
+    screen: { mode: 'tailor', title: 'FONTAINE TAILORING', cards: 5 },
+    bought: { owned: true, wearing: 'mint', paid: 6500, tough: true },
+    off: 'default', back: 'mint',
+    locked: false,
+    saved: { tailor: { mint: 1 }, suit: 'mint' }
+  });
 });

@@ -55,7 +55,36 @@ test('arrivals: leaving McWey drives off with a travel card, and Nine and the cl
     } finally { fadeTo = fade; }
   }, setup.toString())).toEqual({
     depart: { scene: true, hub: 'drive', steps: 'walk hide card wait drive call' },
-    bunker: { hub: true, scene: true, car: [7.5, 4.5], after: false },
+    bunker: { hub: true, scene: true, car: [16.5, 26.5], after: false },
     home: { mode: 'home', scene: true }
   });
+});
+
+test('arrivals: the mall, the club and Nine park you in a bay out front, and you walk up the sidewalk and in through the front door', async ({ openGame }) => {
+  const page = await openGame();
+  expect(await page.evaluate(setup => {
+    eval('(' + setup + ')')();
+    const fade = fadeTo, out = {};
+    try {
+      fadeTo = f => { f(); return true; };
+      for (const [hub, kind] of [['mall', 'vic'], ['club', 'tony'], ['bunker', 'nine']]) {
+        loadHub(hub); const g = G, L = g.lot;
+        const r = { lot: !!L, bay: !!L && Math.abs(g.park.z - L.bayZ) < 0.6, others: !!L && L.cars.length > 0 && L.cars.every(c => Math.abs(c.x - g.park.x) > 3) };
+        // the drive-in comes along the road and ends in your bay; leaving pulls out onto the road
+        const path = venueArrivePath(g, g.park), dep = venueDepartPath(g, g.park);
+        r.drive = Math.abs(path[0][1] - L.roadZ) < 0.01 && path[path.length - 1][0] === g.park.x && Math.abs(dep[dep.length - 1][1] - L.roadZ) < 0.01;
+        while (g.seq) seqSkip();
+        // you end up on the sidewalk, between your car and the building
+        r.kerb = g.player.z < g.park.z && g.player.z > L.top - 3;
+        // and you can walk from there through the front door to the keeper
+        const W = g.W, seen = new Uint8Array(W * g.H), q = [Math.floor(g.player.z) * W + Math.floor(g.player.x)]; seen[q[0]] = 1;
+        while (q.length) { const i = q.shift(), x = i % W, z = (i / W) | 0; for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, nz = z + dz, j = nz * W + nx; if (nx < 0 || nz < 0 || nx >= W || nz >= g.H || seen[j] || g.solid[j] === 1) continue; seen[j] = 1; q.push(j); } }
+        const n = g.npcs.find(k => k.kind === kind); let ok = false;
+        for (let z = Math.floor(n.z) - 2; z <= Math.floor(n.z) + 2; z++) for (let x = Math.floor(n.x) - 2; x <= Math.floor(n.x) + 2; x++) if (seen[z * W + x] && Math.hypot(x + 0.5 - n.x, z + 0.5 - n.z) < 2.1) ok = true;
+        r.walkIn = ok;
+        out[hub] = r;
+      }
+      return out;
+    } finally { fadeTo = fade; }
+  }, setup.toString())).toEqual(Object.fromEntries(['mall', 'club', 'bunker'].map(h => [h, { lot: true, bay: true, others: true, drive: true, kerb: true, walkIn: true }])));
 });
