@@ -162,6 +162,28 @@ test('travel: from home or a shop you can drive straight to the next job, which 
     job: { state: 'objcard', level: 1, hub: false, card: true, name: 'CLUB FLAMINGO', list: true }, go: ['play', false, false], heli: false });
 });
 
+test('free travel: PLAY and sleeping start you at home, McWey only for a new act; shops in between keep the next job', async ({ openGame }) => {
+  const page = await openGame({ nb86jobs: { top: 3, sel: 1, best: {} }, nb86prog: { money: { lvl: 2, xp: 0, perks: {}, debt: 9000, wallet: 100, seen: { loan: 1 } } } });
+  await page.locator('#bStart').click();
+  await page.evaluate(() => { selIdx = CHARS.findIndex(c => c.id === 'money'); updateSelect(); });
+  expect(await page.evaluate(() => {
+    const fade = fadeTo, out = {};
+    try {
+      fadeTo = f => { f(); return true; };
+      // a regular job: PLAY wakes you at home with the job already taken, no drive to McWey
+      $('bPlay').click(); out.play = { mode: HUBMODE, home: G.def === HUBS.home0, cine: !!G.cine, next: NEXTJOB, due: mcDue() };
+      // go shopping first, then come home and sleep: still home, and the job is still waiting
+      loadHub('bunker'); openCarMenu(); $('bCarHome').click(); seqSkip();
+      G.slots = G.slots || []; myProg().mornKey = arm().jobs; goSleep();
+      out.slept = { state, mode: HUBMODE, cine: !!G.cine };
+      onHubTrigger('leave'); out.menu = $('bCarJob').textContent.startsWith('NEXT JOB: CLUB FLAMINGO'); closeCarMenu();
+      // the start of a new act still goes through McWey's office
+      JOBS.sel = 3; $('bPlay').click(); out.act = { mode: HUBMODE, cine: !!G.cine };
+      return out;
+    } finally { fadeTo = fade; }
+  })).toEqual({ play: { mode: 'home', home: true, cine: false, next: 1, due: false }, slept: { state: 'play', mode: 'home', cine: false }, menu: true, act: { mode: 'in', cine: true } });
+});
+
 test('bonus jobs: Pesos follows you once found, the kid must be reached in time, the warehouse pays for no alarm, Lex shows every guard', async ({ openGame }) => {
   test.setTimeout(180_000);
   const page = await openGame();
