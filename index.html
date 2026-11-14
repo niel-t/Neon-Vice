@@ -594,7 +594,9 @@ function objGrab(p,it){const g=G;if(!g||!g.obj)return false;if(it&&Math.hypot(it
   setTimeout(()=>{if(G===g&&state==='play')banner('"LEX IS ON HIS YACHT"','The Royal Flush, two miles out. "He pays me in exposure!"');},2200);return true;}
  return false;}
 /* the objective action in reach, if any: b = touch button label, h = hint text. objGrab does the action itself */
-function objAction(p){const g=G;if(!g||!g.obj||!p||!p.alive)return null;
+function objAction(p){const g=G;if(!g||!p||!p.alive)return null;
+ if(isKade(g)&&g.sid==='pent'&&g.boss&&g.boss.alive){const L=craneLeverAt(g);if(Math.hypot(p.x-L.x,p.z-L.z)<1.4)return {b:'CRANE',h:'DROP THE CRANE ON KADE'};}
+ if(!g.obj)return null;
  if(g.boats&&g.boats.some(b=>!b.sunk&&!(b.fuse>0)&&Math.hypot(b.x-p.x,b.z-p.z)<3.2))return {b:'PLANT',h:'PLANT CHARGE'};
  if(g.safe&&!g.obj.done&&Math.hypot(g.safe.x-p.x,g.safe.z-p.z)<2.2)return {b:'OPEN',h:'OPEN THE SAFE'};
  if(g.rigs&&g.rigs.some(r=>!r.cut&&Math.hypot(r.x-p.x,r.z-p.z)<2.2))return {b:'CUT',h:'CUT THE WIRES'};
@@ -608,13 +610,13 @@ function ctxAction(p){const o=objAction(p);if(o)return {l:o.b,hot:1};const n=nea
  for(const e of g.enemies){if(!e.alive||e.down>0||e.boss||e.body==='fat'||e.body==='big')continue;const dx=e.x-p.x,dz=e.z-p.z,along=dx*sa+dz*ca;
   if(along<0.3||along>7||Math.abs(dx*ca-dz*sa)>0.6||!los(p.x,p.z,e.x,e.z))continue;return slamSpot(e,[sa,ca])?{l:'SLAM',hot:1}:{l:'THROW'};}
  return {l:'LURE'};}
-function updateObj(dt){const g=G;if(!g||!g.obj||!g.player)return;const p=g.player;
+function updateObj(dt){const g=G;if(!g||!g.player||!(g.obj||isKade(g)))return;const p=g.player;
  if(g.boats)for(const b of g.boats){if(b.fuse>0){b.fuse-=dt;if(Math.random()<dt*25)g.parts.push({t:'c',x:b.x+rnd(-0.5,0.5),y:0.6,z:b.z+rnd(-0.3,0.3),vx:rnd(-0.3,0.3),vy:rnd(0.8,1.6),vz:rnd(-0.3,0.3),s:0.05,c:[1,0.5,0.1],life:0.5});
   if(b.fuse<=0){b.fuse=0;b.sunk=true;explode({x:b.x,z:b.z,own:'p'});g.score+=750;g.gpts=(g.gpts||0)+750;g.obj.n++;popup(b.x,b.z,'BOAT SUNK +$750','#2de2e6');
    if(g.obj.n>=g.obj.total){g.obj.done=true;banner('ALL BOATS SUNK',g.enemies.every(e=>!e.alive)?'Get back to the car':'Finish off the guards');}}}}
  if(g.singer){const sg=g.singer;sg.a=Math.atan2(p.x-sg.x,p.z-sg.z);}
  if(p.alive){g.hintT=(g.hintT||0)-dt;if(g.hintT<=0){let h=null;
-  const o=objAction(p);if(o)h=(touchMode?'TAP '+o.b+': ':padMode?'(A): ':'E: ')+o.h;
+  const o=objAction(p);if(o&&!(o.b==='CRANE'&&g.leverT>0))h=(touchMode?'TAP '+o.b+': ':padMode?'(A): ':'E: ')+o.h;
   if(h){g.hintT=2.5;popup(p.x,p.z-0.4,h,'#ffd36b');}}}}
 function stepFloor(d){const n=Math.max(0,Math.min(JOBS.top,JOBS.sel+d));if(n!==JOBS.sel){JOBS.sel=n;saveJobs();updateSelect();sfx('blip');}}
 const BRIEF_FLOOR=(i)=>(i<3?'ACT 1 · FLOOR '+(i+1)+' / 3':i<8?'ACT 2 · FLOOR '+(i-2)+' / 5':'ACT 3 · FLOOR '+(i-7)+' / 3')+' — '+LEVELS[i].name;
@@ -1190,6 +1192,15 @@ function updateEscape(dt){const g=G,x=g.esc,p=g.player;if(!x||!g.cleared||g.done
 /* LURES: noise the player makes on purpose. A thrown weapon that lands, or an arcade cabinet that takes a bullet (it blares its attract
    mode), is heard as a noise at that spot, not as the player: guards in earshot walk over to look. The Studio's ON AIR light does the
    opposite: while it is lit every one of your shots carries 2.5 times as far. */
+/* LEX'S SECOND ACT: when Lex is enraged the Royal Flush starts taking on water. Every 3.5 s another deck row floods, from the stern
+   (bottom) up, stopping five rows from the bow. Flooded floor slows you like a spill and drowns out your footsteps for nobody: it just
+   pushes the fight toward the bow. Drawn as a moving water sheet. */
+function updateFlood(dt){const g=G;if(levelIdx!==7||g.def.hub||!g.boss||!g.boss.enraged||g.stageManaged)return;const W=g.W;
+ if(!g.flood){g.flood={row:0,t:0.5,max:0};let lo=g.H;for(let z=0;z<g.H;z++)for(let x=0;x<W;x++)if(!g.solid[z*W+x]&&!isOut(g,x,z)){lo=Math.min(lo,z);g.flood.max=Math.max(g.flood.max,z);}g.flood.row=g.flood.max+1;g.flood.top=lo+5;
+  banner('THE YACHT IS SINKING','Lex blew a hole in the hull. Keep moving toward the bow');sfx('crash');shake(0.5);}
+ const f=g.flood;f.t-=dt;if(f.t>0||f.row<=f.top)return;f.t=3.5;f.row--;for(let x=0;x<W;x++){const i=f.row*W+x;if(!g.solid[i]&&!isOut(g,x,f.row))g.pool[i]=1;}sfx('thud');}
+function drawFlood(B,g){const f=g.flood;if(!f)return;const W=g.W,y=0.035+Math.sin(g.T*2)*0.01;
+ for(let z=f.row;z<=f.max;z++){let x0=-1;for(let x=0;x<=W;x++){const on=x<W&&g.pool[z*W+x];if(on&&x0<0)x0=x;if(!on&&x0>=0){B.box(A.mul(A.T((x0+x)/2,y,z+0.5),A.S(x-x0,0.02,1)),[0.12,0.45,0.7],true);x0=-1;}}}}
 function lureNoise(x,z,r,label){const g=G;alertNoise(x,z,r,'lure');popup(x,z,label,'#2de2e6');g.lures=(g.lures||0)+1;sfx('alert');}
 function updateOnAir(dt){const g=G;if(levelIdx!==6||!g.panes||g.def.hub)return;g.airT=(g.airT===undefined?6:g.airT)-dt;if(g.airT>0)return;g.onAir=!g.onAir;g.airT=g.onAir?7:9;sfx('click');
  if(g.onAir&&!g.airTip){g.airTip=1;banner('ON AIR','While the red light is on, every shot carries across the whole studio');}}
@@ -1334,7 +1345,7 @@ function playerAttack(p){const g=G,w=p.weapon,ch=CHARS[selIdx];if(p.rl)return;if
  if(tgt){const dx=tgt.x-p.x,dz=tgt.z-p.z,d=Math.hypot(dx,dz)||1,dir=[dx/d,dz/d];p.a=Math.atan2(dx,dz);if(d>wd.range*0.8){p.vx+=dir[0]*7;p.vz+=dir[1]*7;}
   if(wd.kill||ch.id==='consigliere'){sfx('hit_'+(w?BT(w.type):'fists'));hitEnemy(tgt,w?w.type:'fists',dir,2);}else if(tgt.body==='fat'||tgt.body==='big'||tgt.boss)stagger(tgt,dir);else knockdown(tgt,dir);}}
 function nearItem(p){let best=null,bd=0.95;for(const it of G.items){if(it.flying)continue;const d=Math.hypot(it.x-p.x,it.z-p.z);if(d<bd){bd=d;best=it;}}return best;}
-function playerGrab(p){const g=G;const best=nearItem(p);if(objGrab(p,best))return;
+function playerGrab(p){const g=G;const best=nearItem(p);if(objGrab(p,best)||craneLever(p))return;
  if(best){if(p.weapon&&!kitOn(p))dropAt(p,p.weapon.type,p.weapon.ammo);
   g.items.splice(g.items.indexOf(best),1);let ammo=best.ammo;if(best.fresh&&WD[best.type].ammo)ammo=Math.round(ammo*(CHARS[selIdx].id==='don'?1.5:1)*(1+0.25*pk('pockets')));takeWeapon(p,best.type,ammo);sfx('pick');}
  else if(p.weapon)throwWeapon(p);}
@@ -2494,7 +2505,7 @@ function act2Setup(g,i){g.nades=[];if(!(i>=3))return;const W=g.W,cells=ch=>{cons
  if(i===9){g.safe=cells('N')[0];if(g.safe){sol([g.safe]);g.obj={label:'GET THE LEDGER',n:0,total:1,done:false};}}
  if(i===8){g.rigs=cells('N').map(q=>({x:q.x,z:q.z,cut:false}));g.obj={label:'CUT THE CHARGE WIRES',n:0,total:g.rigs.length,done:false};}
  if(i===7){const y=cells('y');if(y.length){const xs=y.map(q=>q.ix),zs=y.map(q=>q.iz);g.tank={x0:Math.min(...xs),x1:Math.max(...xs)+1,z0:Math.min(...zs),z1:Math.max(...zs)+1};}}}
-function updateAct2(dt){const g=G;updateOnAir(dt);
+function updateAct2(dt){const g=G;updateOnAir(dt);updateFlood(dt);
  if(g.studioC&&AC&&!MUS.muffled){const p=g.player,d=Math.hypot(p.x-g.studioC.x,p.z-g.studioC.z),k=clamp(1-d/16,0,1);g.mT=(g.mT||0)-dt;if(g.mT<=0){g.mT=0.2;mFilt.frequency.setTargetAtTime(lerp(700,18000,k*k),AC.currentTime,0.3);}}
  if(g.wreck&&Math.random()<dt*30){g.parts.push({t:'c',x:g.car.x+rnd(-0.8,0.8),y:0.6,z:g.car.z+rnd(-0.4,0.4),vx:rnd(-0.2,0.2),vy:rnd(0.8,1.8),vz:rnd(-0.2,0.2),s:0.07,c:Math.random()<0.5?[1,0.55,0.1]:[0.2,0.18,0.18],life:0.7});}}
 /* breakable studio glass: a bullet shatters the pane and carries on */
@@ -3813,7 +3824,7 @@ function buildDynamic(){const g=G,B=dynB,O=ovB;B.reset();O.reset();if(g.def.hub)
  const p=g.player;const near=p.alive?nearItem(p):null;
  for(const it of g.items)if(!fogHid(it.x,it.z))drawItem(B,it,it===near);
  for(const e of g.enemies)if(!e.alive&&!e.sunk&&!fogHid(e.x,e.z))drawFoe(CB(e),e);if(!p.alive)drawChar(CB(p),p);
- for(const e of g.enemies)if(e.alive&&!fogHidE(e))drawFoe(CB(e),e);drawKinds(B,g);if(g.lex)drawChar(IBhi,g.lex);if(p.alive&&!(g.arrive&&g.arrive.hide)&&!(p.armorT>0&&Math.floor(g.T*20)%2))drawChar(IBhi,p);
+ for(const e of g.enemies)if(e.alive&&!fogHidE(e))drawFoe(CB(e),e);drawKinds(B,g);drawFlood(B,g);if(g.lex)drawChar(IBhi,g.lex);if(p.alive&&!(g.arrive&&g.arrive.hide)&&!(p.armorT>0&&Math.floor(g.T*20)%2))drawChar(IBhi,p);
  for(const e of g.enemies){if(!e.alive||!e.aiming||!p.alive||fogHidE(e))continue;const sa=Math.sin(e.a),ca=Math.cos(e.a);const h=rayWall(e.x,e.z,sa,ca,14,true);const len=h?h.d:14;const st=0.55,rem=Math.max(0,len-st);
   const flick=e.react<0.15?(Math.floor(g.T*30)%2?1:0.4):0.75;B.box(TRS(e.x+sa*(st+rem/2)+ca*0.17,0.74,e.z+ca*(st+rem/2)-sa*0.17,e.a,0.018,0.018,rem),[flick,0.05,0.08],true);}
  for(const b of g.bullets)B.box(TRS(b.x,0.74,b.z,Math.atan2(b.dx,b.dz),0.035,0.035,0.45),b.own==='p'?[1,0.95,0.55]:[1,0.6,0.3],true);
@@ -4221,12 +4232,19 @@ function stageIntro(g){if(!isTower(g))return false;
  else{placeStash(g,2);if(stageSeen(g,'stair'))banner('THE PENTHOUSE','You came in through the kitchen. Nobody saw you.');else{g.ambush=0.4;banner('THE PENTHOUSE','The doors open. They were waiting.');}}
  return true;}
 /* Kade Tower top floor: a crane drops a load down a red lane (it crushes the player and any hard hat in it), and at half health Kade calls three more hard hats up the hoist */
-function kadeStage(dt,g,p){if(g.sid!=='pent'||!g.boss||!g.boss.alive||!g.bossSeen)return;const b=g.boss,c=g.crane||(g.crane={t:3,ph:0,x:g.W/2,w:2.4});c.t-=dt;
+/* KADE'S SECOND ACT: a yellow crane console in the top floor's corner. Grab it (CRANE on touch) and the next load drops down Kade's
+   lane instead of yours: a yellow lane, and if he is still in it when it lands he takes a third of his health. 12 s cooldown. */
+const craneLeverAt=g=>({x:2.5,z:2.5});
+function craneLever(p){const g=G;if(!isKade(g)||g.sid!=='pent'||!g.boss||!g.boss.alive)return false;const L=craneLeverAt(g);if(Math.hypot(p.x-L.x,p.z-L.z)>1.4)return false;
+ if(g.leverT>0){popup(L.x,L.z,'CRANE RESETTING','#ffd36b');return true;}const c=g.crane||(g.crane={t:3,ph:0,x:g.W/2,w:2.4});
+ g.bossSeen=true;c.ph=1;c.t=1.1;c.x=clamp(g.boss.x,3,g.W-4);c.mine=1;g.leverT=12;sfx('blip');banner('CRANE OVERRIDE','The load is coming down on Kade');return true;}
+function kadeStage(dt,g,p){if(g.leverT>0)g.leverT-=dt;if(g.sid!=='pent'||!g.boss||!g.boss.alive||!g.bossSeen)return;const b=g.boss,c=g.crane||(g.crane={t:3,ph:0,x:g.W/2,w:2.4});c.t-=dt;
  if(c.ph===0&&c.t<=0){c.ph=1;c.t=1.5;c.x=clamp(p.x+rnd(-2,2),3,g.W-4);sfx('blip');}
  else if(c.ph===1&&c.t<=0){c.ph=2;c.t=0.7;shake(0.5);sfx('boss');
   if(p.alive&&Math.abs(p.x-c.x)<c.w/2)hurtPlayer([0,1],'boss');
-  for(const e of g.enemies)if(e.alive&&!e.boss&&Math.abs(e.x-c.x)<c.w/2)hitEnemy(e,'fists',[0,1],3);}
- else if(c.ph===2&&c.t<=0){c.ph=0;c.t=b.hp<=b.maxhp/2?4:6;}
+  for(const e of g.enemies)if(e.alive&&!e.boss&&Math.abs(e.x-c.x)<c.w/2)hitEnemy(e,'fists',[0,1],3);
+  if(c.mine&&b.alive&&Math.abs(b.x-c.x)<c.w/2){const d=Math.ceil(b.maxhp/3);popup(b.x,b.z,'CRUSHED! -'+d,'#ffd36b');shake(0.8);if(b.hp<=d)killEnemy(b,'fists',[0,1]);else hitEnemy(b,'fists',[0,1],d);}}
+ else if(c.ph===2&&c.t<=0){c.mine=0;c.ph=0;c.t=b.hp<=b.maxhp/2?4:6;}
  if(!g.kP2&&b.hp<=b.maxhp/2){g.kP2=1;banner('KADE CALLS FOR HELP','Hard hats up the hoist');const dead=lexFate()==='dead';if(lexFate()==='spared')setTimeout(()=>{if(G===g&&state==='play')popup(g.player.x,g.player.z-0.5,'LEX: "HE PANICS. HIT HIM HARD!"','#7dff9a');},1500);for(const [x,z] of [[5.5,2.5],[g.W-5.5,2.5],[g.W/2,g.H-3.5],...(dead?[[g.W/2-4,2.5],[g.W/2+4,2.5]]:[])]){const e=makeEnemy(g,g.def,8,'bat',false,x,z);e.state='chase';e.seeT=0;}}}
 function updateStage(dt){const g=G;if(!isTower(g))return;const p=g.player;
  if(g.ambush>0&&(g.ambush-=dt)<=0)alertNoise(p.x,p.z,12,'elev');
@@ -4262,7 +4280,8 @@ function drawStage(B,g){if(!isTower(g)||!g.stageRun)return;const bx=(x,y,z,sx,sy
   if(s.id==='elev')bx(x,0.03,z,0.9,0.015,0.9,lock?[1,0.25,0.25]:[0.3,1,0.5],true);else drawStairs(B,g,x,z);
   if(s.id==='elev'){bx(x,0.95,z-0.44,3.2,1.9,0.08,steel);bx(x-1.7,1.0,z-0.42,0.12,2.0,0.12,brass);bx(x+1.7,1.0,z-0.42,0.12,2.0,0.12,brass);bx(x,2.05,z-0.4,0.5,0.12,0.06,lock?[1,0.2,0.2]:[0.3,1,0.5],true);}}
  {const ar=g.stageRun.describe(g.sid).arrivals;for(const k of ['bottom','stairs'])if(ar&&ar[k])drawStairsDown(B,g,ar[k].at[0],ar[k].at[1]);}
- if(g.crane&&g.crane.ph>0){const c=g.crane;bx(c.x,0.04,g.H/2,c.w,0.02,g.H-3,[1,0.15,0.15],c.ph===2||Math.sin(g.T*20)>0);if(c.ph===2)bx(c.x,0.8,g.H/2,c.w*0.9,1.6,g.H-4,[0.45,0.4,0.2]);}
+ if(g.crane&&g.crane.ph>0){const c=g.crane;bx(c.x,0.04,g.H/2,c.w,0.02,g.H-3,c.mine?[1,0.8,0.2]:[1,0.15,0.15],c.ph===2||Math.sin(g.T*20)>0);if(c.ph===2)bx(c.x,0.8,g.H/2,c.w*0.9,1.6,g.H-4,[0.45,0.4,0.2]);}
+ if(isKade(g)&&g.sid==='pent'){const L=craneLeverAt(g),ready=!(g.leverT>0);bx(L.x,0.55,L.z,0.5,1.1,0.4,[0.95,0.75,0.1]);bx(L.x,1.12,L.z+0.05,0.3,0.06,0.3,[0.1,0.1,0.12]);bx(L.x,1.2,L.z+0.05,0.16,0.12,0.16,ready?[1,0.15,0.15]:[0.35,0.1,0.1],ready&&Math.sin(g.T*8)>0);}
  if(g.sid==='pent'){const c=g.car;bx(c.x+0.5,0.95,c.z+0.55,2.0,1.9,0.08,steel);bx(c.x-0.5,1.0,c.z+0.5,0.12,2.0,0.12,brass);bx(c.x+1.5,1.0,c.z+0.5,0.12,2.0,0.12,brass);bx(c.x+0.5,2.05,c.z+0.5,0.5,0.12,0.06,g.cleared?[0.3,1,0.5]:[1,0.3,0.3],true);}
  if(g.key){const y=0.45+Math.sin(g.T*2.6)*0.06;bx(g.key.x,y,g.key.z,0.32,0.03,0.2,[1,0.85,0.3],true);bx(g.key.x,0.03,g.key.z,0.7,0.015,0.7,[1,0.8,0.2],true);}}
 function stageStairs(g){

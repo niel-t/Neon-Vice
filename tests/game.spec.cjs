@@ -438,6 +438,20 @@ test('context button: the touch GRAB button names the objective, a weapon to tak
   expect(r).toEqual({ obj: { l: 'CUT', hot: 1 }, none: 'GRAB', lure: 'LURE', slam: { l: 'SLAM', hot: 1 } });
 });
 
+test('boss second acts: the yacht floods once Lex is enraged, and Kade can be crushed with the crane console', async ({ openGame }) => {
+  test.setTimeout(240_000);
+  const page = await openGame();
+  await page.evaluate(() => { NOARRIVE = true; startLevel(7); G.player.hp = 99; G.boss.enraged = true; });
+  await expect.poll(() => page.evaluate(() => !!G.flood && G.pool.some(v => v)), { timeout: 20_000 }).toBe(true);
+  const go = sid => page.waitForFunction(sid => G && G.def && G.sid === sid && !G.going && state === 'play', sid, { timeout: 60_000 });
+  await page.evaluate(() => { startLevel(10); G.keycard = true; const s = G.stageRun.describe(G.sid).stairs.find(q => q.id === 'elev'); G.player.x = s.at[0]; G.player.z = s.at[1]; });
+  await go('pent');
+  const a = await page.evaluate(() => { const p = G.player, L = craneLeverAt(G); p.x = L.x; p.z = L.z; p.hp = 99; const ctx = ctxAction(p).l; const hp = G.boss.hp; playerGrab(p); return { ctx, mine: !!G.crane.mine, x: Math.abs(G.crane.x - Math.max(3, Math.min(G.W - 4, G.boss.x))) < 0.01, hp }; });
+  expect(a).toMatchObject({ ctx: 'CRANE', mine: true, x: true });
+  await page.evaluate(() => { G.boss.spd = 0.0001; G.boss.x = G.crane.x; });
+  await expect.poll(() => page.evaluate(hp => G.boss.hp < hp || !G.boss.alive, a.hp), { timeout: 20_000 }).toBe(true);
+});
+
 test('slams: a guard knocked into water, the shark tank or broken glass dies there, and Kade can go off the edge', async ({ openGame }) => {
   test.setTimeout(180_000);
   const page = await openGame();
