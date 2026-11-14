@@ -352,6 +352,8 @@ const SFX={
  slash:t=>{noise(t,0.12,'highpass',2500,6000,0.3,sfxG,2);},
  splat:t=>{noise(t,0.32,'lowpass',1500,110,0.8,sfxG,5);tone(t,0.22,'sine',95,32,0.55);},
  door:t=>{tone(t,0.12,'square',95,50,0.25);noise(t,0.12,'lowpass',900,100,0.6);},
+ carOpen:t=>{tone(t,0.025,'square',1400,900,0.07);noise(t,0.05,'bandpass',2400,1600,0.18,sfxG,4);tone(t+0.03,0.08,'sine',220,140,0.12);},
+ carShut:t=>{tone(t,0.14,'sine',120,55,0.6);noise(t,0.1,'lowpass',1100,140,0.55);tone(t+0.01,0.03,'square',900,600,0.05);},
  pick:t=>{tone(t,0.04,'square',500,500,0.12);tone(t+0.05,0.05,'square',800,800,0.12);},
  click:t=>{tone(t,0.03,'square',1800,1800,0.08);},
  ric:t=>{tone(t,0.12,'sine',2400,900,0.06);},
@@ -1084,10 +1086,11 @@ function updateArrive(dt){const g=G,A0=g.arrive,p=g.player;A0.t+=dt;
  const skip=A0.t>0.4&&(pressed.perk||pressed.grab||mouse.down||keys.Enter||keys.Space);
  if(A0.ph==='drive'){const D=2.4,u=Math.min(1,A0.t/D),e=1-Math.pow(1-u,3),nx=A0.x0+(A0.x1-A0.x0)*e;A0.spin+=Math.abs(nx-g.car.x)*3.2;g.car.x=nx;
   if(u>=1){A0.ph='park';A0.t=0;}}
- else if(A0.ph==='park'){if(A0.t>0.35){A0.ph='out';A0.t=0;A0.hide=false;p.x=g.car.x-A0.dir*0.35;p.z=A0.z-0.62;p.a=Math.PI;sfx('door');}}
- else if(A0.ph==='out'){const tx=A0.door[0],tz=A0.door[1],dx=tx-p.x,dz=tz-p.z,dd=Math.hypot(dx,dz),sp=2.6;
-  if(dd>0.04){const st=Math.min(dd,sp*dt);p.x+=dx/dd*st;p.z+=dz/dd*st;p.walk=(p.walk||0)+st*9;p.a=Math.atan2(dx,dz);}else p.a=Math.PI;
-  if(dd<=0.04||A0.t>1.4)return endArrive();}
+ else if(A0.ph==='park'){if(A0.t>0.3){A0.ph='open';A0.t=0;const ex=[g.car.x-A0.dir*0.35,A0.z-0.62];A0.ex=ex;A0.side=boatArrival(g)?0:carSideOf(g.car,ex[0],ex[1],g.carA||0);if(A0.side)carDoorOpen(g.car,A0.side);}}
+ else if(A0.ph==='open'){if(!A0.side||g.car.dr.t>=0.8||A0.t>0.6){A0.ph='step';A0.t=0;const q=A0.side?carPt(g.car,A0.side,0.34,-0.2,g.carA||0):A0.ex;A0.hide=false;p.x=q[0];p.z=q[1];}}
+ else if(A0.ph==='step'){if(autoWalk(p,A0.ex,1.9,dt)||A0.t>0.8){p.x=A0.ex[0];p.z=A0.ex[1];A0.ph='out';A0.t=0;carDoorClose(g.car);}}
+ else if(A0.ph==='out'){if(autoWalk(p,A0.door,2.6,dt)||A0.t>1.4){walkVel(p,0,0);return endArrive();}}
+ carDoorTick(g.car,dt);
  {const k=1-Math.exp(-dt*3),tx=A0.ph==='drive'?A0.x1:p.x,tz=A0.z-1;g.cam.x+=(tx-g.cam.x)*k;g.cam.z+=(tz-g.cam.z)*k;}
  if(skip){mouse.down=false;keys.Enter=false;keys.Space=false;endArrive();}}
 /* SPEEDBOAT ARRIVAL (idea 10): the Royal Flush is two miles out, so you come in by speedboat. The road strip under the yacht is drawn
@@ -1099,7 +1102,19 @@ function drawBoatArrival(B,g){const W=g.W,a=g.arr,z0=a.zT+0.02,z1=g.H,y=0.03+Mat
  const gx=a.gx;B.box(TRS(gx,0.09,z0+0.45,0,2.0,0.08,0.9),[0.45,0.32,0.18]);for(const sx of [-0.95,0.95])B.box(TRS(gx+sx,0.35,z0+0.85,0,0.1,0.6,0.1),[0.3,0.2,0.12]);
  const bob=Math.sin(g.T*2.2)*0.03,ar=g.arrive;drawSpeedboat(B,g.car.x,g.car.z+0.1+bob*0.5,g.carA||0,[1,0.3,0.75]);
  if(ar&&ar.ph==='drive')for(let k=0;k<5;k++)g.parts.push({t:'c',x:g.car.x-(ar.dir||1)*1.3+rnd(-0.2,0.2),y:0.12,z:g.car.z+rnd(-0.35,0.35),vx:-(ar.dir||1)*rnd(0.5,1.5),vy:rnd(0.4,1),vz:rnd(-0.3,0.3),s:0.05,c:[0.85,0.95,1],life:0.4});}
-function endArrive(){const g=G,A0=g&&g.arrive;if(!A0)return;g.arrive=null;g.car.x=A0.x1;g.player.x=A0.door[0];g.player.z=A0.door[1];g.player.a=Math.PI;ARR_SEEN=A0.lvl;if(A0.then)A0.then();}
+function endArrive(){const g=G,A0=g&&g.arrive;if(!A0)return;g.arrive=null;g.car.x=A0.x1;carDoorShut(g.car);g.player.x=A0.door[0];g.player.z=A0.door[1];g.player.a=Math.PI;walkVel(g.player,0,0);ARR_SEEN=A0.lvl;if(A0.then)A0.then();}
+/* GETAWAY: reaching the car at the end of a floor walks you round to the driver's door, it opens, you get in and it shuts, then the results.
+   Any tap or key skips straight to the results. The speedboat has no door: you just step aboard. */
+function startLeave(g){const p=g.player,c=g.car,a=g.carA||0,boat=boatArrival(g);if(!c||g.def.noCar||!p){finishLevel();return;}
+ const side=carSideOf(c,p.x,p.z,a),door=boat?[c.x,c.z]:carPt(c,side,0.72,-0.15,a);
+ g.leave={t:0,ph:'walk',door,side:boat?0:side,seat:boat?door:carPt(c,side,0.34,-0.15,a),hide:false,a};mouse.down=false;keys.Enter=keys.Space=false;}
+function updateLeave(dt){const g=G,L=g.leave,p=g.player,c=g.car;if(L.fin)return;L.t+=dt;carDoorTick(c,dt);
+ if(L.t>0.3&&(pressed.perk||pressed.grab||mouse.down||keys.Enter||keys.Space)){mouse.down=false;keys.Enter=keys.Space=false;return endLeave();}
+ if(L.ph==='walk'){if(autoWalk(p,L.door,3.0,dt)||L.t>1.6){walkVel(p,0,0);L.t=0;if(L.side){L.ph='open';carDoorOpen(c,L.side);p.a=Math.atan2(c.x-p.x,c.z-p.z);}else{L.ph='shut';L.hide=true;}}}
+ else if(L.ph==='open'){if(c.dr.t>=0.8||L.t>0.6){L.ph='in';L.t=0;}}
+ else if(L.ph==='in'){if(autoWalk(p,L.seat,1.7,dt)||L.t>0.6){walkVel(p,0,0);L.hide=true;carDoorClose(c);L.ph='shut';L.t=0;}}
+ else if(L.ph==='shut'){if((!c.dr||c.dr.t<=0)&&L.t>0.25)return endLeave();}}
+function endLeave(){const g=G,L=g.leave;if(!L||L.fin)return;L.fin=true;L.hide=true;carDoorShut(g.car);walkVel(g.player,0,0);if(finishLevel()===false)g.leave=null;}
 function arriveSfx(){if(typeof AC==='undefined'||!AC||!SET.sound)return;try{const t=AC.currentTime;
  tone(t,2.2,'sawtooth',95,38,0.07,undefined,0.15);tone(t,2.2,'square',48,26,0.04,undefined,0.15);noise(t+1.75,0.45,'bandpass',2600,1400,0.05,undefined,6);}catch(e){}}
 
@@ -1669,6 +1684,7 @@ function update(dt){const g=G;if(g.climbIn&&state==='play'){climbInTick(dt,g);up
  {const tgt=g.combo>=6?3:g.combo>=4?2:g.combo>=2?1:0;if(tgt>g.lv){g.lv=tgt;g.lvT=2;}else if(g.lv>tgt){g.lvT-=dt;if(g.lvT<=0){g.lv--;g.lvT=1.2;}}}
  if(g.freeze>0){g.freeze-=dt;fogUpdate(g,dt);return;}
  if(g.arrive){updateArrive(dt);updateFX(dt);fogUpdate(g,dt);return;}
+ if(g.leave){updateLeave(dt);updateFX(dt);bodyPhysics();updateCamera(dt);fogUpdate(g,dt);return;}
  if(g.cameo){updateCameo(dt);updateFX(dt);updateCamera(dt);fogUpdate(g,dt);return;}
  if(g.mercy){const fe=g.mercy.e;updateMercy(dt);updateFX(dt);bodyPhysics();const k=1-Math.exp(-dt*3);g.cam.x+=(fe.x-g.cam.x)*k;g.cam.z+=(fe.z-g.cam.z)*k;return;}
  if(g.fin){const fe=g.fin.e;updateFin(dt);updateFX(dt);bodyPhysics();for(const e of g.enemies)if(!e.alive)slideBody(e,dt);const k=1-Math.exp(-dt*3);g.cam.x+=(fe.x-g.cam.x)*k;g.cam.z+=(fe.z-g.cam.z)*k;return;}
@@ -1679,7 +1695,7 @@ function update(dt){const g=G;if(g.climbIn&&state==='play'){climbInTick(dt,g);up
  updatePlayer(dt);updateHazards(dt);if(g.player.ex){if(g.player.alive)updateExec(g.player,dt);else g.player.ex=null;}for(const e of g.enemies)updateEnemy(e,dt);separate();bodyPhysics();updateDoors(dt);updateBullets(dt);updateNades(dt);updateAct2(dt);updateStash(dt);updateObj(dt);updateStage(dt);updateItems(dt);updateCash(dt);updateFX(dt);
  if(stageMayFinish(g)&&!g.cleared&&g.enemies.every(e=>!e.alive||e.spared||e.boss&&g.clear&&g.clear.boss==='optional')){if(g.obj&&!g.obj.done){if(!g.objWarn){g.objWarn=1;banner('GUARDS DOWN','Now: '+g.obj.label);}}else{g.cleared=true;banner('FLOOR CLEAR',g.def.noCar?'Take the elevator down':'Get back to the car');sfx('clear');startEscape(g);}}
  updateEscape(dt);
- if(stageMayFinish(g)&&g.cleared&&g.player.alive&&!g.done&&Math.hypot(g.player.x-g.car.x,g.player.z-g.car.z)<1.8){g.done=true;if(g.esc&&!g.esc.late){g.getaway=true;g.score+=ESC_PAY;g.gpts=(g.gpts||0)+ESC_PAY;}finishLevel();}
+ if(stageMayFinish(g)&&g.cleared&&g.player.alive&&!g.done&&Math.hypot(g.player.x-g.car.x,g.player.z-g.car.z)<1.8){g.done=true;if(g.esc&&!g.esc.late){g.getaway=true;g.score+=ESC_PAY;g.gpts=(g.gpts||0)+ESC_PAY;}startLeave(g);}
  if(!g.player.alive){g.deadT+=dt;if(g.deadT>1&&state==='play')showDead();}
  updateHints(dt);updateCamera(dt);}
 function stickVec(s){let dx=(s.x-s.ox)/55,dy=(s.y-s.oy)/55;const l=Math.hypot(dx,dy);if(l>1){dx/=l;dy/=l;}return[dx,dy];}
@@ -2571,7 +2587,7 @@ function jobDirect(){takeNextJob();
 function travel(go,t1,t2){const g=G,L=g&&HUBMODE==='home'&&HOME_LIFT[g.home];
  if(L)return fadeTo(()=>enterElevator(true,{from:L.from,to:L.to,title:L.title,dur:L.from===69?4.4:2.4,then:go}));return departTo(go,t1,t2);}
 function onHubTrigger(t){if(fading)return false;if(t==='leave')return homeLeave();if(t==='lift')return liftUp();if(t==='exit'){sfx('blip');return fadeTo(()=>loadHub('drive','parked'));}if(t==='tower'){sfx('blip');return fadeTo(()=>loadHub('lobby'));}else if(t==='elevator'){sfx('ding');return fadeTo(enterElevator);}else if(t==='mcwey'){return fadeTo(talkMcWey);}return true;}
-function updateHub(dt){const g=G;g.T+=dt;g.time+=dt;if(g.np)g.np.t+=dt;
+function updateHub(dt){const g=G;g.T+=dt;g.time+=dt;if(g.np)g.np.t+=dt;carDoorTick(g.park,dt);carDoorTick(g.hcar,dt);carDoorTick(g.pcar,dt);
  if(g.seq){updateSeq(dt);if(G!==g)return;if(g.def.hub!=='drive')npcStep(dt);else if(g.parked)parkedStreet(dt);if(g.slots)homeTick(dt);updateFX(dt);seqCam(dt);return;}
  if(g.cine)updateCine(dt);else if(g.def.hub==='drive'&&!g.parked)updateDrive(dt);else{if(g.range)rangePre(dt);hubInteract();updatePlayer(dt);if(g.range){rangeTick(dt);updateDoors(dt);}if(g.solids&&g.player)for(const s of g.solids)boxPush(s,g.player);npcStep(dt);if(g.seatP)seatHold(g);if(g.mcDesk)officeTick(g,dt);if(g.parked)parkedStreet(dt);if(g.slots)homeTick(dt);if(g.club)clubTick(dt);}
  updateFX(dt);
@@ -2594,27 +2610,44 @@ function seqCarAt(st,s){const P=st.path,L=st.L,q=seqPathAt(P,s),ah=seqPathAt(P,M
 /* the auto-walk shoulders swinging doors open the way a walking player would */
 function seqDoors(g,p,dx,dz){for(const d of g.doors||[]){if(d.kind==='slide'||Math.abs(d.w)>1)continue;const e=doorEnd(d),mx=(d.hx+e[0])/2,mz=(d.hz+e[1])/2;if(Math.hypot(mx-p.x,mz-p.z)>0.95)continue;
  const a=d.base+d.th,s=Math.sign(-Math.sin(a)*dx+Math.cos(a)*dz)||1;d.w=s*6;d.pusher='p';sfx('door',0.5);}}
+/* scripted walks set the velocity too: the character models pick the walk cycle (and its stride) from vx/vz, so a walk without it slides */
+function walkVel(p,vx,vz){p.vx=vx;p.vz=vz;}
+/* one frame of walking toward q at speed sp; true once there */
+function autoWalk(p,q,sp,dt){const dx=q[0]-p.x,dz=q[1]-p.z,d=Math.hypot(dx,dz);if(d<0.02){walkVel(p,0,0);return true;}const m=Math.min(d,sp*dt);
+ p.x+=dx/d*m;p.z+=dz/d*m;p.a=Math.atan2(dx,dz);p.walk=(p.walk||0)+m*9;walkVel(p,dx/d*sp,dz/d*sp);return m>=d-1e-6;}
 function startSeq(steps,done,keep){const g=G;g.seq={t:0,i:0,st:0,steps,done:done||null,keep:!!keep,rel:false};g.card=null;g.hideP=steps[0]&&steps[0].k==='hide';g.hubDone=g.hubDone||false;
  $('banner').classList.remove('on');$('bSkip').innerHTML='SKIP<span class="kbhint"> (ENTER)</span><span class="padhint"> (A)</span>';return g.seq;}
 function seqStep(g,s,dt){const S=g.seq,p=g.player;
  switch(s.k){
-  case 'hide':g.hideP=true;if(!s.quiet)sfx('door');return true;
+  case 'hide':g.hideP=true;if(p)walkVel(p,0,0);if(!s.quiet)sfx('door');return true;
   case 'card':g.card={t1:s.t1,t2:s.t2,t0:S.t};return true;
   case 'wait':return S.st>=s.dur;
   case 'drive':{if(s.L===undefined){s.L=seqPathLen(s.path);if(s.sfx!==false)arriveSfx();}const u=Math.min(1,S.st/s.dur),e=s.ease==='in'?u*u:s.ease==='out'?1-Math.pow(1-u,3):u*u*(3-2*u);seqCarAt(s,e*s.L);return u>=1;}
-  case 'out':g.hideP=false;if(p){p.x=s.at[0];p.z=s.at[1];if(s.a!==undefined)p.a=s.a;}if(!s.quiet)sfx('door');return true;
-  case 'walk':{if(!p)return true;s.j=s.j||0;let left=(s.sp||2.6)*dt;while(left>1e-6&&s.j<s.path.length){const q=s.path[s.j],dx=q[0]-p.x,dz=q[1]-p.z,d=Math.hypot(dx,dz);
-    if(d>1e-4){p.a=Math.atan2(dx,dz);seqDoors(g,p,dx/d,dz/d);}const m=Math.min(d,left);if(d>1e-4){p.x+=dx/d*m;p.z+=dz/d*m;}p.walk=(p.walk||0)+m*9;left-=m;if(m>=d)s.j++;}
+  case 'walk':{if(!p)return true;s.j=s.j||0;const sp=s.sp||2.6;let left=sp*dt;while(left>1e-6&&s.j<s.path.length){const q=s.path[s.j],dx=q[0]-p.x,dz=q[1]-p.z,d=Math.hypot(dx,dz);
+    if(d>1e-4){p.a=Math.atan2(dx,dz);seqDoors(g,p,dx/d,dz/d);walkVel(p,dx/d*sp,dz/d*sp);}const m=Math.min(d,left);if(d>1e-4){p.x+=dx/d*m;p.z+=dz/d*m;}p.walk=(p.walk||0)+m*9;left-=m;if(m>=d)s.j++;}
    if(s.j>=s.path.length||S.st>(s.max||9)){seqEnd(g,s);return true;}return false;}
+  /* getting in: the door swings open, you step into the doorway and drop out of sight, the door shuts behind you */
+  case 'in':{const c=s.car;if(!c||!p){g.hideP=true;return true;}
+   if(!s.ph){s.ph=1;s.t=0;carDoorOpen(c,s.side);walkVel(p,0,0);p.a=Math.atan2(c.x-p.x,c.z-p.z);}s.t+=dt;
+   if(s.ph===1){if(c.dr.t>=0.8||s.t>0.6){s.ph=2;s.t=0;s.seat=carPt(c,s.side,0.34,s.along||-0.15);}return false;}
+   if(s.ph===2){if(autoWalk(p,s.seat,1.7,dt)||s.t>0.6){walkVel(p,0,0);g.hideP=true;carDoorClose(c);s.ph=3;s.t=0;}return false;}
+   return c.dr.t<=0&&s.t>0.12;}
+  /* getting out: the door opens, you step out of the doorway to `at`, and the door swings shut on its own while you walk on */
+  case 'out':if(!s.car){g.hideP=false;if(p){p.x=s.at[0];p.z=s.at[1];if(s.a!==undefined)p.a=s.a;}if(!s.quiet)sfx('door');return true;}
+   {const c=s.car;if(!p){g.hideP=false;return true;}
+   if(!s.ph){s.ph=1;s.t=0;s.side=carSideOf(c,s.at[0],s.at[1]);const k=carAxes(carYaw(c));s.along=clamp((s.at[0]-c.x)*k.fx+(s.at[1]-c.z)*k.fz,-0.35,0.2);carDoorOpen(c,s.side);}s.t+=dt;
+   if(s.ph===1){if(c.dr.t>=0.8||s.t>0.6){s.ph=2;s.t=0;const q=carPt(c,s.side,0.34,s.along);g.hideP=false;p.x=q[0];p.z=q[1];}return false;}
+   if(autoWalk(p,s.at,1.9,dt)||s.t>0.8){p.x=s.at[0];p.z=s.at[1];if(s.a!==undefined)p.a=s.a;walkVel(p,0,0);carDoorClose(c);return true;}return false;}
   case 'say':{const n=s.n;if(n){n.said=true;g.talkT=s.lines.length*1.5+0.4;const qg=g.quipGen=(g.quipGen||0)+1;s.lines.forEach((ln,i)=>setTimeout(()=>{if(G===g&&g.quipGen===qg)popup(n.x,n.z,ln,'#ffe9a8');},i*1500));}return true;}
   case 'call':return s.fn()!==false;}
  return true;}
 /* where a step leaves the world when it is skipped (and where a finished walk ends) */
 function seqEnd(g,s){const p=g.player;
- if(s.k==='hide')g.hideP=true;
+ if(s.k==='hide'){g.hideP=true;if(p)walkVel(p,0,0);}
+ else if(s.k==='in'){g.hideP=true;if(p)walkVel(p,0,0);carDoorShut(s.car);}
  else if(s.k==='drive'){if(s.L===undefined)s.L=seqPathLen(s.path);seqCarAt(s,s.L);}
- else if(s.k==='out'){g.hideP=false;if(p){p.x=s.at[0];p.z=s.at[1];if(s.a!==undefined)p.a=s.a;}}
- else if(s.k==='walk'&&p){const n=s.path.length,q=s.path[n-1],o=n>1?s.path[n-2]:[p.x,p.z];if(Math.hypot(q[0]-o[0],q[1]-o[1])>1e-4)p.a=Math.atan2(q[0]-o[0],q[1]-o[1]);p.x=q[0];p.z=q[1];if(s.face!==undefined)p.a=s.face;s.j=n;}
+ else if(s.k==='out'){g.hideP=false;if(p){p.x=s.at[0];p.z=s.at[1];if(s.a!==undefined)p.a=s.a;walkVel(p,0,0);}carDoorShut(s.car);}
+ else if(s.k==='walk'&&p){const n=s.path.length,q=s.path[n-1],o=n>1?s.path[n-2]:[p.x,p.z];if(Math.hypot(q[0]-o[0],q[1]-o[1])>1e-4)p.a=Math.atan2(q[0]-o[0],q[1]-o[1]);p.x=q[0];p.z=q[1];if(s.face!==undefined)p.a=s.face;s.j=n;walkVel(p,0,0);}
  else if(s.k==='say'&&s.n)s.n.said=true;}
 function seqFinish(g){const S=g.seq;if(!S)return;if(S.keep){S.i=S.steps.length;return;}g.seq=null;g.card=null;g.trigLock=true;
  $('bSkip').innerHTML=(HUBMODE==='home'?'GO SOMEWHERE':HUBMODE==='arrive'?'SKIP TO YOUR APARTMENT':HUBMODE==='in'?'SKIP TO McWEY':'SKIP TO YOUR CAR')+'<span class="kbhint"> (TAB)</span><span class="padhint"> (Y)</span>';
@@ -2642,7 +2675,8 @@ function drawSeqHUD(c,g,u){const S=g.seq,k=clamp(S.t/0.45,0,1),bh=Math.round(vh*
 function departCar(g){if(!g)return null;if(g.def.hub==='drive'&&g.parked)return g.pcar;return g.hcar||g.park||null;}
 function departTo(go,t1,t2){const g=G;if(!g||!g.def.hub||g.seq||!g.player||fading)return fadeTo(go);const c=departCar(g);if(!c)return fadeTo(go);
  const p=g.player,heli=c===g.park&&rideHeli(),a=c.h!==undefined&&c.v!==undefined?c.h-Math.PI/2:(c.a||0),fx=Math.cos(a),fz=-Math.sin(a),sx=-fz,sz=fx,
-  side=((p.x-c.x)*sx+(p.z-c.z)*sz)>=0?1:-1,door=[c.x+sx*side*0.72-fx*0.15,c.z+sz*side*0.72-fz*0.15],steps=[{k:'walk',path:[door],sp:3.2,max:3},{k:'hide'},{k:'card',t1,t2},{k:'wait',dur:0.25}];
+  side=((p.x-c.x)*sx+(p.z-c.z)*sz)>=0?1:-1,door=[c.x+sx*side*0.72-fx*0.15,c.z+sz*side*0.72-fz*0.15],far=Math.hypot(door[0]-p.x,door[1]-p.z),
+  steps=[{k:'walk',path:[door],sp:3.2,max:Math.min(6,far/3.2+0.6)},heli?{k:'hide'}:{k:'in',car:c,side},{k:'card',t1,t2},{k:'wait',dur:0.25}];
  if(heli)steps.push({k:'wait',dur:1.4});
  else steps.push({k:'drive',car:c,path:departPath(g,c,a),dur:2.1,ease:'in'});
  steps.push({k:'call',fn:()=>fadeTo(go)});g.hubDone=true;startSeq(steps,null,true);return true;}
@@ -2652,7 +2686,7 @@ function departPath(g,c,a){const x=c.x,z=c.z;
  if(g.lot)return venueDepartPath(g,c);const fx=Math.cos(a),fz=-Math.sin(a);if(g.club)return[[x,z],[x+fx*3,z+fz*3+0.7],[x+fx*24,z+fz*24+0.7]];return[[x,z],[x+fx*24,z+fz*24]];}
 /* ---- pulling up at Nine's or the club: drive in along the street, park, walk to the door ---- */
 function hubArrive(g){if(!g||g!==G||!g.park||!g.player||rideHeli())return;const c=g.park,p=g.player,x1=c.x,z=c.z,end=[p.x,p.z];c.a=0;c.spin=0;seqCamTo(g,x1,z);
- const lot=!!g.lot;startSeq([{k:'hide',quiet:1},{k:'drive',car:c,path:lot?venueArrivePath(g,c):[[x1-15,z],[x1,z]],dur:lot?2.8:2.3,ease:'out',camEnd:1},{k:'wait',dur:0.3},{k:'out',at:lot?[x1-0.25,z-0.72]:[x1-0.25,z+0.68],a:lot?Math.PI:0},{k:'walk',path:[end],max:5}],g=>{if(g.def===HUBS.club)banner('VELVET PALMS','Tip the dancers · talk to Tony');else if(g.def===HUBS.mall)mallHello(g);else banner("NINE OF NINE'S",'Exotic machinery of death');});}
+ const lot=!!g.lot;startSeq([{k:'hide',quiet:1},{k:'drive',car:c,path:lot?venueArrivePath(g,c):[[x1-15,z],[x1,z]],dur:lot?2.8:2.3,ease:'out',camEnd:1},{k:'wait',dur:0.3},{k:'out',car:c,at:lot?[x1-0.25,z-0.72]:[x1-0.25,z+0.68],a:lot?Math.PI:0},{k:'walk',path:[end],max:5}],g=>{if(g.def===HUBS.club)banner('VELVET PALMS','Tip the dancers · talk to Tony');else if(g.def===HUBS.mall)mallHello(g);else banner("NINE OF NINE'S",'Exotic machinery of death');});}
 
 /* ---- coming home ---- */
 /* Room 14: the car pulls into the motel lot; you walk through the gap in the patio rail and in by the back door.
@@ -2665,7 +2699,7 @@ function homeCar(g){if(g.home!==0)return;const c=HOME0_CAR;g.hcar={x:c.x,z:c.z,a
  g.trigs.push({x:c.x-0.5,z:c.z+0.78,t:'leave'});g.car={x:c.x,z:c.z};}
 function homeArrive(g){if(!g||g.home!==0||!g.hcar)return;const c=g.hcar,c0=HOME0_CAR;seqCamTo(g,c0.x,c0.z+1);
  startSeq([{k:'hide',quiet:1},{k:'card',t1:'SUNSET MOTEL',t2:'ROUTE 1 · ROOM 14'},{k:'drive',car:c,path:[[-7,c0.z],[c0.x,c0.z]],dur:2.6,ease:'out',camEnd:1},{k:'wait',dur:0.35},
-  {k:'out',at:[c0.x-0.3,c0.z+0.72],a:0},{k:'walk',path:[[12.3,3.6],[11.9,4.5],[11.5,6.3],[11.5,7.5],[11.5,8.8]],face:0}],g=>homeBanner(g));}
+  {k:'out',car:c,at:[c0.x-0.3,c0.z+0.72],a:0},{k:'walk',path:[[12.3,3.6],[11.9,4.5],[11.5,6.3],[11.5,7.5],[11.5,8.8]],face:0}],g=>homeBanner(g));}
 /* stepping out of your own building's elevator into the corridor (studio, floor 3) or the entrance hall (penthouse, floor 69) */
 const HOME_LIFT={1:{at:[9.7,23],path:[[12.4,23],[15.5,22.7],[15.5,21.5],[15.5,20.2]],title:'THE SEABREEZE',from:3,to:1},2:{at:[12.7,23],path:[[14.8,22.9],[15.9,22.5]],title:'CORAL TOWER',from:69,to:'P1'}};
 function enterHomeByLift(t){loadHub('home'+t,'home');const g=G,L=HOME_LIFT[t],p=g.player;if(!L||!p)return;p.x=L.at[0];p.z=L.at[1];p.a=Math.PI/2;seqCamTo(g,p.x+1,p.z);sfx('ding');
@@ -2681,10 +2715,10 @@ function garageSetup(g){g.garage={bar:0};const W=g.W;for(const z of [7,8]){const
 function arriveHubSetup(g,name){const p=g.player;g.hideP=true;if(name==='slobby'){const c=g.hcar={x:-6,z:9.55,a:0,spin:0};g.solids=g.solids||[];g.solids.push({x:10,z:9.55,w:2.35,d:1.05});
   const cc=g.npcs.find(n=>n.kind==='concierge');seqCamTo(g,10,8.5);
   startSeq([{k:'hide',quiet:1},{k:'card',t1:'THE SEABREEZE',t2:'OCEAN DRIVE · HOME'},{k:'drive',car:c,path:[[-6,9.55],[10,9.55]],dur:2.5,ease:'out',camEnd:1},{k:'wait',dur:0.3},
-   {k:'out',at:[9.7,8.85],a:Math.PI},{k:'walk',path:[[10,8.2],[10,7.4],[10,6.0]],sp:2.3},{k:'say',n:cc,lines:NPCLINES.concierge[0]}],g=>{g.obj='TAKE THE ELEVATOR UP TO YOUR FLOOR';banner('THE SEABREEZE','Your apartment is on the 3rd floor');});}
+   {k:'out',car:c,at:[9.7,8.85],a:Math.PI},{k:'walk',path:[[10,8.2],[10,7.4],[10,6.0]],sp:2.3},{k:'say',n:cc,lines:NPCLINES.concierge[0]}],g=>{g.obj='TAKE THE ELEVATOR UP TO YOUR FLOOR';banner('THE SEABREEZE','Your apartment is on the 3rd floor');});}
  else if(name==='garage'){const c=g.hcar={x:-9,z:8.1,a:0,spin:0};g.solids=g.solids||[];g.solids.push({x:17.5,z:5.75,w:1.05,d:2.35});seqCamTo(g,8,8);
   startSeq([{k:'hide',quiet:1},{k:'card',t1:'CORAL TOWER',t2:'PRIVATE GARAGE · LEVEL P1'},{k:'drive',car:c,path:[[-9,8.1],[12.6,8.1],[15.6,7.7],[17.2,6.7],[17.5,5.75]],dur:4.2,ease:'inout',camMin:8},{k:'wait',dur:0.35},
-   {k:'out',at:[16.75,5.6],a:-Math.PI/2},{k:'walk',path:[[16.3,6.3]],sp:2.2}],g=>{g.obj='TAKE THE PRIVATE ELEVATOR TO 69';banner('CORAL TOWER','Private elevator to the penthouse, floor 69');});}
+   {k:'out',car:c,at:[16.75,5.6],a:-Math.PI/2},{k:'walk',path:[[16.3,6.3]],sp:2.2}],g=>{g.obj='TAKE THE PRIVATE ELEVATOR TO 69';banner('CORAL TOWER','Private elevator to the penthouse, floor 69');});}
  else g.hideP=false;
  if(p)p.a=Math.PI;const lt=g.trigs.filter(t=>t.t==='lift');if(lt.length)g.car={x:lt.reduce((a,t)=>a+t.x,0)/lt.length,z:lt[0].z};return true;}
 /* the lobby elevator: up to the apartment, and the skip button goes straight there */
@@ -2757,14 +2791,14 @@ function hubFixStart(g){const want=g.garage||g.club||g.def===HUBS.bunker;if(!wan
  if(!g.fixB||!g.fixB.buf)g.fixB=new Batch();g.fixB.reset();g.fixB.round=dynB.round;g.fixK=k;return g.fixB;}
 function hubFixEnd(g,F){if(F)F.upload(true);}
 function drawHubDyn(B,O){const g=G;const FX=g.def.hub==='drive'?undefined:hubFixStart(g);
- if(g.def.hub==='drive'){const c=g.pcar;if(g.parked&&rideHeli())drawHeli(B,c.x,c.z,0,g.T);else drawRide(B,c.x,c.z,1,c.h-Math.PI/2,null,c.wr||0);if(myProg().boat){const T0=g.tower||g.car;drawSpeedboat(B,T0.x+1,14.3+Math.sin(g.T*1.5)*0.05,0,[1,0.3,0.75]);}if(g.parked&&g.player&&!g.hideP)drawChar(IBhi,g.player);if(g.doorT>0&&rideId()==='money'&&myCar()==='sig')drawCarDoor(B,c.x,c.z,1,c.h-Math.PI/2,g.doorT*1.1);for(const t of g.traffic)if(inView(t.x,0.6,t.z,2.6))drawCar(B,t.x,t.z,t.col,t.dir,t.wr||0);
+ if(g.def.hub==='drive'){const c=g.pcar;if(g.parked&&rideHeli())drawHeli(B,c.x,c.z,0,g.T);else drawRide(B,c.x,c.z,1,c.h-Math.PI/2,null,c.wr||0);if(myProg().boat){const T0=g.tower||g.car;drawSpeedboat(B,T0.x+1,14.3+Math.sin(g.T*1.5)*0.05,0,[1,0.3,0.75]);}if((g.parked||g.cine&&g.cine.pout)&&g.player&&!g.hideP)drawChar(IBhi,g.player);if(!(g.parked&&rideHeli()))drawRideDoor(B,c.x,c.z,c.h-Math.PI/2,c.dr);for(const t of g.traffic)if(inView(t.x,0.6,t.z,2.6))drawCar(B,t.x,t.z,t.col,t.dir,t.wr||0);
   if(g.car){const T0=g.tower||g.car,pcx=T0.x+4.3,pcz=T0.z+0.7;carCache(B,'lambo|red',pcx,pcz,1,0,0,(K,x,z,sc,a,sp)=>drawLambo(K,x,z,sc,a,[0.82,0.04,0.08],sp));for(const sz of [-0.36,0.36])B.box(TRS(pcx,0.14,pcz+sz,0,2.3,0.035,0.05),GOLD,true);B.box(TRS(pcx,0.05,pcz,0,2.5,0.02,0.92),[0.95,0.72,0.25],true);}
   for(const n of g.npcs)drawChar(IBhi,n);
   if(g.cine&&g.cine.shot===1){const e=g.cine.eye,tg=g.cine.tgt,zz=g.H+3.9,k=(zz-e[2])/(tg[2]-e[2]);drawRetroSun(B,e[0]+(tg[0]-e[0])*k+1.5,2.2,zz,2.0,-0.9,0.9);}
 if(!g.cine&&!g.seq){const y=2.4+Math.sin(g.T*4)*0.2;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.45,0.45,0.45))),GOLD,true);
   for(let i=0;i<6;i++)B.box(TRS(g.car.x+Math.sin(g.T*2+i)*0.9,0.02,g.car.z+Math.cos(g.T*2+i)*0.9,0,0.25,0.01,0.25),[1,0.85,0.3],true);}}
- else{for(const n of g.npcs)drawChar(IBhi,n);if(g.player&&!g.hideP)drawChar(IBhi,g.player);if(g.park){if(rideHeli())drawHeli(B,g.park.x,g.park.z,0,g.T);else drawRide(B,g.park.x,g.park.z,1,g.park.a||0,undefined,g.park.spin||0);}
-  if(g.hcar)drawRide(B,g.hcar.x,g.hcar.z,1,g.hcar.a||0,undefined,g.hcar.spin||0);if(g.garage)drawGarage(B,g,FX);if(g.slob)drawSlobby(B,g);if(g.def===HUBS.bunker)drawBunker(B,g,FX);if(g.dealer)drawDealer(B,g);if(g.up2)drawUp2(B,g);if(g.slots){drawHomeDecor(B,g);drawHome(B,g);drawHomeX(B,g);drawLocker(B,g);}if(g.club)drawClub(B,g,FX);
+ else{for(const n of g.npcs)drawChar(IBhi,n);if(g.player&&!g.hideP)drawChar(IBhi,g.player);if(g.park){if(rideHeli())drawHeli(B,g.park.x,g.park.z,0,g.T);else{drawRide(B,g.park.x,g.park.z,1,g.park.a||0,undefined,g.park.spin||0);drawRideDoor(B,g.park.x,g.park.z,g.park.a||0,g.park.dr);}}
+  if(g.hcar){drawRide(B,g.hcar.x,g.hcar.z,1,g.hcar.a||0,undefined,g.hcar.spin||0);drawRideDoor(B,g.hcar.x,g.hcar.z,g.hcar.a||0,g.hcar.dr);}if(g.garage)drawGarage(B,g,FX);if(g.slob)drawSlobby(B,g);if(g.def===HUBS.bunker)drawBunker(B,g,FX);if(g.dealer)drawDealer(B,g);if(g.up2)drawUp2(B,g);if(g.slots){drawHomeDecor(B,g);drawHome(B,g);drawHomeX(B,g);drawLocker(B,g);}if(g.club)drawClub(B,g,FX);
   if(g.tankB){const t=g.tankB;drawTankLife(B,g.T,t.x0,t.x1,(t.z0+t.z1)/2,0.08,1.35,0.35,0.9,0.4,2.15);}
   if(g.fount)drawFountainWater(B,g.fount,g.T);if(g.mcDesk)drawMcOffice(B,g);if(g.tv)drawLobbyTV(B,g);if(g.lounge)drawLounge(B,g);if(g.cast)drawCast(B,g);
   if(!g.seq){const y=1.6+Math.sin(g.T*4)*0.12;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.22,0.22,0.22))),GOLD,true);}}
@@ -4118,16 +4152,18 @@ function cineTitle(i){const nm=CHARS[selIdx].name.replace('THE ','').toLowerCase
 function updateCine(dt0){const g=G,cn=g.cine,c=g.pcar,T=g.car,now=performance.now(),dt=cn.last?Math.min(0.25,(now-cn.last)/1000):dt0;cn.last=now;cn.t+=dt;const t=cn.t;
  trafficStep(g,dt);
  const shot=t<3.8?0:t<7.2?1:2;if(shot!==cn.shot){cn.shot=shot;cineTitle(shot);if(shot===1){c.x=10;c.z=8.5;for(const tr of g.traffic)if(tr.dir<0&&tr.x>c.x-8)tr.x=c.x-8-Math.random()*30;}if(shot===2){c.x=T.x-17;c.z=8.5;c.h=Math.PI/2;for(const tr of g.traffic)if(tr.dir<0&&tr.x>T.x-3&&tr.x<T.x+3.4)tr.x=T.x-3.6-Math.random()*6;}}
- if(shot<2){c.v=9.5;c.x+=c.v*dt;}else{const rem=T.x-c.x;c.v=clamp(rem*1.15,0,12.5);c.x+=c.v*dt;const k=clamp((t-8.6)/1.6,0,1),e=k*k*(3-2*k);c.z=lerp(8.5,T.z+0.5,e);c.h=Math.PI/2+0.45*Math.sin(k*Math.PI);}
- c.wr=(c.wr||0)-c.v*dt/0.25;engineRev(c.v,false);const p=g.player;p.x=c.x;p.z=c.z;
+ if(shot<2){c.v=9.5;c.x+=c.v*dt;}else{/* pull up on a set clock so the car is standing still at the kerb before the valet opens your door */const u=clamp((t-7.2)/3.2,0,1);c.v=17*3*Math.pow(1-u,2)/3.2;c.x=T.x-17*Math.pow(1-u,3);const k=clamp((t-8.6)/1.6,0,1),e=k*k*(3-2*k);c.z=lerp(8.5,T.z+0.5,e);c.h=Math.PI/2+0.45*Math.sin(k*Math.PI);}
+ c.wr=(c.wr||0)-c.v*dt/0.25;engineRev(c.v,false);const p=g.player;if(!cn.pout){p.x=c.x;p.z=c.z;}
  if(shot===0){const u=t/3.8;cn.eye=[c.x-5+u*2,4.8-u*1.2,c.z+9.5];cn.tgt=[c.x+2.5,1.0,c.z-1.5];}
  else if(shot===1){const u=(t-3.8)/3.4;cn.eye=[c.x+3.4-u*0.8,0.5,6.05];cn.tgt=[c.x-0.6,0.95,c.z+1.6];}
  else{const u=t-7.2;cn.eye=[T.x-7.5+u*0.5,0.9+u*0.1,11.2];cn.tgt=[T.x-0.6,2.0+u*0.1,4.6];}
- const V=g.valet;if(V&&shot===2&&t>7.6&&!V.arrived){const tx=T.x+0.1,tz=T.z+1.5,dx=tx-V.x,dz=tz-V.z,d=Math.hypot(dx,dz);
+ const V=g.valet;if(V&&shot===2&&t>7.6&&!V.arrived){const tx=T.x+1.15,tz=T.z+1.3,dx=tx-V.x,dz=tz-V.z,d=Math.hypot(dx,dz);
   if(d>0.06){const sp=Math.min(d,3.4*dt);V.x+=dx/d*sp;V.z+=dz/d*sp;V.a=Math.atan2(dx,dz);}
   else{V.arrived=true;V.a=Math.atan2(T.x-V.x,T.z+0.5-V.z);V.said=true;popup(V.x,V.z,'Welcome back, sir. Your car is spotless.','#ffe9a8');}}
- if(V&&V.arrived)g.doorT=Math.min(1,(g.doorT||0)+dt*1.8);
- if(t>10.8&&!cn.done){cn.done=fadeTo(()=>loadHub('lobby'));}}
+ if(V&&V.arrived&&t>10.4)carDoorOpen(c,1);carDoorTick(c,dt);
+ if(c.dr&&c.dr.to===1&&c.dr.t>=0.8&&!cn.pout){const q=carPt(c,1,0.34,-0.15);cn.pout={walk:[carPt(c,1,1.05,-0.35),carPt(c,1,1.25,-1.4)],j:0};p.x=q[0];p.z=q[1];g.hideP=false;}
+ if(cn.pout){const P=cn.pout;if(P.j<P.walk.length){if(autoWalk(p,P.walk[P.j],1.8,dt))P.j++;if(P.j===1&&c.dr.to===1)carDoorClose(c);}else walkVel(p,0,0);}
+ if(t>(cn.pout?12.2:11.6)&&!cn.done){cn.done=fadeTo(()=>loadHub('lobby'));}}
 function cineSkip(){if(G&&G.cine&&!G.cine.done){G.cine.done=fadeTo(()=>loadHub('lobby'));}}
 function drawBill(B,m){const u=TUV[11],mu=(u[0]+u[2])/2;B.box(A.mul(m,A.mul(A.mul(A.T(-0.034,0.006,0),A.RZ(0.32)),A.S(0.07,0.004,0.07))),[1,1,1],false,[u[0],u[1],mu,u[3]]);B.box(A.mul(m,A.mul(A.mul(A.T(0.034,0.006,0),A.RZ(-0.32)),A.S(0.07,0.004,0.07))),[1,1,1],false,[mu,u[1],u[2],u[3]]);}
 
@@ -4353,9 +4389,9 @@ function updateHazards(dt){const g=G;if(!g||!g.fans)return;const p=g.player;
    if(p.alive&&Math.hypot(p.x-f.x,p.z-f.z)<1.1){p.vx+=rnd(-3,3);p.vz+=rnd(-3,3);popup(p.x,p.z,'WATCH THE FAN!','#ffd36b');}}}
  if(p.alive&&g.glass&&Math.hypot(p.vx,p.vz)>1.5&&g.glass[Math.floor(p.z)*g.W+Math.floor(p.x)]){p.glT=(p.glT||0)-dt;if(p.glT<=0){p.glT=0.45;alertNoise(p.x,p.z,4.5,'p');sfx('click');}}}
 /* Countach driver door: hinged along its sill, swings up and out (+z side faces the valet) */
-function drawCarDoor(B,x,z,s,a,phi){const {b}=rideKit(B,x,z,s,a);const L=0.75,h=0.3,hz=0.556,hy=0.14;
+function drawCarDoor(B,x,z,s,a,phi,col){const {b}=rideKit(B,x,z,s,a);const L=0.75,h=0.3,hz=0.556,hy=0.14;
  const M=A.mul(A.mul(A.mul(A.mul(b,A.T(0.085,hy,hz)),A.RX(phi)),A.T(0,h/2,0)),A.S(L,h,0.02));
- B.box(M,[0.86,0.05,0.09]);B.box(A.mul(A.mul(A.mul(A.mul(b,A.T(0.085,hy,hz)),A.RX(phi)),A.T(0,h/2,0.012)),A.S(L*0.8,h*0.6,0.004)),[0.05,0.04,0.06]);}
+ B.box(M,col||[0.86,0.05,0.09]);B.box(A.mul(A.mul(A.mul(A.mul(b,A.T(0.085,hy,hz)),A.RX(phi)),A.T(0,h/2,0.012)),A.S(L*0.8,h*0.6,0.004)),[0.05,0.04,0.06]);}
 function drawHazards(B,g){if(!g.fans)return;const DK=hex(0x1a1820),W=g.W;
  for(let z=0;z<g.H;z++)for(let x=0;x<W;x++){const ii=z*W+x;
   if(g.pool[ii]){B.box(TRS(x+0.5,0.02,z+0.5,0,1,0.02,1),[0.22,0.68,0.84],true);}
@@ -4367,12 +4403,12 @@ function drawHazards(B,g){if(!g.fans)return;const DK=hex(0x1a1820),W=g.W;
 function buildDynamic(){const g=G,B=dynB,O=ovB;B.reset();O.reset();if(g.def.hub){drawHubDyn(B,O);return;}if(ENH())drawMotes(g.cam.x,g.cam.z,levelIdx>=1,g.T);
  for(const d of g.doors){const a=d.base+d.th,e=doorEnd(d),s=d.len===undefined?[d.hx,d.hz]:doorStart(d);const dl=d.len??0.98;if(d.gate){const m0=A.mul(A.T((d.hx+e[0])/2,0,(d.hz+e[1])/2),A.RY(-a)),mc=hex(0x24242e);for(const y of [0.1,0.55,1.05])B.box(A.mul(m0,TRS(0,y,0,0,0.98,0.05,0.05)),mc);for(let k=0;k<7;k++)B.box(A.mul(m0,TRS(-0.45+k*0.15,0.58,0,0,0.03,1.0,0.03)),mc);B.box(A.mul(m0,TRS(0.2,0.55,0,0,0.3,0.18,0.02)),[0.3,0.9,1],true);continue;}B.box(A.mul(A.mul(A.T((s[0]+e[0])/2,0.55,(s[1]+e[1])/2),A.RY(-a)),A.S(dl,1.1,0.07)),[0.95,0.9,0.9],false,TUV[4]);if(d.kind==='slide')continue;
   const kl=d.len===undefined?0.82:dl*0.84,kx=d.hx+Math.cos(a)*kl,kz=d.hz+Math.sin(a)*kl;B.box(TRS(kx,0.55,kz,-a,0.05,0.05,0.12),GOLD);}
- if(boatArrival(g))drawBoatArrival(B,g);else if(!g.def.noCar)drawRide(B,g.car.x,g.car.z,1,g.carA||0,undefined,g.arrive?g.arrive.spin:0);drawAct2(B,g);if(g.oldCar)drawBeater(B,g.oldCar.x,g.oldCar.z,1,g.oldCar.a,rideId());drawDisco(B,g);drawHazards(B,g);drawStash(B,g);drawStage(B,g);
+ if(boatArrival(g))drawBoatArrival(B,g);else if(!g.def.noCar){drawRide(B,g.car.x,g.car.z,1,g.carA||0,undefined,g.arrive?g.arrive.spin:0);drawRideDoor(B,g.car.x,g.car.z,g.carA||0,g.car.dr);}drawAct2(B,g);if(g.oldCar)drawBeater(B,g.oldCar.x,g.oldCar.z,1,g.oldCar.a,rideId());drawDisco(B,g);drawHazards(B,g);drawStash(B,g);drawStage(B,g);
  if(g.cleared){const y=1.5+Math.sin(g.T*5)*0.15;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.3,0.3,0.3))),[1,0.3,0.75],true);}
  const p=g.player;const near=p.alive?nearItem(p):null;
  for(const it of g.items)if(!fogHid(it.x,it.z))drawItem(B,it,it===near);
  for(const e of g.enemies)if(!e.alive&&!e.sunk&&!fogHid(e.x,e.z))drawFoe(CB(e),e);if(!p.alive)drawChar(CB(p),p);
- for(const e of g.enemies)if(e.alive&&!fogHidE(e))drawFoe(CB(e),e);drawKinds(B,g);drawFlood(B,g);drawTwist(B,g);drawRoute(B,g);if(g.crowd)for(const d of g.crowd.ppl)drawChar(CB(d),d);if(g.lex)drawChar(IBhi,g.lex);if(p.alive&&!(g.arrive&&g.arrive.hide)&&!(p.armorT>0&&Math.floor(g.T*20)%2))drawChar(IBhi,p);
+ for(const e of g.enemies)if(e.alive&&!fogHidE(e))drawFoe(CB(e),e);drawKinds(B,g);drawFlood(B,g);drawTwist(B,g);drawRoute(B,g);if(g.crowd)for(const d of g.crowd.ppl)drawChar(CB(d),d);if(g.lex)drawChar(IBhi,g.lex);if(p.alive&&!(g.arrive&&g.arrive.hide)&&!(g.leave&&g.leave.hide)&&!(p.armorT>0&&Math.floor(g.T*20)%2))drawChar(IBhi,p);
  for(const e of g.enemies){if(!e.alive||!e.aiming||!p.alive||fogHidE(e))continue;const sa=Math.sin(e.a),ca=Math.cos(e.a);const h=rayWall(e.x,e.z,sa,ca,14,true);const len=h?h.d:14;const st=0.55,rem=Math.max(0,len-st);
   const flick=e.react<0.15?(Math.floor(g.T*30)%2?1:0.4):0.75;B.box(TRS(e.x+sa*(st+rem/2)+ca*0.17,0.74,e.z+ca*(st+rem/2)-sa*0.17,e.a,0.018,0.018,rem),[flick,0.05,0.08],true);}
  for(const b of g.bullets)B.box(TRS(b.x,0.74,b.z,Math.atan2(b.dx,b.dz),0.035,0.035,0.45),b.own==='p'?[1,0.95,0.55]:[1,0.6,0.3],true);

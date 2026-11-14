@@ -279,3 +279,44 @@ function buyCarMod(k){const p=myProg(),x=p.carx||(p.carx={}),m=CARMODS[k];if(!m)
  if(p.wallet<m.price){sfx('blip');dealerSay(pick(VIC_POOR));return renderStore('Not enough cash. Come back richer.');}
  p.wallet-=m.price;if(k==='paint')x.paint=((x.paint||0)+1)%PAINT_NAMES.length;else if(k==='rims')x.rims=RIM_ORDER[(RIM_ORDER.indexOf(x.rims||'stock')+1)%RIM_ORDER.length];else if(k==='glow')x.glow=((x.glow||0)+1)%GLOW_NAMES.length;else x[k]=1;
  saveProg();sfx('cash');dealerSay(pick(VIC_MOD));renderStore(m.name+': '+(carModState(k,x)||'FITTED')+'.');}
+
+/* ================= CAR DOORS: getting in and out =================
+   Any car you get into or out of carries c.dr = {s: side (+1 = the car's local +z side), t: how open 0..1, to: where it is heading}.
+   carDoorOpen/carDoorClose set the target, carDoorTick moves it (the latch clicks as it opens, the door thunks shut), and drawRideDoor
+   draws the swung-out driver's door over the body, with the dark doorway where it was. Doors are front-hinged and swing out toward the nose,
+   so you step in and out behind them. The Countach keeps its scissor door. Everything goes into the shared Batch, so both renderers show it. */
+function carYaw(c){return c.h!==undefined&&c.v!==undefined?c.h-Math.PI/2:(c.a||0);}
+/* the car's forward and sideways (+z side) axes on the ground */
+function carAxes(a){return{fx:Math.cos(a),fz:-Math.sin(a),sx:Math.sin(a),sz:Math.cos(a)};}
+/* which side of the car a point is on */
+function carSideOf(c,x,z,a){const k=carAxes(a===undefined?carYaw(c):a);return((x-c.x)*k.sx+(z-c.z)*k.sz)>=0?1:-1;}
+/* a point beside the car: `out` from the centre line on side sd, `along` toward the nose */
+function carPt(c,sd,out,along,a){const k=carAxes(a===undefined?carYaw(c):a);return[c.x+k.sx*sd*out+k.fx*along,c.z+k.sz*sd*out+k.fz*along];}
+function carDoorOpen(c,s){if(!c)return;const d=c.dr||(c.dr={s:s||1,t:0,to:0});if(s)d.s=s;if(d.to!==1){d.to=1;if(typeof sfx==='function')sfx('carOpen');}}
+function carDoorClose(c){const d=c&&c.dr;if(d)d.to=0;}
+function carDoorShut(c){const d=c&&c.dr;if(d){d.t=0;d.to=0;}}
+function carDoorTick(c,dt){const d=c&&c.dr;if(!d)return;
+ if(d.t<d.to)d.t=Math.min(d.to,d.t+dt/0.32);else if(d.t>d.to){d.t=Math.max(d.to,d.t-dt/0.24);if(d.t===0&&typeof sfx==='function')sfx('carShut');}}
+/* the shape of whatever you drive (paint included), or {lambo} for the Countach */
+function rideShapeNow(){const mc=myCar(),who=rideId(),mx=carMods();let base=null;
+ if(mc==='beater')base=BEATER[who]||BEATER.money;else if(mc==='mid')base=MIDCAR;else if(DEALER_CARS[mc])base=DEALER_CARS[mc].shape;
+ else if(who==='don')base=ROLLS;else if(who==='consigliere')base=ESCALADE;
+ else return{lambo:1,col:rideOver({},mx).col||[0.86,0.05,0.09]};
+ const o=Object.assign({},base,rideOver(base,mx));if(base===ROLLS&&mx.paint)o.roof=ROLLS.roof;return o;}
+/* where the front door sits on a lofted body: front edge at the foot of the windscreen, back edge at the B-pillar (or a door's length back) */
+const CAR_DOOR_DIMS=new WeakMap();
+function carDoorDims(o){let D=CAR_DOOR_DIMS.get(o);if(D)return D;const L=o.L,hw=o.W/2,ride=o.ride||0.15;
+ const x1=o.ws?o.ws[1]-0.03:o.cab?o.cab[1]-0.03:L*0.15,bps=(o.bp||[]).filter(x=>x<x1-0.35).sort((a,b)=>b-a);
+ const x0=bps.length?bps[0]+0.035:Math.max(o.cab?o.cab[0]+0.05:-L/2+0.3,x1-0.82),xm=(x0+x1)/2,top=carLine(o.top,xm),deck=Math.min(top,carLine(o.sill||o.top,xm));
+ D={x0,x1,y0:ride+0.05,y1:deck-0.03,top:!o.open&&top-deck>0.06?top-0.035:null,hw};CAR_DOOR_DIMS.set(o,D);return D;}
+function drawRideDoor(B,x,z,a,dr,o){if(!dr||!(dr.t>0.002))return;const sd=dr.s<0?-1:1,e=carSm(dr.t);o=o||rideShapeNow();
+ if(o.lambo){const {b}=rideKit(B,x,z,1,a+(sd<0?Math.PI:0));B.box(A.mul(b,A.mul(A.T(0.085,0.29,0.56),A.S(0.72,0.28,0.006))),CAR_INT);drawCarDoor(B,x,z,1,a+(sd<0?Math.PI:0),e*1.15,o.col);return;}
+ const D=carDoorDims(o),{b}=rideKit(B,x,z,1,a),len=D.x1-D.x0,h=D.y1-D.y0,ym=(D.y0+D.y1)/2,C=o.col;
+ /* the doorway: dark seats and trim where the door panel was */
+ B.box(A.mul(b,A.mul(A.T((D.x0+D.x1)/2,ym,sd*(D.hw+0.006)),A.S(len-0.02,h-0.02,0.006))),CAR_INT);
+ const H=A.mul(b,A.mul(A.T(D.x1,0,sd*(D.hw+0.02)),A.RY(sd*e*1.05)));
+ const part=(cx,cy,cz,sx,sy,sz,c,uv)=>B.box(A.mul(H,A.mul(A.T(cx,cy,cz),A.S(sx,sy,sz))),c,false,uv);
+ part(-len/2,ym,0,len,h,0.035,C,TUV[56]);
+ part(-len/2,ym,-sd*0.021,len*0.94,h*0.88,0.008,CAR_INT);
+ part(-len*0.8,D.y1-0.05,sd*0.021,0.07,0.02,0.01,CAR_CHR,TUV[58]);
+ if(D.top){part(-len/2+0.02,(D.y1+D.top)/2,0,len-0.08,D.top-D.y1,0.012,CAR_GLASS,TUV[57]);part(-len/2+0.02,D.top,0,len-0.08,0.02,0.02,o.roof||C,TUV[56]);}}
