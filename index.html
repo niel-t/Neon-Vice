@@ -57,6 +57,8 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 .quote{font-size:clamp(17px,3vw,26px);color:#ffb3d6;margin-top:12px;text-shadow:2px 2px 0 #000;font-style:italic}
 @media (max-height:520px){#cPerk{font-size:14px;margin-bottom:4px}.stats3{font-size:13px}.info{margin-top:6px;padding:6px 8px}.quote{margin-top:4px;font-size:15px}.gname{margin-top:4px;font-size:22px}.selBar .btn{margin:3px;padding:9px 14px}}
 #cName{font-family:'Press Start 2P',monospace;font-size:clamp(12px,2.8vw,18px);color:#ffd36b;text-shadow:2px 2px 0 #7a2b00;margin-bottom:8px}
+.bio{max-width:min(560px,92vw);margin-top:8px;text-align:left;background:rgba(10,0,22,.82);border-left:3px solid #ff2d95;padding:5px 9px}.bio summary{cursor:pointer;font-family:'Press Start 2P',monospace;font-size:clamp(8px,1.4vw,11px);color:#ffd36b;line-height:1.5}.bio div{font-size:clamp(14px,2vw,17px);line-height:1.3;color:#f3e6ff;margin-top:5px}
+@media (max-height:520px){.bio{margin-top:4px;padding:3px 7px}.bio div{font-size:13px}}
 #cPerk{font-size:clamp(15px,2.2vw,20px);line-height:1.15;color:#f3e6ff;margin-bottom:8px;text-align:left}
 .stats3{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;align-items:center;font-size:clamp(14px,2.4vw,18px);text-align:left;margin:0 auto;max-width:420px}
 .bar{height:9px;background:#2a1640;position:relative}.bar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#ff2d95,#2de2e6)}
@@ -173,7 +175,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
   <div class="hint">One hit kills, you included. Red lasers mean a gunman is about to fire.<br>Stand still to shoot straight. Silenced guns don't wake the floor.<br>Slam doors into people. Hit downed enemies to finish them.<br>Your kit carries between jobs. Nine of Nine sells and buys gear; spares wait in your apartment's gun locker.</div>
   <button class="btn" id="bHelpBack">GOT IT<span class="padhint"> (A)</span></button></div>
 <div id="sSelect" class="screen">
-  <div class="selHead"><div class="selTop">CHOOSE YOUR CHARACTER</div><div class="gname" id="cBig" data-t=""></div><div class="quote" id="cQuote"></div>
+  <div class="selHead"><div class="selTop">CHOOSE YOUR CHARACTER</div><div class="gname" id="cBig" data-t=""></div><div class="quote" id="cQuote"></div><details class="bio" id="cBioBox"><summary id="cBioS"></summary><div id="cBio"></div></details>
    <div class="info"><div id="cPerk"></div><div class="stats3" id="cStats"></div><div class="diff" id="cDiff"></div><div class="ddesc" id="cDiffD"></div><div class="diff" id="cFloor"></div><div class="ddesc" id="cFloorD"></div><div class="diff" id="cNight"></div><div class="ddesc" id="cNightD"></div></div></div>
   <div class="selBar"><button class="arrow" id="bPrev">&#9664;</button><button class="btn" id="bPlay">TAKE THE JOB<span class="padhint"> (A)</span></button><button class="arrow" id="bNext">&#9654;</button></div>
 </div>
@@ -628,9 +630,12 @@ const LOOKS={
  don:{body:'stocky',bw:1.05,bd:1.08,skin:hex(0xdcab84),jacket:hex(0xf4f1ec),shirt:hex(0x7b2fc0),pants:hex(0xefebe4),shoes:hex(0x5a3a22),hair:hex(0x3a2416),beard:hex(0x3a2416),glasses:hex(0x1c1a1a),chain:true,cigar:true,watch:true},
 };
 const CHARS=[
- {id:'consigliere',name:'THE CONSIGLIERE',quote:'"I give advice. With these."',speed:4.0,stats:{SPEED:2,TOUGHNESS:5,FIREPOWER:2},start:'Gold knuckle dusters',perk:'<b>KNUCKLE DUSTERS</b> — gold dusters on both fists: punches kill outright, and a vest under the suit soaks up one bullet.'},
- {id:'money',name:'THE MONEY MAN',quote:'"Everybody has a price. I know all of them."',speed:4.5,stats:{SPEED:5,TOUGHNESS:1,FIREPOWER:2},start:'Fists + cash',perk:'<b>MAKE IT RAIN</b> — throw a stack of cash to lure guards away. Tracks every enemy on radar and through walls. +25% $.'},
- {id:'don',name:'THE DON',quote:'"This city answers to one family."',speed:4.2,stats:{SPEED:3,TOUGHNESS:2,FIREPOWER:5},start:'.357 Magnum',perk:'<b>THE BOSS</b> — brings his own .357 that goes through bodies. +50% ammo from pickups. Lightning-fast executions.'},
+ {id:'consigliere',name:'THE CONSIGLIERE',quote:'"I give advice. With these."',speed:4.0,stats:{SPEED:2,TOUGHNESS:5,FIREPOWER:2},start:'Gold knuckle dusters',perk:'<b>KNUCKLE DUSTERS</b> — gold dusters on both fists: punches kill outright, and a vest under the suit soaks up one bullet.',
+  real:'Gus Ferrante',from:'South Philadelphia',bio:'Golden Gloves heavyweight, night-school lawyer, then consigliere to Don Carmine Lo Bianco. In \'84 Gus advised a peace meeting at a Passyunk diner. It was an ambush, and only he walked out, the vest under his suit holding one bullet. The Don had given him the gold dusters the day he passed the bar. The family took his job and his name, and never forgave him for living.'},
+ {id:'money',name:'THE MONEY MAN',quote:'"Everybody has a price. I know all of them."',speed:4.5,stats:{SPEED:5,TOUGHNESS:1,FIREPOWER:2},start:'Fists + cash',perk:'<b>MAKE IT RAIN</b> — throw a stack of cash to lure guards away. Tracks every enemy on radar and through walls. +25% $.',
+  real:'Jules Pryce',from:'Brickell, by way of Wharton',bio:'Came south in \'79, when Miami banks were drowning in cash nobody could explain. He kept books for half the city beside Morty Glass, until he found Morty\'s second set and carried it up to McWey. Morty met the shark. The Feds froze every dollar Jules had. He kept a white suit and a black book with everybody\'s price in it.'},
+ {id:'don',name:'THE DON',quote:'"This city answers to one family."',speed:4.2,stats:{SPEED:3,TOUGHNESS:2,FIREPOWER:5},start:'.357 Magnum',perk:'<b>THE BOSS</b> — brings his own .357 that goes through bodies. +50% ammo from pickups. Lightning-fast executions.',
+  real:'Sal Benedetti',from:'Federal Hill, Providence',bio:'Third Don of the Benedetti family, until his own capo wore a wire in \'85. The family went to prison and Sal did eighteen months. He came out to a seized house, frozen accounts and his father\'s .357, buried in his mother\'s tomato bed. He pawned the real chain to pay the lawyer and wears a plated one until he buys it back. Miami has no one family. Yet.'},
 ];
 const KILLPTS={dual:300,fists:500,bat:450,knife:450,machete:450,exec:800,door:600,throw:550,pistol:300,silenced:400,revolver:350,smg:250,m16:300,shotgun:300,double:300};
 const NEON=[[1,0.25,0.7],[0.2,0.85,1],[0.65,0.3,1],[1,0.55,0.2]];
@@ -3176,6 +3181,9 @@ const TONY_LINES=[()=>"Name's Tony. First drink's on the house; the second one c
  ()=>"Nine of Nine was in here last week. Paid for a round with a Soviet rifle. I didn't ask.",
  ()=>myProg().lexDead?"Lex used to sit in that booth, no socks, no tips. Can't say anybody's missed him.":"Lex Sterling? Sits in the VIP booth, never tips, never wears socks. I don't trust a man without socks.",
  ()=>"Cherry, Destiny, Crystal... none of them use their real names. Neither does anybody else in here.",
+ ()=>({don:"Fella from Providence was asking about you. Said the Benedettis used to own a whole hill. I said this is Florida, we don't have hills.",
+  consigliere:"Guy came in from Philly asking about a big lawyer with gold on his knuckles. I told him lawyers don't drink here. Was I right?",
+  money:"Morty Glass used to sit right where you're sitting, counting his tips twice. Then one day he stopped coming in. Funny, that."})[CHARS[selIdx].id],
  ()=>"The more you throw, the harder they dance. Basic economics.",
  ()=>"You want my advice? Never trust a guy in a linen suit, or a guy who gives advice.",
  ()=>myProg().car==='sig'?"That "+carName('sig')+" outside yours? The valet's been crying about it all night.":"Saw your "+carName(myCar())+" outside. Bold choice."];
@@ -4553,7 +4561,7 @@ function drawHUD0(){const c=hctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0
 const SCREENS=['sObj','sElev','sTitle','sHelp','sSelect','sBrief','sDead','sResults','sEnd','sPause','sPerk','sCar','sShop','sStore','sMorning'];
 function show(id){if(id==='sDead'||id==='sPause')WALK_ARM=performance.now()+500;SCREENS.forEach(s=>$(s).classList.toggle('on',s===id));if(id==='sTitle')syncResume();if(id)$('banner').classList.remove('on');}
 let bannerT=null,LASTBAN=null;function banner(a,b){LASTBAN=[a,b];const el=$('banner');el.innerHTML='<div class="b1">'+a+'</div>'+(b?'<div class="b2">'+b+'</div>':'');el.classList.add('on');clearTimeout(bannerT);bannerT=setTimeout(()=>el.classList.remove('on'),2400);}
-function updateSelect(){const c=CHARS[selIdx];const gb=$('cBig');gb.textContent=c.name;gb.dataset.t=c.name;$('cQuote').textContent=c.quote;$('cPerk').innerHTML=c.perk;
+function updateSelect(){const c=CHARS[selIdx];const gb=$('cBig');gb.textContent=c.name;gb.dataset.t=c.name;$('cQuote').textContent=c.quote;$('cBioS').textContent='FILE · '+c.real.toUpperCase()+' · '+c.from.toUpperCase();$('cBio').textContent=c.bio;$('cPerk').innerHTML=c.perk;
  $('cDiff').innerHTML='<span>DIFFICULTY</span>'+Object.entries(DIFF).map(([k,d])=>`<button data-d="${k}" class="${SET.diff===k?'on':''}">${d.name}</button>`).join('');$('cDiffD').textContent=Dd().desc;$('cFloor').innerHTML=floorHTML();$('cFloorD').innerHTML=floorDesc()+'<br>'+chHTML(JOBS.sel);$('cNight').innerHTML=nightHTML();$('cNightD').textContent=nightDesc();
  $('cStats').innerHTML=Object.entries(c.stats).map(([k,v])=>`<span>${k}</span><div class="bar"><i style="width:${v*20}%"></i></div>`).join('')+`<span>STARTS WITH</span><span style="color:#ffd36b">${c.start}</span>`+xpBarHTML()+`<span>REPUTATION</span><span style="color:#ff9ec7;font-size:.85em">${repLine()}</span><span>PERKS</span><span style="color:#7dff9a;font-size:.85em">${perkList()}</span>`+suitHTML();PS2C.applySuit(c.id);}
 function suitHTML(){const p=myProg(),cur=mySuit();return '<span>SUIT</span><div class="suits" style="display:flex;gap:4px;flex-wrap:wrap;grid-column:1/-1">'+SUITKEYS.map(k=>{const S=SUITS[k],ok=suitOK(p,k);return `<button data-suit="${k}" class="${cur===k?'on':''}" ${ok?'':'disabled'} style="font-size:.7em;padding:4px 7px;opacity:${ok?1:.45}">${ok?S.name:S.name+(S.shop?' · TAILOR':S.act2?' · ACT 2':' · LV '+S.lvl)}</button>`;}).join('')+'</div><span style="color:#ffd36b;font-size:.8em;grid-column:1/-1">'+SUITS[cur].desc+'</span>';}
