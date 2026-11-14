@@ -760,7 +760,7 @@ const PROG=(()=>{const o=readSave('nb86prog');for(const c of CHARS){
  savedField('nb86prog',p,'lvl',1,n=>Number.isInteger(n)&&n>=1&&n<=30);
  savedField('nb86prog',p,'xp',0,n=>Number.isFinite(n)&&n>=0);
  savedField('nb86prog',p,'perks',{},saveObject);
- for(const k of ['jewel','seen','furn','rel','wflags','mast','mods','rep','carx','props'])if(p[k]!=null)savedField('nb86prog',p,k,{},saveObject);
+ for(const k of ['jewel','seen','furn','rel','wflags','mast','mods','rep','carx','props','tailor'])if(p[k]!=null)savedField('nb86prog',p,k,{},saveObject);
  if(p.cars!=null)savedField('nb86prog',p,'cars',['beater'],Array.isArray);
  if(p.homes!=null)savedField('nb86prog',p,'homes',[0],Array.isArray);
  if(p.arm!=null){savedField('nb86prog',p,'arm',{},saveObject);for(const k of ['owned','stock'])savedField('nb86prog',p.arm,k,[],Array.isArray);}
@@ -775,8 +775,14 @@ const SUITS={default:{name:'SIGNATURE',lvl:1,perk:{},desc:'Your own look'},
  camo:{name:'JUNGLE CAMO',lvl:6,perk:{fleet:1,sense:1},desc:'Move 6% faster, guards react 15% slower'},
  pink:{name:'HOT PINK',lvl:10,perk:{adren:1,shark:1},desc:'Combos last 0.75s longer, +15% kill money'},
  power:{name:'POWER SUIT',lvl:1,act2:1,perk:{tough:1,shark:1},desc:'Charcoal, double-breasted. +1 hit, +15% kill money'},
- linen:{name:'MIAMI LINEN',lvl:1,act2:1,perk:{fleet:1,adren:1},desc:'Ivory linen, sleeves up. Faster, longer combos'}};
-const suitOK=(p,k)=>!!(p&&SUITS[k])&&(SUITS[k].act2?!!p.suits2:p.lvl>=SUITS[k].lvl);
+ linen:{name:'MIAMI LINEN',lvl:1,act2:1,perk:{fleet:1,adren:1},desc:'Ivory linen, sleeves up. Faster, longer combos'},
+ /* made to measure at Fontaine Tailoring in the Biscayne Galleria (mall.js): bought, not unlocked; paint = the cloth colour, pat = its weave */
+ peach:{name:'PEACH LINEN',lvl:1,shop:1,price:4000,perk:{fleet:1},paint:[250,196,170],pat:'linen',desc:'Peach linen, sleeves pushed up. Move 6% faster'},
+ mint:{name:'MINT DOUBLE-BREASTED',lvl:1,shop:1,price:6500,perk:{tough:1},paint:[160,232,206],pat:'sheen',desc:'Mint, six buttons, shoulders for days. +1 hit you can take'},
+ vice:{name:'VICE WHITE',lvl:1,shop:1,price:9000,perk:{shark:1},paint:[246,244,238],pat:'linen',desc:'White suit, pastel tee, no socks. +15% kill money'},
+ lilac:{name:'LILAC SILK',lvl:1,shop:1,price:12000,perk:{adren:1},paint:[200,168,236],pat:'sheen',desc:'Raw lilac silk that catches the neon. Combos last 0.75s longer'},
+ tux:{name:'MIDNIGHT TUX',lvl:1,shop:1,price:20000,perk:{tough:1,shark:1},paint:[24,22,40],pat:'sheen',desc:'Midnight-blue tuxedo, satin lapels. +1 hit, +15% kill money'}};
+const suitOK=(p,k)=>!!(p&&SUITS[k])&&(SUITS[k].shop?!!(p.tailor&&p.tailor[k]):SUITS[k].act2?!!p.suits2:p.lvl>=SUITS[k].lvl);
 const SUITKEYS=Object.keys(SUITS);
 const mySuit=()=>{const p=myProg();return suitOK(p,p.suit)?p.suit:'default';};
 const myProg=()=>PROG[CHARS[selIdx].id];const pk=k=>(myProg().perks[k]||0)+((SUITS[mySuit()].perk[k])||0);const xpNeed=l=>400+l*300;const ROMAN=['','I','II','III'];
@@ -2101,7 +2107,7 @@ function handPose(c,wt,wd,ph,stride){const atk=c.atkT>0?clamp(c.atkT/c.atkDur,0,
   return{R:[0.16,0.6,0.18],L:[-0.18,0.5,0.08],w:[0.16,0.6,0.18],dir:[0.15,0.7,0.65]};}
  return{R:[0.2,0.42,0.05],L:[-0.2,0.42,0.05]};}
 function drawChar(B,c){const Lk=c.hitT>0?flashLook(c.look):c.look;const BT=Lk.body||c.body,LT=BT==='fat'?1.22:BT==='big'?1.2:BT==='thin'?0.8:BT==='slim'?0.9:BT==='stocky'?1.1:1,SW=BT==='big'?1.1:BT==='thin'?0.93:BT==='stocky'?1.04:1,CW=BT==='big'?1.12:BT==='thin'?0.94:BT==='slim'?0.96:BT==='stocky'?1.06:1;const upright=c.alive&&!(c.down>0);const sc=c.sc||1;const bw=Lk.bw||1,bh=Lk.bh||1,bd=Lk.bd||1;
- {const pid=c.player?CHARS[selIdx].id:c.kind==='mcwey'?'mcwey':c.kind==='nine'?'nine':c.kind==='vic'?'vic':'look';if(B!==stageB&&!(c.hitT>0)&&PS2C.add(c,'game',sc*0.74,menuT,B,pid))return;}
+ {const pid=c.player?CHARS[selIdx].id:c.kind==='mcwey'?'mcwey':c.kind==='nine'?'nine':c.kind==='vic'?'vic':c.kind==='jeweler'?'schmaltzy':c.kind==='tailor'?'felix':c.kind==='furnman'?'lola':'look';if(B!==stageB&&!(c.hitT>0)&&PS2C.add(c,'game',sc*0.74,menuT,B,pid))return;}
  let base=A.mul(A.mul(A.T(c.x,c.y||0,c.z),A.RY(c.a)),A.S(sc,sc,sc));
  const fe=c.fall===undefined?1:1-Math.pow(1-c.fall,2);
  if(!c.alive)base=A.mul(base,A.mul(A.T(0,0.13*bd*fe,0),A.RX(-Math.PI/2*fe)));else if(c.down>0)base=A.mul(base,A.mul(A.T(0,0.13*bd*fe,0),A.RX(Math.PI/2*fe)));
@@ -2253,7 +2259,7 @@ const NPCLOOK={
  valet:()=>({skin:hex(pick([0xd9a37c,0x8a5a3a,0xefcaa8])),jacket:hex(0xf4efe6),shirt:hex(0xb3221f),pants:hex(0x1d1a24),shoes:hex(0x111111),hs:'slick',hair:hex(0x1a1414),bw:1.0,bd:1.0,bh:1.02}),
  nine:()=>({skin:hex(0xf2cdb4),jacket:hex(0x141419),shirt:hex(0xc8582a),torsoTile:32,pants:hex(0x2a2c3a),shoes:hex(0x1a1414),hs:'slick',hair:hex(0x9a5a2c),beard:hex(0x9a4a22),fluff:true,glasses:true,body:'fat',bw:1.15,bd:1.12,bh:1.0}),
  hguard:()=>NPCLOOK.guard(),
- jeweler:()=>mallLook('jeweler'),furnman:()=>mallLook('furnman'),realtor:()=>mallLook('realtor'),
+ jeweler:()=>mallLook('jeweler'),tailor:()=>mallLook('tailor'),furnman:()=>mallLook('furnman'),realtor:()=>mallLook('realtor'),
  tony:()=>({skin:hex(0xd9a37c),jacket:hex(0x15121a),shirt:hex(0xf4f4f0),tie:hex(0xc0182a),pants:hex(0x15121a),shoes:hex(0x0a0a0c),hs:'slick',hair:hex(0x1a1410),stache:true,watch:true,bw:1.06,bd:1.04,bh:1.0}),
  lady:()=>{const sk=hex(pick([0xf0c8a0,0xd9a37c,0x8a5a3a,0xefcaa8,0x6b4226])),dress=Math.random()<0.7;return femWear({fem:true,calm:1,sleeves:Math.random()<0.5,skirt:dress?rnd(0.45,0.62):0,skin:sk,jacket:hex(pick([0xffffff,0xff6fae,0x2de2e6,0xffd36b,0xc9b6f2,0x1a1a22,0xff2d95,0x7dff9a])),shirt:hex(pick([0xffffff,0xffd36b,0x1a1a22,0xff6fae])),pants:dress?sk:hex(pick([0xf2f2f2,0x2a2030,0x9ad8e0])),shoes:hex(pick([0xffffff,0xff2d95,0x1a1a22,0xffd36b])),hs:pick(['long','long','big']),hair:hex(pick([0x101010,0xe8c860,0x6a3a1a,0xa5532a,0x2a1a10])),shades:Math.random()<0.35,medallion:Math.random()<0.3,bw:0.86,bd:0.86,bh:rnd(0.97,1.02)});},
  guest:()=>Math.random()<0.45?NPCLOOK.lady():({calm:0.8,skin:hex(pick([0xf0c8a0,0xd9a37c,0x8a5a3a,0xefcaa8,0x6b4226])),jacket:hex(pick([0xffffff,0xf4d6e4,0x9ad8e0,0xf6e3b4,0xc9b6f2,0x2a2a33,0xff8fb8])),shirt:hex(pick([0xff6fae,0x2de2e6,0xffffff,0xffd36b,0x1a1a22])),pants:hex(pick([0xf2f2f2,0x2a2030,0xd8d0b8,0x9ad8e0])),shoes:hex(pick([0xffffff,0x2a1a14])),hs:pick(['big','slick','normal','buzz']),hair:hex(pick([0x101010,0xe8c860,0x6a3a1a,0xa5532a,0xd8d8d8])),shades:Math.random()<0.4,glasses:Math.random()<0.15,bw:rnd(0.88,1.05),bd:rnd(0.88,1.08),bh:rnd(0.95,1.05)})};
@@ -2344,11 +2350,11 @@ const HUBS={
  mall:{name:'BISCAYNE GALLERIA',hub:'foot',wall:42,floor:61,sofa:0xff6fae,grime:0.08,amb:[0.42,0.38,0.42],lc:[0.64,0.56,0.56],track:'muzak',where:'BISCAYNE GALLERIA · SHOPPING MALL',obj:'SHOP AROUND · THEN BACK TO YOUR CAR',
    /* the shopping mall (mall.js dresses it), entered from the front: Victory Motors at the back (Vic V, turntables 1-4, desk K) behind its
       glass front onto the atrium; the atrium (fountain F, reflecting pool ~, shoppers g) with glass shopfronts H (a low kerb; mall.js puts up
-      the frames and panes): Gold Coast Jewelers (J) and Sunshine Realty (E) to the west, Casa Bonita furniture (R) to the east; the front
+      the frames and panes): Gold Coast Jewelers (J, Schmaltzy) and Sunshine Realty (E) to the west, Casa Bonita furniture (R, Lola) and Fontaine Tailoring (Q, Felix) to the east; the front
       doors (_), then the sidewalk, the parking lay-by with your bay (C), the road and the verge (venues.js). floorFn takes world cells (map + 1) */
-   floorFn:(x,z)=>{const X=x-1,Z=z-1;if(Z<1||Z>=35)return 0;if(Z<=12)return 37;if(X<11)return Z<24?29:4;if(X>33)return 14;const dx=Math.abs(X-22),dz=Math.abs(Z-19);return (dx<=3&&dz<=3&&(dx===3||dz===3))||((X+Z)%6===0&&dx>4)?63:61;},
+   floorFn:(x,z)=>{const X=x-1,Z=z-1;if(Z<1||Z>=35)return 0;if(Z<=12)return 37;if(X<11)return Z<24?29:4;if(X>33)return Z<24?14:61;const dx=Math.abs(X-22),dz=Math.abs(Z-19);return (dx<=3&&dz<=3&&(dx===3||dz===3))||((X+Z)%6===0&&dx>4)?63:61;},
    legend:{'b':{w:33,h:'rand',tint:1,top:34},'H':{w:42,h:0.32,top:43},',':{f:7},'s':{f:37},'l':{f:37,lamp:1},'p':{f:7},'v':{w:38,h:0.03,top:38},'L':{f:7,lamp:1},'.':{f:61},'_':{f:63},'c':{f:61,light:'warm'},'*':{f:37,light:'neon'},'K':{f:37,furn:7},'F':{f:61,furn:25},'~':{w:39,h:0.02,top:39,water:1},
-    'g':{f:61,npc:'guest'},'J':{f:29,npc:'jeweler'},'E':{f:4,npc:'realtor'},'R':{f:14,npc:'furnman'},'V':{f:37,npc:'vic'},'1':{f:37},'2':{f:37},'3':{f:37},'4':{f:37}},
+    'g':{f:61,npc:'guest'},'J':{f:29,npc:'jeweler'},'E':{f:4,npc:'realtor'},'R':{f:14,npc:'furnman'},'Q':{f:61,npc:'tailor'},'V':{f:37,npc:'vic'},'1':{f:37},'2':{f:37},'3':{f:37},'4':{f:37}},
       map:[
   "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
   "#############################################",
@@ -2374,9 +2380,9 @@ const HUBS={
   "#.....c....H.....................H..........#",
   "#..........H......g........g.....H..........#",
   "#..........H.....................H..........#",
-  "############..........c..........H....c.....#",
+  "############..........c..........H##########",
   "#..........H........~~~~~........H..........#",
-  "#..........H........~~~~~........H..........#",
+  "#..........H........~~~~~........H.....Q....#",
   "#....E.....H........~~~~~........H..........#",
   "#...................~~~~~...................#",
   "#...................~~~~~...................#",
@@ -2801,7 +2807,7 @@ function buyCar(k){const p=myProg(),c=CARS[k];if(p.car===k)return renderStore('Y
 function buyJewel(k){const p=myProg(),j=JEWEL[k];if(!j)return;if(p.jewel[k]){p.jewel[k]=p.jewel[k]===true?'off':true;saveProg();sfx('pick');applyJewelLooks();PS2C.rebuild(rideId());return renderStore(p.jewel[k]===true?'You put on the '+j.name+'.':'The '+j.name+' goes back in the box.');}
  if(p.wallet<j.price){sfx('blip');if(storeMode==='jewel')return mallPoor();return renderStore('Not enough cash. Come back richer.');}
  p.wallet-=j.price;p.jewel[k]=true;saveProg();sfx('cash');if(storeMode==='jewel')mallSay(pick(MALL_SHOPS.jewel.sold));applyJewelLooks();PS2C.rebuild(rideId());renderStore('SOLD: '+j.name+'. Wear it well.');}
-$('sStore').addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(!b)return;if(b.id==='bStoreLeave'){closeStore();return;}if(b.dataset.car)buyCar(b.dataset.car);else if(b.dataset.jw)buyJewel(b.dataset.jw);else if(b.dataset.ho!==undefined)buyHome(+b.dataset.ho);else if(b.dataset.fu)buyFurn(b.dataset.fu);else if(b.dataset.sj)takeSideJob(b.dataset.sj);else if(b.dataset.ks)lockerStash(b.dataset.ks);else if(b.dataset.lt!==undefined)lockerTake(+b.dataset.lt);else if(b.dataset.cx)buyCarMod(b.dataset.cx);else if(b.dataset.mf){const q=b.dataset.mf.split(':');buyFurnAt(+q[0],q[1]);}else if(b.dataset.inv)buyProp(b.dataset.inv);else if(b.dataset.vipchat!==undefined){closeStore();tonyTalk();}else if(b.dataset.vip!==undefined)startLapdance(+b.dataset.vip);});
+$('sStore').addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(!b)return;if(b.id==='bStoreLeave'){closeStore();return;}if(b.dataset.car)buyCar(b.dataset.car);else if(b.dataset.jw)buyJewel(b.dataset.jw);else if(b.dataset.ho!==undefined)buyHome(+b.dataset.ho);else if(b.dataset.fu)buyFurn(b.dataset.fu);else if(b.dataset.sj)takeSideJob(b.dataset.sj);else if(b.dataset.ks)lockerStash(b.dataset.ks);else if(b.dataset.lt!==undefined)lockerTake(+b.dataset.lt);else if(b.dataset.cx)buyCarMod(b.dataset.cx);else if(b.dataset.mf){const q=b.dataset.mf.split(':');buyFurnAt(+q[0],q[1]);}else if(b.dataset.inv)buyProp(b.dataset.inv);else if(b.dataset.ts)buySuit(b.dataset.ts);else if(b.dataset.vipchat!==undefined){closeStore();tonyTalk();}else if(b.dataset.vip!==undefined)startLapdance(+b.dataset.vip);});
 function renderVip(msg){const p=myProg(),g=G;
  $('stWallet').textContent='$'+fmt(p.wallet);$('stOwed').textContent='VIP ROOM · $500';
  document.querySelector('#sStore .shT').textContent='TONY · VIP ROOMS';
@@ -4416,7 +4422,7 @@ let bannerT=null,LASTBAN=null;function banner(a,b){LASTBAN=[a,b];const el=$('ban
 function updateSelect(){const c=CHARS[selIdx];const gb=$('cBig');gb.textContent=c.name;gb.dataset.t=c.name;$('cQuote').textContent=c.quote;$('cPerk').innerHTML=c.perk;
  $('cDiff').innerHTML='<span>DIFFICULTY</span>'+Object.entries(DIFF).map(([k,d])=>`<button data-d="${k}" class="${SET.diff===k?'on':''}">${d.name}</button>`).join('');$('cDiffD').textContent=Dd().desc;$('cFloor').innerHTML=floorHTML();$('cFloorD').innerHTML=floorDesc()+'<br>'+chHTML(JOBS.sel);$('cNight').innerHTML=nightHTML();$('cNightD').textContent=nightDesc();
  $('cStats').innerHTML=Object.entries(c.stats).map(([k,v])=>`<span>${k}</span><div class="bar"><i style="width:${v*20}%"></i></div>`).join('')+`<span>STARTS WITH</span><span style="color:#ffd36b">${c.start}</span>`+xpBarHTML()+`<span>REPUTATION</span><span style="color:#ff9ec7;font-size:.85em">${repLine()}</span><span>PERKS</span><span style="color:#7dff9a;font-size:.85em">${perkList()}</span>`+suitHTML();PS2C.applySuit(c.id);}
-function suitHTML(){const p=myProg(),cur=mySuit();return '<span>SUIT</span><div class="suits" style="display:flex;gap:4px;flex-wrap:wrap;grid-column:1/-1">'+SUITKEYS.map(k=>{const S=SUITS[k],ok=suitOK(p,k);return `<button data-suit="${k}" class="${cur===k?'on':''}" ${ok?'':'disabled'} style="font-size:.7em;padding:4px 7px;opacity:${ok?1:.45}">${ok?S.name:S.name+(S.act2?' · ACT 2':' · LV '+S.lvl)}</button>`;}).join('')+'</div><span style="color:#ffd36b;font-size:.8em;grid-column:1/-1">'+SUITS[cur].desc+'</span>';}
+function suitHTML(){const p=myProg(),cur=mySuit();return '<span>SUIT</span><div class="suits" style="display:flex;gap:4px;flex-wrap:wrap;grid-column:1/-1">'+SUITKEYS.map(k=>{const S=SUITS[k],ok=suitOK(p,k);return `<button data-suit="${k}" class="${cur===k?'on':''}" ${ok?'':'disabled'} style="font-size:.7em;padding:4px 7px;opacity:${ok?1:.45}">${ok?S.name:S.name+(S.shop?' · TAILOR':S.act2?' · ACT 2':' · LV '+S.lvl)}</button>`;}).join('')+'</div><span style="color:#ffd36b;font-size:.8em;grid-column:1/-1">'+SUITS[cur].desc+'</span>';}
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-suit]');if(!b||b.disabled)return;const p=myProg();p.suit=b.dataset.suit;saveProg();sfx('pick');updateSelect();});
 let typeT=null,typeFull='',typeI=0;
 function showBrief(i){levelIdx=i;state='brief';show('sBrief');$('brFrom').textContent='INCOMING CALL · '+BRIEF_FLOOR(i);$('brFloor').textContent=BRIEF_FLOOR(i);typeFull=LEVELS[i].brief;typeI=0;$('brMsg').textContent='';sfx('ring');

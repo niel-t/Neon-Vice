@@ -4,33 +4,40 @@
    and shoppers). Glass shopfronts open off the atrium, each with its own keeper:
      GOLD COAST JEWELERS (west)  jewelry you wear: it shows on your character (watch, chains, rings, bracelet, medallion)
      SUNSHINE REALTY (west)      homes to buy or move back into, and investment property that pays rent after every job
-     CASA BONITA (east)          furniture for any home you own, delivered while you are out
-     VICTORY MOTORS (south)      Vic's showroom: the dealer screen and his turntables (cars.js)
-   The three new keepers are placeholder characters until Tristan sends faces; Vic keeps his photo face.
+     CASA BONITA (east, north)   furniture for any home you own, delivered while you are out
+     FONTAINE TAILORING (east, south)  suits made to measure that you wear (SUITS in index.html with shop:1)
+     VICTORY MOTORS (at the back) Vic's showroom: the dealer screen and his turntables (cars.js)
+   Vic, Schmaltzy (jewelry), Felix (tailor) and Lola (furniture) have photo faces (ART / CH in models.js); Barbara is still a placeholder.
    Every shop screen is the shared #sStore screen in its own storeMode ('jewel', 'furn', 'realty').
    The hub map is HUBS.mall in index.html; map cell (x,z) is world (x+1,z+1) because the loader pads every map by one cell.
    Loaded after gunshop.js, before the main inline script: nothing here touches main-script globals at load time. */
 const MALL_NAME='BISCAYNE GALLERIA';
 const MALL_SHOPS={
- jewel:{name:'GOLD COAST JEWELERS',sub:'GOLD · DIAMONDS · NO QUESTIONS ASKED',who:"DOLORES 'DIAMOND' DUVAL",short:'DIAMOND DOLORES',npc:'jeweler',what:'JEWELRY',col:'#ffd36b',
-  intro:"Welcome to Gold Coast, darling. Dolores Duval, but everyone calls me Diamond. Everything in this case is real, and everything looks better on you.",
-  hi:["Back for more sparkle? I knew you'd come round.","Darling, you're underdressed. Let's fix that.","Gold never goes out of style. Neither do I.","Try it on. The mirror never lies. I sometimes do."],
-  sold:["Oh, that is YOU. Wear it out of the store, darling.","Sold! Now go make the whole strip jealous.","Stunning. I'd say it's a steal, but that's your department."],
-  poor:["Darling, that's a lot of zeros you don't have.","Come back when your wallet matches your taste."],
-  bye:["Ciao, darling! Sparkle responsibly.","Don't let anybody pawn that.","Come back shinier."]},
- furn:{name:'CASA BONITA',sub:'FURNITURE · DELIVERED WHILE YOU ARE OUT',who:'RICO RATTAN',short:'RICO RATTAN',npc:'furnman',what:'FURNITURE',col:'#7dff9a',
-  intro:"Hey hey, Rico Rattan, Casa Bonita! White leather, glass tables, neon flamingos. You pick it, my boys deliver it, no questions about the bullet holes.",
-  hi:["My man! Your place still looks like a crime scene?","Feel this leather. Go on. Like butter, right?","Everything here's on special. Everything's always on special.","Interior design is just violence with cushions."],
-  sold:["Delivered by tonight. My boys are very discreet.","Beautiful choice. Your neighbours are gonna hate you.","Ding ding! Casa Bonita strikes again."],
-  poor:["Ooh. Put it on layaway? We don't do layaway.","Love the taste, hate the budget, amigo."],
-  bye:["Mi casa, su casa! Literally, you bought it.","Come back when you need a bigger couch.","Watch the doorframes when they deliver."]},
+ jewel:{name:'GOLD COAST JEWELERS',sub:'GOLD · DIAMONDS · NO QUESTIONS ASKED',who:'SCHMALTZY THE GOLDPAWN',short:'SCHMALTZY',npc:'jeweler',what:'JEWELRY',col:'#ffd36b',
+  intro:"Schmaltzy. The Goldpawn. That's Nugget on the counter, he bites. Everything in this case is real gold, I weigh it myself. You want to look rich or you want to look poor?",
+  hi:["You again. Nugget, look who's back. He doesn't like you either.","Gold goes up. Always up. Buy now, thank me later.","I had a guy try to pawn a fake Rolex. Once.","Look with your eyes, not your fingers. Nugget's watching."],
+  sold:["Sold. Wear it out, let the whole strip see.","Pleasure. Nugget says it suits you. Nugget lies.","Real gold, real weight. Don't let anybody tell you different."],
+  poor:["That's not money, that's a tip. Come back with real money.","Nugget's chain costs more than your wallet."],
+  bye:["Go on, shine. Nugget, say bye.","Don't pawn it. If you pawn it, pawn it with me.","Come back when you're richer. Everybody comes back."]},
+ furn:{name:'CASA BONITA',sub:'DESIGN · INTERIORS · DELIVERED WHILE YOU ARE OUT',who:"LOLA 'CALIENTE' MONTENEGRO",short:'LOLA MONTENEGRO',npc:'furnman',what:'FURNITURE',col:'#7dff9a',
+  intro:"Hola, guapo. Lola Montenegro, Casa Bonita. Peach leather, glass and brass, a bed you won't want to leave. You choose, my boys deliver, and nobody asks about the bullet holes.",
+  hi:["Look who came back to see me.","Sit on that sofa, mi amor. Tell me that's not heaven.","Everything here is on sale for you. Only for you.","A man is only as good as his living room."],
+  sold:["Delivered tonight, cariño. Think of me when you sit on it.","Ay, beautiful choice. Your place is going to be muy caliente.","Done. My boys are fast, and very discreet."],
+  poor:["Ay, papi, your taste is bigger than your wallet.","Come back with more cash and I'll give you the good smile."],
+  bye:["Adiós, guapo. Don't make me wait too long.","Mi casa, su casa. Literally, you bought it.","Ciao, mi amor. Watch the doorframes when they deliver."]},
  realty:{name:'SUNSHINE REALTY',sub:'HOMES · INVESTMENT PROPERTY · CASH WELCOME',who:'BARBARA BRIGHTWATER',short:'BARBARA BRIGHTWATER',npc:'realtor',what:'REAL ESTATE',col:'#ff6fae',
   intro:"Barbara Brightwater, Sunshine Realty! Location, location, and cash. I find you a place to live, and places that pay you while you sleep.",
   hi:["Miami's only going up, darling. Get in now.","Cash buyers are my favourite kind of buyer.","I don't ask where the money comes from. It's very freeing.","Every listing I sell, I sell with a smile. This smile."],
   sold:["Congratulations! Keys, deed, and a fruit basket.","SOLD! I'll put the sign out myself.","Pleasure doing business. Mostly the commission."],
   poor:["Oh honey. The bank won't touch you and neither will I.","Maybe start with something smaller. Like a parking space."],
-  bye:["Bye now! Tell your friends with cash.","Don't forget, Miami's only going up!","Ta-ta! Keep those payments coming."]}};
-const MALL_MODES=['jewel','furn','realty'],mallMode=()=>MALL_MODES.includes(storeMode);
+  bye:["Bye now! Tell your friends with cash.","Don't forget, Miami's only going up!","Ta-ta! Keep those payments coming."]},
+ tailor:{name:'FONTAINE TAILORING',sub:'SUITS · LINEN · SILK · MADE TO MEASURE',who:"FELIX 'FABULOSO' FONTAINE",short:'FABULOSO FELIX',npc:'tailor',what:'SUITS',col:'#ff9ec7',
+  intro:"Welcome, welcome! Felix Fontaine, but the whole of Ocean Drive calls me Fabuloso. Arms out, chin up. Honey, we are going to make you unforgettable.",
+  hi:["There's my favourite silhouette! Turn around, let me see.","Linen breathes, silk shines, polyester confesses. Choose wisely.","A good suit walks into a room before you do.","Pastel is not a colour, darling, it's an attitude."],
+  sold:["Look at those shoulders! Wear it out, I insist.","Fabuloso! Miami is not ready for you.","Perfect fit. I'd tell you you're welcome, but just look in the mirror."],
+  poor:["Ooh, darling, love the ambition, not the budget.","Come back when the wallet matches the cheekbones."],
+  bye:["Ciao, gorgeous! Stand up straight out there.","Strut, don't walk!","Come back for a fitting, any time."]}};
+const MALL_MODES=['jewel','furn','realty','tailor'],mallMode=()=>MALL_MODES.includes(storeMode);
 /* investment property from Sunshine Realty: each one pays rent after every finished job (payout in index.html calls mallRent) */
 const MALL_PROPS=[
  {k:'laundro',name:'SUDS-O-RAMA LAUNDROMAT',price:15000,rent:500,desc:'Twenty coin machines on Collins. Very clean money.'},
@@ -53,18 +60,20 @@ function mallSetup(g){dealerSetup(g);const D=g.dealer,O=1;
   g.lights.push({x:n.x,y:2.0,z:n.z+1.2,r:3.4,c:[1.2,1.05,0.9]});}
  /* everything you can bump into: counters, cases, planters, benches, escalators, the showroom sets */
  const S=g.solids=g.solids||[],R=(x,z,w,d)=>S.push({x:x+O,z:z+O+MALL_DZ,w,d});
- /* jewelry: the counter across the shop with Dolores behind it, the wall cabinets, the round case and the safe */
+ /* jewelry: the counter across the shop with Schmaltzy behind it, the wall cabinets, the round case and the safe */
  R(4.5,10.95,6.2,0.7);R(5.5,6.35,8.6,0.6);R(8.5,13.5,1.3,1.3);R(1.5,6.6,0.9,1.0);
  /* realty: Barbara's desk, the filing cabinets, the tower model */
  R(5.5,20.4,3.0,0.9);R(1.4,17.4,0.7,0.7);R(9.4,23.6,1.5,1.5);
- /* furniture showroom: counter, living set, bedroom set, dining set, TV wall */
- R(41.5,9.95,4.0,0.7);R(37.5,13.4,3.0,1.1);R(41.7,17.2,2.2,2.4);R(37.5,22.0,2.4,1.6);R(42.3,23.6,1.6,0.7);
+ /* furniture showroom (north half): counter, living set, bedroom set */
+ R(41.5,9.95,4.0,0.7);R(37.5,13.4,3.0,1.1);R(41.7,13.5,2.2,2.4);
+ /* tailor (south half): Felix's cutting table, the mannequins, the clothes rail, the mirror */
+ R(39.5,19.7,3.6,0.9);for(const [x,z] of MALL_MANNEQ)R(x,z,0.6,0.6);R(43.4,22.6,0.6,4.2);
  /* atrium: escalators, landing posts, fountain planters, corner gardens, pool benches */
  R(16,20.5,2.0,7.0);R(29,20.5,2.0,7.0);
  for(const [x,z] of MALL_PLANTERS)R(x,z,1.3,1.3);
  for(const [x,z] of MALL_GARDENS)R(x,z,2.6,1.8);
  R(19.35,19.5,0.5,4.4);R(25.65,19.5,0.5,4.4);
- g.lights.push({x:23.5,y:2.6,z:28.5,r:5,c:[0.35,0.8,1.25]},{x:6,y:2.4,z:19,r:5,c:[1.25,0.95,0.55]},{x:6,y:2.4,z:30,r:5,c:[1.25,0.6,0.85]},{x:40,y:2.4,z:24,r:7,c:[0.7,1.15,0.85]},{x:23.5,y:2.8,z:33.5,r:6,c:[0.85,0.8,0.75]},{x:23.5,y:3,z:38,r:7,c:[0.8,0.45,0.75]});
+ g.lights.push({x:23.5,y:2.6,z:28.5,r:5,c:[0.35,0.8,1.25]},{x:6,y:2.4,z:19,r:5,c:[1.25,0.95,0.55]},{x:6,y:2.4,z:30,r:5,c:[1.25,0.6,0.85]},{x:40,y:2.4,z:20,r:6,c:[0.7,1.15,0.85]},{x:39.5,y:2.5,z:30.5,r:6,c:[1.2,0.75,0.95]},{x:23.5,y:2.8,z:33.5,r:6,c:[0.85,0.8,0.75]},{x:23.5,y:3,z:38,r:7,c:[0.8,0.45,0.75]});
  /* the glass runs (H cells): frames and panes are drawn by drawMallGlass */
  g.mall.glass=[];for(let z=0;z<g.H;z++)for(let x=0;x<g.W;x++)if(g.rows[z]&&g.rows[z][x]==='H')g.mall.glass.push([x,z]);
  venueLot(g);
@@ -73,13 +82,15 @@ function mallSetup(g){dealerSetup(g);const D=g.dealer,O=1;
    from the front (Victory Motors moved to the back). Their coordinates below stay in that layout and get MALL_DZ added. */
 const MALL_DZ=8;
 /* fountain planters and the four corner gardens (map coords, before MALL_DZ) */
+/* the tailor's mannequins (old layout coordinates, + MALL_DZ like the rest): x, z, suit colour */
+const MALL_MANNEQ=[[35.7,20.2,[0.98,0.77,0.67]],[35.7,23.4,[0.63,0.91,0.81]],[38.6,24.8,[0.96,0.96,0.93]],[41.2,24.8,[0.78,0.66,0.93]]];
 const MALL_PLANTERS=[[19.5,9.5],[25.5,9.5],[19.5,14.5],[25.5,14.5]];
 const MALL_GARDENS=[[14.5,8.0],[30.5,8.0],[14.5,24.6],[30.5,24.6]];
 function mallTargets(g,t){for(const n of g.mall.keepers){const s=MALL_SHOPS[n.shop];t.push({k:'shop',shop:n.shop,x:n.x,z:n.z,r:2.9,lbl:'TALK TO '+s.short+' · '+s.what});}
- const O=1,OZ=O+MALL_DZ;t.push({k:'shop',shop:'jewel',x:8.5+O,z:14.9+OZ,r:1.6,lbl:'GOLD COAST JEWELERS · THE CASE'});t.push({k:'shop',shop:'furn',x:37.5+O,z:14.4+OZ,r:1.6,lbl:'CASA BONITA · LOOK AROUND'});
+ const O=1,OZ=O+MALL_DZ;t.push({k:'shop',shop:'jewel',x:8.5+O,z:14.9+OZ,r:1.6,lbl:'GOLD COAST JEWELERS · THE CASE'});t.push({k:'shop',shop:'furn',x:37.5+O,z:14.4+OZ,r:1.6,lbl:'CASA BONITA · LOOK AROUND'});t.push({k:'shop',shop:'tailor',x:37.6+O,z:21.5+OZ,r:1.5,lbl:'FONTAINE TAILORING · THE RAIL'});
  t.push({k:'dir',x:18.4+O,z:25.6+OZ,r:1.5,lbl:'MALL DIRECTORY'});}
-function mallHello(g){if(!g||!g.mall)return;banner(MALL_NAME,'Jewelry · furniture · real estate · Victory Motors');}
-function mallDirectory(){const g=G;if(!g||!g.player)return;sfx('blip');popup(g.player.x,g.player.z-0.4,'WEST: JEWELRY · REALTY   EAST: FURNITURE   AT THE BACK: VICTORY MOTORS','#2de2e6');}
+function mallHello(g){if(!g||!g.mall)return;banner(MALL_NAME,'Jewelry · suits · furniture · real estate · Victory Motors');}
+function mallDirectory(){const g=G;if(!g||!g.player)return;sfx('blip');popup(g.player.x,g.player.z-0.4,'WEST: JEWELRY · REALTY   EAST: FURNITURE · TAILOR   AT THE BACK: VICTORY MOTORS','#2de2e6');}
 /* shoppers wander the atrium only, and walk around the planters and benches */
 function mallWalk(n,dt,g,p){const d=Math.hypot(p.x-n.x,p.z-n.z);n.vx=0;n.vz=0;if(d<1.4)return;
  const free=(x,z)=>!g.solids.some(s=>Math.abs(x-s.x)<s.w/2+0.4&&Math.abs(z-s.z)<s.d/2+0.4)&&!isBlock(Math.floor(x),Math.floor(z));
@@ -87,10 +98,11 @@ function mallWalk(n,dt,g,p){const d=Math.hypot(p.x-n.x,p.z-n.z);n.vx=0;n.vz=0;if
  if(n.wait>0){n.wait-=dt;return;}
  const dx=n.tgt[0]-n.x,dz=n.tgt[1]-n.z,L=Math.hypot(dx,dz)||1,sp=0.8;n.vx=dx/L*sp;n.vz=dz/L*sp;const ox=n.x,oz=n.z;n.x+=n.vx*dt;n.z+=n.vz*dt;collideGrid(n);for(const s of g.solids)boxPush(s,n);
  const m=Math.hypot(n.x-ox,n.z-oz);n.walk=(n.walk||0)+m*9;if(m<sp*dt*0.3)n.stuck=(n.stuck||0)+dt;n.a+=clamp(angDiff(n.a,Math.atan2(dx,dz)),-5*dt,5*dt);}
-/* placeholder looks for the three new keepers (low-poly, until the face photos arrive) */
+/* low-poly looks for the mall keepers (used when the photo-face models aren't drawn; Barbara is still a placeholder) */
 function mallLook(k){const hx=v=>[(v>>16&255)/255,(v>>8&255)/255,(v&255)/255];
- if(k==='jeweler')return{fem:true,calm:1,sleeves:true,pads:true,heels:true,skirt:0.55,skin:hx(0xe8b890),jacket:hx(0x1a1a22),shirt:hx(0xffd36b),pants:hx(0xe8b890),shoes:hx(0xffd36b),hs:'big',hair:hx(0x2a1410),medallion:true,chain:true,watch:true,bling:true,bw:0.86,bd:0.86,bh:1.0};
- if(k==='furnman')return{calm:1,skin:hx(0xc08a62),jacket:hx(0xf4efe6),shirt:hx(0x2de2e6),torsoTile:32,pants:hx(0xf4efe6),shoes:hx(0xffffff),hs:'big',hair:hx(0x15100c),stache:true,chain:true,aviators:true,bw:1.08,bd:1.06,bh:1.0};
+ if(k==='jeweler')return{calm:1,skin:hx(0xd8a07a),jacket:hx(0xf6d6be),shirt:hx(0x2a8f8a),torsoTile:32,pants:hx(0xf0d0b8),shoes:hx(0xc8aa82),hs:'big',hair:hx(0x1a1210),chain:true,medallion:true,watch:true,bling:true,aviators:true,bw:1.0,bd:1.0,bh:0.98};
+ if(k==='tailor')return{calm:1,skin:hx(0xe0aa80),jacket:hx(0xf4a8be),shirt:hx(0xd98aa4),torsoTile:32,pants:hx(0xf0a4ba),shoes:hx(0xf6f4ee),hs:'big',hair:hx(0x6a4426),stache:true,chain:true,watch:true,aviators:true,bw:1.0,bd:1.0,bh:1.02};
+ if(k==='furnman')return{fem:true,calm:1,sleeves:true,pads:true,heels:true,skirt:0.55,skin:hx(0xe0b088),jacket:hx(0xb21c34),shirt:hx(0x161418),pants:hx(0x962032),shoes:hx(0x281418),hs:'big',hair:hx(0xa8784a),chain:true,watch:true,bw:0.86,bd:0.86,bh:1.02};
  return{fem:true,calm:1,sleeves:true,pads:true,heels:true,skirt:0.6,skin:hx(0xf0c8a0),jacket:hx(0xff6fae),shirt:hx(0xffffff),pants:hx(0xf0c8a0),shoes:hx(0xffffff),hs:'long',hair:hx(0xf0d070),medallion:true,bw:0.86,bd:0.86,bh:1.02};}
 
 /* ---------- signs: a stroke font for the neon lettering (unit cell, y up) ---------- */
@@ -186,22 +198,49 @@ function drawMall(B,g){const T=g.T||0,O=1,OZ=O+MALL_DZ,bx=(x,y,z,sx,sy,sz,c,em,r
  mallSign(B,30.9+O,2.7,7.3+OZ,['CASA BONITA','FURNITURE'],[0.5,1,0.6],0.32,PINK);
  {bx(41.5,0.48,9.95,4.0,0.96,0.7,[0.95,0.92,0.86]);bx(41.5,0.98,9.95,4.06,0.05,0.76,[0.55,0.36,0.2]);bx(40.4,1.06,9.95,0.32,0.12,0.24,[0.85,0.82,0.76]);
   /* living set: white leather sectional, glass coffee table, neon flamingo on the wall, a palm */
-  const sofa=[0.96,0.95,0.92];bx(37.5,0.22,13.6,3.0,0.44,0.9,sofa);bx(37.5,0.55,13.12,3.0,0.5,0.22,sofa);bx(36.1,0.4,14.05,0.25,0.36,1.0,sofa);bx(38.9,0.4,14.05,0.25,0.36,1.0,sofa);
+  const sofa=[0.98,0.76,0.64];bx(37.5,0.22,13.6,3.0,0.44,0.9,sofa);bx(37.5,0.55,13.12,3.0,0.5,0.22,sofa);bx(36.1,0.4,14.05,0.25,0.36,1.0,sofa);bx(38.9,0.4,14.05,0.25,0.36,1.0,sofa);
   bx(37.5,0.32,14.9,1.4,0.04,0.7,[0.7,0.9,0.95]);for(const [dx,dz] of [[-0.6,-0.3],[0.6,-0.3],[-0.6,0.3],[0.6,0.3]])bx(37.5+dx,0.15,14.9+dz,0.04,0.3,0.04,CH);bx(37.5,0.4,14.9,0.2,0.12,0.2,[1,0.4,0.7]);
   bx(37.5,0.02,14.4,3.6,0.02,2.4,[1,0.55,0.75]);
-  mallWord(B,'SALE',37.5+O,1.9,6.08+OZ,0.32,PINK);
+  mallWord(B,'DESIGN',36.9+O,1.95,6.08+OZ,0.3,PINK);mallWord(B,'INTERIORS',41.5+O,1.95,6.08+OZ,0.28,CYAN);
   palm(35.6,11.6,false);
   /* bedroom set: a big bed with pink sheets, nightstands with lamps */
-  bx(41.7,0.25,17.2,2.0,0.3,2.2,[0.95,0.95,0.97]);bx(41.7,0.45,17.4,1.9,0.14,1.8,[1,0.55,0.75]);for(const s of [-0.5,0.5])bx(41.7+s,0.55,16.45,0.7,0.12,0.36,WH);bx(41.7,0.7,16.08,2.0,0.9,0.1,[0.3,0.25,0.35]);
-  for(const s of [-1.35,1.35]){bx(41.7+s,0.25,16.3,0.5,0.5,0.45,[0.3,0.25,0.35]);bx(41.7+s,0.62,16.3,0.08,0.24,0.08,CH);bx(41.7+s,0.82,16.3,0.3,0.2,0.3,[1.15,1.0,0.8],true);}
-  /* dining set: glass table, four white chairs, fake fruit */
-  bx(37.5,0.72,22.0,1.6,0.04,0.9,[0.7,0.9,0.95]);bx(37.5,0.36,22.0,0.1,0.72,0.1,CH);bx(37.5,0.8,22.0,0.3,0.1,0.3,[1,0.6,0.2]);
-  for(const [dx,dz,ry] of [[-0.45,-0.7,0],[0.45,-0.7,0],[-0.45,0.7,Math.PI],[0.45,0.7,Math.PI]]){bx(37.5+dx,0.42,22.0+dz,0.42,0.05,0.42,WH);bx(37.5+dx,0.7,22.0+dz+(dz<0?-0.2:0.2),0.42,0.5,0.05,WH);}
-  /* TV wall: console, a big CRT, hi-fi towers */
-  bx(42.3,0.3,23.6,1.6,0.6,0.6,[0.15,0.13,0.16]);bx(42.3,0.85,23.6,0.9,0.6,0.5,[0.12,0.12,0.14]);bx(42.3,0.85,23.34,0.74,0.46,0.02,[0.25,0.55,0.9],true);for(const s of [-1,1])bx(42.3+s*1.05,0.55,23.6,0.36,1.1,0.4,[0.1,0.1,0.12]);
+  bx(41.7,0.25,13.5,2.0,0.3,2.2,[0.95,0.95,0.97]);bx(41.7,0.45,13.7,1.9,0.14,1.8,[1,0.55,0.75]);for(const s of [-0.5,0.5])bx(41.7+s,0.55,12.75,0.7,0.12,0.36,WH);bx(41.7,0.7,12.38,2.0,0.9,0.1,[0.3,0.25,0.35]);
+  for(const s of [-1.35,1.35]){bx(41.7+s,0.25,12.6,0.5,0.5,0.45,[0.3,0.25,0.35]);bx(41.7+s,0.62,12.6,0.08,0.24,0.08,CH);bx(41.7+s,0.82,12.6,0.3,0.2,0.3,[1.15,1.0,0.8],true);}
   /* price tags on stands */
-  for(const [x,z] of [[39.4,15.2],[40.3,18.6],[39.0,22.9]]){bx(x,0.4,z,0.03,0.8,0.03,CH);bx(x,0.85,z,0.4,0.24,0.02,[1,1,0.9]);bx(x,0.86,z+0.015,0.3,0.06,0.01,PINK,true);}
-  palm(43.2,12.6,true);palm(35.6,25.0,false);}
+  for(const [x,z] of [[39.4,15.4],[43.2,15.4]]){bx(x,0.4,z,0.03,0.8,0.03,CH);bx(x,0.85,z,0.4,0.24,0.02,[1,1,0.9]);bx(x,0.86,z+0.015,0.3,0.06,0.01,PINK,true);}
+  palm(43.2,10.9,true);}
+ /* ===== FONTAINE TAILORING (east, south): Felix behind the cutting table, a glass-block wall with the neon TAILOR sign, mannequins, a rail of suits ===== */
+ mallSign(B,30.6+O,2.75,18.3+OZ,['FONTAINE','TAILORING'],[1,0.62,0.8],0.3,CYAN);
+ {const MINT=[0.55,0.92,0.84],PEACH=[0.98,0.77,0.67],WOOD2=[0.62,0.44,0.28];
+  /* the glass-block wall across the back, pale pink and lit from behind, the neon word over Felix */
+  for(let i=0;i<16;i++)for(let j=0;j<5;j++){const x=35.7+i*0.5,y=0.3+j*0.48,c=(i+j)%3===0?[1.05,0.85,0.95]:[0.92,0.8,0.9];bx(x,y,17.12,0.46,0.44,0.16,c,(i*j)%5===1);}
+  bx(39.5,1.95,17.24,3.2,0.62,0.04,[0.08,0.04,0.1]);mallWord(B,'TAILOR',39.5+O,1.76,17.3+OZ,0.36,[1,0.35,0.65]);bx(39.5,2.3,17.27,3.0,0.03,0.03,CYAN,true);
+  /* a mint rug, the cutting table: wood, a green cutting mat, fabric bolts, the sewing machine and the cotton spools */
+  bx(39.2,0.012,22.4,6.4,0.012,3.6,[0.3,0.62,0.56]);bx(39.2,0.016,22.4,6.0,0.012,3.2,[0.42,0.74,0.68]);
+  bx(39.5,0.44,19.7,3.6,0.88,0.9,WOOD2);bx(39.5,0.89,19.7,3.4,0.02,0.8,[0.25,0.55,0.4]);for(let i=0;i<5;i++)bx(38.0+i*0.24,0.9,19.6,0.01,0.004,0.7,[0.8,0.95,0.85]);
+  bx(38.4,0.96,19.75,0.7,0.12,0.4,PEACH);bx(38.4,1.04,19.75,0.66,0.06,0.36,[0.63,0.91,0.81]);
+  {const sx=40.7;bx(sx,0.98,19.7,0.6,0.16,0.3,[0.9,0.88,0.8]);bx(sx+0.22,1.18,19.7,0.14,0.28,0.26,[0.9,0.88,0.8]);bx(sx-0.05,1.34,19.7,0.6,0.12,0.22,[0.9,0.88,0.8]);bx(sx-0.3,1.12,19.7,0.06,0.2,0.06,CH);bx(sx+0.28,1.34,19.86,0.12,0.12,0.04,[0.3,0.3,0.32]);}
+  [[1,0.4,0.6],[0.4,0.85,1],[1,0.85,0.3],[0.6,1,0.7],[1,1,1]].forEach((c,i)=>{bx(41.4+i*0.16,1.0,19.45,0.1,0.18,0.1,c);});
+  bx(37.7,0.92,19.85,0.3,0.02,0.06,CH);bx(37.62,0.92,19.95,0.06,0.02,0.18,CH);
+  /* a yellow tape measure left over the table edge */
+  bx(39.1,0.75,20.16,0.05,0.3,0.01,[1,0.85,0.2]);
+  /* mannequins in the new suits: stand, legs, jacket with lapels, a head */
+  for(const [x,z,c] of MALL_MANNEQ){bx(x,0.04,z,0.4,0.06,0.4,CH);bx(x,0.5,z,0.05,0.9,0.05,CH);bx(x,1.02,z,0.42,0.28,0.24,c.map(v=>v*0.92));
+   bx(x,1.4,z,0.5,0.5,0.28,c);bx(x-0.1,1.5,z+0.145,0.08,0.3,0.01,c.map(v=>v*0.8));bx(x+0.1,1.5,z+0.145,0.08,0.3,0.01,c.map(v=>v*0.8));bx(x,1.56,z+0.142,0.1,0.18,0.01,[1,0.95,0.9]);
+   bx(x,1.7,z,0.12,0.1,0.12,[0.92,0.86,0.8]);bx(x,1.86,z,0.2,0.22,0.2,[0.92,0.86,0.8]);}
+  /* the clothes rail down the east wall: chrome, a rainbow of jackets on hangers */
+  bx(43.4,1.6,22.6,0.05,0.05,4.2,CH);for(const zz of [20.5,24.7])bx(43.4,0.8,zz,0.05,1.6,0.05,CH);
+  const RAIL=[[0.98,0.77,0.67],[1,0.55,0.75],[0.63,0.91,0.81],[0.55,0.75,1],[0.96,0.96,0.93],[0.78,0.66,0.93],[1,0.85,0.45],[0.2,0.2,0.3],[0.95,0.6,0.5],[0.5,0.9,0.95]];
+  RAIL.forEach((c,i)=>bx(43.35,1.12,20.8+i*0.38,0.36,0.9,0.12,c));
+  /* the three-way mirror in the corner and a stool for fittings */
+  bx(43.5,1.0,18.3,0.06,1.9,0.8,[0.75,0.85,0.95],true);bx(43.2,1.0,17.75,0.4,1.9,0.06,[0.7,0.8,0.9]);bx(42.4,0.25,18.6,0.4,0.5,0.4,[1,0.55,0.75]);
+  palm(35.0,25.3,false);palm(43.3,25.3,true);}
+ /* Nugget, Schmaltzy's Boston terrier: sits on the jewelry counter next to him in a gold chain */
+ {const J=g.mall.keepers.find(n=>n.shop==='jewel');if(J){const x=J.x-O+0.95,z=10.95,y=0.94,BL=[0.12,0.1,0.11],WT=[0.95,0.94,0.92],bob=Math.sin(T*2.2)*0.01;
+  bx(x,y+0.16,z,0.26,0.3,0.24,BL);bx(x,y+0.16,z+0.12,0.12,0.26,0.02,WT);bx(x,y+0.05,z+0.06,0.3,0.1,0.34,BL);for(const sx of [-0.07,0.07])bx(x+sx,y+0.06,z+0.16,0.06,0.12,0.06,WT);
+  bx(x,y+0.38+bob,z+0.04,0.24,0.2,0.2,BL);bx(x,y+0.36+bob,z+0.15,0.12,0.1,0.04,WT);bx(x,y+0.33+bob,z+0.17,0.08,0.05,0.03,BL);bx(x,y+0.44+bob,z+0.14,0.04,0.08,0.01,WT);
+  for(const sx of [-0.08,0.08])bx(x+sx,y+0.54+bob,z+0.02,0.07,0.14,0.04,BL);for(const sx of [-0.055,0.055])bx(x+sx,y+0.41+bob,z+0.145,0.03,0.03,0.01,[0.25,0.15,0.08]);
+  bx(x,y+0.28,z+0.1,0.22,0.03,0.04,GOLDC,true);bx(x,y+0.26,z+0.125,0.05,0.05,0.01,GOLDC,true);}}
  /* ===== VICTORY MOTORS (at the back): drawDealer draws the turntables, pennants and the sign; add the showroom desk and palms ===== */
  for(const [x,z,t] of [[2.6,4.2,1],[43.4,4.2,1],[2.6,12.2,0],[43.4,12.2,0]])drawPalm(B,x,z,!!t,x+z);}
 
@@ -213,7 +252,13 @@ function drawMallGlass(B,g){const H=2.6,CHR=[0.82,0.84,0.88],GL=[0.62,0.85,0.95]
   else{B.box(TRS(cx,H,cz,0,0.14,0.1,1.0),CHR);B.box(TRS(cx,H/2+0.15,z,0,0.07,H-0.3,0.07),CHR);if(!has(x,z+1))B.box(TRS(cx,H/2+0.15,z+1,0,0.07,H-0.3,0.07),CHR);
    B.box(TRS(cx,0.33,cz,0,0.04,0.02,0.98),GL,true);B.box(TRS(cx,H-0.06,cz,0,0.04,0.02,0.98),GL,true);}}}
 /* ---------- the shop screens ---------- */
-function paintKeeperFace(cv,shop){if(!cv)return;delete cv.dataset.done;const x=cv.getContext('2d'),W=cv.width,H=cv.height,s=MALL_SHOPS[shop],L=mallLook(s.npc),C=a=>'rgb('+a.map(v=>Math.round(v*255)).join(',')+')';
+const MALL_PHOTO={jewel:'schmaltzy',tailor:'felix',furn:'lola'},mallImg={};
+/* the keepers with a photo get the same neon-posterised portrait as Vic (cars.js paintVicFace); the others a drawn placeholder */
+function paintKeeperPhoto(cv,key){const go=()=>{if(storeMode!==Object.keys(MALL_PHOTO).find(k=>MALL_PHOTO[k]===key))return;const x=cv.getContext('2d',{willReadFrequently:true}),W=cv.width,H=cv.height;x.imageSmoothingEnabled=true;x.fillStyle='#2a0838';x.fillRect(0,0,W,H);x.drawImage(mallImg[key],30,0,320,355,0,0,W,H);
+  const d=x.getImageData(0,0,W,H),P=d.data;for(let i=0;i<P.length;i+=4){const l=(P[i]*0.3+P[i+1]*0.55+P[i+2]*0.15)/255,q=v=>Math.round(v/255*5)/5*255;P[i]=Math.min(255,q(P[i])*1.04+(l<0.35?28:0));P[i+1]=q(P[i+1])*0.96;P[i+2]=Math.min(255,q(P[i+2])+(l<0.35?42:0));}
+  x.putImageData(d,0,0);x.fillStyle='rgba(255,95,184,.10)';for(let y=0;y<H;y+=2)x.fillRect(0,y,W,1);cv.dataset.done='1';};
+ const im=mallImg[key]||(mallImg[key]=Object.assign(new Image(),{src:ART[key]}));if(im.complete&&im.naturalWidth)go();else im.addEventListener('load',go,{once:true});}
+function paintKeeperFace(cv,shop){if(!cv)return;delete cv.dataset.done;if(MALL_PHOTO[shop]&&typeof ART!=='undefined'&&ART[MALL_PHOTO[shop]])return paintKeeperPhoto(cv,MALL_PHOTO[shop]);const x=cv.getContext('2d'),W=cv.width,H=cv.height,s=MALL_SHOPS[shop],L=mallLook(s.npc),C=a=>'rgb('+a.map(v=>Math.round(v*255)).join(',')+')';
  x.fillStyle='#2a0838';x.fillRect(0,0,W,H);x.fillStyle=s.col;x.globalAlpha=0.25;x.fillRect(0,H-20,W,20);x.globalAlpha=1;
  x.fillStyle=C(L.jacket);x.beginPath();x.moveTo(6,H);x.lineTo(10,H-14);x.lineTo(W-10,H-14);x.lineTo(W-6,H);x.fill();
  x.fillStyle=C(L.hair);x.beginPath();x.ellipse(W/2,24,L.fem?17:14,L.fem?19:15,0,0,7);x.fill();if(L.fem)x.fillRect(W/2-17,24,34,20);
@@ -233,10 +278,12 @@ function renderMallShop(msg){const p=myProg(),s=MALL_SHOPS[storeMode],sec=(id,on
  $('stFace').style.display='block';const say=$('stSay');say.style.display='';say.dataset.who=s.short;say.textContent=mallSayTxt;let n=0;
  if(storeMode==='jewel'){sec('stCars',1);sec('stGold',0);sec('stHome',0);$('stCarsH').textContent='IN THE CASE · WHAT YOU WEAR SHOWS ON YOU';
   $('stCars').innerHTML=Object.keys(JEWEL).map(k=>{const j=JEWEL[k],own=!!p.jewel[k],on=jewelWorn(p,k);return mallCard(`data-jw="${k}"`,j.name,j.desc,on?'WEARING · TAKE OFF':own?'IN THE BOX · WEAR':'BUY $'+fmt(j.price),on,false,n++);}).join('');}
+ else if(storeMode==='tailor'){sec('stCars',1);sec('stGold',0);sec('stHome',0);const cur=mySuit();$('stCarsH').textContent='MADE TO MEASURE · WHAT YOU WEAR SHOWS ON YOU';
+  $('stCars').innerHTML=SUITKEYS.filter(k=>SUITS[k].shop).map(k=>{const S=SUITS[k],own=suitOK(p,k),on=cur===k;return mallCard(`data-ts="${k}"`,S.name,S.desc,on?'WEARING · BACK TO SIGNATURE':own?'IN THE WARDROBE · WEAR':'BUY $'+fmt(S.price),on,false,n++);}).join('');}
  else if(storeMode==='furn'){const ids=['stCars','stGold','stHome'];ids.forEach((id,t)=>{sec(id,1);const own=(p.homes||[0]).includes(t),here=(p.home||0)===t,f=furnAt(t);
    $(id+'H').textContent=HOMEDEF[t].name+(here?' · YOU LIVE HERE':own?' · YOURS':' · NOT YOURS YET');
    $(id).innerHTML=own?catOf(t).filter(it=>!MALL_NOFURN.includes(it.k)).map(it=>mallCard(`data-mf="${t}:${it.k}"`,it.name,it.desc,f[it.k]?'DELIVERED':'BUY $'+fmt(it.price),!!f[it.k],false,n++)).join('')
-    :`<div class="pd">Buy it at Sunshine Realty first, then Rico delivers.</div>`;});}
+    :`<div class="pd">Buy it at Sunshine Realty first, then Lola's boys deliver.</div>`;});}
  else{sec('stCars',1);sec('stGold',1);sec('stHome',0);const pr=mallProps(p);$('stCarsH').textContent='HOMES · YOU WAKE UP IN THE ONE YOU LIVE IN';
   $('stCars').innerHTML=HOMEDEF.map((h,i)=>{const own=(p.homes||[0]).includes(i),cur=(p.home||0)===i,lock=h.needs&&!p[h.needs];return mallCard(`data-ho="${i}"`,h.name,h.desc,cur?'LIVING HERE':own?'MOVE BACK IN':lock?'AFTER THE SHARK IS DEAD':'BUY $'+fmt(h.price),cur,lock,n++);}).join('');
   const rent=MALL_PROPS.reduce((a,q)=>a+(pr[q.k]?q.rent:0),0);$('stGoldH').textContent='INVESTMENT PROPERTY · RENT AFTER EVERY JOB'+(rent?' · $'+fmt(rent)+' A JOB · EARNED $'+fmt(p.rentTot||0):'');
@@ -246,5 +293,9 @@ function furnAt(t){const p=myProg();p.furn=p.furn||{};return p.furn[t]||(p.furn[
 function mallPoor(){sfx('blip');mallSay(pick(MALL_SHOPS[storeMode].poor));return renderStore('Not enough cash. Come back richer.');}
 function buyFurnAt(t,k){const p=myProg(),it=catOf(t).find(q=>q.k===k);if(!it||MALL_NOFURN.includes(k)||!(p.homes||[0]).includes(t))return;const f=furnAt(t);if(f[k])return renderStore('Already delivered.');
  if(p.wallet<it.price)return mallPoor();p.wallet-=it.price;f[k]=1;saveProg();sfx('cash');mallSay(pick(MALL_SHOPS.furn.sold));renderStore('DELIVERED TO '+HOMEDEF[t].name+': '+it.name+'.');}
+/* the tailor: buying a suit puts it on; clicking the one you wear goes back to your signature look, any other owned one swaps */
+function buySuit(k){const p=myProg(),S=SUITS[k];if(!S||!S.shop)return;p.tailor=p.tailor||{};const id=rideId();
+ if(p.tailor[k]){p.suit=mySuit()===k?'default':k;saveProg();sfx('pick');PS2C.applySuit(id);return renderStore(p.suit===k?'You change into the '+S.name+'.':'Back in your signature look.');}
+ if(p.wallet<S.price)return mallPoor();p.wallet-=S.price;p.tailor[k]=1;p.suit=k;saveProg();sfx('cash');mallSay(pick(MALL_SHOPS.tailor.sold));PS2C.applySuit(id);renderStore('MADE TO MEASURE: '+S.name+'. '+S.desc+'.');}
 function buyProp(k){const p=myProg(),q=MALL_PROPS.find(o=>o.k===k),pr=mallProps(p);if(!q)return;if(pr[k])return renderStore('Already yours. The rent comes in after every job.');
  if(p.wallet<q.price)return mallPoor();p.wallet-=q.price;pr[k]=1;saveProg();sfx('cash');mallSay(pick(MALL_SHOPS.realty.sold));renderStore('SOLD: '+q.name+'. $'+fmt(q.rent)+' rent after every job.');}
