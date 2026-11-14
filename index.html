@@ -2602,7 +2602,7 @@ function drawGarage(B,g){const gr=g.garage,c=g.hcar,T=g.T,Y=[1,0.82,0.1],K=[0.08
  B.box(TRS(13,1.08,2.04,0,4.2,0.1,0.06),GOLD);B.box(TRS(13,1.08,2.08,0,0.9,0.06,0.02),[1,0.82,0.4],true);for(const x of [10.96,15.04])B.box(TRS(x,0.55,2.05,0,0.08,1.1,0.08),GOLD);
  B.box(TRS(15.5,0.7,2.04,0,0.12,0.22,0.04),GOLD);B.box(TRS(15.5,0.74,2.07,0,0.05,0.05,0.02),[1,0.3,0.2],true);B.box(TRS(13,0.007,2.75,0,4.2,0.012,1.4),[0.55,0.04,0.12]);}
 function npcStep(dt){const g=G,p=g.player;if(g.talkT>0)g.talkT-=dt;const vi=Math.min(3,VISIT.debrief===null?0:VISIT.debrief+1);
- for(const n of g.npcs){if(n.kind==='guest'&&g.club){clubWalk(n,dt,g,p);}else if(n.kind==='guest'||n.kind==='pgirl')guestStep(n,dt,g,p);if(n.kind==='dancer'||n.kind==='sdancer'||n.kind==='patron')continue;const dx=p.x-n.x,dz=p.z-n.z,d=Math.hypot(dx,dz);
+ for(const n of g.npcs){if(n.kind==='guest'&&g.club){clubWalk(n,dt,g,p);}else if((n.kind==='guest'||n.kind==='pgirl')&&!n.bed)guestStep(n,dt,g,p);if(n.kind==='dancer'||n.kind==='sdancer'||n.kind==='patron')continue;const dx=p.x-n.x,dz=p.z-n.z,d=Math.hypot(dx,dz);
   if(d<(n.kind==='guest'?1.6:3)){const ta=Math.atan2(dx,dz);n.a+=clamp(angDiff(n.a,ta),-4*dt,4*dt);}else if(n.kind!=='guest')n.a+=clamp(angDiff(n.a,n.a0),-2*dt,2*dt);if(n.seat)n.a=n.a0+clamp(angDiff(n.a0,n.a),-0.9,0.9);
   if(d<2.2&&!n.said&&!(g.talkT>0)){n.said=true;const L=n.kind==='recep'&&RECEP_GRADE[VISIT.grade]?RECEP_GRADE[VISIT.grade]:n.kind==='hguard'?[hguardLine()]:HOME_NPC_LINES[n.kind]?[pick(HOME_NPC_LINES[n.kind])]:(NPCLINES[n.kind][vi]||NPCLINES[n.kind][0]);g.talkT=L.length*1.5+0.4;const qg=g.quipGen=(g.quipGen||0)+1;let t=0;for(const line of L){setTimeout(()=>{if(G===g&&g.quipGen===qg)popup(n.x,n.z,line,'#ffe9a8');},t);t+=1500;}}
   if(d<n.r+p.r&&d>1e-4){const k=(n.r+p.r-d);p.x+=dx/d*k;p.z+=dz/d*k;}}}
@@ -2671,12 +2671,12 @@ function hubModeSetup(name){const g=G,p=g.player;if(HUBMODE==='home'){homeSetup(
  return false;}
 function parkedStreet(dt){const g=G,p=g.player;for(const t of g.traffic){t.x+=t.dir*t.sp*dt;if(t.x>g.W+2)t.x=-2;if(t.x<-2)t.x=g.W+2;
   if(p&&Math.abs(p.x-t.x)<1.6&&Math.abs(p.z-t.z)<0.8){p.z+=Math.sign(p.z-t.z||-1)*0.12;if(!(t.honk>0)){t.honk=1.5;sfx('horn');popup(t.x,t.z,pick(['HEY!','*HONK*','WATCH IT!']),'#ffd36b');}}if(t.honk>0)t.honk-=dt;}}
-function hubTargets(g){const t=[];if(g.club){t.push({k:'car',x:g.park.x,z:g.park.z,r:2.3,lbl:rideHeli()?'YOUR CHOPPER':'YOUR CAR'});for(const d of g.club.dancers)if(!d.walking&&!d.lapDance)t.push({k:'tip',d,x:d.x,z:d.z,r:3.1,lbl:'THROW $100 AT '+d.dname});const v=g.club.vip;if(v.active){t.push({k:'vip_end',x:v.chairX,z:v.chairZ,r:2.8,lbl:'STAND UP · END LAPDANCE'});return t;}if(g.club.tony)t.push({k:'tony',x:g.club.tony.x,z:g.club.tony.z,r:3.4,lbl:v.escort?'TALK TO TONY':'TONY · BOOK A VIP ROOM ($500)'});return t;}if(g.slots){const o=g.slots.o;if(o)t.push({k:'catalog',x:o.x,z:o.z,r:1.9,lbl:'PHONE · FURNITURE & SIDE JOBS'});const bp=homeBedPos(g);t.push({k:'bed',x:bp.x,z:bp.z,r:2.0,lbl:'GO TO SLEEP'});const lp=homeLockerPos(g);t.push({k:'locker',x:lp.x,z:lp.z,r:1.8,lbl:'GUN LOCKER · '+myProg().locker.items.length+'/'+LOCKER_CAP});const f=homeFurn();if(g.home===1&&f.hifi&&g.slots.b)t.push({k:'hifi',x:g.slots.b.x-0.4,z:g.slots.b.z+0.3,r:1.9,lbl:'HI-FI · CHANGE TRACK'});return t;}const car=g.park||(g.parked?g.pcar:null);if(car)t.push({k:'car',x:car.x,z:car.z,r:2.3,lbl:rideHeli()?'YOUR CHOPPER':'YOUR CAR'});const n=g.npcs.find(q=>q.kind==='nine');if(n)t.push({k:'nine',x:n.x,z:n.z,r:2.7,lbl:'NINE OF NINE'});if(g.dealer)dealerTargets(g,t);if(g.def===HUBS.lobby||g.def===HUBS.office){const p=g.player;let nb=null,nd=1.9;if(p)for(const q of g.npcs){if(!NPC_CHAT[q.kind])continue;const d=Math.hypot(q.x-p.x,q.z-p.z);if(d<nd){nd=d;nb=q;}}if(nb)t.push({k:'talk',n:nb,x:nb.x,z:nb.z,r:1.9,lbl:'TALK'});}return t;}
+function hubTargets(g){const t=[];if(g.club){t.push({k:'car',x:g.park.x,z:g.park.z,r:2.3,lbl:rideHeli()?'YOUR CHOPPER':'YOUR CAR'});for(const d of g.club.dancers)if(!d.walking&&!d.lapDance)t.push({k:'tip',d,x:d.x,z:d.z,r:3.1,lbl:'THROW $100 AT '+d.dname});const v=g.club.vip;if(v.active){t.push({k:'laptip',x:v.chairX,z:v.chairZ,r:2.8,lbl:'THROW $100 AT '+v.dancer.dname+' · MOVE TO STAND UP'});return t;}if(g.club.tony)t.push({k:'tony',x:g.club.tony.x,z:g.club.tony.z,r:3.4,lbl:v.escort?'TALK TO TONY':'TONY · BOOK A VIP ROOM ($500)'});return t;}if(g.slots){const o=g.slots.o;if(o)t.push({k:'catalog',x:o.x,z:o.z,r:1.9,lbl:'PHONE · FURNITURE & SIDE JOBS'});const bp=homeBedPos(g);{const gs=Math.min(bedN()-1,g.npcs.filter(q=>q.kind==='pgirl').length);t.push({k:'bed',x:bp.x,z:bp.z,r:2.0,lbl:gs?'GO TO BED WITH THE GIRL'+(gs>1?'S':''):'GO TO SLEEP'});}const lp=homeLockerPos(g);t.push({k:'locker',x:lp.x,z:lp.z,r:1.8,lbl:'GUN LOCKER · '+myProg().locker.items.length+'/'+LOCKER_CAP});const f=homeFurn();if(g.home===1&&f.hifi&&g.slots.b)t.push({k:'hifi',x:g.slots.b.x-0.4,z:g.slots.b.z+0.3,r:1.9,lbl:'HI-FI · CHANGE TRACK'});return t;}const car=g.park||(g.parked?g.pcar:null);if(car)t.push({k:'car',x:car.x,z:car.z,r:2.3,lbl:rideHeli()?'YOUR CHOPPER':'YOUR CAR'});const n=g.npcs.find(q=>q.kind==='nine');if(n)t.push({k:'nine',x:n.x,z:n.z,r:2.7,lbl:'NINE OF NINE'});if(g.dealer)dealerTargets(g,t);if(g.def===HUBS.lobby||g.def===HUBS.office){const p=g.player;let nb=null,nd=1.9;if(p)for(const q of g.npcs){if(!NPC_CHAT[q.kind])continue;const d=Math.hypot(q.x-p.x,q.z-p.z);if(d<nd){nd=d;nb=q;}}if(nb)t.push({k:'talk',n:nb,x:nb.x,z:nb.z,r:1.9,lbl:'TALK'});}return t;}
 function hubInteract(){const g=G,p=g.player;if(!p||g.hubDone)return;const ts=hubTargets(g);let best=null,bd=1e9;
  for(const t of ts){const d=Math.hypot(t.x-p.x,t.z-p.z);if(d<t.r&&d<bd){bd=d;best=t;}}g.ia=best;let go=null;
  if(pressed.grab&&best){go=best;pressed.grab=false;}
  if(g.click){const cx=g.click[0],cy=g.click[1];g.click=null;for(const t of ts){const s=project(t.x,0.8,t.z);if(s&&Math.hypot(s[0]-cx,s[1]-cy)<80){if(Math.hypot(t.x-p.x,t.z-p.z)<t.r+3)go=t;else popup(p.x,p.z,'GET CLOSER','#ffd36b');break;}}}
- if(go){mouse.down=false;if(go.k==='car')openCarMenu();else if(go.k==='catalog')openStore('home');else if(go.k==='locker')openStore('locker');else if(go.k==='bed')goSleep();else if(go.k==='hifi')hifiNext();else if(go.k==='tip')tipDancer(go.d);else if(go.k==='tony'){if(g.club.vip.escort)tonyTalk();else openStore('vip');}else if(go.k==='vip_end')stopLapdance();else if(go.k==='talk')npcTalk(g,go.n);else if(go.k==='vic'||go.k==='show')openDealer(go.car);else openShop();}}
+ if(go){mouse.down=false;if(go.k==='car')openCarMenu();else if(go.k==='catalog')openStore('home');else if(go.k==='locker')openStore('locker');else if(go.k==='bed')goSleep();else if(go.k==='hifi')hifiNext();else if(go.k==='tip')tipDancer(go.d);else if(go.k==='tony'){if(g.club.vip.escort)tonyTalk();else openStore('vip');}else if(go.k==='vip_end')stopLapdance();else if(go.k==='laptip')lapTip();else if(go.k==='talk')npcTalk(g,go.n);else if(go.k==='vic'||go.k==='show')openDealer(go.car);else openShop();}}
 /* wallet + armory, saved per character next to lvl/xp/perks */
 function arm(){const p=myProg();if(typeof p.wallet!=='number')p.wallet=0;if(p.debt===undefined){p.debt=MC_LOAN;if(p.paid===undefined)p.paid=false;}
  if(!p.cars)p.cars=['beater'];if(p.car===undefined||!CARS[p.car])p.car='beater';if(!p.carx)p.carx={};if(!p.jewel)p.jewel={};if(!p.seen)p.seen={};
@@ -2747,7 +2747,7 @@ function renderStore(msg){arm();for(const id of ['stHome','stHomeH','stCars','st
  const hm=storeMode==='home';for(const id of ['stGold','stGoldH'])$(id).style.display=hm?'none':'';if(!hm){for(const id of ['stCars','stCarsH'])$(id).style.display='none';$('stSay').style.display='';$('stSay').textContent="Cars? Victory Vic sells those now: VICTORY MOTORS, on your car menu.";}$('stCarsH').textContent=hm?'SIDE JOBS · ON THE ANSWERING MACHINE':'MIAMI MOTORS';
  if(hm)$('stCars').innerHTML=sjOffers().map(k=>{const j=SIDEJOBS[k],on=p.sidejob===k;return `<button class="scard${on?' on':''}" data-sj="${k}"><div class="pn">${j.name}</div><div class="pd">${j.from}: ${j.desc}</div><div class="sp">${on?'TAKEN':'TAKE · $'+fmt(sjPay(k,NEXTJOB))}</div></button>`;}).join('');$('stHomeH').textContent=hm?'FURNITURE · '+HOMEDEF[p.home||0].name:'SUNSHINE REALTY';
  document.querySelector('#sStore .shT').textContent=hm?'HOME SHOPPING':'OCEAN DRIVE SHOPPING';document.querySelector('#sStore .shS').textContent=hm?'DELIVERED WHILE YOU WAIT · NO QUESTIONS':'GOLD · HOMES · NO REFUNDS';
- $('stHome').innerHTML=hm?catOf(p.home||0).map((it,i)=>{const own=!!homeFurn()[it.k];return `<button class="scard${own?' on':''}" data-fu="${it.k}"><div class="pn">${it.name}</div><div class="pd">${it.desc}</div><div class="sp">${own?'INSTALLED':'BUY $'+fmt(it.price)}<span class="kbhint"> (${i+1})</span></div></button>`;}).join('')
+ $('stHome').innerHTML=hm?catOf(p.home||0).map((it,i)=>{const gn=it.k==='girls'?girlsN(homeFurn()):0,own=it.k==='girls'?gn>=GIRLS_MAX:!!homeFurn()[it.k];return `<button class="scard${own?' on':''}" data-fu="${it.k}"><div class="pn">${it.name}${it.k==='girls'?' ('+gn+'/'+GIRLS_MAX+')':''}</div><div class="pd">${it.desc}</div><div class="sp">${own?(it.k==='girls'?'HOUSE FULL':'INSTALLED'):it.k==='girls'?'HIRE ONE $'+fmt(girlPrice(it)):'BUY $'+fmt(it.price)}<span class="kbhint"> (${i+1})</span></div></button>`;}).join('')
   :HOMEDEF.map((h,i)=>{const own=(p.homes||[0]).includes(i),cur=(p.home||0)===i,lock=h.needs&&!p[h.needs];const act=cur?'LIVING HERE':own?'MOVE BACK IN':lock?'AFTER THE SHARK IS DEAD':'BUY $'+fmt(h.price);
    return `<button class="scard${cur?' on':''}" data-ho="${i}"${lock?' style="opacity:.55"':''}><div class="pn">${h.name}</div><div class="pd">${h.desc}</div><div class="sp">${act}<span class="kbhint"> (${i+7})</span></div></button>`;}).join('');
  $('stMsg').textContent=msg||'';const cs=document.querySelectorAll('#sStore .scard');cs.forEach((b,i)=>b.style.outline=padMode&&i===storeFocus?'3px solid #ffd36b':'');}
@@ -2931,7 +2931,16 @@ function startLapdance(idx){const g=G,p=myProg();if(!g||!g.club)return;arm();
 function beginLapdance(r){const g=G,v=g.club.vip,e=v.escort;if(!e)return;const d=e.d,p=g.player;
  v.escort=null;v.active=true;v.dancer=d;v.room=r;v.t=28;v.chairX=r.chairX;v.chairZ=r.chairZ;v.doorX=r.doorX;v.doorZ=r.doorZ+1;
  d.walking=false;d.lapDance=true;d.boost=1.4;p.vx=p.vz=0;g.obj='PRIVATE DANCE · '+d.dname;
- banner('PRIVATE VIP DANCE · '+d.dname,touchMode?'Sit back & enjoy · tap STAND UP to leave early':'Sit back & enjoy · Press E to leave early');}
+ v.sit=0;v.tips=0;banner('PRIVATE VIP DANCE · '+d.dname,touchMode?'Tap her to throw $100 · move to stand up':'Press E to throw $100 · move to stand up');}
+/* making it rain in the VIP room: $100 a throw, bills fly from your hand and flutter down on her, she dances harder and stays longer */
+function lapTip(){const g=G,v=g.club.vip,p=myProg(),d=v.dancer,pl=g.player;if(!v.active||!d)return;arm();
+ if(p.wallet<100){popup(pl.x,pl.z,'OUT OF CASH','#ff8a95');sfx('blip');return;}
+ p.wallet-=100;saveProg();sfx('cash');v.tips=(v.tips||0)+1;v.t=Math.min(45,v.t+4);d.boost=Math.min(2.4,(d.boost||0)+0.5);d.tips=(d.tips||0)+1;
+ for(let i=0;i<14;i++){const a=Math.atan2(d.x-pl.x,d.z-pl.z)+rnd(-0.7,0.7),sp=rnd(0.6,1.8);g.parts.push({t:'c',x:pl.x,y:1.0,z:pl.z,vx:Math.sin(a)*sp,vy:rnd(1.6,3),vz:Math.cos(a)*sp,s:0.08,c:[0.35,0.8,0.4],life:1.6});}
+ popup(d.x,d.z,'-$100 · '+pick(['OOH, BIG SPENDER','DON\'T STOP NOW','MAKE IT RAIN, SUGAR','YOU\'RE MY FAVOURITE','MMM, MORE']),'#7dff9a');}
+/* any movement input (keys, stick, pad) */
+function moveIntent(){if(keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD||keys.ArrowUp||keys.ArrowDown||keys.ArrowLeft||keys.ArrowRight)return true;
+ if(sticks.L&&Math.hypot(sticks.L.x-sticks.L.ox,sticks.L.y-sticks.L.oy)>30)return true;return !!(padMode&&PAD.on&&Math.hypot(PAD.lx,PAD.ly)>0.5);}
 function stopLapdance(){const g=G;if(!g||!g.club||!g.club.vip.active)return;
  const v=g.club.vip,d=v.dancer,p=g.player,r=v.room;
  if(d){d.lapDance=false;d.walking=true;d.x=r?r.chairX+0.6:d.x;d.z=r?r.chairZ-0.9:d.z;d.y=0;g.club.back={d,ph:'walk',t:0};
@@ -2965,9 +2974,9 @@ function clubTick(dt){const g=G,c=g.club,v=c.vip,p=g.player;
  updateDoors(dt);
  v.camK+=((v.active?1:0)-v.camK)*Math.min(1,dt*5);
  if(v.active&&v.dancer){
-  v.t-=dt;const d=v.dancer;
+  v.t-=dt;v.sit=(v.sit||0)+dt;const d=v.dancer;if(v.sit>1.2&&moveIntent()){stopLapdance();return;}
   p.x=v.chairX;p.z=v.chairZ;p.y=0.22;p.vx=p.vz=0;p.a=Math.PI;p.crouchK=0.68;
-  d.boost=1.35;d.ph+=dt*3.2;d.lapDance=true;d.vx=d.vz=0;
+  d.boost=Math.max(1.35,d.boost-dt*0.15);d.ph+=dt*3.2;d.lapDance=true;d.vx=d.vz=0;
   d.x=v.chairX+Math.sin(d.ph)*0.16;d.z=v.chairZ-0.52+Math.cos(d.ph*2)*0.08;
   d.y=0.02+Math.abs(Math.sin(d.ph*2))*0.06;
   d.a=Math.atan2(p.x-d.x,p.z-d.z);
@@ -3045,15 +3054,15 @@ const FURN_X=[
  [{k:'tank',name:'KOI TANK',price:900,desc:'A little tank of orange-and-white koi. Very zen. Very stolen.'},{k:'dog',name:'STRAY DOG',price:400,desc:'Followed you home. You named him Pesos.'},{k:'cat',name:'ALLEY CAT',price:400,desc:'Judges you silently. Sleeps on the cash.'},
   {k:'dine',name:'CARD-TABLE DINER',price:300,desc:'Folding table, two chairs, cold chow mein.'},{k:'disco',name:'PLASTIC DISCO BALL',price:700,desc:'From the swap meet. Still spins.'},
   {k:'rug',name:'ORANGE SHAG RUG',price:350,desc:'Hides the stains. Mostly.'},{k:'shelf',name:'BRICK & PLANK SHELF',price:300,desc:'Bricks, planks, three paperbacks and a stack of VHS.'},{k:'desk',name:'TYPEWRITER DESK',price:500,desc:'For writing threatening letters.'},
-  {k:'guards',name:'A BODYGUARD',price:2000,desc:'One guy, one gun, no questions.'},{k:'girls',name:'PARTY GIRLS',price:1500,desc:'Two friends who heard you have money.'},{k:'pole',name:'DANCE POLE',price:1200,desc:'Bolted to the ceiling. The landlord does not know.'}],
+  {k:'guards',name:'A BODYGUARD',price:2000,desc:'One guy, one gun, no questions.'},{k:'girls',name:'PARTY GIRLS',price:1500,desc:'Friends who heard you have money. Hire up to three.'},{k:'pole',name:'DANCE POLE',price:1200,desc:'Bolted to the ceiling. The landlord does not know.'}],
  [{k:'tank',name:'TROPICAL REEF TANK',price:3500,desc:'Clownfish, angelfish, a little coral castle.'},{k:'iguana',name:'PET IGUANA',price:1500,desc:'Basks under the neon. Answers to Tony.'},
   {k:'dine',name:'GLASS DINING SET',price:2500,desc:'Glass table, four white chairs, one bowl of fake fruit.'},{k:'disco',name:'MIRROR DISCO BALL',price:2500,desc:'Real mirrors. Coloured lights across the whole room.'},
   {k:'rug',name:'FLAMINGO RUG',price:1200,desc:'Hot pink, shaped like a flamingo. Obviously.'},{k:'shelf',name:'WHITE BOOKSHELF',price:1500,desc:'Books you will never read, by colour.'},{k:'desk',name:'EXECUTIVE DESK',price:3000,desc:'A brick phone, a beige computer, a green screen.'},
-  {k:'guards',name:'TWO BODYGUARDS',price:6000,desc:'Matching suits, matching shades.'},{k:'girls',name:'PARTY GIRLS',price:5000,desc:'They came for the view and stayed for the champagne.'},{k:'pole',name:'DANCE POLE',price:4000,desc:'Chrome pole, spotlight, a dancer from the club.'}],
+  {k:'guards',name:'TWO BODYGUARDS',price:6000,desc:'Matching suits, matching shades.'},{k:'girls',name:'PARTY GIRLS',price:5000,desc:'They came for the view and stayed for the champagne. Hire up to three.'},{k:'pole',name:'DANCE POLE',price:4000,desc:'Chrome pole, spotlight, a dancer from the club.'}],
  [{k:'tank',name:'SHARK TANK',price:25000,desc:'A wall of water with a real shark in it. Like Moreau, but wet.'},{k:'tigerpet',name:'PET TIGER',price:30000,desc:'Alive. Hungry. Walks around like it pays the rent.'},
   {k:'dine',name:'MARBLE BANQUET TABLE',price:12000,desc:'Eight chairs, gold candelabra, room for a whole family.'},{k:'disco',name:'GIANT DISCO BALL',price:10000,desc:'Club-size ball and a light show on the marble.'},
   {k:'rug',name:'POLAR BEAR RUG',price:8000,desc:'Head and all. Do not ask where it came from.'},{k:'shelf',name:'LIBRARY WALL',price:8000,desc:'Leather-bound everything. A ladder on rails.'},{k:'desk',name:'TRADING DESK',price:12000,desc:'Three green screens of stocks you are rigging.'},
-  {k:'guards',name:'THREE BODYGUARDS',price:15000,desc:'Your own crew. Not McWey\'s.'},{k:'girls',name:'PARTY GIRLS',price:12000,desc:'A whole party, every night.'},{k:'pole',name:'GOLD DANCE POLE',price:10000,desc:'Solid gold pole, spotlight, the best dancer in Miami.'}]];
+  {k:'guards',name:'THREE BODYGUARDS',price:15000,desc:'Your own crew. Not McWey\'s.'},{k:'girls',name:'PARTY GIRLS',price:12000,desc:'A whole party, every night. Hire up to three.'},{k:'pole',name:'GOLD DANCE POLE',price:10000,desc:'Solid gold pole, spotlight, the best dancer in Miami.'}]];
 const FURN_CAT=[
  [{k:'tv',name:'STOLEN CRT + VCR',price:1200,desc:'14 inches on a milk crate, looping an aerobics tape.'},{k:'duffel',name:'SURPLUS DUFFEL',price:1500,desc:'Army bag in the corner, spilling shells and mags.'},{k:'fan',name:'RATTLING DESK FAN',price:500,desc:'It hums. It blows your cash around. It is perfect.'},{k:'kpool',name:'INFLATABLE KIDDIE POOL',price:450,desc:'Three feet of hose water on the patio. Technically a pool.'},{k:'bbq',name:'RUSTY BARBECUE',price:600,desc:'Found behind the ice machine. The burgers taste like 1979.'}],
  [{k:'sofa',name:'WHITE LEATHER SECTIONAL',price:3500,desc:'Pristine. Until you come home bleeding.'},{k:'hifi',name:'HI-FI STEREO RACK',price:4500,desc:'Tower speakers. Lets you pick the music at home.'},{k:'neon',name:'NEON FLAMINGO + GLASS TABLE',price:3000,desc:'Pink light across the whole apartment. A mirror on the table.'},{k:'peg',name:'BACKLIT PEGBOARD',price:2500,desc:'Your guns on display, like high-end tools.'},{k:'deck',name:'TERRACE SUN DECK',price:3000,desc:'Two loungers, a parasol and a cooler. Sunset included.'},{k:'tub',name:'TERRACE HOT TUB',price:6000,desc:'Bubbles, pink underlights, an ocean view. The neighbours hate it.'}],
@@ -3084,8 +3093,28 @@ function sjState(g){const k=g.sj,bl=(g.kb.knife||0)+(g.kb.machete||0)+(g.kb.thro
  if(k==='clean')return g.taken?{fail:1,txt:'YOU GOT HIT'}:{ok:1,txt:'UNTOUCHED'};
  if(k==='doors')return {ok:(g.kb.door||0)>=2,txt:'DOOR KILLS '+(g.kb.door||0)+' / 2'};
  return {ok:bl>=4,txt:'BLADE KILLS '+bl+' / 4'};}
+/* party girls at home: hired one at a time (up to GIRLS_MAX, half the old pair price each). Old saves that bought the pair keep both.
+   Hiring one makes the bed a double, two or more a bed for three; when you sleep the girls who fit come to bed with you. */
+const GIRLS_MAX=3,girlsN=f=>f.girlsN!==undefined?f.girlsN:(f.girls?2:0),girlPrice=it=>Math.round(it.price/2),bedN=()=>(myProg().home||0)===0?1:1+Math.min(2,girlsN(homeFurn()));
+/* bed for n people: per home [centre x, centre z for one person, scale]; it grows toward the south */
+const BIG_BED=[[3.05,9.55,1],[2.6,12.5,1],[2.3,10.5,1.2]];
+function bigBedAt(t,n){const [cx,cz,s]=BIG_BED[t];return{x:cx,z:cz+(t===0?0.245:0.49*s)*(n-1),s,w:0.98*s*n};}
+/* the same bed in world space: Studio and Penthouse decor is drawn one cell in from the padded grid */
+function bigBedWorld(t,n){const B=bigBedAt(t,n),o=t===0?0:1;return{x:B.x+o,z:B.z+o,s:B.s,w:B.w};}
+function drawBigBed(bx,t,n,frame,mat,sheet){const B=bigBedAt(t,n),cx=B.x,cz=B.z,s=B.s,w=B.w;
+ for(const [lx,lz] of [[-0.9,-0.5],[0.9,-0.5],[-0.9,0.5],[0.9,0.5]])bx(cx+lx*s,0.17*s,cz+lz*(w-0.08),0.05,0.34*s,0.05,frame);
+ bx(cx,0.36*s,cz,1.95*s,0.06,w+0.04,frame);bx(cx,0.47*s,cz,1.9*s,0.16*s,w,mat);
+ for(let i=0;i<n;i++)bx(cx-0.72*s,0.6*s,cz-w/2+(i+0.5)*w/n,0.32*s,0.1*s,w/n*0.78,sheet);
+ bx(cx+0.28*s,0.565*s,cz,1.32*s,0.03,w+0.02,sheet.map(v=>v*0.85));
+ bx(cx-0.97*s,0.62*s,cz,0.06,0.6*s,w+0.06,frame.map(v=>v*0.7));bx(cx+0.97*s,0.5*s,cz,0.04,0.36*s,w+0.06,frame.map(v=>v*0.7));}
 const HOME_BED_WORLD=[{x:3.0,z:9.5},{x:3.6,z:13.5},{x:3.3,z:11.5}];
-function homeBedPos(g){return HOME_BED_WORLD[g.home]||HOME_BED_WORLD[0];}
+/* everybody who fits lies down on the big bed (face up, heads on the pillows) and stays there until morning is over; moving gets you up */
+function tuckIn(g){const n=bedN(),B=bigBedWorld(g.home,n),gs=g.npcs.filter(q=>q.kind==='pgirl'),who=[g.player].concat(gs.slice(0,n-1));
+ who.forEach((c,i)=>{c.bed=true;c.bedT=c.player?90:1e9;c.bedI=i;c.x=B.x+0.88*B.s;c.z=B.z-B.w/2+(i+0.5)*B.w/n;c.a=Math.PI/2;c.y=0.56*B.s;c.vx=c.vz=0;c.bedX=c.x;c.bedZ=c.z;c.bedHX=B.x-0.86*B.s;c.bedHZ=c.z;});g.bedAt=g.T;}
+function bedTick(g,dt){const B=bigBedWorld(g.home,bedN());for(const c of g.npcs.concat([g.player])){if(!c||!c.bed)continue;c.bedT-=dt;
+ const up=c.player?(state==='play'&&g.T-g.bedAt>1.5&&moveIntent())||c.bedT<=0:c.bedT<=0;
+ if(up){c.bed=false;c.y=0;c.x=B.x+1.35*B.s;c.z=c.bedZ;c.a=Math.PI/2;if(c.player)for(const q of g.npcs)if(q.bed)q.bedT=Math.min(q.bedT,1.5+q.bedI*1.2);continue;}c.x=c.bedX;c.z=c.bedZ;c.a=Math.PI/2;c.y=0.56*B.s;c.vx=c.vz=0;}}
+function homeBedPos(g){const n=bedN();if(n>1){const B=bigBedWorld(g.home,n);return{x:B.x,z:B.z};}return HOME_BED_WORLD[g.home]||HOME_BED_WORLD[0];}
 /* the gun locker stands against the east wall, one per home */
 const HOME_LOCKER_WORLD=[{x:23.72,z:14.5},{x:29.72,z:19.0},{x:31.72,z:17.5}];
 function homeLockerPos(g){return HOME_LOCKER_WORLD[g.home]||HOME_LOCKER_WORLD[0];}
@@ -3102,7 +3131,7 @@ const MORNING=[
 function showMorning(ev){state='morning';$('mnWho').textContent=ev.who;$('mnMsg').textContent=ev.msg;$('mnFx').textContent=ev.fxt;show('sMorning');sfx('blip');}
 /* waking up keeps you at home: McWey only has to be seen to take on a new act (see mcMust), not every morning */
 $('bMorning').onclick=()=>{if(state!=='morning'||fading)return;sfx('pick');show(null);state='play';banner('GOOD MORNING',mcMust()?'McWey wants a word · your car is outside':'Your car is outside · go wherever you like');};
-function goSleep(){if(!G||!G.slots)return;sfx('pick');popup(G.player.x,G.player.z-0.6,'Z Z Z...','#9fd8ff');
+function goSleep(){if(!G||!G.slots)return;sfx('pick');popup(G.player.x,G.player.z-0.6,'Z Z Z...','#9fd8ff');const gs=G.npcs.filter(q=>q.kind==='pgirl');if(gs.length&&bedN()>1){const g=G;setTimeout(()=>{if(G===g)tuckIn(g);},420);}
  {const a=arm(),p=myProg();if(p.mornKey!==a.jobs){p.mornKey=a.jobs;const ev=pick(MORNING.filter(m=>!m.need||m.need()));ev.fx(p,a);saveProg();banner('YOU GET SOME SLEEP','Somebody is at the door...');fadeTo(()=>showMorning(ev));return;}}
  fadeTo(()=>banner('YOU GET SOME SLEEP',mcMust()?'McWey wants a word · your car is outside':'Rested · your car is outside when you are ready'));}
 function buyHome(i){const p=myProg(),h=HOMEDEF[i];if(!h)return;p.homes=p.homes||[0];if((p.home||0)===i)return renderStore('You already live there.');
@@ -3110,7 +3139,9 @@ function buyHome(i){const p=myProg(),h=HOMEDEF[i];if(!h)return;p.homes=p.homes||
  if(h.needs&&!p[h.needs])return renderStore('Moreau is still living in it. Deal with the Shark first.');if(p.wallet<h.price){sfx('blip');return renderStore('Not enough cash. Come back richer.');}
  p.wallet-=h.price;p.homes.push(i);p.home=i;saveProg();sfx('cash');renderStore('SOLD: '+h.name+'. You move in after the next job.');}
 function catOf(t){return FURN_CAT[t].concat(FURN_X[t]);}
-function buyFurn(k){const p=myProg(),it=catOf(p.home||0).find(q=>q.k===k),f=homeFurn();if(!it)return;if(f[k])return renderStore('Already installed.');if(p.wallet<it.price){sfx('blip');return renderStore('Not enough cash. Come back richer.');}
+function buyFurn(k){const p=myProg(),it=catOf(p.home||0).find(q=>q.k===k),f=homeFurn();if(!it)return;
+ if(k==='girls'){const n=girlsN(f),pr=girlPrice(it);if(n>=GIRLS_MAX)return renderStore('Three is a party. Four is a fire hazard.');if(p.wallet<pr){sfx('blip');return renderStore('Not enough cash. Come back richer.');}
+  p.wallet-=pr;f.girls=1;f.girlsN=n+1;saveProg();sfx('cash');renderStore(n===0?'She is on her way over. The bed just got bigger.':n===1?'Another one. You get a bed for three.':'The whole party is here.');if(G&&G.slots)homeExtras(G);return;}if(f[k])return renderStore('Already installed.');if(p.wallet<it.price){sfx('blip');return renderStore('Not enough cash. Come back richer.');}
  p.wallet-=it.price;f[k]=1;saveProg();sfx('cash');renderStore('DELIVERED: '+it.name+'.');if(G&&G.slots)homeExtras(G);}
 const HIFI_TRACKS=['n_crystal','n_nightdrive','n_haze','n_redtide','n_overdrive','n_concrete','n_rampage'];
 function hifiNext(){const p=myProg(),L=HIFI_TRACKS.filter(tapeOK),i=(L.indexOf(p.homeTrack||G.track)+1)%L.length;p.homeTrack=L[i];saveProg();G.track=p.homeTrack;sfx('click');popup(G.player.x,G.player.z,'NOW PLAYING: '+((TRACKS[p.homeTrack]&&TRACKS[p.homeTrack].title)||p.homeTrack),'#2de2e6');}
@@ -3121,7 +3152,7 @@ function homeSetup(g,t){g.home=t;g.slots={};g.spots={};g.pets=[];g.spawned={};fo
 function homeBanner(g){const t=g.home;banner(HOMEDEF[t].name,(touchMode?'Tap':'Click')+' the phone for furniture and side jobs · '+(t===0?'your car is out in the lot':'the elevator takes you down to your car'));}
 /* big pieces block movement; extra light for the neon sign */
 function homeExtras(g){const f=homeFurn(),S=g.slots,sol=(x0,z0,w,h)=>{for(let z=Math.floor(z0);z<Math.ceil(z0+h);z++)for(let x=Math.floor(x0);x<Math.ceil(x0+w);x++)if(x>0&&z>0&&x<g.W-1&&z<g.H-1)g.solid[z*g.W+x]=1;};
- if(g.home===0)sol(S.a.x-0.4,S.a.z-0.4,2.0,0.9);if(g.home===1&&f.sofa)sol(S.a.x-0.4,S.a.z-0.4,2.6,0.9);
+ if(g.home===0)sol(S.a.x-0.4,S.a.z-0.4,2.0,0.9);{const n=bedN();if(n>1){const B=bigBedWorld(g.home,n);sol(B.x-0.9*B.s,B.z-B.w/2+0.05,1.8*B.s,B.w-0.1);}}if(g.home===1&&f.sofa)sol(S.a.x-0.4,S.a.z-0.4,2.6,0.9);
  if(g.home===2){sol(S.k.x-0.9,S.k.z-0.4,1.9,0.9);if(f.pool)sol(S.c.x-0.9,S.c.z-0.45,1.9,0.9);if(f.tiger)sol(S.b.x-0.6,S.b.z-0.3,1.3,0.6);if(f.pit)sol(S.a.x-0.4,S.a.z-0.4,0.9,0.9);}
  if(g.home===1&&f.neon&&!g.neonLit){g.neonLit=1;g.lights.push({x:S.c.x,y:2.0,z:S.c.z,r:7,c:[1.3,0.25,0.75]});}
  /* Room 14 patio upgrades: the kiddie pool (west) and the barbecue (east) */
@@ -3137,7 +3168,7 @@ function homeExtras(g){const f=homeFurn(),S=g.slots,sol=(x0,z0,w,h)=>{for(let z=
  if(f.disco&&S.s)g.disco={x:S.s.x,z:S.s.z};
  const sp=(kind,pos,look)=>{const n=makeChar(pos.x,pos.z,look,false);n.kind=kind;n.state='idle';n.a=n.a0=0;n.r=0.3;n.body=look.body;n.said=false;g.npcs.push(n);return n;};
  if(f.guards&&!g.spawned.guards){g.spawned.guards=1;(g.spots.g||[]).slice(0,t+1).forEach(q=>sp('bguard',q,BGLOOK(t)));}
- if(f.girls&&!g.spawned.girls){g.spawned.girls=1;(g.spots.m||[]).slice(0,2).forEach(q=>sp('pgirl',q,GIRLLOOK()));}
+ {const want=girlsN(f),have=g.spawned.girls||0,ms=g.spots.m||[];for(let i=have;i<want;i++){const q=ms[i]||{x:(ms[0]||S.o).x+1.1*(i-ms.length+1),z:(ms[0]||S.o).z+0.6};const P=dancerProf(i);P.ling=DANCER_LING[i%DANCER_LING.length];P.hair=hex(DANCER_HAIR[(i*5+3)%DANCER_HAIR.length]);P.bod=DANCER_BODY[(i*2+1)%DANCER_BODY.length];const n=sp('pgirl',q,dancerLook(i+(Math.random()*5|0),0,P));n.girlI=i;}g.spawned.girls=Math.max(have,want);}
  if(f.pole&&S.p&&!g.spawned.pole){g.spawned.pole=1;g.dancer=sp('dancer',{x:S.p.x+0.4,z:S.p.z},GIRLLOOK(true));}
  for(const k of ['dog','cat','iguana','tigerpet'])if(f[k]&&!g.spawned[k]&&S.t){g.spawned[k]=1;g.pets.push({k,x:S.t.x+0.6,z:S.t.z-0.4,a:0,tx:S.t.x,tz:S.t.z,wait:1,step:0});}}
 const BGLOOK=t=>({skin:hex(pick([0xd9a37c,0x7a5236,0xf0c8a0,0x5a3a26])),jacket:hex([0x2a2a33,0xf4f1ec,0x15121a][t]),shirt:hex(pick([0x111116,0xff6fae,0x2de2e6])),pants:hex([0x2a2a33,0xf4f1ec,0x15121a][t]),shoes:hex(0x0a0a0c),hs:'buzz',hair:hex(0x101010),shades:true,earpiece:true,bw:1.18,bd:1.1,bh:1.08,body:'big'});
@@ -3145,7 +3176,7 @@ const GIRLLOOK=pole=>{const sk=hex(pick([0xefcaa8,0xd9a37c,0x8a5a3a,0xf0c8a0,0x6
  return {fem:true,dancer:true,calm:1,heels:true,crop:true,sleeves:false,skirt:0,skin:sk,jacket:hex(c1),shirt:hex(c2),pants:sk,shoes:hex(c1),hs:pick(['long','big']),hair:hex(pick([0xe8c860,0x101010,0x6a3a1a,0xa5532a,0xff6fae])),medallion:true,chain:true,bw:0.92,bd:0.94,bh:1.02};};
 const HOME_NPC_LINES={bouncer:["Hands to yourself in there, chief.","No cameras, no trouble, no refunds.","Tony's at the bar if you want a room.","Nice suit. Tip the girls."],bguard:["Nobody gets near you, boss.","I took a bullet for a guy once. Don't make it a habit.","Perimeter's clear. The cat isn't.","You pay, I stand here. Simple."],
  pgirl:["Is it true you know McWey?","Ooh, is that real gold?","Put on some Nine, baby. The good one.","This place needs more champagne.","You're cuter than the last guy with a penthouse."],dancer:["Tips go in the jar, sugar.","I danced at Club Flamingo. Before it... closed.","Don't touch the pole. Or the dancer."]};
-function homeTick(dt){const g=G,S=g.slots;if(!S)return;homeLightTick(g);
+function homeTick(dt){const g=G,S=g.slots;if(!S)return;homeLightTick(g);bedTick(g,dt);
  /* the studio has real doors: the inside ones swing, the glass ones to the terrace slide open as you walk up */
  if(g.home===0)updateDoors(dt);
  if(g.home===2){updateDoors(dt);const p=g.player,near=!!p&&Math.abs(p.x-17)<1.8&&Math.abs(p.z-9.5)<2;g.slideT=clamp((g.slideT||0)+(near?dt:-dt)*3.5,0,1);}
@@ -3331,8 +3362,8 @@ function drawHomeDecor(B0,g){const t=g.home,T=g.T,W=g.W-2,H=g.H-2,f=homeFurn(),O
    for(const sd of [-1,1]){const lx=15+sd*(0.5+sl),lz=10.5+sd*0.06;for(const ex of [-0.47,0.47])bx(lx+ex,0.575,lz,0.04,1.13,0.05,WH);bx(lx,0.03,lz,0.98,0.04,0.05,WH);bx(lx-sd*0.4,0.6,lz+0.04,0.03,0.24,0.03,CH);}}
   for(const cx of [3.2,5.8])for(let i=0;i<3;i++)bx(cx+(i-1)*0.12,0.78,11.05+(i%2)*0.02,0.11,0.74,0.04,i%2?[1,0.7,0.84]:PK);bx(4.5,1.13,11.06,3.0,0.03,0.03,CH);
   /* ---- bedroom: where you sleep before the next job ---- */
-  drawBedAt(bx,2.6,12.5,[0.95,0.95,0.97],[1,0.55,0.7],[0.3,0.8,0.8]);bx(1.07,0.62,12.5,0.08,0.7,1.5,PK);
-  for(const z of [11.55,13.45]){I.r=0.3;I.box(TRS(1.35,0.22,z,0,0.45,0.44,0.45),WH);I.r=0;bx(1.35,0.5,z,0.04,0.14,0.04,CH);I.r=1;I.tp=-0.4;I.box(TRS(1.35,0.66,z,0,0.22,0.2,0.22),[1,0.85,0.6],true);I.tp=0;I.r=0;}
+  if(bedN()>1)drawBigBed(bx,1,bedN(),[0.95,0.95,0.97],[1,0.55,0.7],[0.3,0.8,0.8]);else drawBedAt(bx,2.6,12.5,[0.95,0.95,0.97],[1,0.55,0.7],[0.3,0.8,0.8]);bx(1.07,0.62,12.5,0.08,0.7,1.5,PK);
+  for(const z of [11.55,13.45+0.98*(bedN()-1)]){I.r=0.3;I.box(TRS(1.35,0.22,z,0,0.45,0.44,0.45),WH);I.r=0;bx(1.35,0.5,z,0.04,0.14,0.04,CH);I.r=1;I.tp=-0.4;I.box(TRS(1.35,0.66,z,0,0.22,0.2,0.22),[1,0.85,0.6],true);I.tp=0;I.r=0;}
   bx(5.0,0.012,12.9,1.6,0.02,2.0,[0.8,0.36,0.56]);bx(5.0,0.034,12.9,1.25,0.02,1.65,[0.9,0.56,0.72]);
   I.r=0.25;I.box(TRS(6.9,0.26,11.32,0,1.6,0.52,0.5),WH);I.r=0;for(const dx of [-0.4,0.4])for(const y of [0.16,0.36])bx(6.9+dx,y,11.58,0.2,0.03,0.02,TL);
   I.r=1;I.tp=0.4;I.box(TRS(7.4,0.67,11.3,0,0.14,0.3,0.14),[1,0.3,0.6],true);I.tp=0;for(let i=0;i<3;i++)I.box(TRS(7.4,0.6+((T*0.3+i*0.33)%1)*0.18,11.3,0,0.06,0.06,0.06),[1,0.85,0.3],true);I.r=0;
@@ -3421,7 +3452,7 @@ function drawHomeDecor(B0,g){const t=g.home,T=g.T,W=g.W-2,H=g.H-2,f=homeFurn(),O
    for(const sd of [-1,1]){const lx=16+sd*(0.5+sl),lz=8.5+sd*0.06;for(const ex of [-0.47,0.47])bx(lx+ex,0.575,lz,0.04,1.13,0.05,GOLD);bx(lx,0.03,lz,0.98,0.04,0.05,GOLD);bx(lx-sd*0.4,0.6,lz+0.04,0.03,0.24,0.03,CH);}}
   for(const cx of [3.2,5.8])for(let i=0;i<3;i++)bx(cx+(i-1)*0.12,0.78,9.05+(i%2)*0.02,0.11,0.74,0.04,i%2?[0.7,0.08,0.18]:VR);bx(4.5,1.13,9.06,3.0,0.03,0.03,GOLD);
   /* ---- master bedroom: where you sleep before the next job ---- */
-  drawBedAt(bx,2.3,10.5,GOLD,VR,MB,1.2);bx(1.08,0.72,10.5,0.1,1.0,1.5,VR);for(let i=0;i<3;i++)for(let j=0;j<2;j++)bx(1.14,0.6+j*0.36,10.0+i*0.5,0.02,0.04,0.04,GOLD);bx(1.08,1.24,10.5,0.12,0.05,1.56,GOLD);
+  if(bedN()>1)drawBigBed(bx,2,bedN(),GOLD,VR,MB);else drawBedAt(bx,2.3,10.5,GOLD,VR,MB,1.2);bx(1.08,0.72,10.5,0.1,1.0,1.5,VR);for(let i=0;i<3;i++)for(let j=0;j<2;j++)bx(1.14,0.6+j*0.36,10.0+i*0.5,0.02,0.04,0.04,GOLD);bx(1.08,1.24,10.5,0.12,0.05,1.56,GOLD);
   bx(3.85,0.18,10.5,0.4,0.3,1.0,VR);for(const ez of [-0.42,0.42])bx(3.85,0.03,10.5+ez,0.42,0.06,0.08,GOLD);
   for(const nz of [9.45,11.55]){bx(1.35,0.22,nz,0.42,0.44,0.42,BK);bx(1.35,0.45,nz,0.46,0.02,0.46,GOLD);bx(1.35,0.56,nz,0.04,0.2,0.04,GOLD);I.r=0.8;I.tp=-0.4;I.box(TRS(1.35,0.74,nz,0,0.22,0.18,0.22),[1,0.85,0.55],true);I.tp=0;I.r=0;}
   I.r=0.2;I.box(TRS(1.32,0.36,12.55,0,0.5,0.72,0.9),BK);I.r=0;bx(1.32,0.73,12.55,0.54,0.03,0.94,GOLD);bx(1.05,1.0,12.55,0.03,0.5,0.7,GOLD);bx(1.07,1.0,12.55,0.01,0.42,0.62,[0.6,0.78,0.9]);bx(1.3,0.8,12.35,0.08,0.12,0.08,[1,0.6,0.75]);bx(1.3,0.78,12.7,0.14,0.07,0.1,GOLD);
@@ -3481,7 +3512,7 @@ function drawHomeDecor(B0,g){const t=g.home,T=g.T,W=g.W-2,H=g.H-2,f=homeFurn(),O
 function drawHome(B,g){const f=homeFurn(),S=g.slots,T=g.T,id=rideId(),bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,ry||0,sx,sy,sz),c,!!em);if(!S)return;
  const guns=(()=>{const k=kit(),t=[...k.guns.filter(Boolean).map(x=>x.type),k.melee,...myProg().locker.items.map(i=>i.type)];return [...new Set(t.filter(Boolean))].slice(0,6);})();
  if(g.home===0){const a=S.a,b=S.b,c=S.c,d=S.d,o=S.o;
-  {const cx=a.x+0.55,cz=a.z+0.05;for(const [lx,lz] of [[-0.9,-0.42],[0.9,-0.42],[-0.9,0.42],[0.9,0.42]])bx(cx+lx,0.17,cz+lz,0.05,0.34,0.05,[0.25,0.25,0.28]);bx(cx,0.36,cz,1.95,0.06,1.0,[0.3,0.3,0.33]);
+  if(bedN()>1)drawBigBed(bx,0,bedN(),[0.3,0.3,0.33],[0.96,0.6,0.16],[0.86,0.8,0.62]);else{const cx=a.x+0.55,cz=a.z+0.05;for(const [lx,lz] of [[-0.9,-0.42],[0.9,-0.42],[-0.9,0.42],[0.9,0.42]])bx(cx+lx,0.17,cz+lz,0.05,0.34,0.05,[0.25,0.25,0.28]);bx(cx,0.36,cz,1.95,0.06,1.0,[0.3,0.3,0.33]);
    bx(cx,0.47,cz,1.9,0.16,0.96,[0.96,0.6,0.16]);for(let i=0;i<7;i++)bx(cx-0.8+i*0.27,0.555,cz+(i%2?0.1:-0.1),0.05,0.01,0.7,[0.08,0.06,0.05]);bx(cx-0.72,0.6,cz,0.32,0.1,0.7,[0.86,0.8,0.62]);bx(cx-0.7,0.656,cz+0.12,0.16,0.005,0.2,[0.7,0.6,0.38]);
    bx(cx+0.25,0.557,cz-0.1,0.42,0.006,0.3,[0.55,0.32,0.1]);bx(cx+0.55,0.558,cz+0.25,0.06,0.006,0.06,[0.1,0.06,0.03]);bx(cx-0.1,0.4,cz+0.49,1.5,0.18,0.02,[0.86,0.5,0.12]);for(const lx of [-0.97,0.97])bx(cx+lx,0.55,cz,0.04,0.45,1.0,[0.42,0.26,0.18]);}
   for(let i=0;i<4;i++)bx(a.x+0.2+i*0.35,0.06,a.z+1.15+(i%2)*0.2,0.18,0.12,0.16,[0.95,0.95,0.92],false,i);

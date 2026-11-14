@@ -368,6 +368,10 @@ const M4={id:()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
 /* ---------------- animation ---------------- */
 
 const X=[1,0,0],Y=[0,1,0],Z=[0,0,1];
+/* dance beat (~118 bpm): ws is the weight side (+1 right leg, -1 left) with a dwell on each side, wl/wl2 the same a little and a
+   lot later (follow-through), dip the knee dip as the weight crosses over, b the beat phase. Shared with the jiggle springs. */
+function danceGroove(t,lap){const b=t*(lap?1.7:1.95)*Math.PI*0.5,sh=x=>Math.sign(x)*Math.pow(Math.abs(x),0.55),s=Math.sin(b);
+ return{b,ws:sh(s),wl:sh(Math.sin(b-0.6)),wl2:sh(Math.sin(b-1.2)),dip:Math.pow(Math.max(0,1-Math.abs(s)*1.25),2)};}
 function pose(t,anim,jab,arms,kick,gait){const R={},rot=(b,ax,a)=>{R[b]=M4.mul(M4.R(ax,a),R[b]||M4.id());};let root=[0,0,0];const fem=gait==='fem';
  const armHinge=s=>V.norm(V.cross([AD[0]*s,AD[1],0],Z));
  const lower=(s,a)=>rot(s>0?'uarmL':'uarmR',Z,-a*s);
@@ -399,42 +403,41 @@ function pose(t,anim,jab,arms,kick,gait){const R={},rot=(b,ax,a)=>{R[b]=M4.mul(M
      behind the head). The lap dance keeps its own pose. */
   const jg=window.DANCE_JIGGLE||{x:0,y:0,boost:0},DM=window.DANCE_MOVE||{m:'sway',e:1};
   const lap=anim==='lapdance',m=lap?'lap':DM.m,e=lap?1:Math.max(0,Math.min(1,DM.e)),sw=(m==='sway'||lap)?1:1-e;
-  const w=t*(lap?2.8:3.4),s=Math.sin(w),c=Math.cos(w),gb=lap?1:0.55+0.45*sw;
-  rot('pelvis',Z,(0.24*s+jg.x*0.28)*gb);
-  rot('pelvis',Y,0.26*c*gb);
-  rot('pelvis',X,((lap?0.22:0.12)*c+jg.y*0.18)*gb);
-  rot('spine',Z,(-0.20*s-jg.x*0.22)*gb);
-  rot('spine',X,(-0.10*c-jg.y*0.25)*gb);
-  rot('chest',Z,(-0.10*s+jg.x*0.35)*gb);
-  rot('chest',X,(0.22*Math.sin(w*2-0.55)+jg.y*0.52)*gb);
-  root=[0,0,0];
+  /* the groove (danceGroove): weight shifts from leg to leg on the beat, the hips travel over the standing leg and drop on the
+     free side, the free knee bends with the heel up, the torso counter-tilts into an S-curve, a body roll travels up from the
+     hips to the head a beat behind, and arms and head follow through late. gb fades it down under the spin and the drop. */
+  const tt=t+(DM.o||0),G0=danceGroove(tt,lap),ws=G0.ws,b=G0.b,gb=lap?1:(m==='spin'?0.25:m==='drop'?0.45:1-0.35*e*(1-sw));
+  const pz=-0.15*ws*gb,rx=-0.055*ws*gb,legZ=(-rx-0.83*pz)/0.83;
+  rot('pelvis',Z,pz+jg.x*0.1);rot('pelvis',Y,0.2*Math.cos(b)*gb);
+  rot('pelvis',X,(0.13*Math.sin(2*b)+jg.y*0.12)*gb);rot('spine',X,(-0.1*Math.sin(2*b-0.7)-jg.y*0.15)*gb);rot('chest',X,(0.15*Math.sin(2*b-1.4)+jg.y*0.3)*gb);
+  rot('spine',Z,(0.11*ws-jg.x*0.12)*gb);rot('chest',Z,(0.07*G0.wl+jg.x*0.18)*gb);rot('neck',Z,-0.05*G0.wl2*gb);
+  const fl=Math.max(0,ws),fr=Math.max(0,-ws),dip=G0.dip;
+  rot('thighL',Z,legZ);rot('thighR',Z,legZ);
+  rot('thighL',X,(-0.3*fl-0.06*dip)*gb);rot('shinL',X,(0.55*fl+0.16*dip)*gb);rot('footL',X,0.22*fl*gb);
+  rot('thighR',X,(-0.3*fr-0.06*dip)*gb);rot('shinR',X,(0.55*fr+0.16*dip)*gb);rot('footR',X,0.22*fr*gb);
+  root=[rx,(-0.035*dip-0.01*(fl+fr))*gb,0];
   if(lap){
-   rot('thighL',X,-0.42+0.14*s);rot('thighR',X,-0.42-0.14*s);
-   rot('thighL',Z,0.28);rot('thighR',Z,-0.28);
-   rot('shinL',X,0.62);rot('shinR',X,0.62);
-   lower(1,0.32);lower(-1,0.32);
-   rot('uarmL',X,-0.62+0.18*c);rot('uarmR',X,-0.62-0.18*c);
-   rot('farmL',armHinge(1),1.15);rot('farmR',armHinge(-1),1.15);
-   root=[0.045*s,-0.12+0.05*Math.abs(c),0.06*c];
-  }else{
-   if(sw>0){const k=sw;
-    lower(1,-0.2*k);lower(-1,-0.2*k);
-    rot('uarmL',X,(1.5+0.16*s)*k);rot('uarmR',X,(1.5-0.16*s)*k);
-    rot('farmL',armHinge(1),1.0*k);rot('farmR',armHinge(-1),1.0*k);
-    rot('thighL',X,(-0.18+0.14*s)*k);rot('thighR',X,(-0.18-0.14*s)*k);
-    rot('shinL',X,0.28*k);rot('shinR',X,0.28*k);
-    root=[0.035*s*k,(0.05*Math.abs(c)-0.02)*k,0];}
+   rot('thighL',X,-0.38);rot('thighR',X,-0.38);rot('thighL',Z,0.26);rot('thighR',Z,-0.26);rot('shinL',X,0.55);rot('shinR',X,0.55);
+   lower(1,0.3);lower(-1,0.3);rot('uarmL',X,-0.6+0.16*Math.cos(b-0.8));rot('uarmR',X,-0.6-0.16*Math.cos(b-0.8));
+   rot('farmL',armHinge(1),1.1);rot('farmR',armHinge(-1),1.1);
+   root[1]+=-0.12+0.04*Math.abs(Math.sin(b));root[2]+=0.05*Math.cos(b);}
+  else if(sw>0){const k=sw,la=Math.sin(b-0.9),la2=Math.sin(2*b-1.1);
+   /* arms up and loose, waving a beat behind the hips, wrists soft */
+   lower(1,(-2.15+0.18*la)*k);lower(-1,(-2.15-0.18*la)*k);rot('uarmL',X,(0.25+0.12*la2)*k);rot('uarmR',X,(0.25-0.12*la2)*k);
+   rot('farmL',armHinge(1),(1.2+0.35*Math.max(0,la))*k);rot('farmR',armHinge(-1),(1.2+0.35*Math.max(0,-la))*k);}
+  rot('head',Z,-0.09*G0.wl2*gb);rot('head',X,(-0.07*Math.sin(2*b-2.1)-jg.y*0.1)*gb);rot('neck',Y,0.12*Math.sin(b*0.5)*gb);
+  if(!lap){const s=Math.sin(b),c=Math.cos(b),t=tt;
    const k=e;
-   if(m==='pole'&&k>0){const v=t*2.2;
+   if(m==='pole'&&k>0){const v=b;
     rot('pelvis',X,0.26*Math.sin(v)*k);rot('spine',X,-0.24*Math.sin(v-0.8)*k);rot('chest',X,0.3*Math.sin(v-1.6)*k);rot('head',X,-0.16*Math.sin(v-2.4)*k);
-    lower(-1,-1.35*k);rot('uarmR',X,0.25*k);rot('farmR',armHinge(-1),0.45*k);
+    lower(-1,-2.05*k);rot('uarmR',X,0.25*k);rot('farmR',armHinge(-1),0.45*k);
     lower(1,0.55*k);rot('uarmL',X,-0.35*k);rot('farmL',armHinge(1),1.5*k);
     rot('thighL',X,(-0.38+0.08*Math.sin(v))*k);rot('shinL',X,0.62*k);rot('footL',X,0.25*k);rot('thighL',Z,-0.08*k);
     rot('thighR',Z,0.06*k);root[1]+=(-0.03+0.02*Math.sin(v))*k;}
    else if(m==='spin'&&k>0){
     rot('thighL',X,-0.95*k);rot('shinL',X,0.12*k);rot('footL',X,0.45*k);
     rot('thighR',X,0.3*k);rot('shinR',X,1.15*k);rot('footR',X,0.4*k);
-    lower(-1,-1.3*k);rot('farmR',armHinge(-1),0.3*k);
+    lower(-1,-2.0*k);rot('farmR',armHinge(-1),0.3*k);
     lower(1,0.05*k);rot('uarmL',X,0.45*k);rot('farmL',armHinge(1),0.25*k);
     rot('spine',X,-0.28*k);rot('chest',X,-0.12*k);rot('head',X,-0.22*k);rot('head',Z,0.15*k);}
    else if(m==='drop'&&k>0){const q=(0.5-0.5*Math.cos((DM.t||0)*1.25))*k;
@@ -443,14 +446,12 @@ function pose(t,anim,jab,arms,kick,gait){const R={},rot=(b,ax,a)=>{R[b]=M4.mul(M
     rot('pelvis',Y,0.22*s*q);rot('spine',X,0.32*q);rot('head',X,-0.2*q);
     lower(1,0.85*k);lower(-1,0.85*k);rot('uarmL',X,(0.15+0.55*q)*k);rot('uarmR',X,(0.15+0.55*q)*k);rot('farmL',armHinge(1),0.5*k);rot('farmR',armHinge(-1),0.5*k);
     root[1]-=0.44*q;}
-   else if(m==='hair'&&k>0){const f=Math.sin(t*2.6);
+   else if(m==='hair'&&k>0){const f=Math.sin(b);
     rot('spine',X,(0.42*Math.max(0,f)-0.22*Math.max(0,-f))*k);rot('chest',X,0.24*f*k);rot('neck',X,0.3*f*k);rot('head',X,0.32*f*k);rot('head',Z,0.14*c*k);
-    lower(1,-1.15*k);lower(-1,-1.15*k);rot('uarmL',X,0.35*k);rot('uarmR',X,0.35*k);rot('farmL',armHinge(1),1.7*k);rot('farmR',armHinge(-1),1.7*k);
+    lower(1,-2.0*k);lower(-1,-2.0*k);rot('uarmL',X,0.35*k);rot('uarmR',X,0.35*k);rot('farmL',armHinge(1),1.7*k);rot('farmR',armHinge(-1),1.7*k);
     rot('thighL',Z,0.12*k);rot('thighR',Z,-0.12*k);rot('shinL',X,(0.22+0.16*Math.abs(f))*k);rot('shinR',X,(0.22+0.16*Math.abs(f))*k);
     rot('thighL',X,-0.12*Math.abs(f)*k);rot('thighR',X,-0.12*Math.abs(f)*k);root[1]-=(0.02+0.035*Math.abs(f))*k;}
   }
-  rot('head',X,(Math.sin(w*0.5)*0.12-jg.y*0.16)*gb);
-  rot('head',Z,-0.08*s*gb);
  }
  else{ /* boxer: fists up, bouncing */
   const b=Math.abs(Math.sin(t*4.2)),j=jab===undefined?Math.max(0,Math.sin(t*1.3))**8:jab;root=[0,-0.035-b*0.025,0];
@@ -699,20 +700,27 @@ function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game'
   if(c.walking){}/* a dancer walking with you (or back to the stage) walks */
   else if(c.move==='strut'&&!c.lapDance)anim='walk';
   else if(c.kind!=='pgirl'||sp<0.15)anim=c.lapDance?'lapdance':'dance';
-  window.DANCE_MOVE={m:c.move||'sway',e:c.moveE===undefined?1:c.moveE,t:c.mt||0};
+  window.DANCE_MOVE={m:c.move||'sway',e:c.moveE===undefined?1:c.moveE,t:c.mt||0,o:c.dOff===undefined?(c.dOff=Math.random()*4):c.dOff};
   if(c.lapDance)arms=null;
-  const ph=c.ph||t*3.4,bst=c.boost||0;
-  const ty=Math.sin(ph*2)*(0.38+bst*0.45),tx=Math.cos(ph)*(0.32+bst*0.35);
+  const bst=c.boost||0,o=c.dOff===undefined?(c.dOff=Math.random()*4):c.dOff,g1=danceGroove(t+o,!!c.lapDance),h=1/30,g0=danceGroove(t+o-h,!!c.lapDance),g2=danceGroove(t+o+h,!!c.lapDance);
+  /* springs pushed by the hips' actual acceleration: sideways from the weight shift, up and down from the knee dip and the bounce */
+  const ax=-(g2.ws-2*g1.ws+g0.ws)/(h*h)*0.055,ay=-(g2.dip-2*g1.dip+g0.dip)/(h*h)*0.035+(c.vy0!==undefined?0:0);
+  const amp=0.6+bst*0.5,ty=clamp(ay*0.045*amp,-1.2,1.2),tx=clamp(ax*0.05*amp,-1.2,1.2);
   c._jy=c._jy||0;c._jvy=c._jvy||0;c._jx=c._jx||0;c._jvx=c._jvx||0;
   c._jvy+=((ty-c._jy)*145-c._jvy*10.5)*(1/60);c._jy+=c._jvy*(1/60);
   c._jvx+=((tx-c._jx)*125-c._jvx*9.5)*(1/60);c._jx+=c._jvx*(1/60);
   window.DANCE_JIGGLE={x:c._jx,y:c._jy,boost:bst};
  }else window.DANCE_JIGGLE=null;
  const tt=anim==='walk'&&mode==='game'?(c.walk||0)/(2*Math.PI*0.95)/2:t;
- const lying=mode==='game'&&(!c.alive||c.down>0);if(lying){arms=null;gun=null;anim='idle';window.DANCE_JIGGLE=null;}
+ const lying=mode==='game'&&(!c.alive||c.down>0||!!c.bed);if(lying){arms=null;gun=null;anim='idle';window.DANCE_JIGGLE=null;}
  const W=pose(lying?0:tt,anim,jab,arms,k,CH[id].gait);window.DANCE_JIGGLE=null;window.DANCE_MOVE=null;window.EXLEAN=0;window.CROUCH=0;const S=CH[id].scale;
- let base=M4.mul(M4.T(c.x+(c.lox||0),c.y||0,c.z+(c.loz||0)),M4.mul(M4.R([0,1,0],c.a||0),[scale*S[0],0,0,0,0,scale*S[1],0,0,0,0,scale*S[2],0,0,0,0,1]));
- if(lying){const fe=c.fall===undefined?1:1-Math.pow(1-c.fall,2);base=M4.mul(base,M4.mul(M4.T(0,0.2*fe,0),M4.R([1,0,0],(c.alive?1:-1)*Math.PI/2*fe)));}
+ const SC=[scale*S[0],0,0,0,0,scale*S[1],0,0,0,0,scale*S[2],0,0,0,0,1];let bx0=c.x+(c.lox||0),bz0=c.z+(c.loz||0);
+ /* in bed the head goes on the pillow: the root (feet) sits one body length from it, whatever her height */
+ if(lying&&c.bed&&c.bedHX!==undefined){const len=1.8*scale*S[1];bx0=c.bedHX+Math.sin(c.a||0)*len;bz0=c.bedHZ+Math.cos(c.a||0)*len;}
+ let base=M4.mul(M4.T(bx0,c.y||0,bz0),M4.R([0,1,0],c.a||0));
+ /* lying down: tip over first and scale after, so a body keeps its standing height as its length and its depth as its thickness */
+ if(lying){const fe=c.fall===undefined?1:1-Math.pow(1-c.fall,2);base=M4.mul(base,M4.mul(M4.T(0,(c.bed?0.15:0.2)*fe*scale*S[2],0),M4.mul(M4.R([1,0,0],(c.alive&&!c.bed?1:-1)*Math.PI/2*fe),SC)));}
+ else base=M4.mul(base,SC);
  const Wb=[];const B=new Float32Array(NB*16);for(let i=0;i<NB;i++)Wb[i]=M4.mul(base,W[i]);if(CH[id].neckDrop){const h=BI.head;Wb[h]=M4.mul(base,M4.mul(M4.T(0,-CH[id].neckDrop,0),W[h]));}
  const cut=[],SEV={armL:['uarmL','farmL','handL'],armR:['uarmR','farmR','handR'],legL:['thighL','shinL','footL'],legR:['thighR','shinR','footR']};
  if(c.sev)for(const l in c.sev)cut.push(SEV[l]);if(c.headless)cut.push(['head']);
