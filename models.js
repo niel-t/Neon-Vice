@@ -393,16 +393,22 @@ function pose(t,anim,jab,arms,kick,gait){const R={},rot=(b,ax,a)=>{R[b]=M4.mul(M
   lower(1,0.52);lower(-1,0.52);rot('uarmL',X,0.38*s);rot('uarmR',X,-0.38*s);rot('farmL',armHinge(1),0.35+0.2*Math.max(0,-s));rot('farmR',armHinge(-1),0.35+0.2*Math.max(0,s));
   rot('pelvis',Y,0.1*s);rot('chest',Y,-0.16*s);rot('spine',X,0.06);root=[0,0.025*Math.abs(c)-0.02,0];rot('head',X,-0.04);}
  else if(anim==='dance'||anim==='lapdance'){
-  const jg=window.DANCE_JIGGLE||{x:0,y:0,boost:0};
-  const w=t*(anim==='lapdance'?2.8:3.4),s=Math.sin(w),c=Math.cos(w);
-  rot('pelvis',Z,0.24*s+jg.x*0.28);
-  rot('pelvis',Y,0.26*c);
-  rot('pelvis',X,(anim==='lapdance'?0.22:0.12)*c+jg.y*0.18);
-  rot('spine',Z,-0.20*s-jg.x*0.22);
-  rot('spine',X,-0.10*c-jg.y*0.25);
-  rot('chest',Z,-0.10*s+jg.x*0.35);
-  rot('chest',X,0.22*Math.sin(w*2-0.55)+jg.y*0.52);
-  if(anim==='lapdance'){
+  /* club dancing: a hip groove under everything, plus one of several routines (window.DANCE_MOVE.m, faded in and out by .e
+     so a dancer flows from one move into the next): sway (arms up groove), pole (back to the pole, one hand up, body waves),
+     spin (round the pole, one leg out, leaning back), drop (slow squat with knees out and back up), hair (hair flip, hands
+     behind the head). The lap dance keeps its own pose. */
+  const jg=window.DANCE_JIGGLE||{x:0,y:0,boost:0},DM=window.DANCE_MOVE||{m:'sway',e:1};
+  const lap=anim==='lapdance',m=lap?'lap':DM.m,e=lap?1:Math.max(0,Math.min(1,DM.e)),sw=(m==='sway'||lap)?1:1-e;
+  const w=t*(lap?2.8:3.4),s=Math.sin(w),c=Math.cos(w),gb=lap?1:0.55+0.45*sw;
+  rot('pelvis',Z,(0.24*s+jg.x*0.28)*gb);
+  rot('pelvis',Y,0.26*c*gb);
+  rot('pelvis',X,((lap?0.22:0.12)*c+jg.y*0.18)*gb);
+  rot('spine',Z,(-0.20*s-jg.x*0.22)*gb);
+  rot('spine',X,(-0.10*c-jg.y*0.25)*gb);
+  rot('chest',Z,(-0.10*s+jg.x*0.35)*gb);
+  rot('chest',X,(0.22*Math.sin(w*2-0.55)+jg.y*0.52)*gb);
+  root=[0,0,0];
+  if(lap){
    rot('thighL',X,-0.42+0.14*s);rot('thighR',X,-0.42-0.14*s);
    rot('thighL',Z,0.28);rot('thighR',Z,-0.28);
    rot('shinL',X,0.62);rot('shinR',X,0.62);
@@ -411,15 +417,40 @@ function pose(t,anim,jab,arms,kick,gait){const R={},rot=(b,ax,a)=>{R[b]=M4.mul(M
    rot('farmL',armHinge(1),1.15);rot('farmR',armHinge(-1),1.15);
    root=[0.045*s,-0.12+0.05*Math.abs(c),0.06*c];
   }else{
-   lower(1,-0.2);lower(-1,-0.2);
-   rot('uarmL',X,1.5+0.16*s);rot('uarmR',X,1.5-0.16*s);
-   rot('farmL',armHinge(1),1.0);rot('farmR',armHinge(-1),1.0);
-   rot('thighL',X,-0.18+0.14*s);rot('thighR',X,-0.18-0.14*s);
-   rot('shinL',X,0.28);rot('shinR',X,0.28);
-   root=[0.035*s,0.05*Math.abs(c)-0.02,0];
+   if(sw>0){const k=sw;
+    lower(1,-0.2*k);lower(-1,-0.2*k);
+    rot('uarmL',X,(1.5+0.16*s)*k);rot('uarmR',X,(1.5-0.16*s)*k);
+    rot('farmL',armHinge(1),1.0*k);rot('farmR',armHinge(-1),1.0*k);
+    rot('thighL',X,(-0.18+0.14*s)*k);rot('thighR',X,(-0.18-0.14*s)*k);
+    rot('shinL',X,0.28*k);rot('shinR',X,0.28*k);
+    root=[0.035*s*k,(0.05*Math.abs(c)-0.02)*k,0];}
+   const k=e;
+   if(m==='pole'&&k>0){const v=t*2.2;
+    rot('pelvis',X,0.26*Math.sin(v)*k);rot('spine',X,-0.24*Math.sin(v-0.8)*k);rot('chest',X,0.3*Math.sin(v-1.6)*k);rot('head',X,-0.16*Math.sin(v-2.4)*k);
+    lower(-1,-1.35*k);rot('uarmR',X,0.25*k);rot('farmR',armHinge(-1),0.45*k);
+    lower(1,0.55*k);rot('uarmL',X,-0.35*k);rot('farmL',armHinge(1),1.5*k);
+    rot('thighL',X,(-0.38+0.08*Math.sin(v))*k);rot('shinL',X,0.62*k);rot('footL',X,0.25*k);rot('thighL',Z,-0.08*k);
+    rot('thighR',Z,0.06*k);root[1]+=(-0.03+0.02*Math.sin(v))*k;}
+   else if(m==='spin'&&k>0){
+    rot('thighL',X,-0.95*k);rot('shinL',X,0.12*k);rot('footL',X,0.45*k);
+    rot('thighR',X,0.3*k);rot('shinR',X,1.15*k);rot('footR',X,0.4*k);
+    lower(-1,-1.3*k);rot('farmR',armHinge(-1),0.3*k);
+    lower(1,0.05*k);rot('uarmL',X,0.45*k);rot('farmL',armHinge(1),0.25*k);
+    rot('spine',X,-0.28*k);rot('chest',X,-0.12*k);rot('head',X,-0.22*k);rot('head',Z,0.15*k);}
+   else if(m==='drop'&&k>0){const q=(0.5-0.5*Math.cos((DM.t||0)*1.25))*k;
+    rot('thighL',X,-1.25*q);rot('thighR',X,-1.25*q);rot('thighL',Z,0.42*q);rot('thighR',Z,-0.42*q);
+    rot('shinL',X,2.1*q);rot('shinR',X,2.1*q);rot('footL',X,-0.85*q);rot('footR',X,-0.85*q);
+    rot('pelvis',Y,0.22*s*q);rot('spine',X,0.32*q);rot('head',X,-0.2*q);
+    lower(1,0.85*k);lower(-1,0.85*k);rot('uarmL',X,(0.15+0.55*q)*k);rot('uarmR',X,(0.15+0.55*q)*k);rot('farmL',armHinge(1),0.5*k);rot('farmR',armHinge(-1),0.5*k);
+    root[1]-=0.44*q;}
+   else if(m==='hair'&&k>0){const f=Math.sin(t*2.6);
+    rot('spine',X,(0.42*Math.max(0,f)-0.22*Math.max(0,-f))*k);rot('chest',X,0.24*f*k);rot('neck',X,0.3*f*k);rot('head',X,0.32*f*k);rot('head',Z,0.14*c*k);
+    lower(1,-1.15*k);lower(-1,-1.15*k);rot('uarmL',X,0.35*k);rot('uarmR',X,0.35*k);rot('farmL',armHinge(1),1.7*k);rot('farmR',armHinge(-1),1.7*k);
+    rot('thighL',Z,0.12*k);rot('thighR',Z,-0.12*k);rot('shinL',X,(0.22+0.16*Math.abs(f))*k);rot('shinR',X,(0.22+0.16*Math.abs(f))*k);
+    rot('thighL',X,-0.12*Math.abs(f)*k);rot('thighR',X,-0.12*Math.abs(f)*k);root[1]-=(0.02+0.035*Math.abs(f))*k;}
   }
-  rot('head',X,Math.sin(w*0.5)*0.12-jg.y*0.16);
-  rot('head',Z,-0.08*s);
+  rot('head',X,(Math.sin(w*0.5)*0.12-jg.y*0.16)*gb);
+  rot('head',Z,-0.08*s*gb);
  }
  else{ /* boxer: fists up, bouncing */
   const b=Math.abs(Math.sin(t*4.2)),j=jab===undefined?Math.max(0,Math.sin(t*1.3))**8:jab;root=[0,-0.035-b*0.025,0];
@@ -650,7 +681,10 @@ function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game'
  window.CROUCH=mode==='game'&&c.alive&&!(c.down>0)?(c.crouchK||0):0;
  window.PUMP=0;if(gun==='shotgun'&&c.pumpAt!==undefined&&G){const dt2=G.T-c.pumpAt;if(dt2>0.3&&dt2<0.62)window.PUMP=Math.sin((dt2-0.3)/0.32*Math.PI);}
  if(mode==='game'&&c.alive&&(c.kind==='sdancer'||c.kind==='dancer'||c.kind==='pgirl'||c.lapDance)){
-  if(c.kind!=='pgirl'||sp<0.15)anim=c.lapDance?'lapdance':'dance';
+  if(c.walking){}/* a dancer walking with you (or back to the stage) walks */
+  else if(c.move==='strut'&&!c.lapDance)anim='walk';
+  else if(c.kind!=='pgirl'||sp<0.15)anim=c.lapDance?'lapdance':'dance';
+  window.DANCE_MOVE={m:c.move||'sway',e:c.moveE===undefined?1:c.moveE,t:c.mt||0};
   if(c.lapDance)arms=null;
   const ph=c.ph||t*3.4,bst=c.boost||0;
   const ty=Math.sin(ph*2)*(0.38+bst*0.45),tx=Math.cos(ph)*(0.32+bst*0.35);
@@ -661,7 +695,7 @@ function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game'
  }else window.DANCE_JIGGLE=null;
  const tt=anim==='walk'&&mode==='game'?(c.walk||0)/(2*Math.PI*0.95)/2:t;
  const lying=mode==='game'&&(!c.alive||c.down>0);if(lying){arms=null;gun=null;anim='idle';window.DANCE_JIGGLE=null;}
- const W=pose(lying?0:tt,anim,jab,arms,k,CH[id].gait);window.DANCE_JIGGLE=null;window.EXLEAN=0;window.CROUCH=0;const S=CH[id].scale;
+ const W=pose(lying?0:tt,anim,jab,arms,k,CH[id].gait);window.DANCE_JIGGLE=null;window.DANCE_MOVE=null;window.EXLEAN=0;window.CROUCH=0;const S=CH[id].scale;
  let base=M4.mul(M4.T(c.x+(c.lox||0),c.y||0,c.z+(c.loz||0)),M4.mul(M4.R([0,1,0],c.a||0),[scale*S[0],0,0,0,0,scale*S[1],0,0,0,0,scale*S[2],0,0,0,0,1]));
  if(lying){const fe=c.fall===undefined?1:1-Math.pow(1-c.fall,2);base=M4.mul(base,M4.mul(M4.T(0,0.2*fe,0),M4.R([1,0,0],(c.alive?1:-1)*Math.PI/2*fe)));}
  const Wb=[];const B=new Float32Array(NB*16);for(let i=0;i<NB;i++)Wb[i]=M4.mul(base,W[i]);if(CH[id].neckDrop){const h=BI.head;Wb[h]=M4.mul(base,M4.mul(M4.T(0,-CH[id].neckDrop,0),W[h]));}
