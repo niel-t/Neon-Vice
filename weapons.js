@@ -18,11 +18,33 @@ const WD={
  m16:{name:'M16',ammo:30,cal:'556',mag:30,rl:2.2,ar:[0.5,0.13],cd:0.32,pel:1,spr:0.015,mv:0.09,bloom:0.02,ecd:0.9,burst3:true,loud:15,pierce:2,len:0.66,snd:'rifle',kick:0.14,spd:0.92,two:true},
  tknife:{name:'THROWING KNIVES',toss:true,ammo:4,cal:null,mag:4,cd:0.3,loud:0,len:0.27,snd:'throw'},
  /* Nine of Nine exclusives: base = the stock weapon whose animation, gore and sounds they borrow */
- goldak:{name:'GOLDEN AK-47',base:'m16',excl:true,ammo:40,cal:'762',mag:40,rl:2.5,ar:[0.5,0.12],cd:0.09,pel:1,spr:0.03,mv:0.08,bloom:0.02,bloomMax:0.16,ecd:0.2,burst:5,loud:15,pierce:2,len:0.62,snd:'rifle',kick:0.12,spd:0.94,two:true},
- golddeagle:{name:'GOLDEN DEAGLES',base:'dual',excl:true,ammo:16,cal:'50ae',mag:14,rl:2.8,ar:[0.5,0.1],cd:0.16,pel:1,spr:0.03,mv:0.07,bloom:0.05,bloomMax:0.2,ecd:0.5,loud:16,pierce:3,len:0.26,snd:'revolver',kick:0.24},
- goldgl:{name:'GOLD GRENADE LAUNCHER',base:'shotgun',excl:true,nade:true,ammo:6,cal:'40mm',mag:6,rl:3.5,ar:[0.55,0.1],cd:0.8,pel:1,spr:0.02,mv:0.04,bloom:0,ecd:1.6,loud:17,len:0.62,snd:'double',kick:0.5,spd:0.93,two:true},
+ goldak:{name:'GOLDEN AK-47',base:'m16',excl:true,ammo:40,cal:'762',mag:40,rl:2.5,ar:[0.5,0.12],cd:0.09,pel:1,spr:0.03,mv:0.08,bloom:0.02,bloomMax:0.16,ecd:0.2,burst:5,loud:15,pierce:2,len:0.62,snd:'ak',kick:0.12,spd:0.94,two:true},
+ golddeagle:{name:'GOLDEN DEAGLES',base:'dual',excl:true,ammo:16,cal:'50ae',mag:14,rl:2.8,ar:[0.5,0.1],cd:0.16,pel:1,spr:0.03,mv:0.07,bloom:0.05,bloomMax:0.2,ecd:0.5,loud:16,pierce:3,len:0.26,snd:'deagle',kick:0.24},
+ goldgl:{name:'GOLD GRENADE LAUNCHER',base:'shotgun',excl:true,nade:true,ammo:6,cal:'40mm',mag:6,rl:3.5,ar:[0.55,0.1],cd:0.8,pel:1,spr:0.02,mv:0.04,bloom:0,ecd:1.6,loud:17,len:0.62,snd:'gl',kick:0.5,spd:0.93,two:true},
  katana:{name:'KATANA',base:'machete',excl:true,melee:true,range:1.5,cd:0.26,kill:true,len:0.8,snd:'swing_machete',arc:1.35},
 };
+/* ================= GUN AUDIO (real recordings) =================
+   audio/guns.mp3 is one sprite of CC0 field recordings from the Free Firearm Sound Library (Still North Media / Ben Jaszczak,
+   2014; credits in audio/CREDITS.md, cut by scripts/gun-audio.py). GUNCLIP = clip name -> [start s, length s] in the sprite.
+   GUNSND = per weapon: fire = shot clips (one picked per shot), rack = clip after each shot, rl = reload steps [fraction of the
+   reload, clip] (the last step plays when the reload completes), dry = empty click. Data only: index.html plays them. */
+const GUNCLIP={pistol1:[0.12,0.55],pistol2:[0.79,0.55],pistol3:[1.46,0.55],silenced1:[2.13,0.35],silenced2:[2.6,0.35],revolver1:[3.07,0.6],revolver2:[3.79,0.6],shotgun1:[4.51,0.7],shotgun2:[5.3299,0.7],double1:[6.1499,0.7],double2:[6.9699,0.7],smg1:[7.7899,0.4],smg2:[8.3099,0.4],smg3:[8.8299,0.4],rifle1:[9.3499,0.55],rifle2:[10.0199,0.55],ak1:[10.6899,0.55],ak2:[11.3599,0.55],ak3:[12.0299,0.55],deagle1:[12.6999,0.6],deagle2:[13.4199,0.6],gl1:[14.1399,0.6],gl2:[14.8599,0.6],ppq_out:[15.5799,0.4],ppq_in:[16.0999,0.35],ppq_slide:[16.5698,0.3],ppq_dry:[16.9898,0.15],sw_open:[17.2598,0.5],sw_eject:[17.8798,0.85],sw_load:[18.8498,0.8],sw_close:[19.7698,0.4],sw_dry:[20.2898,0.2],pump_shell:[20.6098,0.65],pump_cycle:[21.3798,0.6],pump_dry:[22.0998,0.15],brk_open:[22.3698,0.35],brk_shell:[22.8398,0.4],brk_close:[23.3598,0.45],smg_out:[23.9298,0.3],smg_in:[24.3498,0.4],smg_bolt:[24.8698,0.4],ar_out:[25.3898,0.35],ar_in:[25.8598,0.5],ar_bolt:[26.4798,0.5],ar_dry:[27.0998,0.15],ak_out:[27.3698,0.3],ak_in:[27.7898,0.3],ak_back:[28.2098,0.4],ak_fwd:[28.7298,0.35],m1911_out:[29.1998,0.35],m1911_in:[29.6698,0.35],m1911_slide:[30.1397,0.4]};
+const RL_PPQ=[[0.06,'ppq_out'],[0.55,'ppq_in'],[1,'ppq_slide']],RL_BRK=[[0.04,'brk_open'],[0.38,'brk_shell'],[0.6,'brk_shell'],[1,'brk_close']];
+const GUNSND={
+ pistol:{fire:['pistol1','pistol2','pistol3'],rl:RL_PPQ,dry:'ppq_dry',tink:1},
+ silenced:{fire:['silenced1','silenced2'],rl:RL_PPQ,dry:'ppq_dry',tink:1},
+ dual:{fire:['pistol1','pistol2','pistol3'],rl:[[0.04,'ppq_out'],[0.3,'ppq_in'],[0.48,'ppq_out'],[0.74,'ppq_in'],[1,'ppq_slide']],dry:'ppq_dry',tink:1},
+ revolver:{fire:['revolver1','revolver2'],rl:[[0.03,'sw_open'],[0.16,'sw_eject'],[0.52,'sw_load'],[1,'sw_close']],dry:'sw_dry'},
+ shotgun:{fire:['shotgun1','shotgun2'],rack:'pump_cycle',rl:[[0.1,'pump_shell'],[0.3,'pump_shell'],[0.5,'pump_shell'],[0.7,'pump_shell'],[1,'pump_cycle']],dry:'pump_dry'},
+ double:{fire:['double1','double2'],rl:RL_BRK,dry:'pump_dry'},
+ smg:{fire:['smg1','smg2','smg3'],rl:[[0.06,'smg_out'],[0.55,'smg_in'],[1,'smg_bolt']],dry:'ar_dry',tink:0.4},
+ m16:{fire:['rifle1','rifle2'],rl:[[0.06,'ar_out'],[0.55,'ar_in'],[1,'ar_bolt']],dry:'ar_dry',tink:1},
+ goldak:{fire:['ak1','ak2','ak3'],rl:[[0.06,'ak_out'],[0.5,'ak_in'],[0.82,'ak_back'],[1,'ak_fwd']],dry:'ar_dry',tink:1},
+ golddeagle:{fire:['deagle1','deagle2'],rl:[[0.04,'m1911_out'],[0.3,'m1911_in'],[0.48,'m1911_out'],[0.74,'m1911_in'],[1,'m1911_slide']],dry:'ppq_dry',tink:1},
+ goldgl:{fire:['gl1','gl2'],rl:[[0.04,'brk_open'],[0.5,'brk_shell'],[1,'brk_close']],dry:'pump_dry'},
+};
+/* sfx name -> weapon whose shot clips it plays (WD.snd keys) */
+const SND_GUN={pistol:'pistol',silenced:'silenced',dual:'dual',revolver:'revolver',shotgun:'shotgun',double:'double',smg:'smg',rifle:'m16',ak:'goldak',deagle:'golddeagle',gl:'goldgl'};
 const BT=t=>(WD[t]&&WD[t].base)||t;
 /* calibers shared by every gun that chambers them (one pool per caliber in the kit).
    box=rounds per box at Nine's, price=$ per box, cap=base pool capacity before upgrades, up=capacity added per upgrade.

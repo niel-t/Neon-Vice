@@ -329,7 +329,7 @@ const SFX={
 };
 let gunBus=null,sfxRev=null;
 function initGunBus(){gunBus=AC.createWaveShaper();gunBus.curve=distCurve(7);gunBus.oversample='2x';const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=9000;const comp=AC.createDynamicsCompressor();comp.threshold.value=-12;comp.ratio.value=5;comp.attack.value=0.001;comp.release.value=0.1;const gg=AC.createGain();gg.gain.value=0.75;gunBus.connect(lp);lp.connect(comp);comp.connect(gg);gg.connect(sfxG);
- sfxRev=AC.createConvolver();sfxRev.buffer=impulse(0.75,3.4);const rg=AC.createGain();rg.gain.value=0.45;sfxRev.connect(rg);rg.connect(sfxG);buildGunBufs();buildMeleeBufs();}
+ sfxRev=AC.createConvolver();sfxRev.buffer=impulse(0.75,3.4);const rg=AC.createGain();rg.gain.value=0.45;sfxRev.connect(rg);rg.connect(sfxG);buildGunBufs();buildMeleeBufs();loadGunAudio();}
 function shot(t,o){noise(t,0.035,'highpass',3500,1500,o.crack,gunBus);noise(t,o.dur,'lowpass',o.bf,110,o.body,gunBus,1.3);tone(t,o.dur*1.4,'sine',o.sf,26,o.sub,sfxG);tone(t,o.dur*0.35,'square',o.sf*1.7,45,o.sub*0.3,gunBus);
  const s=AC.createBufferSource();s.buffer=noiseBuf;const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=2200;const g=AC.createGain();env(g,t,0.002,o.tail,0.1);s.connect(f);f.connect(g);g.connect(sfxRev);s.start(t,Math.random()*0.5);s.stop(t+0.15);}
 function mech(t,f,v){noise(t,0.04,'bandpass',f,f*0.7,v,sfxG,3);tone(t,0.03,'square',f*0.25,f*0.18,v*0.4,sfxG);}
@@ -371,6 +371,39 @@ Object.assign(SFX,{
  smg:(t,v=1)=>{pb(GB.smg,t,0.7*v,rr(),0.25);if(Math.random()<0.4)pb(GB.tink,t+rnd(0.3,0.6),0.05*v,rr());},
  rifle:(t,v=1)=>{pb(GB.rifle,t,0.85*v,rr(),0.35);pb(GB.tink,t+rnd(0.35,0.6),0.06*v,rr());}});
 
+/* ---- real gun recordings (GUNCLIP/GUNSND in weapons.js): one CC0 sprite, audio/guns.mp3. Until it has loaded, or where it
+   cannot (file://, no fetch, decode failure), the synthesized guns above keep playing. Recordings skip the distortion bus:
+   they go through their own compressor, with a little of the room reverb. ---- */
+let GBUF=null,gbufTried=false,recBus=null;const GCLIP={};
+let fxSeed=7;const frnd=(a,b)=>{fxSeed=(fxSeed*16807)%2147483647;return a+(b-a)*(fxSeed/2147483647);}; // cosmetic only: keeps the seeded Math.random untouched
+function loadGunAudio(){if(gbufTried||!AC||typeof fetch!=='function'||location.protocol==='file:')return;gbufTried=true;
+ try{const comp=AC.createDynamicsCompressor();comp.threshold.value=-20;comp.knee.value=6;comp.ratio.value=4;comp.attack.value=0.001;comp.release.value=0.12;
+  recBus=AC.createGain();recBus.gain.value=1;const mk=AC.createGain();mk.gain.value=1.7;recBus.connect(comp);comp.connect(mk);mk.connect(sfxG);}catch(e){recBus=null;return;}
+ fetch('audio/guns.mp3').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.arrayBuffer();})
+  .then(ab=>new Promise((ok,no)=>{const p=AC.decodeAudioData(ab,ok,no);if(p&&p.catch)p.catch(no);}))
+  .then(buf=>{const d=buf.getChannelData(0),sr=buf.sampleRate;
+   // find each clip's real start (decoders pad MP3s differently): the first sample above 8% of the clip's peak, minus 4 ms
+   for(const k in GUNCLIP){const [o,l]=GUNCLIP[k],a=Math.max(0,Math.floor((o-0.04)*sr)),b=Math.min(d.length,Math.floor((o+Math.min(l,0.3))*sr));let pk=0;for(let i=a;i<b;i++){const v=Math.abs(d[i]);if(v>pk)pk=v;}
+    let s=a;while(s<b&&Math.abs(d[s])<pk*0.08)s++;GCLIP[k]=[clamp(s/sr-0.004,Math.max(0,o-0.04),o+0.04),l];}
+   GBUF=buf;})
+  .catch(()=>{GBUF=null;});}
+function gclip(k,t,vol,rate,rev){const c=GCLIP[k];if(!c||!GBUF||!recBus||!AC||AC.state!=='running'||!SET.sound)return false;
+ const s=AC.createBufferSource();s.buffer=GBUF;s.playbackRate.value=rate||1;const g=AC.createGain();g.gain.value=vol;s.connect(g);g.connect(recBus);
+ if(rev&&sfxRev){const r=AC.createGain();r.gain.value=rev;g.connect(r);r.connect(sfxRev);}s.start(t,c[0],c[1]);return true;}
+const GSHOTV={pistol:0.9,silenced:0.8,dual:0.9,revolver:1,shotgun:1,double:1,smg:0.75,rifle:0.9,ak:0.95,deagle:1,gl:0.95};
+const GSHOTR={deagle:0.88,gl:0.72}; // pitch: the Desert Eagle borrows a .45 shot dropped a little, the M79 a 12-gauge dropped into a thump
+SFX.ak=SFX.ak||SFX.rifle;SFX.deagle=SFX.deagle||((t,v=1)=>{pb(GB.revolver,t,0.95*v,0.85,0.45);});SFX.gl=SFX.gl||SFX.double;
+for(const n in SND_GUN){const syn=SFX[n],S=GUNSND[SND_GUN[n]];
+ SFX[n]=(t,v=1)=>{const L=S.fire;if(!gclip(L[Math.floor(frnd(0,L.length))],t,GSHOTV[n]*v,(GSHOTR[n]||1)*frnd(0.96,1.04),0.28*v))return syn(t,v);
+  if(S.rack)gclip(S.rack,t+0.3,0.55*v,frnd(0.97,1.03),0.1);
+  if(S.tink&&frnd(0,1)<S.tink)pb(GB.tink,t+frnd(0.35,0.6),0.06*v,frnd(0.94,1.06));};}
+/* reload steps: played as the reload bar passes them, the last one when the gun is ready */
+function gunSnd(type){return GUNSND[type]||GUNSND[BT(type)];}
+function rlStep(r,type){const S=gunSnd(type);if(!S||!GBUF)return;const n=S.rl.length;r.si=r.si||0;
+ while(r.si<n-1&&r.t>=S.rl[r.si][0]*r.dur){if(contextLost||!AC||AC.state!=='running')return void r.si++;gclip(S.rl[r.si][1],AC.currentTime,0.8,frnd(0.97,1.03),0.12);r.si++;}}
+function rlFinish(r,type){const S=gunSnd(type);if(!S||!GBUF||contextLost||!AC||AC.state!=='running'||!SET.sound)return false;const n=S.rl.length,t=AC.currentTime;
+ if((r.si||0)<n-1&&n>1){gclip(S.rl[n-2][1],t,0.8,1.05,0.12);gclip(S.rl[n-1][1],t+0.09,0.85,1.05,0.12);}else gclip(S.rl[n-1][1],t,0.85,frnd(0.97,1.03),0.12);return true;}
+function gunDry(type){const S=gunSnd(type);if(!S||!S.dry||contextLost||!AC)return false;return gclip(S.dry,AC.currentTime,0.7,frnd(0.97,1.03),0.05);}
 function sfx(n,v){if(contextLost||!AC||AC.state!=='running'||!SET.sound)return;try{SFX[n](AC.currentTime,v===undefined?1:v);}catch(e){}}
 const mtof=m=>440*Math.pow(2,(m-69)/12);
 /* ---- music engine: distorted bus, sidechain, delay, reverb ---- */
@@ -1429,7 +1462,7 @@ function fireGun(c,w,isP){const g=G,wd=WD[w.type];if(isP&&c.cover){c.cover.pop=C
  let ox=0;if(BT(w.type)==='dual'){c.alt=!c.alt;ox=c.alt?-0.17:0.17;}const bx0=mo.x+ca*ox,bz0=mo.z-sa*ox,bP=bProj(w.type);
  const bY0=(c.eyeY??1.6)-0.3,bY=!isP&&typeof coverShotY==='function'?coverShotY(bY0,G.player):bY0;
  for(let i=0;i<wd.pel;i++){const a=a0+(wd.pel>1?rnd(-spr,spr):(Math.random()+Math.random()-1)*spr);g.bullets.push({x:bx0,z:bz0,dx:Math.sin(a),dz:Math.cos(a),sp:isP?34:Dd().ebSpd,life:1.2,own:isP?'p':'e',pierce:isP?(wd.pierce||1):1,type:w.type,hit:[],p:bP,e:bP.e0,tum:1,y:bY,sx:bx0,sz:bz0,st:c.stance||'stand'});}
- const ml=0.4+wd.len;g.flashes.push({x:c.x+sa*ml+ca*(ox||0.17),y:0.74,z:c.z+ca*ml-sa*(ox||0.17),t:0.06,big:wd.pel>1,sil:w.type==='silenced'||isP&&quietPistol(w)});
+ const ml=0.4+wd.len,fx=c.x+sa*ml+ca*(ox||0.17),fz=c.z+ca*ml-sa*(ox||0.17),sil=w.type==='silenced'||isP&&quietPistol(w);g.flashes.push({x:fx,y:0.74,z:fz,t:0.06,big:wd.pel>1,sil,a:a0,k:flashKind(w.type),r:frnd(0,TAU),j:frnd(0,1)});muzzleSmoke(fx,0.74,fz,sa,ca,wd.pel>1?5:sil?1:BT(w.type)==='m16'?3:2);
  sfx(isP&&quietPistol(w)?'silenced':wd.snd,isP?1:clamp(1.15-Math.hypot(c.x-g.player.x,c.z-g.player.z)/18,0.2,1));
  if(w.type!=='double'&&w.type!=='shotgun')gib(c.x+ca*0.2,0.72,c.z-sa*0.2,ca*rnd(1.5,2.5),rnd(1.5,2.5),-sa*rnd(1.5,2.5),wd.pel>1?[0.04,0.04,0.08]:[0.03,0.03,0.06],wd.pel>1?[0.8,0.15,0.15]:[0.85,0.65,0.25],true);
  if(isP){rumble(wd.pel>1?0.6:0.12,wd.pel>1?0.8:0.35,wd.pel>1?150:60);shake(wd.kick*1.2);g.cam.kx-=sa*wd.kick*0.6;g.cam.kz-=ca*wd.kick*0.6;if(isP&&g.onAir)g.airShots=(g.airShots||0)+1;{const L=isP?gunLoud(w,g):wd.loud;alertNoise(c.x,c.z,L*(isP&&g.onAir?2.5:1),isP?'p':'');if(L>=10)g.loudShot=1;}}}
@@ -1472,10 +1505,10 @@ function takeWeapon(p,type,ammo){const wd=WD[type];
    A reload tops the magazine up from the caliber pool after WD.rl seconds; one press inside the active window (WD.ar) finishes it at once,
    a press anywhere else jams it (slower) and locks further tries. Attacks wait for it; switching or dropping the gun cancels it. */
 function reloadStart(p){const w=p.weapon,L=G.live;if(!w||!L||p.rl)return false;const wd=WD[w.type];if(!reloadNeed(w.type,w.ammo,L.pool[wd.cal]))return false;
- p.rl=reloadNew(w.type);if(mastLv(w.type)>=2)for(const q of ['dur','ar0','ar1'])p.rl[q]*=0.75;p.rl.w=w;p.burstQ=0;sfx('blip');return true;}
-function reloadDone(p){const w=p.rl.w,wd=WD[w.type],L=G.live;p.rl=null;const n=reloadNeed(w.type,w.ammo,L.pool[wd.cal]);L.pool[wd.cal]=(L.pool[wd.cal]|0)-n;w.ammo+=n;p.cd=Math.max(p.cd,0.1);sfx('pick');}
-function reloadTick(p,dt){const r=p.rl;if(!r)return;if(r.w!==p.weapon||!G.live){p.rl=null;return;}r.t+=dt;if(r.t>=r.dur)reloadDone(p);}
-function reloadInput(p){if(p.rl){const res=reloadPress(p.rl);if(res==='hit'){popup(p.x,p.z,'PERFECT','#7dff9a');reloadDone(p);}else if(res==='jam'){popup(p.x,p.z,'JAMMED','#ff8a95');sfx('throw');}return;}
+ p.rl=reloadNew(w.type);if(mastLv(w.type)>=2)for(const q of ['dur','ar0','ar1'])p.rl[q]*=0.75;p.rl.w=w;p.burstQ=0;if(GBUF)rlStep(p.rl,w.type);else sfx('blip');return true;}
+function reloadDone(p){const r=p.rl,w=r.w,wd=WD[w.type],L=G.live;p.rl=null;const n=reloadNeed(w.type,w.ammo,L.pool[wd.cal]);L.pool[wd.cal]=(L.pool[wd.cal]|0)-n;w.ammo+=n;p.cd=Math.max(p.cd,0.1);if(!rlFinish(r,w.type))sfx('pick');}
+function reloadTick(p,dt){const r=p.rl;if(!r)return;if(r.w!==p.weapon||!G.live){p.rl=null;return;}r.t+=dt;if(r.t>=r.dur)reloadDone(p);else rlStep(r,r.w.type);}
+function reloadInput(p){if(p.rl){const res=reloadPress(p.rl);if(res==='hit'){popup(p.x,p.z,'PERFECT','#7dff9a');reloadDone(p);}else if(res==='jam'){popup(p.x,p.z,'JAMMED','#ff8a95');if(!gunDry(p.rl.w.type))sfx('throw');}return;}
  const w=p.weapon,wd=w&&WD[w.type];if(!reloadStart(p)&&wd&&!wd.melee&&isCal(wd.cal)&&w.ammo<wd.mag&&!(G.live.pool[wd.cal]>0))popup(p.x,p.z,'NO '+CAL[wd.cal].name,'#ff8a95');}
 /* ================= GORE + REAL EXECUTIONS ================= */
 const GORE=()=>SET.gore!=='normal';
@@ -1506,14 +1539,14 @@ function updateExec(p,dt){const x=p.ex,e=x.e,g=G;x.t+=dt;p.vx=p.vz=0;p.exec=Math
   if(k==='punch'||k==='stab'||k==='smash'){p.atkT=p.atkDur=0.16;if(x.kind==='fists')p.jab=!p.jab;sfx(x.kind==='fists'?'hit_fists':'hit_'+x.wt);sfx('punch');
    bloodBurst(hx,0.25,hz,dir,gore?(k==='smash'?30:18):8,k==='smash'?3.5:2.4);addFloorDecal(hx+rnd(-0.3,0.3),hz+rnd(-0.3,0.3),rnd(0.25,0.55),rnd(0,TAU),10,bloodTint());shake(k==='smash'?0.3:0.16);rumble(0.4,0.6,80);g.freeze=0.03;}
   else{p.atkT=p.atkDur=0.2;
-   if(x.kind==='gun'){const w=p.weapon;if(w&&w.ammo>0){w.ammo--;const wd=WD[w.type];sfx(wd.snd);alertNoise(p.x,p.z,wd.loud,'p');g.flashes.push({x:p.x+dir[0]*0.6,y:0.45,z:p.z+dir[1]*0.6,t:0.08,big:true,sil:w.type==='silenced'});if(w.type==='shotgun')p.pumpAt=g.T;}}
+   if(x.kind==='gun'){const w=p.weapon;if(w&&w.ammo>0){w.ammo--;const wd=WD[w.type];sfx(wd.snd);alertNoise(p.x,p.z,wd.loud,'p');g.flashes.push({x:p.x+dir[0]*0.6,y:0.45,z:p.z+dir[1]*0.6,t:0.08,big:true,sil:w.type==='silenced',a:Math.atan2(dir[0],dir[1]),k:flashKind(w.type),r:frnd(0,TAU),j:frnd(0,1)});if(w.type==='shotgun')p.pumpAt=g.T;}}
    else{sfx('hit_'+(x.kind==='fists'?'fists':x.wt));sfx('splat');}
    if(e.alive){killEnemy(e,'exec',dir);g.execs++;}
    const pop=x.kind==='gun'||x.kind==='machete'||x.kind==='bat'||gore||(x.kind==='fists'&&CHARS[selIdx].id==='consigliere');
    if(pop)headPop(e,dir);bloodBurst(hx,0.3,hz,dir,gore?70:30,4);addFloorDecal(hx,hz,rnd(1.0,1.5),rnd(0,TAU),8,bloodTint());if(x.kind==='gun'||gore)wallSplat(hx,hz,dir,gore?2:1);
    shake(0.45);rumble(0.9,1,200);g.freeze=0.14;}}
  if(x.t>=x.dur){p.ex=null;p.exec=0.05;}}
-function playerAttack(p){const g=G,w=p.weapon,ch=CHARS[selIdx];if(p.rl)return;if(w&&!WD[w.type].melee&&w.ammo<=0&&reloadStart(p))return;{let tg=null,bd=1.15;for(const e of g.enemies){if(e.alive&&e.down>0){const d=Math.hypot(e.x-p.x,e.z-p.z);if(d<bd){bd=d;tg=e;}}}if(tg&&!(w&&!WD[w.type].melee&&w.ammo<=0)){execute(p,tg);return;}}
+function playerAttack(p){const g=G,w=p.weapon,ch=CHARS[selIdx];if(p.rl)return;if(w&&!WD[w.type].melee&&!WD[w.type].toss&&w.ammo<=0){gunDry(w.type);if(reloadStart(p))return;}{let tg=null,bd=1.15;for(const e of g.enemies){if(e.alive&&e.down>0){const d=Math.hypot(e.x-p.x,e.z-p.z);if(d<bd){bd=d;tg=e;}}}if(tg&&!(w&&!WD[w.type].melee&&w.ammo<=0)){execute(p,tg);return;}}
  if(w&&!WD[w.type].melee){if(w.ammo<=0){throwWeapon(p);return;}const wd=WD[w.type];
   if(wd.burst3){fireGun(p,w,true);p.burstQ=Math.min(2,w.ammo);p.burstT=0.065;p.cd=wd.cd;}else fireGun(p,w,true);if(w.ammo<=0&&p.weapon===w)reloadStart(p);return;}
  const wd=WD[w?w.type:'fists'];let tgt=null,best=1.15;
@@ -1890,29 +1923,113 @@ function updateCamera(dt){const g=G,p=g.player;let lx=0,lz=0;
  const k=1-Math.exp(-dt*6);g.cam.x+=(p.x+lx-g.cam.x)*k;g.cam.z+=(p.z+lz-g.cam.z)*k;}
 
 /* ================= DRAW: WEAPONS & CHARACTERS ================= */
-/* weapon parts in weapon-local frame: grip at origin, barrel +z, up +y. [x,y,z,sx,sy,sz,col] */
+/* weapon models in weapon-local frame: grip at origin, barrel +z, up +y, metres (handguns real size, long guns ~0.85x).
+   Each part is [x,y,z,sx,sy,sz,col,rx,rz,tag]: a box turned rx about x (+ tips the far end up) then rz about the barrel axis.
+   tag 's' = slide (snaps back on a shot), 'p' = pump fore-end (rides back when racked). Proportions follow the real guns:
+   Beretta 92F, Colt Python 6", Remington 870, side-by-side coach gun, IMI Uzi, Colt M16A1, AK-47, Desert Eagle .50, M79. */
+const WC={blue:hex(0x24252b),poly:hex(0x18181b),park:hex(0x34363a),grip:hex(0x2b221d),walnut:hex(0x5c3519),rub:hex(0x111111),case:hex(0x77706a),lea:hex(0x5b3a22),ito:hex(0x262a5c)};
+const wp=(x,y,z,sx,sy,sz,c,rx,rz,tag)=>[x,y,z,sx,sy,sz,c,rx||0,rz||0,tag||''];
+/* round stock: a square plus the same square turned 45 degrees reads as a barrel from every side */
+const wcyl=(x,y,z,d,l,c,tag)=>[wp(x,y,z,d*0.86,d*0.86,l,c,0,0,tag),wp(x,y,z,d*0.86,d*0.86,l,c,0,Math.PI/4,tag)];
+const wmir=ps=>ps.flatMap(q=>q[0]?[q,[-q[0],...q.slice(1)]]:[q]);
+const BERETTA=c=>wmir([
+ wp(0,0.047,0.0,0.03,0.036,0.088,c,0,0,'s'),wp(0,0.039,0.099,0.03,0.02,0.11,c,0,0,'s'),wp(0,0.056,0.147,0.028,0.012,0.016,c,0,0,'s'),
+ ...wcyl(0,0.054,0.095,0.017,0.11,STEEL,'s'),wp(0.0155,0.048,-0.028,0.002,0.026,0.022,DARK,0,0,'s'),
+ wp(0.017,0.057,-0.032,0.005,0.008,0.014,c,0,0,'s'),wp(0,0.068,0.146,0.004,0.01,0.012,c,0,0,'s'),wp(0,0.068,-0.034,0.022,0.008,0.008,c,0,0,'s'),
+ wp(0,0.017,0.082,0.026,0.014,0.13,c),wp(0,0.016,0.0,0.028,0.022,0.07,c),
+ wp(0,-0.012,0.05,0.008,0.006,0.062,c),wp(0,0.001,0.08,0.008,0.028,0.006,c,-0.25),wp(0,0.0,0.04,0.006,0.022,0.006,DARK,0.3),
+ wp(0,-0.045,-0.012,0.03,0.106,0.048,c,0.2),wp(0,-0.047,-0.013,0.034,0.08,0.038,WC.grip,0.2),wp(0,-0.098,-0.024,0.03,0.009,0.05,DARK,0.2),
+ wp(0,0.055,-0.049,0.01,0.018,0.012,c,-0.4)]);
 const WPARTS={
- pistol:[[0,0.045,0.07,0.035,0.045,0.19,GUN],[0,-0.025,0,0.032,0.1,0.05,GUNL]],
- silenced:[[0,0.045,0.07,0.035,0.045,0.19,GUN],[0,-0.025,0,0.032,0.1,0.05,GUNL],[0,0.045,0.25,0.032,0.032,0.17,DARK]],
- revolver:[[0,0.05,0.15,0.025,0.03,0.16,SILV],[0,0.04,0.04,0.05,0.05,0.07,SILV],[0,-0.03,-0.01,0.032,0.1,0.045,WOOD]],
- shotgun:[[0,0.045,0.33,0.035,0.035,0.5,GUN],[0,0.0,0.3,0.05,0.045,0.17,WOOD],[0,0.035,0.0,0.05,0.065,0.16,GUN],[0,0.0,-0.2,0.05,0.09,0.26,WOOD]],
- double:[[-0.022,0.045,0.27,0.03,0.035,0.46,GUN],[0.022,0.045,0.27,0.03,0.035,0.46,GUN],[0,0.025,0,0.06,0.07,0.12,GUNL],[0,0.0,-0.2,0.05,0.09,0.28,WOOD]],
- smg:[[0,0.045,0.06,0.045,0.065,0.22,GUN],[0,-0.06,0.02,0.032,0.13,0.045,GUN],[0,0.05,0.2,0.022,0.022,0.07,DARK]],
- m16:[[0,0.04,0.14,0.042,0.065,0.34,GUN],[0,0.045,0.4,0.018,0.018,0.2,DARK],[0,0.1,0.08,0.025,0.03,0.16,GUN],[0,-0.05,0.12,0.03,0.13,0.05,DARK],[0,0.02,-0.15,0.04,0.075,0.22,GUN],[0,-0.03,0,0.03,0.08,0.04,GUN]],
- bat:[[0,0,0.14,0.035,0.035,0.3,WOOD],[0,0,0.5,0.065,0.065,0.42,WOODL]],
- knife:[[0,0,0.04,0.026,0.032,0.1,DARK],[0,0.006,0.17,0.01,0.038,0.17,STEEL]],
- machete:[[0,0,0.05,0.028,0.036,0.12,DARK],[0,0.012,0.33,0.012,0.075,0.45,STEEL]],
+ pistol:BERETTA(WC.blue),
+ silenced:[...BERETTA(WC.blue),...wcyl(0,0.054,0.236,0.034,0.16,DARK),wp(0,0.054,0.317,0.02,0.02,0.002,WC.rub)],
+ revolver:wmir([wp(0,0.038,0.03,0.024,0.05,0.075,SILV),wp(0,0.068,0.03,0.018,0.008,0.075,SILV),...wcyl(0,0.042,0.03,0.044,0.044,SILV),
+  ...wcyl(0,0.051,0.145,0.017,0.155,SILV),wp(0,0.064,0.145,0.007,0.012,0.155,SILV),wp(0,0.064,0.1,0.0075,0.006,0.018,DARK),wp(0,0.064,0.145,0.0075,0.006,0.018,DARK),wp(0,0.064,0.19,0.0075,0.006,0.018,DARK),
+  wp(0,0.032,0.145,0.016,0.02,0.155,SILV),wp(0,0.051,0.2235,0.008,0.008,0.002,DARK),wp(0,0.074,0.212,0.004,0.012,0.016,SILV,-0.2),wp(0,0.074,0.0,0.012,0.006,0.012,SILV),
+  wp(0,0.07,-0.016,0.008,0.024,0.012,SILV,-0.5),wp(0,0.0,0.035,0.008,0.006,0.04,SILV),wp(0,0.01,0.055,0.008,0.022,0.006,SILV),wp(0,0.008,0.028,0.005,0.02,0.005,SILV,0.3),
+  wp(0,0.0,-0.012,0.022,0.04,0.035,SILV,0.35),wp(0,-0.04,-0.028,0.032,0.09,0.04,WC.walnut,0.35),wp(0.0162,-0.03,-0.024,0.002,0.012,0.012,GOLD,0.35)]),
+ shotgun:wmir([wp(0,0.045,0.07,0.036,0.06,0.19,WC.blue),wp(0.0185,0.056,0.08,0.002,0.022,0.07,DARK),wp(0,0.006,0.02,0.03,0.02,0.07,WC.blue),
+  wp(0,-0.012,0.03,0.008,0.006,0.06,WC.blue),wp(0,-0.002,0.058,0.008,0.024,0.006,WC.blue),wp(0,-0.002,0.03,0.005,0.018,0.005,DARK,0.3),
+  ...wcyl(0,0.058,0.4,0.022,0.47,WC.blue),wp(0,0.072,0.4,0.008,0.006,0.47,WC.blue),wp(0,0.077,0.63,0.005,0.005,0.005,SILV),wp(0,0.058,0.6355,0.014,0.014,0.002,DARK),
+  ...wcyl(0,0.026,0.36,0.024,0.39,WC.blue),...wcyl(0,0.026,0.562,0.027,0.02,WC.blue),
+  wp(0,0.026,0.29,0.044,0.042,0.17,WOOD,0,0,'p'),...[0,1,2,3,4].map(i=>wp(0.0225,0.026,0.226+i*0.032,0.002,0.03,0.008,WC.walnut,0,0,'p')),
+  wp(0,0.026,-0.085,0.034,0.052,0.13,WOOD,-0.14),wp(0,0.028,-0.25,0.038,0.05,0.21,WOOD,0.02),wp(0,-0.012,-0.295,0.037,0.07,0.15,WOOD,-0.3),wp(0,-0.008,-0.362,0.04,0.12,0.018,WC.rub,-0.06)]),
+ double:wmir([wp(0,0.04,0.03,0.042,0.055,0.1,WC.case),...wcyl(0.0115,0.055,0.32,0.022,0.48,WC.blue),wp(0,0.068,0.32,0.008,0.006,0.48,WC.blue),wp(0,0.044,0.32,0.008,0.008,0.48,WC.blue),
+  wp(0.0115,0.055,0.5605,0.013,0.013,0.002,DARK),wp(0,0.036,0.16,0.036,0.026,0.15,WOOD),wp(0.012,0.072,-0.012,0.006,0.022,0.012,WC.case,-0.5),wp(0,0.07,0.0,0.01,0.006,0.03,WC.case,0,0.3),
+  wp(0,0.0,0.03,0.005,0.02,0.005,DARK,0.3),wp(0,0.0,0.046,0.005,0.02,0.005,DARK,0.3),wp(0,-0.012,0.04,0.008,0.006,0.06,WC.blue),
+  wp(0,0.025,-0.08,0.034,0.045,0.12,WOOD,-0.1),wp(0,0.0,-0.24,0.038,0.09,0.2,WOOD,-0.05),wp(0,-0.006,-0.345,0.04,0.1,0.012,WC.rub,-0.05)]),
+ smg:wmir([wp(0,0.05,0.08,0.044,0.055,0.3,WC.park),wp(0,0.08,0.08,0.04,0.008,0.28,WC.blue),...[0,1,2,3,4,5].map(i=>wp(0,0.0845,-0.02+i*0.04,0.036,0.002,0.006,DARK)),
+  wp(0,0.09,0.12,0.012,0.012,0.018,WC.blue,0,0,'s'),wp(0,0.093,-0.04,0.03,0.014,0.016,WC.blue),wp(0.012,0.093,0.205,0.005,0.018,0.016,WC.blue),wp(0,0.09,0.205,0.003,0.012,0.003,WC.blue),
+  ...wcyl(0,0.05,0.24,0.032,0.02,WC.blue),...wcyl(0,0.05,0.27,0.016,0.04,WC.blue),wp(0,0.05,0.2905,0.01,0.01,0.002,DARK),
+  wp(0,-0.04,0.005,0.036,0.1,0.046,WC.poly,0.06),wp(0,-0.135,0.0,0.026,0.09,0.034,WC.blue,0.06),wp(0,-0.181,-0.003,0.03,0.008,0.038,WC.blue,0.06),
+  wp(0,-0.012,0.06,0.008,0.006,0.07,WC.blue),wp(0,0.005,0.094,0.008,0.035,0.006,WC.blue),wp(0,0.004,0.05,0.005,0.02,0.005,DARK,0.3),
+  wp(0,0.015,0.17,0.042,0.022,0.1,WC.poly),wp(0.025,0.04,0.06,0.004,0.012,0.22,WC.blue),wp(0,0.04,0.172,0.054,0.03,0.008,WC.blue),wp(0.02,0.034,0.01,0.004,0.01,0.012,WC.blue)]),
+ m16:wmir([wp(0,0.025,0.03,0.03,0.045,0.17,WC.park),wp(0,0.06,0.04,0.03,0.03,0.19,WC.park),wp(0.0155,0.062,0.045,0.002,0.016,0.05,DARK),
+  wp(0,0.102,0.04,0.012,0.01,0.13,WC.park),wp(0,0.085,0.1,0.012,0.03,0.014,WC.park),wp(0,0.09,-0.02,0.016,0.035,0.022,WC.park),wp(0,0.072,-0.062,0.03,0.008,0.014,WC.park),wp(0.02,0.065,-0.02,0.012,0.012,0.02,WC.park),
+  wp(0,0.05,-0.16,0.034,0.05,0.21,WC.poly),wp(0,0.01,-0.2,0.034,0.05,0.15,WC.poly,-0.2),wp(0,0.025,-0.272,0.038,0.1,0.014,DARK),
+  ...wcyl(0,0.06,0.225,0.046,0.19,WC.poly),...wcyl(0,0.06,0.133,0.052,0.012,WC.park),...wcyl(0,0.06,0.39,0.014,0.15,WC.park),
+  wp(0,0.075,0.355,0.016,0.035,0.02,WC.park,-0.3),wp(0,0.1,0.355,0.004,0.025,0.004,WC.park),...wcyl(0,0.06,0.49,0.022,0.05,DARK),wp(0,0.06,0.5155,0.012,0.012,0.002,WC.rub),
+  wp(0,0.0,0.085,0.032,0.03,0.07,WC.park),wp(0,-0.05,0.09,0.022,0.09,0.062,WC.park,-0.12),wp(0,-0.123,0.105,0.022,0.06,0.058,WC.park,-0.3),
+  wp(0,-0.035,-0.025,0.028,0.08,0.034,WC.poly,0.4),wp(0,-0.005,0.02,0.008,0.005,0.06,WC.park),wp(0,0.0,0.01,0.005,0.02,0.005,DARK,0.3),wp(-0.017,0.03,-0.035,0.003,0.01,0.012,WC.park)]),
+ bat:[...wcyl(0,0,-0.04,0.046,0.016,WOODL),...wcyl(0,0,0.04,0.034,0.13,DARK),...wcyl(0,0,0.15,0.031,0.12,WOODL),...wcyl(0,0,0.26,0.044,0.1,WOODL),...wcyl(0,0,0.48,0.066,0.36,WOODL),
+  ...wcyl(0,0,0.67,0.058,0.02,WOODL),wp(0,0.0285,0.45,0.004,0.006,0.1,DARK)],
+ knife:wmir([wp(0,0,-0.048,0.03,0.03,0.016,DARK),...wcyl(0,0,0.0,0.028,0.085,WC.lea),...[0,1,2,3].map(i=>wcyl(0,0,-0.03+i*0.02,0.03,0.004,DARK)).flat(),wp(0,0,0.05,0.016,0.052,0.008,DARK),
+  wp(0,0.004,0.13,0.005,0.034,0.15,STEEL),wp(0,-0.002,0.215,0.005,0.022,0.04,STEEL,0.35),wp(0.0027,0.01,0.12,0.001,0.006,0.1,GUNL)]),
+ machete:wmir([wp(0,0,0.05,0.028,0.036,0.12,DARK),wp(0.0145,0,0.03,0.002,0.008,0.008,SILV),wp(0.0145,0,0.07,0.002,0.008,0.008,SILV),
+  wp(0,0.012,0.29,0.004,0.066,0.38,STEEL),wp(0,0.018,0.5,0.004,0.08,0.06,STEEL),wp(0,0.026,0.545,0.004,0.06,0.04,STEEL,-0.6),wp(0,0.044,0.31,0.0045,0.008,0.42,GUNL)]),
 };
-WPARTS.goldak=[[0,0.04,0.12,0.042,0.06,0.36,GOLD],[0,0.045,0.38,0.018,0.018,0.18,GOLD],[0,-0.06,0.15,0.032,0.12,0.05,GOLD],[0,-0.12,0.19,0.03,0.06,0.045,GOLD],[0,0.02,-0.15,0.04,0.07,0.21,WOOD],[0,-0.03,0,0.03,0.08,0.04,GOLD]];
-WPARTS.golddeagle=[[0,0.05,0.08,0.042,0.058,0.25,GOLD],[0,-0.03,0,0.036,0.11,0.055,GOLD],[0,0.08,0.08,0.012,0.008,0.22,hex(0xfff0b0)]];
-WPARTS.goldgl=[[0,0.05,0.16,0.05,0.07,0.42,GOLD],[0,0.05,0.4,0.075,0.075,0.08,GOLD],[0,0.0,0.05,0.1,0.1,0.12,hex(0xb8902e)],[0,-0.05,0.02,0.03,0.11,0.05,DARK],[0,0.02,-0.15,0.04,0.07,0.2,GOLD]];
-WPARTS.katana=[[0,0,0.06,0.026,0.03,0.17,DARK],[0,0,0.16,0.075,0.014,0.055,GOLD],[0,0.008,0.52,0.008,0.042,0.7,STEEL]];
-WPARTS.tknife=[-0.035,0,0.035].flatMap(ox=>[[ox,0,0.02,0.02,0.025,0.07,DARK],[ox,0.004,0.11,0.008,0.03,0.12,STEEL]]);
+WPARTS.goldak=wmir([wp(0,0.035,0.07,0.032,0.05,0.24,GOLD),wp(0,0.064,0.07,0.028,0.014,0.22,GOLD),wp(0,0.07,0.21,0.026,0.02,0.04,GOLD),
+ wp(0,0.032,0.27,0.04,0.038,0.13,WOOD),wp(0,0.068,0.27,0.026,0.02,0.13,WOOD),...wcyl(0,0.068,0.39,0.014,0.11,GOLD),...wcyl(0,0.04,0.42,0.016,0.18,GOLD),
+ wp(0,0.06,0.47,0.016,0.05,0.02,GOLD),wp(0,0.09,0.47,0.004,0.016,0.004,GOLD),wp(0,0.04,0.525,0.02,0.02,0.03,GOLD),wp(0,0.04,0.5405,0.01,0.01,0.002,DARK),
+ wp(0.022,0.05,0.13,0.014,0.01,0.012,GOLD),wp(0.017,0.04,0.04,0.002,0.008,0.07,GOLD),
+ wp(0,-0.034,0.141,0.024,0.09,0.055,GOLD,-0.25),wp(0,-0.106,0.172,0.024,0.07,0.05,GOLD,-0.6),
+ wp(0,-0.04,-0.005,0.028,0.085,0.035,WOOD,0.3),wp(0,-0.008,0.05,0.008,0.005,0.07,GOLD),wp(0,0.0,0.035,0.005,0.02,0.005,DARK,0.3),
+ wp(0,0.02,-0.11,0.03,0.045,0.12,WOOD,-0.1),wp(0,-0.005,-0.25,0.034,0.075,0.18,WOOD,-0.12),wp(0,-0.02,-0.345,0.036,0.085,0.012,GOLD,-0.12)]);
+WPARTS.golddeagle=wmir([wp(0,0.05,0.04,0.034,0.038,0.13,GOLD,0,0,'s'),wp(0.0172,0.05,-0.005,0.002,0.026,0.03,DARK,0,0,'s'),wp(0,0.072,-0.02,0.022,0.008,0.01,GOLD,0,0,'s'),
+ wp(0,0.055,0.17,0.03,0.03,0.13,GOLD),wp(0,0.074,0.17,0.014,0.008,0.13,GOLD),wp(0,0.055,0.236,0.016,0.016,0.002,DARK),wp(0,0.08,0.228,0.004,0.008,0.01,GOLD),
+ wp(0,0.02,0.1,0.03,0.016,0.16,GOLD),wp(0,-0.012,0.06,0.008,0.006,0.06,GOLD),wp(0,0.0,0.088,0.008,0.028,0.006,GOLD,-0.3),wp(0,0.0,0.045,0.006,0.02,0.006,DARK,0.3),
+ wp(0,-0.045,-0.01,0.034,0.11,0.054,GOLD,0.22),wp(0,-0.047,-0.011,0.037,0.08,0.044,WC.rub,0.22),wp(0,0.06,-0.035,0.012,0.02,0.012,GOLD,-0.4)]);
+WPARTS.goldgl=wmir([...wcyl(0,0.06,0.25,0.052,0.3,GOLD),wp(0,0.06,0.401,0.036,0.036,0.002,DARK),wp(0,0.045,0.05,0.042,0.06,0.11,GOLD),wp(0,0.026,0.17,0.046,0.03,0.12,WOOD),
+ wp(0,0.092,0.13,0.022,0.01,0.05,GOLD),wp(0,-0.01,0.03,0.008,0.006,0.05,GOLD),wp(0,0.0,0.03,0.005,0.02,0.005,DARK,0.3),wp(0,0.08,0.0,0.012,0.008,0.03,GOLD,0,0.3),
+ wp(0,0.02,-0.08,0.036,0.05,0.13,WOOD,-0.15),wp(0,-0.01,-0.23,0.042,0.1,0.18,WOOD,-0.08),wp(0,-0.018,-0.33,0.044,0.11,0.025,WC.rub,-0.08)]);
+WPARTS.katana=wmir([...wcyl(0,0,0.06,0.03,0.2,DARK),...[0,1,2,3,4,5,6].map(i=>wp(0,0,-0.02+i*0.027,0.032,0.014,0.014,WC.ito,0,Math.PI/4)),wp(0,0,-0.042,0.034,0.036,0.012,GOLD),
+ ...wcyl(0,0,0.165,0.08,0.008,GOLD),wp(0,0.004,0.18,0.012,0.032,0.02,GOLD),
+ wp(0,0.006,0.32,0.007,0.032,0.26,STEEL,-0.03),wp(0,0.014,0.58,0.007,0.03,0.26,STEEL,-0.06),wp(0,0.024,0.74,0.007,0.02,0.08,STEEL,-0.3),wp(0.0037,-0.004,0.45,0.001,0.006,0.5,hex(0xf7f9fc),-0.04)]);
+WPARTS.tknife=[-0.035,0,0.035].flatMap(ox=>[wp(ox,0,0.02,0.02,0.024,0.07,DARK),wp(ox,0,0.0,0.021,0.008,0.012,STEEL),wp(ox,0.004,0.105,0.006,0.03,0.11,STEEL),wp(ox,0.0,0.17,0.006,0.018,0.03,STEEL,-0.4)]);
 WPARTS.dual=WPARTS.pistol.map(q=>[q[0]-0.07,...q.slice(1)]).concat(WPARTS.pistol.map(q=>[q[0]+0.07,...q.slice(1)]));
 const CB=c=>Math.hypot(c.x-G.cam.x,c.z-G.cam.z)<11?IBhi:IBlo;const FAB=()=>TUV[44],SKN=()=>TUV[45],MET=()=>TUV[46];
-/* WGOLD: set around the player's own weapon once it is mastered (MASTERY III): the metal parts come out gold */
-var WGOLD=false;const WMETAL=[GUN,GUNL,SILV,STEEL];
-function drawWeapon(B,m,type){const ps=WPARTS[type];if(!ps)return;const pr=B.r,pt=B.tp,pu=B.uv;B.r=0.18;B.tp=0;B.uv=MET();for(const q of ps)B.box(A.mul(A.mul(m,A.T(q[0],q[1],q[2])),A.S(q[3],q[4],q[5])),WGOLD&&WMETAL.includes(q[6])?GOLD:q[6]);B.r=pr;B.tp=pt;B.uv=pu;}
+/* WGOLD: set around the player's own weapon once it is mastered (MASTERY III): the metal parts come out gold.
+   WKICK (0..1+): set around a gun that just fired: muzzle climbs, the gun drives back into the hand and the slide snaps back.
+   WPUMP (0..1): set around a shotgun being racked: the fore-end rides back. */
+var WGOLD=false,WKICK=0,WPUMP=0;const WMETAL=[GUN,GUNL,SILV,STEEL,WC.blue,WC.park,WC.case],WROUGH=[WOOD,WOODL,WC.walnut,WC.rub,WC.poly,WC.grip,WC.lea,WC.ito,DARK];
+const WLOC={};
+function drawWeapon(B,m,type){const ps=WPARTS[type];if(!ps)return;const Lm=WLOC[type]||(WLOC[type]=ps.map(q=>A.mul(A.mul(A.mul(A.T(q[0],q[1],q[2]),A.RX(q[7]||0)),A.RZ(q[8]||0)),A.S(q[3],q[4],q[5]))));
+ const pr=B.r,pt=B.tp,pu=B.uv;B.tp=0;B.uv=MET();const k=WKICK>0?Math.min(1.4,WKICK):0;
+ if(k)m=A.mul(m,A.mul(A.T(0,0.01*k,-0.03*k),A.RX(-0.2*k)));
+ const ms=k?A.mul(m,A.T(0,0,-0.026*Math.min(1,k*1.5))):m,mp=WPUMP>0?A.mul(m,A.T(0,0,-0.075*WPUMP)):m;
+ for(let i=0;i<ps.length;i++){const q=ps[i],c=q[6],tg=q[9];B.r=WROUGH.includes(c)?0.62:0.18;B.box(A.mul(tg==='s'?ms:tg==='p'?mp:m,Lm[i]),WGOLD&&WMETAL.includes(c)?GOLD:c);}
+ B.r=pr;B.tp=pt;B.uv=pu;}
+/* muzzle flash: a hot core, a plume along the barrel and star petals (pistols 3, rifles 4 from the flash hider, shotguns 5 and
+   bigger), shrinking over its 60 ms. Suppressed guns only blink. f.a = firing angle, f.r = roll, f.j = jitter. */
+function flashKind(t){const b=BT(t);return t==='goldgl'?'g':b==='shotgun'||b==='double'?'s':b==='m16'||t==='smg'?'r':t==='revolver'||t==='golddeagle'?'m':'p';}
+function drawFlash(B,f){if(f.sil){B.box(TRS(f.x,f.y,f.z,0,0.045,0.045,0.045),[0.9,0.9,0.8],true);return;}
+ if(f.a===undefined){const s=f.big?0.32:0.2;B.box(TRS(f.x,f.y,f.z,frnd(0,TAU),s,s*0.6,s),[1,0.95,0.6],true);return;}
+ const K=f.k||'p',life=clamp(f.t/0.06,0,1),sc={p:0.8,m:1.05,r:1,s:1.35,g:1.2}[K]*(0.5+0.5*life),sa=Math.sin(f.a),ca=Math.cos(f.a),j=0.75+0.5*(f.j||0.5);
+ const hot=[1,0.97,0.78],warm=[1,0.66,0.22],P=[f.x,f.y,f.z],R=f.r||0;
+ B.box(A.mul(frameFrom(P,[sa,0,ca]),A.mul(A.RZ(R),A.S(0.1*sc,0.1*sc,0.09*sc))),hot,true);
+ const L=(K==='r'?0.46:K==='s'?0.5:K==='m'?0.36:K==='g'?0.2:0.26)*sc*j;
+ B.box(A.mul(frameFrom([f.x+sa*L*0.5,f.y,f.z+ca*L*0.5],[sa,0,ca]),A.mul(A.RZ(R),A.S(0.075*sc,0.075*sc,L))),warm,true);
+ B.box(A.mul(frameFrom([f.x+sa*L*0.35,f.y,f.z+ca*L*0.35],[sa,0,ca]),A.mul(A.RZ(R+0.6),A.S(0.04*sc,0.04*sc,L*0.75))),hot,true);
+ const n={p:3,m:4,r:4,s:5,g:6}[K],pl=(K==='s'?0.24:K==='r'?0.2:0.15)*sc;
+ for(let i=0;i<n;i++){const an=R+i*TAU/n,rx=Math.cos(an),ry=Math.sin(an),d=[ca*rx+sa*0.55,ry,-sa*rx+ca*0.55];
+  B.box(A.mul(frameFrom([f.x+d[0]*pl*0.5,f.y+d[1]*pl*0.5,f.z+d[2]*pl*0.5],d),A.S(0.028*sc,0.028*sc,pl)),i%2?warm:hot,true);}}
+/* a puff of grey smoke drifting off the muzzle (rises and fades through the 'm' particle path) */
+function muzzleSmoke(x,y,z,sa,ca,n){const g=G;if(!g||!g.parts||g.parts.length>900)return;for(let i=0;i<n;i++){const v=frnd(0.2,0.9);
+ g.parts.push({t:'m',x:x+sa*frnd(0,0.15),y:y+frnd(-0.03,0.03),z:z+ca*frnd(0,0.15),vx:sa*v+frnd(-0.15,0.15),vy:0,vz:ca*v+frnd(-0.15,0.15),s:frnd(0.05,0.09),c:[0.5,0.5,0.54],life:frnd(0.45,0.85)});}}
+/* recoil + pump state of a character's gun this frame, for drawWeapon */
+function weaponAnim(c,type){const wd=WD[type];WKICK=0;WPUMP=0;if(!wd||wd.melee||!c)return;
+ if(c.atkT>0&&!wd.toss)WKICK=clamp(c.atkT/(c.atkDur||0.08),0,1)*clamp((wd.kick||0.1)*3.2,0.35,1.4);
+ if(type==='shotgun'&&c.pumpAt!==undefined&&typeof G!=='undefined'&&G){const t=(G.T-c.pumpAt-0.3)/0.32;if(t>0&&t<1)WPUMP=Math.sin(Math.PI*t);}}
 function PB(B,m,x,y,z,sx,sy,sz,col,em,uv){B.box(A.mul(A.mul(m,A.T(x,y,z)),A.S(sx,sy,sz)),col,em,uv);}
 function flashLook(Lk){const o={};for(const k in Lk)o[k]=(Array.isArray(Lk[k])&&Lk[k].length===3)?[1,1,1]:Lk[k];o.torsoTile=null;o.shirtTile=null;return o;}
 /* ---- vector helpers + IK ---- */
@@ -1999,7 +2116,7 @@ function drawChar(B,c){const Lk=c.hitT>0?flashLook(c.look):c.look;const BT=Lk.bo
  B.r=0.18;B.tp=0;B.uv=MET();
  /* weapon */
  if(c.weapon){if(hp.guns){for(const [gp,gd] of hp.guns)drawWeapon(B,A.mul(A.mul(TM,frameFrom(gp,gd,[0,1,0])),US),'pistol');}
-  else if(hp.w){WGOLD=!!c.player&&mastLv(wt)>=3;drawWeapon(B,A.mul(A.mul(TM,frameFrom(hp.w,hp.dir,Math.abs(hp.dir[1])>0.8?[0,0,-1]:[0,1,0])),US),wt);WGOLD=false;}}
+  else if(hp.w){WGOLD=!!c.player&&mastLv(wt)>=3;weaponAnim(c,wt);drawWeapon(B,A.mul(A.mul(TM,frameFrom(hp.w,hp.dir,Math.abs(hp.dir[1])>0.8?[0,0,-1]:[0,1,0])),US),wt);WGOLD=false;WKICK=WPUMP=0;}}
  B.r=0.9;B.tp=0;B.uv=SKN();
  /* head */
  const H=A.mul(A.mul(base,A.T(0,0.93*(bh-1),0.018)),A.mul(A.mul(A.T(0,hipY*bh,0),A.mul(A.RY(tw*0.6),A.RX(lean*0.7))),A.T(0,-hipY*bh,0)));const hy=by;const hc=Lk.hair||DARK;
@@ -3895,7 +4012,7 @@ function buildDynamic(){const g=G,B=dynB,O=ovB;B.reset();O.reset();if(g.def.hub)
  for(const e of g.enemies){if(!e.alive||!e.aiming||!p.alive||fogHidE(e))continue;const sa=Math.sin(e.a),ca=Math.cos(e.a);const h=rayWall(e.x,e.z,sa,ca,14,true);const len=h?h.d:14;const st=0.55,rem=Math.max(0,len-st);
   const flick=e.react<0.15?(Math.floor(g.T*30)%2?1:0.4):0.75;B.box(TRS(e.x+sa*(st+rem/2)+ca*0.17,0.74,e.z+ca*(st+rem/2)-sa*0.17,e.a,0.018,0.018,rem),[flick,0.05,0.08],true);}
  for(const b of g.bullets)B.box(TRS(b.x,0.74,b.z,Math.atan2(b.dx,b.dz),0.035,0.035,0.45),b.own==='p'?[1,0.95,0.55]:[1,0.6,0.3],true);
- for(const f of g.flashes){if(f.sil){B.box(TRS(f.x,f.y,f.z,0,0.06,0.06,0.06),[0.9,0.9,0.8],true);continue;}const s=f.big?0.32:0.2;B.box(TRS(f.x,f.y,f.z,rnd(0,TAU),s,s*0.6,s),[1,0.95,0.6],true);}
+ for(const f of g.flashes)drawFlash(B,f);
  IBlo.r=0.9;IBlo.tp=0;IBlo.uv=null;IBhi.r=1;IBhi.tp=0;IBhi.uv=null;let nb=0;for(const q of g.parts){if(q.t==='b'&&nb<420){nb++;const sv=Math.hypot(q.vx,q.vy,q.vz),st=1+Math.min(2.2,sv*0.18);IBhi.box(A.mul(frameFrom([q.x,q.y,q.z],sv>0.1?[q.vx,q.vy,q.vz]:[0,0,1],[0,1,0]),A.S(q.s,q.s,q.s*st)),q.c);}else IBlo.box(A.mul(A.T(q.x,q.y,q.z),A.S(q.s,q.t==='c'?q.s*0.3:q.s,q.s)),q.c,q.t==='s');}
  IBhi.r=0.7;IBhi.tp=0;IBhi.uv=null;for(const q of g.gibs)IBhi.box(A.mul(A.mul(A.mul(A.T(q.x,q.y,q.z),A.RY(q.ry)),A.RX(q.rx)),A.S(q.sx,q.sy,q.sz)),q.c);
  for(const c of g.cash)if(!c.landed)B.box(TRS(c.x,c.y,c.z,c.t*12,0.22,0.1,0.12),[0.35,0.8,0.4]);
