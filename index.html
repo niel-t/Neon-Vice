@@ -944,7 +944,7 @@ function loadLevel(i,dOver,staged=false){const arrI=ARR_GO;ARR_GO=null;
    if(lg.trig)g.trigs.push({x:cx,z:cz,t:lg.trig});
    if(lg.light==='warm')g.lights.push({x:cx,y:1.7,z:cz,r:5,c:[1,0.8,0.55]});else if(lg.light==='neon')g.lights.push({x:cx,y:1.6,z:cz,r:5,c:NEON[g.lights.length%4]});
    if(lg.lamp){g.deco.push({t:'lamp',x,z});g.lights.push({x:cx,y:2.1,z:cz,r:5,c:[1,0.72,0.42]});}
-   if(lg.npc){const n=makeChar(cx,cz,NPCLOOK[lg.npc](),false);n.kind=lg.npc==='lady'?'guest':lg.npc;n.state='idle';n.a=n.a0=0;n.r=0.3;n.body=n.look.body;if(n.kind==='smoker'){n.seat=true;n.y=-0.24;g.deco.push({t:'cigar',x:cx,z:cz});}g.npcs.push(n);}
+   if(lg.npc){const n=makeChar(cx,cz,NPCLOOK[lg.npc](),false);n.kind=lg.npc==='lady'?'guest':lg.npc;n.state='idle';n.a=n.a0=0;n.r=0.3;n.body=n.look.body;if(n.kind==='smoker'){n.seat=true;n.y=-0.5;n.seatPose=1;g.deco.push({t:'chair',x:cx,z:cz},{t:'cigar',x:cx,z:cz});}g.npcs.push(n);}
    continue;}
   if(isW(c))continue;
   const cx=x+0.5,cz=z+0.5;
@@ -1131,7 +1131,8 @@ function drawPalm(B,cx,cz,tall,seedk){const h=tall?2.5:1.5,lean=(hsh(cx|0,cz|0,s
 function drawDeco(B,g,d){const cx=d.x+0.5,cz=d.z+0.5;
  if(d.t==='dash'){if(!(g.def&&g.def.hub==='drive'))B.box(TRS(cx,0.004,cz,0,0.55,0.006,0.1),hex(0xe8c040));}
   else if(d.t==='cline'){for(const o of [-0.06,0.06])B.box(TRS(cx,0.004,d.z+o,0,1.0,0.006,0.05),hex(0xe8c040));}
- else if(d.t==='cigar'){B.box(TRS(d.x+0.1,1.2,d.z,0,0.22,0.05,0.05),[0.55,0.32,0.15]);B.box(TRS(d.x+0.22,1.2,d.z,0,0.04,0.06,0.06),[1,0.45,0.1]);}
+ else if(d.t==='chair'){const k=[0.36,0.2,0.12];B.box(TRS(d.x,0.42,d.z,0,0.5,0.08,0.5),k);B.box(TRS(d.x,0.75,d.z-0.22,0,0.5,0.6,0.07),k);for(const [lx,lz] of [[-0.2,-0.2],[0.2,-0.2],[-0.2,0.2],[0.2,0.2]])B.box(TRS(d.x+lx,0.2,d.z+lz,0,0.06,0.4,0.06),k);}
+ else if(d.t==='cigar'){B.box(TRS(d.x+0.1,1.12,d.z,0,0.22,0.05,0.05),[0.55,0.32,0.15]);B.box(TRS(d.x+0.22,1.12,d.z,0,0.04,0.06,0.06),[1,0.45,0.1]);}
   else if(d.t==='lane'){B.box(TRS(cx,0.004,d.z,0,0.55,0.006,0.07),[0.92,0.92,0.9]);}
  else if(d.t==='lamp'){const z=d.z+0.12;B.box(TRS(cx,1.05,z,0,0.07,2.1,0.07),hex(0x3a3a44));B.box(TRS(cx,2.1,z+0.22,0,0.07,0.07,0.5),hex(0x3a3a44));B.box(TRS(cx,2.05,z+0.42,0,0.22,0.08,0.3),[1,0.85,0.55],true);}
  else if(d.t==='awning'||d.t==='carpet'||d.t==='dumpster'||d.t==='bulb'||d.t==='escape'||d.t==='puddle'||d.t==='rail'||d.t==='arch')drawArriveDeco(B,g,d);
@@ -4169,8 +4170,8 @@ function hdChar(B,c,t){{const pid=c.pose==='sal'?'mcwey':(typeof elevChar!=='und
  else if(c.pose==='sal'){const ta=c.talk>0.05?1:0.3,gg=Math.sin(t*2.3)*0.2*ta,g2=Math.sin(t*1.7+1)*0.2*ta;pose={spread:0.06,lean:0.03,hx:-0.03+c.talk*0.03,hy:0.1+Math.sin(t*0.9)*0.06,bob:0,R:[-0.8+g2,0.25,-1.1-g2,'open'],L:[-0.85+gg,0.22,-1.0-gg,'open']};}
  else{const k=c.kick||0;pose={spread:0.11,lean:-0.04,hx:0.06+k*0.05,hy:-0.12,bob:0,R:[-1.52+k*0.45,-0.05,-k*0.5,'gun','revolver'],L:[0.1,0.07,-0.3,'pocket']};}
  /* legs */
- B.r=1;B.tp=0.15;B.uv=FAB();for(const sd of [-1,1]){const hip=A.mul(base,A.mul(A.T(sd*0.1,0.93,0),A.RZ(sd*pose.spread)));
-  B.tp=0.12;P(hip,0,-0.2,0,0.175,0.5,0.185,Lk.pants);B.tp=0;const kn=A.mul(hip,A.T(0,-0.45,0));P(kn,0,0,0,0.158,0.15,0.162,Lk.pants);B.tp=0.28;P(kn,0,-0.2,0,0.158,0.44,0.162,Lk.pants);B.tp=0;
+ B.r=1;B.tp=0.15;B.uv=FAB();for(const sd of [-1,1]){const hip=A.mul(base,A.mul(A.T(sd*0.1,0.93,0),c.seatPose?A.RX(-Math.PI/2):A.RZ(sd*pose.spread)));
+  B.tp=0.12;P(hip,0,-0.2,0,0.175,0.5,0.185,Lk.pants);B.tp=0;const kn=c.seatPose?A.mul(hip,A.mul(A.T(0,-0.45,0),A.RX(Math.PI/2))):A.mul(hip,A.T(0,-0.45,0));P(kn,0,0,0,0.158,0.15,0.162,Lk.pants);B.tp=0.28;P(kn,0,-0.2,0,0.158,0.44,0.162,Lk.pants);B.tp=0;
   const ft=A.mul(kn,A.RZ(-sd*pose.spread));P(ft,0,-0.435,0.05,0.13,0.08,0.29,Lk.shoes);P(ft,0,-0.47,0.05,0.135,0.015,0.3,DARK);
   B.r=0;for(const s of SPL.legs)if(s[0]===sd)P(hip,0.03*sd,s[1],0.093,s[2]*2.6,s[2]*2.6,0.005,[0.95,0.95,0.95],false,TUV[51]);B.r=1;}
  B.r=0.55;B.tp=0;B.uv=FAB();const tor=A.mul(base,A.mul(A.mul(A.T(0,0.93+br+pose.bob,0),A.RX(pose.lean)),A.T(0,-0.93,0)));
