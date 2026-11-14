@@ -2762,7 +2762,7 @@ function drawHubDyn(B,O){const g=G;const FX=g.def.hub==='drive'?undefined:hubFix
 if(!g.cine&&!g.seq){const y=2.4+Math.sin(g.T*4)*0.2;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.45,0.45,0.45))),GOLD,true);
   for(let i=0;i<6;i++)B.box(TRS(g.car.x+Math.sin(g.T*2+i)*0.9,0.02,g.car.z+Math.cos(g.T*2+i)*0.9,0,0.25,0.01,0.25),[1,0.85,0.3],true);}}
  else{for(const n of g.npcs)drawChar(IBhi,n);if(g.player&&!g.hideP)drawChar(IBhi,g.player);if(g.park){if(rideHeli())drawHeli(B,g.park.x,g.park.z,0,g.T);else drawRide(B,g.park.x,g.park.z,1,g.park.a||0,undefined,g.park.spin||0);}
-  if(g.hcar)drawRide(B,g.hcar.x,g.hcar.z,1,g.hcar.a||0,undefined,g.hcar.spin||0);if(g.garage)drawGarage(B,g);if(g.slob)drawSlobby(B,g);if(g.def===HUBS.bunker)drawBunker(B,g);if(g.dealer)drawDealer(B,g);if(g.up2)drawUp2(B,g);if(g.slots){drawHomeDecor(B,g);drawHome(B,g);drawHomeX(B,g);drawLocker(B,g);}if(g.club)drawClub(B,g);
+  if(g.hcar)drawRide(B,g.hcar.x,g.hcar.z,1,g.hcar.a||0,undefined,g.hcar.spin||0);if(g.garage)drawGarage(B,g,FX);if(g.slob)drawSlobby(B,g);if(g.def===HUBS.bunker)drawBunker(B,g,FX);if(g.dealer)drawDealer(B,g);if(g.up2)drawUp2(B,g);if(g.slots){drawHomeDecor(B,g);drawHome(B,g);drawHomeX(B,g);drawLocker(B,g);}if(g.club)drawClub(B,g,FX);
   if(g.tankB){const t=g.tankB;drawTankLife(B,g.T,t.x0,t.x1,(t.z0+t.z1)/2,0.08,1.35,0.35,0.9,0.4,2.15);}
   if(g.fount)drawFountainWater(B,g.fount,g.T);if(g.mcDesk)drawMcOffice(B,g);if(g.tv)drawLobbyTV(B,g);if(g.lounge)drawLounge(B,g);if(g.cast)drawCast(B,g);
   if(!g.seq){const y=1.6+Math.sin(g.T*4)*0.12;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.22,0.22,0.22))),GOLD,true);}}
