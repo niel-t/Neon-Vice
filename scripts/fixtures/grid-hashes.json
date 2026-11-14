@@ -28,7 +28,7 @@
         "paletteSize": 6
       },
       "gridHash": "c9ac145e682527be42d31530da835a6abcd07b82a38a6688802c82f186e8fa38",
-      "loadedHash": "9483f14dbf7e81c6efd962dff0bb086abf6c407fbff572f70adb091ac96077d6",
+      "loadedHash": "b0241536de258847c1d0215133577793beca23f386252201fa057ce3154b8fcc",
       "queryHash": "9edde8587540c90fa1248f3ffbbb343c0f1f7abe2b11b62c502367d07352764d",
       "cellHash": "fe48420def186409edeb6975a3abb2a61ed9eca2cb35389d77ae797e3680ab05"
     },
@@ -60,7 +60,7 @@
         "paletteSize": 6
       },
       "gridHash": "654dc4615a097d59f60f08897133cc5af3dc4061fe5cfe950349da13f29b1b6c",
-      "loadedHash": "6c0be633cabe38c77578b87ec15e9ad81a66f5db64c35a83dc458fb562569c2a",
+      "loadedHash": "a3f97d09e6876cc1d84d2b9f859d56ed17ec446677876dd64ff6bd60bb832e8f",
       "queryHash": "39998289b1be040e1237631746c37af8a970c4f8bac483c9e09fd68216aa195c",
       "cellHash": "72c16f8253325d52ded0ee9fdd4dcdd32f8a9a9b518549a180f68f728a1426cb"
     },
@@ -90,7 +90,7 @@
         "paletteSize": 6
       },
       "gridHash": "4851ccfdc381fb9872a93b265a247a31db0e2750416e5dc44f159f3f7010663c",
-      "loadedHash": "4e90de519684cea887523f95ad1580b7700adfe6cbfd2c3c32a9b44a923c521c",
+      "loadedHash": "ab1ed03507b6515c1d339cf12632955ab828917f3ec626ccec98c961f699e8a7",
       "queryHash": "fb30a494f9ee439867cac26fb98433d404099d53675b30eb6eef168a3fde9f5d",
       "cellHash": "267e40b660b055dd8ddcbde84e211f587437534184edc1a8d49c803a69aed000"
     },
@@ -133,7 +133,7 @@
         "paletteSize": 6
       },
       "gridHash": "8c92eea3d38a8a6c8881a79e6bc9acec618b26f315501d3eb8ffa202ba74d6de",
-      "loadedHash": "8b1857939a5fcfcad5b0c11c385e44c77f11105e6a7c8c5f4cf3e12a5df440a0",
+      "loadedHash": "0c5da6305c2c762c48431135d2c7b0e826afe46738d688430b046151a46949ab",
       "queryHash": "99a96a215859bd02a74b62c5fa58b96eea0bd214016025feb5c677ed80079459",
       "cellHash": "fe70ddac74b327f40e22364f374585c66c763bc467cc045239af36cc018a775b"
     },
@@ -174,7 +174,7 @@
         "paletteSize": 6
       },
       "gridHash": "b4288b80924dbefacd554892bf1e04514f80aa07a06ccebc1b3b8af3b13e7bb7",
-      "loadedHash": "c16fc7fa86522a12fb6d9695c556ef6145037d378131966a67a2e18ff0d7ed36",
+      "loadedHash": "39b5f3b4f7b8187082db59581c984d30c2d759e7c2119bac0990eb584a4e65a6",
       "queryHash": "2a12117cbd09e5697c86ed9828973d8f0cc8c7ea0f62d2347f7a717bfc1f3b2a",
       "cellHash": "e2fc6c253c537c09919f3aee4f03802ab42d937779d38f66bc8f4d83266be7e6"
     },
@@ -214,7 +214,7 @@
         "paletteSize": 6
       },
       "gridHash": "8b489823e7d53ba9d68e1ba1928814327b6c77e1920872efe20803603a45bbda",
-      "loadedHash": "d1c3b4f2df7d4326fd1a6f32e8e0ab37d4c1f77f0bf7b919ba8e063a7608d549",
+      "loadedHash": "cefdbf9092e38b59deb3eb12cf26d1dc799f493b25165f0ffecfe09b8f5c3bec",
       "queryHash": "2aa8023e07024bd119aa5f0e42925c0a1b9ecf36bc25e2fe8997939e6d0080aa",
       "cellHash": "c128a992dc4debea3a0d9743e08d7e4d5f271053f5595460c29c33ca86994b6f"
     },
@@ -255,7 +255,7 @@
         "paletteSize": 6
       },
       "gridHash": "5da667f13fb777c5cdc1764aa0dd9d5941df864ac24dc8385e7910e4991d487b",
-      "loadedHash": "8839f0014471eb05de3fe0746d39c2858be763fe08952aebefc240b91dca7a3b",
+      "loadedHash": "b51d9d62ba2523488621e1daf022642f738ef6ac823710ec55876a5bc4ff66ec",
       "queryHash": "77964a846817e411de70dbe51cea6850f397faae5d555dabdf812ad164baf6d3",
       "cellHash": "b501553e81fd06f75866f35a646fe7819eea4b2e7c283b44486b4e0d85a072a5"
     },
@@ -295,7 +295,7 @@
         "paletteSize": 6
       },
       "gridHash": "004b868cecf5abde143c3204eeeaa0b8becbded225bffd979777a8cde84d7797",
-      "loadedHash": "3158f87d4aec25112f9079ffa451fa4c40df3c4f34c876762e46c0afa82a47bd",
+      "loadedHash": "611d8b0d47d8b0b774a95e84ff623b55171aa38461f0ed4eb9af3c0d45e02d24",
       "queryHash": "09f0a4b638a18148dabaebe3ef559b6316c9b41bb096eb0df2d37a4765084694",
       "cellHash": "aae93f3680bd624c9319922d1fae5a76c8f9ebf8a31bb5b15d8c95de50dd1ace"
     },
@@ -329,7 +329,7 @@
         "paletteSize": 6
       },
       "gridHash": "5a712271d519ca3e4dc68bb86240349f34feb3a8342e3855f07673244cb6d867",
-      "loadedHash": "7ece9425ceb360a05465aed93c2f61f2ea88b4fac6059bcf04c12d820d4623f7",
+      "loadedHash": "3686045021d1e38716e31da5d6093baef8370b02c4f9e1daf55542198bad014d",
       "queryHash": "898d54d6f7f45efcb179425033de5215dd3a294c3c867dffb6c2fbf170f31a67",
       "cellHash": "e7da68c7d2aadd2437ec886630483f4b3889b2ca547f09273594f6dc5523ffdb"
     },
@@ -367,7 +367,7 @@
         "paletteSize": 6
       },
       "gridHash": "b55cf6f89997ae1a078749291caba44907b6dc3716fb5e0e76cbb748b4cc37c9",
-      "loadedHash": "ac84e329de16b3b949696ded325201e9f2dc8ea4d02d5eb5c1aac25f006a8e9b",
+      "loadedHash": "46743d9703de5567aef03d9eeafd31e5892c1acfb12ea2586382fa78392a72f2",
       "queryHash": "2dc52628d02a0514a1518772013bb2e4d8b7fc3d7a8ca44ac3e180f57fb871ee",
       "cellHash": "68d0134c3896467e56e155e5106344ae921d548761143c71ac4b7ffaa5052686"
     },
@@ -394,7 +394,7 @@
         "paletteSize": 6
       },
       "gridHash": "6089b5fe0961a1cd8aeb4f09434f0d3f9055b67b61dafff20fb8886d68f61b68",
-      "loadedHash": "8b3251b3cab2753b0434877a700a254d6c672456835a8bdf8323dfbae53149cc",
+      "loadedHash": "a47599cf6a37f03730c9b3271635b442e63d77834e14e734cee00f12e69ae3f8",
       "queryHash": "9205966503c76d811cae910414929fdea2f1e69b0455dc81137c3f89ca32dd8b",
       "cellHash": "ff1754d834e75568d9c32bc039c122f73bc92361cdec01851e627ee34fd946bb"
     },
@@ -474,7 +474,7 @@
         "paletteSize": 6
       },
       "gridHash": "0990d183113507f53b28da4994556ba355b8d555a01fff7d5c4ab3833f56767e",
-      "loadedHash": "7f88b8104d7775307ab2e9eb5449532d370590b06250d4ff41f2fbd7f71a86b8",
+      "loadedHash": "bce673ec828e2c70376a03320a5d3badf6465bf958c1ec39e67d00fc1edf18d5",
       "queryHash": "82881cfe88ce188cf6c5dea32992383302e8469d42c66cb0ea0cf2784d1c4b12",
       "cellHash": "45e2a6bde1bd5cb2cb33977e2df92c14632a0b6e43f22dd0355d5e82528a0bb7"
     },
@@ -554,7 +554,7 @@
         "paletteSize": 6
       },
       "gridHash": "00f59ad98a8f890524b00e4d77daf92e75d88dafab7ecc67c44c63355e0a4460",
-      "loadedHash": "0b07b85c9f29c9aad65f539ac7125e7a16579c4a5fc2abc3779786cbc0406e9d",
+      "loadedHash": "74f46b2914103550949faf5446453b85cdf95d249378388a477c32a48224dabf",
       "queryHash": "82881cfe88ce188cf6c5dea32992383302e8469d42c66cb0ea0cf2784d1c4b12",
       "cellHash": "45e2a6bde1bd5cb2cb33977e2df92c14632a0b6e43f22dd0355d5e82528a0bb7"
     },
@@ -629,7 +629,7 @@
         "paletteSize": 6
       },
       "gridHash": "2d4fc18f92ff108a44ed178ac1327e2935bbd2c059cca455f7eef22d95a33ac0",
-      "loadedHash": "32504a2bbe718df1834a8456bdf52499423d26b4a108becd61de485b721af16d",
+      "loadedHash": "cb5de2bf3a4175b9ae7d227e597c259358ba3ed7124b9de338064e1be8c76df8",
       "queryHash": "c268c9667d9cafef6147f1f5b043a6c87dd36fa97d03389b4829b9088b4f2e12",
       "cellHash": "65bc7d6809e293abbe55f7abe9366cde5bf4c54d31d056daab3e3fac56dcfd8f"
     },
@@ -704,7 +704,7 @@
         "paletteSize": 6
       },
       "gridHash": "2d4fc18f92ff108a44ed178ac1327e2935bbd2c059cca455f7eef22d95a33ac0",
-      "loadedHash": "32504a2bbe718df1834a8456bdf52499423d26b4a108becd61de485b721af16d",
+      "loadedHash": "cb5de2bf3a4175b9ae7d227e597c259358ba3ed7124b9de338064e1be8c76df8",
       "queryHash": "c268c9667d9cafef6147f1f5b043a6c87dd36fa97d03389b4829b9088b4f2e12",
       "cellHash": "65bc7d6809e293abbe55f7abe9366cde5bf4c54d31d056daab3e3fac56dcfd8f"
     },
@@ -779,7 +779,7 @@
         "paletteSize": 6
       },
       "gridHash": "7d5f5e116292d421c47ef5643345c03f512ca860faf0935cb953289fe248e8a1",
-      "loadedHash": "8f5e8e1cc922775c822e031e47d8389bc5db7fe3403896575f869f11b31ee430",
+      "loadedHash": "6922bd0e2f9f5527445a7c634f13863fdb850febf8c7c1b74ded133309640a06",
       "queryHash": "b9aeb3f8ce2edc78123ed09a53e09d9aae41fd2297cd2b3c304dba44862b177e",
       "cellHash": "710d32d7ca2ba1787c082223de26ce02a0ed159a063896352ec6c47870dd3153"
     },
@@ -854,7 +854,7 @@
         "paletteSize": 6
       },
       "gridHash": "7d5f5e116292d421c47ef5643345c03f512ca860faf0935cb953289fe248e8a1",
-      "loadedHash": "8f5e8e1cc922775c822e031e47d8389bc5db7fe3403896575f869f11b31ee430",
+      "loadedHash": "6922bd0e2f9f5527445a7c634f13863fdb850febf8c7c1b74ded133309640a06",
       "queryHash": "b9aeb3f8ce2edc78123ed09a53e09d9aae41fd2297cd2b3c304dba44862b177e",
       "cellHash": "710d32d7ca2ba1787c082223de26ce02a0ed159a063896352ec6c47870dd3153"
     },
@@ -961,7 +961,7 @@
         "paletteSize": 6
       },
       "gridHash": "0e08be41c593f7a37b2db748c6f620d9893971c733c453ed9a519b9446422b70",
-      "loadedHash": "9ed7b4ab4abd1c6d795bae8e842a054112c8666a0436f08dd21693b98a6a35d2",
+      "loadedHash": "a3ff47d5953a48e088d0feb2b9f9fa28ddcf0de187ff9f61b0aa0915cc5cff58",
       "queryHash": "530f08aa5382752b77b2fb4242ba430d5dd1976f5f3de2b5302defc0f254892a",
       "cellHash": "899a3619352147c149b25e83074a1f12f79d5ccbefd46c8bb49253bcca9d1525"
     },
@@ -1068,7 +1068,7 @@
         "paletteSize": 6
       },
       "gridHash": "0e08be41c593f7a37b2db748c6f620d9893971c733c453ed9a519b9446422b70",
-      "loadedHash": "9ed7b4ab4abd1c6d795bae8e842a054112c8666a0436f08dd21693b98a6a35d2",
+      "loadedHash": "a3ff47d5953a48e088d0feb2b9f9fa28ddcf0de187ff9f61b0aa0915cc5cff58",
       "queryHash": "530f08aa5382752b77b2fb4242ba430d5dd1976f5f3de2b5302defc0f254892a",
       "cellHash": "899a3619352147c149b25e83074a1f12f79d5ccbefd46c8bb49253bcca9d1525"
     },
@@ -1194,7 +1194,7 @@
         "paletteSize": 6
       },
       "gridHash": "ad9b7b3efbc1bbf8da918c6511a1776967d39ff08dcbd21e54e097edb7803bc3",
-      "loadedHash": "c7da335ee8d93a100bb42ec5eb2ca0490bb3ceb6136dedbd8b4eef2a067b94ab",
+      "loadedHash": "3722abb6bb755d6d9603a54cf10f660e3782302676310d7c53e403d9e8ce55de",
       "queryHash": "bb90b235796b7b6f45519900de492b74f21ce4ad0bbda4d71f28c89c5807b693",
       "cellHash": "7462fb646e7aab6873995fb9e5dab9edabe89070b34d4bd32fd391e9ed446db7"
     },
@@ -1320,7 +1320,7 @@
         "paletteSize": 6
       },
       "gridHash": "ad9b7b3efbc1bbf8da918c6511a1776967d39ff08dcbd21e54e097edb7803bc3",
-      "loadedHash": "c7da335ee8d93a100bb42ec5eb2ca0490bb3ceb6136dedbd8b4eef2a067b94ab",
+      "loadedHash": "3722abb6bb755d6d9603a54cf10f660e3782302676310d7c53e403d9e8ce55de",
       "queryHash": "bb90b235796b7b6f45519900de492b74f21ce4ad0bbda4d71f28c89c5807b693",
       "cellHash": "7462fb646e7aab6873995fb9e5dab9edabe89070b34d4bd32fd391e9ed446db7"
     },
@@ -1447,7 +1447,7 @@
         "paletteSize": 6
       },
       "gridHash": "df1e3fe7d8829db4e2eae522f87b4181306b9ac08573db3ce2fab0bb8d2cc6b6",
-      "loadedHash": "60903b3ff022ba0ec32ce2215ebe44c76a4fe88a75c362d47d7179236e4922f4",
+      "loadedHash": "a8e2d5b491f26b05ce6c5a1d4e1d5571b77dc301f6723238731fa69fb4c1af68",
       "queryHash": "1c8ff551d12bea04d6627d820f1f7341e1bea57010909cf4b13de64abd6b54e9",
       "cellHash": "6d172bf1b7e4c67811723ea78ce112b4addccaac0bfa5f6ae67000fb0e651be2"
     },
@@ -1574,7 +1574,7 @@
         "paletteSize": 6
       },
       "gridHash": "df1e3fe7d8829db4e2eae522f87b4181306b9ac08573db3ce2fab0bb8d2cc6b6",
-      "loadedHash": "60903b3ff022ba0ec32ce2215ebe44c76a4fe88a75c362d47d7179236e4922f4",
+      "loadedHash": "a8e2d5b491f26b05ce6c5a1d4e1d5571b77dc301f6723238731fa69fb4c1af68",
       "queryHash": "1c8ff551d12bea04d6627d820f1f7341e1bea57010909cf4b13de64abd6b54e9",
       "cellHash": "6d172bf1b7e4c67811723ea78ce112b4addccaac0bfa5f6ae67000fb0e651be2"
     },
@@ -1689,7 +1689,7 @@
         "paletteSize": 6
       },
       "gridHash": "d1a95f83279ddfe2e5727a259b788a302684b117d5bf4de1284aa3b764be6d01",
-      "loadedHash": "aa62bc12d8f5ef960ab7032fd832171f98f008d9ef930a6b7dce33a0b7f13b17",
+      "loadedHash": "97c82ebf4560f25dac1f29a1a08c6953fc36c1b6edb9daf0baf087295e03ee4e",
       "queryHash": "788c270c88362742d529c5fdf7847493d5a0f93f9934f8074c05b1e195447d04",
       "cellHash": "9597c37e50ddf6a30eae48b1b6b0c775b318a1c6e06b404be552e8795f01dc86"
     },
@@ -1804,30 +1804,54 @@
         "paletteSize": 6
       },
       "gridHash": "963fa6c472332ad8962da4d1cd8338073b0ffcfc666d12e8b07593a5c8002d0e",
-      "loadedHash": "55cb62a26e551114223a491db21cf2aa4d0ebb3044ca311d3414233760e2acda",
+      "loadedHash": "1a90b9414e01e58e598a10aa0dca14a6a9655c4217dfdf0f426e47a1d4d6adf6",
       "queryHash": "788c270c88362742d529c5fdf7847493d5a0f93f9934f8074c05b1e195447d04",
       "cellHash": "9597c37e50ddf6a30eae48b1b6b0c775b318a1c6e06b404be552e8795f01dc86"
     },
     {
-      "key": "hub:dealer:0",
+      "key": "hub:mall:0",
       "idx": 0,
       "input": {
         "map": [
-          "bbbbbbbbbbbbbbbbbbbbbbbbbb",
-          "b,,,,,,,,,,,,,,,,,,,,,,,,b",
-          "b,,L,,,,,,,,,,,,,,,,,,L,,b",
-          "b,,,,,C,,,,P,,,,,,,,,,,,,b",
-          "b,,,,,,,,,,,,,,,,,,,,,,,,b",
-          "#GGGGGGGG,,,,GGGGGGGGGGGG#",
-          "#*...........c..........*#",
-          "#........................#",
-          "#...1.....2.....3.....4..#",
-          "#........................#",
-          "#........................#",
-          "#..........V.............#",
-          "#T........KKKK..........T#",
-          "#*..........c...........*#",
-          "##########################"
+          "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "b,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,b",
+          "b,,L,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,L,,b",
+          "b,,,,,,C,,,,,,,,,,,,,,P,,,,,,,,,,,,,,,,,,,,,b",
+          "b,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,b",
+          "#HHHHHHHHHHHHHHHHHHH_____HHHHHHHHHHHHHHHHHHH#",
+          "#..........H.....................H..........#",
+          "#..c.......H.............g.......H.......c..#",
+          "#..........H.....................H......R...#",
+          "#...J......H.....g..........g....H..........#",
+          "#....................FFF....................#",
+          "#...............c....FFF.....c..............#",
+          "#..........H.........FFF.........H..........#",
+          "#.....c....H.....................H..........#",
+          "#..........H......g........g.....H..........#",
+          "#..........H.....................H..........#",
+          "###########H..........c..........H....c.....#",
+          "#..........H........~~~~~........H..........#",
+          "#..........H........~~~~~........H..........#",
+          "#....E.....H........~~~~~........H..........#",
+          "#...................~~~~~...................#",
+          "#...................~~~~~...................#",
+          "#..........H.....................H..........#",
+          "#..c.......H..g.......c........g.H..........#",
+          "#..........H..........g..........H......c...#",
+          "#..........H.....................H..........#",
+          "############HHHHHHH........HHHHHH############",
+          "#*.........................................*#",
+          "#...........................................#",
+          "#.....c...............c................c....#",
+          "#...........................................#",
+          "#......1.........2..........3.........4.....#",
+          "#...........................................#",
+          "#...........................................#",
+          "#.....................V.....................#",
+          "#...........c.......KKKKKK.......c..........#",
+          "#*.........................................*#",
+          "#...........................................#",
+          "#############################################"
         ],
         "legend": {
           "1": {
@@ -1848,11 +1872,10 @@
             "tint": 1,
             "top": 34
           },
-          "G": {
-            "w": 35,
-            "h": 2.6,
-            "top": 42,
-            "glow": 1
+          "H": {
+            "w": 42,
+            "h": 0.32,
+            "top": 43
           },
           ",": {
             "f": 7
@@ -1862,10 +1885,13 @@
             "lamp": 1
           },
           ".": {
-            "f": 37
+            "f": 61
+          },
+          "_": {
+            "f": 63
           },
           "c": {
-            "f": 37,
+            "f": 61,
             "light": "warm"
           },
           "*": {
@@ -1876,44 +1902,91 @@
             "f": 37,
             "furn": 7
           },
-          "T": {
-            "f": 37,
-            "furn": 1
+          "F": {
+            "f": 61,
+            "furn": 25
+          },
+          "~": {
+            "w": 39,
+            "h": 0.02,
+            "top": 39,
+            "water": 1
+          },
+          "g": {
+            "f": 61,
+            "npc": "guest"
+          },
+          "J": {
+            "f": 29,
+            "npc": "jeweler"
+          },
+          "E": {
+            "f": 4,
+            "npc": "realtor"
+          },
+          "R": {
+            "f": 14,
+            "npc": "furnman"
           },
           "V": {
             "f": 37,
             "npc": "vic"
           }
         },
-        "wall": 5,
-        "floor": 7,
+        "wall": 42,
+        "floor": 61,
+        "floorFn": "(x,z)=>{const X=x-1,Z=z-1;if(Z<5)return 7;if(Z>=27)return 37;if(X<11)return Z<16?29:4;if(X>33)return 14;const dx=Math.abs(X-22),dz=Math.abs(Z-11);return (dx<=3&&dz<=3&&(dx===3||dz===3))||((X+Z)%6===0&&dx>4)?63:61;}",
         "paletteSize": 6
       },
-      "gridHash": "302681e699da8b19256c84934712fb4048b01352820d05482f2839d9cde512ae",
-      "loadedHash": "60c12ce72965c85da8cf69553460aee7fe73cfa963cadc7494ead1a260974d76",
-      "queryHash": "63050d21d9f3ae825dc0bb6d3b57c70ec4f4473ee499f60a4309dbe6f8519b2c",
-      "cellHash": "1d97b603ef2c5bbf5379a5bd85b517e4809410e504d8155932860d6a61e771d5"
+      "gridHash": "ff463132457006a391f0cff75e4a903b6f5ec3cd623d561ebba4757438954108",
+      "loadedHash": "b64342c55a7989a2705b0ca4e460162b4568206f507b67bebe4d98be20c1e0d0",
+      "queryHash": "05cab231c568e0ae6d7727ee5d7a9bded6cde51ac70cb848518b735dd790fc5e",
+      "cellHash": "65eb3f81bbc2146329339548c6933026154fcad3d77608251e8ea0ec12558310"
     },
     {
-      "key": "hub:dealer:7",
+      "key": "hub:mall:7",
       "idx": 7,
       "input": {
         "map": [
-          "bbbbbbbbbbbbbbbbbbbbbbbbbb",
-          "b,,,,,,,,,,,,,,,,,,,,,,,,b",
-          "b,,L,,,,,,,,,,,,,,,,,,L,,b",
-          "b,,,,,C,,,,P,,,,,,,,,,,,,b",
-          "b,,,,,,,,,,,,,,,,,,,,,,,,b",
-          "#GGGGGGGG,,,,GGGGGGGGGGGG#",
-          "#*...........c..........*#",
-          "#........................#",
-          "#...1.....2.....3.....4..#",
-          "#........................#",
-          "#........................#",
-          "#..........V.............#",
-          "#T........KKKK..........T#",
-          "#*..........c...........*#",
-          "##########################"
+          "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "b,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,b",
+          "b,,L,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,L,,b",
+          "b,,,,,,C,,,,,,,,,,,,,,P,,,,,,,,,,,,,,,,,,,,,b",
+          "b,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,b",
+          "#HHHHHHHHHHHHHHHHHHH_____HHHHHHHHHHHHHHHHHHH#",
+          "#..........H.....................H..........#",
+          "#..c.......H.............g.......H.......c..#",
+          "#..........H.....................H......R...#",
+          "#...J......H.....g..........g....H..........#",
+          "#....................FFF....................#",
+          "#...............c....FFF.....c..............#",
+          "#..........H.........FFF.........H..........#",
+          "#.....c....H.....................H..........#",
+          "#..........H......g........g.....H..........#",
+          "#..........H.....................H..........#",
+          "###########H..........c..........H....c.....#",
+          "#..........H........~~~~~........H..........#",
+          "#..........H........~~~~~........H..........#",
+          "#....E.....H........~~~~~........H..........#",
+          "#...................~~~~~...................#",
+          "#...................~~~~~...................#",
+          "#..........H.....................H..........#",
+          "#..c.......H..g.......c........g.H..........#",
+          "#..........H..........g..........H......c...#",
+          "#..........H.....................H..........#",
+          "############HHHHHHH........HHHHHH############",
+          "#*.........................................*#",
+          "#...........................................#",
+          "#.....c...............c................c....#",
+          "#...........................................#",
+          "#......1.........2..........3.........4.....#",
+          "#...........................................#",
+          "#...........................................#",
+          "#.....................V.....................#",
+          "#...........c.......KKKKKK.......c..........#",
+          "#*.........................................*#",
+          "#...........................................#",
+          "#############################################"
         ],
         "legend": {
           "1": {
@@ -1934,11 +2007,10 @@
             "tint": 1,
             "top": 34
           },
-          "G": {
-            "w": 35,
-            "h": 2.6,
-            "top": 42,
-            "glow": 1
+          "H": {
+            "w": 42,
+            "h": 0.32,
+            "top": 43
           },
           ",": {
             "f": 7
@@ -1948,10 +2020,13 @@
             "lamp": 1
           },
           ".": {
-            "f": 37
+            "f": 61
+          },
+          "_": {
+            "f": 63
           },
           "c": {
-            "f": 37,
+            "f": 61,
             "light": "warm"
           },
           "*": {
@@ -1962,23 +2037,46 @@
             "f": 37,
             "furn": 7
           },
-          "T": {
-            "f": 37,
-            "furn": 1
+          "F": {
+            "f": 61,
+            "furn": 25
+          },
+          "~": {
+            "w": 39,
+            "h": 0.02,
+            "top": 39,
+            "water": 1
+          },
+          "g": {
+            "f": 61,
+            "npc": "guest"
+          },
+          "J": {
+            "f": 29,
+            "npc": "jeweler"
+          },
+          "E": {
+            "f": 4,
+            "npc": "realtor"
+          },
+          "R": {
+            "f": 14,
+            "npc": "furnman"
           },
           "V": {
             "f": 37,
             "npc": "vic"
           }
         },
-        "wall": 5,
-        "floor": 7,
+        "wall": 42,
+        "floor": 61,
+        "floorFn": "(x,z)=>{const X=x-1,Z=z-1;if(Z<5)return 7;if(Z>=27)return 37;if(X<11)return Z<16?29:4;if(X>33)return 14;const dx=Math.abs(X-22),dz=Math.abs(Z-11);return (dx<=3&&dz<=3&&(dx===3||dz===3))||((X+Z)%6===0&&dx>4)?63:61;}",
         "paletteSize": 6
       },
-      "gridHash": "3b95d1cfbeb5fdda9c2b5b4f633a929640775e81964956b32d10f7e1beb38bb6",
-      "loadedHash": "ea082c04c3bb307a4892f91dc3d524fbce4798bb68b606e6c5831c43f06e2575",
-      "queryHash": "63050d21d9f3ae825dc0bb6d3b57c70ec4f4473ee499f60a4309dbe6f8519b2c",
-      "cellHash": "1d97b603ef2c5bbf5379a5bd85b517e4809410e504d8155932860d6a61e771d5"
+      "gridHash": "cd5e1b0893d9c05e7b83936327e2853cb6535f49b418fb66788a84903c65d020",
+      "loadedHash": "6a260983561b890bcc1053efa82a0b5cee386433ce85a747d040a3bea911e7dd",
+      "queryHash": "05cab231c568e0ae6d7727ee5d7a9bded6cde51ac70cb848518b735dd790fc5e",
+      "cellHash": "65eb3f81bbc2146329339548c6933026154fcad3d77608251e8ea0ec12558310"
     },
     {
       "key": "hub:bunker:0",
@@ -2041,7 +2139,7 @@
         "paletteSize": 6
       },
       "gridHash": "a258a1c69027db2df83825aeea1c1ea02b32bf0c93613c3cb29c7e093ea4040c",
-      "loadedHash": "0692637d1d25722601ca8bd7d23d970031017e80469783f4a0397bf02fdc3407",
+      "loadedHash": "84953506c8a0703cb594fa55ab8643436539d3cd806e52552dc6f40ed6f466be",
       "queryHash": "a6804461f67f20d905335d5df4598168c2b56823fc63e5c2f03f65ffc50ddd3a",
       "cellHash": "572db473bcae8a1d3a85235d44254b96606128dde84370132323ba12c83bcdea"
     },
@@ -2106,7 +2204,7 @@
         "paletteSize": 6
       },
       "gridHash": "3c29b51d32dc30ac4c6805849f5ac9f9fa1918c54d7dcdd618c70c0820ae548e",
-      "loadedHash": "567d358c6c5b53cadc4e3d9531b78efd4223d9b304415be45caa38000c1f9e43",
+      "loadedHash": "084aeac1c4bbec215a7b35bc5cc04f96f92a4b32e02c18ffdc6c7ffcd2ad8b97",
       "queryHash": "a6804461f67f20d905335d5df4598168c2b56823fc63e5c2f03f65ffc50ddd3a",
       "cellHash": "572db473bcae8a1d3a85235d44254b96606128dde84370132323ba12c83bcdea"
     },
@@ -2163,7 +2261,7 @@
         "paletteSize": 6
       },
       "gridHash": "fa8f7bd127078b4d6d796558e7113db8480ef1217dff0d8c3b34ef4053bf2b12",
-      "loadedHash": "0221909e590378cbb0506867c885a546e38ef3610577a75ac5bedab244f76732",
+      "loadedHash": "7af9153c05e9bb75fc10d1731e1f2939d996348c57867a648919da01df57191f",
       "queryHash": "2cb8f7472d685ba5e900f7067e941f7430e18defc25a3ed336d2f6eb26c9c86d",
       "cellHash": "452aaf6e0456f9ee0f824a41290451ddb963fa15cfacd7acb65ffde828120396"
     },
@@ -2220,7 +2318,7 @@
         "paletteSize": 6
       },
       "gridHash": "fa8f7bd127078b4d6d796558e7113db8480ef1217dff0d8c3b34ef4053bf2b12",
-      "loadedHash": "0221909e590378cbb0506867c885a546e38ef3610577a75ac5bedab244f76732",
+      "loadedHash": "7af9153c05e9bb75fc10d1731e1f2939d996348c57867a648919da01df57191f",
       "queryHash": "2cb8f7472d685ba5e900f7067e941f7430e18defc25a3ed336d2f6eb26c9c86d",
       "cellHash": "452aaf6e0456f9ee0f824a41290451ddb963fa15cfacd7acb65ffde828120396"
     },
@@ -2272,7 +2370,7 @@
         "paletteSize": 6
       },
       "gridHash": "373e3ebf21e7d9201ff0beefec54136b872c2d5610d2f54a83992663261a681a",
-      "loadedHash": "bd463cddff40ac0e3ffc5233e87461ca4e694103118522ad08a27cc46813a75d",
+      "loadedHash": "82a267becae629d2bfa25bb9e1bf5b6b191aadf2487c2120bdab8d6c6e0ff9dd",
       "queryHash": "95f3f0c93550070d00f84b9da6cf6cd821b7e3153381400d25ec76bbef77b44d",
       "cellHash": "1a61b1b0c7177ff6983c810073ce01111b41124b0c00ae1880234e5ab0ce024f"
     },
@@ -2324,7 +2422,7 @@
         "paletteSize": 6
       },
       "gridHash": "373e3ebf21e7d9201ff0beefec54136b872c2d5610d2f54a83992663261a681a",
-      "loadedHash": "bd463cddff40ac0e3ffc5233e87461ca4e694103118522ad08a27cc46813a75d",
+      "loadedHash": "82a267becae629d2bfa25bb9e1bf5b6b191aadf2487c2120bdab8d6c6e0ff9dd",
       "queryHash": "95f3f0c93550070d00f84b9da6cf6cd821b7e3153381400d25ec76bbef77b44d",
       "cellHash": "1a61b1b0c7177ff6983c810073ce01111b41124b0c00ae1880234e5ab0ce024f"
     }
