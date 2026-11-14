@@ -116,6 +116,9 @@ function paintBody(pais,B){LAV=B.jacket;LAVD=LAV.map(v=>v*0.62);PANTS=B.pants;SH
  if(B.chains)for(const [d,w] of [[1.44,2.2],[1.38,2.6],[1.31,3.2]]){x.strokeStyle='#8a5a14';x.lineWidth=w+1;x.beginPath();x.moveTo(fx(-0.075),ty(1.52));x.quadraticCurveTo(fx(0),ty(d-0.06),fx(0.075),ty(1.52));x.stroke();x.strokeStyle='#f0c050';x.lineWidth=w;x.stroke();x.strokeStyle='#fff4c0';x.lineWidth=0.8;x.setLineDash([2,3]);x.stroke();x.setLineDash([]);}
  if(B.chain){x.strokeStyle='#e8b84a';x.lineWidth=3;x.beginPath();x.moveTo(fx(-0.07),ty(1.5));x.quadraticCurveTo(fx(0),ty(1.3),fx(0.07),ty(1.5));x.stroke();x.strokeStyle='#8a5a14';x.lineWidth=1;x.setLineDash([2,2]);x.stroke();x.setLineDash([]);
   const mg=x.createRadialGradient(fx(0),ty(1.32),0,fx(0),ty(1.32),11);mg.addColorStop(0,'#fff4c0');mg.addColorStop(0.6,'#e8b84a');mg.addColorStop(1,'#8a5a14');x.fillStyle=mg;x.beginPath();x.moveTo(fx(0),ty(1.36));x.lineTo(fx(0.028),ty(1.32));x.lineTo(fx(0),ty(1.27));x.lineTo(fx(-0.028),ty(1.32));x.closePath();x.fill();}
+ if(B.medal){/* gold medallion: a long fine chain and a saint the size of a coaster */x.strokeStyle='#d8a838';x.lineWidth=1.6;x.beginPath();x.moveTo(fx(-0.08),ty(1.52));x.quadraticCurveTo(fx(0),ty(1.12),fx(0.08),ty(1.52));x.stroke();
+  const cy=ty(1.215),r=Math.abs(fx(0.034)-fx(0)),mg=x.createRadialGradient(fx(-0.008),cy-r*0.3,0,fx(0),cy,r);mg.addColorStop(0,'#fff4c0');mg.addColorStop(0.55,'#f0c050');mg.addColorStop(1,'#8a5a14');x.fillStyle=mg;x.beginPath();x.arc(fx(0),cy,r,0,6.3);x.fill();
+  x.strokeStyle='#8a5a14';x.lineWidth=1.2;x.beginPath();x.arc(fx(0),cy,r*0.72,0,6.3);x.stroke();x.fillStyle='#a8741c';x.fillRect(fx(0)-1,cy-r*0.45,2,r*0.9);x.fillRect(fx(0)-r*0.3,cy-r*0.15,r*0.6,2);}
  if(!B.tie)line([[fx(0.004),ty(1.4)],[fx(0.004),ty(1.12)]],1.5,'rgba(60,35,45,.6)');if(!B.tie&&!B.chain)for(const Y of [1.36,1.28,1.2]){x.fillStyle='#efe6d6';x.beginPath();x.arc(fx(0.012),ty(Y),2.2,0,6.3);x.fill();}
  x.restore();
  /* lapels: wide notch lapels with drop shadow, ink edge, pick-stitching and a buttonhole */
@@ -242,6 +245,9 @@ function buildBody(B){const M=newMesh(),X=[1,0,0],Y=[0,1,0],Z=[0,0,1],BP=B.fem?B
    loft(M,[{c:cc,rx:0.029,rz:0.029},{c:at(cc,side,0.013),rx:0.029,rz:0.029},{c:at(cc,side,0.015),rx:0.025,rz:0.025}].map(r=>Object.assign(r,{s:ax,f:bx,w:W1(fa),v:gv})),12,{uvf:()=>[0.36,gv]});
    disc(M,at(cc,side,0.0155),side,ax,bx,0.023,14,SW.dial,16/512,W1(fa));
    loft(M,[{c:at(at(cc,side,0.006),bx,0.028),rx:0.005,rz:0.005},{c:at(at(cc,side,0.006),bx,0.036),rx:0.004,rz:0.004}].map(r=>Object.assign(r,{s:ax,f:side,w:W1(fa),v:gv})),6,{uvf:()=>[0.36,gv],capB:{dir:bx,uv:[0.36,gv]}});}
+  if(B.bracelet&&s!==(B.watch||1)){/* gold ID bracelet: chunky curb links and a name plate */
+   const gv=SW.gold[1];loft(M,[{c:at(wr,ad,-0.062),rx:0.061,rz:0.062},{c:at(wr,ad,-0.04),rx:0.061,rz:0.062}].map(r=>Object.assign(r,{s:side,f:fwd,w:W1(fa),v:gv})),10,{uvf:(u,r)=>[150/512+u*140/512,gv]});
+   const pc=at(at(wr,ad,-0.051),side,0.062);loft(M,[{c:pc,rx:0.012,rz:0.024},{c:at(pc,side,0.008),rx:0.012,rz:0.024}].map(r=>Object.assign(r,{s:V.norm(ad),f:fwd,w:W1(fa),v:gv})),8,{uvf:()=>[0.36,gv],capB:{dir:side,uv:[0.36,gv]}});}
   {/* fist: palm block, four curled fingers, thumb across the front; gold knuckle duster rings around the fingers */
    const f0=M.p.length/3,pm=V.mul(side,-1),Zv=[0,0,1],hw=W1(hb),sk=()=>SW.skin,gv=SW.gold[1],gu=()=>[0.36,gv];
    const P=(ta,tp,tz)=>V.add(V.add(at(wr,ad,ta),V.mul(pm,tp)),V.mul(Zv,tz));
@@ -537,7 +543,7 @@ async function init(){const shaders=[];try{
  ready=mainIds.every(id=>modelStates[id]==='ready');status=ready?'ready':'degraded';
  }catch(e){shaderReady=false;status='failed';for(const id of mainIds)modelStates[id]='failed';if(P)gl.deleteProgram(P);P=null;$('modelWarning').style.display='block';console.error('PS2C',e);}
  finally{for(const s of shaders)gl.deleteShader(s);gl.bindTexture(gl.TEXTURE_2D,atlasTex);}}
- let PAIS=null;function jewelB(id,B){const p=PROG[id];if(!p||!CHARS.some(c=>c.id===id))return;const j=p.jewel||{};B.nowatch=!j.watch;B.chain=!!j.chain;B.rings=j.rings?2:0;}
+ let PAIS=null;function jewelB(id,B){const p=PROG[id];if(!p||!CHARS.some(c=>c.id===id))return;const j=p.jewel||{},w=k=>j[k]===true;if(B.chains0===undefined)B.chains0=!!B.chains;B.nowatch=!w('watch');B.chain=w('chain');B.rings=w('rings')?2:0;B.chains=B.chains0||w('cuban');B.bracelet=w('bracelet');B.medal=w('medal');}
  function buildCH(id){const C=CH[id],face=C.img,pais=PAIS;jewelB(id,C.B);const ht=paintHead(face,C.F);if(C.F.smile)paintSmile(ht,C.F);const shirt=C.B.shirt==='pais'?pais:C.B.shirt==='tropical'?tropicalCanvas():shirtCanvas(C.B.shirt);const bt=paintBody(shirt,Object.assign({shirtScale:C.B.shirt==='pais'?0.26:C.B.shirt==='tropical'?0.45:1},C.B));if(C.B.dolphin)dolphinPrint(bt.getContext('2d'));
   const cp=cv=>{const k=document.createElement('canvas');k.width=cv.width;k.height=cv.height;k.getContext('2d').drawImage(cv,0,0);return k;};const canvases={bc:bt,hc:ht,bcBase:cp(bt),bc0:cp(bt),hc0:cp(ht)},parts=[];
   try{parts.push(upload(buildBody(C.B),mkTex(bt)));parts.push(upload(buildHead(C.B),mkTex(ht)));}catch(e){freeModel(parts);throw e;}
@@ -740,4 +746,4 @@ function flush(VPm,u){if(NX&&NX.live){NX.takeChars(queue,MODELS);queue.length=0;
   const at=(n,b,s)=>{const l=Lc[n];if(l<0)return;gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.vertexAttribPointer(l,s,gl.FLOAT,false,0,0);};
   at('aP',mm.p,3);at('aN',mm.n,3);at('aT',mm.t,2);at('aBi',mm.bi,4);at('aBw',mm.bw,4);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,mm.i);gl.drawElements(gl.TRIANGLES,mm.n_i,gl.UNSIGNED_SHORT,0);}}
  for(const kk of ['aP','aN','aT','aBi','aBw']){const l=Lc[kk];if(l>=0)gl.disableVertexAttribArray(l);}gl.disable(gl.CULL_FACE);gl.bindTexture(gl.TEXTURE_2D,atlasTex);queue.length=0;}
-return{init,add,flush,has,applySuit,rebuild,beginFrame,lookVerts,modelStatus:id=>modelStates[id],get status(){return status;},get ready(){return ready;}};})();
+return{init,add,flush,has,applySuit,rebuild,beginFrame,lookVerts,jewelB,modelStatus:id=>modelStates[id],get status(){return status;},get ready(){return ready;}};})();

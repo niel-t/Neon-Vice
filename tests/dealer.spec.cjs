@@ -1,10 +1,10 @@
 const { test, expect } = require('./fixtures.cjs');
 
-// Victory Motors: the car dealership is a drive-in stop on the car menu, the only place that sells cars,
+// Victory Motors: the car dealership is Vic's showroom in the Biscayne Galleria mall, a drive-in stop on the car menu, the only place that sells cars,
 // and its upgrades (PROG[id].carx) dress and tune whatever you drive.
 const setup = () => { selIdx = 2; sessionReset(Math.min(JOBS.sel, JOBS.top)); const p = myProg(); arm(); p.wallet = 200000; };
 
-test('dealer: drive to Victory Motors, meet Vic, buy a car and upgrades, and they stick', async ({ openGame }) => {
+test('dealer: drive to the mall, meet Vic in Victory Motors, buy a car and upgrades, and they stick', async ({ openGame }) => {
   const page = await openGame();
   expect(await page.evaluate(setup => {
     eval('(' + setup + ')')();
@@ -15,7 +15,7 @@ test('dealer: drive to Victory Motors, meet Vic, buy a car and upgrades, and the
       out.menu = $('bCarDealer').style.display !== 'none';
       $('bCarDealer').click();
       out.depart = !!G.seq; seqSkip();
-      out.lot = { hub: G.def === HUBS.dealer, scene: !!G.seq, vic: G.npcs.filter(n => n.kind === 'vic').length, slots: G.dealer.slots.map(s => s.k) };
+      out.lot = { hub: G.def === HUBS.mall, scene: !!G.seq, vic: G.npcs.filter(n => n.kind === 'vic').length, slots: G.dealer.slots.map(s => s.k) };
       seqSkip();
       const t = hubTargets(G).map(q => q.k);
       out.targets = ['car', 'vic', 'show'].every(k => t.includes(k));
@@ -28,8 +28,8 @@ test('dealer: drive to Victory Motors, meet Vic, buy a car and upgrades, and the
       out.bought = { car: p.car, cars: p.cars.slice(), carx: { ...p.carx }, wallet: p.wallet };
       saveProg(); out.saved = JSON.parse(localStorage.getItem('nb86prog'))[CHARS[selIdx].id].carx;
       closeStore(); out.closed = [state, G.obj];
-      // the shopping mall no longer sells cars
-      openCarMenu(); $('bCarStore').click(); out.mall = $('stCars').style.display; closeStore();
+      // the old Ocean Drive Shopping button is gone: S opens the mall too
+      out.mall = !document.getElementById('bCarStore');
       // every car and every look draws without throwing
       const B = new Batch(); let n = 0;
       for (const k of ['beater', 'mid', 'spyder', 'sig', 'testa']) for (const id of [0, 1, 2]) {
@@ -47,7 +47,7 @@ test('dealer: drive to Victory Motors, meet Vic, buy a car and upgrades, and the
     bought: { car: 'spyder', cars: ['beater', 'spyder'], carx: { paint: 2, rims: 'chrome', glow: 1, eng: 1, turbo: 1 }, wallet: 200000 - 30000 - 800 * 2 - 1500 - 2500 - 6000 - 9000 },
     saved: { paint: 2, rims: 'chrome', glow: 1, eng: 1, turbo: 1 },
     closed: ['play', 'BACK TO YOUR CAR'],
-    mall: 'none',
+    mall: true,
     drawn: 21
   });
 });

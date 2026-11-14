@@ -176,7 +176,7 @@ const DEALER_CARS={
    top:[[-1.3,0.44],[-1.22,0.47],[-0.75,0.5],[-0.3,0.66],[0.1,0.67],[0.46,0.45],[1.22,0.36],[1.3,0.31]],sill:[[-1.3,0.47],[0.46,0.45],[1.3,0.38]],ws:[0.1,0.46],rw:[-0.75,-0.3],cab:[-0.55,0.46],bp:[],axles:[0.82,-0.8],bump:[0.94,0.94,0.95]})}};
 
 /* ================= VICTORY MOTORS: the car dealership =================
-   Reached from the car menu (departTo -> loadHub('dealer') -> hubArrive drive-in). 'Victory' Vic Velour runs the floor: talk to him,
+   Reached from the car menu (departTo -> loadHub('mall') -> hubArrive drive-in; the showroom is the south end of the Biscayne Galleria, mall.js). 'Victory' Vic Velour runs the floor: talk to him,
    or walk up to a car on a turntable, and the dealer screen opens (the shared #sStore screen in storeMode 'dealer').
    Cars are only sold here. Upgrades (PROG[id].carx) fit whatever you drive: paint, rims and underglow change the look,
    the V8 and the turbo change how it drives on Ocean Drive (updateDrive). */
@@ -215,7 +215,7 @@ function drawLotCar(B,k,x,z,a){if(k==='mid'){drawCarShape(B,x,z,1,a,null,MIDCAR,
 const DEALER_FONT={V:[[0,1,0.5,0],[0.5,0,1,1]],I:[[0.5,0,0.5,1]],C:[[1,1,0,1],[0,1,0,0],[0,0,1,0]],T:[[0,1,1,1],[0.5,1,0.5,0]],O:[[0,0,1,0],[1,0,1,1],[1,1,0,1],[0,1,0,0]],
  R:[[0,0,0,1],[0,1,1,1],[1,1,1,0.5],[1,0.5,0,0.5],[0.3,0.5,1,0]],Y:[[0,1,0.5,0.5],[1,1,0.5,0.5],[0.5,0.5,0.5,0]],M:[[0,0,0,1],[0,1,0.5,0.45],[0.5,0.45,1,1],[1,1,1,0]],S:[[1,1,0,1],[0,1,0,0.5],[0,0.5,1,0.5],[1,0.5,1,0],[1,0,0,0]]};
 function dealerWord(B,word,cx,y,z,h,col){const w=h*0.62,gap=h*0.32;let x=cx-(word.length*(w+gap)-gap)/2;for(const ch of word){const S=DEALER_FONT[ch];if(S)for(const q of S)strokeBox(B,x+q[0]*w,y+q[1]*h,x+q[2]*w,y+q[3]*h,z,h*0.11,col);x+=w+gap;}}
-function drawDealer(B,g){const D=g.dealer,T=g.T||0,PINK=[1,0.3,0.75],CYAN=[0.2,0.9,1];
+function drawDealer(B,g){const D=g.dealer,T=g.T||0,PINK=[1,0.3,0.75],CYAN=[0.2,0.9,1];if(g.mall)drawMall(B,g);
  for(const s of D.slots){
   /* turntable: a low dais with a neon rim, the car turning slowly on top */
   for(let k=0;k<8;k++)B.box(TRS(s.x,0.05,s.z,k*Math.PI/8,2.7,0.1,1.12),[0.85,0.85,0.88]);
@@ -225,11 +225,12 @@ function drawDealer(B,g){const D=g.dealer,T=g.T||0,PINK=[1,0.3,0.75],CYAN=[0.2,0
   /* price stand in front */
   B.box(TRS(s.x+1.15,0.45,s.z+1.25,0,0.04,0.9,0.04),[0.2,0.2,0.22]);B.box(TRS(s.x+1.15,0.95,s.z+1.27,0,0.42,0.28,0.02),[0.98,0.96,0.9]);B.box(TRS(s.x+1.15,1.06,s.z+1.285,0,0.36,0.05,0.01),myProg().cars.includes(s.k)?CYAN:PINK,true)}
  /* the storefront sign inside the glass, and the pylon out on the lot */
- const fz=(()=>{for(let z=0;z<g.H;z++)if(g.rows[z]&&g.rows[z].includes('G'))return z+1;return 6;})();
- B.box(TRS(g.W/2,2.3,fz+0.04,0,8.6,0.8,0.04),[0.08,0.04,0.1]);dealerWord(B,'VICTORY MOTORS',g.W/2,2.05,fz+0.08,0.48,PINK);B.box(TRS(g.W/2,2.72,fz+0.08,0,8.4,0.03,0.03),CYAN,true);B.box(TRS(g.W/2,1.88,fz+0.08,0,8.4,0.03,0.03),CYAN,true);
- const px=g.W-4.5,pz=2.4;B.box(TRS(px,1.5,pz,0,0.16,3,0.16),[0.25,0.25,0.28]);B.box(TRS(px,3.4,pz,0,2.2,1.3,0.12),[0.08,0.04,0.1]);dealerWord(B,'V',px,2.95,pz+0.08,0.85,PINK);B.box(TRS(px,4.08,pz+0.07,0,2.1,0.04,0.03),CYAN,true);B.box(TRS(px,2.76,pz+0.07,0,2.1,0.04,0.03),CYAN,true);
+ /* in the mall (mall.js) the sign hangs inside Vic's showroom glass, there's no pylon and the pennants string across the showroom */
+ const fz=D.signZ?D.signZ-0.04:(()=>{for(let z=0;z<g.H;z++)if(g.rows[z]&&g.rows[z].includes('G'))return z+1;return 6;})(),sx=D.signX||g.W/2;
+ B.box(TRS(sx,2.3,fz+0.04,0,8.6,0.8,0.04),[0.08,0.04,0.1]);dealerWord(B,'VICTORY MOTORS',sx,2.05,fz+0.08,0.48,PINK);B.box(TRS(sx,2.72,fz+0.08,0,8.4,0.03,0.03),CYAN,true);B.box(TRS(sx,1.88,fz+0.08,0,8.4,0.03,0.03),CYAN,true);
+ if(!D.noPylon){const px=g.W-4.5,pz=2.4;B.box(TRS(px,1.5,pz,0,0.16,3,0.16),[0.25,0.25,0.28]);B.box(TRS(px,3.4,pz,0,2.2,1.3,0.12),[0.08,0.04,0.1]);dealerWord(B,'V',px,2.95,pz+0.08,0.85,PINK);B.box(TRS(px,4.08,pz+0.07,0,2.1,0.04,0.03),CYAN,true);B.box(TRS(px,2.76,pz+0.07,0,2.1,0.04,0.03),CYAN,true);}
  /* pennant strings over the lot */
- const cols=[PINK,CYAN,[1,0.85,0.3],[1,1,1]];for(const [x0,x1,zz] of [[2,g.W-2,1.6],[2,g.W-2,4.4]]){const n=Math.round((x1-x0)/0.45);for(let i=0;i<=n;i++){const u=i/n,x=x0+(x1-x0)*u,y=2.6-Math.sin(u*Math.PI)*0.35+Math.sin(T*3+i)*0.02;B.box(TRS(x,y-0.1,zz,0,0.2,0.2,0.012),cols[i%4]);}}
+ const cols=[PINK,CYAN,[1,0.85,0.3],[1,1,1]];for(const [x0,x1,zz] of D.pen||[[2,g.W-2,1.6],[2,g.W-2,4.4]]){const n=Math.round((x1-x0)/0.45);for(let i=0;i<=n;i++){const u=i/n,x=x0+(x1-x0)*u,y=2.6-Math.sin(u*Math.PI)*0.35+Math.sin(T*3+i)*0.02;B.box(TRS(x,y-0.1,zz,0,0.2,0.2,0.012),cols[i%4]);}}
  /* balloons on the end cars */
  for(const s of [D.slots[0],D.slots[D.slots.length-1]]){if(!s)continue;for(let i=0;i<3;i++){const bx=s.x-1.25+i*0.18,bz=s.z+1.2,by=1.6+i*0.15+Math.sin(T*2+i)*0.04;B.box(TRS(bx,by,bz,0,0.24,0.28,0.24),cols[i]);B.box(TRS(bx,by/2,bz,0,0.008,by,0.008),[0.9,0.9,0.9]);}}}
 /* the stylised portrait on the dealer screen: the face photo, pixelated and posterised to a neon palette */
@@ -243,7 +244,7 @@ function openDealer(focus){if(state!=='play'||!G)return;const p=myProg();arm();i
 function closeDealer(){state='play';show(null);const g=G;if(!g)return;if(g.park){g.car={x:g.park.x,z:g.park.z};g.obj='BACK TO YOUR CAR';}const n=g.npcs.find(q=>q.kind==='vic');if(n)popup(n.x,n.z,pick(VIC_BYE),'#ffe9a8');}
 function renderDealer(msg){const p=myProg(),x=p.carx||(p.carx={});$('stWallet').textContent='$'+fmt(p.wallet);$('stOwed').textContent=p.debt>0?'OWED TO McWEY $'+fmt(p.debt):'DEBT CLEARED';
  document.querySelector('#sStore .shT').textContent='VICTORY MOTORS';document.querySelector('#sStore .shS').textContent=VIC_NAME+' · BISCAYNE BLVD · EVERY DEAL\'S A WIN';
- const face=$('stFace');face.style.display='block';paintVicFace(face);const say=$('stSay');say.style.display='';say.textContent=vicSayTxt;
+ const face=$('stFace');face.style.display='block';paintVicFace(face);const say=$('stSay');say.style.display='';say.dataset.who='VICTORY VIC';say.textContent=vicSayTxt;
  for(const id of ['stHome','stHomeH'])$(id).style.display='none';for(const id of ['stGold','stGoldH'])$(id).style.display='';$('stHome').innerHTML='';
  $('stCarsH').textContent='ON THE LOT';$('stGoldH').textContent="VIC'S GARAGE · FITS WHATEVER YOU DRIVE (NOW: "+carName(myCar())+')';
  $('stCars').innerHTML=DEALER_LIST.map((k,i)=>{const c=CARS[k],own=p.cars.includes(k),cur=p.car===k,lock=c.needs&&!p.cars.includes(c.needs);const act=cur?'DRIVING':own?'DRIVE IT':lock?'NEEDS THE '+carName(c.needs):'BUY $'+fmt(c.price);
