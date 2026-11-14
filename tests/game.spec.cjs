@@ -425,6 +425,19 @@ test('night 2: a cleared floor can be replayed with a modifier, keeps its own be
   expect(r).toEqual({ locked: null, mod: 'shotguns', moved: true, allShot: true, more: true, hp: 1, dead: true, dogs: true, daily: true, rec: 'FIRST NIGHT CLEAR', kept: true });
 });
 
+test('context button: the touch GRAB button names the objective, a weapon to take, a slam, a throw or a lure', async ({ openGame }) => {
+  const page = await openGame();
+  const r = await page.evaluate(() => { NOARRIVE = true; const out = {}; startLevel(8); const p = G.player, rg = G.rigs[0];
+    p.x = rg.x; p.z = rg.z; out.obj = ctxAction(p); p.x = 1.5; p.z = 1.5; p.weapon = null; G.items.length = 0; out.none = ctxAction(p).l;
+    startLevel(3); const q = G.player, W = G.W; q.weapon = { type: 'pistol', ammo: 5 }; G.items.length = 0;
+    for (const b of G.boats) b.sunk = true; for (const e of G.enemies) { e.alive = false; } out.lure = ctxAction(q).l;
+    for (let z = 1; z < G.H - 1 && !out.slam; z++) for (let x = 4; x < W - 2; x++) { const i = z * W + x;
+      if (!G.solid[i] && G.solid[i + 1] && G.wallT[i + 1] === 39 && G.wh[i + 1] < 0.1 && !G.solid[i - 1] && !G.solid[i - 2] && !G.solid[i - 3]) {
+        const e = G.enemies.find(k => k.body !== 'fat' && k.body !== 'big' && !k.boss); e.alive = true; e.down = 0; e.x = x + 0.5; e.z = z + 0.5; q.x = x - 2.5; q.z = z + 0.5; q.a = Math.PI / 2; out.slam = ctxAction(q); break; } }
+    return out; });
+  expect(r).toEqual({ obj: { l: 'CUT', hot: 1 }, none: 'GRAB', lure: 'LURE', slam: { l: 'SLAM', hot: 1 } });
+});
+
 test('slams: a guard knocked into water, the shark tank or broken glass dies there, and Kade can go off the edge', async ({ openGame }) => {
   test.setTimeout(180_000);
   const page = await openGame();
