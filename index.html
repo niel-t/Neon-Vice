@@ -286,6 +286,7 @@ const TRS=(x,y,z,ry,sx,sy,sz)=>A.mul(A.mul(A.T(x,y,z),A.RY(ry)),A.S(sx,sy,sz));
 <script src="overworld.js"></script>
 <script src="cars.js"></script>
 <script src="gunshop.js"></script>
+<script src="streets.js"></script>
 <script>
 'use strict';
 /* W2f dev gate (not shipped to players): ?planplay=motel|penthouse registers a plan-stage preview errand on the job list */
@@ -1072,19 +1073,26 @@ function endArrive(){const g=G,A0=g&&g.arrive;if(!A0)return;g.arrive=null;g.car.
 function arriveSfx(){if(typeof AC==='undefined'||!AC||!SET.sound)return;try{const t=AC.currentTime;
  tone(t,2.2,'sawtooth',95,38,0.07,undefined,0.15);tone(t,2.2,'square',48,26,0.04,undefined,0.15);noise(t+1.75,0.45,'bandpass',2600,1400,0.05,undefined,6);}catch(e){}}
 
-function dressStreet(g){const W=g.W,H=g.H;if(g.arr&&g.arr.type==='alley')dressAlley(g);
+function dressStreet(g){const W=g.W,H=g.H;streetPlan(g);if(g.arr&&g.arr.type==='alley')dressAlley(g);
  const street=(x,z)=>x>=0&&z>=0&&x<W&&z<H&&!g.solid[z*W+x]&&g.floorT[z*W+x]===7&&!(g.arr&&g.arr.ax&&x>=g.arr.ax[0]&&x<=g.arr.ax[1]&&z>=g.arr.zT-1);
  const occ=(x,z)=>g.rows[z][x]!=='=';
  for(let z=0;z<H;z++)for(let x=0;x<W;x++){if(!street(x,z))continue;
   const top=isSolid(x,z-1),bot=isSolid(x,z+1),mid=street(x,z-1)&&street(x,z+1);
   if(mid&&x%2===0)g.deco.push({t:'dash',x,z});
-  if(top&&x%6===3&&!occ(x,z)){g.deco.push({t:'lamp',x,z});g.lights.push({x:x+0.5,y:2.1,z:z+0.45,r:5,c:[1,0.72,0.42]});}
-  if(top&&x%11===8&&!occ(x,z))g.deco.push({t:'hydrant',x,z});
+  /* kerb props come from streets.js: lamps at irregular spacing, hydrants, news boxes, meters, phones, mailboxes, bins */
+  const k=top&&!occ(x,z)?streetDecoPick(g,x,z):null;
+  if(k==='lamp'){g.deco.push({t:'lamp',x,z});g.lights.push({x:x+0.5,y:2.1,z:z+0.45,r:5,c:[1,0.72,0.42]});}else if(k)g.deco.push({t:k,x,z});
+  const pr=ihash(x,z,511);
+  /* palms are furniture (cover and collision), so they keep their old spots; only the bags move */
   if(bot&&x%5===1&&!occ(x,z)&&Math.abs(x+0.5-g.car.x)>2.4&&Math.abs(x+0.5-g.player.x)>1.5)g.furn[z*W+x]=8;
-  else if(bot&&x%7===4&&!occ(x,z))g.deco.push({t:'bags',x,z});}
+  else if(bot&&pr>0.86&&!occ(x,z))g.deco.push({t:'bags',x,z});}
  /* parked car: its body overhangs into the neighbouring kerb cells, so keep x-1..x+2 clear of palms, bags, lamps and other cars */
- const kerbClear=(x,z)=>{for(let X=x-1;X<=x+2;X++){if(!street(X,z)||g.furn[z*W+X]||occ(X,z))return false;}return !g.deco.some(d=>d.z===z&&d.t!=='dash'&&d.x>=x-1&&d.x<=x+2);};
- for(let z=H-1;z>=0;z--)for(let x=W-4;x>W/2;x--){if(isSolid(x,z+1)&&isSolid(x+1,z+1)&&kerbClear(x,z)&&Math.hypot(x+1-g.car.x,z+0.5-g.car.z)>4.5){g.furn[z*W+x]=21;g.furn[z*W+x+1]=22;return;}}}
+ /* the parked car is collision, so it keeps the spot it had when lamps, hydrants and bags sat on a fixed rhythm (every 6th, 11th and 7th cell);
+    any kerb prop that now lands under it is cleared away instead */
+ const oldDeco=(X,Z)=>street(X,Z)&&!occ(X,Z)&&((isSolid(X,Z-1)&&(X%6===3||X%11===8))||(isSolid(X,Z+1)&&X%5!==1&&X%7===4));
+ const kerbClear=(x,z)=>{for(let X=x-1;X<=x+2;X++){if(!street(X,z)||g.furn[z*W+X]||occ(X,z)||oldDeco(X,z))return false;}return true;};
+ for(let z=H-1;z>=0;z--)for(let x=W-4;x>W/2;x--){if(isSolid(x,z+1)&&isSolid(x+1,z+1)&&kerbClear(x,z)&&Math.hypot(x+1-g.car.x,z+0.5-g.car.z)>4.5){g.furn[z*W+x]=21;g.furn[z*W+x+1]=22;
+  const under=d=>d.z===z&&d.t!=='dash'&&d.x>=x-1&&d.x<=x+2;for(const d of g.deco)if(under(d)&&d.t==='lamp')g.lights=g.lights.filter(l=>!(Math.abs(l.x-d.x-0.5)<0.01&&Math.abs(l.z-d.z-0.45)<0.01));g.deco=g.deco.filter(d=>!under(d));return;}}}
 function drawPalm(B,cx,cz,tall,seedk){const h=tall?2.5:1.5,lean=(hsh(cx|0,cz|0,seedk)-0.5)*0.5;const tr=hex(0x6b4a2a),tr2=hex(0x806040);
  if(!tall){B.box(TRS(cx,0.22,cz,0,0.42,0.44,0.42),hex(0xb85a32));B.box(TRS(cx,0.45,cz,0,0.36,0.03,0.36),hex(0x3a2a1a));}
  const y0=tall?0:0.45,n=6;let px=cx,pz=cz;for(let i=0;i<n;i++){const y=y0+(i+0.5)*(h-y0)/n;px=cx+lean*(i/n)*(i/n);B.box(TRS(px,y,pz,i*0.4,0.17-i*0.012,(h-y0)/n+0.02,0.17-i*0.012),i%2?tr:tr2);}
@@ -1097,7 +1105,8 @@ function drawDeco(B,g,d){const cx=d.x+0.5,cz=d.z+0.5;
  else if(d.t==='lamp'){const z=d.z+0.12;B.box(TRS(cx,1.05,z,0,0.07,2.1,0.07),hex(0x3a3a44));B.box(TRS(cx,2.1,z+0.22,0,0.07,0.07,0.5),hex(0x3a3a44));B.box(TRS(cx,2.05,z+0.42,0,0.22,0.08,0.3),[1,0.85,0.55],true);}
  else if(d.t==='awning'||d.t==='carpet'||d.t==='dumpster'||d.t==='bulb'||d.t==='escape'||d.t==='puddle'||d.t==='rail'||d.t==='arch')drawArriveDeco(B,g,d);
  else if(d.t==='hydrant'){const z=d.z+0.2;B.box(TRS(cx,0.22,z,0,0.18,0.44,0.18),hex(0xc0202a));B.box(TRS(cx,0.46,z,0,0.13,0.08,0.13),hex(0xd03030));B.box(TRS(cx,0.28,z,0,0.3,0.07,0.07),hex(0xa01a22));}
- else if(d.t==='bags'){for(let i=0;i<3;i++){const u=hsh(d.x,d.z,10+i);B.box(TRS(d.x+0.25+u*0.5,0.17,d.z+0.55+hsh(d.x,d.z,20+i)*0.3,u*3,0.38,0.34,0.34),i===1?hex(0x2a3a2a):hex(0x15151a));}}}
+ else if(d.t==='bags'){for(let i=0;i<3;i++){const u=hsh(d.x,d.z,10+i);B.box(TRS(d.x+0.25+u*0.5,0.17,d.z+0.55+hsh(d.x,d.z,20+i)*0.3,u*3,0.38,0.34,0.34),i===1?hex(0x2a3a2a):hex(0x15151a));}}
+ else if(d.t.startsWith('k_'))drawKerbDeco(B,g,d);}
 function clutter(B,g,x,z){if(g.def.hub)return;const ch=g.rows[z][x];if(!(ch in FLOORCH)&&ch!=='r')return;if(hsh(x,z,1)>0.14)return;const st=g.floorT[z*g.W+x]===7,out=isOut(g,x,z);
  const lvl=levelIdx;const pool=st?['can','paper','can','butts']:out?['can','butts','bottle','can','paper']:lvl===1?['bottle','cards','bottle','can','butts','paper','cards']:lvl===2?['cash','paper','bottle','cash','casings','paper']:['bottle','can','paper','pizza','butts','casings','paper'];
  const t=pool[Math.floor(hsh(x,z,2)*pool.length)];const u=x+0.2+hsh(x,z,3)*0.6,v=z+0.2+hsh(x,z,4)*0.6,r=hsh(x,z,5)*TAU;
@@ -1144,20 +1153,20 @@ function buildStatic(g){const B=g.staticB;B.reset();const W=g.W,H=g.H;
  for(let z=0;z<H;z++)for(let x=0;x<W;x++){const i=z*W+x;
   if(!g.solid[i]){B.room=rid(x,z);const v=0.9+((x*7+z*13)%5)*0.025;const sl=(X,Z)=>(isSolid(X,Z)?1:0)+(G.furn[Z*W+X]?0.4:0),sn=(X,Z)=>sl(X-1,Z-1)+sl(X,Z-1)+sl(X-1,Z)+sl(X,Z),ao=(X,Z)=>{const k=v*(1-0.15*sn(X,Z)),t=surfTint(X,Z);return[k*t[0],k*t[1],k*t[2]];};const [ft,fk]=surfFloor(g.floorT[i],x,z),gw=(X,Z)=>grimeW(X,Z,0.16*sn(X,Z))*GRM;
    B.blT=BLEND[ft]||0;B.quad4([[x,0,z+1],[x+1,0,z+1],[x+1,0,z],[x,0,z]],0,1,0,TUV[ft],[ao(x,z+1),ao(x+1,z+1),ao(x+1,z),ao(x,z)],fk,B.blT?[gw(x,z+1),gw(x+1,z+1),gw(x+1,z),gw(x,z)]:null);B.blT=0;if((!g.def.hub||g.def.hub==='drive')&&!g.furn[i]&&hsh(x,z,21)<0.12&&g.floorT[i]===7)floorQuad(B,x+0.2+hsh(x,z,22)*0.6,z+0.2+hsh(x,z,23)*0.6,0.7+hsh(x,z,24)*0.9,hsh(x,z,25)*6,TUV[47],[1,1,1],0.006);if(g.rug[i])B.quad([[x,0.004,z+1],[x+1,0.004,z+1],[x+1,0.004,z],[x,0.004,z]],0,1,0,TUV[19],[1,1,1]);if(g.furn[i])buildFurniture(B,g,x,z,g.furn[i]);else clutter(B,g,x,z);B.room=0;continue;}
-  let any=false;const h=g.wh[i]||WALL_H,tn=g.tint[i]>=0?PASTEL[g.tint[i]]:null,gm=g.glow[i]===1?1.35:1;
+  let any=false;const h=g.wh[i]||WALL_H,tn=g.tint[i]>=100?STREET_TINT[g.tint[i]-100]:g.tint[i]>=0?PASTEL[g.tint[i]]:null,gm=g.glow[i]===1?1.35:1;
   const tc=c=>tn?c.map((v,k)=>v*tn[k]*gm):c.map(v=>v*gm);const WG0=[[0.62,0.62,0.66],[0.62,0.62,0.66],[1,1,1],[1,1,1]].map(tc),WG1=[[1,1,1],[1,1,1],[1,1,1],[1,1,1]].map(tc);
   const nh=j=>g.solid[j]?(g.wh[j]||WALL_H):0;
   /* per face segment: a variant/flip pick and the world-space surface tint at each corner */
-  const face=(n,s,P,nx,nz)=>{B.room=rid(x+nx,z+nz);for(let y0=n,q=0;y0<h-1e-4;y0+=WALL_H,q++){const y1=Math.min(h,y0+WALL_H),Q=P(y0,y1),[t,k]=surfPick(g.wallT[i],x,z,1+s*8+q,0.25);
+  const face=(n,s,P,nx,nz)=>{B.room=rid(x+nx,z+nz);for(let y0=n,q=0;y0<h-1e-4;y0+=WALL_H,q++){const y1=Math.min(h,y0+WALL_H),Q=P(y0,y1),[t,k]=surfPick(g.wallX&&g.wallX[i]||g.wallT[i],x,z,1+s*8+q,0.25);
    const g0=y0<0.01&&BLEND[t];B.blT=g0||0;B.quad4(Q,nx,0,nz,TUV[t],(y0<0.01?WG0:WG1).map((c,j)=>{const m=surfTint(Q[j][0],Q[j][2]);return[c[0]*m[0],c[1]*m[1],c[2]*m[2]];}),k,g0?Q.map((p,j)=>j<2?grimeW(p[0],p[2],0.45)*GRM:0):null);B.blT=0;}};
   if(z+1<H){const n=nh(i+W);if(n<h){face(n,0,(y0,y1)=>[[x,y0,z+1],[x+1,y0,z+1],[x+1,y1,z+1],[x,y1,z+1]],0,1);any=true;if(!g.def.hub&&n===0)wallDecor(B,g,x,z);}}
   if(z-1>=0){const n=nh(i-W);if(n<h){face(n,1,(y0,y1)=>[[x+1,y0,z],[x,y0,z],[x,y1,z],[x+1,y1,z]],0,-1);any=true;}}
   if(x+1<W){const n=nh(i+1);if(n<h){face(n,2,(y0,y1)=>[[x+1,y0,z+1],[x+1,y0,z],[x+1,y1,z],[x+1,y1,z+1]],1,0);any=true;}}
   if(x-1>=0){const n=nh(i-1);if(n<h){face(n,3,(y0,y1)=>[[x,y0,z],[x,y0,z+1],[x,y1,z+1],[x,y1,z]],-1,0);any=true;}}
   if(!any){for(const [ox,oz] of [[-1,-1],[1,-1],[-1,1],[1,1]]){const nx=x+ox,nz=z+oz;if(nx>=0&&nz>=0&&nx<W&&nz<H&&!g.solid[nz*W+nx])any=true;}}
-  B.room=0;if(any||g.topT[i])B.quad([[x,h,z+1],[x+1,h,z+1],[x+1,h,z],[x,h,z]],0,1,0,g.topT[i]?TUV[g.topT[i]]:WUV,g.topT[i]?(g.glow[i]===2?[0.85,0.95,1.15]:[1,1,1]):top);
+  B.room=0;const tt=g.topX&&g.topX[i]||g.topT[i];if(any||tt)B.quad([[x,h,z+1],[x+1,h,z+1],[x+1,h,z],[x,h,z]],0,1,0,tt?TUV[tt]:WUV,tt?(g.glow[i]===2?[0.85,0.95,1.15]:[1,1,1]):top);
  }
- for(const d of g.deco)drawDeco(B,g,d);if(g.def.hub==='drive'){drawSign(B,g.car.x,g.car.z-0.47);drawEntrance(B,g.car.x,g.car.z-0.5);drawCineSky(B,g);}
+ for(const d of g.deco)drawDeco(B,g,d);drawStreetscape(B,g);if(g.def.hub==='drive'){drawSign(B,g.car.x,g.car.z-0.47);drawEntrance(B,g.car.x,g.car.z-0.5);drawCineSky(B,g);}
  B.upload(true);}
 function buildRadar(g){const c=document.createElement('canvas');c.width=g.W*4;c.height=g.H*4;const x=c.getContext('2d');
  for(let z=0;z<g.H;z++)for(let xx=0;xx<g.W;xx++){const i=z*g.W+xx;if(g.solid[i]){let edge=false;for(const [a,b] of [[1,0],[-1,0],[0,1],[0,-1]])if(!isSolid(xx+a,z+b))edge=true;if(edge){x.fillStyle='#e07ab4';x.fillRect(xx*4,z*4,4,4);}}
@@ -2602,8 +2611,8 @@ function drawGarage(B,g){const gr=g.garage,c=g.hcar,T=g.T,Y=[1,0.82,0.1],K=[0.08
  B.box(TRS(13,1.08,2.04,0,4.2,0.1,0.06),GOLD);B.box(TRS(13,1.08,2.08,0,0.9,0.06,0.02),[1,0.82,0.4],true);for(const x of [10.96,15.04])B.box(TRS(x,0.55,2.05,0,0.08,1.1,0.08),GOLD);
  B.box(TRS(15.5,0.7,2.04,0,0.12,0.22,0.04),GOLD);B.box(TRS(15.5,0.74,2.07,0,0.05,0.05,0.02),[1,0.3,0.2],true);B.box(TRS(13,0.007,2.75,0,4.2,0.012,1.4),[0.55,0.04,0.12]);}
 function npcStep(dt){const g=G,p=g.player;if(g.talkT>0)g.talkT-=dt;const vi=Math.min(3,VISIT.debrief===null?0:VISIT.debrief+1);
- for(const n of g.npcs){if(n.kind==='guest'&&g.club){clubWalk(n,dt,g,p);}else if(n.kind==='guest'||n.kind==='pgirl')guestStep(n,dt,g,p);if(n.kind==='dancer'||n.kind==='sdancer'||n.kind==='patron')continue;const dx=p.x-n.x,dz=p.z-n.z,d=Math.hypot(dx,dz);
-  if(d<(n.kind==='guest'?1.6:3)){const ta=Math.atan2(dx,dz);n.a+=clamp(angDiff(n.a,ta),-4*dt,4*dt);}else if(n.kind!=='guest')n.a+=clamp(angDiff(n.a,n.a0),-2*dt,2*dt);if(n.seat)n.a=n.a0+clamp(angDiff(n.a0,n.a),-0.9,0.9);
+ for(const n of g.npcs){if(n.kind==='guest'&&g.club){clubWalk(n,dt,g,p);}else if(n.kind==='guest'||n.kind==='pgirl')guestStep(n,dt,g,p);else if(n.cast)castStep(n,dt,g,p);if(n.kind==='dancer'||n.kind==='sdancer'||n.kind==='patron')continue;const dx=p.x-n.x,dz=p.z-n.z,d=Math.hypot(dx,dz);
+  if(d<(n.kind==='guest'||(n.cast&&(n.vx||n.vz))?1.6:3)){const ta=Math.atan2(dx,dz);n.a+=clamp(angDiff(n.a,ta),-4*dt,4*dt);}else if(n.kind!=='guest')n.a+=clamp(angDiff(n.a,n.a0),-2*dt,2*dt);if(n.seat)n.a=n.a0+clamp(angDiff(n.a0,n.a),-0.9,0.9);
   if(d<2.2&&!n.said&&!(g.talkT>0)){n.said=true;const L=n.kind==='recep'&&RECEP_GRADE[VISIT.grade]?RECEP_GRADE[VISIT.grade]:n.kind==='hguard'?[hguardLine()]:HOME_NPC_LINES[n.kind]?[pick(HOME_NPC_LINES[n.kind])]:(NPCLINES[n.kind][vi]||NPCLINES[n.kind][0]);g.talkT=L.length*1.5+0.4;const qg=g.quipGen=(g.quipGen||0)+1;let t=0;for(const line of L){setTimeout(()=>{if(G===g&&g.quipGen===qg)popup(n.x,n.z,line,'#ffe9a8');},t);t+=1500;}}
   if(d<n.r+p.r&&d>1e-4){const k=(n.r+p.r-d);p.x+=dx/d*k;p.z+=dz/d*k;}}}
 let ENG=null;
@@ -2641,7 +2650,7 @@ if(!g.cine&&!g.seq){const y=2.4+Math.sin(g.T*4)*0.2;B.box(A.mul(A.mul(A.T(g.car.
  else{for(const n of g.npcs)drawChar(IBhi,n);if(g.player&&!g.hideP)drawChar(IBhi,g.player);if(g.park){if(rideHeli())drawHeli(B,g.park.x,g.park.z,0,g.T);else drawRide(B,g.park.x,g.park.z,1,g.park.a||0,undefined,g.park.spin||0);}
   if(g.hcar)drawRide(B,g.hcar.x,g.hcar.z,1,g.hcar.a||0,undefined,g.hcar.spin||0);if(g.garage)drawGarage(B,g);if(g.slob)drawSlobby(B,g);if(g.def===HUBS.bunker)drawBunker(B,g);if(g.dealer)drawDealer(B,g);if(g.slots){drawHomeDecor(B,g);drawHome(B,g);drawHomeX(B,g);drawLocker(B,g);}if(g.club)drawClub(B,g);
   if(g.tankB){const t=g.tankB;drawTankLife(B,g.T,t.x0,t.x1,(t.z0+t.z1)/2,0.08,1.35,0.35,0.9,0.4,2.15);}
-  if(g.fount)drawFountainWater(B,g.fount,g.T);if(g.mcDesk)drawMcOffice(B,g);if(g.tv)drawLobbyTV(B,g);if(g.lounge)drawLounge(B,g);
+  if(g.fount)drawFountainWater(B,g.fount,g.T);if(g.mcDesk)drawMcOffice(B,g);if(g.tv)drawLobbyTV(B,g);if(g.lounge)drawLounge(B,g);if(g.cast)drawCast(B,g);
   if(!g.seq){const y=1.6+Math.sin(g.T*4)*0.12;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.22,0.22,0.22))),GOLD,true);}}
  for(const q of g.parts)B.box(A.mul(A.T(q.x,q.y,q.z),A.S(q.s,q.s,q.s)),q.c,q.t==='s');}
 function drawHubHUD(c,g,u,m){if(g.cine)return;if(g.seq){drawSeqHUD(c,g,u);return;}const d=g.def;c.font=PXF(7*u);txt(c,d.where,m,m,'#ffd36b','left',7*u);c.font=VTF(22*u);txt(c,g.obj||d.obj,m,m+10*u,'#fff','left',22*u);
@@ -3672,19 +3681,22 @@ function chatGo(pick){if(!CHAT.done)return;chatClearTimers();sfx('pick');if(VISI
 function showEnd(){state='end';$('eStats').innerHTML=`CREW<b>${CHARS[selIdx].name}</b><br>BODIES<b>${totalKills}</b><br>TIME<b>${mmss(totalTime)}</b><br>TOTAL TAKE<b>$${fmt(totalScore)}</b>${RUNEND?'<br>ENDING<b>'+RUNEND.title+'</b>':''}`;show('sEnd');}
 HUBLEG_FOOT['.']={};
 {const DW=66,R=(f)=>Array.from({length:DW},(_,x)=>f(x)).join('');const tw=x=>x>=51&&x<=59;
+ /* lamps, neon and palms at hand-picked, uneven spots rather than every sixth cell */
+ const LN=[2,9,14,22,27,35,41,47,61,65],NN=[5,18,31,44],LS=[0,5,13,19,24,30,38,43,49,56,62],NS=[8,34,52],PS=[3,7,15,20,26,29,36,42,47,53,57,63];
  HUBS.drive.map=[R(x=>tw(x)?'G':'b'),R(x=>tw(x)?'G':'b'),R(x=>tw(x)?'G':'b'),R(x=>tw(x)?'G':'b'),
-  R(x=>x>=52&&x<=58?'V':x%6===3?'l':x%11===5?'*':'s'),R(x=>x>44?'=':x%11===9?'q':x%11===10?'Q':'='),R(x=>x===2?'P':'='),R(()=>'='),R(()=>'='),
-  R(x=>x%6===0?'l':x%13===7?'*':'s'),R(x=>x%6===3?'H':'y'),R(()=>'y'),R(()=>'o'),R(()=>'o'),R(()=>'o')];}
+  R(x=>x>=52&&x<=58?'V':LN.includes(x)?'l':NN.includes(x)?'*':'s'),R(x=>x>44?'=':x%11===9?'q':x%11===10?'Q':'='),R(x=>x===2?'P':'='),R(()=>'='),R(()=>'='),
+  R(x=>LS.includes(x)?'l':NS.includes(x)?'*':'s'),R(x=>PS.includes(x)?'H':'y'),R(()=>'y'),R(()=>'o'),R(()=>'o'),R(()=>'o')];}
+/* the lobby's people are the cast in streets.js (castSetup), not letters on the map */
 HUBS.lobby.map=[
  "||||||||eeee||||||||||",
  "|c.....nvvvvn......c.|",
  "|.H................H.|",
- "|...q.........g..EEl.|",
- "|..KKKKK.l......SSS..|",
- "|...g....FFF...l.....|",
+ "|...q............EE..|",
+ "|..KKKKK........SSS..|",
  "|........FFF.........|",
- "|....c...FFF.....c.l.|",
- "|........rrrr...g..p.|",
+ "|........FFF.........|",
+ "|....c...FFF.....c...|",
+ "|........rrrr......p.|",
  "|........rrrr........|",
  "|......n..P...n......|",
  "||||||||xxxxxx||||||||"];
@@ -3764,7 +3776,7 @@ function tvHeadline(){const vi=VISIT;if(vi.debrief===null||!LEVELS[vi.debrief])r
  const nm=LEVELS[vi.debrief].name,tail={S:'NO WITNESSES, NO SUSPECTS',A:'POLICE BAFFLED','A+':'POLICE BAFFLED',B:'POLICE APPEAL FOR INFORMATION',C:'CLEANUP TO TAKE DAYS',D:'"A BLOODBATH," SAYS CORONER'}[vi.grade]||'POLICE BAFFLED';
  return 'BREAKING: CARNAGE AT '+nm+'  ·  '+tail+'  ·  McWEY HOLDINGS STOCK UP AGAIN  ·  ';}
 function lobbySetup(g){g.tv={x:6,z:2.3,msg:tvHeadline()};g.solids=[{x:6,z:2.3,w:1.8,d:0.5}];g.lights.push({x:6,y:1.2,z:2.9,r:2.4,c:[0.4,0.6,1.3]});
- loungeSetup(g);if(myProg().sharkDead){for(const x of [7.4,14.6]){const n=makeChar(x,2.6,NPCLOOK.guard(),false);n.kind='guard2';n.state='idle';n.a=n.a0=0;n.r=0.3;n.body=n.look.body;n.said=false;g.npcs.push(n);}}}
+ loungeSetup(g);castSetup(g);if(myProg().sharkDead){for(const x of [7.4,14.6]){const n=makeChar(x,2.6,NPCLOOK.guard(),false);n.kind='guard2';n.state='idle';n.a=n.a0=0;n.r=0.3;n.body=n.look.body;n.said=false;g.npcs.push(n);}}}
 /* lounge in the lobby's west corner: an L of cream sofas, an armchair, a glass table, and a couple of guests already sat down */
 function loungeSetup(g){const L={x:4.6,z:9.4};g.lounge=L;g.solids.push({x:L.x-0.1,z:L.z-1.25,w:2.6,d:0.8},{x:2.6,z:L.z+0.1,w:0.8,d:2.2},{x:L.x+2.0,z:L.z,w:0.8,d:0.8},{x:L.x,z:L.z,w:1.2,d:0.7});
  for(const [x,z,a] of [[L.x-0.6,L.z-1.2,0],[2.65,L.z+0.5,Math.PI/2]]){const n=makeChar(x,z,NPCLOOK.guest(),false);n.kind='sitter';n.state='idle';n.y=-0.24;n.seat=true;n.a=n.a0=a;n.r=0.3;n.body=n.look.body;g.npcs.push(n);}}

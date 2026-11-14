@@ -291,6 +291,63 @@ function makeAtlas(){
   43:x=>{x.fillStyle='#16141a';x.fillRect(0,0,64,64);vein(x,48,5,'#34303c',1,'rgba(120,110,130,.25)');spk(x,49,120,['#221f28','#0e0d12']);
    x.fillStyle='#c9a24a';x.fillRect(0,0,64,1);x.fillRect(0,0,1,64);x.fillStyle='rgba(201,162,74,.35)';x.fillRect(0,32,64,1);x.fillRect(32,0,1,64);}};
  for(const b of MACDEF)for(let q=0;q<4;q++)tile(MACRO[b]+q,x=>{x.translate(-32*(q&1),-32*(q>>1));MDES[b](x);});
+ /* street kit (streets.js): facade cells are one cell wide and one storey (WALL_H) tall, painted light so the lot's tint
+    colours them; 172-183 (after the grime partner cells) are walls and roofs, 200+ decals, billboards and lit variants. Own RNG, so
+    the srand sequence of every other tile stays the same. */
+ {let ss=91;const r=()=>{ss=(ss*16807)%2147483647;return ss/2147483647;},R=(x,c,a,b,w,h)=>{x.fillStyle=c;x.fillRect(a,b,w,h);},
+  dots=(x,n,cols,a=0,b=0,w=32,h=32)=>{for(let i=0;i<n;i++)R(x,cols[i%cols.length],a+r()*w,b+r()*h,1,1);},
+  glass=(x,a,b,w,h,lit)=>{const gr=x.createLinearGradient(a,b,a+w,b+h);gr.addColorStop(0,lit?'#ffd58a':'#2a3550');gr.addColorStop(0.55,lit?'#e89a52':'#151a2c');gr.addColorStop(1,lit?'#b8643a':'#0c0f1c');x.fillStyle=gr;x.fillRect(a,b,w,h);
+   x.fillStyle='rgba(255,255,255,.22)';x.beginPath();x.moveTo(a+w*0.15,b+h);x.lineTo(a+w*0.45,b);x.lineTo(a+w*0.6,b);x.lineTo(a+w*0.3,b+h);x.fill();};
+  /* a window: frame, flat glass (dark, or lamp-lit with a blind half down), a highlight along the top, a sill */
+  const win=(x,a,b,w,h,lit,fr)=>{R(x,fr||'#ffffff',a-1,b-1,w+2,h+2);R(x,lit?'#ffd98a':'#26324f',a,b,w,h);if(lit){R(x,'#f0b860',a,b,w,h*0.35);R(x,'#c88848',a,b+h*0.35,w,0.6);}else{R(x,'#3a4a6e',a,b,w*0.4,h);}R(x,'rgba(255,255,255,.55)',a,b,w,0.8);R(x,'rgba(0,0,0,.25)',a,b+h+1,w,1);};
+  const deco=lit=>x=>{R(x,'#f6f1ea',0,0,32,32);R(x,'#e2dace',0,30,32,2);for(const y of [3,5])R(x,'#e6ded3',0,y,32,1);win(x,4,11,24,10,lit,'#fbf8f3');R(x,'#efe9e0',15.5,11,1,10);R(x,'#cfc5b8',2,8,28,2);R(x,'#ffffff',2,7.4,28,0.8);},
+   brick=lit=>x=>{R(x,'#b4644a',0,0,32,32);for(let y=0;y<32;y+=4){R(x,'#94503a',0,y,32,0.8);for(let k=(y/4%2)*4;k<32;k+=8)R(x,'#94503a',k,y,0.8,4);}win(x,9,6,14,18,lit,'#f2ece2');R(x,'#f2ece2',9,14.5,14,1.5);R(x,'#e0d8cc',7,25,18,2);},
+   jal=lit=>x=>{R(x,'#f4f2ec',0,0,32,32);R(x,lit?'#ffd98a':'#30384e',5,7,22,14);for(let y=8;y<21;y+=2)R(x,lit?'#e8b060':'#7c97a6',5,y,22,0.8);R(x,'#ffffff',4,6,24,1);R(x,'#d8d4c8',4,21,24,1.2);R(x,'#ffffff',0,26,32,2);R(x,'#c8c4b8',0,28,32,1);for(let k=1;k<32;k+=3)R(x,'#9a98a0',k,23,0.6,3);R(x,'#9a98a0',0,23,32,0.6);},
+   glassF=lit=>x=>{R(x,'#2e6f8c',0,0,32,32);R(x,'#4f9bb4',0,0,32,14);if(lit)R(x,'#ffd98a',1,17,14,13);R(x,'rgba(255,255,255,.18)',3,0,6,32);R(x,'#d4dce4',0,0,32,1.2);R(x,'#d4dce4',0,15,32,1.2);R(x,'#d4dce4',0,0,1.2,32);R(x,'#d4dce4',16,0,1,32);},
+   stone=lit=>x=>{R(x,'#ece4d2',0,0,32,32);for(let y=0;y<32;y+=5){R(x,'#d6cab2',0,y,32,0.7);for(let k=(y/5%2)*6;k<32;k+=12)R(x,'#d6cab2',k,y,0.7,5);}R(x,'#c8bca4',8,6,16,22);x.fillStyle='#c8bca4';x.beginPath();x.arc(16,7,8,Math.PI,0);x.fill();win(x,10,7,12,19,lit,'#f4ecdc');x.fillStyle=lit?'#ffd98a':'#26324f';x.beginPath();x.arc(16,7.5,6,Math.PI,0);x.fill();R(x,'#f4ecdc',15.4,2,1.2,24);};
+  const ST={
+  172:deco(false),213:deco(true),173:brick(false),214:brick(true),174:jal(false),215:jal(true),175:glassF(false),217:glassF(true),183:stone(false),216:stone(true),
+  /* breeze block screen: the mid-century cross-and-circle pattern */
+  176:x=>{R(x,'#4a4452',0,0,32,32);for(let i=0;i<4;i++)for(let j=0;j<4;j++){const a=i*8,b=j*8;R(x,'#f4f0e8',a,b,8,8);x.fillStyle='#4a4452';x.beginPath();x.arc(a+4,b+4,2.6,0,6.3);x.fill();R(x,'#f4f0e8',a+3.4,b,1.2,8);R(x,'#f4f0e8',a,b+3.4,8,1.2);R(x,'#dcd6ca',a,b+7.4,8,0.6);}},
+  /* parking deck: concrete spandrel over a dark open bay with a car or two */
+  177:x=>{R(x,'#1a1920',0,0,32,32);R(x,'#dcd8d0',0,0,32,6);R(x,'#c4bfb6',0,5,32,1);R(x,'#dcd8d0',0,26,32,6);R(x,'#b0aba2',0,26,32,1);
+   const cols=['#c0182a','#2de2e6','#f2f2f2','#ffd36b','#1d3557','#ff6fae'];for(let k=0;k<2;k++)if(r()<0.8){const a=2+k*15+r()*3;R(x,cols[r()*cols.length|0],a,18,11,6);R(x,'#0a0a0e',a+1.5,15.5,8,3);R(x,'#ffeaa0',a,20,1.5,1.2);R(x,'#ffeaa0',a+9.5,20,1.5,1.2);}R(x,'#ffe05a',0,25,32,0.6);},
+  /* storefront: warm-lit plate glass, shelf silhouettes, a kick plate */
+  178:x=>{R(x,'#b8bec8',0,0,32,32);R(x,'#ffd98a',1.5,1.5,29,24);R(x,'#f0b060',1.5,15,29,10.5);R(x,'rgba(90,40,30,.5)',3,10,26,1);R(x,'rgba(90,40,30,.5)',3,18,26,1);for(let k=0;k<7;k++)R(x,['#c0182a','#2a9da6','#d89a20','#4aa060','#d84a8a'][k%5],4+k*3.6,6.5+(k%2)*8,2.4,3.5);
+   x.fillStyle='rgba(255,255,255,.3)';x.beginPath();x.moveTo(6,25);x.lineTo(14,1.5);x.lineTo(18,1.5);x.lineTo(10,25);x.fill();R(x,'#7e8490',15.5,1,1,25);R(x,'#3a3840',0,26,32,6);R(x,'#d8dce2',0,26,32,1);},
+  /* roller shutter, with a tag sprayed on */
+  179:x=>{R(x,'#9da2ab',0,0,32,32);for(let y=0;y<32;y+=2){R(x,'#7f848d',0,y,32,0.6);R(x,'#c4c9d1',0,y+0.7,32,0.4);}R(x,'#5a5e66',0,0,1.5,32);R(x,'#5a5e66',30.5,0,1.5,32);
+   x.lineWidth=1.6;x.lineCap='round';const c=['#ff2d95','#2de2e6','#7dff9a','#ffd36b'];x.strokeStyle=c[r()*4|0];x.beginPath();x.moveTo(5,20);for(let k=0;k<6;k++)x.lineTo(7+k*3.5,14+r()*8);x.stroke();R(x,'#3a3e46',0,29,32,3);},
+  /* gravel roof: mid grey, fine grain, a hatch */
+  180:x=>{R(x,'#8a8690',0,0,32,32);dots(x,140,['#7c7882','#96929c']);R(x,'#6a6670',22,5,6,6);R(x,'#a8a4ae',22,5,6,1);},
+  /* membrane roof: pale sheets with tar seams */
+  181:x=>{R(x,'#d2d0d6',0,0,32,32);dots(x,50,['#c6c4ca','#dcdade']);R(x,'#8a8690',0,15.5,32,0.8);R(x,'#8a8690',15.5,0,0.8,15.5);R(x,'#8a8690',7,16,0.8,16);R(x,'#8a8690',23,16,0.8,16);},
+  /* deco glass block and fluted pier, for a hotel's stair tower */
+  182:x=>{R(x,'#f6f1ea',0,0,32,32);for(let k=0;k<3;k++)R(x,'#e2d8cc',2+k*3,0,1,32);for(let k=0;k<3;k++)R(x,'#e2d8cc',23+k*3,0,1,32);
+   for(let i=0;i<4;i++)for(let j=0;j<7;j++){R(x,'#a8d8e4',11+i*2.6,2+j*4,2.2,3.4);R(x,'#ffffff',11+i*2.6,2+j*4,2.2,0.6);}},
+  /* billboards, two cells each (left, right) */
+  200:x=>{const gr=x.createLinearGradient(0,0,0,32);gr.addColorStop(0,'#ff4fa6');gr.addColorStop(0.6,'#ffb36b');gr.addColorStop(1,'#ffe39a');x.fillStyle=gr;x.fillRect(0,0,32,32);x.fillStyle='#ffef7a';x.beginPath();x.arc(30,20,10,0,6.3);x.fill();
+   for(let k=0;k<4;k++)R(x,'#ff4fa6',18,16+k*2.6,26,1);R(x,'#1a1030',0,26,32,6);x.fillStyle='#fff';x.font='bold 9px sans-serif';x.fillText('SUN',2,11);x.font='bold 7px sans-serif';x.fillText('COAST',2,20);},
+  201:x=>{const gr=x.createLinearGradient(0,0,0,32);gr.addColorStop(0,'#ff4fa6');gr.addColorStop(0.6,'#ffb36b');gr.addColorStop(1,'#ffe39a');x.fillStyle=gr;x.fillRect(0,0,32,32);x.fillStyle='#ffef7a';x.beginPath();x.arc(-2,20,10,0,6.3);x.fill();
+   for(let k=0;k<4;k++)R(x,'#ff4fa6',-8,16+k*2.6,14,1);R(x,'#1a1030',0,26,32,6);x.fillStyle='#1a1030';x.font='bold 6px sans-serif';x.fillText('RUM',12,10);x.fillStyle='#2de2e6';x.font='bold 4px sans-serif';x.fillText('ON THE ROCKS',4,31);},
+  202:x=>{R(x,'#101018',0,0,32,32);for(let k=0;k<5;k++)R(x,['#ff2d95','#ffd36b','#2de2e6','#7dff9a','#c9b6f2'][k],0,22+k*2,32,2);x.fillStyle='#2de2e6';x.font='bold 13px sans-serif';x.fillText('WAVE',1,16);},
+  203:x=>{R(x,'#101018',0,0,32,32);for(let k=0;k<5;k++)R(x,['#ff2d95','#ffd36b','#2de2e6','#7dff9a','#c9b6f2'][k],0,22+k*2,32,2);x.fillStyle='#ff2d95';x.font='bold 13px sans-serif';x.fillText('104',1,16);x.fillStyle='#fff';x.font='bold 4px sans-serif';x.fillText('FM',26,16);},
+  204:x=>{R(x,'#e8f4f8',0,0,32,32);R(x,'#1d3557',0,0,32,8);x.fillStyle='#fff';x.font='bold 6px sans-serif';x.fillText('FLY PAN',2,6.5);x.fillStyle='#1d3557';x.beginPath();x.moveTo(6,22);x.lineTo(30,14);x.lineTo(32,16);x.lineTo(10,24);x.fill();R(x,'#2bb7b9',0,28,32,4);},
+  205:x=>{R(x,'#e8f4f8',0,0,32,32);R(x,'#1d3557',0,0,32,8);x.fillStyle='#ffd36b';x.font='bold 6px sans-serif';x.fillText('SUNAIR',1,6.5);x.fillStyle='#1d3557';x.beginPath();x.moveTo(-2,16);x.lineTo(14,12);x.lineTo(10,16);x.fill();x.font='bold 5px sans-serif';x.fillText('HAVANA',4,22);x.fillText('$99',8,27);R(x,'#2bb7b9',0,28,32,4);},
+  /* road decals (alpha-cut): manhole, crack, kerb drain, asphalt patch, oil stain */
+  206:x=>{x.clearRect(0,0,32,32);x.fillStyle='#1a191e';x.beginPath();x.arc(16,16,13,0,6.3);x.fill();x.fillStyle='#4a4750';x.beginPath();x.arc(16,16,11.5,0,6.3);x.fill();
+   x.strokeStyle='#2c2a31';x.lineWidth=1;for(let k=-8;k<=8;k+=4){x.beginPath();x.moveTo(16+k,6);x.lineTo(16+k,26);x.stroke();x.beginPath();x.moveTo(6,16+k);x.lineTo(26,16+k);x.stroke();}x.fillStyle='#5c5862';x.beginPath();x.arc(16,16,3,0,6.3);x.fill();},
+  207:x=>{x.clearRect(0,0,32,32);x.strokeStyle='#1a1920';x.lineWidth=0.7;const br=(px,py,a,n)=>{x.beginPath();x.moveTo(px,py);for(let k=0;k<n;k++){a+=(r()-0.5)*1.1;px+=Math.cos(a)*3;py+=Math.sin(a)*3;x.lineTo(px,py);if(r()<0.25)br(px,py,a+(r()<0.5?1:-1),3);}x.stroke();};br(2,16,0,9);},
+  208:x=>{R(x,'#0c0c10',0,0,32,32);for(let k=1;k<32;k+=4)R(x,'#55525c',k,2,2,28);R(x,'#55525c',0,0,32,2);R(x,'#55525c',0,30,32,2);},
+  209:x=>{x.clearRect(0,0,32,32);x.fillStyle='#232228';x.beginPath();x.moveTo(3,4);x.lineTo(29,2);x.lineTo(30,27);x.lineTo(5,29);x.lineTo(2,16);x.fill();dots(x,50,['#2a2930','#1e1d23'],4,4,24,22);x.strokeStyle='#18171c';x.lineWidth=0.8;x.stroke();},
+  210:x=>{x.clearRect(0,0,32,32);x.fillStyle='#111016';x.beginPath();x.ellipse(16,16,11,8,0.4,0,6.3);x.fill();x.beginPath();x.ellipse(22,10,4,3,0,0,6.3);x.fill();x.fillStyle='#3a2f48';x.beginPath();x.ellipse(14,17,4,2,0.4,0,6.3);x.fill();},
+  /* shop window posters and a cinema one-sheet */
+  211:x=>{R(x,'#d9d2c4',0,0,32,32);const c=['#ff2d95','#2de2e6','#ffd36b','#7dff9a','#c0182a','#1d3557'];for(let i=0;i<3;i++)for(let j=0;j<2;j++){R(x,c[r()*6|0],1+i*10.4,1+j*15.5,9.6,14.5);R(x,'#fff',2+i*10.4,3+j*15.5,7.6,2);R(x,'rgba(0,0,0,.35)',2+i*10.4,8+j*15.5,7.6,5);}},
+  212:x=>{const gr=x.createLinearGradient(0,0,0,32);gr.addColorStop(0,'#1a0830');gr.addColorStop(1,'#c0182a');x.fillStyle=gr;x.fillRect(0,0,32,32);x.fillStyle='#ffd36b';x.beginPath();x.arc(16,13,6,0,6.3);x.fill();R(x,'#1a0830',6,13,20,1.5);R(x,'#1a0830',8,16,16,1);
+   x.fillStyle='#fff';x.font='bold 5px sans-serif';x.fillText('NIGHT',8,26);x.fillText('HEAT',10,31);}};
+  for(const k in ST)tile(+k,ST[k]);
+  /* lamp-lit window variants, picked per storey by surfPick */
+  for(const [t,v] of [[172,213],[173,214],[174,215],[183,216],[175,217]])TVAR[t]=[v];}
  for(const t of ATILES)if(!legacy.has(t)){gutter(t);const [cx,cy]=TCELL(t),n=ax.getImageData(cx*64,cy*64,64,64).data;for(let j=0;j<64;j++)d.set(n.subarray(j*256,j*256+256),((cy*64+j)*ATLAS+cx*64)*4);}
  /* W13c grime partners, computed straight into the upload data (no canvas round trip, so the alpha mask keeps exact RGB):
     desaturated warm-dark grime with grit and a dust lift on dark bases; alpha = fbm height mask (gutters replicate the
