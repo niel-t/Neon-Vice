@@ -12,6 +12,14 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 .px{font-family:'Press Start 2P',ui-monospace,monospace}
 .screen{position:fixed;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:16px}
 .screen.on{display:flex}
+#sObj{cursor:pointer}#sObj .ojBox{max-width:640px;width:100%;border:2px solid #2de2e6;box-shadow:0 0 18px rgba(45,226,230,.35),inset 0 0 30px rgba(255,63,164,.12);background:rgba(10,4,18,.88);padding:14px 18px;text-align:left}
+#sObj .ojWhere{font-family:'Press Start 2P',monospace;font-size:clamp(8px,1.6vw,11px);color:#c9a8e8;letter-spacing:1px}
+#sObj .ojName{font-family:'Press Start 2P',monospace;font-size:clamp(13px,3vw,22px);color:#2de2e6;text-shadow:2px 2px 0 #ff3fa4;margin:8px 0 6px;line-height:1.4}
+#sObj .ojBrief{font-size:clamp(14px,2.2vw,18px);color:#e9c7ff;font-style:italic;line-height:1.3}
+#sObj .ojHd{font-family:'Press Start 2P',monospace;font-size:clamp(8px,1.6vw,11px);color:#ff5fb8;margin:12px 0 4px}
+#sObj ul{list-style:none;margin:0;padding:0}#sObj li{font-size:clamp(16px,2.6vw,21px);color:#fff;line-height:1.3;padding-left:1.2em;text-indent:-1.2em}#sObj li::before{content:'\25a0  ';color:#ffd36b}
+#sObj li.ex{color:#ffd36b}#sObj li.ch{color:#c9a8e8;font-size:clamp(14px,2.2vw,18px)}#sObj li.ch::before{content:''}
+#sObj .ojGo{font-family:'Press Start 2P',monospace;font-size:clamp(9px,1.8vw,12px);color:#7dff9a;margin-top:14px;text-align:center;animation:ojB 1.1s steps(2) infinite}@keyframes ojB{50%{opacity:.35}}
 .dim{background:rgba(8,0,16,.72)}
 .logo{font-family:'Press Start 2P',monospace;font-size:clamp(28px,8vw,72px);line-height:1.15;color:#ff3fa4;text-shadow:3px 3px 0 #2de2e6,6px 6px 0 #3a0b4f;letter-spacing:2px}
 .logo2{font-family:'Press Start 2P',monospace;font-size:clamp(13px,3.2vw,26px);color:#2de2e6;text-shadow:2px 2px 0 #ff3fa4;margin-top:10px;line-height:1.5}
@@ -177,10 +185,10 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <div id="sDead" class="screen dim"><div class="big red">YOU'RE DEAD</div><div class="hint" id="deadCause" style="color:#ffb3bd"></div><div class="hint" id="deadXP" style="color:#ffd36b"></div><div class="hint" id="deadTip"></div><div class="rowc"><button class="btn" id="bRetry">RETRY<span class="kbhint"> (R)</span><span class="padhint"> (A)</span></button><button class="btn alt" id="bDeadRestartJob" style="display:none">RESTART JOB</button><button class="btn alt" id="bDeadWalk">WALK AWAY<span class="padhint"> (X)</span></button><button class="btn alt" id="bDeadQuit">QUIT<span class="padhint"> (B)</span></button></div><div class="hint" style="opacity:.75">Retry keeps what you brought in · Walk away to go home with it</div></div>
 <div id="sResults" class="screen dim"><div class="logo2" id="rTitle">FLOOR CLEAR</div><div class="stats" id="rStats"></div><div class="grade" id="rGrade">A</div><div class="rowc"><button class="btn alt" id="bRetryLvl">RETRY<span class="padhint"> (X)</span></button><button class="btn" id="bNextLvl">NEXT FLOOR</button></div></div>
 <div id="sPerk" class="screen dim"><div class="logo2">LEVEL UP!</div><div class="hint" id="pkLvl"></div><div class="rowc" id="pkCards"></div></div>
-<div id="sCar" class="screen dim"><div class="logo2">YOUR RIDE</div><div class="hint" id="carWallet" style="color:#7dff9a"></div><div class="hint" id="carLoad" style="color:#ffd36b;margin-top:4px"></div><div style="display:flex;flex-direction:column;align-items:center;margin-top:10px"><button class="btn" id="bCarJob">NEXT JOB</button><button class="btn alt" id="bCarShop">NINE OF NINE'S &middot; GUN SHOP<span class="kbhint"> (G)</span><span class="padhint"> (X)</span></button><button class="btn alt" id="bCarClub">VELVET PALMS &middot; STRIP CLUB<span class="kbhint"> (C)</span><span class="padhint"> (RB)</span></button><button class="btn alt" id="bCarDealer">VICTORY MOTORS &middot; CAR DEALER<span class="kbhint"> (D)</span><span class="padhint"> (LB)</span></button><button class="btn alt" id="bCarStore">OCEAN DRIVE SHOPPING &middot; GOLD &amp; HOMES<span class="kbhint"> (S)</span><span class="padhint"> (Y)</span></button><button class="btn alt" id="bCarHome">BACK TO YOUR PLACE</button><button class="btn alt" id="bCarBack">NOT YET<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div>
+<div id="sCar" class="screen dim"><div class="logo2">YOUR RIDE</div><div class="hint" id="carWallet" style="color:#7dff9a"></div><div class="hint" id="carLoad" style="color:#ffd36b;margin-top:4px"></div><div style="display:flex;flex-direction:column;align-items:center;margin-top:10px"><button class="btn" id="bCarJob">NEXT JOB</button><button class="btn alt" id="bCarShop">NINE OF NINE'S &middot; GUN SHOP<span class="kbhint"> (G)</span><span class="padhint"> (X)</span></button><button class="btn alt" id="bCarClub">VELVET PALMS &middot; STRIP CLUB<span class="kbhint"> (C)</span><span class="padhint"> (RB)</span></button><button class="btn alt" id="bCarDealer">VICTORY MOTORS &middot; CAR DEALER<span class="kbhint"> (D)</span><span class="padhint"> (LB)</span></button><button class="btn alt" id="bCarStore">OCEAN DRIVE SHOPPING &middot; GOLD &amp; HOMES<span class="kbhint"> (S)</span><span class="padhint"> (Y)</span></button><button class="btn alt" id="bCarMcWey">McWEY TOWER</button><button class="btn alt" id="bCarHome">BACK TO YOUR PLACE<span class="kbhint"> (H)</span><span class="padhint"> (RT)</span></button><button class="btn alt" id="bCarBack">NOT YET<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div>
 <div id="sShop" class="screen"><div class="gs"><div class="gsHead"><div><div class="shT">NINE OF NINE'S</div><div class="shS">EXOTIC MACHINERY OF DEATH &middot; GUNS &middot; MODS &middot; RANGE</div></div><div class="shW" id="shWallet"></div></div><div class="shSay" id="shSay"></div><div id="shMain"><div class="gsTabs" id="shTabs"></div><div class="gsList" id="shList"></div></div><div class="gsCard" id="shDetail"></div><div class="gsFoot"><span id="shLoad"></span><span class="gsKeys kbhint">W/S SCROLL &middot; A/D SECTION &middot; ENTER BUY &middot; T TRY</span><button class="btn" id="bShopLeave">LEAVE<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div></div>
 <div id="sStore" class="screen dim"><div class="shop"><div class="shHead"><div class="stHL"><canvas id="stFace" width="56" height="62"></canvas><div><div class="shT">OCEAN DRIVE SHOPPING</div><div class="shS">CARS &middot; GOLD &middot; NO REFUNDS</div></div></div><div><div class="shW" id="stWallet"></div><div class="shS" id="stOwed" style="color:#ff8a95;text-align:right"></div></div></div><div class="shSay" id="stSay" style="display:none"></div><div class="shS" style="margin-top:12px;align-self:flex-start" id="stCarsH">MIAMI MOTORS</div><div class="rowc" id="stCars"></div><div class="shS" style="margin-top:6px;align-self:flex-start" id="stGoldH">GOLD COAST JEWELERS</div><div class="rowc" id="stGold"></div><div class="shS" style="margin-top:6px;align-self:flex-start" id="stHomeH">SUNSHINE REALTY</div><div class="rowc" id="stHome"></div><div class="shF"><span id="stMsg"></span><button class="btn" id="bStoreLeave">LEAVE<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button></div></div></div>
-<div id="sMorning" class="screen dim"><div class="phone"><div class="hdr"><span id="mnWho"></span><span>THE MORNING AFTER</span></div><div class="msg" id="mnMsg"></div><div class="floor" id="mnFx"></div></div><button class="btn" id="bMorning">HEAD OUT<span class="kbhint"> (ENTER)</span><span class="padhint"> (A)</span></button></div>
+<div id="sObj" class="screen dim" role="dialog" aria-label="Mission objective"><div class="ojBox"><div class="ojWhere" id="ojWhere"></div><div class="ojName" id="ojName"></div><div class="ojBrief" id="ojBrief"></div><div class="ojHd">OBJECTIVE</div><ul id="ojList"></ul><div id="ojCh"></div><div class="ojGo" id="ojGo"></div></div></div><div id="sMorning" class="screen dim"><div class="phone"><div class="hdr"><span id="mnWho"></span><span>THE MORNING AFTER</span></div><div class="msg" id="mnMsg"></div><div class="floor" id="mnFx"></div></div><button class="btn" id="bMorning">HEAD OUT<span class="kbhint"> (ENTER)</span><span class="padhint"> (A)</span></button></div>
 <div id="sEnd" class="screen dim"><div class="logo" style="font-size:clamp(20px,5vw,44px)">THE FAMILY<br>RUNS MIAMI</div><div class="stats" id="eStats"></div><button class="btn" id="bAgain">PLAY AGAIN<span class="padhint"> (A)</span></button></div>
 <div id="sPause" class="screen dim"><div class="logo2" id="pTitle">PAUSED</div><div class="col" style="margin-top:8px">
   <button class="btn" id="bResume">RESUME<span class="padhint"> (START)</span></button><button class="btn alt" id="bPRestart">RESTART FLOOR<span class="padhint"> (BACK)</span></button><button class="btn alt" id="bPRestartJob" style="display:none">RESTART JOB FROM THE BEGINNING</button><button class="btn alt" id="bWalk">WALK AWAY FROM THE JOB<span class="padhint"> (X)</span></button>
@@ -289,14 +297,34 @@ if(!gl)throw new Error('no webgl');
 let AC=null,master,musicG,sfxG,noiseBuf,musTimer=null,musStep=0,musNext=0,audioFailed=false;
 function audioFailure(e){if(!audioFailed)console.error('Audio recovery failed',e);audioFailed=true;$('audioWarning').style.display='block';}
 function audioRecovered(){if(AC&&AC.state==='running'){audioFailed=false;$('audioWarning').style.display='none';}}
-function resumeAudio(){if(contextLost||!AC||!SET.sound||!['suspended','interrupted'].includes(AC.state)||navigator.userActivation?.isActive===false)return;
+function resumeAudio(){if(contextLost||!AC||!SET.sound)return;if(AUD.rebuild&&navigator.userActivation?.isActive!==false){rebuildAudio();return;}if(!['suspended','interrupted'].includes(AC.state)||navigator.userActivation?.isActive===false)return;
  try{AC.resume().then(audioRecovered,audioFailure);}catch(e){audioFailure(e);}}
 function initAudio(){if(contextLost)return;if(AC){resumeAudio();return;}try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){audioFailure(e);return;}
- AC.addEventListener('statechange',audioRecovered);
+ AC.addEventListener('statechange',audioRecovered);if(!AUD.timer)AUD.timer=setInterval(audioWatch,1000);
  master=AC.createGain();master.gain.value=SET.sound?0.6:0;master.connect(AC.destination);
+ try{AUD.probe=AC.createAnalyser();AUD.probe.fftSize=256;AUD.buf=new Float32Array(256);master.connect(AUD.probe);}catch(e){AUD.probe=null;}
  musicG=AC.createGain();musicG.gain.value=0.34;musicG.connect(master);sfxG=AC.createGain();sfxG.gain.value=0.85;sfxG.connect(master);
  noiseBuf=AC.createBuffer(1,AC.sampleRate,AC.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
  initGunBus();initMusicBus();musTimer=setInterval(schedMusic,40);resumeAudio();}
+/* Audio watchdog: the sound must never stay dead. Once a second it checks the engine:
+   - a context the browser suspended or interrupted (tab switch, phone lock, a call, Bluetooth change) is asked to resume,
+     which browsers allow once the page has been used; Safari waits for the next tap, which resumeAudio() handles;
+   - a context whose clock has stopped, or whose output has gone NaN (one bad value inside a filter, compressor or the reverb
+     silences everything after it for good), is closed and rebuilt from scratch: at once, or on the next tap, click or key.
+   sfx() also caps how many sounds can overlap, so a long firefight cannot swamp a phone's audio thread. */
+const AUD={timer:null,probe:null,buf:null,lastT:-1,stuck:0,tryT:0,rebuild:false,rebuilds:0,since:0};
+function audioWatch(){if(contextLost||!AC||document.hidden)return;const st=AC.state,now=performance.now();
+ if(st==='closed'){AUD.rebuild=true;return;}
+ if(st!=='running'){AUD.lastT=-1;AUD.stuck=0;if(SET.sound&&navigator.userActivation?.hasBeenActive!==false&&now-AUD.tryT>1500){AUD.tryT=now;try{AC.resume().then(audioRecovered,()=>{});}catch(e){}}return;}
+ const t=AC.currentTime;AUD.stuck=t===AUD.lastT?AUD.stuck+1:0;AUD.lastT=t;let bad=AUD.stuck>=3;
+ if(!bad&&AUD.probe&&SET.sound){AUD.probe.getFloatTimeDomainData(AUD.buf);for(let i=0;i<AUD.buf.length;i+=2)if(!Number.isFinite(AUD.buf[i])){bad=true;break;}}
+ if(!bad)return;
+ if(now-AUD.since>60000){AUD.since=now;AUD.rebuilds=0;}if(AUD.rebuilds>=3)return; // a machine with no working output: stop trying
+ AUD.rebuilds++;if(navigator.userActivation?.hasBeenActive===false)AUD.rebuild=true;else rebuildAudio();}
+function rebuildAudio(){AUD.rebuild=false;AUD.stuck=0;AUD.lastT=-1;const old=AC;if(musTimer)clearInterval(musTimer);musTimer=null;
+ try{if(old&&old.state!=='closed')old.close().catch(()=>{});}catch(e){}
+ AC=null;ENG=null;FOUNT=null;GBUF=null;gbufTried=false;recBus=null;gunBus=null;sfxRev=null;VOICES.length=0;
+ MUS.track='';MUS.pending=null;MUS.muffled=false;initAudio();}
 function env(g,t,a,pk,dec){g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(pk,t+a);g.gain.exponentialRampToValueAtTime(0.0001,t+a+dec);}
 function noise(t,dur,type,f0,f1,vol,dest,q){if(!AC||AC.state!=='running')return;const s=AC.createBufferSource();s.buffer=noiseBuf;const f=AC.createBiquadFilter();f.type=type;f.frequency.setValueAtTime(f0,t);f.frequency.exponentialRampToValueAtTime(f1,t+dur);f.Q.value=q||1;const g=AC.createGain();env(g,t,0.002,vol,dur);s.connect(f);f.connect(g);g.connect(dest||sfxG);s.start(t,Math.random()*0.5);s.stop(t+dur+0.05);}
 function tone(t,dur,type,f0,f1,vol,dest,a){if(!AC||AC.state!=='running')return;a=a||0.002;const o=AC.createOscillator();o.type=type;o.frequency.setValueAtTime(f0,t);if(f1!==f0)o.frequency.exponentialRampToValueAtTime(f1,t+dur);const g=AC.createGain();env(g,t,a,vol,dur);o.connect(g);g.connect(dest||sfxG);o.start(t);o.stop(t+a+dur+0.05);}
@@ -404,7 +432,10 @@ function rlStep(r,type){const S=gunSnd(type);if(!S||!GBUF)return;const n=S.rl.le
 function rlFinish(r,type){const S=gunSnd(type);if(!S||!GBUF||contextLost||!AC||AC.state!=='running'||!SET.sound)return false;const n=S.rl.length,t=AC.currentTime;
  if((r.si||0)<n-1&&n>1){gclip(S.rl[n-2][1],t,0.8,1.05,0.12);gclip(S.rl[n-1][1],t+0.09,0.85,1.05,0.12);}else gclip(S.rl[n-1][1],t,0.85,frnd(0.97,1.03),0.12);return true;}
 function gunDry(type){const S=gunSnd(type);if(!S||!S.dry||contextLost||!AC)return false;return gclip(S.dry,AC.currentTime,0.7,frnd(0.97,1.03),0.05);}
-function sfx(n,v){if(contextLost||!AC||AC.state!=='running'||!SET.sound)return;try{SFX[n](AC.currentTime,v===undefined?1:v);}catch(e){}}
+/* at most 36 sounds started in the last 0.6 s: past that, new combat sounds are dropped (menu blips always play) */
+const VOICES=[],VOICE_UI=new Set(['blip','pick','cash','ring','ding','type']);
+function voiceFree(n){const t=AC.currentTime;while(VOICES.length&&VOICES[0]<=t)VOICES.shift();if(VOICES.length>=36&&!VOICE_UI.has(n))return false;VOICES.push(t+0.6);return true;}
+function sfx(n,v){if(contextLost||!AC||AC.state!=='running'||!SET.sound||!voiceFree(n))return;try{SFX[n](AC.currentTime,v===undefined?1:v);}catch(e){}}
 const mtof=m=>440*Math.pow(2,(m-69)/12);
 /* ---- music engine: distorted bus, sidechain, delay, reverb ---- */
 let mBus,mDist,mFilt,scBus,bassDist,leadDist,dlyIn,revIn,hissG;
@@ -795,6 +826,7 @@ function padMenus(dt){if(!PAD.on)return;PAD.navT-=dt;const ax=PAD.gp.axes[0]||0;
  if(pdown(14))dir=-1;else if(pdown(15))dir=1;else if(Math.abs(ax)>0.6&&PAD.navT<=0)dir=Math.sign(ax);if(dir)PAD.navT=0.32;if(Math.abs(ax)<0.3)PAD.navT=0;
  const skip=()=>chatTap();
  switch(state){
+  case 'objcard':if(pdown(0)||pdown(1)||pdown(9))objCardGo();break;
   case 'title':if(SETMENU){if(pdown(1)||pdown(9))$('bSetBack').click();break;}if(pdown(0)||pdown(9)){initAudio();$('bStart').click();}else if(pdown(3))$('bHelp').click();else if(pdown(2))$('bSettings').click();else if(pdown(5)&&resumeRun())$('bResumeJob').click();break;
   case 'help':if(pdown(0)||pdown(1))$('bHelpBack').click();break;
   case 'select':if(dir<0)$('bPrev').click();else if(dir>0)$('bNext').click();if(pdown(12))stepFloor(1);else if(pdown(13))stepFloor(-1);
@@ -809,7 +841,7 @@ function padMenus(dt){if(!PAD.on)return;PAD.navT-=dt;const ax=PAD.gp.axes[0]||0;
   case 'end':if(pdown(0))$('bAgain').click();break;
   case 'store':storePad(dir);break;
   case 'morning':if(pdown(0))$('bMorning').click();break;
-  case 'carmenu':if(pdown(3)){$('bCarStore').click();break;}if(pdown(4)&&$('bCarDealer').style.display!=='none'){$('bCarDealer').click();break;}if(pdown(5)&&$('bCarClub').style.display!=='none'){$('bCarClub').click();break;}if(pdown(0))$('bCarJob').click();else if(pdown(2)&&$('bCarShop').style.display!=='none')$('bCarShop').click();else if(pdown(1))closeCarMenu();break;
+  case 'carmenu':if(pdown(3)){$('bCarStore').click();break;}if(pdown(4)&&$('bCarDealer').style.display!=='none'){$('bCarDealer').click();break;}if(pdown(5)&&$('bCarClub').style.display!=='none'){$('bCarClub').click();break;}if(pdown(6)&&$('bCarMcWey').style.display!=='none'){$('bCarMcWey').click();break;}if(pdown(7)&&$('bCarHome').style.display!=='none'){$('bCarHome').click();break;}if(pdown(0))$('bCarJob').click();else if(pdown(2)&&$('bCarShop').style.display!=='none')$('bCarShop').click();else if(pdown(1))closeCarMenu();break;
   case 'shop':shopPadInput(dir,dt);break;
   case 'perk':{const cs=document.querySelectorAll('.pcard');const i=pdown(4)?0:pdown(0)?1:pdown(5)?2:-1;if(i>=0&&cs[i])choosePerk(cs[i].dataset.k);}break;
   case 'pause':if(pdown(9)||pdown(1))togglePause();else if(pdown(8))restart();else if(padWalk())walkAway();else if(pdown(3))$('bQuit').click();break;
@@ -2388,16 +2420,28 @@ function hubSetup(g){const d=g.def;g.npcs=g.npcs||[];g.trigs=g.trigs||[];
  {const fk=[];for(let z=0;z<g.H;z++)for(let x=0;x<g.W;x++)if(g.furn[z*g.W+x]===25)fk.push([x,z]);if(fk.length){const xs=fk.map(t=>t[0]),zs=fk.map(t=>t[1]);g.fount={x:(Math.min(...xs)+Math.max(...xs)+1)/2,z:(Math.min(...zs)+Math.max(...zs)+1)/2};}}
  if(d===HUBS.office)officeSetup(g);else if(d===HUBS.lobby)lobbySetup(g);else if(d===HUBS.slobby)slobbySetup(g);else if(d===HUBS.garage)garageSetup(g);}
 function loadHub(name,mode){HUBMODE=mode||'in';const d=HUBS[name];loadLevel(levelIdx,d);G.track=d.track;MUS.track='';MUS.pending=null;state='play';show(null);
- const own=hubModeSetup(name);$('bSkip').innerHTML=(G.seq?'SKIP':HUBMODE==='home'?'LEAVE FOR McWEY':HUBMODE==='arrive'?'SKIP TO YOUR APARTMENT':HUBMODE==='in'?'SKIP TO McWEY':'SKIP TO YOUR CAR')+'<span class="kbhint"> (TAB)</span><span class="padhint"> (Y)</span>';if(own)return;
+ const own=hubModeSetup(name);$('bSkip').innerHTML=(G.seq?'SKIP':HUBMODE==='home'?'GO SOMEWHERE':HUBMODE==='arrive'?'SKIP TO YOUR APARTMENT':HUBMODE==='in'?'SKIP TO McWEY':'SKIP TO YOUR CAR')+'<span class="kbhint"> (TAB)</span><span class="padhint"> (Y)</span>';if(own)return;
  if(name==='drive')banner('OCEAN DRIVE, MIAMI',touchMode?'Left thumb steers &amp; drives · push to the edge for turbo':padMode?'Left stick steers &amp; drives · LB turbo':'W/S gas &amp; brake · A/D steer · Shift turbo');
  else if(name==='lobby')banner('McWEY TOWER','Take the elevator to the 52nd floor');}
-function goDrive(){const p=PROG[rideId()];if(p&&p.heli){loadHub('lobby');banner('BY HELICOPTER','Landed on McWey Tower · take the elevator up');return;}startCine();}
+/* The helicopter ride is switched off for now: it only behaved like a car. Every trip is by car (the boat still takes you to the yacht).
+   p.heli is still granted after the Mall so old saves and the job unlocks keep working; flip HELI_RIDE to bring the chopper back. */
+const HELI_RIDE=false,rideHeli=()=>HELI_RIDE&&!!myProg().heli;
+function goDrive(){if(rideHeli()){loadHub('lobby');banner('BY HELICOPTER','Landed on McWey Tower · take the elevator up');return;}startCine();}
 let fading=false;function fadeTo(fn,o){if(contextLost||fading)return false;fading=true;
  if(o&&o.climb){setTimeout(()=>{let done=false;const run=snap=>{if(done)return;done=true;SNAP=null;try{if(!contextLost)fn();}finally{climbDissolve(snap);fading=false;}};
   SNAP=()=>run(climbSnap());setTimeout(()=>run(null),400);},o.ms||800);return true;}
  $('fade').classList.add('on');setTimeout(()=>{try{if(!contextLost)fn();}finally{setTimeout(()=>{$('fade').classList.remove('on');fading=false;},60);}},380);return true;}
 /* McWey still owes a debrief/brief (VISIT.next is only taken into NEXTJOB by chatGo): leaving home or taking the job goes to him first, never back to the last job */
 const mcDue=()=>VISIT.next!==NEXTJOB;
+/* You can drive straight to the next job from anywhere: home, Nine's, the club, the dealer, Ocean Drive. McWey only insists on a
+   visit for the first meeting (the loan), the start of a new act, and the final debrief. Skipping a debrief only skips his talk:
+   the money was settled when the job ended. */
+const mcMust=()=>mcDue()&&(VISIT.next==='end'||!(myProg().seen||{}).loan||VISIT.next===3||VISIT.next===8);
+function jobDirect(){if(mcDue()){const pr=myProg();NEXTJOB=VISIT.next;JOBPICK=null;LASTPAY=null;HUBFIRST=false;VISIT.debrief=null;if(missionBriefReset(missionId(NEXTJOB),pr.wflags))saveProg();}
+ const r=JOBPICK?startMission(JOBPICK):startLevel(NEXTJOB);showObjCard();return r;}
+/* leaving for somewhere from a home rides the elevator down first (the Seabreeze, Coral Tower); everywhere else your car drives off */
+function travel(go,t1,t2){const g=G,L=g&&HUBMODE==='home'&&HOME_LIFT[g.home];
+ if(L)return fadeTo(()=>enterElevator(true,{from:L.from,to:L.to,title:L.title,dur:L.from===69?4.4:2.4,then:go}));return departTo(go,t1,t2);}
 function onHubTrigger(t){if(fading)return false;if(t==='leave')return homeLeave();if(t==='lift')return liftUp();if(t==='exit'){sfx('blip');return fadeTo(()=>loadHub('drive','parked'));}if(t==='tower'){sfx('blip');return fadeTo(()=>loadHub('lobby'));}else if(t==='elevator'){sfx('ding');return fadeTo(enterElevator);}else if(t==='mcwey'){return fadeTo(talkMcWey);}return true;}
 function updateHub(dt){const g=G;g.T+=dt;g.time+=dt;if(g.np)g.np.t+=dt;
  if(g.seq){updateSeq(dt);if(G!==g)return;if(g.def.hub!=='drive')npcStep(dt);else if(g.parked)parkedStreet(dt);if(g.slots)homeTick(dt);updateFX(dt);seqCam(dt);return;}
@@ -2445,7 +2489,7 @@ function seqEnd(g,s){const p=g.player;
  else if(s.k==='walk'&&p){const n=s.path.length,q=s.path[n-1],o=n>1?s.path[n-2]:[p.x,p.z];if(Math.hypot(q[0]-o[0],q[1]-o[1])>1e-4)p.a=Math.atan2(q[0]-o[0],q[1]-o[1]);p.x=q[0];p.z=q[1];if(s.face!==undefined)p.a=s.face;s.j=n;}
  else if(s.k==='say'&&s.n)s.n.said=true;}
 function seqFinish(g){const S=g.seq;if(!S)return;if(S.keep){S.i=S.steps.length;return;}g.seq=null;g.card=null;g.trigLock=true;
- $('bSkip').innerHTML=(HUBMODE==='home'?'LEAVE FOR McWEY':HUBMODE==='arrive'?'SKIP TO YOUR APARTMENT':HUBMODE==='in'?'SKIP TO McWEY':'SKIP TO YOUR CAR')+'<span class="kbhint"> (TAB)</span><span class="padhint"> (Y)</span>';
+ $('bSkip').innerHTML=(HUBMODE==='home'?'GO SOMEWHERE':HUBMODE==='arrive'?'SKIP TO YOUR APARTMENT':HUBMODE==='in'?'SKIP TO McWEY':'SKIP TO YOUR CAR')+'<span class="kbhint"> (TAB)</span><span class="padhint"> (Y)</span>';
  if(S.done)S.done(g);}
 function seqSkip(){const g=G,S=g&&g.seq;if(!S||S.i>=S.steps.length)return;
  while(S.i<S.steps.length){const s=S.steps[S.i++];if(s.k==='call'){s.fn();if(G!==g)return;continue;}if(s.k==='card')continue;seqEnd(g,s);}
@@ -2469,7 +2513,7 @@ function drawSeqHUD(c,g,u){const S=g.seq,k=clamp(S.t/0.45,0,1),bh=Math.round(vh*
 /* ---- leaving by car: walk to the driver's door, get in, pull out and drive off, then the next place loads ---- */
 function departCar(g){if(!g)return null;if(g.def.hub==='drive'&&g.parked)return g.pcar;return g.hcar||g.park||null;}
 function departTo(go,t1,t2){const g=G;if(!g||!g.def.hub||g.seq||!g.player||fading)return fadeTo(go);const c=departCar(g);if(!c)return fadeTo(go);
- const p=g.player,heli=c===g.park&&!!myProg().heli,a=c.h!==undefined&&c.v!==undefined?c.h-Math.PI/2:(c.a||0),fx=Math.cos(a),fz=-Math.sin(a),sx=-fz,sz=fx,
+ const p=g.player,heli=c===g.park&&rideHeli(),a=c.h!==undefined&&c.v!==undefined?c.h-Math.PI/2:(c.a||0),fx=Math.cos(a),fz=-Math.sin(a),sx=-fz,sz=fx,
   side=((p.x-c.x)*sx+(p.z-c.z)*sz)>=0?1:-1,door=[c.x+sx*side*0.72-fx*0.15,c.z+sz*side*0.72-fz*0.15],steps=[{k:'walk',path:[door],sp:3.2,max:3},{k:'hide'},{k:'card',t1,t2},{k:'wait',dur:0.25}];
  if(heli)steps.push({k:'wait',dur:1.4});
  else steps.push({k:'drive',car:c,path:departPath(g,c,a),dur:2.1,ease:'in'});
@@ -2479,7 +2523,7 @@ function departPath(g,c,a){const x=c.x,z=c.z;
  if(g.def.hub==='drive')return[[x,z],[x+2.4,z+0.5],[x+5.2,8.5],[x+24,8.5]];
  const fx=Math.cos(a),fz=-Math.sin(a);if(g.club)return[[x,z],[x+fx*3,z+fz*3+0.7],[x+fx*24,z+fz*24+0.7]];return[[x,z],[x+fx*24,z+fz*24]];}
 /* ---- pulling up at Nine's or the club: drive in along the street, park, walk to the door ---- */
-function hubArrive(g){if(!g||g!==G||!g.park||!g.player||myProg().heli)return;const c=g.park,p=g.player,x1=c.x,z=c.z,end=[p.x,p.z];c.a=0;c.spin=0;seqCamTo(g,x1,z);
+function hubArrive(g){if(!g||g!==G||!g.park||!g.player||rideHeli())return;const c=g.park,p=g.player,x1=c.x,z=c.z,end=[p.x,p.z];c.a=0;c.spin=0;seqCamTo(g,x1,z);
  startSeq([{k:'hide',quiet:1},{k:'drive',car:c,path:[[x1-15,z],[x1,z]],dur:2.3,ease:'out',camEnd:1},{k:'wait',dur:0.3},{k:'out',at:[x1-0.25,z+0.68],a:0},{k:'walk',path:[end],max:4}],g=>{if(g.def===HUBS.club)banner('VELVET PALMS','Tip the dancers · talk to Tony');else if(g.def===HUBS.dealer){banner('VICTORY MOTORS',"Talk to Victory Vic · every deal's a win");dealerHello(g);}else banner("NINE OF NINE'S",'Exotic machinery of death');});}
 
 /* ---- coming home ---- */
@@ -2517,9 +2561,9 @@ function arriveHubSetup(g,name){const p=g.player;g.hideP=true;if(name==='slobby'
  if(p)p.a=Math.PI;const lt=g.trigs.filter(t=>t.t==='lift');if(lt.length)g.car={x:lt.reduce((a,t)=>a+t.x,0)/lt.length,z:lt[0].z};return true;}
 /* the lobby elevator: up to the apartment, and the skip button goes straight there */
 function liftUp(){const L=G&&G.def.lift;if(!L)return false;sfx('ding');return fadeTo(()=>enterElevator(false,{from:L.from,to:L.to,title:L.title,dur:L.dur,then:()=>enterHomeByLift(L.home)}));}
-function homeLeave(){const g=G,nx=mcDue()?goDrive:()=>loadHub('drive','parked'),L=HOME_LIFT[g.home];sfx('blip');
- if(L)return fadeTo(()=>enterElevator(true,{from:L.from,to:L.to,title:L.title,dur:L.from===69?4.4:2.4,then:nx}));
- if(g.hcar)return departTo(nx,'McWEY TOWER',mcDue()?'THE MAN WANTS A WORD':'OCEAN DRIVE');return fadeTo(nx);}
+/* walking out of a home asks where to: the next job, McWey, a shop. Backing out of the menu leaves you standing by the door,
+   and the door waits until you have walked off it before it asks again */
+function homeLeave(){const g=G;g.trigLock=true;openCarMenu();return false;}
 function drawSlobby(B,g){/* the concierge desk top with a bell and the guest book, the elevator call panel and floor lights, a rug, the street kerb */
  B.box(TRS(5.5,0.96,4.5,0,3.1,0.05,0.95),[0.97,0.97,0.96],false,TUV[63]);B.box(TRS(5.5,0.93,4.5,0,3.14,0.03,0.99),GOLD);B.box(TRS(6.6,1.02,4.4,0,0.12,0.07,0.12),GOLD);
  B.box(TRS(4.6,1.0,4.45,0.2,0.42,0.03,0.3),[0.95,0.92,0.82]);B.box(TRS(5.5,0.6,4.99,0,2.9,0.5,0.02),[0.17,0.72,0.73]);
@@ -2573,13 +2617,13 @@ function updateDrive(dt){const g=G,c=g.pcar,p=g.player;let thr=0,st=0,turbo=fals
  if(turbo&&Math.random()<dt*25)g.parts.push({t:'c',x:c.x-fx*1.2,y:0.3,z:c.z-fz*1.2,vx:-fx*2+rnd(-0.5,0.5),vy:rnd(0,0.5),vz:-fz*2+rnd(-0.5,0.5),s:0.06,c:[1,0.4,0.9],life:0.3});
  engineRev(c.v,turbo);p.x=c.x;p.z=c.z;p.vx=fx*c.v;p.vz=fz*c.v;p.a=c.h;g.turbo=turbo;}
 function drawHubDyn(B,O){const g=G;
- if(g.def.hub==='drive'){const c=g.pcar;if(g.parked&&myProg().heli)drawHeli(B,c.x,c.z,0,g.T);else drawRide(B,c.x,c.z,1,c.h-Math.PI/2,null,c.wr||0);if(myProg().boat){const T0=g.tower||g.car;drawSpeedboat(B,T0.x+1,14.3+Math.sin(g.T*1.5)*0.05,0,[1,0.3,0.75]);}if(g.parked&&g.player&&!g.hideP)drawChar(IBhi,g.player);if(g.doorT>0&&rideId()==='money'&&myCar()==='sig')drawCarDoor(B,c.x,c.z,1,c.h-Math.PI/2,g.doorT*1.1);for(const t of g.traffic)drawCar(B,t.x,t.z,t.col,t.dir,t.wr||0);
+ if(g.def.hub==='drive'){const c=g.pcar;if(g.parked&&rideHeli())drawHeli(B,c.x,c.z,0,g.T);else drawRide(B,c.x,c.z,1,c.h-Math.PI/2,null,c.wr||0);if(myProg().boat){const T0=g.tower||g.car;drawSpeedboat(B,T0.x+1,14.3+Math.sin(g.T*1.5)*0.05,0,[1,0.3,0.75]);}if(g.parked&&g.player&&!g.hideP)drawChar(IBhi,g.player);if(g.doorT>0&&rideId()==='money'&&myCar()==='sig')drawCarDoor(B,c.x,c.z,1,c.h-Math.PI/2,g.doorT*1.1);for(const t of g.traffic)drawCar(B,t.x,t.z,t.col,t.dir,t.wr||0);
   if(g.car){const T0=g.tower||g.car,pcx=T0.x+4.3,pcz=T0.z+0.7;drawLambo(B,pcx,pcz,1,0,[0.82,0.04,0.08],0);for(const sz of [-0.36,0.36])B.box(TRS(pcx,0.14,pcz+sz,0,2.3,0.035,0.05),GOLD,true);B.box(TRS(pcx,0.05,pcz,0,2.5,0.02,0.92),[0.95,0.72,0.25],true);}
   for(const n of g.npcs)drawChar(IBhi,n);
   if(g.cine&&g.cine.shot===1){const e=g.cine.eye,tg=g.cine.tgt,zz=g.H+3.9,k=(zz-e[2])/(tg[2]-e[2]);drawRetroSun(B,e[0]+(tg[0]-e[0])*k+1.5,2.2,zz,2.0,-0.9,0.9);}
 if(!g.cine&&!g.seq){const y=2.4+Math.sin(g.T*4)*0.2;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.45,0.45,0.45))),GOLD,true);
   for(let i=0;i<6;i++)B.box(TRS(g.car.x+Math.sin(g.T*2+i)*0.9,0.02,g.car.z+Math.cos(g.T*2+i)*0.9,0,0.25,0.01,0.25),[1,0.85,0.3],true);}}
- else{for(const n of g.npcs)drawChar(IBhi,n);if(g.player&&!g.hideP)drawChar(IBhi,g.player);if(g.park){if(myProg().heli)drawHeli(B,g.park.x,g.park.z,0,g.T);else drawRide(B,g.park.x,g.park.z,1,g.park.a||0,undefined,g.park.spin||0);}
+ else{for(const n of g.npcs)drawChar(IBhi,n);if(g.player&&!g.hideP)drawChar(IBhi,g.player);if(g.park){if(rideHeli())drawHeli(B,g.park.x,g.park.z,0,g.T);else drawRide(B,g.park.x,g.park.z,1,g.park.a||0,undefined,g.park.spin||0);}
   if(g.hcar)drawRide(B,g.hcar.x,g.hcar.z,1,g.hcar.a||0,undefined,g.hcar.spin||0);if(g.garage)drawGarage(B,g);if(g.slob)drawSlobby(B,g);if(g.def===HUBS.bunker)drawBunker(B,g);if(g.dealer)drawDealer(B,g);if(g.slots){drawHomeDecor(B,g);drawHome(B,g);drawHomeX(B,g);drawLocker(B,g);}if(g.club)drawClub(B,g);
   if(g.tankB){const t=g.tankB;drawTankLife(B,g.T,t.x0,t.x1,(t.z0+t.z1)/2,0.08,1.35,0.35,0.9,0.4,2.15);}
   if(g.fount)drawFountainWater(B,g.fount,g.T);if(g.mcDesk)drawMcOffice(B,g);if(g.tv)drawLobbyTV(B,g);if(g.lounge)drawLounge(B,g);
@@ -2612,7 +2656,7 @@ function hubModeSetup(name){const g=G,p=g.player;if(HUBMODE==='home'){homeSetup(
  return false;}
 function parkedStreet(dt){const g=G,p=g.player;for(const t of g.traffic){t.x+=t.dir*t.sp*dt;if(t.x>g.W+2)t.x=-2;if(t.x<-2)t.x=g.W+2;
   if(p&&Math.abs(p.x-t.x)<1.6&&Math.abs(p.z-t.z)<0.8){p.z+=Math.sign(p.z-t.z||-1)*0.12;if(!(t.honk>0)){t.honk=1.5;sfx('horn');popup(t.x,t.z,pick(['HEY!','*HONK*','WATCH IT!']),'#ffd36b');}}if(t.honk>0)t.honk-=dt;}}
-function hubTargets(g){const t=[];if(g.club){t.push({k:'car',x:g.park.x,z:g.park.z,r:2.3,lbl:myProg().heli?'YOUR CHOPPER':'YOUR CAR'});for(const d of g.club.dancers)t.push({k:'tip',d,x:d.x,z:d.z,r:3.1,lbl:'THROW $100 AT '+d.dname});if(g.club.tony)t.push({k:'tony',x:g.club.tony.x,z:g.club.tony.z,r:3.4,lbl:'TALK TO TONY'});return t;}if(g.slots){const o=g.slots.o;if(o)t.push({k:'catalog',x:o.x,z:o.z,r:1.9,lbl:'PHONE · FURNITURE & SIDE JOBS'});const bp=homeBedPos(g);t.push({k:'bed',x:bp.x,z:bp.z,r:2.0,lbl:'GO TO SLEEP'});const lp=homeLockerPos(g);t.push({k:'locker',x:lp.x,z:lp.z,r:1.8,lbl:'GUN LOCKER · '+myProg().locker.items.length+'/'+LOCKER_CAP});const f=homeFurn();if(g.home===1&&f.hifi&&g.slots.b)t.push({k:'hifi',x:g.slots.b.x-0.4,z:g.slots.b.z+0.3,r:1.9,lbl:'HI-FI · CHANGE TRACK'});return t;}const car=g.park||(g.parked?g.pcar:null);if(car)t.push({k:'car',x:car.x,z:car.z,r:2.3,lbl:myProg().heli?'YOUR CHOPPER':'YOUR CAR'});const n=g.npcs.find(q=>q.kind==='nine');if(n)t.push({k:'nine',x:n.x,z:n.z,r:2.7,lbl:'NINE OF NINE'});if(g.dealer)dealerTargets(g,t);if(g.def===HUBS.lobby||g.def===HUBS.office){const p=g.player;let nb=null,nd=1.9;if(p)for(const q of g.npcs){if(!NPC_CHAT[q.kind])continue;const d=Math.hypot(q.x-p.x,q.z-p.z);if(d<nd){nd=d;nb=q;}}if(nb)t.push({k:'talk',n:nb,x:nb.x,z:nb.z,r:1.9,lbl:'TALK'});}return t;}
+function hubTargets(g){const t=[];if(g.club){t.push({k:'car',x:g.park.x,z:g.park.z,r:2.3,lbl:rideHeli()?'YOUR CHOPPER':'YOUR CAR'});for(const d of g.club.dancers)t.push({k:'tip',d,x:d.x,z:d.z,r:3.1,lbl:'THROW $100 AT '+d.dname});if(g.club.tony)t.push({k:'tony',x:g.club.tony.x,z:g.club.tony.z,r:3.4,lbl:'TALK TO TONY'});return t;}if(g.slots){const o=g.slots.o;if(o)t.push({k:'catalog',x:o.x,z:o.z,r:1.9,lbl:'PHONE · FURNITURE & SIDE JOBS'});const bp=homeBedPos(g);t.push({k:'bed',x:bp.x,z:bp.z,r:2.0,lbl:'GO TO SLEEP'});const lp=homeLockerPos(g);t.push({k:'locker',x:lp.x,z:lp.z,r:1.8,lbl:'GUN LOCKER · '+myProg().locker.items.length+'/'+LOCKER_CAP});const f=homeFurn();if(g.home===1&&f.hifi&&g.slots.b)t.push({k:'hifi',x:g.slots.b.x-0.4,z:g.slots.b.z+0.3,r:1.9,lbl:'HI-FI · CHANGE TRACK'});return t;}const car=g.park||(g.parked?g.pcar:null);if(car)t.push({k:'car',x:car.x,z:car.z,r:2.3,lbl:rideHeli()?'YOUR CHOPPER':'YOUR CAR'});const n=g.npcs.find(q=>q.kind==='nine');if(n)t.push({k:'nine',x:n.x,z:n.z,r:2.7,lbl:'NINE OF NINE'});if(g.dealer)dealerTargets(g,t);if(g.def===HUBS.lobby||g.def===HUBS.office){const p=g.player;let nb=null,nd=1.9;if(p)for(const q of g.npcs){if(!NPC_CHAT[q.kind])continue;const d=Math.hypot(q.x-p.x,q.z-p.z);if(d<nd){nd=d;nb=q;}}if(nb)t.push({k:'talk',n:nb,x:nb.x,z:nb.z,r:1.9,lbl:'TALK'});}return t;}
 function hubInteract(){const g=G,p=g.player;if(!p||g.hubDone)return;const ts=hubTargets(g);let best=null,bd=1e9;
  for(const t of ts){const d=Math.hypot(t.x-p.x,t.z-p.z);if(d<t.r&&d<bd){bd=d;best=t;}}g.ia=best;let go=null;
  if(pressed.grab&&best){go=best;pressed.grab=false;}
@@ -2663,15 +2707,18 @@ function runWalkAway(p){if(!p.run)return false;delete p.run;return true;}
   return 'LOADOUT: '+(parts.join(' + ')||'BARE HANDS')+(am.length?' · '+am.join(' · '):'')+(ar?' · '+ar.name+(k.armour.plates<ar.plates?' (DAMAGED)':''):'');}
 /* the car menu */
 function openCarMenu(){if(state!=='play'||!G)return;sfx('blip');state='carmenu';$('carWallet').textContent='WALLET $'+fmt(wallet())+(myProg().debt>0?'  ·  OWED TO McWEY $'+fmt(myProg().debt):'')+'  ·  RIDE: '+carName(myCar());$('carLoad').textContent=loadoutTxt();
- $('bCarJob').innerHTML=(mcDue()?'SEE McWEY':'NEXT JOB: '+(JOBPICK?missionName(JOBPICK):LEVELS[NEXTJOB].name))+'<span class="kbhint"> (ENTER)</span><span class="padhint"> (A)</span>';$('bCarShop').style.display=G.def===HUBS.bunker?'none':'';$('bCarClub').style.display=G.def===HUBS.club?'none':'';$('bCarDealer').style.display=G.def===HUBS.dealer?'none':'';show('sCar');}
+ $('bCarJob').innerHTML=(mcMust()?'SEE McWEY':'NEXT JOB: '+(JOBPICK?missionName(JOBPICK):LEVELS[mcDue()?VISIT.next:NEXTJOB].name))+'<span class="kbhint"> (ENTER)</span><span class="padhint"> (A)</span>';
+ $('bCarMcWey').style.display=mcMust()?'none':'';$('bCarMcWey').innerHTML='McWEY TOWER &middot; '+(mcDue()?'DEBRIEF':'MORE WORK')+'<span class="kbhint"> (M)</span><span class="padhint"> (LT)</span>';
+ $('bCarHome').style.display=HUBMODE==='home'?'none':'';$('bCarShop').style.display=G.def===HUBS.bunker?'none':'';$('bCarClub').style.display=G.def===HUBS.club?'none':'';$('bCarDealer').style.display=G.def===HUBS.dealer?'none':'';show('sCar');}
 function closeCarMenu(){if(state!=='carmenu')return;sfx('blip');state='play';show(null);}
 $('bCarJob').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);const mc=mcDue();
- departTo(mc?goDrive:()=>JOBPICK?startMission(JOBPICK):startLevel(NEXTJOB),mc?'McWEY TOWER':JOBPICK?missionName(JOBPICK):LEVELS[NEXTJOB].name,mc?'THE MAN WANTS A WORD':"TONIGHT'S JOB");};
-$('bCarShop').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);departTo(()=>{loadHub('bunker');hubArrive(G);},"NINE OF NINE'S",'EXOTIC MACHINERY OF DEATH');};
+ const must=mcMust();travel(must?goDrive:jobDirect,must?'McWEY TOWER':JOBPICK?missionName(JOBPICK):LEVELS[mc?VISIT.next:NEXTJOB].name,must?'THE MAN WANTS A WORD':"TONIGHT'S JOB");};
+$('bCarMcWey').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);travel(goDrive,'McWEY TOWER',mcDue()?'THE MAN WANTS A WORD':'FIFTY-TWO FLOORS OF GOLD');};
+$('bCarShop').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);travel(()=>{loadHub('bunker');hubArrive(G);},"NINE OF NINE'S",'EXOTIC MACHINERY OF DEATH');};
 $('bCarBack').onclick=()=>closeCarMenu();
 $('bCarHome').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);departTo(goHome,HOMEDEF[myProg().home||0].name,'HOME');};
-$('bCarClub').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);departTo(()=>{loadHub('club');hubArrive(G);},'VELVET PALMS',"GENTLEMEN'S CLUB");};
-$('bCarDealer').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);departTo(()=>{loadHub('dealer');hubArrive(G);},'VICTORY MOTORS',"EVERY DEAL'S A WIN");};
+$('bCarClub').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);travel(()=>{loadHub('club');hubArrive(G);},'VELVET PALMS',"GENTLEMEN'S CLUB");};
+$('bCarDealer').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);travel(()=>{loadHub('dealer');hubArrive(G);},'VICTORY MOTORS',"EVERY DEAL'S A WIN");};
 $('bCarStore').onclick=()=>{if(state!=='carmenu')return;sfx('pick');openStore();};
 const JEWEL={watch:{name:'GOLD WATCH',price:2500,desc:'Tells time. Mostly tells people you have money.'},chain:{name:'GOLD CHAIN',price:6000,desc:'Real gold. No green marks on this neck.'},rings:{name:'PINKY RINGS',price:9000,desc:'Two rings. One on each hand that matters.'}};
 let storeFocus=0,storeMode='shop';
@@ -2721,7 +2768,7 @@ function storePad(dir){const cs=document.querySelectorAll('#sStore .scard');if(d
 function applyJewelLooks(){for(const c of CHARS){const j=(PROG[c.id]&&PROG[c.id].jewel)||{},L=LOOKS[c.id];if(!L)continue;L.watch=!!j.watch;L.chain=!!j.chain;}}
 function placeOldCar(){const g=G,cx=g.arrive?g.arrive.x1:g.car.x,a=g.arr,lane=(x,z)=>a&&z>=a.zT&&z<a.zT+2&&(g.carA?x>cx:x<cx),free=(x,z)=>{for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=0;dz++){const ix=Math.floor(x+dx),iz=Math.floor(z+dz);if(ix<1||iz<1||ix>=g.W-1||iz>=g.H-1||g.solid[iz*g.W+ix]||g.furn[iz*g.W+ix])return false;}return true;};
  for(const [ox,oz] of [[-3,0],[3,0],[0,2.2],[0,-2.2],[-3,2],[3,2]]){const x=cx+ox,z=g.car.z+oz;if(free(x,z)&&!lane(x,z)&&Math.hypot(x-g.player.x,z-g.player.z)>2){g.oldCar={x,z,a:0};return;}}}
-function menuKey(e){const c=e.code;if(state==='store'){storeKey(e);return;}if(state==='carmenu'&&c==='KeyS'){$('bCarStore').click();return;}if(state==='carmenu'&&c==='KeyD'&&$('bCarDealer').style.display!=='none'){$('bCarDealer').click();return;}if(state==='carmenu'&&c==='KeyC'&&$('bCarClub').style.display!=='none'){$('bCarClub').click();return;}
+function menuKey(e){const c=e.code;if(state==='store'){storeKey(e);return;}if(state==='carmenu'&&c==='KeyS'){$('bCarStore').click();return;}if(state==='carmenu'&&c==='KeyM'&&$('bCarMcWey').style.display!=='none'){$('bCarMcWey').click();return;}if(state==='carmenu'&&c==='KeyH'&&$('bCarHome').style.display!=='none'){$('bCarHome').click();return;}if(state==='carmenu'&&c==='KeyD'&&$('bCarDealer').style.display!=='none'){$('bCarDealer').click();return;}if(state==='carmenu'&&c==='KeyC'&&$('bCarClub').style.display!=='none'){$('bCarClub').click();return;}
  if(state==='carmenu'){if(c==='Enter'||c==='Space')$('bCarJob').click();else if((c==='KeyG'||c==='Digit2')&&$('bCarShop').style.display!=='none')$('bCarShop').click();else if(c==='Escape'||c==='Backspace')closeCarMenu();return;}
  shopKey(e);}
 /* ================= ACT 2: HOSTILE TAKEOVER ================= */
@@ -2870,7 +2917,7 @@ const FURN_X=[
 const FURN_CAT=[
  [{k:'tv',name:'STOLEN CRT + VCR',price:1200,desc:'14 inches on a milk crate, looping an aerobics tape.'},{k:'duffel',name:'SURPLUS DUFFEL',price:1500,desc:'Army bag in the corner, spilling shells and mags.'},{k:'fan',name:'RATTLING DESK FAN',price:500,desc:'It hums. It blows your cash around. It is perfect.'},{k:'kpool',name:'INFLATABLE KIDDIE POOL',price:450,desc:'Three feet of hose water on the patio. Technically a pool.'},{k:'bbq',name:'RUSTY BARBECUE',price:600,desc:'Found behind the ice machine. The burgers taste like 1979.'}],
  [{k:'sofa',name:'WHITE LEATHER SECTIONAL',price:3500,desc:'Pristine. Until you come home bleeding.'},{k:'hifi',name:'HI-FI STEREO RACK',price:4500,desc:'Tower speakers. Lets you pick the music at home.'},{k:'neon',name:'NEON FLAMINGO + GLASS TABLE',price:3000,desc:'Pink light across the whole apartment. A mirror on the table.'},{k:'peg',name:'BACKLIT PEGBOARD',price:2500,desc:'Your guns on display, like high-end tools.'},{k:'deck',name:'TERRACE SUN DECK',price:3000,desc:'Two loungers, a parasol and a cooler. Sunset included.'},{k:'tub',name:'TERRACE HOT TUB',price:6000,desc:'Bubbles, pink underlights, an ocean view. The neighbours hate it.'}],
- [{k:'pit',name:'VELVET CONVERSATION PIT',price:12000,desc:'Sunken seating around a black-marble water feature.'},{k:'tiger',name:'WHITE TIGER ON GOLD',price:15000,desc:'Taxidermy. Serves no purpose. That is the purpose.'},{k:'pool',name:'ZEBRA BILLIARDS TABLE',price:9000,desc:'Because a normal pool table is for normal people.'},{k:'vault',name:'ROTATING WALL VAULT',price:18000,desc:'Motorised, behind the desk, guns on red velvet.'},{k:'sky',name:'SKY LOUNGE + FIRE PIT',price:20000,desc:'White daybeds around a gas fire on the terrace, fifty floors over the bay.'},{k:'heli',name:'HELIPAD + CHOPPER',price:45000,desc:'Black and gold, parked on your own roof. Traffic is for other people.'}]];
+ [{k:'pit',name:'VELVET CONVERSATION PIT',price:12000,desc:'Sunken seating around a black-marble water feature.'},{k:'tiger',name:'WHITE TIGER ON GOLD',price:15000,desc:'Taxidermy. Serves no purpose. That is the purpose.'},{k:'pool',name:'ZEBRA BILLIARDS TABLE',price:9000,desc:'Because a normal pool table is for normal people.'},{k:'vault',name:'ROTATING WALL VAULT',price:18000,desc:'Motorised, behind the desk, guns on red velvet.'},{k:'sky',name:'SKY LOUNGE + FIRE PIT',price:20000,desc:'White daybeds around a gas fire on the terrace, fifty floors over the bay.'},{k:'heli',name:'HELIPAD + CHOPPER',price:45000,desc:'Black and gold, parked on your own terrace. It mostly sits there looking expensive.'}]];
 function homeFurn(){arm();const p=myProg();p.furn=p.furn||{};const t=p.home||0;return p.furn[t]||(p.furn[t]={});}
 /* side jobs from the safehouse phone: one at a time, judged on your next floor */
 const SIDEJOBS={quiet:{name:'NO WITNESSES',from:'MRS. ORTEGA UPSTAIRS',desc:'Clear your next floor without firing a loud gun.',pay:2500},
@@ -3600,7 +3647,7 @@ TRACKS.muzak=theme({title:'NINE (LOBBY VERSION)',bpm:96,dist:1.0,cut:5200,prog:T
  bass:[0,null,null,7,null,null,12,null,0,null,null,7,null,null,5,null],bassLen:1.5,bv:0.3,arp:[0,2,4,2],arpV:'bell',av:0.025,pad:true,pcut:1500,pv:0.03,lead:'bell',mv:0.06,melSec:0,mo:-12});
 const ARCH_LABEL={bruiser:'BRUISER',bouncer:'BRAWLER',bodyguard:'BODYGUARD',butcher:'BUTCHER',biker:'HEAVY BIKER',disco:'HEAVYWEIGHT',merc:'MERC',mobster:'MOBSTER',dealer:'DEALER',punk:'PUNK',hitman:'HITMAN'};
 const archLabel=e=>e.boss?'THE SHARK':(ARCH_LABEL[e.look&&e.look.arch]||'BRUISER');
-function hubSkip(){if(!(G&&G.def.hub&&state==='play'))return;if(G.seq){seqSkip();return;}if(HUBMODE==='arrive'){const L=G.def.lift;if(!G.hubDone&&L)G.hubDone=fadeTo(()=>enterHomeByLift(L.home));return;}if(HUBMODE==='home'){if(!G.hubDone)G.hubDone=fadeTo(goDrive);return;}if(HUBMODE==='parked'||HUBMODE==='bunker'){openCarMenu();return;}if(HUBMODE==='out'){if(G.hubDone)return;G.hubDone=fadeTo(()=>{loadHub('drive','parked');openCarMenu();});return;}if(!G.hubDone)G.hubDone=fadeTo(talkMcWey);}
+function hubSkip(){if(!(G&&G.def.hub&&state==='play'))return;if(G.seq){seqSkip();return;}if(HUBMODE==='arrive'){const L=G.def.lift;if(!G.hubDone&&L)G.hubDone=fadeTo(()=>enterHomeByLift(L.home));return;}if(HUBMODE==='home'){if(!G.hubDone)openCarMenu();return;}if(HUBMODE==='parked'||HUBMODE==='bunker'){openCarMenu();return;}if(HUBMODE==='out'){if(G.hubDone)return;G.hubDone=fadeTo(()=>{loadHub('drive','parked');openCarMenu();});return;}if(!G.hubDone)G.hubDone=fadeTo(talkMcWey);}
 const SIGN_STROKES={M:[[0,0,0,1],[0,1,0.5,0.45],[0.5,0.45,1,1],[1,1,1,0]],c:[[0.6,0.55,0,0.55],[0,0.55,0,0],[0,0,0.6,0]],W:[[0,1,0.25,0],[0.25,0,0.5,0.6],[0.5,0.6,0.75,0],[0.75,0,1,1]],E:[[0,0,0,1],[0,1,0.8,1],[0,0.5,0.6,0.5],[0,0,0.8,0]],Y:[[0,1,0.5,0.5],[1,1,0.5,0.5],[0.5,0.5,0.5,0]]};
 function strokeBox(B,x0,y0,x1,y1,z,t,col){const dx=x1-x0,dy=y1-y0,L=Math.hypot(dx,dy)||0.01,a=Math.atan2(dy,dx);B.box(A.mul(A.mul(A.T((x0+x1)/2,(y0+y1)/2,z),A.RZ(a)),A.S(L+t,t,t)),col,true);}
 function drawSign(B,cx,z){B.quad([[cx-1.4,4.62,z-1.6],[cx+1.4,4.62,z-1.6],[cx+1.4,4.62,z-4.4],[cx-1.4,4.62,z-4.4]],0,1,0,TUV[36],[1,1,1]);B.box(TRS(cx,4.0,z-0.02,0,4.6,0.95,0.08),hex(0x120e16));B.box(TRS(cx,4.5,z+0.03,0,4.7,0.05,0.05),[1,0.3,0.75],true);B.box(TRS(cx,3.5,z+0.03,0,4.7,0.05,0.05),[1,0.3,0.75],true);
@@ -4142,9 +4189,9 @@ function drawHUD0(){const c=hctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0
   if(!sticks.L&&!sticks.R&&g.time<6){c.font=VTF(20*u);c.globalAlpha=0.75;txt(c,'◀ MOVE',vw*0.22,vh*0.72,'#2de2e6','center',20*u);txt(c,'AIM + ATTACK ▶',vw*0.78,vh*0.72,'#ff5fb8','center',20*u);c.globalAlpha=1;}}}
 
 /* ================= FLOW ================= */
-const SCREENS=['sElev','sTitle','sHelp','sSelect','sBrief','sDead','sResults','sEnd','sPause','sPerk','sCar','sShop','sStore','sMorning'];
+const SCREENS=['sObj','sElev','sTitle','sHelp','sSelect','sBrief','sDead','sResults','sEnd','sPause','sPerk','sCar','sShop','sStore','sMorning'];
 function show(id){if(id==='sDead'||id==='sPause')WALK_ARM=performance.now()+500;SCREENS.forEach(s=>$(s).classList.toggle('on',s===id));if(id==='sTitle')syncResume();if(id)$('banner').classList.remove('on');}
-let bannerT=null;function banner(a,b){const el=$('banner');el.innerHTML='<div class="b1">'+a+'</div>'+(b?'<div class="b2">'+b+'</div>':'');el.classList.add('on');clearTimeout(bannerT);bannerT=setTimeout(()=>el.classList.remove('on'),2400);}
+let bannerT=null,LASTBAN=null;function banner(a,b){LASTBAN=[a,b];const el=$('banner');el.innerHTML='<div class="b1">'+a+'</div>'+(b?'<div class="b2">'+b+'</div>':'');el.classList.add('on');clearTimeout(bannerT);bannerT=setTimeout(()=>el.classList.remove('on'),2400);}
 function updateSelect(){const c=CHARS[selIdx];const gb=$('cBig');gb.textContent=c.name;gb.dataset.t=c.name;$('cQuote').textContent=c.quote;$('cPerk').innerHTML=c.perk;
  $('cDiff').innerHTML='<span>DIFFICULTY</span>'+Object.entries(DIFF).map(([k,d])=>`<button data-d="${k}" class="${SET.diff===k?'on':''}">${d.name}</button>`).join('');$('cDiffD').textContent=Dd().desc;$('cFloor').innerHTML=floorHTML();$('cFloorD').innerHTML=floorDesc()+'<br>'+chHTML(JOBS.sel);$('cNight').innerHTML=nightHTML();$('cNightD').textContent=nightDesc();
  $('cStats').innerHTML=Object.entries(c.stats).map(([k,v])=>`<span>${k}</span><div class="bar"><i style="width:${v*20}%"></i></div>`).join('')+`<span>STARTS WITH</span><span style="color:#ffd36b">${c.start}</span>`+xpBarHTML()+`<span>REPUTATION</span><span style="color:#ff9ec7;font-size:.85em">${repLine()}</span><span>PERKS</span><span style="color:#7dff9a;font-size:.85em">${perkList()}</span>`+suitHTML();PS2C.applySuit(c.id);}
@@ -4154,6 +4201,31 @@ let typeT=null,typeFull='',typeI=0;
 function showBrief(i){levelIdx=i;state='brief';show('sBrief');$('brFrom').textContent='INCOMING CALL · '+BRIEF_FLOOR(i);$('brFloor').textContent=BRIEF_FLOOR(i);typeFull=LEVELS[i].brief;typeI=0;$('brMsg').textContent='';sfx('ring');
  clearInterval(typeT);typeT=setInterval(()=>{typeI++;$('brMsg').textContent=typeFull.slice(0,typeI);if(typeI%2===0)sfx('type');if(typeI>=typeFull.length)clearInterval(typeT);},28);}
 function startLevel(i){startMission(missionId(i));}
+/* The objective card: when you set off on a job, the floor loads behind a card that says where you are and what the job is,
+   and the floor waits (arrival scene and all) until you tap, click, or press Enter / Space / A. Restarts skip it. */
+function objLines(g){const L=[],tot=g.enemies.length,ex=t=>L.push({t,c:'ex'}),add=t=>L.push({t});
+ const sg=stageGoal(g);if(sg)add(sg.charAt(0)+sg.slice(1).toLowerCase());
+ if(g.twist==='arena')add('Survive the waves. Nine sells gear between rounds. Drive off whenever you have had enough');
+ else if(g.twist==='pesos')add('Find Pesos the dog and get him out alive');
+ else if(tot)add('Take out '+(tot===1?'the target':'all '+tot+' targets'));
+ if(g.obj)ex(g.obj.label.charAt(0)+g.obj.label.slice(1).toLowerCase()+(g.obj.total>1?' ('+g.obj.total+')':''));
+ if(g.kid)ex('Reach the kid within '+Math.ceil(g.kidT||60)+' seconds');
+ if(g.twist==='ghost')ex('Stay unseen: the first guard who spots you raises the alarm');
+ if(g.twist==='rush')ex('They keep coming. Keep moving');
+ if(g.sj&&typeof SIDEJOBS!=='undefined'&&SIDEJOBS[g.sj])ex('Side job, '+SIDEJOBS[g.sj].name+': '+SIDEJOBS[g.sj].desc);
+ if(g.twist!=='arena')add(g.def.noCar?'Then take the elevator down':'Then get back to the car');
+ return L;}
+function showObjCard(){const g=G;if(!g||g.def.hub||state!=='play')return false;const id=MISSION,i=missionIdx(id),camp=missionIsCampaign(id)&&i>=0;
+ const esc=t=>String(t).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+ $('ojWhere').textContent=camp?BRIEF_FLOOR(i).split(' — ')[0]:'McWEY\'S OTHER WORK';
+ $('ojName').textContent=camp?LEVELS[i].name:missionName(id);
+ const br=camp?LEVELS[i].brief:(MISSIONS[id]&&MISSIONS[id].brief)||'';$('ojBrief').textContent=br?'"'+br+'"':'';
+ $('ojList').innerHTML=objLines(g).map(l=>'<li'+(l.c?' class="'+l.c+'"':'')+'>'+esc(l.t)+'</li>').join('');
+ const C=camp&&CHALLENGES[i];$('ojCh').innerHTML=C?'<div class="ojHd">CHALLENGES</div><ul>'+C.map((c,k)=>'<li class="ch">'+(chDone(i,k)?'\u2605 ':'\u2606 ')+esc(c.n)+'</li>').join('')+'</ul>':'';
+ $('ojGo').textContent=touchMode?'TAP TO START':padMode?'PRESS A TO START':'CLICK OR PRESS ENTER TO START';
+ OBJCARD={ban:LASTBAN,t:performance.now()};state='objcard';show('sObj');return true;}
+let OBJCARD=null;
+function objCardGo(){if(state!=='objcard'||!OBJCARD||performance.now()-OBJCARD.t<350)return;const b=OBJCARD.ban;OBJCARD=null;sfx('pick');state='play';show(null);if(b)banner(b[0],b[1]);}
 /* levelIdx stays the map index (grid seeds, decor, par); campaign-only effects key on MISSION */
 function startMission(id){if(MISSIONS[id]&&(MISSIONS[id].stageDefs||MISSIONS[id].stages.some(s=>s!=='legacy')||myProg().run?.mission===id&&myProg().run.st))return startGridMission(id);const i=missionIdx(id),b=missionBase(id);clearInterval(typeT);MISSION=id;JOBPICK=null;levelIdx=b;HUBMODE='in';ARR_GO=i>=0&&!window.NOARRIVE?b:null;loadLevel(b);
  const ld=runEnter(id);G.mission=id;G.variant=myProg().run.var;G.clear=missionClear(id,G.variant);if(G.arrive&&missionVar(id,G.variant).spawn){G.car.x=G.arrive.x1;G.arrive=null;}missionSpawn(G);applyLoadout(ld);
@@ -4537,9 +4609,9 @@ $('cDiff').addEventListener('click',e=>{const d=e.target.dataset&&e.target.datas
 $('pkCards').addEventListener('click',e=>{const b=e.target.closest('.pcard');if(b)choosePerk(b.dataset.k);});
 $('bPrev').onclick=()=>{selIdx=(selIdx+2)%3;updateSelect();sfx('blip');};
 $('bNext').onclick=()=>{selIdx=(selIdx+1)%3;updateSelect();sfx('blip');};
-$('bPlay').onclick=()=>{const st=Math.min(JOBS.sel,JOBS.top),p=myProg();if(p.run){runWalkAway(p);saveProg();}sessionReset(st);sfx('pick');fadeTo(goDrive);};$('bResumeJob').onclick=()=>{const r=resumeRun();if(!r||fading)return;selIdx=r.ci;sessionReset(r.st);NEXTJOB=r.st;sfx('pick');fadeTo(()=>startMission(r.id));};$('bDeadWalk').onclick=()=>walkAway();$('bWalk').onclick=()=>walkAway();syncResume();
+$('bPlay').onclick=()=>{const st=Math.min(JOBS.sel,JOBS.top),p=myProg();if(p.run){runWalkAway(p);saveProg();}sessionReset(st);sfx('pick');fadeTo(goDrive);};$('bResumeJob').onclick=()=>{const r=resumeRun();if(!r||fading)return;selIdx=r.ci;sessionReset(r.st);NEXTJOB=r.st;sfx('pick');fadeTo(()=>{startMission(r.id);showObjCard();});};$('bDeadWalk').onclick=()=>walkAway();$('bWalk').onclick=()=>walkAway();syncResume();
 $('sBrief').onclick=e=>{if(CHAT.phase==='choose'||e.target.closest('#bGo,#dlJobs,#bDlSkip,#bDlText,summary,#dlogHist,.dlChoices'))return;chatTap();};$('bDlSkip').onclick=()=>chatSkipAll();$('bDlText').onclick=()=>cycleTextSize();
-$('sElev').onclick=()=>skipElev();$('cine').onclick=()=>cineSkip();$('bSkip').onclick=()=>hubSkip();
+$('sObj').onclick=()=>objCardGo();$('sElev').onclick=()=>skipElev();$('cine').onclick=()=>cineSkip();$('bSkip').onclick=()=>hubSkip();
 $('bGo').onclick=()=>chatGo();$('dlJobs').onclick=e=>{const b=e.target.closest('[data-mid]');if(b)chatGo(b.dataset.mid);};
 $('bNextLvl').onclick=()=>{if(pendingPerks>0){showPerkPick('results');return;}if(fading)return;kitCommit();payout();VISIT=missionIsCampaign(MISSION)?{debrief:levelIdx,grade:G.grade,take:G.take,style:G.style,next:levelIdx+1<CAMPAIGN_LEN?levelIdx+1:'end'}:{debrief:null,grade:G.grade,take:G.take,style:G.style,next:NEXTJOB};fadeTo(goHome);};
 $('bRetryLvl').onclick=()=>restart();
@@ -4554,7 +4626,7 @@ const tbtn=(id,fn)=>{const el=$(id);el.addEventListener('touchstart',e=>{e.preve
 tbtn('bSpare',()=>pressed.spare=true);tbtn('bFinish',()=>pressed.finish=true);tbtn('bGrab',()=>pressed.grab=true);tbtn('bReload',()=>pressed.reload=true);tbtn('bSwap',()=>pressed.swap=true);tbtn('bPerk',()=>pressed.perk=true);tbtn('bCover',()=>pressed.cover=true);tbtn('bPause',()=>togglePause());tbtn('bRestart',()=>restart());
 
 /* ================= INPUT ================= */
-addEventListener('keydown',e=>{if(contextLost)return;keys[e.code]=true;if(state==='morning'&&(e.code==='Enter'||e.code==='Space')){$('bMorning').click();e.preventDefault();return;}if(state==='carmenu'||state==='shop'||state==='store'){menuKey(e);e.preventDefault();return;}if((e.code==='Space'||e.code==='Enter')&&state==='play'&&G&&G.cine){cineSkip();e.preventDefault();return;}if(e.code==='Tab'&&state==='play'&&G&&G.def.hub){hubSkip();e.preventDefault();return;}if((e.code==='Enter'||e.code==='Space')&&state==='elev'){skipElev();e.preventDefault();return;}if(state==='perk'&&/^Digit[123]$/.test(e.code)){const cs=document.querySelectorAll('.pcard');const b=cs[+e.code.slice(5)-1];if(b)choosePerk(b.dataset.k);return;}if(padMode&&/^(Key[WASD]|Arrow)/.test(e.code))padMode=false;{const inJob=state==='play'&&G&&!G.def.hub;if(e.code==='KeyR'){if(inJob){if(!e.repeat)pressed.reload=true;}else pressed.restart=true;}if(e.code==='Backspace'&&G&&!G.def.hub&&(inJob||state==='dead'||state==='results')){pressed.restart=true;e.preventDefault();}if(e.code==='Tab'&&inJob){pressed.swap=true;e.preventDefault();}const dg=inJob&&/^(?:Digit|Numpad)([123])$/.exec(e.code);if(dg)pressed.slot=+dg[1];}if(e.code==='KeyE')pressed.grab=true;if(e.code==='Space'&&SET.cover&&state==='play'&&G&&!G.def.hub){if(!e.repeat)pressed.cover=true;}else if(e.code==='Space'||e.code==='KeyQ')pressed.perk=true;if(e.code==='Escape'||e.code==='KeyP')pressed.pause=true;if(SETMENU&&e.code==='Escape')$('bSetBack').click();if(e.code==='KeyM')toggleMute();
+addEventListener('keydown',e=>{if(contextLost)return;keys[e.code]=true;if(state==='objcard'){if(!e.repeat&&['Enter','Space','Escape','NumpadEnter','KeyE'].includes(e.code)){objCardGo();e.preventDefault();}return;}if(state==='morning'&&(e.code==='Enter'||e.code==='Space')){$('bMorning').click();e.preventDefault();return;}if(state==='carmenu'||state==='shop'||state==='store'){menuKey(e);e.preventDefault();return;}if((e.code==='Space'||e.code==='Enter')&&state==='play'&&G&&G.cine){cineSkip();e.preventDefault();return;}if(e.code==='Tab'&&state==='play'&&G&&G.def.hub){hubSkip();e.preventDefault();return;}if((e.code==='Enter'||e.code==='Space')&&state==='elev'){skipElev();e.preventDefault();return;}if(state==='perk'&&/^Digit[123]$/.test(e.code)){const cs=document.querySelectorAll('.pcard');const b=cs[+e.code.slice(5)-1];if(b)choosePerk(b.dataset.k);return;}if(padMode&&/^(Key[WASD]|Arrow)/.test(e.code))padMode=false;{const inJob=state==='play'&&G&&!G.def.hub;if(e.code==='KeyR'){if(inJob){if(!e.repeat)pressed.reload=true;}else pressed.restart=true;}if(e.code==='Backspace'&&G&&!G.def.hub&&(inJob||state==='dead'||state==='results')){pressed.restart=true;e.preventDefault();}if(e.code==='Tab'&&inJob){pressed.swap=true;e.preventDefault();}const dg=inJob&&/^(?:Digit|Numpad)([123])$/.exec(e.code);if(dg)pressed.slot=+dg[1];}if(e.code==='KeyE')pressed.grab=true;if(e.code==='Space'&&SET.cover&&state==='play'&&G&&!G.def.hub){if(!e.repeat)pressed.cover=true;}else if(e.code==='Space'||e.code==='KeyQ')pressed.perk=true;if(e.code==='Escape'||e.code==='KeyP')pressed.pause=true;if(SETMENU&&e.code==='Escape')$('bSetBack').click();if(e.code==='KeyM')toggleMute();
  if((e.code==='Enter'||e.code==='Space')&&state==='title'){$('bStart').click();e.preventDefault();return;}
  if((e.code==='Enter'||e.code==='Space')&&state==='brief'){chatTap();e.preventDefault();return;}
  if(state==='brief'){if(CHAT.phase==='choose'){const d=/^(?:Digit|Numpad)([1-9])$/.exec(e.code);if(d){chatPick(+d[1]-1);e.preventDefault();return;}
@@ -4593,7 +4665,7 @@ function frame(now){if(contextLost||gl.isContextLost())return;requestAnimationFr
  if(G&&G.climb&&state==='stagefade')climbTick(dt,G);
  if(G&&(state==='play'||state==='dead')&&!portrait)update(dt);
  if(state==='elev')updateElev(dt);else if(state==='brief')updateBrief(dt);else if(state==='shop')updateNine(dt);else if(state==='title'||state==='select'||state==='help'||!G)updateMenu(dt);
- if(AC){let tr;if(state==='play'||state==='dead'||state==='pause'){if(G&&G.def.hub)tr=G.track;else if(G&&G.cleared)tr='drone';else if(G&&G.boss&&G.boss.alive&&G.bossSeen)tr='boss';else tr=(G&&G.track)||'game';}else if(state==='carmenu'||state==='shop'||state==='store')tr=(G&&G.track)||'n_concrete';else tr=state==='results'?'drone':state==='elev'?'muzak':(state==='brief'&&G&&G.def.hub)?'n_haze':'menu';setTrack(tr);setMuffle(state==='dead'||state==='pause'||state==='brief');}
+ if(AC){let tr;if(state==='play'||state==='dead'||state==='pause'||state==='objcard'){if(G&&G.def.hub)tr=G.track;else if(G&&G.cleared)tr='drone';else if(G&&G.boss&&G.boss.alive&&G.bossSeen)tr='boss';else tr=(G&&G.track)||'game';}else if(state==='carmenu'||state==='shop'||state==='store')tr=(G&&G.track)||'n_concrete';else tr=state==='results'?'drone':state==='elev'?'muzak':(state==='brief'&&G&&G.def.hub)?'n_haze':'menu';setTrack(tr);setMuffle(state==='dead'||state==='pause'||state==='brief');}
  engineOn(state==='play'&&!!G&&G.def.hub==='drive'&&!G.parked&&SET.sound);$('cine').style.display=(state==='play'&&G&&G.cine)?'block':'none';$('bSkip').style.display=(state==='play'&&G&&G.def.hub)?'block':'none';
  pressed.grab=pressed.perk=pressed.restart=pressed.pause=pressed.reload=pressed.swap=pressed.cover=false;pressed.slot=0;
  const tui=touchMode&&state==='play'&&!(G&&G.def.hub&&!G.rangeOn);$('touchUI').style.display=tui?'block':'none';

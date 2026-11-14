@@ -81,6 +81,11 @@ test('UI journey: title/select/intro/elevator/brief/car/mission, spam and held m
   // the car drives off from McWey's kerb first; Enter skips the scene like a player would
   await page.waitForFunction(() => G.seq && G.seq.t > 0.5, null, { polling: 'raf' });
   await page.keyboard.press('Enter');
+  // the floor loads behind its objective card and waits for the player
+  await expect.poll(() => page.evaluate(() => state === 'objcard' && G.def === LEVELS[0] && !fading)).toBe(true);
+  await expect(page.locator('#sObj')).toContainText('MOTEL SUNSET');
+  await page.waitForTimeout(400);
+  await page.keyboard.press('Enter');
   await expect.poll(() => page.evaluate(() => state === 'play' && G.def === LEVELS[0] && !fading)).toBe(true);
   const x = await page.evaluate(() => G.player.x);
   await page.keyboard.down('d');
@@ -253,6 +258,9 @@ test('saves: a job in progress resumes from its stage kit as a retry, and walkin
   const page = await openGame({ nb86prog: { money: { lvl: 1, xp: 0, perks: {}, kit: entry, run: { v: 1, mission: 'c1', stage: 's1', entryKit: entry, stageKit: stage, stow: [{ type: 'smg', mag: 12 }], t: 5 } } } });
   await expect(page.locator('#bResumeJob')).toBeVisible();
   await page.locator('#bResumeJob').click();
+  await expect.poll(() => page.evaluate(() => state)).toBe('objcard');
+  await page.waitForTimeout(400);
+  await page.locator('#sObj').click();
   await expect.poll(() => page.evaluate(() => state === 'play' && !!G && !G.def.hub && levelIdx)).toBe(1);
   // a pre-MISSIONS checkpoint ('s1') on a still-unmigrated mission keeps its stage kit and stowed finds, and stays kept after the next save
   expect(await page.evaluate(() => { saveProg(); const r = JSON.parse(localStorage.getItem('nb86prog')).money.run;

@@ -118,7 +118,9 @@ test('missions: after a job, leaving home by the door goes to McWey for the debr
         finishLevel(); pendingPerks = 0; $('bNextLvl').click();
         const home = HUBMODE;
         onHubTrigger('leave');
-        const viaDoor = { mode: HUBMODE, cine: !!G.cine, hub: G.def.hub };
+        // the door asks where to; McWey still insists here (first meeting, then a new act), so the job button sends you to him
+        const viaDoor = { mode: HUBMODE, state, label: $('bCarJob').textContent.startsWith('SEE McWEY') };
+        closeCarMenu();
         // the car menu offers McWey, not the finished job, while the debrief is still owed
         loadHub('drive', 'parked'); openCarMenu();
         const label = $('bCarJob').textContent;
@@ -131,8 +133,33 @@ test('missions: after a job, leaving home by the door goes to McWey for the debr
       }
       return out;
     } finally { fadeTo = fade; }
-  })).toEqual([1, 2].map(lvl => ({ lvl, home: 'home', viaDoor: { mode: 'in', cine: true, hub: 'drive' }, label: expect.stringMatching(/^SEE McWEY/), viaCar: { mode: 'in', cine: true },
-    next: lvl + 1, after: { mode: 'parked', label: true } })));
+  })).toEqual([1, 2].map(lvl => ({ lvl, home: 'home', viaDoor: { mode: 'home', state: 'carmenu', label: true }, label: expect.stringMatching(/^SEE McWEY/), viaCar: { mode: 'in', cine: true },
+    next: lvl + 1, after: { mode: 'home', label: true } })));
+});
+
+test('travel: from home or a shop you can drive straight to the next job, which opens on its objective card', async ({ openGame }) => {
+  const page = await openGame({ nb86jobs: { top: 2, sel: 1, best: {} }, nb86prog: { money: { lvl: 2, xp: 0, perks: {}, debt: 9000, wallet: 100, seen: { loan: 1 } } } });
+  expect(await page.evaluate(() => {
+    const fade = fadeTo, out = {};
+    try {
+      fadeTo = f => { f(); return true; };
+      selIdx = CHARS.findIndex(c => c.id === 'money'); sessionReset(0); NEXTJOB = VISIT.next;
+      startLevel(NEXTJOB); for (const e of G.enemies) e.alive = false; finishLevel(); pendingPerks = 0; $('bNextLvl').click();
+      // home: the door opens the destination menu, with the next job, McWey and the shops, and no "back to your place"
+      onHubTrigger('leave');
+      const vis = id => $(id).style.display !== 'none';
+      out.home = { state, job: $('bCarJob').textContent.split('(')[0].trim(), mcwey: vis('bCarMcWey'), shop: vis('bCarShop'), home: vis('bCarHome') };
+      closeCarMenu(); out.closed = [state, G.trigLock];
+      // the gun shop: same menu, and the job button starts the next floor straight away, behind its objective card
+      loadHub('bunker'); openCarMenu(); $('bCarJob').click(); seqSkip();
+      out.job = { state, level: levelIdx, hub: !!G.def.hub, card: $('sObj').classList.contains('on'), name: $('ojName').textContent, list: $('ojList').children.length > 1 };
+      OBJCARD.t = 0; objCardGo(); out.go = [state, $('sObj').classList.contains('on'), mcDue()];
+      // the chopper is parked for now: trips stay by car
+      myProg().heli = 1; out.heli = rideHeli();
+      return out;
+    } finally { fadeTo = fade; }
+  })).toEqual({ home: { state: 'carmenu', job: 'NEXT JOB: ' + 'CLUB FLAMINGO', mcwey: true, shop: true, home: false }, closed: ['play', true],
+    job: { state: 'objcard', level: 1, hub: false, card: true, name: 'CLUB FLAMINGO', list: true }, go: ['play', false, false], heli: false });
 });
 
 test('bonus jobs: Pesos follows you once found, the kid must be reached in time, the warehouse pays for no alarm, Lex shows every guard', async ({ openGame }) => {
