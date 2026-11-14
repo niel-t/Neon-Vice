@@ -200,7 +200,7 @@ const CARMODS={
  turbo:{name:'TURBO',price:9000,once:true,needs:'eng',desc:'Hold boost longer, refill it faster, hit a higher top speed.'}};
 function carModState(k,x){if(k==='paint')return PAINT_NAMES[x.paint||0];if(k==='rims')return RIM_NAMES[x.rims||'stock'];if(k==='glow')return GLOW_NAMES[x.glow||0];return x[k]?'FITTED':'';}
 let vicSayTxt='',vicImg=null;
-function dealerSetup(g){g.park={x:g.car.x,z:g.car.z};const n=g.npcs.find(q=>q.kind==='vic');if(n){g.car={x:n.x,z:n.z};n.a=n.a0=Math.PI;n.r=0.3;g.lights.push({x:n.x,y:2.0,z:n.z-1.3,r:3.6,c:[1.3,1.05,0.9]});}
+function dealerSetup(g){g.park={x:g.car.x,z:g.car.z};const n=g.npcs.find(q=>q.kind==='vic');if(n){g.car={x:n.x,z:n.z};n.a=n.a0=0;/* faces the camera and his customers (you walk in from the south) */n.r=0.3;g.lights.push({x:n.x,y:2.0,z:n.z+1.3,r:3.6,c:[1.3,1.05,0.9]});}
  const slots=[];for(let z=0;z<g.H;z++)for(let x=0;x<g.W;x++){const c=g.rows[z]&&g.rows[z][x];if(c>='1'&&c<='4')slots.push({i:+c-1,x:x+0.5,z:z+0.5});}
  slots.sort((a,b)=>a.i-b.i);g.dealer={slots:slots.map((s,i)=>({k:DEALER_LOT[i%DEALER_LOT.length],x:s.x,z:s.z,a0:0.5+i*1.3}))};
  g.solids=g.solids||[];for(const s of g.dealer.slots){g.solids.push({x:s.x,z:s.z,w:2.7,d:2.7});g.lights.push({x:s.x,y:2.4,z:s.z,r:3.4,c:[1.1,1.0,1.05]});}

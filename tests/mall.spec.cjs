@@ -112,3 +112,31 @@ test('mall: the keepers have photo faces, and Fontaine Tailoring sells suits you
     saved: { tailor: { mint: 1 }, suit: 'mint' }
   });
 });
+
+test('mall: walk straight in from the doors, Vic faces you, the food court has diners and stalls, signs clear the escalators', async ({ openGame }) => {
+  const page = await openGame();
+  expect(await page.evaluate(setup => {
+    eval('(' + setup + ')')();
+    const fade = fadeTo; try {
+      fadeTo = f => { f(); return true; };
+      loadHub('mall'); const g = G; while (g.seq) seqSkip();
+      const vic = g.npcs.find(n => n.kind === 'vic');
+      // hold W from the sidewalk in front of the doors: nothing stops you until the fountain
+      const p = g.player; p.x = 23.5; p.z = 36.4; keys.KeyW = true;
+      for (let i = 0; i < 240; i++) { updatePlayer(1 / 30); for (const s of g.solids) boxPush(s, p); }
+      keys.KeyW = false;
+      const diners = g.npcs.filter(n => n.kind === 'diner'), cooks = g.npcs.filter(n => n.kind === 'cook');
+      // the shop signs hang at x 13-17 and 28-32 (map), the escalators now stand clear of them
+      const escX = MALL_ESC.map(x => x + 1);
+      return {
+        vicFaces: Math.abs(vic.a0) < 0.01,
+        walkedIn: p.z < 24,
+        noPool: !g.rows.some(r => r.includes('~')),
+        diners: diners.length >= 8 && diners.every(n => n.seat && n.seatK === 1),
+        cooks: cooks.length === 2,
+        escClear: escX.every(x => x > 18 && x < 29),
+        chat: !!(NPC_CHAT.diner && NPC_CHAT.cook)
+      };
+    } finally { fadeTo = fade; }
+  }, setup.toString())).toEqual({ vicFaces: true, walkedIn: true, noPool: true, diners: true, cooks: true, escClear: true, chat: true });
+});
