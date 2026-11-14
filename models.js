@@ -485,6 +485,8 @@ function pose(t,anim,jab,arms,kick,gait){const R={},rot=(b,ax,a)=>{R[b]=M4.mul(M
  if(window.EXLEAN){rot('spine',X,0.35*window.EXLEAN);rot('chest',X,0.2*window.EXLEAN);rot('thighL',X,-0.35*window.EXLEAN);rot('thighR',X,-0.1*window.EXLEAN);rot('shinL',X,0.55*window.EXLEAN);rot('shinR',X,0.3*window.EXLEAN);root[1]-=0.08*window.EXLEAN;}
  if(window.CROUCH){const c=window.CROUCH;/* W7 cover crouch: deep knee bend, feet flat, chest over knees */
   rot('thighL',X,-1.45*c);rot('thighR',X,-1.3*c);rot('shinL',X,2.2*c);rot('shinR',X,2.05*c);rot('footL',X,-0.75*c);rot('footR',X,-0.75*c);rot('spine',X,0.4*c);rot('chest',X,0.15*c);root[1]-=0.47*c;}
+ if(window.SIT){const c=window.SIT;/* sat on a sofa or chair: thighs level, shins down, back upright, hands on the knees */
+  rot('thighL',X,-1.5*c);rot('thighR',X,-1.42*c);rot('shinL',X,1.5*c);rot('shinR',X,1.42*c);rot('spine',X,-0.06*c);root[1]-=0.4*c;}
  R.head=M4.mul(M4.R(X,0.06),R.head||M4.id());
  const W=[];for(let i=0;i<NB;i++){const b=BONES[i],pv=b[2],L=M4.mul(M4.mul(M4.T(pv[0],pv[1],pv[2]),R[b[0]]||M4.id()),M4.T(-pv[0],-pv[1],-pv[2]));W[i]=b[1]<0?M4.mul(M4.T(root[0],root[1],root[2]),L):M4.mul(W[b[1]],L);}
  return W;}
@@ -715,7 +717,7 @@ function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game'
   else{gun=wt;k=atk*0.12;arms=BT(wt)==='dual'?'dual':wd.two?'rifle':'aim';dual=BT(wt)==='dual';if(!(c.player||c.kind==='mcwey'||c.state==='chase'||c.aiming||atk>0))arms='low';}
  }
  if(mode==='game'&&c.ex){const kd=c.ex.kind;if(kd==='gun'){arms='execGun';anim='idle';}else if(kd==='fists'){anim='stance';jab=atk>0?Math.sin(ap*Math.PI):0;}window.EXLEAN=1;}else window.EXLEAN=0;
- window.CROUCH=mode==='game'&&c.alive&&!(c.down>0)?(c.crouchK||0):0;
+ window.CROUCH=mode==='game'&&c.alive&&!(c.down>0)?(c.crouchK||0):0;window.SIT=mode==='game'&&c.alive&&!(c.down>0)?(c.seatK||0):0;
  window.PUMP=0;if(gun==='shotgun'&&c.pumpAt!==undefined&&G){const dt2=G.T-c.pumpAt;if(dt2>0.3&&dt2<0.62)window.PUMP=Math.sin((dt2-0.3)/0.32*Math.PI);}
  if(mode==='game'&&c.alive&&(c.kind==='sdancer'||c.kind==='dancer'||c.kind==='pgirl'||c.lapDance)){
   if(c.walking){}/* a dancer walking with you (or back to the stage) walks */
@@ -734,7 +736,7 @@ function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game'
  }else window.DANCE_JIGGLE=null;
  const tt=anim==='walk'&&mode==='game'?(c.walk||0)/(2*Math.PI*0.95)/2:t;
  const lying=mode==='game'&&(!c.alive||c.down>0||!!c.bed);if(lying){arms=null;gun=null;anim='idle';window.DANCE_JIGGLE=null;}
- const W=pose(lying?0:tt,anim,jab,arms,k,CH[id].gait);window.DANCE_JIGGLE=null;window.DANCE_MOVE=null;window.EXLEAN=0;window.CROUCH=0;const S=CH[id].scale;
+ const W=pose(lying?0:tt,anim,jab,arms,k,CH[id].gait);window.DANCE_JIGGLE=null;window.DANCE_MOVE=null;window.EXLEAN=0;window.CROUCH=0;window.SIT=0;const S=CH[id].scale;
  const SC=[scale*S[0],0,0,0,0,scale*S[1],0,0,0,0,scale*S[2],0,0,0,0,1];let bx0=c.x+(c.lox||0),bz0=c.z+(c.loz||0);
  /* in bed the head goes on the pillow: the root (feet) sits one body length from it, whatever her height */
  if(lying&&c.bed&&c.bedHX!==undefined){const len=1.8*scale*S[1];bx0=c.bedHX+Math.sin(c.a||0)*len;bz0=c.bedHZ+Math.cos(c.a||0)*len;}
