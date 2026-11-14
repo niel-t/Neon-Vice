@@ -217,7 +217,9 @@ function torsoRows(B){const BP=B.fem?BODYP.fem:BODYP.male;
 function buildBody(B){const M=newMesh(),X=[1,0,0],Y=[0,1,0],Z=[0,0,1],BP=B.fem?BODYP.fem:BODYP.male;
  const tv=y=>((TY1-y)/(TY1-TY0)*ROW.t)/512;
  /* torso: big frame, chest wider than the hips, padded 80s shoulders, open collar */
- const T=torsoRows(B),BUST=BP.bust||{},SHx=B.shoulders||0;
+ const bM = B.dancer ? 2.8 : 1;
+ const T=torsoRows(B), BUST={}, SHx=B.shoulders||0;
+ for(let k in (BP.bust||{})) BUST[k] = BP.bust[k] * bM;
  loft(M,T.map(r=>({c:[0,r[0],r[3]],s:X,f:Z,rx:r[1],rz:r[2],v:tv(r[0]),w:r[4],mod:(p,ph)=>{if(r[0]>1.44&&r[0]<1.48){p[1]+=0.006*Math.cos(2*ph);}if(B.fem){const b=BUST[r[0]];if(b){const c=Math.max(0,Math.cos(ph));p[2]+=b*c*c*Math.exp(-Math.pow((Math.abs(Math.sin(ph))-0.42)/0.3,2));}if(BP.glute&&r[0]>0.85&&r[0]<0.95){const k=Math.max(0,-Math.cos(ph));p[2]-=BP.glute*k*k;}return p;}if(Math.cos(ph)>0.2&&r[0]>1.05&&r[0]<1.4)p[2]+=0.008*Math.cos(ph);return p;}})),BP.segs,{capA:{dir:[0,-1,0],uv:[0.5,0.555]},capB:{dir:[0,1,0],uv:[0.5,0.002],lift:-0.012}});
  /* lapel ridge: a thin raised strip so the lapels catch light (PS2 games modelled these as a few polys) */
  if(!B.fem)for(const s of [1,-1]){GRP++;const pts=[];for(const Y of [1.18,1.3,1.45]){const vw=0.012+(Y-1.12)*0.36,xx=s*(vw+0.04),zz=Math.sqrt(Math.max(0,1-Math.pow(xx/(Y>1.38?0.24:0.25),2)))*0.156+0.008+(Y<1.4?0.008:0);pts.push([xx,Y,zz]);}
@@ -263,7 +265,7 @@ function buildBody(B){const M=newMesh(),X=[1,0,0],Y=[0,1,0],Z=[0,0,1],BP=B.fem?B
   {const dx=s*(0.215*SHx*0.9-BP.shIn);for(let i=v0;i<M.p.length/3;i++)M.p[i*3]+=dx;}
   /* legs */
   const x=0.1*s,th=BI[s>0?'thighL':'thighR'],sn=BI[s>0?'shinL':'shinR'],ft=BI[s>0?'footL':'footR'];const lv=t=>(ROW.p0+t*(ROW.p1-ROW.p0))/512;
-  loft(M,[[0.92,0.1,W2(BI.pelvis,th,0.6)],[0.8,0.095,W1(th)],[0.65,0.083,W1(th)],[0.51,0.07,W2(th,sn,0.5)],[0.36,0.064,W1(sn)],[0.2,0.06,W1(sn)],[0.1,0.065,W1(sn)]].map((r,k)=>({c:[x*BP.legX(r[0]),r[0],0.006],s:X,f:Z,rx:r[1]*BP.leg[k],rz:r[1]*1.04*BP.leg[k],v:lv((0.92-r[0])/0.82),w:r[2]})),10,{});
+  loft(M,[[0.92,0.1,W2(BI.pelvis,th,0.6)],[0.8,0.095,W1(th)],[0.65,0.083,W1(th)],[0.51,0.07,W2(th,sn,0.5)],[0.36,0.064,W1(sn)],[0.2,0.06,W1(sn)],[0.1,0.065,W1(sn)]].map((r,k)=>({c:[x*BP.legX(r[0]),r[0],0.006],s:X,f:Z,rx:r[1]*BP.leg[k]*(B.dancer&&r[0]>0.6?1.15:1),rz:r[1]*1.04*BP.leg[k]*(B.dancer&&r[0]>0.6?1.35:1),v:lv((0.92-r[0])/0.82),w:r[2]})),10,{});
   /* shoes: loafer shape, leather texture wrapping over the top */
   const sc=(z,w,h,y,t)=>({c:[BP.footX*s,y,z],s:X,f:Y,rx:w,rz:h,w:W1(ft),t});const sw=SW.shoe[1];
   if(B.fem&&s>0&&B.skirt){/* skirt: flares from the hips, painted like the dress (bottom of the torso sheet) */
@@ -388,6 +390,21 @@ function pose(t,anim,jab,arms,kick,gait){const R={},rot=(b,ax,a)=>{R[b]=M4.mul(M
   rot('footL',X,0.25*Math.max(0,-Math.sin(w+0.6)));rot('footR',X,0.25*Math.max(0,Math.sin(w+0.6)));
   lower(1,0.52);lower(-1,0.52);rot('uarmL',X,0.38*s);rot('uarmR',X,-0.38*s);rot('farmL',armHinge(1),0.35+0.2*Math.max(0,-s));rot('farmR',armHinge(-1),0.35+0.2*Math.max(0,s));
   rot('pelvis',Y,0.1*s);rot('chest',Y,-0.16*s);rot('spine',X,0.06);root=[0,0.025*Math.abs(c)-0.02,0];rot('head',X,-0.04);}
+ else if(anim==='dance'){
+  const w = t * 3.2, s = Math.sin(w), c = Math.cos(w);
+  rot('pelvis', Z, 0.15 * s);
+  rot('pelvis', X, 0.1 * c);
+  rot('spine', Z, -0.12 * s);
+  rot('chest', Z, -0.05 * s);
+  rot('chest', X, 0.15 * Math.sin(t * 6.4));
+  lower(1, -0.2); lower(-1, -0.2);
+  rot('uarmL', X, 1.5 + 0.1 * s); rot('uarmR', X, 1.5 - 0.1 * s);
+  rot('farmL', armHinge(1), 1.0); rot('farmR', armHinge(-1), 1.0);
+  rot('thighL', X, -0.15 + 0.1 * s); rot('thighR', X, -0.15 - 0.1 * s);
+  rot('shinL', X, 0.25); rot('shinR', X, 0.25);
+  root=[0, 0.04 * Math.abs(c) - 0.02, 0];
+  rot('head', X, Math.sin(t * 1.6) * 0.1);
+ }
  else{ /* boxer: fists up, bouncing */
   const b=Math.abs(Math.sin(t*4.2)),j=jab===undefined?Math.max(0,Math.sin(t*1.3))**8:jab;root=[0,-0.035-b*0.025,0];
   rot('thighL',X,-0.28);rot('thighR',X,0.08);rot('thighL',Z,0.1);rot('thighR',Z,-0.1);rot('shinL',X,0.42);rot('shinR',X,0.32);rot('footL',X,-0.14);rot('footR',X,-0.4);
