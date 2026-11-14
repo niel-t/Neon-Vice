@@ -714,8 +714,13 @@ function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game'
  const tt=anim==='walk'&&mode==='game'?(c.walk||0)/(2*Math.PI*0.95)/2:t;
  const lying=mode==='game'&&(!c.alive||c.down>0||!!c.bed);if(lying){arms=null;gun=null;anim='idle';window.DANCE_JIGGLE=null;}
  const W=pose(lying?0:tt,anim,jab,arms,k,CH[id].gait);window.DANCE_JIGGLE=null;window.DANCE_MOVE=null;window.EXLEAN=0;window.CROUCH=0;const S=CH[id].scale;
- let base=M4.mul(M4.T(c.x+(c.lox||0),c.y||0,c.z+(c.loz||0)),M4.mul(M4.R([0,1,0],c.a||0),[scale*S[0],0,0,0,0,scale*S[1],0,0,0,0,scale*S[2],0,0,0,0,1]));
- if(lying){const fe=c.fall===undefined?1:1-Math.pow(1-c.fall,2);base=M4.mul(base,M4.mul(M4.T(0,0.2*fe,0),M4.R([1,0,0],(c.alive&&!c.bed?1:-1)*Math.PI/2*fe)));}
+ const SC=[scale*S[0],0,0,0,0,scale*S[1],0,0,0,0,scale*S[2],0,0,0,0,1];let bx0=c.x+(c.lox||0),bz0=c.z+(c.loz||0);
+ /* in bed the head goes on the pillow: the root (feet) sits one body length from it, whatever her height */
+ if(lying&&c.bed&&c.bedHX!==undefined){const len=1.8*scale*S[1];bx0=c.bedHX+Math.sin(c.a||0)*len;bz0=c.bedHZ+Math.cos(c.a||0)*len;}
+ let base=M4.mul(M4.T(bx0,c.y||0,bz0),M4.R([0,1,0],c.a||0));
+ /* lying down: tip over first and scale after, so a body keeps its standing height as its length and its depth as its thickness */
+ if(lying){const fe=c.fall===undefined?1:1-Math.pow(1-c.fall,2);base=M4.mul(base,M4.mul(M4.T(0,(c.bed?0.15:0.2)*fe*scale*S[2],0),M4.mul(M4.R([1,0,0],(c.alive&&!c.bed?1:-1)*Math.PI/2*fe),SC)));}
+ else base=M4.mul(base,SC);
  const Wb=[];const B=new Float32Array(NB*16);for(let i=0;i<NB;i++)Wb[i]=M4.mul(base,W[i]);if(CH[id].neckDrop){const h=BI.head;Wb[h]=M4.mul(base,M4.mul(M4.T(0,-CH[id].neckDrop,0),W[h]));}
  const cut=[],SEV={armL:['uarmL','farmL','handL'],armR:['uarmR','farmR','handR'],legL:['thighL','shinL','footL'],legR:['thighR','shinR','footR']};
  if(c.sev)for(const l in c.sev)cut.push(SEV[l]);if(c.headless)cut.push(['head']);
