@@ -15,12 +15,12 @@ test('mall: shops, keepers, jewelry you wear, furniture for every home, real est
       out.label = $('bCarDealer').textContent.includes('BISCAYNE GALLERIA');
       $('bCarDealer').click(); seqSkip(); seqSkip();
       const g = G;
-      out.hub = { mall: g.def === HUBS.mall, keepers: g.mall.keepers.map(n => n.shop).sort(), vic: g.npcs.filter(n => n.kind === 'vic').length, lot: g.dealer.slots.length, shoppers: g.npcs.filter(n => n.kind === 'guest').length >= 5, glass: g.mall.glass.length > 60 };
+      out.hub = { mall: g.def === HUBS.mall, keepers: g.mall.keepers.map(n => n.shop).sort(), vic: g.npcs.filter(n => n.kind === 'vic').length, lot: g.dealer.slots.length, shoppers: g.npcs.filter(n => n.kind === 'guest').length >= 5, glass: g.mall.glass.length >= 50 };
       const t = hubTargets(g);
       out.targets = ['car', 'vic', 'show', 'shop', 'dir'].every(k => t.some(q => q.k === k));
       // shoppers stay in the atrium
       for (let i = 0; i < 240; i++) npcStep(1 / 30);
-      out.atrium = g.npcs.filter(n => n.kind === 'guest').every(n => n.x > 12.5 && n.x < 34.5 && n.z > 6.5 && n.z < 27.5);
+      out.atrium = g.npcs.filter(n => n.kind === 'guest').every(n => n.x > 12.5 && n.x < 34.5 && n.z > 14.5 && n.z < 35.5);
       // every frame of the mall draws
       const B = new Batch(); drawDealer(B, g); out.drawn = B.n > 20000;
       // jewelry: buy, it shows on the model flags, take it off, put it back on

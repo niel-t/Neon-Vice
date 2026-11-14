@@ -239,7 +239,7 @@ function bunkerSetup(g){for(const [x0,z0,x1,z1] of BK_SOLID)for(let z=z0;z<=z1;z
  const L=(x,z,r,c,y)=>g.lights.push({x:x+1,y:y||2.2,z:z+1,r,c});g.lights.length=0;
  L(5,8.5,6,[1.1,0.85,0.6]);L(16,8.5,6,[1.1,0.85,0.6]);L(10.5,6.8,5,[1.2,0.3,0.8]);L(10.5,11.5,4.5,[1.2,1.0,0.75]);L(10.5,9,3,[1.3,1.1,0.6],1.6);
  L(4,18.5,5,[0.75,0.7,0.55]);L(12,18.5,5,[0.95,0.8,0.55]);L(18.5,18,4.5,[0.6,0.5,0.9]);
- L(26.5,9.5,7,[0.95,1.0,1.1],2.5);L(26.5,6.6,5,[1.2,0.25,0.25],1.8);L(26.5,17,5.5,[0.9,0.95,1.05]);L(26.5,20,4.5,[0.5,0.6,0.9]);
+ L(26.5,9.5,7,[0.95,1.0,1.1],2.5);L(26.5,6.6,5,[1.2,0.25,0.25],1.8);L(26.5,17,5.5,[0.9,0.95,1.05]);L(26.5,20,4.5,[0.5,0.6,0.9]);L(19.5,23.4,4.5,[1.1,0.45,0.9],2.6);L(15,25,7,[0.75,0.6,0.85],3);
  g.range={lanes:BK.lanes.map((x,i)=>({x:x+1,z:BK.tz[i]+1,base:x+1,down:0,t:0,flash:0})),on:false,loan:null,prev:null,list:[],i:0,rl:0,fired:0,hits:0,pts:0,best:0,last:null,lastAmmo:0};}
 function rangeZone(p){return p.x>BK.strip[0]+1.05&&p.x<BK.strip[1]+0.95&&p.z>BK.strip[2]+0.62&&p.z<BK.strip[3]+1.3;}
 function rangeGuns(R){const k=kit(),o=[];if(R.loan)o.push(R.loan);for(const s of [k.active,1-k.active]){const it=k.guns[s];if(it&&rangeOK(it.type)&&!o.includes(it.type))o.push(it.type);}if(!o.length)o.push('pistol');return o;}
@@ -287,6 +287,9 @@ function drawBunker(B,g){const T=g.T||0,O=1,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(T
  /* ---- storefront: the street sign and the shutter tracks ---- */
  bx(10.5,2.3,6.04,4.6,0.66,0.05,[0.06,0.03,0.08]);nineWord(B,"NINE OF NINE'S",11.5,2.1,7.1,0.34,[1.2*fl,0.35*fl,0.85*fl]);bx(10.5,2.58,6.09,4.3,0.03,0.03,CYAN,true);bx(10.5,2.02,6.09,4.3,0.03,0.03,CYAN,true);
  for(const sx of [8.9,13.1])bx(sx,1.2,5.1,0.08,2.4,0.12,ST);
+ /* ---- the front door onto the sidewalk (south): the shop's name over it, cyan strips and a red mat ---- */
+ bx(19.5,2.3,23.04,4.8,0.66,0.05,[0.06,0.03,0.08]);nineWord(B,"NINE OF NINE'S",20.5,2.1,24.1,0.34,[1.2*fl,0.35*fl,0.85*fl]);bx(19.5,2.58,23.09,4.5,0.03,0.03,CYAN,true);bx(19.5,2.02,23.09,4.5,0.03,0.03,CYAN,true);
+ bx(19.5,0.012,23.6,1.2,0.012,0.7,[0.4,0.05,0.11]);drawVenueLot(B,g);
  /* ---- showroom: red runner from the door to the counter ---- */
  bx(10.5,0.012,9.2,2.2,0.012,6.4,[0.3,0.03,0.08]);bx(10.5,0.016,9.2,2.0,0.012,6.2,[0.4,0.05,0.11]);for(const sx of [9.45,11.55])bx(sx,0.02,9.2,0.05,0.012,6.2,GOLD);
  /* north wall pegboards either side of the door, handguns and SMGs hung side-on */
