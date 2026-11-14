@@ -301,7 +301,10 @@ function resumeAudio(){if(contextLost||!AC||!SET.sound)return;if(AUD.rebuild&&na
  try{AC.resume().then(audioRecovered,audioFailure);}catch(e){audioFailure(e);}}
 function initAudio(){if(contextLost)return;if(AC){resumeAudio();return;}try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){audioFailure(e);return;}
  AC.addEventListener('statechange',audioRecovered);if(!AUD.timer)AUD.timer=setInterval(audioWatch,1000);
- master=AC.createGain();master.gain.value=SET.sound?0.6:0;master.connect(AC.destination);
+ master=AC.createGain();master.gain.value=SET.sound?0.6:0;
+ /* output limiter: many overlapping shots (or a big firefight) can sum past full scale; the hardware then clips them into crackle.
+    This catches the peaks just before the speaker, quietly, and leaves normal levels untouched */
+ const lim=AC.createDynamicsCompressor();lim.threshold.value=-3;lim.knee.value=2;lim.ratio.value=20;lim.attack.value=0.002;lim.release.value=0.09;master.connect(lim);lim.connect(AC.destination);
  try{AUD.probe=AC.createAnalyser();AUD.probe.fftSize=256;AUD.buf=new Float32Array(256);master.connect(AUD.probe);}catch(e){AUD.probe=null;}
  musicG=AC.createGain();musicG.gain.value=0.34;musicG.connect(master);sfxG=AC.createGain();sfxG.gain.value=0.85;sfxG.connect(master);
  noiseBuf=AC.createBuffer(1,AC.sampleRate,AC.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
@@ -312,10 +315,14 @@ function initAudio(){if(contextLost)return;if(AC){resumeAudio();return;}try{AC=n
    - a context whose clock has stopped, or whose output has gone NaN (one bad value inside a filter, compressor or the reverb
      silences everything after it for good), is closed and rebuilt from scratch: at once, or on the next tap, click or key.
    sfx() also caps how many sounds can overlap, so a long firefight cannot swamp a phone's audio thread. */
-const AUD={timer:null,probe:null,buf:null,lastT:-1,stuck:0,tryT:0,rebuild:false,rebuilds:0,since:0};
+const AUD={timer:null,probe:null,buf:null,lastT:-1,stuck:0,tryT:0,rebuild:false,rebuilds:0,since:0,wake:false};
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)AUD.wake=true;});
 function audioWatch(){if(contextLost||!AC||document.hidden)return;const st=AC.state,now=performance.now();
  if(st==='closed'){AUD.rebuild=true;return;}
- if(st!=='running'){AUD.lastT=-1;AUD.stuck=0;if(SET.sound&&navigator.userActivation?.hasBeenActive!==false&&now-AUD.tryT>1500){AUD.tryT=now;try{AC.resume().then(audioRecovered,()=>{});}catch(e){}}return;}
+ if(st!=='running'){AUD.lastT=-1;AUD.stuck=0;
+  /* a suspended context is only woken by a real gesture (resumeAudio, from the tap/click/key listeners) or by coming back to the tab:
+     retrying on a timer just asks the browser again and again, and gets refused each time */
+  if(AUD.wake){AUD.wake=false;if(SET.sound)resumeAudio();}return;}
  const t=AC.currentTime;AUD.stuck=t===AUD.lastT?AUD.stuck+1:0;AUD.lastT=t;let bad=AUD.stuck>=3;
  if(!bad&&AUD.probe&&SET.sound){AUD.probe.getFloatTimeDomainData(AUD.buf);for(let i=0;i<AUD.buf.length;i+=2)if(!Number.isFinite(AUD.buf[i])){bad=true;break;}}
  if(!bad)return;
