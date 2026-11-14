@@ -452,6 +452,24 @@ test('boss second acts: the yacht floods once Lex is enraged, and Kade can be cr
   await expect.poll(() => page.evaluate(hp => G.boss.hp < hp || !G.boss.alive, a.hp), { timeout: 20_000 }).toBe(true);
 });
 
+test('mastery, mods and capstones: kills level a weapon, Nine fits mods, Second Wind saves one fatal hit, Ghost keeps shots silent', async ({ openGame }) => {
+  const page = await openGame();
+  const r = await page.evaluate(() => { NOARRIVE = true; const out = {}, pr = myProg(), keep = { perks: pr.perks, mast: pr.mast, mods: pr.mods, lvl: pr.lvl };
+    try {
+      pr.lvl = 5; pr.perks = {}; out.capsEarly = perkOpts(pr).some(k => PERKS[k].cap); pr.lvl = 12; out.capsLate = ['second', 'slammer', 'phantom'].every(k => perkOpts(pr).includes(k));
+      startLevel(3); const p = G.player; pr.mast = {}; p.weapon = { type: 'pistol', ammo: 9 };
+      for (let i = 0; i < 20; i++) addKillScore(G.enemies[0], 'pistol'); out.mast = [mastLv('pistol'), mastLv('smg')];
+      p.weapon = { type: 'smg', ammo: 9 }; addKillScore(G.enemies[0], 'pistol'); out.wrongGun = pr.mast.pistol;
+      pr.mods = { xmag: 1, supp: 1 }; applyMods(); out.mag = WD.smg.mag; G.firstKill = 1; out.quiet = gunLoud({ type: 'pistol' }, G);
+      pr.mods = {}; applyMods(); out.magBack = WD.smg.mag;
+      pr.perks = { phantom: 1 }; G.firstKill = 0; out.ghost = gunLoud({ type: 'shotgun' }, G); G.firstKill = 1; out.ghostAfter = gunLoud({ type: 'shotgun' }, G) > 0;
+      pr.perks = { second: 1 }; p.armor = 0; p.armorT = 0; p.hp = 1; hurtPlayer([0, 1], 'pistol', 5); out.saved = p.alive && G.secondUsed === 1;
+      p.armorT = 0; hurtPlayer([0, 1], 'pistol', 5); out.second = p.alive;
+    } finally { Object.assign(pr, keep); applyMods(); }
+    return out; });
+  expect(r).toEqual({ capsEarly: false, capsLate: true, mast: [1, 0], wrongGun: 20, mag: 48, quiet: 2.5, magBack: 32, ghost: 0, ghostAfter: true, saved: true, second: false });
+});
+
 test('slams: a guard knocked into water, the shark tank or broken glass dies there, and Kade can go off the edge', async ({ openGame }) => {
   test.setTimeout(180_000);
   const page = await openGame();
