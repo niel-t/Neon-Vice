@@ -50,7 +50,7 @@ test('club: book a VIP room with Tony, walk her to a private room, and she goes 
       o.broke = { msg: $('stMsg').textContent, wallet: myProg().wallet }; closeStore();
       // every routine keeps her near her own pole
       const moves = new Set(); let far = 0;
-      for (let i = 0; i < 60 * 30; i++) { clubTick(1 / 30); for (const q of c.dancers) { moves.add(q.move); if (Math.hypot(q.x - q.pole.x, q.z - q.pole.z) > 0.9) far++; } }
+      for (let i = 0; i < 60 * 30; i++) { clubTick(1 / 30); for (const q of c.dancers) { moves.add(q.move); if (!q.npcVip && Math.hypot(q.x - q.pole.x, q.z - q.pole.z) > 0.9) far++; } }
       o.moves = moves.size; o.far = far;
     } finally { fadeTo = fade; }
     return o;
