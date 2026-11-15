@@ -5088,30 +5088,33 @@ function updateStage(dt){const g=G;act4Tick(dt);if(!isTower(g))return;const p=g.
  if(g.keyEn===undefined)g.keyEn=g.enemies.find(e=>e.weapon&&e.weapon.type==='silenced')||null;
  if(!g.key&&g.keyEn&&!g.keyEn.alive){g.key={x:g.keyEn.x,z:g.keyEn.z};popup(g.key.x,g.key.z,isKade(g)?'HOIST KEY DROPPED':'KEYCARD DROPPED','#ffd36b');}
  if(g.key&&p.alive&&Math.hypot(p.x-g.key.x,p.z-g.key.z)<0.8){g.keycard=true;g.key=null;sfx('cash');popup(p.x,p.z,isKade(g)?'HOIST KEY  -  THE HOIST IS OPEN':'KEYCARD  -  THE ELEVATOR IS OPEN','#7dff9a');}}
-/* A flight of stairs up through a doorway in the wall behind its cell (the stair cells sit against the top wall): six steps with lit
-   nosings, a handrail on each side, a dark doorway with a brass frame and a lit sign, and floor chevrons that pulse toward it. Drawn
-   only; the walk-on trigger is still the circle around the cell centre in stageStairs. */
-function drawStairs(B,g,x,z){const bx=(px,py,pz,sx,sy,sz,c,em,ry)=>B.box(TRS(px,py,pz,ry||0,sx,sy,sz),c,!!em),brass=[0.85,0.68,0.22],amber=[1,0.85,0.35],N=6,D=0.15,R=0.1,z0=z+0.45;
- for(let i=0;i<N;i++){const h=(i+1)*R,zc=z0-(i+0.5)*D;bx(x,h/2,zc,0.86,h,D,i%2?[0.5,0.5,0.56]:[0.44,0.44,0.5]);bx(x,h+0.006,zc+D/2-0.02,0.86,0.012,0.035,amber,true);
-  for(const sx of [-0.45,0.45])bx(x+sx,h+0.62,zc,0.04,0.04,D+0.02,brass);}
- for(const sx of [-0.45,0.45]){bx(x+sx,0.36,z0-0.03,0.04,0.72,0.04,brass);bx(x+sx,N*R+0.31,z0-N*D+0.03,0.04,0.62,0.04,brass);}
- const top=N*R,dz=z-0.47;bx(x,top+0.62,dz,0.82,1.24,0.05,[0.02,0.02,0.035]);bx(x-0.45,1.0,dz+0.02,0.08,2.0,0.08,brass);bx(x+0.45,1.0,dz+0.02,0.08,2.0,0.08,brass);bx(x,top+1.28,dz+0.02,0.98,0.08,0.08,brass);
- bx(x,2.05,dz+0.05,0.62,0.14,0.05,amber,true);
- for(let k=0;k<2;k++){const on=Math.sin((g.T||0)*5-k*1.6)>0,zc=z0+0.3+k*0.32,c=on?amber:[0.5,0.42,0.18];bx(x-0.13,0.03,zc,0.3,0.012,0.07,c,on,0.6);bx(x+0.13,0.03,zc,0.3,0.012,0.07,c,on,-0.6);}}
-/* The way back down, on the floor you arrived on: a doorway in the nearest wall to the arrival point with the top steps of the flight
-   going down inside it, a lit sign, and a landing mat. Looks only; the stairs are one way. Walls to the north, west and east are tried
-   before the south one, which the camera cannot see. */
+/* Stairwells are part of the floor plan, the way a top-down map draws them: the flight fills its cell, edge to edge, rising toward the
+   wall behind it and getting darker as it climbs out of the light; a stepped stringer and a handrail close off every open side, and two
+   floor chevrons pulse toward the bottom step. No door frame or sign: the stairs simply go up through the floor above. Drawn only; the
+   walk-on trigger is still the circle around the cell centre in stageStairs. */
+function drawStairs(B,g,x,z){const bx=(px,py,pz,sx,sy,sz,c,em,ry)=>B.box(TRS(px,py,pz,ry||0,sx,sy,sz),c,!!em),N=7,D=1/N,R=0.085,z0=z+0.5,ix=Math.floor(x),iz=Math.floor(z),
+  open=dx=>!isSolid(ix+dx,iz),rail=[0.2,0.2,0.24],amber=[1,0.85,0.35];
+ bx(x,0.004,z,1,0.008,1,[0.05,0.05,0.07]);
+ for(let i=0;i<N;i++){const h=(i+1)*R,zc=z0-(i+0.5)*D,k=0.62-i*0.075;bx(x,h/2,zc,0.98,h,D,[k,k,k*1.08]);bx(x,h+0.004,zc+D/2-0.012,0.98,0.008,0.024,i<3?amber.map(v=>v*(0.7-i*0.2)):[k*1.3,k*1.3,k*1.4],i<2);
+  for(const sd of [-1,1])if(open(sd))bx(x+sd*0.475,h/2+0.03,zc,0.05,h+0.06,D,[0.14,0.14,0.17]);}
+ for(const sd of [-1,1])if(open(sd)){const y0=0.5,y1=N*R+0.5,L=Math.hypot(1,y1-y0),a=Math.atan2(y1-y0,1);
+  B.box(A.mul(A.mul(A.T(x+sd*0.475,(y0+y1)/2,z),A.RX(a)),A.S(0.045,0.045,L)),rail,false);for(const t of [0.1,0.9])bx(x+sd*0.475,(y0+(y1-y0)*t)/2+0.02,z0-t,0.035,y0+(y1-y0)*t,0.035,rail);}
+ for(let k=0;k<2;k++){const on=Math.sin((g.T||0)*5-k*1.6)>0,zc=z0+0.22+k*0.26,c=on?amber:[0.5,0.42,0.18];bx(x-0.13,0.012,zc,0.3,0.012,0.06,c,on,0.6);bx(x+0.13,0.012,zc,0.3,0.012,0.06,c,on,-0.6);}}
+/* The way back down, on the floor you arrived on: the cell against the nearest wall is a stairwell going down, painted the same way,
+   the treads stepping down and darkening into the wall, with a rail round its open sides so it reads as a hole in the floor. Looks only;
+   the stairs are one way. Walls to the north, west and east are tried before the south one, which the camera cannot see. */
 function stairsDownSpot(g,ax,az){const ix=Math.floor(ax),iz=Math.floor(az);let best=null;
  for(const [dx,dz] of [[0,-1],[-1,0],[1,0],[0,1]]){for(let k=1;k<=4;k++){const cx=ix+dx*k,cz=iz+dz*k;if(cx<0||cz<0||cx>=g.W||cz>=g.H)break;const i=cz*g.W+cx;
    if(g.solid[i]){if(!g.furn[i]&&!g.glass[i]&&(!best||k<best.k))best={dx,dz,k};break;}}if(best&&best.k<=2)break;}
  if(!best)return null;const {dx,dz,k}=best;return{dx,dz,along:dx?0:1,fx:dx?(dx<0?ix-k+1:ix+k):ix+0.5,fz:dz?(dz<0?iz-k+1:iz+k):iz+0.5};}
-function drawStairsDown(B,g,ax,az){const brass=[0.85,0.68,0.22],amber=[1,0.85,0.35],sp=stairsDownSpot(g,ax,az);
- if(!sp)return;const {dx,dz,along,fx,fz}=sp;
+function drawStairsDown(B,g,ax,az){const sp=stairsDownSpot(g,ax,az);if(!sp)return;const {dx,dz,along,fx,fz}=sp,N=7,rail=[0.2,0.2,0.24];
  /* u runs along the wall, n out of it toward the room */
  const bx=(u,y,n,su,sy,sn,c,em)=>B.box(TRS(fx+(along?u:-dx*n),y,fz+(along?-dz*n:u),0,along?su:sn,sy,along?sn:su),c,!!em);
- bx(0,0.95,0.03,0.82,1.9,0.05,[0.02,0.02,0.035]);for(let i=0;i<3;i++)bx(0,0.5-i*0.17,0.062+i*0.004,0.7-i*0.12,0.03,0.012,i?[0.55,0.46,0.2]:amber,i===0);
- bx(-0.45,1.0,0.05,0.08,2.0,0.08,brass);bx(0.45,1.0,0.05,0.08,2.0,0.08,brass);bx(0,1.96,0.05,0.98,0.08,0.08,brass);bx(0,2.12,0.08,0.62,0.14,0.05,[0.45,0.75,1],true);
- bx(0,0.02,0.45,0.9,0.012,0.7,[0.2,0.2,0.26]);for(let i=0;i<4;i++)bx(0,0.03,0.16+i*0.17,0.78,0.012,0.06,i?[0.3,0.5,0.7]:[0.45,0.75,1],i===0);for(const u of [-0.45,0.45]){bx(u,0.36,0.2,0.04,0.72,0.04,brass);bx(u,0.36,0.75,0.04,0.72,0.04,brass);bx(u,0.7,0.475,0.04,0.04,0.59,brass);}}
+ const cx=fx+(along?0:-dx*0.5),cz=fz+(along?-dz*0.5:0),open=s=>{const ox=along?s:0,oz=along?0:s;return !isSolid(Math.floor(cx+ox),Math.floor(cz+oz));};
+ bx(0,0.003,0.5,1,0.006,1,[0.02,0.02,0.03]);
+ for(let i=0;i<N;i++){const k=0.5*Math.pow(1-i/N,1.6)+0.02,n=1-(i+0.5)/N;bx(0,0.006,n,0.94,0.006,1/N-0.02,[k,k,k*1.1]);bx(0,0.0075,n+0.5/N-0.012,0.94,0.004,0.016,[k*1.6,k*1.5,k*1.2]);}
+ for(const s of [-1,1])if(open(s)){bx(s*0.48,0.02,0.5,0.05,0.04,1,[0.14,0.14,0.17]);bx(s*0.48,0.45,0.5,0.045,0.045,1,rail);for(const n of [0.08,0.5,0.92])bx(s*0.48,0.225,n,0.035,0.45,0.035,rail);}
+}
 function drawStage(B,g){drawAct4(B,g);if((isGarage(g)||isHangar(g))&&g.stageRun){for(const s of g.stageRun.describe(g.sid).stairs)drawA4Stairs(B,g,s);return;}if(!isTower(g)||!g.stageRun)return;const bx=(x,y,z,sx,sy,sz,c,em)=>B.box(TRS(x,y,z,0,sx,sy,sz),c,!!em),steel=[0.74,0.77,0.82],brass=[0.85,0.68,0.22];
  for(const s of g.stageRun.describe(g.sid).stairs){const lock=stageLocked(g,s),x=s.at[0],z=s.at[1];
   if(s.id==='elev')bx(x,0.03,z,0.9,0.015,0.9,lock?[1,0.25,0.25]:[0.3,1,0.5],true);else drawStairs(B,g,x,z);
