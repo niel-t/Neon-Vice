@@ -5082,44 +5082,45 @@ function kadeStage(dt,g,p){if(g.leverT>0)g.leverT-=dt;if(g.sid!=='pent'||!g.boss
  else if(c.ph===2&&c.t<=0){c.mine=0;c.ph=0;c.t=b.hp<=b.maxhp/2?4:6;}
  if(!g.kP2&&b.hp<=b.maxhp/2){g.kP2=1;banner('KADE CALLS FOR HELP','Hard hats up the hoist');const dead=lexFate()==='dead';if(lexFate()==='spared')setTimeout(()=>{if(G===g&&state==='play')popup(g.player.x,g.player.z-0.5,'LEX: "HE PANICS. HIT HIM HARD!"','#7dff9a');},1500);for(const [x,z] of [[5.5,2.5],[g.W-5.5,2.5],[g.W/2,g.H-3.5],...(dead?[[g.W/2-4,2.5],[g.W/2+4,2.5]]:[])]){const e=makeEnemy(g,g.def,8,'bat',false,x,z);e.state='chase';e.seeT=0;}}}
 function updateStage(dt){const g=G;act4Tick(dt);if(!isTower(g))return;const p=g.player;
+ if(!g.climb&&!g.climbIn&&!g.seatP)p.y=wellY(g,p.x,p.z);
  if(g.ambush>0&&(g.ambush-=dt)<=0)alertNoise(p.x,p.z,12,'elev');
  if(isKade(g))kadeStage(dt,g,p);
  if(g.sid!==(isKade(g)?'site':'lobby')||g.keycard)return;
  if(g.keyEn===undefined)g.keyEn=g.enemies.find(e=>e.weapon&&e.weapon.type==='silenced')||null;
  if(!g.key&&g.keyEn&&!g.keyEn.alive){g.key={x:g.keyEn.x,z:g.keyEn.z};popup(g.key.x,g.key.z,isKade(g)?'HOIST KEY DROPPED':'KEYCARD DROPPED','#ffd36b');}
  if(g.key&&p.alive&&Math.hypot(p.x-g.key.x,p.z-g.key.z)<0.8){g.keycard=true;g.key=null;sfx('cash');popup(p.x,p.z,isKade(g)?'HOIST KEY  -  THE HOIST IS OPEN':'KEYCARD  -  THE ELEVATOR IS OPEN','#7dff9a');}}
-/* Stairwells are part of the floor plan, the way a top-down map draws them: the flight fills its cell, edge to edge, rising toward the
-   wall behind it and getting darker as it climbs out of the light; a stepped stringer and a handrail close off every open side, and two
-   floor chevrons pulse toward the bottom step. No door frame or sign: the stairs simply go up through the floor above. Drawn only; the
-   walk-on trigger is still the circle around the cell centre in stageStairs. */
-function drawStairs(B,g,x,z){const bx=(px,py,pz,sx,sy,sz,c,em,ry)=>B.box(TRS(px,py,pz,ry||0,sx,sy,sz),c,!!em),N=7,D=1/N,R=0.085,z0=z+0.5,ix=Math.floor(x),iz=Math.floor(z),
-  open=dx=>!isSolid(ix+dx,iz),rail=[0.2,0.2,0.24],amber=[1,0.85,0.35];
- bx(x,0.004,z,1,0.008,1,[0.05,0.05,0.07]);
- for(let i=0;i<N;i++){const h=(i+1)*R,zc=z0-(i+0.5)*D,k=0.62-i*0.075;bx(x,h/2,zc,0.98,h,D,[k,k,k*1.08]);bx(x,h+0.004,zc+D/2-0.012,0.98,0.008,0.024,i<3?amber.map(v=>v*(0.7-i*0.2)):[k*1.3,k*1.3,k*1.4],i<2);
-  for(const sd of [-1,1])if(open(sd))bx(x+sd*0.475,h/2+0.03,zc,0.05,h+0.06,D,[0.14,0.14,0.17]);}
- for(const sd of [-1,1])if(open(sd)){const y0=0.5,y1=N*R+0.5,L=Math.hypot(1,y1-y0),a=Math.atan2(y1-y0,1);
-  B.box(A.mul(A.mul(A.T(x+sd*0.475,(y0+y1)/2,z),A.RX(a)),A.S(0.045,0.045,L)),rail,false);for(const t of [0.1,0.9])bx(x+sd*0.475,(y0+(y1-y0)*t)/2+0.02,z0-t,0.035,y0+(y1-y0)*t,0.035,rail);}
- for(let k=0;k<2;k++){const on=Math.sin((g.T||0)*5-k*1.6)>0,zc=z0+0.22+k*0.26,c=on?amber:[0.5,0.42,0.18];bx(x-0.13,0.012,zc,0.3,0.012,0.06,c,on,0.6);bx(x+0.13,0.012,zc,0.3,0.012,0.06,c,on,-0.6);}}
-/* The way back down, on the floor you arrived on: the cell against the nearest wall is a stairwell going down, painted the same way,
-   the treads stepping down and darkening into the wall, with a rail round its open sides so it reads as a hole in the floor. Looks only;
-   the stairs are one way. Walls to the north, west and east are tried before the south one, which the camera cannot see. */
-function stairsDownSpot(g,ax,az){const ix=Math.floor(ax),iz=Math.floor(az);let best=null;
- for(const [dx,dz] of [[0,-1],[-1,0],[1,0],[0,1]]){for(let k=1;k<=4;k++){const cx=ix+dx*k,cz=iz+dz*k;if(cx<0||cz<0||cx>=g.W||cz>=g.H)break;const i=cz*g.W+cx;
-   if(g.solid[i]){if(!g.furn[i]&&!g.glass[i]&&(!best||k<best.k))best={dx,dz,k};break;}}if(best&&best.k<=2)break;}
- if(!best)return null;const {dx,dz,k}=best;return{dx,dz,along:dx?0:1,fx:dx?(dx<0?ix-k+1:ix+k):ix+0.5,fz:dz?(dz<0?iz-k+1:iz+k):iz+0.5};}
-function drawStairsDown(B,g,ax,az){const sp=stairsDownSpot(g,ax,az);if(!sp)return;const {dx,dz,along,fx,fz}=sp,N=7,rail=[0.2,0.2,0.24];
- /* u runs along the wall, n out of it toward the room */
- const bx=(u,y,n,su,sy,sn,c,em)=>B.box(TRS(fx+(along?u:-dx*n),y,fz+(along?-dz*n:u),0,along?su:sn,sy,along?sn:su),c,!!em);
- const cx=fx+(along?0:-dx*0.5),cz=fz+(along?-dz*0.5:0),open=s=>{const ox=along?s:0,oz=along?0:s;return !isSolid(Math.floor(cx+ox),Math.floor(cz+oz));};
- bx(0,0.003,0.5,1,0.006,1,[0.02,0.02,0.03]);
- for(let i=0;i<N;i++){const k=0.5*Math.pow(1-i/N,1.6)+0.02,n=1-(i+0.5)/N;bx(0,0.006,n,0.94,0.006,1/N-0.02,[k,k,k*1.1]);bx(0,0.0075,n+0.5/N-0.012,0.94,0.004,0.016,[k*1.6,k*1.5,k*1.2]);}
- for(const s of [-1,1])if(open(s)){bx(s*0.48,0.02,0.5,0.05,0.04,1,[0.14,0.14,0.17]);bx(s*0.48,0.45,0.5,0.045,0.045,1,rail);for(const n of [0.08,0.5,0.92])bx(s*0.48,0.225,n,0.035,0.45,0.035,rail);}
-}
+/* SWITCHBACK STAIRWELLS. Every staircase is a real piece of the floor plan in its corner: two flights, three cells deep, side by side
+   with a wall between them. You walk up one flight toward the wall, turn on the half landing between floors, and come up the flight beside
+   it facing the other way, so on the floor above you step off in the same corner, heading back into the room.
+   - Where a stair goes up (the stair's 'at' is the top cell of the flight), the flight beside it, past the divider, goes down: to the floor
+     below where there is one, otherwise it is taped off.
+   - Where you arrive (the arrival 'at' is the bottom cell of the flight you come up), the column on the far side of the divider is the
+     enclosed shaft going on up, unless that floor's own stairs are there.
+   The divider and shaft are ordinary wall cells in the maps; the flights are floor cells. The player rises up a flight and sinks down one
+   (wellY). Drawn only; the walk-on trigger is still the circle around the stair's top cell in stageStairs. */
+const WELL_N=3,WELL_RISE=0.6;
+function stageWells(g){if(g._wells)return g._wells;const out=[];if(!g.stageRun)return out;const d=g.stageRun.describe(g.sid),W=g.W;
+ for(const s of d.stairs||[]){if(s.id==='elev'||!isTower(g))continue;const col=Math.floor(s.at[0]),side=col<W/2?1:-1;out.push({up:col,down:col+2*side,z0:Math.floor(s.at[1]),live:false,taped:true,stair:s});}
+ for(const k of ['bottom','stairs']){const a=d.arrivals&&d.arrivals[k];if(!a||!isTower(g))continue;const col=Math.floor(a.at[0]),side=col<W/2?-1:1;out.push({up:null,down:col,shaft:col+2*side,z0:Math.floor(a.at[1])-WELL_N+1,live:true});}
+ return g._wells=out;}
+/* height of a point on a flight: up flights rise toward the wall, down flights sink toward it; level ground at the bottom cell's centre */
+function wellY(g,x,z){if(!isTower(g))return 0;for(const w of stageWells(g)){const t=(z-w.z0)/WELL_N;if(t<0||t>1)continue;const c=Math.floor(x),f=Math.max(0,1-t/((WELL_N-0.5)/WELL_N));
+  if(c===w.up)return WELL_RISE*f;if(c===w.down)return -WELL_RISE*f;}return 0;}
+function drawWells(B,g){const bx=(px,py,pz,sx,sy,sz,c,em,ry)=>B.box(TRS(px,py,pz,ry||0,sx,sy,sz),c,!!em),rail=[0.2,0.2,0.24],amber=[1,0.85,0.35],N=WELL_N*5,D=WELL_N/N;
+ for(const w of stageWells(g)){const z0=w.z0,zE=z0+WELL_N;
+  if(w.up!==null){const x=w.up+0.5;bx(x,0.004,z0+WELL_N/2,1,0.008,WELL_N,[0.05,0.05,0.07]);
+   for(let i=0;i<N;i++){const h=(i+1)*WELL_RISE/N*1.15,zc=zE-(i+0.5)*D,k=0.64-i*0.032;bx(x,h/2,zc,0.98,h,D,[k,k,k*1.08]);bx(x,h+0.004,zc+D/2-0.012,0.98,0.008,0.024,i<3?amber.map(v=>v*(0.7-i*0.2)):[k*1.3,k*1.3,k*1.4],i<2);}
+   for(const sd of [-0.47,0.47]){B.box(A.mul(A.mul(A.T(x+sd,0.5+WELL_RISE*0.55,z0+WELL_N/2),A.RX(Math.atan2(WELL_RISE*1.15,WELL_N))),A.S(0.04,0.04,Math.hypot(WELL_N,WELL_RISE*1.15))),rail,false);}
+   for(let k=0;k<2;k++){const on=Math.sin((g.T||0)*5-k*1.6)>0,zc=zE+0.22+k*0.26,c=on?amber:[0.5,0.42,0.18];bx(x-0.13,0.012,zc,0.3,0.012,0.06,c,on,0.6);bx(x+0.13,0.012,zc,0.3,0.012,0.06,c,on,-0.6);}}
+  {const x=w.down+0.5,room=w.up!==null?(w.down>w.up?1:-1):(w.down>w.shaft?1:-1);bx(x,0.003,z0+WELL_N/2,1,0.006,WELL_N,[0.02,0.02,0.03]);
+   for(let i=0;i<N;i++){const k=0.5*Math.pow(1-(i+0.5)/N,1.4)+0.02,zc=zE-(i+0.5)*D;bx(x,0.006,zc,0.94,0.006,D-0.02,[k,k,k*1.1]);bx(x,0.0075,zc+D/2-0.012,0.94,0.004,0.016,[k*1.6,k*1.5,k*1.2]);}
+   if(!isSolid(w.down+room,z0+1)){bx(x+room*0.48,0.02,z0+WELL_N/2,0.05,0.04,WELL_N,[0.14,0.14,0.17]);bx(x+room*0.48,0.45,z0+WELL_N/2-0.05,0.045,0.045,WELL_N-0.1,rail);for(let n=0;n<=WELL_N;n++)bx(x+room*0.48,0.225,z0+0.05+n*(WELL_N-0.15)/WELL_N,0.035,0.45,0.035,rail);}
+   if(w.taped){for(const sx of [-0.42,0.42])bx(x+sx,0.4,zE-0.08,0.05,0.8,0.05,[0.95,0.8,0.15]);for(let i=0;i<6;i++)bx(x-0.35+i*0.14,0.62,zE-0.08,0.14,0.07,0.02,i%2?[0.08,0.08,0.08]:[0.95,0.8,0.15]);}}}}
 function drawStage(B,g){drawAct4(B,g);if((isGarage(g)||isHangar(g))&&g.stageRun){for(const s of g.stageRun.describe(g.sid).stairs)drawA4Stairs(B,g,s);return;}if(!isTower(g)||!g.stageRun)return;const bx=(x,y,z,sx,sy,sz,c,em)=>B.box(TRS(x,y,z,0,sx,sy,sz),c,!!em),steel=[0.74,0.77,0.82],brass=[0.85,0.68,0.22];
  for(const s of g.stageRun.describe(g.sid).stairs){const lock=stageLocked(g,s),x=s.at[0],z=s.at[1];
-  if(s.id==='elev')bx(x,0.03,z,0.9,0.015,0.9,lock?[1,0.25,0.25]:[0.3,1,0.5],true);else drawStairs(B,g,x,z);
+  if(s.id==='elev')bx(x,0.03,z,0.9,0.015,0.9,lock?[1,0.25,0.25]:[0.3,1,0.5],true);
   if(s.id==='elev'){bx(x,0.95,z-0.44,3.2,1.9,0.08,steel);bx(x-1.7,1.0,z-0.42,0.12,2.0,0.12,brass);bx(x+1.7,1.0,z-0.42,0.12,2.0,0.12,brass);bx(x,2.05,z-0.4,0.5,0.12,0.06,lock?[1,0.2,0.2]:[0.3,1,0.5],true);}}
- {const ar=g.stageRun.describe(g.sid).arrivals;for(const k of ['bottom','stairs'])if(ar&&ar[k])drawStairsDown(B,g,ar[k].at[0],ar[k].at[1]);
+ drawWells(B,g);{const ar=g.stageRun.describe(g.sid).arrivals;
   /* the lift you came up in: its doors stand in the top wall right where the lift is on the floor below */
   if(ar&&ar.elev){const x=ar.elev.at[0],zw=Math.floor(ar.elev.at[1]);bx(x,0.95,zw+0.04,1.5,1.9,0.06,steel);bx(x,0.95,zw+0.075,0.02,1.86,0.02,[0.3,0.32,0.36]);bx(x-0.8,1.0,zw+0.06,0.1,2.0,0.1,brass);bx(x+0.8,1.0,zw+0.06,0.1,2.0,0.1,brass);bx(x,2.0,zw+0.06,1.7,0.1,0.1,brass);bx(x,2.12,zw+0.09,0.4,0.1,0.04,[0.3,1,0.5],true);bx(x,0.012,zw+0.45,1.4,0.012,0.7,[0.24,0.24,0.28]);}}
  if(g.crane&&g.crane.ph>0){const c=g.crane;bx(c.x,0.04,g.H/2,c.w,0.02,g.H-3,c.mine?[1,0.8,0.2]:[1,0.15,0.15],c.ph===2||Math.sin(g.T*20)>0);if(c.ph===2)bx(c.x,0.8,g.H/2,c.w*0.9,1.6,g.H-4,[0.45,0.4,0.2]);}
@@ -5130,16 +5131,17 @@ function drawStage(B,g){drawAct4(B,g);if((isGarage(g)||isHangar(g))&&g.stageRun)
    camera rises with them. At the top the last frame is held on screen and dissolves into the next floor, where the player walks up out
    of the stairwell onto the landing. The floor change itself is unchanged; only the black fade is replaced. The elevator keeps its fade. */
 let SNAP=null;
-function climbStart(g,s){const p=g.player;g.climb={t0:performance.now(),dur:0.8,x0:p.x,z0:p.z,sx:s.at[0],sz:s.at[1]+0.45,tz:s.at[1]-0.42};p.vx=p.vz=0;}
-function climbTick(dt,g){const c=g.climb,p=g.player;if(!c)return;const k=Math.min(1,(performance.now()-c.t0)/1000/c.dur),e=k*k*(3-2*k),ox=p.x,oz=p.z;
- if(k<0.3){const q=k/0.3;p.x=lerp(c.x0,c.sx,q);p.z=lerp(c.z0,c.sz,q);p.y=0;}else{const q=(k-0.3)/0.7;p.x=c.sx;p.z=lerp(c.sz,c.tz,q);p.y=q*0.6;}
+function climbStart(g,s){const p=g.player;g.climb={t0:performance.now(),dur:0.8,x0:p.x,z0:p.z,y0:p.y||0,sx:s.at[0],sz:s.at[1]+0.45,tz:s.at[1]-0.42};p.vx=p.vz=0;}
+function climbTick(dt,g){const c=g.climb,p=g.player;if(!c)return;const k=Math.min(1,(performance.now()-c.t0)/1000/c.dur),e=k*k*(3-2*k),ox=p.x,oz=p.z,ym=Math.max(c.y0,0.45);
+ if(k<0.3){const q=k/0.3;p.x=lerp(c.x0,c.sx,q);p.z=lerp(c.z0,c.sz,q);p.y=lerp(c.y0,ym,q);}else{const q=(k-0.3)/0.7;p.x=c.sx;p.z=lerp(c.sz,c.tz,q);p.y=ym+q*0.4;}
  const m=Math.hypot(p.x-ox,p.z-oz);p.walk=(p.walk||0)+m*9;p.vx=0;p.vz=dt>0?-Math.max(2.5,m/dt):0;p.a=Math.PI;g.cam.lift=e;
  const kk=1-Math.exp(-Math.max(dt,0.03)*10);g.cam.x+=(p.x-g.cam.x)*kk;g.cam.z+=(p.z-1-g.cam.z)*kk;}
-function climbArrive(g,s){const ar=g.stageRun?.describe(g.sid).arrivals?.[s.arrive];if(!ar)return;const sp=stairsDownSpot(g,ar.at[0],ar.at[1]),p=g.player;if(!sp)return;
- const sx=sp.along?sp.fx:sp.fx-sp.dx*0.05,sz=sp.along?sp.fz-sp.dz*0.05:sp.fz;g.climbIn={t0:performance.now(),dur:0.55,x0:sx,z0:sz,x1:p.x,z1:p.z,a:Math.atan2(p.x-sx,p.z-sz)};
- p.x=sx;p.z=sz;p.y=-0.35;p.a=g.climbIn.a;g.cam.x=p.x;g.cam.z=p.z-1;g.cam.lift=1;}
+/* coming up the second flight of the switchback: from the dark end by the wall, walking back into the room, to the arrival spot */
+function climbArrive(g,s){const ar=g.stageRun?.describe(g.sid).arrivals?.[s.arrive];if(!ar)return;const p=g.player,w=stageWells(g).find(q=>q.live&&q.down===Math.floor(ar.at[0]));if(!w)return;
+ const sx=ar.at[0],sz=w.z0+0.2;g.climbIn={t0:performance.now(),dur:0.9,x0:sx,z0:sz,y0:-WELL_RISE*1.1,x1:p.x,z1:p.z,a:Math.atan2(p.x-sx,p.z-sz)};
+ p.x=sx;p.z=sz;p.y=g.climbIn.y0;p.a=g.climbIn.a;g.cam.x=p.x;g.cam.z=p.z-1;g.cam.lift=1;}
 function climbInTick(dt,g){const c=g.climbIn,p=g.player;const k=Math.min(1,(performance.now()-c.t0)/1000/c.dur),e=k*k*(3-2*k),ox=p.x,oz=p.z;
- p.x=lerp(c.x0,c.x1,e);p.z=lerp(c.z0,c.z1,e);p.y=Math.min(0,-0.35*(1-k*1.6));p.a=c.a;const m=Math.hypot(p.x-ox,p.z-oz);p.walk=(p.walk||0)+m*9;
+ p.x=lerp(c.x0,c.x1,e);p.z=lerp(c.z0,c.z1,e);p.y=Math.min(0,c.y0*(1-e));p.a=c.a;const m=Math.hypot(p.x-ox,p.z-oz);p.walk=(p.walk||0)+m*9;
  const sp=dt>0?Math.max(2.5,m/dt):0;p.vx=Math.sin(c.a)*sp;p.vz=Math.cos(c.a)*sp;g.cam.lift=1-e;
  const kk=1-Math.exp(-Math.max(dt,0.03)*10);g.cam.x+=(p.x-g.cam.x)*kk;g.cam.z+=(p.z-1-g.cam.z)*kk;if(k>=1){g.climbIn=null;g.cam.lift=0;p.y=0;p.vx=p.vz=0;}}
 /* hold the frame just drawn (call only from the end of render, before the browser clears the drawing buffer) */

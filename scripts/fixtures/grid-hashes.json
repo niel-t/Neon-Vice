@@ -348,7 +348,7 @@
         "paletteSize": 6
       },
       "gridHash": "9763693fcb8b21b7aec83a6b469ad701c5b19e18a3c1792bde27f4878aa00226",
-      "loadedHash": "40a482c53175c882c4f1f78fae23cb4e25bf0748d27b2300a8ddeeaa496b0723",
+      "loadedHash": "38e057e6ee735e919d7e0a1c76ef663a5e8b55ced64930bc60fd39a9cde2f74e",
       "queryHash": "30ecc161bd636ac77b1edb88064f871bdccdb9dee7c0fda80e1ffd048bab7745",
       "cellHash": "55149a4d58609527dbf44d19438eaa70444c84bcb81c2e912a704c4d8f49580c"
     },
@@ -388,7 +388,7 @@
         "paletteSize": 6
       },
       "gridHash": "fa6cf26d4815b58a4072a79947fac34b9aba2ebf7e729635acdabb003240c428",
-      "loadedHash": "cc7c8c0db474e2bf0de8018720cff8872989bc224ba4d55cc17270764d69f7d8",
+      "loadedHash": "773ae1ee218d96c40c3fb4fc5a581757b434f5c137a81bc4ec0e5d2bd610e4b5",
       "queryHash": "8a6af3d59fb278210dfc0d39e081444316635c040f47c0d9cdc8802d70cf2504",
       "cellHash": "c04c00afbe15a40bb939bde3963ca4b1216186115a8d84640b85e3e680817cb2"
     },
@@ -398,9 +398,9 @@
       "input": {
         "map": [
           "####################################",
-          "#..................................#",
-          "#..7............................2..#",
-          "#.....FF....................FF.....#",
+          "###................................#",
+          "###.7...........................2..#",
+          "###...FF....................FF.....#",
           "#........s.....b.....b.....s.......#",
           "#............F....m...F............#",
           "#..Z......Z......FF......Z......Z..#",
@@ -414,10 +414,10 @@
         "wall": 6,
         "paletteSize": 6
       },
-      "gridHash": "d63cd455b9784c1270bcf4acd3d0973979f6ba53b19f5e72fcd4f75e1104fe6d",
-      "loadedHash": "926d720bb064db8b5b2a6774bc61137e87465bb39233fee2759505f9fc928e17",
-      "queryHash": "9205966503c76d811cae910414929fdea2f1e69b0455dc81137c3f89ca32dd8b",
-      "cellHash": "ff1754d834e75568d9c32bc039c122f73bc92361cdec01851e627ee34fd946bb"
+      "gridHash": "361352ddb0dcf3f83bc01ddbc3fb1bcc746c01e5098714501d3b0ffd8c941aba",
+      "loadedHash": "3b59ce2a3f62a72ecc0adb07243bbbf9fd598b5873efdfb9c4717c5dc1c59c5d",
+      "queryHash": "7743269094e7da95c699827b73f385a4a687d05c00719ea6031f61d17c17789c",
+      "cellHash": "3334d3c3895ed1c051e040ec5bb283908f156988d521b13a5d4fd99156d97f39"
     },
     {
       "key": "level:11",
