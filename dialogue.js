@@ -202,6 +202,7 @@ const DLG={
   {t:"What happens now?",a:"Nothing happens, for once, and that's the reward. Enjoy it."},
   {t:"I'm starting a family.",req:{char:'don'},a:["I know you are, Sal, and Miami's big enough for a second one. Just remember who lent you the car.",['P',"I'll remember."],"Good. I'd hate to send flowers to Providence twice."]},
   {t:"Philadelphia called me.",req:{char:'consigliere'},a:["Lo Bianco's widow wrote to me as well, four pages of apologies. They want their consigliere back.",['P',"And what did you tell her?"],"I told her you were busy giving me advice I never take. Was that wrong?"]},
+  {t:"Vale's in your trunk.",req:{flag:'vale_spared'},a:["Then the papers can bury him and I'll keep him. A banker who remembers every number in Miami is worth more breathing.",['P',"And if he talks?"],"He'll talk. To me. For the rest of his life."]},
   {t:"It looked like an accident.",req:{flag:'vale_clean'},a:["The papers say a fuel leak, and the Feds sent a wreath. I sent a bigger one.",['P',"And the gold?"],"Back in my vault, every bar, the way it was in '59."]},
   {t:"The Feds unfroze my accounts.",req:{char:'money'},a:["I know, because I made the phone call. Think of it as a bonus that never shows up in anybody's books.",['P',"Morty would've charged you for that."],"Morty would've skimmed it, and look where Morty ended up."]},
   {t:"Thank you, Mr McWey.",set:{rel:{mcwey:1}}}],"Now get out before I say something sentimental and we both have to pretend I didn't.")};

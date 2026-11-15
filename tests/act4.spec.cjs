@@ -87,18 +87,30 @@ test('act 4 floor 3: Vale walks to his jet, the stairs open when he is aboard, h
   await expect.poll(() => page.evaluate(() => G.valeW.aboard), { timeout: 90_000 }).toBe(true);
   await toStairs(page, 'board');
   await go(page, 'jet');
-  const j = await page.evaluate(() => ({ boss: G.boss && G.boss.vale, obj: G.obj.label, valve: !!G.jet.valve, car: !G.def.noCar }));
-  expect(j).toEqual({ boss: true, obj: 'FINISH VALE', valve: true, car: true });
+  const j = await page.evaluate(() => ({ boss: G.boss && G.boss.vale, obj: G.obj.label, valve: !!G.jet.valve, car: !G.def.noCar, sealed: !!G.solid[G.jet.door.iz * G.W + G.jet.door.ix], lift: liftAt(G.player.x, G.player.z) }));
+  expect(j).toEqual({ boss: true, obj: "TAKE OUT VALE'S BODYGUARDS", valve: true, car: true, sealed: true, lift: 0.8 });
   await page.evaluate(() => { G.player.hp = 99; G.player.maxhp = 99; for (const e of G.enemies) e.spd = 0.0001; });
-  // Half health: the jet rolls and two men come back from the cockpit.
-  const before = await page.evaluate(() => G.enemies.length);
-  await page.evaluate(() => { G.boss.hp = Math.floor(G.boss.maxhp / 2); });
-  await expect.poll(() => page.evaluate(() => ({ roll: G.jet.roll, n: G.enemies.length })), { timeout: 20_000 }).toEqual({ roll: 1, n: before + 2 });
-  // The valve does nothing while Vale lives; finished by hand (the bat), the finisher plays.
+  // The valve does nothing yet; the bodyguards go down and the jet starts its take-off run with the door shut.
   expect(await page.evaluate(() => { const p = G.player, v = G.jet.valve; p.x = v.x + 1.1; p.z = v.z; playerGrab(p); return G.jet.fuse; })).toBe(0);
-  await page.evaluate(() => { for (const e of G.enemies) if (e.alive && !e.boss) killEnemy(e, 'pistol', [0, 1]); killEnemy(G.boss, 'bat', [0, 1]); });
-  expect(await page.evaluate(() => ({ fin: !!G.fin, shot: G.valeShot, obj: G.obj.label }))).toEqual({ fin: true, shot: false, obj: 'MAKE IT LOOK LIKE AN ACCIDENT' });
-  await page.evaluate(() => { while (G.fin) { G.fin.t = 2; pressed.grab = true; updateFin(0.01); pressed.grab = false; } });
+  await page.evaluate(() => { for (const e of G.enemies) if (e.alive && !e.boss) killEnemy(e, 'pistol', [0, 1]); });
+  await expect.poll(() => page.evaluate(() => G.jet.ph), { timeout: 20_000 }).toBe('roll');
+  expect(await page.evaluate(() => G.obj.label.startsWith('HACK THE COCKPIT DOOR'))).toBe(true);
+  // The hack: CTX at the door's panel, then hold position until it opens.
+  const h = await page.evaluate(() => { const p = G.player, D = G.jet.door; p.x = D.x - 1.0; p.z = D.z; const l = ctxAction(p).l; playerGrab(p); G.jet.hack = 0.9; return { l, hacking: G.jet.hacking }; });
+  expect(h).toEqual({ l: 'HACK', hacking: 1 });
+  await expect.poll(() => page.evaluate(() => G.jet.ph), { timeout: 30_000 }).toBe('vale');
+  expect(await page.evaluate(() => G.solid[G.jet.door.iz * G.W + G.jet.door.ix])).toBe(0);
+  // Vale goes down and begs; finished bare-handed it counts as by hand, and the finisher plays.
+  await page.evaluate(() => { killEnemy(G.boss, 'pistol', [0, 1]); });
+  expect(await page.evaluate(() => !!G.mercy && G.boss.alive)).toBe(true);
+  await page.evaluate(() => { G.player.weapon = null; G.mercy.t = 2; keys.Digit2 = true; });
+  await expect.poll(() => page.evaluate(() => !G.mercy && !G.boss.alive), { timeout: 20_000 }).toBe(true);
+  await page.evaluate(() => { keys.Digit2 = false; while (G.fin) { G.fin.t = 2; pressed.grab = true; updateFin(0.01); pressed.grab = false; } });
+  await expect.poll(() => page.evaluate(() => G.jet.ph), { timeout: 20_000 }).toBe('stop');
+  expect(await page.evaluate(() => G.valeShot)).toBe(false);
+  // The throttles stop the jet; the airstairs come back down.
+  const st = await page.evaluate(() => { G.items = []; const p = G.player, t = G.jet.thr; p.x = t.x - 0.8; p.z = t.z; const l = ctxAction(p).l; playerGrab(p); return { l, stopped: G.jet.stopped }; });
+  expect(st).toEqual({ l: 'BRAKES', stopped: 1 });
   const v = await page.evaluate(() => { const p = G.player, v = G.jet.valve; p.x = v.x + 1.1; p.z = v.z; const l = ctxAction(p).l; playerGrab(p); return { l, fuse: G.jet.fuse > 0, done: G.obj.done }; });
   expect(v).toEqual({ l: 'VALVE', fuse: true, done: true });
   // Not done until the jet blows: standing at the car early does not finish the floor.
@@ -111,17 +123,38 @@ test('act 4 floor 3: Vale walks to his jet, the stairs open when he is aboard, h
   expect(await page.evaluate(() => document.getElementById('rTitle').textContent)).toBe('BANKER DIES IN FIERY RUNWAY CRASH');
 });
 
-test('act 4 floor 3: standing next to the jet when it goes up kills you', async ({ openGame }) => {
-  test.setTimeout(240_000);
-  const page = await openGame();
+const toJet = async page => {
   await page.evaluate(() => { NOARRIVE = true; startLevel(13); });
   await page.evaluate(() => { G.player.hp = 99; });
   await toStairs(page, 'door');
   await go(page, 'hangar');
   await page.evaluate(() => { G.valeW.t = 0; G.valeW.n.path = []; });
-  await expect.poll(() => page.evaluate(() => G.valeW.aboard), { timeout: 20_000 }).toBe(true);
+  await expect.poll(() => page.evaluate(() => G.valeW.aboard), { timeout: 30_000 }).toBe(true);
   await toStairs(page, 'board');
   await go(page, 'jet');
-  await page.evaluate(() => { for (const e of G.enemies) if (e.alive && !e.boss) killEnemy(e, 'pistol', [0, 1]); killEnemy(G.boss, 'pistol', [0, 1]); while (G.fin) { G.fin.t = 2; pressed.grab = true; updateFin(0.01); pressed.grab = false; } const v = G.jet.valve; G.player.x = v.x + 1.1; G.player.z = v.z; playerGrab(G.player); G.jet.fuse = 0.05; });
-  await expect.poll(() => page.evaluate(() => ({ boom: G.jet.boom, alive: G.player.alive, acc: G.accident })), { timeout: 20_000 }).toEqual({ boom: 1, alive: false, acc: 'messy' });
+  await page.evaluate(() => { G.player.hp = 99; G.player.maxhp = 99; for (const e of G.enemies) if (e.alive && !e.boss) killEnemy(e, 'pistol', [0, 1]); });
+  await expect.poll(() => page.evaluate(() => G.jet.ph), { timeout: 20_000 }).toBe('roll');
+};
+
+test('act 4 floor 3: spare Vale and McWey takes him; the jet still goes up as an accident', async ({ openGame }) => {
+  test.setTimeout(240_000);
+  const page = await openGame();
+  await toJet(page);
+  await page.evaluate(() => { G.jet.hack = 1; G.jet.hacking = 1; const D = G.jet.door; G.player.x = D.x - 1.0; G.player.z = D.z; });
+  await expect.poll(() => page.evaluate(() => G.jet.ph), { timeout: 20_000 }).toBe('vale');
+  await page.evaluate(() => { killEnemy(G.boss, 'pistol', [0, 1]); G.mercy.t = 2; keys.Digit1 = true; });
+  await expect.poll(() => page.evaluate(() => ({ m: !!G.mercy, spared: !!G.boss.spared, ph: G.jet.ph })), { timeout: 20_000 }).toEqual({ m: false, spared: true, ph: 'stop' });
+  await page.evaluate(() => { keys.Digit1 = false; G.items = []; const t = G.jet.thr; G.player.x = t.x - 0.8; G.player.z = t.z; playerGrab(G.player); });
+  expect(await page.evaluate(() => ({ stopped: G.jet.stopped, nearCar: Math.hypot(G.boss.x - G.car.x, G.boss.z - G.car.z) < 2.5 }))).toEqual({ stopped: 1, nearCar: true });
+  await page.evaluate(() => { const v = G.jet.valve; G.player.x = v.x + 1.1; G.player.z = v.z; playerGrab(G.player); G.player.x = G.car.x + 1; G.player.z = G.car.z; G.jet.fuse = 0.05; });
+  await expect.poll(() => page.evaluate(() => ({ boom: G.jet.boom, acc: G.accident, vale: G.boss.alive, me: G.player.alive })), { timeout: 20_000 }).toEqual({ boom: 1, acc: 'clean', vale: true, me: true });
+});
+
+test('act 4 floor 3: if the jet is not stopped in time it runs off the runway and you die with it', async ({ openGame }) => {
+  test.setTimeout(240_000);
+  const page = await openGame();
+  await toJet(page);
+  expect(await page.evaluate(() => { const S = jetSkin(G, G.jetBody), d = S.doors[0]; return liftAt(d.x, d.z + d.d * 1.5); })).toBe(0);
+  await page.evaluate(() => { G.jet.crash = 0.05; });
+  await expect.poll(() => page.evaluate(() => ({ boom: G.jet.boom, crashed: G.jet.crashed, alive: G.player.alive })), { timeout: 20_000 }).toEqual({ boom: 1, crashed: 1, alive: false });
 });

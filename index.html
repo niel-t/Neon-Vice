@@ -1335,7 +1335,7 @@ function addKillScore(e,type){const g=G;g.firstKill=1;if(g.arena)g.arena.cash+=1
  if(sb){sb=Math.round(sb*Dd().mult);g.score+=sb;g.styleB=(g.styleB||0)+sb;popup(e.x,e.z-0.45,lbl+' +$'+fmt(sb),'#2de2e6');}}
 const GUNS=['dual','pistol','silenced','revolver','smg','m16','shotgun','double','goldak','golddeagle'];
 function killEnemy(e,type,dir){type=BT(type);if(!e.alive)return;const g=G;
- if(e.boss&&isKade(g)&&g.sid==='pent'&&!g.kadeFell&&Math.min(e.x,e.z,g.W-e.x,g.H-e.z)<4.2){g.kadeFell=true;const S=SLAMS.edge;g.score+=S.pay;g.gpts=(g.gpts||0)+S.pay;g.slams=(g.slams||0)+1;(g.slamK||(g.slamK={})).edge=1;popup(e.x,e.z,S.n+' +$'+fmt(S.pay),S.c);shake(0.6);setTimeout(()=>{if(G===g){e.sunk=true;banner('KADE GOES OVER THE EDGE','Forty floors is a long way down.');}},650);}if(e.lex&&!e.mercyAsked&&!g.fin&&!g.mercy){e.mercyAsked=true;e.hp=1;e.vx=e.vz=0;e.down=9999;e.wind=0;g.mercy={e,dir,type,t:0,bt:0};return;}
+ if(e.boss&&isKade(g)&&g.sid==='pent'&&!g.kadeFell&&Math.min(e.x,e.z,g.W-e.x,g.H-e.z)<4.2){g.kadeFell=true;const S=SLAMS.edge;g.score+=S.pay;g.gpts=(g.gpts||0)+S.pay;g.slams=(g.slams||0)+1;(g.slamK||(g.slamK={})).edge=1;popup(e.x,e.z,S.n+' +$'+fmt(S.pay),S.c);shake(0.6);setTimeout(()=>{if(G===g){e.sunk=true;banner('KADE GOES OVER THE EDGE','Forty floors is a long way down.');}},650);}if((e.lex||e.vale)&&!e.mercyAsked&&!g.fin&&!g.mercy){e.mercyAsked=true;e.hp=1;e.vx=e.vz=0;e.down=9999;e.wind=0;g.mercy={e,dir,type,t:0,bt:0};return;}
  e.alive=false;act4Kill(e,type);if((e.lex||e.vale)&&!g.fin)g.fin=e.mercyAsked?{t:0,e,dir,ph:'fin',step:0,line:{who:'',txt:'',t:0},lineT:0}:{t:0,e,dir,ph:'fin',step:-1,line:null};e.down=0;e.wind=0;dropWeapon(e,dir,true);
  const sh=type==='shotgun'||type==='double';e.a=Math.atan2(-dir[0],-dir[1]);launchBody(e,type,dir);
  const n=(GORE()?1.6:1)*(sh?75:type==='exec'?90:['bat','knife','machete'].includes(type)?45:40);bloodBurst(e.x,0.65,e.z,dir,n,sh?7:4.5);
@@ -2932,7 +2932,7 @@ function payout(){if(!G||G.paid||!G.take)return;G.paid=1;const a=arm(),p=myProg(
  if(!missionIsCampaign(MISSION)){p.wallet+=G.take;mallRent(p);p.couchBlood=0;for(const r of MISSIONS[MISSION].rewards||[])if(r&&typeof r.flag==='string')dlgObj(p,'wflags')[r.flag]=1;saveProg();return;}
  const cut=cutOf(G.take),before=p.debt;p.debt-=cut;p.wallet+=G.take-cut;
  if(G.sjPay)p.wallet+=G.sjPay;p.gift=null;if(G.sj)p.sidejob=null;p.couchBlood=0;if(levelIdx===2)p.sharkDead=1;LASTPAY={take:G.take,cut,debt:p.debt,before,squared:false,lvl:levelIdx};
- LASTPAY.rent=mallRent(p);if(levelIdx===3)p.boat=1;if(levelIdx===4){p.suits2=1;p.suit='power';PS2C.applySuit(rideId());}if(levelIdx===5)p.heli=1;if(levelIdx===13&&G.jet){const w=dlgObj(p,'wflags');if(G.accident==='clean')w.vale_clean=1;else delete w.vale_clean;} if(levelIdx===7){if(G.enemies.some(e=>e.boss&&!e.alive)){p.lexDead=1;delete dlgObj(p,'wflags').lex_spared;}else dlgObj(p,'wflags').lex_spared=1;p.respect=1;LASTPAY.yacht=true;LASTPAY.cleared=p.debt;p.debt=0;p.paid=true;}else if(p.debt<=0&&!p.paid){p.paid=true;LASTPAY.squared=true;}a.jobs++;saveProg();}
+ LASTPAY.rent=mallRent(p);if(levelIdx===3)p.boat=1;if(levelIdx===4){p.suits2=1;p.suit='power';PS2C.applySuit(rideId());}if(levelIdx===5)p.heli=1;if(levelIdx===13&&G.jet){const w=dlgObj(p,'wflags');if(G.accident==='clean')w.vale_clean=1;else delete w.vale_clean;if(G.valeSpared)w.vale_spared=1;else delete w.vale_spared;} if(levelIdx===7){if(G.enemies.some(e=>e.boss&&!e.alive)){p.lexDead=1;delete dlgObj(p,'wflags').lex_spared;}else dlgObj(p,'wflags').lex_spared=1;p.respect=1;LASTPAY.yacht=true;LASTPAY.cleared=p.debt;p.debt=0;p.paid=true;}else if(p.debt<=0&&!p.paid){p.paid=true;LASTPAY.squared=true;}a.jobs++;saveProg();}
  /* the kit is the only inventory: it is what you carry into a job and what you walk out with. During a job p.kit stays untouched;
     the run snapshot rewinds retries (stageKit), walking away restores entryKit, and only a finished job commits what you hold. */
  function kit(){arm();return myProg().kit;}
@@ -3099,11 +3099,11 @@ const FIN_VALE={consigliere:[['CONRAD VALE',"Be reasonable. Everybody in this ci
 /* The moment before Lex dies: he is down and begging. 1 = spare him, 2 = finish him. Spared, he stays on the deck (e.spared) and the floor
    clears without him; the payout then records lex_spared (alive) instead of lexDead. Act 3 reads that: see lexFate(). */
 function updateMercy(dt){const g=G,m=g.mercy,e=m.e;m.t+=dt;g.T+=dt;e.down=9999;
- if(m.t<0.5)return;if(!m.shown){m.shown=1;popup(e.x,e.z,'"WAIT! I CAN PAY YOU!"','#ffd36b');sfx('boss');}
- if((m.bt-=dt)<=0){m.bt=2.3;banner('LEX BEGS: "I\'VE GOT A TESTAROSSA!"',touchMode?'TAP SPARE OR FINISH':'[1] SPARE HIM        [2] FINISH HIM');}
+ if(m.t<0.5)return;if(!m.shown){m.shown=1;popup(e.x,e.z,e.vale?'"WAIT. EVERYONE HAS A PRICE."':'"WAIT! I CAN PAY YOU!"','#ffd36b');sfx('boss');}
+ if((m.bt-=dt)<=0){m.bt=2.3;banner(e.vale?'VALE BEGS: "NAME YOUR NUMBER. I\'LL WIRE IT TONIGHT."':'LEX BEGS: "I\'VE GOT A TESTAROSSA!"',touchMode?'TAP SPARE OR FINISH':'[1] SPARE HIM        [2] FINISH HIM');}
  if(m.t<1.2){pressed.spare=pressed.finish=false;return;}m.ask=1;const spare=keys.Digit1||keys.Numpad1||pdown(2)||pressed.spare,kill=keys.Digit2||keys.Numpad2||pdown(1)||pressed.finish;pressed.spare=pressed.finish=false;
- if(spare){g.mercy=null;e.spared=true;e.state='idle';popup(e.x,e.z,'SPARED','#7dff9a');banner('YOU SPARED LEX','He stays on the deck, watching you finish the yacht.');sfx('pick');}
- else if(kill){g.mercy=null;killEnemy(e,m.type,m.dir||[0,1]);}}
+ if(spare){g.mercy=null;e.spared=true;e.state='idle';popup(e.x,e.z,'SPARED','#7dff9a');if(e.vale){e.cuffed=1;e.weapon=null;g.valeSpared=1;banner('YOU SPARED CONRAD VALE','McWey will want a word with him. Now stop the jet.');}else banner('YOU SPARED LEX','He stays on the deck, watching you finish the yacht.');sfx('pick');}
+ else if(kill){g.mercy=null;if(e.vale){const pw=g.player.weapon,wd=pw&&WD[pw.type];g.valeHand=!(wd&&!wd.melee);popup(e.x,e.z-0.4,g.valeHand?'BY HAND':'A BULLET','#ffd36b');}killEnemy(e,m.type,m.dir||[0,1]);}}
 const lexFate=()=>{const p=myProg();return p.lexDead?'dead':(dlgObj(p,'wflags')||{}).lex_spared?'spared':null;};
 function updateFin(dt){const g=G,f=g.fin,id=rideId(),FT=f.e.vale?FIN_VALE:FIN,L=FT[id]||FT.don,e=f.e,p=g.player;f.t+=dt;g.T+=dt;
  const next=()=>{f.step++;if(f.step>=L.length){g.fin=null;if(e.vale)banner('CONRAD VALE IS DONE','Now the fuel valve in the rear hold. Make it look like an accident.');else banner('LEX "SILKS" STERLING IS DONE','Clear the yacht, then back to the car');return;}const q=L[f.step];f.line={who:q[0]==='P'?CHARS[selIdx].name:q[0],txt:q[1],t:0};f.lineT=1.2+q[1].length*0.045;
