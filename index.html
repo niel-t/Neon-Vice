@@ -1763,7 +1763,7 @@ function updatePlayer(dt){const g=G,p=g.player,ch=CHARS[selIdx];
  if(kitOn(p)&&!p.weapon&&g.hand!==null){g.hand=null;autoDraw(p);}
  let mx=0,mz=0;if(keys.KeyW||keys.ArrowUp)mz-=1;if(keys.KeyS||keys.ArrowDown)mz+=1;if(keys.KeyA||keys.ArrowLeft)mx-=1;if(keys.KeyD||keys.ArrowRight)mx+=1;
  if(sticks.L){const v=stickVec(sticks.L);mx+=v[0];mz+=v[1];}if(padMode&&PAD.on){mx+=PAD.lx;mz+=PAD.ly;}const ml=Math.hypot(mx,mz);if(ml>1){mx/=ml;mz/=ml;}if(g.seatP&&ml>0.3)seatUp(g);
- if(p.exec>0){p.exec-=dt;mx=mz=0;}
+ if(p.exec>0){p.exec=Math.max(0,p.exec-dt);mx=mz=0;} // clamp: a leftover negative timer is truthy and used to block every floor change
  const cs=playerCover(p,mx,mz,dt);
  const sraw=sticks.L?Math.hypot(sticks.L.x-sticks.L.ox,sticks.L.y-sticks.L.oy):0;const wantS=!cs&&(keys.ShiftLeft||keys.ShiftRight||(padMode&&PAD.on&&(PAD.b[4]||PAD.b[10]))||sraw>68)&&ml>0.3;
  if(p.stam===undefined){p.stam=1;p.stamT=0;}p.sprinting=wantS&&p.stam>0.02&&!p.tired&&!(p.exec>0);
@@ -5004,7 +5004,7 @@ function startGridRun(id,arrive=null){
   if(moved)banner(missionName(id)+' WAS REBUILT','This floor changed since you saved. Starting again from the beginning, with everything you brought.');return true;
  }catch(e){ARR_GO=null;stageRelease(fresh);return stageFailure(e);}
 }
-function stageCanLeave(g){return !!(g&&g===G&&g.stageManaged&&g.stageRun?.active&&g.mission===MISSION&&myProg().run===g.runOwner&&myProg().run?.mission===MISSION&&myProg().run.stage===g.sid&&g.player.alive&&Number.isFinite(g.player.hp)&&g.player.hp>0&&!g.player.ex&&!g.player.exec&&!g.done&&!g.fin&&!g.cine&&!g.cameo);}
+function stageCanLeave(g){return !!(g&&g===G&&g.stageManaged&&g.stageRun?.active&&g.mission===MISSION&&myProg().run===g.runOwner&&myProg().run?.mission===MISSION&&myProg().run.stage===g.sid&&g.player.alive&&Number.isFinite(g.player.hp)&&g.player.hp>0&&!g.player.ex&&!(g.player.exec>0)&&!g.done&&!g.fin&&!g.cine&&!g.cameo);}
 /* A floor change must never be refused over fight leftovers. stageSettle puts anything the strict snapshot would reject into a state it
    accepts (things in the air land, odd numbers become safe ones); it only runs after a strict attempt has failed. */
 function stageSettle(g){
