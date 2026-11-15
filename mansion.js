@@ -125,11 +125,11 @@ const MV_B=[
 const MV_SLOTLEG=f=>{const L={};for(const c of '.otgmnx')L[c]={f};return L;};
 /* the ground floor's floors (world cells): terrace terrazzo, foyer checkerboard marble, dining parquet, kitchen tile, the drive, the lawn, the court */
 function mvFloorG(x,z){const X=x-1,Z=z-1,ch=(MV_G[Z]||'')[X];
- if(ch===',')return 11;if(ch==='=')return 37;if(ch==='_')return X>=37&&X<=44&&Z>=5&&Z<=20?12:3;
+ if(ch===',')return 11;if(ch==='=')return 37;if(ch==='_')return X>=34&&X<=47&&Z>=3&&Z<=22?61:3;
  if(Z<=12)return 61;if(Z>=31)return 63;
  if(X>=15&&X<=22&&Z>=18)return (X+Z)%2?43:63;if(X>=24&&Z<=21)return 4;if(X>=24)return 14;return 63;}
 function mvFloorU(x,z){const X=x-1,Z=z-1;if(Z<=12)return 61;if(Z<=21)return X<=10?43:X>=27?4:63;return X<=13?29:X>=24?4:63;}
-function mvFloorB(x,z){const X=x-1,Z=z-1;if(Z>=19)return 4;if(X>=22)return 7;return 43;}
+function mvFloorB(x,z){const X=x-1,Z=z-1;if(Z>=19)return 4;if(X>=22)return 61;return 43;}
 const MANSION_HUBS={
  home3:{name:'VILLA SOLANA',hub:'foot',homeT:3,mfl:0,wall:45,floor:63,amb:[0.38,0.34,0.37],lc:[0.62,0.54,0.52],sofa:0xffffff,track:'c_palms',where:'STAR ISLAND · VILLA SOLANA',obj:'FURNISH THE PLACE · THEN HEAD OUT',grime:0.06,
   floorFn:mvFloorG,
@@ -140,7 +140,7 @@ const MANSION_HUBS={
   floorFn:mvFloorU,
   legend:Object.assign(MV_SLOTLEG(63),{'~':{w:39,h:0.02,top:39,water:1},'y':{w:42,h:0.02,top:42},'O':{w:42,h:0.02,top:42},'Y':{w:42,h:0.02,top:42},'R':{w:43,h:0.1,top:43},'W':{w:45,h:0.42}}),
   map:MV_U},
- home3b:{name:'THE VELVET VAULT',hub:'foot',homeT:3,mfl:-1,wall:19,floor:43,amb:[0.58,0.44,0.52],lc:[0.78,0.54,0.62],sofa:0xb0102a,track:'c_palms',where:'VILLA SOLANA · BASEMENT',obj:'THE CLUB · THE RANGE',grime:0.1,
+ home3b:{name:'THE VELVET VAULT',hub:'foot',homeT:3,mfl:-1,wall:19,floor:43,amb:[0.58,0.44,0.52],lc:[0.78,0.54,0.62],sofa:0xb0102a,track:'c_palms',where:'VILLA SOLANA · BASEMENT',obj:'THE CLUB · THE RANGE',grime:0.03,
   floorFn:mvFloorB,
   legend:Object.assign(MV_SLOTLEG(43),{'Y':{w:43,h:0.06,top:43}}),
   map:MV_B}};
@@ -380,7 +380,7 @@ function mvGroundStatic(B,g){const bx=mvBx(B),f=homeFurn(),M=TUV[63],T0=0;
   bx(yx-0.5,0.72,yz,6.0,0.45,1.5,MV_WH);bx(yx-0.5,0.74,yz+0.76,5.6,0.2,0.02,[0.06,0.08,0.12]);bx(yx-1.0,1.12,yz,3.6,0.36,1.2,MV_WH);bx(yx-1.0,1.14,yz+0.61,3.2,0.16,0.02,[0.06,0.08,0.12]);
   bx(yx-1.6,1.5,yz,0.12,0.5,0.9,MV_WH);bx(yx-1.6,1.76,yz,0.6,0.05,0.1,[0.2,0.2,0.22]);bx(yx-3.6,0.64,yz,1.6,0.25,0.8,[0.95,0.95,0.92]);mallWord(B,'SOLANA',yx+2.2,0.12,yz+0.97,0.18,GOLD);}
  /* ===== the tennis court: lines, net, chain-link fence, the umpire's chair and a bench ===== */
- const LN=[0.96,0.96,0.96];for(const z of [6,22])bx(42,0.012,z,8.06,0.01,0.07,LN);for(const x of [38,46,39,45])bx(x,0.012,14,0.06,0.01,16,LN);
+ bx(42,0.004,14,12.8,0.006,18.8,[0.18,0.42,0.32]);bx(42,0.007,14,8.4,0.006,16.4,[0.16,0.32,0.62]);const LN=[0.96,0.96,0.96];for(const z of [6,22])bx(42,0.012,z,8.06,0.01,0.07,LN);for(const x of [38,46,39,45])bx(x,0.012,14,0.06,0.01,16,LN);
  for(const z of [10,18])bx(42,0.012,z,6,0.01,0.06,LN);bx(42,0.012,14,0.06,0.01,8,LN);for(const z of [6.15,21.85])bx(42,0.012,z,0.06,0.01,0.3,LN);
  for(const x of [37.5,46.5])bx(x,0.32,14,0.07,0.64,0.07,[0.2,0.2,0.22]);bx(42,0.32,14,9,0.5,0.015,[0.08,0.09,0.1]);bx(42,0.58,14,9,0.05,0.03,LN);
  const FN=[0.36,0.4,0.4];for(let z=4.5;z<=23.5;z+=1.9){bx(35.5,0.8,z,0.06,1.6,0.06,FN);bx(48.5,0.8,z,0.06,1.6,0.06,FN);}

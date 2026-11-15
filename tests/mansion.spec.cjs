@@ -61,7 +61,8 @@ test('mansion: the drive-in arrival ends at the front door, and bed upstairs', a
     goHome();
   });
   await expect.poll(() => page.evaluate(() => !!G.seq), { timeout: 5000 }).toBe(true);
-  await expect.poll(() => page.evaluate(() => !G.seq), { timeout: 30000 }).toBe(true);
+  // run the scene in fixed steps (software GL is too slow to wait for it in real time)
+  expect(await page.evaluate(() => { for (let i = 0; i < 900 && G.seq; i++) updateSeq(1 / 30); return !G.seq; })).toBe(true);
   const r = await page.evaluate(() => {
     const g = G, q = g.player, out = { hub: g.def === HUBS.home3, x: +q.x.toFixed(1), z: +q.z.toFixed(1), free: !g.solid[Math.floor(q.z) * g.W + Math.floor(q.x)], car: [+g.hcar.x.toFixed(1), +g.hcar.z.toFixed(1)], girls: g.npcs.filter(n => n.kind === 'pgirl').length, guards: g.npcs.filter(n => n.kind === 'bguard').length };
     const fade = fadeTo; try { fadeTo = f => { f(); return true; }; MV_FROM = 0; loadHub('home3u', 'home'); } finally { fadeTo = fade; }
