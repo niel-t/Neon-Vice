@@ -215,6 +215,11 @@ test('saves: pre-RPG progress preserves purchases and loan history', async ({ op
     .toEqual({ wallet: 123, lvl: 1, car: 'mid', loan: 1 });
 });
 
+test('saves: a save that lives in a bought home boots (the home index is checked before HOMEDEF exists)', async ({ openGame }) => {
+  const page = await openGame({ nb86prog: { don: { lvl: 13, xp: 0, perks: {}, debt: 0, paid: true, seen: { loan: 1 }, homes: [0, 1, 2, 3], home: 3 } } });
+  expect(await page.evaluate(() => [typeof state, HOME_COUNT === HOMEDEF.length, myProg().home])).toEqual(['string', true, 3]);
+});
+
 test('saves: pre-debt progress preserves the car and loan history', async ({ openGame }) => {
   const preDebt = await openGame({ nb86prog: { don: { lvl: 2, xp: 10, perks: {}, cars: ['beater', 'mid'], car: 'mid', seen: { loan: 1 } } } });
   expect(await preDebt.evaluate(() => { arm(); return [myProg().car, myProg().seen.loan]; })).toEqual(['mid', 1]);
