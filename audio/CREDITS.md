@@ -22,5 +22,11 @@ Clips were trimmed, faded, normalised and packed into one mono MP3 by `scripts/g
 | Golden AK-47 | AK-47 7.62x39 (C_28P); mag out/in, charging handle (C_11, C_10, C_14) |
 | Golden Deagles | Colt 1911 .45 shot pitched down (A_42P); mag out/in, slide (A_3, A_4, A_11) |
 | Gold grenade launcher | Mossberg 190 12 gauge shot pitched down into a thump (N_30P); Nova action sounds |
+| Colt .45 | Colt 1911 .45, mid and near (A_34P, A_42P at true pitch); mag out/in, slide release, dry fire (A_3, A_4, A_9, A_19) |
+| MAC-10 | PPSh-41 SMG single shots, pitched up a touch (P_30P); mag out/in, bolt, dry fire (P_7, P_6, P_8, P_1) |
+| SPAS-12 | Winchester Model 12 12 gauge (K_22P); shells into the tube, action close, dry fire (K_3, K_5, K_7) |
+| Ruger Mini-14 | Norinco SKS 7.62x39 (U_14P); bolt back, stripper load, bolt forward, dry fire (U_3, U_0, U_4, U_6) |
+| Lever-action .30-30 | Marlin 336 .30-30 (I_22P); full lever cycle after every shot, rounds into the tube, dry fire (I_10, I_0, I_8) |
+| Scoped .30-06 | Tikka T3 .30-06 (W_29P); full bolt cycle after every shot, bolt up/back/forward, mag out/in, dry fire (W_14, W_6, W_9, W_12, W_5, W_4, W_13) |
 
-The shell-casing tinkle after a shot is still synthesized in code.
+The shell-casing tinkle after a shot, and the golf club's swish and ping, are synthesized in code.
