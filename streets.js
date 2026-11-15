@@ -223,7 +223,7 @@ function drawKerb(B,g,k){const x=k.x,z=k.z,R=s=>ihash(x*10|0,z*10|0,s);
 function drawKerbDeco(B,g,d){const k={t:d.t.slice(2),x:d.x+0.5,z:d.z+(d.t==='k_meter'||d.t==='k_news'||d.t==='k_mailbox'||d.t==='k_trash'?0.25:0.35),n:2};drawKerb(B,g,k);}
 
 /* ---- the road: patches, cracks, oil, manholes, drains at the kerb, a zebra crossing outside McWey Tower ---- */
-function drawRoad(B,g){const W=g.W,H=g.H;if(typeof HUBS!=='undefined'&&g.def===HUBS.garage)return;
+function drawRoad(B,g){const W=g.W,H=g.H;if(typeof HUBS!=='undefined'&&g.def===HUBS.garage||g.front)return;
  const road=(x,z)=>x>=0&&z>=0&&x<W&&z<H&&!g.solid[z*W+x]&&g.floorT[z*W+x]===7&&!g.furn[z*W+x];
  for(let z=0;z<H;z++)for(let x=0;x<W;x++){if(!road(x,z))continue;const r=ihash(x,z,401),u=ihash(x,z,402),v=ihash(x,z,403);
   const kerbN=z>0&&!road(x,z-1)&&g.floorT[(z-1)*W+x]!==7,kerbS=z<H-1&&!road(x,z+1)&&g.floorT[(z+1)*W+x]!==7;
