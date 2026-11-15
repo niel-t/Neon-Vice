@@ -191,12 +191,14 @@ function mvGroundSetup(g){const W=g.W,H=g.H;
  mvSolid(g,26.6,17.4,31.4,19.6);      /* the dining table */
  mvSolid(g,26.4,26.6,30.6,28.0);mvSolid(g,25.05,24.05,33.0,24.9);   /* the island, the counters */
  mvSolid(g,18.4,15.4,21.6,16.6);      /* the gallery statue */
+ mvSolid(g,9.4,27.0,14.0,27.6);       /* the shark tank */
+ mvSolid(g,19.6,25.85,20.4,26.55);    /* the globe on its plinth */
  /* the car out front, and the way out: walk back out of the front door to it */
  const c=g.hcar={x:20.0,z:34.7,a:0,spin:0};g.solids.push({x:c.x,z:c.z,w:2.35,d:1.05});g.trigs.push({x:20.0,z:33.55,t:'leave'});g.car={x:c.x,z:c.z};
  const L=(x,z,r,c,y)=>g.lights.push({x,z,r,c,y:y||2.1});
  L(20,25,7,[1.0,0.86,0.7],2.6);L(20,17,6,[0.95,0.8,0.7]);L(10,18,6,[0.9,0.74,0.6]);L(10,26,6,[0.85,0.66,0.6]);L(29,18,6,[0.95,0.78,0.55]);L(29,27,6,[0.85,0.85,0.9]);
  L(20,7,9,[0.35,0.9,1.15],0.6);L(13,10,5,[1.2,0.35,0.8],0.9);L(27,10,5,[1.2,0.35,0.8],0.9);L(30.5,6.5,4,[0.4,1.0,1.2],0.8);L(6,8,5,[1.0,0.6,0.35],1.4);
- L(20,38.5,6,[0.5,0.9,1.2],1.2);L(20,33,5,[1.1,0.75,0.45],2.4);L(17.6,44,4,[1.2,0.8,0.4],1.6);L(22.4,44,4,[1.2,0.8,0.4],1.6);L(41.5,13.5,8,[0.75,0.85,0.95],2.4);
+ L(20,38.5,6,[0.5,0.9,1.2],1.2);L(20,33,5,[1.1,0.75,0.45],2.4);L(17.6,44,4,[1.2,0.8,0.4],1.6);L(22.4,44,4,[1.2,0.8,0.4],1.6);L(41,27.5,6,[0.85,0.9,1.1],2.4);L(11.7,26.6,4,[0.3,0.75,1.2],1.2);L(41.5,13.5,8,[0.75,0.85,0.95],2.4);
  /* the household: the butler in the foyer, two guards at the gate, the tennis pro and his partner rallying on the court */
  mvChar(g,'butler',21.6,24.8,mvLooks.butler(),0);
  for(const x of [16.6,23.4]){const n=mvChar(g,'hguard',x,44.1,NPCLOOK.guard(),0);n.a=n.a0=x<20?Math.PI*0.25:-Math.PI*0.25;}
@@ -216,6 +218,7 @@ function mvUpSetup(g){const W=g.W,H=g.H;g.lowGround=1;
  mvSolid(g,6.6,15.6,10.6,18.6);       /* the sunken tub */
  mvSolid(g,6.05,25.1,8.4,27.6);       /* the guest bed */
  mvSolid(g,28.0,27.2,31.0,28.4);      /* the desk */
+ mvSolid(g,18.0,17.3,21.0,20.3);      /* the round bed in the middle of the room */
  g.obj='THE MASTER SUITE · TAKE THE STAIRS DOWN TO GO OUT';}
 /* the basement: the club's stage and poles, the bar, booths, the dance floor; the range; the cellar hall */
 const MV_POLES=[7.0,8.9,10.8,12.7,14.6,16.5].map(x=>({x,z:3.75}));
@@ -241,6 +244,7 @@ function mvBaseSetup(g){const W=g.W,H=g.H;
  /* the range: three lanes north, the firing line between the bench and the back wall */
  g.range={name:'PRIVATE RANGE',zone:{x0:23.05,x1:32.95,z0:14.85,z1:17.4},lanes:MV_LANES.map((x,i)=>({x,z:MV_LANEZ[i],base:x,down:0,t:0,flash:0})),on:false,loan:null,prev:null,list:[],i:0,rl:0,fired:0,hits:0,pts:0,best:0,last:null,lastAmmo:0};
  mvSolid(g,33.05,21.05,33.95,21.95);   /* the gun locker */
+ mvSolid(g,2.1,21.1,6.9,21.95);       /* the cash in the counting room */
  g.obj='THE CLUB · THE RANGE · TAKE THE STAIRS UP TO GO OUT';}
 /* furniture, guards, pets and girls (homeExtras for the mansion): safe to call again after buying something */
 function mansionExtras(g){const f=homeFurn(),S=g.slots,fl=g.mfl,sp=g.spawned;g.fixK=-1;
@@ -428,6 +432,14 @@ function mvGroundStatic(B,g){const bx=mvBx(B),f=homeFurn(),M=TUV[63],T0=0;
  for(let i=0;i<8;i++){const z=28.15+i*0.34,y=-0.12-i*0.26;bx(7.5,y,z,2.9,0.08,0.36,MV_BLK);bx(7.5,y+0.045,z-0.15,2.9,0.01,0.04,MV_PINK,true);}
  mvRail(B,[{x:6.1,y:0,z:27.95},{x:7.5,y:0,z:27.95},{x:9.0,y:0,z:27.95},{x:9.0,y:0,z:29.5},{x:9.0,y:0,z:31.0}],0.48,GOLD);
  mallSign(B,7.5,1.5,28.0,['THE VAULT'],MV_PINK,0.2);
+ /* ===== specials: the shark tank across the great room, the globe's plinth in the foyer, the helipad on the east lawn ===== */
+ bx(11.7,0.1,27.3,4.7,0.2,0.66,MV_BLK);bx(11.7,1.24,27.3,4.7,0.08,0.66,MV_BLK);for(const x of [9.38,14.02])bx(x,0.67,27.3,0.06,1.06,0.66,GOLD);bx(11.7,1.29,27.3,4.74,0.02,0.7,GOLD);
+ bx(11.7,1.18,27.3,4.5,0.03,0.05,MV_CYAN,true);bx(11.7,0.205,27.3,4.6,0.01,0.6,[0.2,0.55,0.85],true);bx(11.7,0.22,27.3,4.6,0.04,0.58,[0.85,0.75,0.5]);for(const [x,c] of [[10.1,[1,0.4,0.5]],[10.6,[0.95,0.6,0.3]],[13.2,[1,0.45,0.6]],[13.5,[0.4,0.85,0.5]]])bx(x,0.32,27.4,0.18,0.2,0.16,c);
+ bx(11.7,0.05,27.01,4.6,0.03,0.02,MV_CYAN,true);
+ bx(20,0.3,26.2,0.62,0.6,0.62,MV_BLK,false,0,M);bx(20,0.62,26.2,0.7,0.04,0.7,GOLD);bx(20,0.03,26.2,0.76,0.06,0.76,GOLD);bx(20,0.68,26.2,0.12,0.12,0.12,GOLD);mallWord(B,'THE CITY IS OURS',20,0.34,26.52,0.045,GOLD);
+ mvDisc(B,41,0.012,27.5,3.0,0.012,[0.22,0.22,0.25]);for(let i=0;i<24;i++){const a=i*TAU/24;bx(41+Math.cos(a)*2.75,0.02,27.5+Math.sin(a)*2.75,0.06,0.012,0.6,[0.95,0.85,0.2],false,-a);}
+ bx(40.2,0.022,27.5,0.18,0.012,1.6,MV_WH);bx(41.8,0.022,27.5,0.18,0.012,1.6,MV_WH);bx(41,0.022,27.5,1.6,0.012,0.18,MV_WH);
+ for(let i=0;i<8;i++){const a=i*TAU/8;bx(41+Math.cos(a)*3.05,0.05,27.5+Math.sin(a)*3.05,0.1,0.1,0.1,[0.3,1.2,0.5],true);}
  /* ===== the dining room: a marble table for ten under a chandelier ===== */
  bx(29,0.42,18.5,4.6,0.06,1.6,MV_WH,false,0,M);bx(29,0.385,18.5,4.64,0.02,1.64,GOLD);for(const x of [27.2,30.8])bx(x,0.2,18.5,0.3,0.4,0.9,GOLD);
  for(let i=0;i<5;i++)for(const sd of [-1,1]){const x=27.0+i,z=18.5+sd*1.05;bx(x,0.25,z,0.42,0.06,0.42,MV_RED);bx(x,0.12,z,0.36,0.24,0.36,GOLD);bx(x,0.5,z+sd*0.2,0.42,0.5,0.06,MV_RED);}
@@ -460,8 +472,41 @@ function mvGroundDyn(D,g){const T=g.T,bx=mvBx(D),f=homeFurn(),M=g.mansion;
  {const k=M.gate*1.35;for(const sd of [-1,1]){const hx=20+sd*1.9,a=sd<0?-k:Math.PI+k,m0=A.mul(A.T(hx,0,44.5),A.RY(a)),P=(px,py,pz,sx,sy,sz,c,em)=>D.box(A.mul(m0,TRS(px,py,pz,0,sx,sy,sz)),c,!!em);
    P(0.95,0.08,0,1.9,0.06,0.06,MV_BLK);P(0.95,1.3,0,1.9,0.06,0.06,MV_BLK);P(0.95,0.75,0,1.9,0.04,0.04,MV_BLK);for(let i=0;i<9;i++){P(0.1+i*0.21,0.7,0,0.03,1.3,0.03,MV_BLK);P(0.1+i*0.21,1.4,0,0.05,0.08,0.05,GOLD);}P(1.6,0.75,0,0.34,0.34,0.03,GOLD);P(1.6,0.75,0.02,0.2,0.2,0.01,MV_PINK,true);}}
  drawChandelier(D,IBhi,20,25,1.45,T);drawChandelier(D,IBhi,29,18.5,1.2,T);
+ mvTankFish(D,T);mvGlobe(D,20,26.2,T);mvFireworks(D,T,1.8,1.6);
+ if(myProg().heli)drawHeli(D,41,27.5,0.4,0);else for(let i=0;i<8;i++){if(Math.floor(T*4)%8===i)bx(41+Math.cos(i*TAU/8)*3.05,0.08,27.5+Math.sin(i*TAU/8)*3.05,0.14,0.04,0.14,[0.6,1.6,0.8],true);}
  {const ph=Math.floor(T*0.7)%4,c=[[1,0.35,0.75],[0.3,0.9,1],[1,0.85,0.3],[0.6,0.4,1]][ph];bx(6.41,0.88,21.5,0.01,0.46,1.8,c.map(v=>v*(0.85+0.15*Math.sin(T*7))),true);}}
 
+/* ---------------- the specials ---------------- */
+const MV_BED={x:19.5,z:18.8};
+/* a disc out of 32 wedges (radial boxes meeting in the middle) */
+function mvDisc(B,x,y,z,r,h,c,em,uv){const N=32,w=2*r*Math.tan(Math.PI/N)+0.01;for(let i=0;i<N;i++){const a=i*TAU/N;B.box(TRS(x+Math.cos(a)*r/2,y,z+Math.sin(a)*r/2,-a,r,h,w),c,!!em,uv);}}
+/* the master bed: a round dais with a neon rim, a white leather base, red satin, a tufted half-moon headboard, pillows, a canopy ring */
+function mvRoundBed(B,x,z){const bx=mvBx(B),N=28;
+ mvDisc(B,x,0.05,z,2.45,0.1,MV_WH,false,TUV[63]);for(let i=0;i<N;i++){const a=i*TAU/N;bx(x+Math.cos(a)*2.46,0.05,z+Math.sin(a)*2.46,0.04,0.035,0.58,MV_PINK,true,-a);}
+ mvDisc(B,x,0.26,z,2.05,0.3,MV_WH);for(let i=0;i<N;i++){const a=i*TAU/N;bx(x+Math.cos(a)*2.06,0.41,z+Math.sin(a)*2.06,0.04,0.03,0.48,GOLD,false,-a);}
+ mvDisc(B,x,0.49,z,1.95,0.14,MV_RED);mvDisc(B,x+0.35,0.565,z,1.55,0.02,[0.72,0.05,0.14]);
+ for(let i=0;i<14;i++){const a=Math.PI*0.62+i*Math.PI*0.76/13;bx(x+Math.cos(a)*2.12,0.62,z+Math.sin(a)*2.12,0.14,0.82,0.52,MV_RED,false,-a);bx(x+Math.cos(a)*2.14,1.04,z+Math.sin(a)*2.14,0.18,0.05,0.54,GOLD,false,-a);
+  bx(x+Math.cos(a)*2.04,0.74,z+Math.sin(a)*2.04,0.02,0.04,0.04,GOLD,false,-a);}
+ for(let i=0;i<4;i++){const zz=z-1.47+i*0.98;bx(x-1.15,0.62,zz,0.36,0.12,0.72,i%2?MV_WH:[1,0.75,0.85],false,0.0);}
+ for(const sd of [-1,1]){const a=Math.PI+sd*1.25,px=x+Math.cos(a)*2.75,pz=z+Math.sin(a)*2.75;bx(px,0.25,pz,0.5,0.5,0.5,GOLD,false,a);bx(px,0.51,pz,0.56,0.02,0.56,MV_WH,false,a,TUV[63]);bx(px,0.68,pz,0.06,0.3,0.06,GOLD);bx(px,0.88,pz,0.3,0.16,0.3,[1.2,0.85,0.6],true);}
+ for(let i=0;i<N;i++){const a=i*TAU/N;bx(x+Math.cos(a)*1.9,1.75,z+Math.sin(a)*1.9,0.05,0.05,0.44,GOLD,false,-a);}for(let i=0;i<4;i++){const a=i*TAU/4+0.4;bx(x+Math.cos(a)*1.9,2.2,z+Math.sin(a)*1.9,0.015,0.9,0.015,GOLD);}}
+/* fireworks over the bay: a burst every couple of seconds, sparks fall and fade (deterministic from the clock) */
+function mvFireworks(D,T,zc,yb){for(let k=0;k<3;k++){const per=2.6,t0=Math.floor(T/per-k/3)*per+k*per/3,u=(T-t0)/per;if(u<0||u>1)continue;
+  const sd=Math.floor(t0*7.3),rr=v=>((Math.sin(sd*12.9898+v*78.233)*43758.5453)%1+1)%1,cx=6+rr(1)*36,cy=yb+rr(2)*1.2,cz=zc+rr(3)*1.5,c=NEON[Math.floor(rr(4)*4)],f=Math.max(0,1-u*1.15);
+  if(u<0.18){const h=u/0.18;D.box(TRS(cx,cy*h,cz+1.5*(1-h),0,0.05,0.18,0.05),[1.2,0.9,0.5],true);continue;}
+  const e=(u-0.18)/0.82,R=0.5+e*2.2;for(let i=0;i<26;i++){const a=i*TAU/26,b=((i*7)%5-2)*0.35;D.box(TRS(cx+Math.cos(a)*R*Math.cos(b),cy+Math.sin(b)*R-e*e*0.9,cz+Math.sin(a)*R*0.45,0,0.13,0.13,0.13),c.map(v=>v*1.6*f),true);D.box(TRS(cx+Math.cos(a)*R*0.7*Math.cos(b),cy+Math.sin(b)*R*0.7-e*e*0.9,cz+Math.sin(a)*R*0.3,0,0.07,0.07,0.07),[1.4*f,1.3*f,1.0*f],true);}}}
+/* the shark tank's life: a reef shark cruising end to end, a school of neon fish the other way, bubbles */
+function mvTankFish(D,T){const x0=9.7,x1=13.7,z=27.25,P=(m,px,py,pz,sx,sy,sz,c,em)=>D.box(A.mul(m,TRS(px,py,pz,0,sx,sy,sz)),c,!!em);
+ {const u=(T*0.11)%2,f=u<1?u:2-u,dir=u<1?1:-1,x=x0+0.5+(x1-x0-1)*(0.5-0.5*Math.cos(f*Math.PI)),y=0.72+Math.sin(T*0.7)*0.12,w=Math.sin(T*6)*0.18,m=A.mul(A.T(x,y,z+0.05),A.RY(dir>0?0:Math.PI)),G2=[0.5,0.55,0.62],W2=[0.85,0.86,0.88];
+  P(m,0,0,0,0.62,0.15,0.16,G2);P(m,0.3,-0.01,0,0.16,0.1,0.11,G2);P(m,0.02,-0.05,0,0.5,0.06,0.13,W2);P(m,-0.05,0.13,0,0.14,0.14,0.03,G2);
+  D.box(A.mul(m,A.mul(A.T(-0.36,0,0),A.mul(A.RY(w),TRS(-0.1,0.04,0,0,0.2,0.2,0.03)))),G2);P(m,0.05,-0.09,0.06,0.14,0.03,0.12,G2);P(m,0.3,0.02,0.055,0.03,0.03,0.01,[0.05,0.05,0.05]);}
+ for(let i=0;i<9;i++){const sp=0.35+0.05*(i%3),u=((-T*sp+i*0.37)%1+1)%1,x=x1-0.15-u*(x1-x0-0.3),y=0.42+((i*0.29)%0.62),zz=z-0.12+((i*0.17)%0.25),c=NEON[i%4],w=Math.sin(T*10+i)*0.3,m=A.mul(A.T(x,y+Math.sin(T*2+i)*0.03,zz),A.RY(Math.PI));
+  P(m,0,0,0,0.13,0.07,0.035,c,true);D.box(A.mul(m,A.mul(A.T(-0.065,0,0),A.mul(A.RY(w),TRS(-0.04,0,0,0,0.07,0.07,0.012)))),c,true);}
+ for(let i=0;i<6;i++){const u=(T*0.5+i/6)%1;D.box(TRS(10.2+i*0.65+Math.sin(T*3+i)*0.04,0.3+u*0.85,z+0.1,0,0.035,0.035,0.035),[0.85,0.95,1],true);}}
+/* the gold globe in the foyer: turning, meridians and a pink neon ring round it */
+function mvGlobe(D,x,z,T){const y=1.12,R=0.38,rot=T*0.6;for(let la=-3;la<=3;la++){const lat=la*0.4,rr=Math.cos(lat)*R,yy=y+Math.sin(lat)*R,n=Math.max(4,Math.round(14*Math.cos(lat)));
+  for(let i=0;i<n;i++){const lon=i*TAU/n+rot,land=Math.sin(lon*2+la)>0.25;D.box(A.mul(A.mul(A.mul(A.T(x+Math.sin(lon)*rr,yy,z+Math.cos(lon)*rr),A.RY(lon)),A.RX(-lat)),A.S(0.2*Math.cos(lat)+0.04,0.13,0.03)),land?[1.0,0.78,0.3]:[0.75,0.55,0.16],land);}}
+ for(let i=0;i<24;i++){const a=i*TAU/24-rot*0.5;D.box(TRS(x+Math.sin(a)*0.52,y+Math.sin(a*1)*0.08,z+Math.cos(a)*0.52,a,0.03,0.03,0.15),MV_PINK,true);}}
 /* ---------------- upstairs: the balcony over the pool, the master suite, the bath, the dressing room, the gallery round the stairwell ---------------- */
 function mvUpStatic(B,g){const bx=mvBx(B),f=homeFurn(),M=TUV[63],S=g.slots||{};
  /* ===== the balcony: a white slab edge with pink neon under it, posts and a gold rail (the glass is mvPanes), daybeds, palms in planters, a telescope ===== */
@@ -476,12 +521,12 @@ function mvUpStatic(B,g){const bx=mvBx(B),f=homeFurn(),M=TUV[63],S=g.slots||{};
  /* the sliding doors in from the balcony (open), and the window frames */
  for(const x of [18.05,21.95])bx(x,0.56,14.5,0.1,1.12,0.14,MV_WH);bx(20,1.1,14.5,4,0.08,0.14,MV_WH);for(const x of [18.4,21.6])bx(x,0.56,14.62,0.62,1.0,0.03,[0.55,0.7,0.8]);
  mvWindows(B,MV_U);
- /* ===== the master bedroom: the big round-cornered bed against the west wall, a neon sun over it, zebra rug, the dresser and TV, the armchair ===== */
- const bw=(x,y,z,sx,sy,sz,c)=>bx(x+1,y,z+1,sx,sy,sz,c);
- drawBigBed(bw,3,Math.max(2,bedN()),GOLD,[0.95,0.94,0.96],MV_RED);
- bx(13.1,0.75,17.6,0.06,0.9,4.2,MV_RED);for(let i=0;i<5;i++)bx(13.14,0.75,15.95+i*0.82,0.02,0.82,0.03,GOLD);bx(13.12,1.22,17.6,0.08,0.05,4.3,GOLD);
- {const r0=B.round;B.round=0;drawRetroSun({box:(m,c,e,uv)=>B.box(A.mul(A.mul(A.T(13.18,0,17.6),A.RY(-Math.PI/2)),A.mul(A.T(-13.18,0,-17.6),m)),c,e,uv),round:0},13.18,0.84,17.6,0.26,-0.1,1.0);B.round=r0;}
- for(let i=0;i<12;i++)bx(19.0,0.006+(i%2)*0.002,18.8,3.2-i*0.0,0.008,1.0,i%2?[1,0.6,0.8]:MV_WH,false,i*Math.PI/12);bx(19.0,0.012,18.8,1.2,0.006,1.2,MV_PINK,false,Math.PI/4);
+ /* ===== the master bedroom: a round bed on a round dais in the middle of the room, pink neon under it, a gold canopy ring over it,
+    the fireplace on the west wall, the dresser and TV, the armchair ===== */
+ mvRoundBed(B,MV_BED.x,MV_BED.z);
+ bx(13.12,0.38,18.8,0.12,0.76,2.0,MV_WH,false,0,M);bx(13.2,0.3,18.8,0.06,0.44,1.2,MV_BLK);bx(13.22,0.78,18.8,0.3,0.05,2.2,MV_WH,false,0,M);bx(13.36,0.81,18.8,0.04,0.02,2.2,GOLD);
+ for(const z of [17.95,19.65])bx(13.3,0.4,z,0.06,0.72,0.06,GOLD);for(const z of [18.2,19.4])bx(13.3,0.86,z,0.05,0.07,0.05,[0.95,0.92,0.85]);bx(13.1,1.0,18.8,0.04,0.24,1.0,[0.75,0.85,0.95]);bx(13.08,1.0,18.8,0.05,0.28,1.06,GOLD);
+ bx(15.0,0.006,18.8,1.6,0.008,1.2,MV_WH);
  bx(24.8,0.4,15.9,2.3,0.8,0.62,MV_WH,false,0,M);bx(24.8,0.81,15.9,2.36,0.03,0.66,GOLD);for(const x of [24.2,25.4])for(const y of [0.2,0.55])bx(x,y,16.22,1.0,0.02,0.01,GOLD);
  bx(24.8,1.14,15.75,1.4,0.62,0.08,[0.08,0.08,0.1]);bx(24.8,0.84,15.75,0.3,0.04,0.2,[0.12,0.12,0.14]);
  {const x=25.55,z=20.0,m0=A.mul(A.T(x,0,z),A.RY(-Math.PI/2)),P=(px,py,pz,sx,sy,sz,c)=>B.box(A.mul(m0,TRS(px,py,pz,0,sx,sy,sz)),c);P(0,0.2,0,0.8,0.4,0.75,MV_RED);P(0,0.55,-0.33,0.8,0.5,0.14,MV_RED);for(const s of [-1,1])P(s*0.36,0.36,0,0.1,0.3,0.75,MV_RED);P(0,0.02,0,0.82,0.04,0.78,GOLD);}
@@ -524,6 +569,8 @@ function mvUpStatic(B,g){const bx=mvBx(B),f=homeFurn(),M=TUV[63],S=g.slots||{};
  bx(26.0,0.25,29.3,0.5,0.5,0.5,MV_WOOD);bx(26.0,0.6,29.3,0.5,0.5,0.5,[0.3,0.5,0.7],false,0.4);bx(26.0,0.6,29.3,0.04,0.64,0.62,GOLD);
  mvPalm(B,32.6,30.2,0.55,0);mvPalm(B,6.6,30.2,0.55,0);}
 function mvUpDyn(D,g){const T=g.T,bx=mvBx(D);
+ {const fl=0.85+0.15*Math.sin(T*9)*Math.sin(T*5.3);for(let i=0;i<5;i++)bx(13.25,0.14+i*0.06*fl,18.5+i*0.15+Math.sin(T*3+i)*0.05,0.06,0.1,0.18-i*0.02,[1.3,0.5+i*0.1,0.12],true,i);}
+ mvFireworks(D,T,2.4,1.8);
  /* water in the sunken tub, the chandelier hanging down the stairwell, the TV, candles on the balcony */
  const TB=MV_TUBS[1];bx(TB.x,0.02,17.1,3.3,0.01,2.2,[0.3,0.75,1.0],true);for(let i=0;i<8;i++){const a=T*1.3+i*2.1,r=0.3+((i*0.31+T*0.4)%0.8);bx(TB.x+Math.sin(a)*r*1.3,0.03,17.1+Math.cos(a)*r*0.8,0.1,0.01,0.1,[0.9,1,1],true);}
  drawChandelier(D,IBhi,20,28.5,MV_LOW+1.6,T);
@@ -574,13 +621,18 @@ function mvBaseStatic(B,g){const bx=mvBx(B),f=homeFurn(),M=TUV[63],LT=[0.9,0.9,0
  bx(33.85,1.0,10,0.2,1.2,5,MV_WOOD);for(let i=0;i<8;i++){const z=7.8+i*0.6;bx(33.72,1.0,z,0.06,1.0,0.08,[0.1,0.1,0.12]);bx(33.7,0.75,z,0.08,0.3,0.1,MV_WOOD);}
  bx(23.15,1.6,16.5,0.08,0.06,1.4,[0.3,0.3,0.34]);for(let i=0;i<4;i++){bx(23.25,1.45,16.0+i*0.33,0.14,0.2,0.08,[0.9,0.3,0.15]);bx(23.25,1.58,16.0+i*0.33,0.05,0.04,0.24,[0.1,0.1,0.12]);}
  /* ===== the cellar hall: wine racks along the club wall, a cigar humidor, the stairs up behind a brass rail, the gun locker by the range door ===== */
- for(const [x0,x1] of [[2.3,10.6],[13.4,26.6]]){const n=Math.round((x1-x0)/0.9);for(let i=0;i<n;i++){const x=x0+(i+0.5)*(x1-x0)/n;bx(x,0.6,20.25,(x1-x0)/n-0.04,1.2,0.4,MV_WOOD);for(let r=0;r<4;r++)for(let k=0;k<3;k++)bx(x-0.25+k*0.25,0.2+r*0.28,20.47,0.07,0.07,0.04,(k+r+i)%3?[0.25,0.04,0.08]:[0.65,0.7,0.35]);}}
+ for(const [x0,x1] of [[7.6,10.6],[13.4,26.6]]){const n=Math.round((x1-x0)/0.9);for(let i=0;i<n;i++){const x=x0+(i+0.5)*(x1-x0)/n;bx(x,0.6,20.25,(x1-x0)/n-0.04,1.2,0.4,MV_WOOD);for(let r=0;r<4;r++)for(let k=0;k<3;k++)bx(x-0.25+k*0.25,0.2+r*0.28,20.47,0.07,0.07,0.04,(k+r+i)%3?[0.25,0.04,0.08]:[0.65,0.7,0.35]);}}
+ /* the counting room at the west end: a round steel vault door swung open, gold bars, and your cash piled up (mvBaseDyn) */
+ for(let i=0;i<16;i++){const a=i*TAU/16;bx(4.5+Math.cos(a)*0.62,0.7+Math.sin(a)*0.62,20.12,0.26,0.26,0.14,[0.55,0.56,0.6],false,0);}bx(4.5,0.7,20.1,1.0,1.0,0.1,[0.3,0.31,0.35]);
+ {const m0=A.mul(A.T(5.2,0,20.2),A.RY(-1.2));for(let i=0;i<12;i++){const a=i*TAU/12;B.box(A.mul(m0,TRS(0.62+Math.cos(a)*0.5,0.7+Math.sin(a)*0.5,0,0,0.3,0.3,0.24)),[0.6,0.62,0.66]);}B.box(A.mul(m0,TRS(0.62,0.7,0.14,0,0.5,0.06,0.06)),GOLD);B.box(A.mul(m0,TRS(0.62,0.7,0.14,0,0.06,0.5,0.06)),GOLD);}
+ for(let r=0;r<3;r++)for(let i=0;i<4-r;i++)bx(2.7+i*0.32+r*0.16,0.06+r*0.1,20.6,0.28,0.1,0.14,[1.2,0.9,0.35],true);
+ bx(4.5,1.32,20.06,2.4,0.16,0.02,[0.06,0.02,0.08]);mvNeonWord(B,'COUNTING ROOM',4.5,1.28,20.09,0.08,[0.4,1.2,0.5]);
  bx(18.5,1.25,20.07,3.0,0.18,0.02,[0.06,0.02,0.08]);mvNeonWord(B,'CELLAR',18.5,1.21,20.1,0.1,[1,0.75,0.35]);
  mvFlight(B,12,22.05,23.95,1.1,7.4,6,0,MV_RED);mvRail(B,[{x:8.1,y:0,z:21.9},{x:8.1,y:0,z:23.9}],0.5,GOLD);mvRail(B,[{x:15.9,y:0,z:21.9},{x:15.9,y:0,z:23.9}],0.5,GOLD);
  mallSign(B,12,1.5,21.9,['UP'],MV_CYAN,0.16);
  bx(30.6,0.45,20.4,1.0,0.9,0.5,MV_WOOD);bx(30.6,0.91,20.4,1.04,0.03,0.54,GOLD);bx(30.6,0.6,20.66,0.8,0.5,0.02,[0.6,0.4,0.2]);
  for(let i=0;i<3;i++)bx(31.9+i*0.55,0.95,20.08,0.45,0.9,0.04,[0.75,0.6,0.3]),bx(31.9+i*0.55,0.95,20.1,0.35,0.78,0.02,[0.12,0.08,0.06]);
- for(const [x,z] of [[2.6,21.3],[26.4,22.6]])bx(x,0.5,z,0.3,1.0,0.3,[0.3,0.3,0.32]),bx(x,1.05,z,0.2,0.1,0.2,[1.2,0.85,0.5],true);}
+ for(const [x,z] of [[26.4,22.6]])bx(x,0.5,z,0.3,1.0,0.3,[0.3,0.3,0.32]),bx(x,1.05,z,0.2,0.1,0.2,[1.2,0.85,0.5],true);}
 /* a neon word on a west/east wall (runs along z) */
 function mvNeonWordX(B,word,x,y,z,h,col){mallWord({box:(m,c,e,uv)=>B.box(A.mul(A.mul(A.T(x,0,z),A.RY(Math.PI/2)),A.mul(A.T(-x,0,-z),m)),c,e,uv)},word,x,y,z,h,col);}
 function mvBaseDyn(D,g){const T=g.T,bx=mvBx(D),M=g.mansion,f=homeFurn();
@@ -604,4 +656,5 @@ function mvBaseDyn(D,g){const T=g.T,bx=mvBx(D),M=g.mansion,f=homeFurn();
  for(const b of g.bullets)D.box(TRS(b.x,0.74,b.z,Math.atan2(b.dx,b.dz),0.035,0.035,0.45),[1,0.95,0.55],true);
  if(g.flashes)for(const q of g.flashes)drawFlash(D,q);
  if(R&&R.on)for(const q of g.gibs)D.box(A.mul(A.mul(A.T(q.x,q.y,q.z),A.mul(A.RY(q.ry),A.RX(q.rx))),A.S(q.sx,q.sy,q.sz)),q.c);
- drawLocker(D,g);}
+ drawLocker(D,g);
+ {const n=Math.min(60,Math.ceil((myProg().wallet||0)/20000));for(let i=0;i<n;i++){const col=i%12,row=Math.floor(i/12);bx(2.45+col*0.38+(row%2)*0.1,0.07+row*0.14,21.55,0.34,0.13,0.5,[0.35,0.62,0.35]);bx(2.45+col*0.38+(row%2)*0.1,0.075+row*0.14,21.55,0.08,0.135,0.51,[0.9,0.85,0.7]);}}}
