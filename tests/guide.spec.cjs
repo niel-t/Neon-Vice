@@ -8,10 +8,11 @@ test('guide: points at the singer, then the car, once the Studio is clear', asyn
     startMission('c6'); if (G.arrive) endArrive(); await wait(300);
     const g = G, before = guideTarget(g);
     for (const e of g.enemies) e.alive = false;
-    await wait(400);
+    const until = async f => { for (let i = 0; i < 50 && !f(); i++) await wait(100); };
+    await until(() => guideTarget(g));
     const t1 = guideTarget(g), singer = { x: g.singer.x, z: g.singer.z };
     drawHUD0(); touchMode = true; drawHUD0(); touchMode = false;
-    g.obj.done = true; await wait(400);
+    g.obj.done = true; await until(() => g.cleared && guideTarget(g)?.k === 'exit');
     const t2 = guideTarget(g);
     return { before, t1: t1 && { k: t1.k, lbl: t1.lbl, at: t1.x === singer.x && t1.z === singer.z }, cleared: g.cleared, t2: t2 && { k: t2.k, car: t2.x === g.car.x && t2.z === g.car.z, lbl: t2.lbl.split('  ')[0] } };
   });
@@ -24,7 +25,8 @@ test('guide: Coral Tower lobby points up the stairs once its guards are down', a
     const wait = ms => new Promise(res => setTimeout(res, ms));
     window.NOARRIVE = 1; startMission('c2'); if (G.arrive) endArrive(); await wait(300);
     const g = G, before = guideTarget(g);
-    for (const e of g.enemies) e.alive = false; await wait(300);
+    for (const e of g.enemies) e.alive = false;
+    for (let i = 0; i < 50 && !guideTarget(g); i++) await wait(100);
     const t = guideTarget(g), st = g.stageRun.describe(g.sid).stairs.find(s => s.x === undefined && s.at[0] === t.x && s.at[1] === t.z);
     return { before, k: t.k, lbl: t.lbl, stair: st && st.id, cleared: g.cleared };
   });
