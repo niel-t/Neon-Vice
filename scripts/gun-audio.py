@@ -29,6 +29,20 @@ C={
  'ar_out':('D_3.wav',3.81,0.35,MECH),'ar_in':('D_4.wav',0.93,0.5,MECH),'ar_bolt':('D_13.wav',0.34,0.5,MECH),'ar_dry':('D_16.wav',0.37,0.15,MECH),
  'ak_out':('C_11.wav',0.23,0.3,MECH),'ak_in':('C_10.wav',0.21,0.3,MECH),'ak_back':('C_14.wav',0.24,0.4,MECH),'ak_fwd':('C_14.wav',1.42,0.35,MECH),
  'm1911_out':('A_3.wav',1.15,0.35,MECH),'m1911_in':('A_4.wav',0.90,0.35,MECH),'m1911_slide':('A_11.wav',0.74,0.4,MECH),
+# ---- new guns (2026-11-15): Colt .45, MAC-10, SPAS-12, Mini-14, Marlin lever action, scoped .30-06 ----
+ 'colt1':('A_34P.wav',1.54,0.55,SHOT),'colt2':('A_34P.wav',6.65,0.55,SHOT),'colt3':('A_42P.wav',5.00,0.55,SHOT),
+ 'colt_slide':('A_9.wav',0.62,0.35,MECH),'colt_dry':('A_19.wav',0.70,0.15,MECH),
+ 'mac1':('P_30P.wav',0.96,0.32,SHOT),'mac2':('P_30P.wav',4.38,0.32,SHOT),'mac3':('P_30P.wav',8.24,0.32,SHOT),'mac4':('P_30P.wav',11.42,0.32,SHOT),
+ 'mac_out':('P_7.wav',0.15,0.3,MECH),'mac_in':('P_6.wav',0.54,0.4,MECH),'mac_bolt':('P_8.wav',0.85,0.4,MECH),'mac_dry':('P_1.wav',0.97,0.15,MECH),
+ 'spas1':('K_22P.wav',0.84,0.7,SHOT),'spas2':('K_22P.wav',7.44,0.7,SHOT),
+ 'spas_shell':('K_3.wav',1.33,0.45,MECH),'spas_bolt':('K_5.wav',1.21,0.45,MECH),'spas_dry':('K_7.wav',1.09,0.15,MECH),
+ 'mini1':('U_14P.wav',3.57,0.55,SHOT),'mini2':('U_14P.wav',6.75,0.55,SHOT),'mini3':('U_14P.wav',10.21,0.55,SHOT),
+ 'mini_back':('U_3.wav',0.50,0.35,MECH),'mini_in':('U_0.wav',1.42,0.5,MECH),'mini_fwd':('U_4.wav',1.76,0.4,MECH),'mini_dry':('U_6.wav',0.89,0.15,MECH),
+ 'lever1':('I_22P.wav',0.74,0.8,SHOT),'lever2':('I_22P.wav',7.00,0.8,SHOT),
+ 'lever_cyc':('I_10.wav',0.88,0.6,MECH),'lever_load1':('I_0.wav',0.55,0.45,MECH),'lever_load2':('I_0.wav',3.65,0.45,MECH),'lever_dry':('I_8.wav',0.92,0.2,MECH),
+ 'hunt1':('W_29P.wav',0.57,0.95,SHOT),'hunt2':('W_29P.wav',5.66,0.95,SHOT),
+ 'hunt_cyc':('W_14.wav',0.42,1.0,MECH),'hunt_up':('W_6.wav',1.04,0.3,MECH),'hunt_back':('W_9.wav',0.43,0.3,MECH),'hunt_out':('W_5.wav',1.08,0.35,MECH),
+ 'hunt_in':('W_4.wav',1.01,0.4,MECH),'hunt_fwd':('W_12.wav',0.53,0.35,MECH),'hunt_dry':('W_13.wav',0.41,0.15,MECH),
 }
 GAP=0.12;cache={};parts=[np.zeros(int(GAP*SR),np.float32)];pos=GAP;meta={}
 for name,(f,t,ln,pk) in C.items():

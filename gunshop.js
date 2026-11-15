@@ -14,15 +14,23 @@ const NINE_POOR="My friend, this costs more than you have. I am sorry, but is si
 const NINE_SELL=['Is good piece. I give you fair price. Fair for me.','Da, I find her a new home. A worse one, probably.','Forty percent. Is not robbery, is economics.'];
 const NINE_TRY=['Go, try her at the range. Ammunition is on the house. The house is me.','Lane two, my friend. Shoot paper, not my cousin.','Try before you buy. Is very American, I love it.'];
 const NINE_BACK=['My boy takes her back. Come, buy her properly.','Is good, da? Now you know. Now you pay.','Paper is dead. Very convincing.'];
-const SHOPP={pistol:1500,silenced:2200,revolver:2800,dual:3200,smg:3500,shotgun:3800,double:4200,m16:5200,bat:600,knife:500,machete:900,katana:7500,tknife:1100,golddeagle:12000,goldak:15000,goldgl:20000};
+const SHOPP={pistol:1500,silenced:2200,revolver:2800,dual:3200,smg:3500,shotgun:3800,double:4200,m16:5200,colt45:2400,mac10:4000,spas12:5600,mini14:4800,lever:4400,hunter:7000,golf:800,bat:600,knife:500,machete:900,katana:7500,tknife:1100,golddeagle:12000,goldak:15000,goldgl:20000};
 const WDESC={pistol:'Reliable. Boring. Like a Swiss watch.',silenced:'For conversations nobody hears.',revolver:'Six chances. Goes through three men.',dual:'Two pistols, twice the opinions.',smg:'Sprays the room like cologne.',shotgun:'Seven pellets of diplomacy.',double:'Two shells. One argument.',m16:'Three-round bursts, through walls.',bat:'Silent. Swings. Home run.',knife:'Close, quiet, personal.',tknife:'Four blades. Silent across the room. Go pick them up after.',machete:'For cutting through the paperwork.',
+ colt45:'Seventy years old and still the last word in any argument. Seven big rounds, goes through two men.',
+ mac10:'Spits thirty rounds in under two seconds. Very ludicrous. Very Miami. Aiming is optional.',
+ spas12:'Italian. Semi-automatic. Eight shells as fast as you pull. Like the police drama, but louder.',
+ mini14:'Stainless ranch rifle. The van-driving mercenaries love it. Twenty rounds, through walls.',
+ lever:'Cowboy rifle. Work the lever, every shot through three men. Yee-haw, da?',
+ hunter:'Five rounds of .30-06 and a scope from Austria. Goes through four men and most furniture. Slow, but final.',
+ golf:'Nine iron from the country club. The members never miss it.',
  katana:'Folded nine hundred times. By me. On a Tuesday.',goldgl:'I acquire it from a very wet gentleman. Six gold grenades.',golddeagle:'Two solid-gold hand cannons. Through walls, through men.',goldak:'Solid gold. Fully automatic. Zero subtlety.'};
 const EXCL=['goldak','golddeagle','katana'];
 /* the catalogue: weapon sections first, then attachments, ammo and armour, and selling */
-const SHOP_SECS=[{id:'hand',name:'HANDGUNS',w:['pistol','silenced','revolver','dual','golddeagle']},{id:'long',name:'SMG & RIFLES',w:['smg','m16','goldak']},
- {id:'shot',name:'SHOTGUNS & HEAVY',w:['shotgun','double','goldgl']},{id:'melee',name:'MELEE & THROWN',w:['knife','bat','machete','tknife','katana']},
+const SHOP_SECS=[{id:'hand',name:'HANDGUNS',w:['pistol','silenced','colt45','revolver','dual','golddeagle']},{id:'long',name:'SMG & RIFLES',w:['smg','mac10','m16','mini14','lever','hunter','goldak']},
+ {id:'shot',name:'SHOTGUNS & HEAVY',w:['shotgun','spas12','double','goldgl']},{id:'melee',name:'MELEE & THROWN',w:['knife','bat','golf','machete','tknife','katana']},
  {id:'mods',name:'ATTACHMENTS'},{id:'gear',name:'AMMO & ARMOUR'},{id:'sell',name:'SELL TO NINE'}];
 const SHOP_KIND={hand:'HANDGUN',long:'AUTOMATIC',shot:'SHOTGUN',melee:'MELEE'};
+const SHOP_KIND_W={colt45:'SEMI-AUTO HANDGUN',mac10:'MACHINE PISTOL',spas12:'SEMI-AUTO SHOTGUN',mini14:'SEMI-AUTO RIFLE',lever:'LEVER ACTION',hunter:'BOLT ACTION · SCOPED',golf:'MELEE'};
 const MOD_GUN={supp:'pistol',xmag:'smg',sling:null};
 const MOD_INFO={supp:'Screws onto the 9MM PISTOL. Its shots go quiet: nobody in the next room hears them.',xmag:'Clips into the UZI. 48 rounds a magazine instead of 32.',sling:'For every gun you carry. Switching weapons takes a blink instead of a breath.'};
 const DEAL_OFF=0.2;
@@ -101,7 +109,7 @@ function shopBars(t){const cur=kitGun(kit()),cs=cur&&cur.type!==t?shopStats(cur.
  return '<div class="gsBars">'+shopStats(t).map(([n,v],i)=>{const c=cs&&cs[i]&&cs[i][0]===n?cs[i][1]:null;return `<div class="gsBar"><span>${n}</span><i><b style="width:${Math.round(v*100)}%"></b>${c!==null?`<u style="left:${Math.round(c*100)}%"></u>`:''}</i></div>`;}).join('')+'</div>'+(cs?`<div class="gsCmp">| = YOUR ${WD[cur.type].name}</div>`:'');}
 function shopCard(q){const k=kit(),pr=myProg();
  if(q.k==='w'){const t=q.t,w=WD[t],own=kitHas(k,t),av=shopAvail(t),sec=SHOP_SECS.find(s=>s.id===q.sec),n=((pr.mast||{})[t])|0,ml=mastLv(t);
-  const sub=(w.excl?'NINE EXCLUSIVE · ':'')+(w.toss?'THROWN':SHOP_KIND[sec.id]||'')+(w.cal?' · '+CAL[w.cal].name:'')+(w.melee?' · ONE-HIT KILL':' · MAG '+w.mag)+(w.pierce>1?' · PIERCES '+w.pierce:'');
+  const sub=(w.excl?'NINE EXCLUSIVE · ':'')+(w.toss?'THROWN':SHOP_KIND_W[t]||SHOP_KIND[sec.id]||'')+(w.cal?' · '+CAL[w.cal].name:'')+(w.melee?' · ONE-HIT KILL':' · MAG '+w.mag)+(w.pierce>1?' · PIERCES '+w.pierce:'');
   const mods=Object.keys(MODS).filter(m=>!w.melee&&!w.toss&&(MOD_GUN[m]===t||!MOD_GUN[m])).map(m=>`<button data-x="mod" data-c="${m}"${hasMod(m)?' class="on"':''}>${MODS[m].name}${hasMod(m)?' · FITTED':' $'+fmt(MODS[m].price)}</button>`).join('');
   const ammo=w.cal&&isCal(w.cal)&&ownCals().includes(w.cal)?`<button data-x="ammo" data-c="${w.cal}"${(k.pool[w.cal]|0)>=capOf(k,w.cal)?' class="on"':''}>AMMO +${CAL[w.cal].box} $${fmt(CAL[w.cal].price)} (${k.pool[w.cal]|0}/${capOf(k,w.cal)})${KEYH('F','Y')}</button>`:'';
   const mast=w.toss?'':`<div class="gsM">MASTERY ${ml?ROMAN[ml]:'-'} · ${n} KILLS${ml<3?' · '+ROMAN[ml+1]+' AT '+MAST[ml]+': '+MASTD[ml+1]:' · GOLD FINISH'}</div>`;
@@ -191,7 +199,7 @@ function buildNine(){if(!nineB)nineB=new Batch();const B=nineB;B.reset();B.round
  for(const [x0,x1] of [[-3.8,-0.75],[0.75,3.2]]){B.box(TRS((x0+x1)/2,1.75,wz+0.03,0,x1-x0,1.9,0.04),hex(0x2a2226));for(let gx=x0+0.12;gx<x1-0.05;gx+=0.18)for(let gy=0.9;gy<2.65;gy+=0.18)B.box(TRS(gx,gy,wz+0.055,0,0.025,0.025,0.01),hex(0x120e12));
   B.box(TRS((x0+x1)/2,2.72,wz+0.06,0,x1-x0,0.05,0.05),hex(0x5a4a30));B.box(TRS((x0+x1)/2,0.78,wz+0.06,0,x1-x0,0.05,0.05),hex(0x5a4a30));}
  for(const [t,x,y,s] of [['m16',-3.0,2.35,1.9],['shotgun',-1.75,2.35,1.9],['smg',-3.35,1.75,1.9],['revolver',-2.55,1.75,1.9],['double',-1.5,1.75,1.7],['silenced',-3.3,1.2,1.9],['machete',-2.3,1.2,1.8],['pistol',-1.35,1.2,1.9],
-  ['m16',2.4,2.35,1.9],['double',1.4,2.35,1.7],['smg',1.25,1.75,1.9],['shotgun',2.4,1.75,1.7],['bat',1.6,1.2,1.4],['knife',2.55,1.2,2],['revolver',3.0,1.2,1.8]])wallGun(B,t,x,y,wz+0.12,s);
+  ['m16',2.4,2.35,1.9],['double',1.4,2.35,1.7],['mac10',1.25,1.75,1.9],['shotgun',2.4,1.75,1.7],['bat',1.6,1.2,1.4],['knife',2.55,1.2,2],['revolver',3.0,1.2,1.8]])wallGun(B,t,x,y,wz+0.12,s);
  /* the backlit panel behind the showcase mat, so the piece reads as a silhouette */
  B.box(TRS(-0.62,1.3,wz+0.05,0,1.5,1.05,0.03),hex(0x1a1a22));B.box(TRS(-0.62,1.3,wz+0.07,0,1.4,0.95,0.01),[0.55,0.32,0.62],true);for(let i=1;i<7;i++)B.box(TRS(-1.32+i*0.2,1.3,wz+0.08,0,0.008,0.95,0.005),[0.75,0.5,0.85],true);B.box(TRS(-0.62,1.3,wz+0.08,0,1.4,0.008,0.005),[0.75,0.5,0.85],true);
  /* the neon sign across the top */
@@ -229,7 +237,7 @@ function drawNineDyn(B,P){B.reset();P.reset();if(!nineChar)return;if(!PS2C.add(n
  if(t&&WPARTS[t])drawShowcase(B,t,-0.6,1.3,0.66,showLen(t),menuT,mods);
  else if(q&&(q.k==='vest'||q.k==='carrier')){B.box(TRS(-0.55,1.12,0.66,0.3+Math.sin(menuT*0.7)*0.4,0.5,0.32,0.18),q.k==='vest'?hex(0x2a3a2a):hex(0x2a2a30));B.box(TRS(-0.55,1.12,0.66,0.3+Math.sin(menuT*0.7)*0.4,0.36,0.24,0.2),hex(0x1a1a1c));}
  else{const ex=arm().stock.find(k=>WD[k]&&WD[k].excl);if(ex)drawShowcase(B,ex,-0.6,1.3,0.66,showLen(ex),menuT,{});}}
-const showLen=t=>{const w=WD[t];return w.melee?(t==='knife'?0.5:0.9):w.toss?0.45:w.two||t==='smg'||t==='goldak'?0.85:0.55;};
+const showLen=t=>{const w=WD[t];return w.melee?(t==='knife'?0.5:0.9):w.toss?0.45:w.two||t==='smg'||t==='mac10'||t==='goldak'?(t==='hunter'?1:0.85):0.55;};
 
 /* =================== THE BUNKER: Nine's shop as real rooms, the shooting range in its east third ===================
    Map coordinates below (the loader pads the map by one cell, so world = map + 1). Shop x 1..20, range x 22..30.
@@ -299,13 +307,13 @@ function drawBunker(D,g,F){const B=F===undefined?D:F,T=g.T||0,O=1,bx=(x,y,z,sx,s
  bx(10.5,0.012,9.2,2.2,0.012,6.4,[0.3,0.03,0.08]);bx(10.5,0.016,9.2,2.0,0.012,6.2,[0.4,0.05,0.11]);for(const sx of [9.45,11.55])bx(sx,0.02,9.2,0.05,0.012,6.2,GOLD);
  /* north wall pegboards either side of the door, handguns and SMGs hung side-on */
  for(const [x0,x1] of [[1.2,8.6],[12.4,19.8]]){bx((x0+x1)/2,1.45,6.06,x1-x0,1.5,0.05,hex(0x2a2226));bx((x0+x1)/2,2.25,6.1,x1-x0,0.06,0.07,BR);bx((x0+x1)/2,0.68,6.1,x1-x0,0.06,0.07,BR);}
- {const ws=[['pistol',1.9,1.8],['silenced',3.0,1.8],['revolver',4.1,1.8],['dual',5.4,1.8],['pistol',6.8,1.8],['smg',8.0,1.8],['smg',2.3,1.1],['revolver',3.7,1.1],['silenced',5.1,1.1],['knife',6.4,1.1],['tknife',7.6,1.1],
-   ['shotgun',13.6,1.8],['m16',15.5,1.8],['double',17.4,1.8],['m16',19.1,1.8],['machete',13.4,1.1],['bat',15.0,1.1],['shotgun',16.9,1.1],['knife',18.9,1.1]];
+ {const ws=[['pistol',1.9,1.8],['silenced',3.0,1.8],['revolver',4.1,1.8],['dual',5.4,1.8],['colt45',6.8,1.8],['smg',8.0,1.8],['mac10',2.3,1.1],['revolver',3.7,1.1],['silenced',5.1,1.1],['knife',6.4,1.1],['tknife',7.6,1.1],
+   ['shotgun',13.6,1.8],['m16',15.5,1.8],['double',17.4,1.8],['lever',19.1,1.8],['machete',13.4,1.1],['golf',15.0,1.1],['spas12',16.9,1.1],['knife',18.9,1.1]];
   for(const [t,x,y] of ws)gun(t,x,y,6.16,Math.PI/2,WD[t].two?1.25:1.7);}
  nineWord(B,'9',4.9+O,2.4,6.12+O,0.28,PINK);nineWord(B,'9',16.1+O,2.4,6.12+O,0.28,PINK);
  /* west wall: long-gun rack, rifles standing barrel-up */
  bx(1.25,1.2,8.5,0.32,2.1,4.0,hex(0x3a2a20));bx(1.42,0.35,8.5,0.06,0.08,3.9,BR);bx(1.42,1.95,8.5,0.06,0.08,3.9,BR);
- {const lg=['m16','shotgun','double','m16','shotgun','double','m16','bat'];lg.forEach((t,i)=>drawWeapon(B,A.mul(A.mul(A.mul(A.T(1.55+O,1.05,6.85+i*0.48+O),A.RZ(0)),A.RX(-Math.PI/2)),A.S(1.15,1.15,1.15)),t));}
+ {const lg=['m16','shotgun','double','mini14','spas12','lever','hunter','golf'];lg.forEach((t,i)=>drawWeapon(B,A.mul(A.mul(A.mul(A.T(1.55+O,1.05,6.85+i*0.48+O),A.RZ(0)),A.RX(-Math.PI/2)),A.S(1.15,1.15,1.15)),t));}
  /* east wall: ammo shelving, olive boxes and red shotgun shells */
  bx(20.7,1.0,8.5,0.55,2.0,4.0,hex(0x2a2a2e));for(let sh=0;sh<4;sh++){const y=0.25+sh*0.5;bx(20.5,y,8.5,0.6,0.04,3.9,ST);for(let i=0;i<9;i++){const z=6.8+i*0.42,red=(i+sh)%3===0;bx(20.45,y+0.12,z,0.28,0.2,0.32,red?[0.7,0.12,0.12]:OL);bx(20.3,y+0.14,z,0.01,0.08,0.2,[0.9,0.85,0.5]);}}
  /* glass display cases: dark base, lit bed with pistols, glass frame */
