@@ -72,6 +72,17 @@ The common thread: **everybody McWey hires arrived with nothing, the way he did.
 
 ---
 
+## Where it surfaces
+
+The select screen only carries a teaser. The story itself comes out in talk, a piece at a time:
+
+- **McWey.** Optional questions about his own past in the Moreau, mall, Royal Flush and gala briefs and the square-up scene. Each operator also gets a personal exchange in the first brief, the Act 2 start (Lex's boats), the Act 3 start (Kade's wrecking crew) and the finale. All of it goes through `scripts/dlg-check.cjs`.
+- **People around town** (`STORY_CHAT` in `dialogue.js`). The lobby bellhop, janitor, widow, banker, lawyer, retirees, receptionist and guards; the Seabreeze doorman and concierge; the Coral Tower garage guard; Nine's cousin and the off-duty cop; your bodyguards, home guards, party girls and the motel neighbour. Some lines are about McWey and everybody hears them. Others are about the operator you picked. A line you haven't heard this session comes up first, more often than not.
+- **Tony** at the Velvet Palms has one line per operator.
+- **Mornings.** Two per operator (a letter from Providence and the pawn ticket; a postcard from Philadelphia and an old sparring partner; a federal envelope and Morty's widow), plus a card from McWey about his mother.
+
+To add a line, put it under the NPC's kind in `STORY_CHAT`, with `_` for everybody or `don` / `consigliere` / `money`.
+
 ## Hooks for later
 
 - Sal's real chain is still in a Providence pawn shop. A side job or a Gold Coast Jewelers item could buy it back.

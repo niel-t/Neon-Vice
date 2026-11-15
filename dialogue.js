@@ -125,7 +125,10 @@ const DLG={
  brief3:dlgScene(["Lex swears his marina deliveries are clean. My corners say different, and I trust my corners more than I trust Lex.","I can't be seen touching my golden boy, so you were never here. Sink his boats."],[
   {t:{don:"Every boat.",consigliere:"The sea and Lex can have a word.",money:"Sinking money. That hurts to watch."}},
   {t:"I thought Lex was yours.",a:["So did Lex.",['P',"And now?"],"Now I'm asking you to sink his boats, aren't I? Keep up."]},
-  {t:"And if one of them floats?",a:"Then it's yours, and I'm told speedboats are a lot of fun. I wouldn't know, I get seasick."}]),
+  {t:"And if one of them floats?",a:"Then it's yours, and I'm told speedboats are a lot of fun. I wouldn't know, I get seasick."},
+  {t:"Lex isn't family.",req:{char:'don'},a:["No, Lex is money. Your father knew the difference, Sal, and that's why Providence lasted three generations.",['P',"Until it didn't."],"Until a capo wore a wire. So sink the boats yourself and trust nobody with a microphone."]},
+  {t:"Let me talk to Lex first.",req:{char:'consigliere'},a:["Your last peace talk ended with two men through a diner window, Gus. Sink the boats.",['P',"The window was their idea."],"Then let the sea have its idea about Lex's boats."]},
+  {t:"I'd like a look at Lex's books.",req:{char:'money'},a:["Lex's books are worse than Morty's were, and Morty's were a crime scene. That's why I want them wet.",['P',"Wet paper still reads."],"Then read them on the way down, and tell me who else he pays."]}]),
  brief4:dlgScene(["Lex washes his money through the Starlight Arcade. Quarters go into the machines and clean dollars come out the back.","Unplug every cabinet in the place."],[
   {t:{don:"Game over.",consigliere:"I'll pull the plugs myself.",money:"I'm keeping the quarters, though."}},
   {t:"Kids play there.",a:"Not after midnight they don't, and if they do, call their mothers. Then unplug the cabinets."},
@@ -133,7 +136,8 @@ const DLG={
  brief5:dlgScene(["You've been working too hard, {kid}. Go to the Ocean View Mall and buy yourself something nice; it's on me.","Relax for once. What's the worst that could happen?"],[
   {t:{don:"Shopping. Sure.",consigliere:"I could use a new tie.",money:"Your treat means your card, right?"}},
   {t:"You never treat anybody.",a:["I'm treating you, aren't I?",['P',"That's what worries me."],"Don't make it weird, just go and buy yourself a shirt."]},
-  {t:"Who else knows I'm going?",a:"Me, and whoever I happened to mention it to. Why, are you nervous?"}]),
+  {t:"Who else knows I'm going?",a:"Me, and whoever I happened to mention it to. Why, are you nervous?"},
+  {t:"Do you ever buy yourself anything?",a:["My mother bought one new thing in her whole life, a hat for my First Communion. It's still in my safe.",['P',"Next to the gold?"],"Above the gold. Now go and buy yourself a shirt, {kid}."]}]),
  brief6:dlgScene(["Lex is hiding, and his last friend in the world is a pop singer he's paying to make an album.","They're at Biscayne Sound tonight. Crash the session and get the singer to tell you where Lex sleeps."],[
   {t:{don:"He'll sing.",consigliere:"We'll discuss the lyrics.",money:"I'll just outbid Lex."}},
   {t:"Why crash it? I'll buy the session.",a:"Your money, your idea. Just keep it off my expenses; my accountant's nervous enough.",set:{flag:'singer_paid'}},
@@ -148,6 +152,9 @@ const DLG={
   {t:{don:"Tell the crew their shift is over.",consigliere:"I'll serve the eviction notice myself.",money:"Does he own the block, or just the paperwork?"}},
   {t:"Who is Kade?",a:["Real estate. Lex's gold was his money, and the Tower and the Mall are his buildings.",['P',"So he's been getting rent from you."],"Everybody pays somebody rent."]},
   {t:"What about my cut?",a:"Cut the wires first. Then we'll talk about your cut, and my building."},
+  {t:"A man takes your block, you take his.",req:{char:'don'},a:"That's how your grandfather got Federal Hill, I'm told. Do it the same way, only with fewer witnesses."},
+  {t:"Kade has lawyers. I used to be one.",req:{char:'consigliere'},a:["Then you know where lawyers keep the knives, Gus.",['P',"In the fine print."],"So read his crew the fine print, starting with the wires on those charges."]},
+  {t:"I can read Kade's paper for you.",req:{char:'money'},a:"Good, because his paper is the only thing taller than his tower. Find me everybody he owes, and then cut the wires."},
   {t:"What about Lex?",req:{flag:'lex_spared'},a:["Lex is breathing, and you let him. He called me crying, and then he called Kade.",['P',"Mercy is expensive."],"Not as expensive as a funeral. Try not to do it twice."]},
   {t:"What about Lex?",req:{noFlag:'lex_spared'},a:["Lex is feeding the sharks, and his gold went to Kade like water downhill.","His estate is sitting in a Kade account. Make it yours."]}]),
  brief9:dlgScene(["Kade is buying the city council tonight at the Grand Biscayne, black tie and free champagne.","Somewhere in that building is a ledger of every hand he has greased. Bring it to me."],[
@@ -204,3 +211,50 @@ const dlgStart=id=>({dlg:id,n:DLG[id].start});
 function dlgItems(id,n){const node=DLG[id].nodes[n],out=(node.say||[]).map(([w,t])=>({who:w==='P'?'p':'m',name:w,t:dlgText(t)}));
  if(node.choose)out.push({choose:node.choose,dlg:id});else if(node.next)out.push({dlg:id,n:node.next});return out;}
 function dlogScrollBy(px){const s=$('dlogScroll');if(s)s.scrollTop+=px;}
+
+/* ---- backstory in passing (docs/BACKSTORIES.md): what people around town know about McWey and about you ----
+ STORY_CHAT[npc kind] = {_:[lines for everybody], don:[...], consigliere:[...], money:[...]}. Lines join the kind's normal
+ TALK/greeting pool, and a line not yet heard this session comes up first more often than not, so the story surfaces. */
+const STORY_CHAT={
+ bellhop:{_:["Boss carried bags himself once, at the Grand Biscayne. That's why he tips in gold."],
+  don:["Bags from Providence? Just the one? Travelling light, sir."],money:["You're the numbers guy? Mr. McWey had a numbers guy before. Had."]},
+ janitor:{_:["His mother mopped floors, same as me. He told me that once, then never again."],
+  consigliere:["Big hands on you. Boxer? My brother fought Golden Gloves in Philly. Lost to some lawyer."]},
+ widow:{_:["I knew his mother. She did my sheets at the Grand Biscayne in '48. Lovely woman. The son, I'm less sure about."]},
+ banker:{_:["McWey only trusts gold. Came over from Havana with a suitcase of it, they say, and gave it all back."],
+  money:["Glass and Pryce. I remember. One of you was honest, and we never found out which."]},
+ lawyer:{don:["Benedetti, right? I read your case. Whoever let your capo near a wire should be disbarred."],
+  consigliere:["Ferrante? Temple Law, night classes? They still talk about the heavyweight in moot court."],
+  money:["Pryce? The Feds still have your filing cabinets. I could get them back. Billable, obviously."]},
+ retiree:{don:["Federal Hill? Doris! He's from Federal Hill! We had cannoli there in '62."],
+  consigliere:["Philly boy, I can hear it. Doris, he's from Philly. She doesn't care."],
+  money:["You look like our accountant. He went to Florida too. Never heard from him again."]},
+ recep:{_:["He gets seasick looking at the fountain. Whatever you do, don't mention boats."]},
+ guard:{don:["Heard you were a Don up north. Down here you're a guy who owes the boss a car."],
+  consigliere:["They say you put two guys through a diner window. That true, or is it advice?"],
+  money:["You're the accountant? The one who isn't in the tank?"]},
+ guard2:{_:["The shark's eaten one accountant. Boss keeps his glasses in the desk drawer, for sentiment."]},
+ doorman:{don:["A lady called from Rhode Island. Said to tell you the tomatoes came up fine."],
+  consigliere:["Letter came for you, Philly postmark. Smelled like perfume. I didn't read it, I swear."],
+  money:["Two men in grey suits were asking for a Mr. Pryce. I said no Pryce here, just a nice tenant."]},
+ concierge:{_:["Mr. McWey sent flowers to the lobby again. He does that for his mother's birthday, I'm told."]},
+ gsec:{don:["You carry an old revolver, sir. My grandfather had one like it. He buried his too."]},
+ cousin:{don:["Nine says the .357 of your father is very old. He would polish for free. Is a big compliment."],
+  consigliere:["Gold knuckles! Nine says your old boss had taste. Nine says this about nobody."],
+  money:["Nine says you know the price of everything. Please do not tell him the price of the gold one."]},
+ offcop:{don:["Providence PD sent us your sheet. Long sheet. Nice handwriting, though."],
+  money:["Federal guys came by the station asking about a Glass. Funny, they never found him."]},
+ bguard:{don:["Your father's gun, boss? Keep it clean. It's the one thing you brought."],
+  consigliere:["Vest on under the suit, boss? Good. I heard why."],money:["Count us twice if you like, boss. We're all here."]},
+ hguard:{don:["Guy at the bar asked if you were Sal from Federal Hill. I said I never heard of a hill in Florida."],
+  consigliere:["You fold your pocket square like a lawyer, you know that? Sorry. Touchy subject."],
+  money:["Your mail's all brown envelopes, boss. I stopped asking."]},
+ pgirl:{don:["Is that chain real, baby? Don't answer. I like it either way."],consigliere:["You're so polite. It's kind of scary."],
+  money:["You count your tips twice too, don't you? I can tell."]},
+ smoker:{don:["Fella in a Buick was asking for a Benedetti. I said no Italians here, just me and the gulls."],
+  money:["Saw your name in the Herald. Page eleven. 'Assets frozen.' Mine have been frozen since '74."]}};
+const STORY_HEARD=new Set();
+function storyChat(kind){const S=STORY_CHAT[kind];if(!S)return [];let c=null;try{c=CHARS[selIdx].id;}catch(e){}return [...(S._||[]),...((c&&S[c])||[])];}
+// Picks from a kind's pool plus its story lines; an unheard story line wins 60% of the time.
+function storyPick(kind,pool){const st=storyChat(kind),fresh=st.filter(l=>!STORY_HEARD.has(l));
+ const L=fresh.length&&(!pool||!pool.length||Math.random()<0.6)?fresh[0]:pick([...(pool||[]),...st]);if(L)STORY_HEARD.add(L);return L;}
