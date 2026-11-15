@@ -2041,7 +2041,7 @@ function updateCash(dt){const g=G;for(const c of g.cash){c.t+=dt;
 function updateFX(dt){const g=G;
  for(let i=g.parts.length-1;i>=0;i--){const p=g.parts[i];p.life-=dt;
   if(p.t==='m'){p.y+=0.45*dt;p.x+=p.vx*dt;p.z+=p.vz*dt;p.s*=Math.exp(-dt*0.9);}
-  else if(p.t==='c'){if(p.y>0.03){p.vy=Math.max(p.vy-3*dt,-0.7);p.x+=(p.vx+Math.sin(p.life*9)*0.4)*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;}else p.y=0.02;}
+  else if(p.t==='c'){const fy=p.fy||0.02;if(p.y>fy+0.01){p.vy=Math.max(p.vy-3*dt,-0.7);if(p.bill){p.vx*=Math.exp(-dt*1.6);p.vz*=Math.exp(-dt*1.6);p.ph+=p.sp*dt;}p.x+=(p.vx+Math.sin(p.life*9)*0.4)*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;}else p.y=fy;}
   else{const ox=p.x,oz=p.z;p.vy-=(p.t==='b'?16:6)*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;
    const cx=Math.floor(p.x),cz=Math.floor(p.z);
    if(isSolid(cx,cz)){if(p.t==='b'&&p.y>0.05&&Math.random()<0.5){const ocx=Math.floor(ox),ocz=Math.floor(oz);if(cx!==ocx)addWallDecal(cx>ocx?cx:ocx,p.y,p.z,cx>ocx?-1:1,0,rnd(0.08,0.22),10,bloodTint());else addWallDecal(p.x,p.y,cz>ocz?cz:ocz,0,cz>ocz?-1:1,rnd(0.08,0.22),10,bloodTint());}p.life=0;}
@@ -2398,7 +2398,7 @@ const NPCLOOK={
  hguard:()=>NPCLOOK.guard(),smoker:()=>NPCLOOK.guard(),
  jeweler:()=>mallLook('jeweler'),tailor:()=>mallLook('tailor'),furnman:()=>mallLook('furnman'),realtor:()=>mallLook('realtor'),
  tony:()=>({skin:hex(0xd9a37c),jacket:hex(0x15121a),shirt:hex(0xf4f4f0),tie:hex(0xc0182a),pants:hex(0x15121a),shoes:hex(0x0a0a0c),hs:'slick',hair:hex(0x1a1410),stache:true,watch:true,bw:1.06,bd:1.04,bh:1.0}),
- lady:()=>{const sk=hex(pick([0xf0c8a0,0xd9a37c,0x8a5a3a,0xefcaa8,0x6b4226])),dress=Math.random()<0.7;return femWear({fem:true,calm:1,sleeves:Math.random()<0.5,skirt:dress?rnd(0.45,0.62):0,skin:sk,jacket:hex(pick([0xffffff,0xff6fae,0x2de2e6,0xffd36b,0xc9b6f2,0x1a1a22,0xff2d95,0x7dff9a])),shirt:hex(pick([0xffffff,0xffd36b,0x1a1a22,0xff6fae])),pants:dress?sk:hex(pick([0xf2f2f2,0x2a2030,0x9ad8e0])),shoes:hex(pick([0xffffff,0xff2d95,0x1a1a22,0xffd36b])),hs:pick(['long','long','big']),hair:hex(pick([0x101010,0xe8c860,0x6a3a1a,0xa5532a,0x2a1a10])),shades:Math.random()<0.35,medallion:Math.random()<0.3,bw:0.86,bd:0.86,bh:rnd(0.97,1.02)});},
+ lady:()=>{const sk=hex(pick([0xf0c8a0,0xd9a37c,0x8a5a3a,0xefcaa8,0x6b4226])),dress=Math.random()<0.7;return femWear({fem:true,calm:1,sleeves:Math.random()<0.5,skirt:dress?rnd(0.45,0.62):0,skin:sk,jacket:hex(pick([0xffffff,0xff6fae,0x2de2e6,0xffd36b,0xc9b6f2,0x1a1a22,0xff2d95,0x7dff9a])),shirt:hex(pick([0xffffff,0xffd36b,0x1a1a22,0xff6fae])),pants:dress?sk:hex(pick([0xf2f2f2,0x2a2030,0x9ad8e0])),shoes:hex(pick([0xffffff,0xff2d95,0x1a1a22,0xffd36b])),...(hs=>({hs,hair:AFRO_HS.has(hs)?hex(pick(AFRO_HAIR)):hex(pick([0x101010,0xe8c860,0x6a3a1a,0xa5532a,0x2a1a10]))}))(pick(darkSkin(sk)?GIRL_HS_DARK:['long','xlong','waves','big'])),shades:Math.random()<0.35,medallion:Math.random()<0.3,bw:0.86,bd:0.86,bh:rnd(0.97,1.02)});},
  guest:()=>Math.random()<0.45?NPCLOOK.lady():({calm:0.8,skin:hex(pick([0xf0c8a0,0xd9a37c,0x8a5a3a,0xefcaa8,0x6b4226])),jacket:hex(pick([0xffffff,0xf4d6e4,0x9ad8e0,0xf6e3b4,0xc9b6f2,0x2a2a33,0xff8fb8])),shirt:hex(pick([0xff6fae,0x2de2e6,0xffffff,0xffd36b,0x1a1a22])),pants:hex(pick([0xf2f2f2,0x2a2030,0xd8d0b8,0x9ad8e0])),shoes:hex(pick([0xffffff,0x2a1a14])),hs:pick(['big','slick','normal','buzz']),hair:hex(pick([0x101010,0xe8c860,0x6a3a1a,0xa5532a,0xd8d8d8])),shades:Math.random()<0.4,glasses:Math.random()<0.15,bw:rnd(0.88,1.05),bd:rnd(0.88,1.08),bh:rnd(0.95,1.05)})};
 const NPCLINES={
  guard:[["Evening, sir. Mr. McWey is expecting you.","Elevator's at the back. Fifty-two floors of class."],["Heard about the motel. Nice work.","Boss is in a good mood. Keep it that way."],["Club Flamingo, huh? The whole strip is talking.","He's waiting upstairs."],["You actually did it. The Shark..."]],
@@ -2891,7 +2891,7 @@ if(!g.cine&&!g.seq){const y=2.4+Math.sin(g.T*4)*0.2;B.box(A.mul(A.mul(A.T(g.car.
   if(g.tankB){const t=g.tankB;drawTankLife(B,g.T,t.x0,t.x1,(t.z0+t.z1)/2,0.08,1.35,0.35,0.9,0.4,2.15);}
   if(g.fount)drawFountainWater(B,g.fount,g.T);if(g.mcDesk)drawMcOffice(B,g);if(g.tv)drawLobbyTV(B,g);if(g.lounge)drawLounge(B,g);if(g.cast)drawCast(B,g);
   if(!g.seq){const y=1.6+Math.sin(g.T*4)*0.12;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.22,0.22,0.22))),GOLD,true);}}
- for(const q of g.parts)B.box(A.mul(A.T(q.x,q.y,q.z),A.S(q.s,q.s,q.s)),q.c,q.t==='s');hubFixEnd(g,FX);}
+ for(const q of g.parts){if(q.bill){drawPartBill(B,q);continue;}B.box(A.mul(A.T(q.x,q.y,q.z),A.S(q.s,q.s,q.s)),q.c,q.t==='s');}hubFixEnd(g,FX);}
 function drawHubHUD(c,g,u,m){if(g.cine)return;if(g.seq){drawSeqHUD(c,g,u);return;}const d=g.def;c.font=PXF(7*u);txt(c,d.where,m,m,'#ffd36b','left',7*u);c.font=VTF(22*u);txt(c,g.obj||d.obj,m,m+10*u,'#fff','left',22*u);
  c.font=PXF(13*u);txt(c,'$'+fmt(wallet()),vw-m,m,'#7dff9a','right',13*u);if(myProg().debt>0){c.font=VTF(15*u);txt(c,'OWED TO McWEY $'+fmt(myProg().debt),vw-m,m+38*u,'#ff8a95','right',15*u);}c.font=VTF(16*u);txt(c,CHARS[selIdx].name+' LV'+myProg().lvl,vw-m,m+20*u,'#e9c7ff','right',16*u);
  const R=Math.max(44,Math.min(vw,vh)*0.13),rcx=m+R,rcy=touchMode?m+62*u+R:vh-m-R;drawRadar(c,rcx,rcy,R);
@@ -3191,8 +3191,15 @@ function dancerFigure(P){const key=String(P.sk)+'|'+String(P.hair);let h=2166136
 const DANCER_LING=['bikini','bodysuit','corset','lace','babydoll','leopard','strappy','leotard'];
 /* faces: eye colour, lipstick and eyeshadow; each girl gets her own mix */
 const DANCER_IRIS=['#3a2414','#5a3a1a','#6a5a24','#2e6a3a','#2a5a9a','#5a6470'],DANCER_LIP=[[225,30,90],[200,20,40],[240,90,110],[150,30,70],[235,110,80],[190,110,110]],DANCER_SHADOW=['rgba(150,60,140,.55)','rgba(60,110,210,.5)','rgba(235,90,160,.5)','rgba(210,160,60,.5)','rgba(40,30,40,.55)','rgba(40,170,160,.45)'];
-function dancerProf(ix){const sh=a=>a.slice().sort(()=>Math.random()-0.5),k=ix==null?(Math.random()*12|0):ix;
- return{sk:hex(pick([0xefcaa8,0xd9a37c,0x8a5a3a,0xf0c8a0,0x6b4226,0xb07850,0xf8dcc8,0xc89a6a,0x4a2c1a,0xe0b48c])),hair:hex(DANCER_HAIR[(k*5+(Math.random()*3|0))%DANCER_HAIR.length]),hs:pick(['long','long','big','normal','pony','bob']),
+/* hairstyles: mostly long (straight, waist-length, waves, the 80s feathered cut), plus perms, ponytails, bobs and braids;
+   girls with dark skin mostly wear an afro, an afro puff or box braids, in natural dark shades */
+const GIRL_HS=['long','xlong','waves','long','xlong','waves','big','pony','bob','braids'],GIRL_HS_DARK=['afro','afro','afro','puff','braids','braids','xlong','waves'];
+const AFRO_HS=new Set(['afro','puff','braids']),AFRO_HAIR=[0x141010,0x2a1a12,0x3e2618,0x5a3420];
+const darkSkin=c=>c[0]*0.3+c[1]*0.59+c[2]*0.11<0.45;
+/* her hair colour: natural dark for afros and braids, otherwise from the dancer palette (i spreads the colours) */
+const girlHairC=(P,i,pal)=>AFRO_HS.has(P.hs)?hex(AFRO_HAIR[((i%AFRO_HAIR.length)+AFRO_HAIR.length)%AFRO_HAIR.length]):hex(pal);
+function dancerProf(ix){const sh=a=>a.slice().sort(()=>Math.random()-0.5),k=ix==null?(Math.random()*12|0):ix,sk=hex(pick([0xefcaa8,0xd9a37c,0x8a5a3a,0xf0c8a0,0x6b4226,0xb07850,0xf8dcc8,0xc89a6a,0x4a2c1a,0xe0b48c])),hs=pick(darkSkin(sk)?GIRL_HS_DARK:GIRL_HS);
+ return{sk,hs,hair:girlHairC({hs},k,DANCER_HAIR[(k*5+(Math.random()*3|0))%DANCER_HAIR.length]),
   iris:DANCER_IRIS[(k*7+(Math.random()*3|0))%DANCER_IRIS.length],lip:DANCER_LIP[(k*3+(Math.random()*2|0))%DANCER_LIP.length],shadow:DANCER_SHADOW[(k*5+(Math.random()*2|0))%DANCER_SHADOW.length],
   bod:DANCER_BODY[(k*2+(Math.random()*2|0))%DANCER_BODY.length],ling:DANCER_LING[(k+(Math.random()*2|0)*2)%DANCER_LING.length],hose:pick([null,null,'sheer','net']),hoseC:pick([[0.04,0.04,0.06],[0.55,0.02,0.1],[0.95,0.95,0.97]])};}
 function dancerLook(fit,stage,prof){const f=STAGE_FITS[fit%STAGE_FITS.length],P=prof||dancerProf(fit),sk=P.sk;
@@ -3204,7 +3211,7 @@ function clubSetup(g){const W=g.W,cells=ch=>{const o=[];for(let z=0;z<g.H;z++)fo
  const sc={x:(g.stage.x0+g.stage.x1)/2,z:(g.stage.z0+g.stage.z1)/2};g.disco={x:sc.x,z:sc.z};g.lights.push({x:sc.x,y:2.2,z:sc.z,r:6,c:[1.6,0.15,0.35]});
  for(const q of S)g.solid[Math.floor(q.z)*W+Math.floor(q.x)]=1;
  const names=DANCER_NAMES.slice().sort(()=>Math.random()-0.5);
- const shuf=a=>a.slice().sort(()=>Math.random()-0.5),lings=shuf(DANCER_LING),bods=shuf(DANCER_BODY),hairs=shuf(DANCER_HAIR);const dancers=cells('j').map((q,i)=>{const prof=Object.assign(dancerProf(i),{ling:lings[i%lings.length],bod:bods[i%bods.length],hair:hex(hairs[i])}),d=makeChar(q.x,q.z,dancerLook(i+Math.floor(Math.random()*5),0,prof),false);d.prof=prof;d.kind='sdancer';d.pole=q;d.y=0.36;d.tips=0;d.stage=0;d.boost=0;d.ph=i*2.1;d.fit=i;d.dname=names[i];d.r=0.25;
+ const shuf=a=>a.slice().sort(()=>Math.random()-0.5),lings=shuf(DANCER_LING),bods=shuf(DANCER_BODY),hairs=shuf(DANCER_HAIR);const dancers=cells('j').map((q,i)=>{const prof=Object.assign(dancerProf(i),{ling:lings[i%lings.length],bod:bods[i%bods.length]});prof.hair=girlHairC(prof,i,hairs[i]);const d=makeChar(q.x,q.z,dancerLook(i+Math.floor(Math.random()*5),0,prof),false);d.prof=prof;d.kind='sdancer';d.pole=q;d.y=0.36;d.tips=0;d.stage=0;d.boost=0;d.ph=i*2.1;d.fit=i;d.dname=names[i];d.r=0.25;
   d.move=CLUB_MOVES[i%CLUB_MOVES.length];d.mt=0;d.md=rnd(4,7);d.moveE=1;d.sa=i*2.1;g.npcs.push(d);return d;});
  for(const q of cells('u')){const pt=makeChar(q.x,q.z,Object.assign(NPCLOOK.guest(),{calm:1}),false);pt.kind='patron';pt.a=Math.atan2(sc.x-q.x,sc.z-q.z);pt.r=0.28;g.npcs.push(pt);}
  for(const q of cells('g')){const b=makeChar(q.x,q.z,NPCLOOK.guard(),false);b.kind='bouncer';b.state='idle';b.a=b.a0=Math.PI/2;b.r=0.3;g.npcs.push(b);}
@@ -3212,10 +3219,10 @@ function clubSetup(g){const W=g.W,cells=ch=>{const o=[];for(let z=0;z<g.H;z++)fo
  /* the VIP doors: the lowest row with two or more doors (the front door below them is a single one) */
  let doorZ=0;for(let z=g.H-1;z>0&&!doorZ;z--)if(g.rows[z].split('D').length>2)doorZ=z;
  const isSolid=(x,z)=>g.solid[z*W+x]===1,rooms=[];for(let x=0;x<W;x++)if(g.rows[doorZ][x]==='D'){let x0=x,x1=x;while(!isSolid(x0-1,doorZ+1))x0--;while(!isSolid(x1+1,doorZ+1))x1++;let z1=doorZ+1;while(!isSolid(x,z1+1))z1++;
-  rooms.push({x0,x1:x1+1,z0:doorZ+1,z1:z1+1,doorX:x+0.5,doorZ:doorZ+0.5,chairX:x+0.5,chairZ:z1+0.1,n:rooms.length+1});}
+  rooms.push({x0,x1:x1+1,z0:doorZ+1,z1:z1+1,doorX:x+0.5,doorZ:doorZ+0.5,chairX:x+0.5,chairZ:z1+0.42,n:rooms.length+1});}
  let topD=0;for(let z=0;z<doorZ&&!topD;z++)if(z>6&&g.rows[z].indexOf('D')>=0)topD=z;
  const room={x0:1,x1:W-1,z0:topD+1,z1:doorZ};
- for(const r of rooms)g.lights.push({x:r.chairX,y:2.1,z:r.chairZ-0.8,r:3.6,c:[1.7,0.12,0.3]});
+ for(const r of rooms)g.lights.push({x:r.chairX,y:2.1,z:r.chairZ-1.1,r:3.8,c:[1.6,0.22,0.55]});
  for(const q of [[3,room.z0+1],[W-4,room.z0+1],[3,room.z1-1],[W-4,room.z1-1]])g.lights.push({x:q[0],y:2.3,z:q[1],r:5,c:[1.4,0.08,0.18]});
  const vip={chairX:rooms[0].chairX,chairZ:rooms[0].chairZ,doorX:rooms[0].doorX,doorZ:rooms[0].doorZ,active:false,dancer:null,room:null,escort:null,t:0,camK:0};
  let front=null;for(let z=g.H-1;z>doorZ&&!front;z--){const x=g.rows[z].indexOf('D');if(x>=0)front={x,z:z+1};}
@@ -3243,8 +3250,11 @@ function beginLapdance(r){const g=G,v=g.club.vip,e=v.escort;if(!e)return;const d
 function lapTip(){const g=G,v=g.club.vip,p=myProg(),d=v.dancer,pl=g.player;if(!v.active||!d)return;arm();
  if(p.wallet<100){popup(pl.x,pl.z,'OUT OF CASH','#ff8a95');sfx('blip');return;}
  p.wallet-=100;saveProg();sfx('cash');v.tips=(v.tips||0)+1;v.t=Math.min(45,v.t+4);d.boost=Math.min(2.4,(d.boost||0)+0.5);d.tips=(d.tips||0)+1;
- for(let i=0;i<14;i++){const a=Math.atan2(d.x-pl.x,d.z-pl.z)+rnd(-0.7,0.7),sp=rnd(0.6,1.8);g.parts.push({t:'c',x:pl.x,y:1.0,z:pl.z,vx:Math.sin(a)*sp,vy:rnd(1.6,3),vz:Math.cos(a)*sp,s:0.08,c:[0.35,0.8,0.4],life:1.6});}
+ throwBills(g,pl.x,0.95,pl.z,d.x,d.z,14,0.7,0.6,1.8,1.6,3,rnd(5,7));
  popup(d.x,d.z,'-$100 · '+pick(['OOH, BIG SPENDER','DON\'T STOP NOW','MAKE IT RAIN, SUGAR','YOU\'RE MY FAVOURITE','MMM, MORE']),'#7dff9a');}
+/* a handful of real dollar bills thrown from (x,y,z) toward (tx,tz): they fly out, flutter down tumbling and lie where they land for a while (fy: the floor they land on) */
+function throwBills(g,x,y,z,tx,tz,n,spread,v0,v1,u0,u1,life,fy){const a0=Math.atan2(tx-x,tz-z);
+ for(let i=0;i<n;i++){const a=a0+rnd(-spread,spread),sp=rnd(v0,v1);g.parts.push({t:'c',bill:1,x,y,z,vx:Math.sin(a)*sp,vy:rnd(u0,u1),vz:Math.cos(a)*sp,s:0.08,c:[0.35,0.8,0.4],life:life+rnd(-0.5,0.5),ph:rnd(0,TAU),sp:rnd(5,11)*(Math.random()<0.5?-1:1),fy});}}
 /* any movement input (keys, stick, pad) */
 function moveIntent(){if(keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD||keys.ArrowUp||keys.ArrowDown||keys.ArrowLeft||keys.ArrowRight)return true;
  if(sticks.L&&Math.hypot(sticks.L.x-sticks.L.ox,sticks.L.y-sticks.L.oy)>30)return true;return !!(padMode&&PAD.on&&Math.hypot(PAD.lx,PAD.ly)>0.5);}
@@ -3276,7 +3286,7 @@ function danceTick(g,d,dt){const sc=g.club.sc,q=d.pole,y0=d.baseY===undefined?0.
  else ty=y0+Math.abs(Math.sin(d.ph))*0.025;
  const k=Math.min(1,dt*(d.move==='spin'?14:6)),ox=d.x,oz=d.z;d.x+=(tx-d.x)*k;d.z+=(tz-d.z)*k;d.y+=(ty-d.y)*Math.min(1,dt*8);d.vx=d.vz=0;
  d.a+=clamp(angDiff(d.a,ta),-7*dt,7*dt);
- if(d.stage>=2&&Math.random()<dt*6)g.parts.push({t:'c',x:d.x+rnd(-0.6,0.6),y:2.4,z:d.z+rnd(-0.6,0.6),vx:rnd(-0.2,0.2),vy:-0.8,vz:rnd(-0.2,0.2),s:0.07,c:[0.35,0.8,0.4],life:2.4});}
+}
 const inRoom=(r,x,z)=>x>r.x0&&x<r.x1&&z>r.z0&&z<r.z1;
 function clubTick(dt){const g=G,c=g.club,v=c.vip,p=g.player;
  updateDoors(dt);
@@ -3288,7 +3298,6 @@ function clubTick(dt){const g=G,c=g.club,v=c.vip,p=g.player;
   d.x=v.chairX+Math.sin(d.ph)*0.16;d.z=v.chairZ-0.52+Math.cos(d.ph*2)*0.08;
   d.y=0.02+Math.abs(Math.sin(d.ph*2))*0.06;
   d.a=Math.atan2(p.x-d.x,p.z-d.z);
-  if(Math.random()<dt*5)g.parts.push({t:'c',x:d.x+rnd(-0.4,0.4),y:2.1,z:d.z+rnd(-0.4,0.4),vx:rnd(-0.15,0.15),vy:-0.7,vz:rnd(-0.15,0.15),s:0.07,c:[0.35,0.85,0.45],life:2.0});
   if(v.t<=0)stopLapdance();}
  const e=v.escort;
  if(e){const d=e.d;e.t+=dt;
@@ -3304,7 +3313,7 @@ function clubTick(dt){const g=G,c=g.club,v=c.vip,p=g.player;
  for(const d of c.dancers){if(d.lapDance||d.walking)continue;danceTick(g,d,dt);d.boost=Math.max(0,d.boost-dt*0.25);}}
 function tipDancer(d){const p=myProg(),g=G;arm();if(d.cold>0){popup(d.x,d.z,d.dname+' WON\'T TAKE YOUR MONEY','#ff8a95');sfx('blip');return;}if(p.wallet<100){popup(g.player.x,g.player.z,'OUT OF CASH','#ff8a95');sfx('blip');return;}
  p.wallet-=100;saveProg();d.tips++;d.boost=Math.min(1.6,d.boost+0.7);sfx('cash');
- for(let i=0;i<8;i++){const a=Math.atan2(d.x-g.player.x,d.z-g.player.z)+rnd(-0.4,0.4),v=rnd(2.5,4.5);g.parts.push({t:'c',x:g.player.x,y:1.1,z:g.player.z,vx:Math.sin(a)*v,vy:rnd(1,2.5),vz:Math.cos(a)*v,s:0.08,c:[0.35,0.8,0.4],life:1.0});}
+ throwBills(g,g.player.x,1.05,g.player.z,d.x,d.z,8,0.4,2.5,4.5,1,2.5,rnd(3,4),(d.y||0)+0.02);
  popup(d.x,d.z,'-$100 · '+pick(['WOO!','OOH, BIG SPENDER','DON\'T STOP NOW','MORE!','THANK YOU, SUGAR']),'#7dff9a');
  if(d.tips===3||d.tips===7){d.stage=Math.min(2,d.stage+1);if(d.stage===1){d.look=dancerLook(d.fit,1,d.prof);d._ps2k=null;popup(d.x,d.z,d.dname+' DROPS THE JACKET','#ff6fae');}else{popup(d.x,d.z,d.dname+"'S BIG FINALE","#ffd36b");sfx('clear');}}}
 const TONY_LINES=[()=>"Name's Tony. First drink's on the house; the second one costs you a story.",
@@ -3332,7 +3341,7 @@ function drawClub(D,g,F){const B=F===undefined?D:F,T=g.T,st=g.stage,bx=(x,y,z,sx
   for(let i=0;i<6;i++){const an=T*0.9+i*TAU/6;dx(cx+Math.cos(an)*3.2,0.012,cz+Math.sin(an)*3.2,0.5,0.01,0.5,i%2?[1,0.1,0.25]:[1,0.35,0.7],true);}
   const on=Math.floor(T*3)%2;dx(24.98,0.16,R.z0+6,0.03,0.05,8,on?neon:pink,true);
   for(let i=0;i<14;i++){const lit=(Math.floor(T*8)+i)%3>0,col=lit?[1,0.85,0.4]:[0.3,0.2,0.1];dx(ox-1.7+i*3.4/13,H+0.92,fz+0.1,0.07,0.07,0.04,col,lit);dx(ox-1.7+i*3.4/13,H+0.18,fz+0.1,0.07,0.07,0.04,col,lit);}
-  for(const r of c.rooms){heart(dx,r.chairX,0.85,r.z1-0.05,0.02,(Math.floor(T*2)+r.n)%2?neon:pink);dx(r.doorX,H+0.06,r.doorZ,0.9,0.1,0.5,(Math.floor(T*2)+r.n)%2?neon:pink,true);}}
+  for(const r of c.rooms){heart(dx,r.chairX,1.0,r.z1-0.12,0.009,(Math.floor(T*2)+r.n)%2?neon:pink);dx(r.doorX,H+0.06,r.doorZ,0.9,0.1,0.5,(Math.floor(T*2)+r.n)%2?neon:pink,true);}}
  if(!B)return;
  const cx=(st.x0+st.x1)/2,cz=(st.z0+st.z1)/2,w=st.x1-st.x0,d=st.z1-st.z0;bx(cx,0.17,cz,w,0.34,d,[0.25,0.04,0.12]);bx(cx,0.345,cz,w-0.1,0.01,d-0.1,[0.22,0.04,0.12]);
  for(const q of g.club.dancers){bx(q.pole.x,1.6,q.pole.z,0.05,2.5,0.05,GOLD);bx(q.pole.x,0.36,q.pole.z,0.5,0.02,0.5,[1,0.3,0.75],true);}
@@ -3357,13 +3366,62 @@ function drawClub(D,g,F){const B=F===undefined?D:F,T=g.T,st=g.stage,bx=(x,y,z,sx
  bx(ox,0.012,fz-2.5,0.9,0.02,5.0,[0.6,0.03,0.08]);
  for(const x of [3.2,8.6]){bx(x,0.9,24.06,0.9,1.0,0.04,GOLD);bx(x,0.9,24.09,0.76,0.86,0.03,[0.62,0.6,0.68]);}
 
- /* the VIP rooms: a red throne, velvet side curtains, a neon heart on the back wall, a gold pole and champagne */
- for(const r of c.rooms){const cx=r.chairX,cz=r.chairZ;
-  bx(cx,0.28,cz,0.85,0.28,0.75,[0.65,0.05,0.22]);bx(cx,0.62,cz+0.32,0.85,0.55,0.14,[0.65,0.05,0.22]);
-  bx(cx-0.38,0.45,cz,0.12,0.25,0.75,GOLD);bx(cx+0.38,0.45,cz,0.12,0.25,0.75,GOLD);
-  for(const x of [r.x0+0.04,r.x1-0.04])for(let z=r.z0+0.2;z<r.z1-0.1;z+=0.34){const k=Math.floor(z/0.34)%2;bx(x,H*0.5,z+0.17,0.07+k*0.04,H,0.34,k?red:red2);}
-  bx(r.x0+0.7,H*0.5+0.1,r.z0+0.7,0.05,H+0.2,0.05,GOLD);bx(r.x0+0.7,0.02,r.z0+0.7,0.4,0.04,0.4,GOLD);
-  bx(r.x1-0.6,0.35,r.z1-0.6,0.42,0.7,0.42,[0.1,0.02,0.04]);bx(r.x1-0.6,0.78,r.z1-0.6,0.18,0.16,0.18,[0.75,0.75,0.8]);bx(r.x1-0.6,0.95,r.z1-0.6,0.05,0.22,0.05,[0.1,0.35,0.15]);}}
+ /* the VIP rooms are lounges: hot-pink fur on every wall, a plum shag rug, a big tufted velvet sectional along the back wall with wings down the
+    sides (you sit in the middle of it), a low black-and-gold salon table with champagne on ice, flutes and strawberries, gold sconces, a gold pole */
+ for(const r of c.rooms)drawVipLounge(B,r,H);}
+function drawVipLounge(B,r,H){const bx=(x,y,z,sx,sy,sz,col,em,ry)=>B.box(TRS(x,y,z,ry||0,sx,sy,sz),col,!!em),FUR=TUV[222],FAB=TUV[44],
+  fb=(x,y,z,sx,sy,sz,col,ry)=>B.box(TRS(x,y,z,ry||0,sx,sy,sz),col,false,FUR),vb=(x,y,z,sx,sy,sz,col,ry)=>B.box(TRS(x,y,z,ry||0,sx,sy,sz),col,false,FAB),
+  tilt=(x,y,z,ry,rx,sx,sy,sz,col,em)=>B.box(A.mul(A.mul(A.mul(A.T(x,y,z),A.RY(ry)),A.RX(rx)),A.S(sx,sy,sz)),col,!!em),
+  {x0,x1,z0,z1}=r,cx=r.chairX,PINK=[1,0.46,0.74],VEL=[0.36,0.07,0.42],VEL2=[0.46,0.1,0.52],BTN=[0.16,0.03,0.2],GLD=GOLD,
+  jit=(i,j)=>0.9+0.1*Math.abs(Math.sin(i*12.9898+j*78.233+r.n*3.1)*43758.5453%1);
+ /* fur on the walls, in panels so the pile tiles across them (the north wall leaves the doorway open) */
+ const furRun=(ax,az,bx2,bz,nx,nz,gap)=>{const L=Math.hypot(bx2-ax,bz-az),n=Math.max(1,Math.round(L/0.42)),rows=3,h=H/rows;
+  for(let i=0;i<n;i++){const t=(i+0.5)/n,px=ax+(bx2-ax)*t,pz=az+(bz-az)*t,w=L/n+0.004;if(gap!==undefined&&Math.abs(px-gap)<0.56)continue;
+   for(let j=0;j<rows;j++){const v=jit(i,j);fb(px+nx*0.035,h*(j+0.5),pz+nz*0.035,nx?0.07:w,h+0.004,nx?w:0.07,[PINK[0]*v,PINK[1]*v,PINK[2]*v]);}}
+  /* a gold trim along the top of the fur */
+  bx((ax+bx2)/2+nx*0.07,H-0.02,(az+bz)/2+nz*0.07,nx?0.03:L,0.04,nx?L:0.03,GLD);};
+ furRun(x0,z0,x0,z1,1,0);furRun(x1,z0,x1,z1,-1,0);furRun(x0,z1,x1,z1,0,-1);furRun(x0,z0,x1,z0,0,1,r.doorX);
+ /* the shag rug, with a gold edge */
+ {const rx0=x0+0.95,rx1=x1-0.95,rz0=z0+0.7,rz1=z1-0.9,nx=Math.round((rx1-rx0)/0.5),nz=Math.round((rz1-rz0)/0.5),w=(rx1-rx0)/nx,d=(rz1-rz0)/nz;
+  bx((rx0+rx1)/2,0.008,(rz0+rz1)/2,rx1-rx0+0.08,0.012,rz1-rz0+0.08,GLD);
+  for(let i=0;i<nx;i++)for(let j=0;j<nz;j++){const v=jit(i+7,j+3);fb(rx0+(i+0.5)*w,0.02,rz0+(j+0.5)*d,w+0.004,0.022,d+0.004,[0.5*v,0.17*v,0.55*v]);}}
+ /* the sectional: plinth with a purple glow under it, seat cushions, a tufted back with buttons, a rolled top; wings down both side walls */
+ const SEAT=0.42,BZ=z1-0.07,FZ=z1-0.84,WD=0.78,WZ=z1-2.4;
+ const section=(ax,az,bx2,bz,nx,nz,nCush)=>{/* a run of couch with its back against the wall at (a..b), facing (nx,nz) */
+  const L=Math.hypot(bx2-ax,bz-az),mx=(ax+bx2)/2,mz=(az+bz)/2,along=nx?0:1,sz=(w,d)=>along?[w,d]:[d,w];
+  let q=sz(L,WD);bx(mx+nx*WD/2,0.05,mz+nz*WD/2,q[0],0.1,q[1],[0.08,0.02,0.1]);
+  q=sz(L-0.04,0.03);bx(mx+nx*(WD-0.01),0.035,mz+nz*(WD-0.01),q[0],0.03,q[1],[0.8,0.25,1],true);
+  q=sz(L,0.02);bx(mx+nx*(WD+0.005),0.11,mz+nz*(WD+0.005),q[0],0.02,q[1],GLD);
+  for(let k=0;k<nCush;k++){const t=(k+0.5)/nCush,px=ax+(bx2-ax)*t,pz=az+(bz-az)*t;q=sz(L/nCush-0.025,WD-0.24);vb(px+nx*(0.24+(WD-0.24)/2),0.27,pz+nz*(0.24+(WD-0.24)/2),q[0],0.3,q[1],k%2?VEL:VEL2);}
+  q=sz(L,0.24);vb(mx+nx*0.12,0.47,mz+nz*0.12,q[0],0.74,q[1],VEL);
+  q=sz(L+0.02,0.3);vb(mx+nx*0.13,0.86,mz+nz*0.13,q[0],0.08,q[1],VEL2);
+  const nb=Math.max(2,Math.round(L/0.26));for(let k=0;k<nb;k++)for(let j=0;j<3;j++){if((k+j)%2)continue;const t=(k+0.5)/nb,px=ax+(bx2-ax)*t,pz=az+(bz-az)*t;bx(px+nx*0.245,0.5+j*0.12,pz+nz*0.245,0.035,0.035,0.035,BTN);}};
+ section(x0+0.07,BZ,x1-0.07,BZ,0,-1,6);
+ section(x0+0.07,FZ,x0+0.07,WZ,1,0,2);section(x1-0.07,FZ,x1-0.07,WZ,-1,0,2);
+ /* the wing ends: padded arms */
+ for(const [ax,s2] of [[x0+0.07,1],[x1-0.07,-1]]){vb(ax+s2*WD/2,0.36,WZ-0.07,WD,0.52,0.16,VEL2);bx(ax+s2*WD/2,0.63,WZ-0.07,WD,0.03,0.18,GLD);}
+ /* fur throw pillows in the corners and on the wings */
+ for(const [px,pz,ry] of [[x0+0.42,z1-0.36,0.75],[x0+0.62,z1-0.4,0.35],[x1-0.42,z1-0.36,-0.75],[x0+0.36,z1-1.7,1.45],[x1-0.36,z1-1.6,-1.4],[cx+1.15,z1-0.36,-0.15]])
+  tilt(px,0.56,pz,ry,-0.25,0.3,0.28,0.1,[1,0.62,0.85]);
+ /* gold sconces either side, over the couch */
+ for(const sx of [-1.45,1.45]){bx(cx+sx,1.0,z1-0.09,0.08,0.16,0.06,GLD);bx(cx+sx,1.07,z1-0.14,0.11,0.06,0.09,[1,0.78,0.5],true);}
+ /* the salon table, out in front of the west wing (in view of the dance camera): black glass on a gold rim and pedestal */
+ const tx=x0+1.4,tz=z1-1.5;
+ bx(tx,0.03,tz,0.36,0.04,0.36,GLD);bx(tx,0.18,tz,0.12,0.28,0.12,GLD);
+ for(const a of [0,Math.PI/4]){bx(tx,0.335,tz,0.74,0.03,0.74,GLD,false,a);bx(tx,0.355,tz,0.7,0.015,0.7,[0.05,0.03,0.08],false,a);}
+ /* champagne on ice: a silver bucket, a bottle in it, ice */
+ const ix=tx-0.14,iz=tz+0.12;for(const a of [0,Math.PI/4])bx(ix,0.47,iz,0.17,0.21,0.17,[0.82,0.84,0.9],false,a);bx(ix,0.585,iz,0.15,0.02,0.15,[0.86,0.94,1]);
+ tilt(ix+0.02,0.64,iz,0.6,0.38,0.075,0.22,0.075,[0.06,0.22,0.1]);tilt(ix+0.07,0.79,iz+0.05,0.6,0.38,0.035,0.1,0.035,GLD);
+ /* an open bottle standing, a label on it */
+ bx(tx+0.16,0.49,tz+0.14,0.08,0.24,0.08,[0.06,0.22,0.1]);bx(tx+0.16,0.48,tz+0.099,0.06,0.08,0.005,[0.97,0.93,0.82]);bx(tx+0.16,0.65,tz+0.14,0.035,0.1,0.035,GLD);
+ /* two flutes with champagne in them */
+ for(const [fx,fz] of [[tx+0.05,tz-0.18],[tx+0.2,tz-0.08]]){bx(fx,0.367,fz,0.06,0.008,0.06,[0.9,0.9,0.95]);bx(fx,0.42,fz,0.012,0.1,0.012,[0.9,0.9,0.95]);
+  bx(fx,0.52,fz,0.045,0.11,0.045,[0.88,0.9,0.96]);bx(fx,0.51,fz,0.036,0.07,0.036,[1,0.86,0.42],true);}
+ /* strawberries on a silver dish */
+ bx(tx-0.16,0.368,tz-0.15,0.16,0.012,0.16,[0.82,0.84,0.9]);
+ for(let k=0;k<5;k++){const a=k*TAU/5;bx(tx-0.16+Math.cos(a)*0.04,0.39,tz-0.15+Math.sin(a)*0.04,0.035,0.035,0.035,[0.85,0.06,0.1],false,a);}
+ /* the gold pole in the corner by the door */
+ bx(x0+0.7,H*0.5+0.1,z0+0.7,0.05,H+0.2,0.05,GLD);bx(x0+0.7,0.02,z0+0.7,0.4,0.04,0.4,GLD);}
 /* ---- safehouses: Room 14, the Ocean Drive studio, the Coral Tower penthouse ---- */
 const HOMEDEF=[{name:'ROOM 14 · SUNSET MOTEL',price:0,desc:'The gutter. Orange neon through cheap blinds.'},{name:'OCEAN DRIVE STUDIO',price:12000,desc:'The come-up. Pastel rooms, a real kitchen, a terrace on the sand.'},{name:'CORAL TOWER PENTHOUSE',price:40000,needs:'sharkDead',desc:"The kingpin. Moreau's old place, black marble and gold."},MV_HOME];
 const FURN_X=[
@@ -3517,7 +3575,7 @@ function homeExtras(g){if(g.home===3)return mansionExtras(g);const f=homeFurn(),
  if(f.disco&&S.s)g.disco={x:S.s.x,z:S.s.z};
  const sp=(kind,pos,look)=>{const n=makeChar(pos.x,pos.z,look,false);n.kind=kind;n.state='idle';n.a=n.a0=0;n.r=0.3;n.body=look.body;n.said=false;g.npcs.push(n);return n;};
  if(f.guards&&!g.spawned.guards){g.spawned.guards=1;(g.spots.g||[]).slice(0,t+1).forEach(q=>sp('bguard',q,BGLOOK(t)));}
- {const want=girlsN(f),have=g.spawned.girls||0,ms=g.spots.m||[];for(let i=have;i<want;i++){const q=ms[i]||{x:(ms[0]||S.o).x+1.1*(i-ms.length+1),z:(ms[0]||S.o).z+0.6};const P=dancerProf(i);P.ling=DANCER_LING[i%DANCER_LING.length];P.hair=hex(DANCER_HAIR[(i*5+3)%DANCER_HAIR.length]);P.bod=DANCER_BODY[(i*2+1)%DANCER_BODY.length];const n=sp('pgirl',q,dancerLook(i+(Math.random()*5|0),0,P));n.girlI=i;}g.spawned.girls=Math.max(have,want);}
+ {const want=girlsN(f),have=g.spawned.girls||0,ms=g.spots.m||[];for(let i=have;i<want;i++){const q=ms[i]||{x:(ms[0]||S.o).x+1.1*(i-ms.length+1),z:(ms[0]||S.o).z+0.6};const P=dancerProf(i);P.ling=DANCER_LING[i%DANCER_LING.length];P.hair=girlHairC(P,i,DANCER_HAIR[(i*5+3)%DANCER_HAIR.length]);P.bod=DANCER_BODY[(i*2+1)%DANCER_BODY.length];const n=sp('pgirl',q,dancerLook(i+(Math.random()*5|0),0,P));n.girlI=i;}g.spawned.girls=Math.max(have,want);}
  if(f.pole&&S.p&&!g.spawned.pole){g.spawned.pole=1;g.dancer=sp('dancer',{x:S.p.x+0.4,z:S.p.z},GIRLLOOK(true));}
  for(const k of ['dog','cat','iguana','tigerpet'])if(f[k]&&!g.spawned[k]&&S.t){g.spawned[k]=1;g.pets.push({k,x:S.t.x+0.6,z:S.t.z-0.4,a:0,tx:S.t.x,tz:S.t.z,wait:1,step:0});}}
 const BGLOOK=t=>({skin:hex(pick([0xd9a37c,0x7a5236,0xf0c8a0,0x5a3a26])),jacket:hex([0x2a2a33,0xf4f1ec,0x15121a][t]),shirt:hex(pick([0x111116,0xff6fae,0x2de2e6])),pants:hex([0x2a2a33,0xf4f1ec,0x15121a][t]),shoes:hex(0x0a0a0c),hs:'buzz',hair:hex(0x101010),shades:true,earpiece:true,bw:1.18,bd:1.1,bh:1.08,body:'big'});
@@ -4343,6 +4401,8 @@ function updateCine(dt0){const g=G,cn=g.cine,c=g.pcar,T=g.car,now=performance.no
  if(cn.pout){const P=cn.pout;if(P.j<P.walk.length){if(autoWalk(p,P.walk[P.j],1.8,dt))P.j++;if(P.j===1&&c.dr.to===1)carDoorClose(c);}else walkVel(p,0,0);}
  if(t>(cn.pout?12.2:11.6)&&!cn.done){cn.done=fadeTo(()=>loadHub('lobby'));}}
 function cineSkip(){if(G&&G.cine&&!G.cine.done){G.cine.done=fadeTo(()=>loadHub('lobby'));}}
+/* a thrown bill: tumbling while it flutters down, lying flat once it has landed */
+function drawPartBill(B,q){const air=q.y>(q.fy||0.02)+0.012,m=A.mul(A.T(q.x,q.y,q.z),A.RY(q.ph));drawBill(B,air?A.mul(m,A.mul(A.RX(Math.sin(q.ph*0.7)*0.9),A.RZ(Math.cos(q.ph*0.5)*0.5))):A.mul(m,A.S(1,0.3,1)));}
 function drawBill(B,m){const u=TUV[11],mu=(u[0]+u[2])/2;B.box(A.mul(m,A.mul(A.mul(A.T(-0.034,0.006,0),A.RZ(0.32)),A.S(0.07,0.004,0.07))),[1,1,1],false,[u[0],u[1],mu,u[3]]);B.box(A.mul(m,A.mul(A.mul(A.T(0.034,0.006,0),A.RZ(-0.32)),A.S(0.07,0.004,0.07))),[1,1,1],false,[mu,u[1],u[2],u[3]]);}
 
 /* ================= RENDER ================= */
@@ -4591,7 +4651,7 @@ function buildDynamic(){const g=G,B=dynB,O=ovB;B.reset();O.reset();if(g.def.hub)
   const flick=e.react<0.15?(Math.floor(g.T*30)%2?1:0.4):0.75;B.box(TRS(e.x+sa*(st+rem/2)+ca*0.17,0.74,e.z+ca*(st+rem/2)-sa*0.17,e.a,0.018,0.018,rem),[flick,0.05,0.08],true);}
  for(const b of g.bullets)B.box(TRS(b.x,0.74+liftAt(b.x,b.z),b.z,Math.atan2(b.dx,b.dz),0.035,0.035,0.45),b.own==='p'?[1,0.95,0.55]:[1,0.6,0.3],true);
  for(const f of g.flashes)drawFlash(B,f);
- IBlo.r=0.9;IBlo.tp=0;IBlo.uv=null;IBhi.r=1;IBhi.tp=0;IBhi.uv=null;let nb=0;for(const q of g.parts){if(q.t==='b'&&nb<420){nb++;const sv=Math.hypot(q.vx,q.vy,q.vz),st=1+Math.min(2.2,sv*0.18);IBhi.box(A.mul(frameFrom([q.x,q.y+liftAt(q.x,q.z),q.z],sv>0.1?[q.vx,q.vy,q.vz]:[0,0,1],[0,1,0]),A.S(q.s,q.s,q.s*st)),q.c);}else IBlo.box(A.mul(A.T(q.x,q.y+liftAt(q.x,q.z),q.z),A.S(q.s,q.t==='c'?q.s*0.3:q.s,q.s)),q.c,q.t==='s');}
+ IBlo.r=0.9;IBlo.tp=0;IBlo.uv=null;IBhi.r=1;IBhi.tp=0;IBhi.uv=null;let nb=0;for(const q of g.parts){if(q.t==='b'&&nb<420){nb++;const sv=Math.hypot(q.vx,q.vy,q.vz),st=1+Math.min(2.2,sv*0.18);IBhi.box(A.mul(frameFrom([q.x,q.y+liftAt(q.x,q.z),q.z],sv>0.1?[q.vx,q.vy,q.vz]:[0,0,1],[0,1,0]),A.S(q.s,q.s,q.s*st)),q.c);}else if(q.bill)drawPartBill(B,q);else IBlo.box(A.mul(A.T(q.x,q.y+liftAt(q.x,q.z),q.z),A.S(q.s,q.t==='c'?q.s*0.3:q.s,q.s)),q.c,q.t==='s');}
  IBhi.r=0.7;IBhi.tp=0;IBhi.uv=null;for(const q of g.gibs)IBhi.box(A.mul(A.mul(A.mul(A.T(q.x,q.y,q.z),A.RY(q.ry)),A.RX(q.rx)),A.S(q.sx,q.sy,q.sz)),q.c);
  for(const c of g.cash)if(!c.landed)B.box(TRS(c.x,c.y,c.z,c.t*12,0.22,0.1,0.12),[0.35,0.8,0.4]);
  if(CHARS[selIdx].id==='money'&&p.alive)for(const e of g.enemies)if(e.alive&&!e.pvis){const y=1.4+Math.sin(g.T*6+e.x)*0.06;O.box(A.mul(A.mul(A.T(e.x,y,e.z),A.RY(g.T*3)),A.mul(A.RX(0.785),A.S(0.13,0.13,0.13))),e.state==='chase'?[1,0.15,0.2]:[1,0.8,0.25],true);}
