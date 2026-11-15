@@ -27,7 +27,8 @@ test('music: new tracks are wired to missions, hubs and the floor-clear cool-dow
 });
 
 test('music: every new track plays a full loop without errors and stays under the old tracks\' peak', async ({ openGame }) => {
-  test.setTimeout(120_000);
+  // 17 offline renders: about 1 min in the cloud container, over 2 min on the GitHub browser runner
+  test.setTimeout(300_000);
   const page = await openGame();
   const res = await page.evaluate(async NEW => {
     const out = {};
