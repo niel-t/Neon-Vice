@@ -450,9 +450,14 @@ test('context button: the touch GRAB button names the objective, a weapon to tak
     p.x = rg.x; p.z = rg.z; out.obj = ctxAction(p); p.x = 1.5; p.z = 1.5; p.weapon = null; G.items.length = 0; out.none = ctxAction(p).l;
     startLevel(3); const q = G.player, W = G.W; q.weapon = { type: 'pistol', ammo: 5 }; G.items.length = 0;
     for (const b of G.boats) b.sunk = true; for (const e of G.enemies) { e.alive = false; } out.lure = ctxAction(q).l;
-    for (let z = 1; z < G.H - 1 && !out.slam; z++) for (let x = 4; x < W - 2; x++) { const i = z * W + x;
-      if (!G.solid[i] && G.solid[i + 1] && G.wallT[i + 1] === 39 && G.wh[i + 1] < 0.1 && !G.solid[i - 1] && !G.solid[i - 2] && !G.solid[i - 3]) {
-        const e = G.enemies.find(k => k.body !== 'fat' && k.body !== 'big' && !k.boss); e.alive = true; e.down = 0; e.x = x + 0.5; e.z = z + 0.5; q.x = x - 2.5; q.z = z + 0.5; q.a = Math.PI / 2; out.slam = ctxAction(q); break; } }
+    /* a guard on the pier edge with open water behind him and room to line up the kick: from the west (water to the east)
+       or, on the Marina's narrow finger piers, from the yard side of the quay (water to the north) */
+    const sea = j => G.solid[j] && G.wallT[j] === 39 && G.wh[j] < 0.1;
+    for (const [dx, dz, a] of [[1, 0, Math.PI / 2], [0, -1, Math.PI]]) { const s = dx + dz * W;
+      for (let z = 1; z < G.H - 4 && !out.slam; z++) for (let x = 4; x < W - 2; x++) { const i = z * W + x;
+        if (!G.solid[i] && sea(i + s) && !G.solid[i - s] && !G.solid[i - 2 * s] && !G.solid[i - 3 * s]) {
+          const e = G.enemies.find(k => k.body !== 'fat' && k.body !== 'big' && !k.boss); e.alive = true; e.down = 0; e.x = x + 0.5; e.z = z + 0.5; q.x = x + 0.5 - 2.5 * dx; q.z = z + 0.5 - 2.5 * dz; q.a = a; out.slam = ctxAction(q); break; } }
+      if (out.slam) break; }
     return out; });
   expect(r).toEqual({ obj: { l: 'CUT', hot: 1 }, none: 'GRAB', lure: 'LURE', slam: { l: 'SLAM', hot: 1 } });
 });
