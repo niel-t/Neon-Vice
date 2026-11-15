@@ -1,5 +1,5 @@
 'use strict';
-/* ================= ACT 1 SETS: the Sunset Motel, Club Flamingo and the Coral Tower lobby =================
+/* ================= STREET FRONTS AND SETS: Act 1 (the Sunset Motel, Club Flamingo, the Coral Tower lobby), and the Act 2/3 fronts =================
    Each Act 1 street is built like the venue fronts (venues.js): under the building's front wall, a paved sidewalk, a parking
    lay-by marked into bays, two road lanes and a sand verge with palms (world.js frontGrid turns the map's '=' rows into these,
    def.front on the level). Nothing on the street is rolled at random any more: no stray patch tiles or litter on the road, no palm
@@ -23,6 +23,28 @@ const ACT1={
  'CORAL TOWER LOBBY':{entry:'main',awning:0xd9c08a,carpet:true,canopy:true,lamps:[-12,-5,5,12],
   kerb:[['planter',-2.2,'w'],['planter',2.2,'w'],['podium',3.2,'k2'],['bench',-8,'w'],['bench',8,'w'],['mailbox',10.5,'k'],['news',-10.5,'w'],['hydrant',-14,'k'],['trash',14,'w']],
   sign:null},
+ /* Act 2 and Act 3 fronts (the Royal Flush is at sea and keeps its speedboat) */
+ 'VICE MARINA':{entry:'main',gate:true,awning:0x2bb7b9,lamps:[-14,-7,7,14],
+  kerb:[['pole',-10,'k',{t1:'VICE',t2:'MARINA',c1:[0.3,0.95,1],c2:[1,0.55,0.2],t3:'BOAT SLIPS'}],['bench',-4.5,'w'],['bench',4.5,'w'],['trash',6.5,'w'],['phone',-6.5,'w'],['hydrant',11,'k'],['news',12.5,'w']],
+  sign:null,side:{bulb:true,dumpsters:true}},
+ 'STARLIGHT ARCADE':{entry:'main',awning:0xe0459a,lamps:[-13,-6,7,13],
+  kerb:[['posters',-2.6,'w'],['posters',2.6,'w'],['news',-5,'w'],['trash',5,'w'],['meter',-9,'k'],['meter',9,'k'],['hydrant',11,'k'],['phone',-11,'w']],
+  sign:{t:'STARLIGHT',c:[0.75,0.45,1]},side:{bulb:true}},
+ 'OCEAN VIEW MALL':{entry:'main',awning:0x2bb7b9,carpet:false,lamps:[-14,-7,6,13],
+  kerb:[['planter',-1.8,'w'],['planter',1.8,'w'],['bench',-4.5,'w'],['bench',4.5,'w'],['trash',-7,'w'],['mailbox',8,'k'],['phone',10.5,'w'],['news',-10.5,'w'],['hydrant',-12.5,'k']],
+  sign:{t:'OCEAN VIEW MALL',c:[0.3,0.95,1]},side:{bulb:true}},
+ 'THE RECORDING STUDIO':{entry:'side',awning:0x8e2a66,lamps:[-13,-6,6,13],
+  kerb:[['posters',-2.6,'w'],['meter',-5,'k'],['news',4,'w'],['trash',6,'w'],['phone',-9,'w'],['hydrant',10,'k'],['bench',12,'w']],
+  sign:{t:'SUNSHINE SOUND',c:[1,0.35,0.3],onair:true},side:{bulb:true,dumpsters:true}},
+ 'OCEAN DRIVE DEMOLITION':{entry:'side',awning:0xe0a030,lamps:[-13,13],works:true,
+  kerb:[['barrier',-2.2,'k2'],['barrier',2.2,'k2'],['cone',-4,'k'],['cone',4,'k'],['cone',-7,'k'],['cone',7,'k'],['dumpster',9,'w'],['trash',-9,'w'],['hydrant',11,'k']],
+  sign:{t:'KADE DEVELOPMENT',c:[1,0.8,0.3]},side:{bulb:true}},
+ 'THE GRAND BISCAYNE GALA':{entry:'main',awning:0xd9c08a,carpet:true,canopy:'GRAND BISCAYNE',lamps:[-13,-6,6,13],
+  kerb:[['rope',-1.7,'k2'],['rope',1.7,'k2'],['planter',-3.4,'w'],['planter',3.4,'w'],['podium',3.6,'k'],['bench',-8,'w'],['bench',8,'w'],['news',-11,'w'],['hydrant',12,'k']],
+  sign:null},
+ 'KADE TOWER: SITE GATE':{entry:'main',awning:0xe0a030,lamps:[-12,12],works:true,
+  kerb:[['barrier',-2.4,'k2'],['barrier',2.4,'k2'],['cone',-4.5,'k'],['cone',4.5,'k'],['cone',-8,'k'],['cone',8,'k'],['dumpster',-11,'w'],['dumpster',11,'w']],
+  sign:{t:'KADE TOWER',c:[1,1,1]},side:{bulb:true}},
 };
 const act1Of=g=>g&&g.front&&ACT1[g.def.name]?ACT1[g.def.name]:null;
 const A1_CARS=[[0.92,0.92,0.9],[0.1,0.1,0.12],[0.75,0.12,0.15],[0.2,0.45,0.85],[0.95,0.75,0.2],[0.3,0.75,0.65],[0.9,0.5,0.7]];
@@ -33,16 +55,23 @@ function act1Gaps(g){const W=g.W,zT=g.front.zT,out=[];let run=null;
 
 /* ---- arrival: called by arriveSetup for front streets; sets g.arr, the doors, the car's bay and the walk in ---- */
 function act1Arrive(g,i,skipScene){const A=act1Of(g),F=g.front,W=g.W,zT=F.zT,gaps=act1Gaps(g);if(!gaps.length||!g.player)return false;
- const ctr=q=>(q.a+q.b+1)/2,mid=W/2;gaps.sort((p,q)=>Math.abs(ctr(p)-mid)-Math.abs(ctr(q)-mid));const main=gaps[0];
- let gap=main;if(A.entry==='side'){const s=gaps.filter(q=>q!==main&&q.b-q.a<=1&&Math.abs(ctr(q)-ctr(main))>=6);if(s.length)gap=s[s.length-1];}
- for(const q of gaps)addGapDoors(g,q,zT-1);
+ const ctr=q=>(q.a+q.b+1)/2,mid=W/2;gaps.sort((p,q)=>Math.abs(ctr(p)-mid)-Math.abs(ctr(q)-mid));
+ /* a door is only an entrance if you can step inside it (the mall's middle door opens onto the elevator block) */
+ const inOK=q=>{const x=Math.floor((q.a+q.b+1)/2-(q.b>q.a?0.5:0)),i=(zT-2)*W+x;return !g.solid[i]&&!g.furn[i]&&g.rows[zT-2][x]!=='e';};
+ let main=gaps.find(q=>q.b-q.a<=1&&inOK(q))||gaps.find(inOK)||gaps[0];
+ /* the Marina: the dock yard's open front is railed off, with a two-leaf iron gate in the middle */
+ if(A.gate){const wide=gaps.filter(q=>q.b-q.a>=3).sort((p,q)=>(q.b-q.a)-(p.b-p.a))[0];if(wide){const c=Math.floor(ctr(wide)),gate={a:c-1,b:c};
+  for(let x=wide.a;x<=wide.b;x++){if(x>=gate.a&&x<=gate.b)continue;const ii=(zT-1)*W+x;g.solid[ii]=1;g.wallT[ii]=6;g.wh[ii]=0.55;g.topT[ii]=0;g.deco.push({t:'rail',x,z:zT-1});}
+  gaps.splice(gaps.indexOf(wide),1,gate);main=gate;g.deco.push({t:'arch',x:gate.a,z:zT-1,fx:gate.b,w:2});for(const sx of [-1,1])g.lights.push({x:c+sx*1.3,y:1.8,z:zT+0.1,r:4,c:[0.3,0.9,1]});g.a1gate=gate;}}
+ let gap=main;if(A.entry==='side'){const s=gaps.filter(q=>q!==main&&q.b-q.a<=1&&inOK(q)&&Math.abs(ctr(q)-ctr(main))>=6);if(s.length)gap=s[s.length-1];}
+ for(const q of gaps)addGapDoors(g,q,zT-1);if(g.a1gate)for(const d of g.doors)if(d.front&&Math.abs(d.hz-(zT-0.5))<0.01&&d.hx>=g.a1gate.a&&d.hx<=g.a1gate.b+1)d.gate=1;
  const gx=ctr(gap),fx=ctr(main);g.arr={type:gap===main?'front':'side',zT,zB:F.zV,gx,gap,main,fx,ax:null,front:1};
  /* the bays are three cells wide; yours is the one whose middle sits just past the door, so the driver's door opens onto the walk */
  const b0=Math.round(gx+0.45-1.5),cx=b0+1.5,cz=F.bay+0.5;g.bayX=cx;g.bays=[];
  for(let b=b0-3*Math.ceil(b0/3);b+3<=W-1;b+=3){if(b<1)continue;g.bays.push({x:b+1.5,z:cz,b,mine:b===b0});}
  g.car={x:cx,z:cz};g.carA=0;
  /* the job starts just inside the door; if that cell is blocked, on the sidewalk outside it */
- const inX=Math.floor(gx-(gap.b>gap.a?0.5:0)),inside=!g.solid[(zT-2)*W+inX]&&!g.furn[(zT-2)*W+inX],door=inside?[gx,zT-1.45]:[gx,zT+0.45];
+ const inX=Math.floor(gx-(gap.b>gap.a?0.5:0)),inside=inOK(gap),door=inside?[gx,zT-1.45]:[gx,zT+0.45];
  const p=g.player;p.x=door[0];p.z=door[1];p.a=Math.PI;
  if(skipScene)return true;
  const L=F.lane[0]+0.5,path=[[cx-16,L],[cx-4.2,L],[cx-1.5,cz+0.12],[cx,cz]];
@@ -66,12 +95,12 @@ function act1ArriveStep(g,A0,dt){const p=g.player,c=g.car;
 /* ---- street dressing: dressStreet hands front streets over here (before buildStatic) ---- */
 function act1Dress(g){const A=act1Of(g),F=g.front,W=g.W,a=g.arr,zT=F.zT;streetPlan(g);
  const gaps=act1Gaps(g),ctr=q=>(q.a+q.b+1)/2,mid=W/2;gaps.sort((p,q)=>Math.abs(ctr(p)-mid)-Math.abs(ctr(q)-mid));
- const main=a?a.main:gaps[0],fx=main?ctr(main):mid,doorsX=gaps.map(ctr);g.a1={kerb:[],lamps:[],palms:[],signs:[]};const K=g.a1.kerb;
+ const main=a?a.main:(gaps.find(q=>q.b-q.a<=1)||gaps[0]),fx=main?ctr(main):mid,doorsX=gaps.map(ctr);g.a1={kerb:[],lamps:[],palms:[],signs:[]};const K=g.a1.kerb;
  const clearOfDoors=(x,r)=>doorsX.every(d=>Math.abs(d-x)>r);
  if(!g.bays){/* no arrival scene (tests, NOARRIVE): bays from the map's car spot */const b0=Math.round(g.car.x-1.5);g.bayX=b0+1.5;g.bays=[];for(let b=b0-3*Math.ceil(b0/3);b+3<=W-1;b+=3)if(b>=1)g.bays.push({x:b+1.5,z:F.bay+0.5,b,mine:b===b0});g.car.x=g.bayX;g.car.z=F.bay+0.5;g.carA=0;}
  /* the main door: awning or canopy, a carpet, warm lights under it */
  if(main){const w=Math.min(main.b-main.a+1.8,4.2),col=hex(A.awning);
-  if(A.canopy)g.a1.signs.push({t:'canopy',x:fx,z:zT,w:w+0.6});else g.deco.push({t:'awning',x:Math.floor(fx),z:zT,fx,w,c:col});
+  if(A.canopy)g.a1.signs.push({t:'canopy',x:fx,z:zT,w:w+0.6,text:A.canopy===true?'CORAL TOWER':A.canopy});else g.deco.push({t:'awning',x:Math.floor(fx),z:zT,fx,w,c:col});
   if(A.carpet)g.deco.push({t:'carpet',x:Math.floor(fx),z:zT,fx,w:Math.min(main.b-main.a+1,2.2)});
   for(const sx of [-1,1])g.lights.push({x:fx+sx*(w/2+0.2),y:1.5,z:zT+0.2,r:3.6,c:[1,0.82,0.55]});
   if(A.sign)g.a1.signs.push(Object.assign({x:fx,z:zT},A.sign));}
@@ -81,8 +110,8 @@ function act1Dress(g){const A=act1Of(g),F=g.front,W=g.W,a=g.arr,zT=F.zT;streetPl
  /* street lamps at the kerb, lit over the road */
  for(const o of A.lamps){const x=Math.round(fx+o)+0.5;if(x<1.5||x>W-1.5||!clearOfDoors(x,1.1))continue;g.a1.lamps.push(x);g.lights.push({x,y:2.2,z:zT+1.15,r:5,c:[1,0.72,0.42]});}
  /* kerb furniture */
- for(const [t,o,s] of A.kerb){const x=fx+o;if(x<1.3||x>W-1.3)continue;if(s==='w'&&!clearOfDoors(x,0.9))continue;if(g.a1.lamps.some(l=>Math.abs(l-x)<0.6))continue;
-  K.push({t,x,z:s==='w'?zT+0.28:s==='k2'?zT+0.62:zT+0.8});}
+ for(const [t,o,s,opt] of A.kerb){const x=fx+o;if(x<1.3||x>W-1.3)continue;if(s==='w'&&!clearOfDoors(x,0.9))continue;if(g.a1.lamps.some(l=>Math.abs(l-x)<0.6))continue;
+  K.push(Object.assign({t,x,z:s==='w'?zT+0.28:s==='k2'?zT+0.62:zT+0.8},opt||{}));}
  /* palms along the verge, the same rhythm the whole way */
  for(let x=2.5;x<W-1;x+=5)g.a1.palms.push(x);
  /* parked cars: some of the other bays, never the ones next to yours, and one always left free (for your old car) */
@@ -108,23 +137,25 @@ function drawAct1(B,g){if(!act1Of(g)||!g.a1)return;const F=g.front,W=g.W,zT=F.zT
  for(const b of g.bays)if(b.car)drawCar(B,b.x,b.z,b.car.col,b.car.dir,0);
  for(const x of g.a1.palms)drawPalm(B,x,F.zV+0.5,true,x*1.7);
  for(const x of g.a1.lamps)a1Lamp(B,x,zT);
- for(const k of g.a1.kerb){if(k.t==='pole')a1Pole(B,k.x,k.z);else if(k.t==='hydrant'){const x=k.x,z=k.z;sbox(B,x,0.22,z,0.18,0.44,0.18,hex(0xc0202a));sbox(B,x,0.46,z,0.13,0.08,0.13,hex(0xd03030));sbox(B,x,0.28,z,0.3,0.07,0.07,hex(0xa01a22));}else drawKerb(B,g,k);}
+ for(const k of g.a1.kerb){if(k.t==='pole')a1Pole(B,k.x,k.z,k);else if(k.t==='cone'){sbox(B,k.x,0.03,k.z,0.34,0.06,0.34,hex(0x1a1a1a));sbox(B,k.x,0.22,k.z,0.2,0.34,0.2,hex(0xff6a10));sbox(B,k.x,0.24,k.z,0.22,0.06,0.22,S_WHITE);sbox(B,k.x,0.42,k.z,0.09,0.08,0.09,hex(0xff6a10));}
+  else if(k.t==='barrier'){for(const o of [-0.5,0.5])sbox(B,k.x+o,0.4,k.z,0.06,0.8,0.3,S_GREY);for(let j=0;j<4;j++)sbox(B,k.x-0.375+j*0.25,0.62,k.z,0.25,0.18,0.04,j%2?S_WHITE:hex(0xff6a10));sbox(B,k.x+0.5,0.84,k.z,0.07,0.06,0.07,[1,0.6,0.1],true);}
+  else if(k.t==='dumpster'){const z=k.z+0.08,col=hex(0x2f5a3a);sbox(B,k.x,0.38,z,1.3,0.76,0.62,col);sbox(B,k.x,0.79,z+0.02,1.34,0.06,0.66,sdim(col,0.7));}else if(k.t==='hydrant'){const x=k.x,z=k.z;sbox(B,x,0.22,z,0.18,0.44,0.18,hex(0xc0202a));sbox(B,x,0.46,z,0.13,0.08,0.13,hex(0xd03030));sbox(B,x,0.28,z,0.3,0.07,0.07,hex(0xa01a22));}else drawKerb(B,g,k);}
  for(const s of g.a1.signs)a1Sign(B,g,s);
  a1Fixtures(B,g);a1Interior(B,g);B.round=r0;}
 function a1Lamp(B,x,zT){const z=zT+0.86,P=hex(0x3a3a44);sbox(B,x,0.08,z,0.18,0.16,0.18,P);sbox(B,x,1.15,z,0.08,2.3,0.08,P);sbox(B,x,2.28,z+0.25,0.07,0.07,0.5,P);sbox(B,x,2.22,z+0.48,0.24,0.08,0.3,[1,0.85,0.55],true);}
 /* the Sunset's roadside sign: a tall pole, the name in teal and orange neon, and VACANCY lit underneath */
-function a1Pole(B,x,z){const P=hex(0x2a2a32);sbox(B,x,1.6,z,0.12,3.2,0.12,P);sbox(B,x+0.02,3.02,z-0.02,1.9,0.78,0.14,hex(0x1c3e4a));sbox(B,x+0.02,3.02,z+0.06,1.96,0.84,0.02,[0.3,0.95,1],true);
- sbox(B,x+0.02,3.02,z+0.075,1.84,0.72,0.02,hex(0x123038));neonText(B,'SUNSET',x+0.02,3.2,z+0.09,0.05,[1,0.55,0.15]);neonText(B,'MOTEL',x+0.02,2.86,z+0.09,0.045,[0.3,0.95,1]);
- sbox(B,x,2.3,z,1.2,0.3,0.1,hex(0x1a1a20));neonText(B,'VACANCY',x,2.3,z+0.06,0.028,[1,0.25,0.3]);}
+function a1Pole(B,x,z,o){o=o||{};const T1=o.t1||'SUNSET',T2=o.t2||'MOTEL',C1=o.c1||[1,0.55,0.15],C2=o.c2||[0.3,0.95,1],T3=o.t3||'VACANCY';const P=hex(0x2a2a32);sbox(B,x,1.6,z,0.12,3.2,0.12,P);sbox(B,x+0.02,3.02,z-0.02,1.9,0.78,0.14,hex(0x1c3e4a));sbox(B,x+0.02,3.02,z+0.06,1.96,0.84,0.02,[0.3,0.95,1],true);
+ sbox(B,x+0.02,3.02,z+0.075,1.84,0.72,0.02,hex(0x123038));neonText(B,T1,x+0.02,3.2,z+0.09,0.05,C1);neonText(B,T2,x+0.02,2.86,z+0.09,0.045,C2);
+ sbox(B,x,2.3,z,1.2,0.3,0.1,hex(0x1a1a20));neonText(B,T3,x,2.3,z+0.06,Math.min(0.028,1.1/(T3.length*6)),[1,0.25,0.3]);}
 /* signs over the main door: the motel office, Club Flamingo's neon flamingo, the tower's gold letters on a canopy */
 function a1Sign(B,g,s){const z=s.z+0.03,x=s.x;
  if(s.t==='canopy'){const w=s.w,c=hex(0x1a2340),zf=s.z+0.95;sbox(B,x,2.1,s.z+0.48,w,0.06,0.96,c);sbox(B,x,2.02,zf,w+0.04,0.2,0.05,c);sbox(B,x,2.13,zf,w+0.06,0.03,0.07,GOLD);sbox(B,x,1.91,zf,w+0.06,0.03,0.07,GOLD);
-  goldText(B,'CORAL TOWER',x,2.02,zf+0.02,0.022);for(const sx of [-1,1])sbox(B,x+sx*(w/2-0.05),1.0,zf-0.02,0.06,2.0,0.06,GOLD);
+  goldText(B,s.text,x,2.02,zf+0.02,0.022*Math.min(1,10/s.text.length));for(const sx of [-1,1])sbox(B,x+sx*(w/2-0.05),1.0,zf-0.02,0.06,2.0,0.06,GOLD);
   for(let k=0;k<4;k++)sbox(B,x-w/2+0.5+k*(w-1)/3,2.06,s.z+0.5,0.1,0.02,0.1,[1,0.9,0.6],true);return;}
  if(s.gold){goldText(B,s.t,x,2.6,s.z,0.05);return;}
  if(s.t==='OFFICE'){sbox(B,x,2.4,z+0.1,1.1,0.26,0.05,hex(0x14141a));sbox(B,x,2.2,z+0.1,0.04,0.2,0.04,hex(0x3a3a44));neonText(B,'OFFICE',x,2.4,z+0.14,0.032,s.c);return;}
- const w=textW(s.t,0.05)+0.3;sbox(B,x,2.45,z+0.03,w,0.5,0.06,hex(0x1a0a18));sbox(B,x,2.45,z+0.065,w+0.06,0.56,0.01,sdim(s.c,0.7),true);sbox(B,x,2.45,z+0.07,w-0.04,0.44,0.01,hex(0x1a0a18));
- neonText(B,s.t,x,2.45,z+0.09,0.05,s.c);
+ const px=Math.min(0.05,3.6/(s.t.length*6)),w=textW(s.t,px)+0.3;sbox(B,x,2.45,z+0.03,w,0.5,0.06,hex(0x1a0a18));sbox(B,x,2.45,z+0.065,w+0.06,0.56,0.01,sdim(s.c,0.7),true);sbox(B,x,2.45,z+0.07,w-0.04,0.44,0.01,hex(0x1a0a18));
+ neonText(B,s.t,x,2.45,z+0.09,px,s.c);if(s.onair){sbox(B,x+w/2+0.45,2.45,z+0.06,0.6,0.26,0.05,hex(0x1a0a0a));neonText(B,'ON AIR',x+w/2+0.45,2.45,z+0.1,0.016,[1,0.2,0.2]);}
  if(s.flamingo){const fx=x-w/2-0.45,P=[1,0.4,0.7];sbox(B,fx,2.15,z+0.05,0.04,0.7,0.02,P,true);sbox(B,fx+0.06,2.55,z+0.05,0.26,0.18,0.02,P,true);sbox(B,fx+0.14,2.75,z+0.05,0.04,0.3,0.02,P,true);sbox(B,fx+0.2,2.9,z+0.05,0.12,0.06,0.02,[1,0.7,0.2],true);}
  for(let k=0;k<10;k++)sbox(B,x-w/2+k*w/9,2.15,z+0.08,0.05,0.05,0.03,(k%2?[1,0.9,0.5]:[1,0.5,0.8]),true);}
 

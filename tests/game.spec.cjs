@@ -105,7 +105,7 @@ test('integration: existing startLevel loads all eleven floors and advances real
     // Floor 2 is a building: startLevel(2) begins on the lobby stage (missions.js), not on the LEVELS[2] map.
     if (i === 2) Object.assign(expected, { enemies: 7, items: 3, player: [[18.5, 11.5]], car: [[18.5, 12.5]] });
     // Floor 10 is Kade Tower: startLevel(10) begins on the site stage (missions.js).
-    if (i === 10) Object.assign(expected, { enemies: 13, items: 4, player: [[13.5, 12.5]], car: [[24.5, 12.5]] });
+    if (i === 10) Object.assign(expected, { enemies: 13, items: 4, player: [[13.5, 11.5]], car: [[24.5, 12.5]] });
     const actual = await page.evaluate(i => {
       startLevel(i);
       return { enemies: G.enemies.length, items: G.items.length,
