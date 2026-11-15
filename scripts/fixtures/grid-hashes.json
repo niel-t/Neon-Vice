@@ -560,18 +560,18 @@
             "f": 41
           },
           "j": {
-            "w": 32,
-            "h": 1.15,
-            "top": 32
+            "w": 7,
+            "h": 0.02,
+            "top": 7
           }
         },
         "wall": 34,
         "floor": 7,
         "paletteSize": 6
       },
-      "gridHash": "c3a2c69d5d5212281ff98dee3ff3662c0a5d84f0e7cb2b87f1ea3b1adc624020",
-      "loadedHash": "da978f1b4fc944ecb04a6c0d854f413a247bb74f12b7bde86310ed5076beb978",
-      "queryHash": "04e7e69100070373137264cbe5607d00ffb86bf705e184f07362feed5fe5afae",
+      "gridHash": "4e7c0f56b2290f3e22357de4cbaa2a6845f7f4de2bff7e89744ad551609b5173",
+      "loadedHash": "a1401fdbaaf3d0656686c23da5a5675fb025454f3ac80181441c89ac1fcd78e5",
+      "queryHash": "de4f56cc67c960e74cef0b7edd4e0105c975b0605e4ea7389e08ec65b5abddce",
       "cellHash": "586b7d29f8141c20c079e3bc066221293e9f2a0d00d9abda89872f07c9de7cea"
     },
     {

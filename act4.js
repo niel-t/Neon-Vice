@@ -160,16 +160,30 @@ function valvePull(p){const g=G,J=g.jet;if(!J||!J.valve||J.fuse>0||J.boom)return
  J.fuse=A4_FUSE;J.open=true;g.obj.n=1;g.obj.done=true;g.objNow=false;sfx('door');banner('THE FUEL IS POURING','Get clear of the jet before it goes up: '+A4_FUSE+' seconds');return true;}
 /* the airliner-style private jet: nose cone east, tail fin and engines west, swept wings north and south of the cabin. In the hangar the
    body is a solid block (j cells, lower) and gets a roof; on the runway the cabin is open so you can see the fight inside. */
-function drawJet(B,g,b,roof){const T=g.T||0,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,ry||0,sx,sy,sz),c,!!em),wh=[0.95,0.95,0.96],gr=[0.75,0.77,0.8],st=[0.12,0.2,0.42],gold=[0.95,0.75,0.25];
- const L=b.x1-b.x0,cz=b.cz,w=b.z1-b.z0,boom=g.jet&&g.jet.boom,sh=boom?[0.12,0.1,0.1]:wh,sg=boom?[0.1,0.09,0.09]:gr;
- for(let k=0;k<3;k++)bx(b.x1+0.45+k*0.55,0.65-k*0.06,cz,0.6,1.0-k*0.25,w*(0.82-k*0.24),sh);bx(b.x1+0.95,0.95,cz,0.5,0.25,w*0.5,boom?sg:[0.15,0.2,0.3]);
- bx(b.x0-0.6,0.7,cz,1.2,0.9,w*0.55,sh);bx(b.x0-0.9,1.9,cz,1.0,1.6,0.14,sh);bx(b.x0-1.0,2.6,cz,0.8,0.12,2.4,sh);bx(b.x0-0.9,2.0,cz,1.02,0.2,0.16,boom?sg:st);
- for(const sd of [-1,1]){const wz=sd>0?b.z1:b.z0,mx=b.x0+L*0.55;for(let k=0;k<5;k++)bx(mx-k*0.55,0.55,wz+sd*(0.6+k*0.75),2.2-k*0.3,0.08,0.8,sg);bx(mx-2.4,0.6,wz+sd*4.1,0.5,0.4,0.12,boom?sg:st);
-  bx(b.x0+1.4,0.95,wz+sd*0.55,1.6,0.6,0.6,sg);bx(b.x0+2.25,0.95,wz+sd*0.55,0.08,0.56,0.56,[0.08,0.08,0.1]);
-  bx(b.x0+L/2,0.9,wz+sd*0.01,L-0.4,0.1,0.02,boom?sg:st,false);bx(b.x0+L/2,0.78,wz+sd*0.01,L-0.6,0.04,0.02,boom?sg:gold,false);
-  for(let k=0;k<Math.floor(L/1.2);k++)bx(b.x0+1.2+k*1.2,1.0,wz+sd*0.012,0.3,0.18,0.02,boom?sg:[0.25,0.45,0.65],false);}
- if(roof)bx(b.x0+L/2,1.07,cz,L,0.06,w,sh);
- if(!boom&&(Math.sin(T*3)>0.6))for(const sd of [-1,1])bx(b.x0+L*0.55-2.4,0.65,(sd>0?b.z1:b.z0)+sd*4.2,0.14,0.14,0.14,sd>0?[0.2,1,0.3]:[1,0.15,0.15],true);}
+/* the jet: a thin white skin with a row of small windows. The 'j' cells keep the collision but sit flat (h 0.02); the skin is drawn on
+   each fuselage cell's edge that faces the cabin, so the walls are thin and the cabin keeps its width. */
+function jetSkin(g,b){if(g.jetSkin&&g.jetSkin.b===b)return g.jetSkin.e;const set=new Set(a4Cells(g,'j').map(q=>q.ix+','+q.iz)),e=[];
+ const inner=(x,z)=>x>b.x0&&x<b.x1-1&&z>b.z0&&z<b.z1-1&&!set.has(x+','+z);
+ for(const k of set){const [x,z]=k.split(',').map(Number);
+  if(inner(x,z+1))e.push({x0:x,x1:x+1,z:z+1,hz:1,o:-1});if(inner(x,z-1))e.push({x0:x,x1:x+1,z:z,hz:1,o:1});
+  if(inner(x+1,z))e.push({z0:z,z1:z+1,x:x+1,hz:0,o:-1});if(inner(x-1,z))e.push({z0:z,z1:z+1,x:x,hz:0,o:1});}
+ g.jetSkin={b,e};return e;}
+function drawJet(B,g,b,roof){const T=g.T||0,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,ry||0,sx,sy,sz),c,!!em),wh=[0.95,0.95,0.96],gr=[0.75,0.77,0.8],st=[0.12,0.2,0.42];
+ const boom=g.jet&&g.jet.boom,sh=boom?[0.12,0.1,0.1]:wh,sg=boom?[0.1,0.09,0.09]:gr,win=boom?[0.06,0.05,0.05]:[0.1,0.14,0.22],H=1.15,t=0.1;
+ /* the visible hull is one cell in from the outline */
+ const X0=b.x0+1,X1=b.x1-1,Z0=b.z0+1,Z1=b.z1-1,L=X1-X0,cz=b.cz,w=Z1-Z0;
+ for(const q of jetSkin(g,b)){if(q.hz){const z=q.z+q.o*t/2,len=q.x1-q.x0,cx=(q.x0+q.x1)/2;bx(cx,H/2,z,len,H,t,sh);
+   /* small rounded windows on both faces, two to a cell */
+   for(const f of [0.3,0.7])for(const sd of [-1,1]){const wx=q.x0+f*len,wz=z+sd*(t/2+0.006);bx(wx,0.74,wz,0.16,0.22,0.012,win);bx(wx,0.74,wz,0.2,0.16,0.012,win);}}
+  else{const x=q.x+q.o*t/2;bx(x,H/2,(q.z0+q.z1)/2,t,H,q.z1-q.z0,sh);}}
+ /* nose and tail */
+ for(let k=0;k<3;k++)bx(X1+0.3+k*0.5,0.6-k*0.06,cz,0.55,1.1-k*0.28,w*(0.86-k*0.26),sh);bx(X1+0.75,0.95,cz,0.45,0.22,w*0.5,boom?sg:[0.12,0.16,0.26]);
+ bx(X0-0.5,0.7,cz,1.0,0.9,w*0.6,sh);bx(X0-0.8,1.9,cz,0.9,1.6,0.12,sh);bx(X0-0.9,2.6,cz,0.7,0.1,2.4,sh);
+ /* wings and engines */
+ for(const sd of [-1,1]){const wz=sd>0?Z1:Z0,mx=X0+L*0.55;for(let k=0;k<5;k++)bx(mx-k*0.55,0.55,wz+sd*(0.6+k*0.75),2.2-k*0.3,0.06,0.8,sg);bx(mx-2.4,0.6,wz+sd*4.1,0.5,0.4,0.1,sh);
+  bx(X0+1.0,0.95,wz+sd*0.4,1.4,0.5,0.5,sg);bx(X0+1.75,0.95,wz+sd*0.4,0.06,0.46,0.46,[0.08,0.08,0.1]);}
+ if(roof)bx(X0+L/2,H+0.03,cz,L,0.06,w,sh);
+ if(!boom&&(Math.sin(T*3)>0.6))for(const sd of [-1,1])bx(X0+L*0.55-2.4,0.65,(sd>0?Z1:Z0)+sd*4.2,0.12,0.12,0.12,sd>0?[0.2,1,0.3]:[1,0.15,0.15],true);}
 function drawHangar(B,g){const bx=(x,y,z,sx,sy,sz,c,em)=>B.box(TRS(x,y,z,0,sx,sy,sz),c,!!em),T=g.T||0;
  if(g.sid==='hangar'&&g.jetBody){drawJet(B,g,g.jetBody,true);const W=g.valeW;if(W){if(!W.aboard&&!fogHid(W.n.x,W.n.z))drawChar(CB(W.n),W.n);const s=W.stairs;
    for(let k=0;k<5;k++)bx(s.x-0.1,0.12+k*0.2,s.z-0.35-k*0.18,0.9,0.08,0.22,[0.85,0.85,0.88]);bx(s.x-0.55,0.6,s.z-0.7,0.05,1.1,1.2,[0.7,0.72,0.76]);bx(s.x+0.35,0.6,s.z-0.7,0.05,1.1,1.2,[0.7,0.72,0.76]);
