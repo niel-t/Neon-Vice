@@ -283,12 +283,8 @@ function drawMall(B,g,LB){LB=LB||MALL_SINK;const T=g.T||0,O=1,OZ=O+MALL_DZ,bx=(x
   /* the three-way mirror in the corner and a stool for fittings */
   bx(43.5,1.0,18.3,0.06,1.9,0.8,[0.75,0.85,0.95],true);bx(43.2,1.0,17.75,0.4,1.9,0.06,[0.7,0.8,0.9]);bx(42.4,0.25,18.6,0.4,0.5,0.4,[1,0.55,0.75]);
   palm(35.0,25.3,false);palm(43.3,25.3,true);}
- /* Nugget, Schmaltzy's Boston terrier: sits on the jewelry counter next to him in a gold chain */
- {const J=g.mall.keepers.find(n=>n.shop==='jewel');if(J){const x=J.x-O+0.95,z=10.95,y=0.94,BL=[0.12,0.1,0.11],WT=[0.95,0.94,0.92],bob=0;
-  bx(x,y+0.16,z,0.26,0.3,0.24,BL);bx(x,y+0.16,z+0.12,0.12,0.26,0.02,WT);bx(x,y+0.05,z+0.06,0.3,0.1,0.34,BL);for(const sx of [-0.07,0.07])bx(x+sx,y+0.06,z+0.16,0.06,0.12,0.06,WT);
-  bx(x,y+0.38+bob,z+0.04,0.24,0.2,0.2,BL);bx(x,y+0.36+bob,z+0.15,0.12,0.1,0.04,WT);bx(x,y+0.33+bob,z+0.17,0.08,0.05,0.03,BL);bx(x,y+0.44+bob,z+0.14,0.04,0.08,0.01,WT);
-  for(const sx of [-0.08,0.08])bx(x+sx,y+0.54+bob,z+0.02,0.07,0.14,0.04,BL);for(const sx of [-0.055,0.055])bx(x+sx,y+0.41+bob,z+0.145,0.03,0.03,0.01,[0.25,0.15,0.08]);
-  bx(x,y+0.28,z+0.1,0.22,0.03,0.04,GOLDC,true);bx(x,y+0.26,z+0.125,0.05,0.05,0.01,GOLDC,true);}}
+ /* Nugget, Schmaltzy's Boston terrier: sits on the jewelry counter next to him in a gold chain (animals.js, drawn every frame so he moves) */
+ {const J=g.mall.keepers.find(n=>n.shop==='jewel');if(J&&LB!==MALL_SINK&&typeof drawNugget==='function')drawNugget(J.x+0.95,0.94,10.95+OZ,T);}
  /* ===== VICTORY MOTORS (at the back): drawDealer draws the turntables, pennants and the sign; add the showroom desk and palms ===== */
  for(const [x,z,t] of [[2.6,4.2,1],[43.4,4.2,1],[2.6,12.2,0],[43.4,12.2,0]])drawPalm(B,x,z,!!t,x+z);}
 

@@ -292,9 +292,11 @@ const TRS=(x,y,z,ry,sx,sy,sz)=>A.mul(A.mul(A.T(x,y,z),A.RY(ry)),A.S(sx,sy,sz));
 <script src="venues.js"></script>
 <script src="streets.js"></script>
 <script src="act1.js"></script>
+<script src="marina.js"></script>
 <script src="upstairs.js"></script>
 <script src="mansion.js"></script>
 <script src="guide.js"></script>
+<script src="animals.js"></script>
 <script>
 'use strict';
 /* W2f dev gate (not shipped to players): ?planplay=motel|penthouse registers a plan-stage preview errand on the job list */
@@ -1144,7 +1146,7 @@ function endLeave(){const g=G,L=g.leave;if(!L||L.fin)return;L.fin=true;L.hide=tr
 function arriveSfx(){if(typeof AC==='undefined'||!AC||!SET.sound)return;try{const t=AC.currentTime;
  tone(t,2.2,'sawtooth',95,38,0.07,undefined,0.15);tone(t,2.2,'square',48,26,0.04,undefined,0.15);noise(t+1.75,0.45,'bandpass',2600,1400,0.05,undefined,6);}catch(e){}}
 
-function dressStreet(g){if(act1Of(g)){act1Dress(g);return;}const W=g.W,H=g.H;streetPlan(g);if(g.arr&&g.arr.type==='alley')dressAlley(g);
+function dressStreet(g){if(act1Of(g)){act1Dress(g);marinaDress(g);return;}const W=g.W,H=g.H;streetPlan(g);if(g.arr&&g.arr.type==='alley')dressAlley(g);
  const street=(x,z)=>x>=0&&z>=0&&x<W&&z<H&&!g.solid[z*W+x]&&g.floorT[z*W+x]===7&&!(g.arr&&g.arr.ax&&x>=g.arr.ax[0]&&x<=g.arr.ax[1]&&z>=g.arr.zT-1);
  const occ=(x,z)=>g.rows[z][x]!=='=';
  for(let z=0;z<H;z++)for(let x=0;x<W;x++){if(!street(x,z))continue;
@@ -1201,6 +1203,7 @@ const TALL_FURN={8:1,9:1,10:1,12:1,13:1,17:1};
 const SET_PIECE='cae%n';
 const setPiece=(g,x,z)=>SET_PIECE.includes(g.rows[z][x]);
 function wallDecorKind(g,x,z){const W=g.W,i=z*W+x,j=i+W;if(z+1>=g.H||g.solid[j]||setPiece(g,x,z+1))return null;
+ if(g.wallX&&g.wallX[i]>=218&&g.wallX[i]<=221)return null; /* the Marina's sheds and containers (marina.js) carry their own dressing */
  if((g.wh[i]||WALL_H)<WALL_H*0.9)return null;const f=g.furn[j];if(f&&!DECOR_FRONT_OK[f])return null;
  /* a one-cell wall stub between two openings is not a hosting wall; nor is a slot squeezed between tall props */
  if(x>0&&x<W-1&&!g.solid[i-1]&&!g.solid[i+1])return null;
@@ -1239,7 +1242,7 @@ function buildStatic(g){const B=g.staticB;B.reset();const W=g.W,H=g.H;
   if(!any){for(const [ox,oz] of [[-1,-1],[1,-1],[-1,1],[1,1]]){const nx=x+ox,nz=z+oz;if(nx>=0&&nz>=0&&nx<W&&nz<H&&!g.solid[nz*W+nx])any=true;}}
   B.room=0;const tt=g.topX&&g.topX[i]||g.topT[i];if(any||tt)B.quad([[x,h,z+1],[x+1,h,z+1],[x+1,h,z],[x,h,z]],0,1,0,tt?TUV[tt]:WUV,tt?(g.glow[i]===2?[0.85,0.95,1.15]:[1,1,1]):top);
  }
- for(const d of g.deco)drawDeco(B,g,d);drawStreetscape(B,g);venueStatic(B,g);drawAct1(B,g);if(g.def===HUBS.lobby)drawMcDesk(B,g);if(g.def===HUBS.bunker)drawNineFront(B,g);if(g.def.hub==='drive'){drawSign(B,g.car.x,g.car.z-0.47);drawEntrance(B,g.car.x,g.car.z-0.5);drawCineSky(B,g);}
+ for(const d of g.deco)drawDeco(B,g,d);drawStreetscape(B,g);venueStatic(B,g);drawAct1(B,g);drawMarina(B,g);if(g.def===HUBS.lobby)drawMcDesk(B,g);if(g.def===HUBS.bunker)drawNineFront(B,g);if(g.def.hub==='drive'){drawSign(B,g.car.x,g.car.z-0.47);drawEntrance(B,g.car.x,g.car.z-0.5);drawCineSky(B,g);}
  B.upload(true);}
 function buildRadar(g){const c=document.createElement('canvas');c.width=g.W*4;c.height=g.H*4;const x=c.getContext('2d');
  for(let z=0;z<g.H;z++)for(let xx=0;xx<g.W;xx++){const i=z*g.W+xx;if(g.solid[i]){let edge=false;for(const [a,b] of [[1,0],[-1,0],[0,1],[0,-1]])if(!isSolid(xx+a,z+b))edge=true;if(edge){x.fillStyle='#e07ab4';x.fillRect(xx*4,z*4,4,4);}}
@@ -1384,12 +1387,6 @@ function drawKinds(B,g){const T=g.T;for(const e of g.enemies){if(!e.kind||e.sunk
    if(see)L=Math.hypot(p.x-e.x,p.z-e.z);else while(L<16&&!blk(g,e.x+sx*(L+0.25),e.z+cz*(L+0.25)))L+=0.25;
    const hot=(e.lock||0)>0.55;B.box(A.mul(A.mul(A.T(e.x+sx*L/2,1.05,e.z+cz*L/2),A.RY(a)),A.S(hot?0.05:0.025,hot?0.05:0.025,L)),hot&&Math.sin(T*40)>0?[1,0.8,0.3]:[1,0.1,0.1],true);}}
  if(g.nades)for(const n of g.nades)if(n.own==='e'&&n.ring){const k=Math.min(1,n.t/n.dur),r=2.2*(0.5+0.5*k);if(Math.sin(T*30)>-0.3)for(let q=0;q<12;q++){const a=q*TAU/12;B.box(A.mul(A.T(n.tx+Math.cos(a)*r,0.04,n.tz+Math.sin(a)*r),A.S(0.22,0.02,0.22)),[1,0.15,0.15],true);}}}
-function drawDog(B,e){const T=G.T,run=e.alive?Math.min(1,Math.hypot(e.vx,e.vz)/2):0,lg=Math.sin(T*20+e.id)*0.09*run,S=1.35;
- const m0=A.mul(A.mul(A.T(e.x,e.alive?0:0.16,e.z),A.RY(e.a)),e.alive?A.S(S,S,S):A.mul(A.RZ(1.45),A.S(S,S,S)));
- const P=(x,y,z,sx,sy,sz,c)=>B.box(A.mul(m0,A.mul(A.T(x,y,z),A.S(sx,sy,sz))),c),c=[0.13,0.1,0.09],t=[0.55,0.33,0.16];
- P(0,0.34,0,0.24,0.24,0.6,c);P(0,0.3,0.05,0.2,0.1,0.4,t);P(0,0.48,0.36,0.2,0.2,0.22,c);P(0,0.43,0.5,0.1,0.09,0.14,t);for(const sd of [-1,1])P(sd*0.07,0.61,0.33,0.05,0.09,0.04,c);
- for(const [lx,lz] of [[-0.08,0.2],[0.08,0.2],[-0.08,-0.2],[0.08,-0.2]])P(lx,0.11,lz+(lx>0?lg:-lg),0.06,0.22,0.06,t);P(0,0.44,-0.35,0.04,0.04,0.16,c);
- if(e.alive)P(0,0.36,0.3,0.26,0.05,0.05,[0.8,0.1,0.15]);}
 function drawFoe(B,e){if(e.kind==='dog')drawDog(B,e);else drawChar(B,e);}
 /* GETAWAY: the floor does not go quiet after the last kill. From floor 2 on, clearing a floor starts a countdown sized to the walk out. Leave in
    time for a clean getaway bonus. Late: backup arrives at the exit, or on the demolition floors (ESC_DEBRIS) the building starts coming down
@@ -3104,8 +3101,8 @@ function updateFin(dt){const g=G,f=g.fin,id=rideId(),L=FIN[id]||FIN.don,e=f.e,p=
  if(f.step<0){if(f.t>0.9)next();}else if(f.line){f.line.t+=dt;if(f.line.t>f.lineT)next();}
  if(f.t>1.2&&(pressed.perk||pressed.grab||mouse.down||keys.Enter)){mouse.down=false;keys.Enter=false;while(g.fin)next();}}
 /* Act 2 props */
-function drawSpeedboat(B,x,z,a,col){const {P}=rideKit(B,x,z,1,a),W1=[0.96,0.96,0.97],D1=[0.1,0.1,0.12];P(0,0.16,0,0,2.4,0.24,0.86,W1);P(1.35,0.17,0,0,0.5,0.18,0.56,W1);P(1.62,0.16,0,0,0.2,0.12,0.3,W1);
- for(const sd of [-1,1])P(0.1,0.2,sd*0.435,0,2.3,0.06,0.01,col,null,1);P(-0.05,0.38,0,0,0.6,0.18,0.7,[0.55,0.8,0.95]);P(-0.6,0.33,0,0,0.6,0.1,0.72,D1);P(-1.3,0.26,0,0,0.22,0.32,0.5,D1);P(-1.3,0.44,0,0,0.24,0.06,0.52,col,null,1);}
+/* every speedboat is the classic mahogany runabout (marina.js) */
+function drawSpeedboat(B,x,z,a,col){drawRiva(B,x,z,a,col);}
 function drawHeli(B,x,z,a,T){const {P}=rideKit(B,x,z,1,a),D1=[0.1,0.1,0.13];P(0,0.6,0,0,1.6,0.78,0.95,D1);P(0.78,0.62,0,0,0.5,0.6,0.86,[0.5,0.75,0.95]);P(-1.4,0.8,0,0,1.7,0.16,0.16,D1);P(-2.2,1.0,0,0,0.26,0.5,0.05,D1);P(-2.2,0.85,0.12,0,0.3,0.06,0.25,D1);
  for(const sd of [-1,1]){P(0,0.08,sd*0.46,0,1.8,0.05,0.05,[0.65,0.65,0.7]);P(0.4,0.22,sd*0.42,0,0.05,0.28,0.04,[0.65,0.65,0.7]);P(-0.4,0.22,sd*0.42,0,0.05,0.28,0.04,[0.65,0.65,0.7]);P(0,0.5,sd*0.48,0,1.5,0.06,0.01,GOLD);}
  P(0,1.02,0,0,0.12,0.12,0.12,D1);for(let i=0;i<2;i++)B.box(A.mul(A.mul(A.T(x,1.08,z),A.RY(T*14+i*Math.PI/2)),A.S(3.8,0.03,0.14)),[0.15,0.15,0.17]);}
@@ -3114,7 +3111,7 @@ function drawAct2(B,g){const T=g.T,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,
  if(g.tip){for(const r of (g.rigs||[]))if(!r.cut)bx(r.x,1.2,r.z,0.07,2.4,0.07,[0.3,1,0.5],true);if(g.safe&&!(g.obj&&g.obj.done))bx(g.safe.x,1.4,g.safe.z,0.07,2.8,0.07,[0.3,1,0.5],true);}
  if(g.safe){const q=g.safe;bx(q.x,0.45,q.z,0.7,0.9,0.6,[0.28,0.3,0.34]);bx(q.x,0.5,q.z+0.31,0.28,0.28,0.02,g.obj&&g.obj.done?[0.2,0.8,0.3]:[0.9,0.7,0.2],true);}
  if(g.rigs)g.rigs.forEach(r=>{bx(r.x,0.2,r.z,0.5,0.4,0.36,[0.5,0.1,0.1]);bx(r.x,0.45,r.z,0.1,0.1,0.1,r.cut?[0.2,0.8,0.3]:[1,0.1,0.1],r.cut||Math.sin(g.T*8)>0);});
- if(g.boats)g.boats.forEach((q,i)=>{if(q.sunk)return;drawSpeedboat(B,q.x,q.z,i%2?Math.PI:0,[[1,0.3,0.75],[0.2,0.9,1],[1,0.8,0.2]][i%3]);if(q.fuse>0&&Math.sin(g.T*22)>0)bx(q.x,0.9,q.z,0.3,0.3,0.3,[1,0.1,0.1],true);});
+ if(g.boats)g.boats.forEach((q,i)=>{if(q.sunk)return;drawMarinaBoat(B,g,q,i,[[1,0.3,0.75],[0.2,0.9,1],[1,0.8,0.2]][i%3]);if(q.fuse>0&&Math.sin(g.T*22)>0)bx(q.x,0.9,q.z,0.3,0.3,0.3,[1,0.1,0.1],true);});
  if(g.cabs)g.cabs.forEach((q,i)=>{bx(q.x,0.8,q.z,0.7,1.6,0.6,[0.12,0.05,0.2]);const cc=[[1,0.3,0.75],[0.3,0.9,1],[1,0.85,0.3],[0.5,1,0.5]][(i+Math.floor(T*2))%4];bx(q.x,1.05,q.z+0.31,0.5,0.4,0.01,cc,true);bx(q.x,1.55,q.z+0.31,0.6,0.12,0.01,[1,0.3,0.75],true);bx(q.x,0.75,q.z+0.33,0.55,0.08,0.1,[0.3,0.3,0.35]);});
  if(g.hockey)g.hockey.forEach((q,i)=>{bx(q.x,0.45,q.z,1.0,0.9,1.0,[0.12,0.1,0.18]);bx(q.x,0.905,q.z,0.96,0.02,0.96,[0.92,0.95,1]);bx(q.x,0.93,q.z,1.0,0.04,0.04,[0.3,0.9,1],true);if(i%4===0){const px=q.x+0.5+Math.sin(T*3+i)*0.6,pz=q.z+0.5+Math.cos(T*2.3+i)*0.6;bx(px,0.93,pz,0.12,0.03,0.12,[1,0.3,0.6],true);}});
  if(g.manq)for(const m of g.manq)drawChar(CB(m),m);if(g.singer)drawChar(CB(g.singer),g.singer);
@@ -3490,7 +3487,7 @@ function drawHomeX(B,g){const f=homeFurn(),S=g.slots,T=g.T,t=g.home,bx=(x,y,z,sx
   else if(t===1){bx(r.x,0.012,r.z,1.8,0.02,1.0,[1,0.4,0.7]);bx(r.x+0.9,0.014,r.z-0.35,0.5,0.02,0.18,[1,0.4,0.7]);bx(r.x+1.15,0.016,r.z-0.45,0.18,0.02,0.18,[1,0.75,0.3]);}
   else{bx(r.x,0.02,r.z,1.6,0.04,1.1,[0.97,0.97,0.95]);for(const [lx,lz] of [[-0.8,-0.6],[0.8,-0.6],[-0.8,0.6],[0.8,0.6]])bx(r.x+lx,0.02,r.z+lz,0.4,0.03,0.3,[0.97,0.97,0.95]);bx(r.x+1.05,0.1,r.z,0.45,0.2,0.4,[0.97,0.97,0.95]);bx(r.x+1.3,0.1,r.z,0.06,0.06,0.06,[0.05,0.05,0.05]);}}
  if(f.tank&&S.f){const q=S.f,w=[1.0,1.4,2.6][t],h=[0.6,0.9,1.6][t],y0=[0.45,0.45,0.2][t];bx(q.x,y0/2,q.z,w,y0,0.55,[0.12,0.1,0.12]);bx(q.x,y0+h+0.03,q.z,w+0.04,0.06,0.59,[0.12,0.1,0.12]);
-  if(t<2){const fc=t===0?[[1,0.5,0.1],[1,1,0.95],[1,0.4,0.1]]:[[1,0.55,0.1],[0.3,0.6,1],[1,0.9,0.2],[0.9,0.2,0.6],[0.3,1,0.6]];fc.forEach((c,i)=>{const fx=q.x+Math.sin(T*(0.6+i*0.17)+i*2)*(w/2-0.12),fy=y0+0.15+((i*0.37)%1)*(h-0.3),fz=q.z+Math.cos(T*0.9+i)*0.12;B.box(A.mul(A.mul(A.T(fx,fy,fz),A.RY(Math.cos(T*(0.6+i*0.17)+i*2)>0?Math.PI/2:-Math.PI/2)),A.S(0.06,0.05,0.12)),c,true);});
+  if(t<2){drawHomeFish(t,T,q.x-w/2+0.04,q.x+w/2-0.04,q.z,y0+0.1,y0+h-0.12);
    if(t===1){bx(q.x-0.4,y0+0.12,q.z,0.25,0.24,0.25,[1,0.4,0.5]);bx(q.x+0.35,y0+0.08,q.z,0.2,0.16,0.2,[0.9,0.6,0.3]);}}
   else drawTankLife(B,T,q.x-w/2+0.1,q.x+w/2-0.1,q.z,0.06,y0+h/2,0.25,0.75,y0+0.2,y0+h-0.1);}
  if(f.dine&&S.q){const q=S.q;if(t===0){bx(q.x,0.36,q.z,0.9,0.04,0.7,[0.55,0.55,0.6]);for(const lx of [-0.4,0.4])bx(q.x+lx,0.18,q.z,0.03,0.36,0.6,[0.4,0.4,0.45]);for(const sd of [-1,1])bx(q.x,0.22,q.z+sd*0.6,0.38,0.04,0.38,[0.5,0.5,0.55]);bx(q.x-0.15,0.42,q.z,0.12,0.1,0.1,[0.95,0.95,0.92]);bx(q.x+0.2,0.4,q.z+0.1,0.16,0.05,0.16,[0.95,0.95,0.92]);}
@@ -3507,12 +3504,6 @@ function drawHomeX(B,g){const f=homeFurn(),S=g.slots,T=g.T,t=g.home,bx=(x,y,z,sx
  if(f.disco&&S.s){drawDisco(B,g);if(t>=1)for(let i=0;i<(t===2?8:4);i++){const an=T*1.1+i*TAU/(t===2?8:4),rr=1.4+Math.sin(T*0.7+i)*0.4;bx(S.s.x+Math.cos(an)*rr,0.012,S.s.z+Math.sin(an)*rr,0.35,0.01,0.35,NEON[i%4],true);}}
  if(f.pole&&S.p){const q=S.p;bx(q.x,1.3,q.z,0.05,2.6,0.05,t===2?GOLD:[0.85,0.85,0.9]);bx(q.x,0.06,q.z,0.9,0.12,0.9,t===0?[0.3,0.2,0.3]:[0.1,0.1,0.12]);bx(q.x,0.125,q.z,0.86,0.01,0.86,[1,0.3,0.75],true);}
  for(const q of g.pets)drawPet(B,q,T);}
-function drawPet(B,q,T){const m0=A.mul(A.T(q.x,0,q.z),A.RY(q.a)),P=(x,y,z,sx,sy,sz,c,ry)=>B.box(A.mul(m0,A.mul(A.T(x,y,z),A.mul(A.RY(ry||0),A.S(sx,sy,sz)))),c),lg=Math.sin(q.step)*0.04;
- if(q.k==='dog'){const c=[0.55,0.35,0.2];P(0,0.32,0,0.24,0.22,0.55,c);P(0,0.44,0.34,0.2,0.2,0.22,c);P(0,0.4,0.48,0.1,0.08,0.12,[0.4,0.25,0.15]);for(const [lx,lz] of [[-0.08,0.18],[0.08,0.18],[-0.08,-0.18],[0.08,-0.18]])P(lx,0.11,lz+(lx>0?lg:-lg),0.06,0.22,0.06,c);P(0,0.42,-0.33,0.04,0.04,0.18,c,Math.sin(T*12)*0.6);}
- else if(q.k==='cat'){const c=[0.35,0.35,0.38];P(0,0.2,0,0.16,0.15,0.36,c);P(0,0.3,0.22,0.15,0.14,0.14,c);for(const sx of [-0.05,0.05])P(sx,0.39,0.24,0.04,0.05,0.03,c);for(const [lx,lz] of [[-0.05,0.12],[0.05,0.12],[-0.05,-0.12],[0.05,-0.12]])P(lx,0.07,lz+(lx>0?lg:-lg)*0.6,0.04,0.14,0.04,c);P(0,0.32,-0.3,0.03,0.03,0.26,c,Math.sin(T*3)*0.4);}
- else if(q.k==='iguana'){const c=[0.3,0.65,0.3];P(0,0.08,0,0.14,0.1,0.42,c);P(0,0.1,0.28,0.1,0.08,0.16,c);P(0,0.06,-0.4,0.05,0.04,0.42,c,Math.sin(T*2)*0.3);for(const [lx,lz] of [[-0.1,0.12],[0.1,0.12],[-0.1,-0.12],[0.1,-0.12]])P(lx,0.04,lz+(lx>0?lg:-lg)*0.5,0.08,0.05,0.04,c);for(let i=0;i<4;i++)P(0,0.15,0.15-i*0.1,0.02,0.04,0.02,[0.5,0.8,0.3]);}
- else{const c=[1,0.55,0.12];P(0,0.5,0,0.38,0.36,0.9,c);P(0,0.62,0.56,0.32,0.3,0.3,c);P(0,0.56,0.74,0.16,0.12,0.1,[0.98,0.95,0.9]);for(const sx of [-0.12,0.12])P(sx,0.8,0.56,0.06,0.07,0.04,c);for(let i=0;i<6;i++)P(0,0.69,0.3-i*0.13,0.4,0.02,0.04,[0.08,0.06,0.05]);
-  for(const [lx,lz] of [[-0.13,0.3],[0.13,0.3],[-0.13,-0.3],[0.13,-0.3]])P(lx,0.17,lz+(lx>0?lg:-lg)*1.5,0.1,0.34,0.1,c);P(0,0.58,-0.6,0.05,0.05,0.4,c,Math.sin(T*2.5)*0.5);}}
 
 /* ---- safehouse dressing: what each place looks like before you buy anything ----
    Room 14 is a dump, the studio is clean Miami pastel, the penthouse is marble, gold and crystal */
@@ -4234,27 +4225,6 @@ function guestStep(n,dt,g,p){const d=Math.hypot(p.x-n.x,p.z-n.z);n.vx=0;n.vz=0;i
  if(n.wait>0){n.wait-=dt;return;}
  const dx=n.tgt[0]-n.x,dz=n.tgt[1]-n.z,L=Math.hypot(dx,dz)||1,sp=0.85;n.vx=dx/L*sp;n.vz=dz/L*sp;const ox=n.x,oz=n.z;n.x+=n.vx*dt;n.z+=n.vz*dt;collideGrid(n);
  const m=Math.hypot(n.x-ox,n.z-oz);n.walk=(n.walk||0)+m*9;if(m<sp*dt*0.3)n.stuck=(n.stuck||0)+dt;n.a+=clamp(angDiff(n.a,Math.atan2(dx,dz)),-5*dt,5*dt);}
-/* ---------- the shark ---------- */
-function drawShark(IB,m,T,sc){const S=sc||1,sw=T*3.6,BC=[0.42,0.5,0.6],BL=[0.82,0.86,0.9],DK2=[0.08,0.09,0.11];
- const pr=IB.r,pt=IB.tp,pu=IB.uv;IB.uv=null;IB.tp=0;IB.r=0.95;
- const m0=A.mul(A.mul(m,A.S(S,S,S)),A.RY(Math.sin(sw)*0.07));
- const seg=(mm,x,y,z,sx,sy,sz,col,tp)=>{tp=tp||0;IB.tp=Math.abs(tp);IB.box(A.mul(A.mul(mm,A.T(x,y,z)),A.mul(A.RX(tp<0?-Math.PI/2:Math.PI/2),A.S(sx,sz,sy))),col);IB.tp=0;};
- seg(m0,0,0,0.06,0.24,0.26,0.6,BC);seg(m0,0,-0.07,0.1,0.2,0.1,0.62,BL);
- seg(m0,0,-0.01,0.42,0.22,0.22,0.34,BC,0.55);seg(m0,0,-0.07,0.42,0.18,0.08,0.3,BL,0.5);
- IB.box(A.mul(m0,A.mul(A.T(0,-0.09,0.47),A.S(0.12,0.012,0.12))),DK2);
- for(const sd of [-1,1]){IB.box(A.mul(m0,A.mul(A.T(sd*0.095,0.03,0.46),A.S(0.025,0.03,0.03))),DK2);for(let i=0;i<4;i++)IB.box(A.mul(m0,A.mul(A.T(sd*0.115,-0.01,0.3-i*0.035),A.S(0.01,0.09,0.01))),DK2);
-  IB.box(A.mul(m0,A.mul(A.mul(A.T(sd*0.17,-0.08,0.2),A.mul(A.RZ(-sd*0.45),A.RY(sd*0.5))),A.S(0.26,0.02,0.13))),BC);}
- IB.r=0.6;IB.box(A.mul(m0,A.mul(A.mul(A.T(0,0.2,0.0),A.RX(-0.55)),A.S(0.025,0.26,0.17))),BC);IB.r=0.95;
- const mR=A.mul(A.mul(m0,A.T(0,0,-0.22)),A.RY(Math.sin(sw-1.1)*0.22));seg(mR,0,0,-0.2,0.18,0.2,0.44,BC,-0.45);seg(mR,0,-0.05,-0.18,0.14,0.08,0.38,BL,-0.45);
- IB.box(A.mul(mR,A.mul(A.mul(A.T(0,0.1,-0.3),A.RX(-0.5)),A.S(0.015,0.08,0.06))),BC);
- const mT=A.mul(A.mul(mR,A.T(0,0,-0.44)),A.RY(Math.sin(sw-2.1)*0.42));seg(mT,0,0,-0.06,0.06,0.09,0.2,BC);
- IB.r=0.5;IB.box(A.mul(mT,A.mul(A.mul(A.T(0,0.14,-0.2),A.RX(-0.75)),A.S(0.02,0.36,0.1))),BC);IB.box(A.mul(mT,A.mul(A.mul(A.T(0,-0.09,-0.16),A.RX(0.85)),A.S(0.02,0.22,0.08))),BC);
- IB.r=pr;IB.tp=pt;IB.uv=pu;}
-function sharkPath(T,x0,x1,zc,dz,y0,yA){const mid=(x0+x1)/2,hs=(x1-x0)/2,w=0.35,x=mid+hs*Math.sin(T*w),z=zc+dz*Math.sin(2*T*w),vx=hs*w*Math.cos(T*w),vz=2*dz*w*Math.cos(2*T*w),y=y0+yA*Math.sin(T*0.7);
- return A.mul(A.mul(A.T(x,y,z),A.RY(Math.atan2(vx,vz))),A.RZ(-vz*0.4));}
-function drawTankLife(B,T,x0,x1,zc,dz,y0,yA,sc,yb,yt){drawShark(IBhi,sharkPath(T,x0+0.5*sc,x1-0.5*sc,zc,dz,y0,yA),T,sc);
- const fc=[[1,0.8,0.2],[0.3,0.75,1],[1,0.45,0.6],[1,0.8,0.2],[0.3,0.75,1]];for(let i=0;i<5;i++){const m=sharkPath(-T*1.3+i*1.7,x0+0.2,x1-0.2,zc,dz*0.6,yb+0.3+i*0.2*(yt-yb)/1.2,0.08);B.box(A.mul(m,A.S(0.03*sc*2,0.05*sc*2,0.09*sc*2)),fc[i]);B.box(A.mul(m,A.mul(A.T(0,0,-0.08*sc*2),A.S(0.01,0.05*sc*2,0.04*sc*2))),fc[i]);}
- for(let i=0;i<14;i++){const ph=(T*0.45+i*0.37)%1,x=x0+0.15+((i*0.618)%1)*(x1-x0-0.3);B.box(TRS(x+Math.sin(T*3+i)*0.03,yb+ph*(yt-yb),zc+Math.sin(i*7)*dz*0.8,0,0.025+0.015*ph,0.025+0.015*ph,0.025+0.015*ph),[0.65,0.9,1].map(v=>v*0.8),true);}}
 function tankGlass(P,x0,x1,z0,z1,y0,y1){const GC=[0.45,0.85,1.15],U=TUV[20];P.quad([[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]],0,0,1,U,GC);
  P.quad([[x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0]],-1,0,0,U,GC);P.quad([[x1,y0,z1],[x1,y0,z0],[x1,y1,z0],[x1,y1,z1]],1,0,0,U,GC);
  P.quad([[x0,y1-0.2,z1],[x1,y1-0.2,z1],[x1,y1-0.2,z0],[x0,y1-0.2,z0]],0,1,0,U,[0.3,0.75,1.1]);}
