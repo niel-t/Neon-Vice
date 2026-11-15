@@ -128,7 +128,7 @@ function valeWalkTick(dt,g){const W=g.valeW;if(!W||W.aboard)return;if(W.t>0){W.t
  if(a4Walk(W.n,dt,1.45)){W.aboard=true;sfx('door');banner('VALE IS ABOARD','The jet is taxiing out to the runway. Get up those stairs.');}}
 /* the jet's body cells (j): {x0,x1,z0,z1} in world units */
 function a4Body(g){const c=a4Cells(g,'j');if(!c.length)return null;let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9;for(const q of c){x0=Math.min(x0,q.ix);x1=Math.max(x1,q.ix+1);z0=Math.min(z0,q.iz);z1=Math.max(z1,q.iz+1);}return {x0,x1,z0,z1,cz:(z0+z1)/2};}
-function jetSetup(g){const b=a4Body(g),N=a4Cells(g,'N')[0];if(!b)return;g.jetBody=b;g.jet={valve:N?{x:N.x,z:N.z}:null,fuse:0,boom:0,roll:0,rollT:0,open:false};
+function jetSetup(g){const b=a4Body(g),N=a4Cells(g,'N')[0];if(!b)return;g.jetBody=b;g.jet={valve:N?{x:N.x,z:N.z}:null,fuse:0,boom:0,roll:0,rollT:0,open:false};g.lift=(x,z)=>jetLift(g,x,z);
  if(N)g.solid[N.iz*g.W+N.ix]=1;
  g.obj={label:'FINISH VALE',n:0,total:1,done:false};
  if(lexFate()==='dead'){for(const [x,z] of [[b.x1-3,b.z0-2],[b.x1-6,b.z1+2]]){const e=makeEnemy(g,g.def,13,'mac10',false,x,z);e.state='idle';}if(typeof buildRadar==='function')buildRadar(g);}}
@@ -169,26 +169,39 @@ function jetSkin(g,b){if(g.jetSkin&&g.jetSkin.b===b)return g.jetSkin;const cells
   if(inner(x,z+1))e.push({x0:x,x1:x+1,z:z+1,hz:1,o:-1});if(inner(x,z-1))e.push({x0:x,x1:x+1,z:z,hz:1,o:1});
   if(inner(x+1,z))e.push({z0:z,z1:z+1,x:x+1,hz:0,o:-1});if(inner(x-1,z))e.push({z0:z,z1:z+1,x:x,hz:0,o:1});}
  for(const z of [b.z0,b.z1-1])for(let x=b.x0+1;x<b.x1-1;x++)if(!set.has(x+','+z)&&set.has((x-1)+','+z))doors.push({x:x+0.5,z:z===b.z0?z+1:z,d:z===b.z0?-1:1});
- g.jetSkin={b,e,doors,cells};return g.jetSkin;}
+ g.jetSkin={b,e,doors,cells,set};return g.jetSkin;}
+/* the jet stands on its landing gear: the cabin floor is JET_DECK above the tarmac, and the airstairs run from the door down to the
+   ground. liftAt() (index.html, models.js) raises characters, dropped guns, blood, bullets and sparks by this much where they are. */
+const JET_DECK=0.8;
+function jetLift(g,x,z){const b=g.jetBody;if(!b)return 0;const S=jetSkin(g,b),ix=Math.floor(x),iz=Math.floor(z);
+ if(ix>b.x0&&ix<b.x1-1&&iz>b.z0&&iz<b.z1-1&&!S.set.has(ix+','+iz))return JET_DECK;
+ for(const d of S.doors)if(Math.abs(x-d.x)<0.62){const t=(z-d.z)*d.d;if(t>-0.05&&t<2)return JET_DECK*Math.min(1,1-t/2);}
+ return 0;}
+function liftAt(x,z){const g=G;return g&&g.lift?g.lift(x,z):0;}
 /* airstairs from a door at hull face z down to the tarmac, d = +1 south / -1 north */
-function drawAirstairs(bx,x,z,d,c){const n=7,len=2.0,top=1.0,rail=[0.7,0.72,0.76];
+function drawAirstairs(bx,x,z,d,c,top){const n=8,len=2.0,rail=[0.7,0.72,0.76];top=top||1.0;
  for(let k=0;k<n;k++){const f=(k+0.5)/n,y=top*(1-f),zz=z+d*f*len;bx(x,y,zz,0.78,0.05,len/n+0.02,c);
   for(const sd of [-1,1])bx(x+sd*0.42,y+0.45,zz,0.04,0.04,len/n+0.02,rail);if(k%2===0)for(const sd of [-1,1])bx(x+sd*0.42,y+0.22,zz,0.03,0.45,0.03,rail);}
  for(const sd of [-1,1])bx(x+sd*0.38,top*0.5,z+d*len*0.5,0.05,0.05,len*1.02,[0.55,0.57,0.6]);}
-function drawJet(B,g,b,roof){const T=g.T||0,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,ry||0,sx,sy,sz),c,!!em),wh=[0.95,0.95,0.96],gr=[0.75,0.77,0.8],st=[0.12,0.2,0.42];
+function drawJet(B,g,b,roof){const T=g.T||0,DK=JET_DECK,bx0=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,ry||0,sx,sy,sz),c,!!em),bx=(x,y,z,sx,sy,sz,c,em,ry)=>bx0(x,y+DK,z,sx,sy,sz,c,em,ry),wh=[0.95,0.95,0.96],gr=[0.75,0.77,0.8],st=[0.12,0.2,0.42];
  const boom=g.jet&&g.jet.boom,sh=boom?[0.12,0.1,0.1]:wh,sg=boom?[0.1,0.09,0.09]:gr,win=boom?[0.06,0.05,0.05]:[0.1,0.14,0.22],H=1.15,t=0.1,S=jetSkin(g,b);
  /* the visible hull is one cell in from the outline */
  const X0=b.x0+1,X1=b.x1-1,Z0=b.z0+1,Z1=b.z1-1,L=X1-X0,cz=b.cz,w=Z1-Z0;
  const winAt=(x0,len,z)=>{for(let k=0;k<len;k++)for(const f of [0.3,0.7]){const wx=x0+k+f;if(S.doors.some(d=>Math.abs(d.x-wx)<0.6&&Math.abs(d.z-z)<0.2))continue;bx(wx,0.74,z,0.18,0.2,0.012,win);}};
- bx((b.x0+b.x1)/2,0.012,cz,b.x1-b.x0-0.6,0.012,b.z1-b.z0-0.3,[0.05,0.05,0.06]);
+ bx0((b.x0+b.x1)/2,0.012,cz,b.x1-b.x0-0.6,0.012,b.z1-b.z0-0.3,[0.05,0.05,0.06]);
+ /* the belly under the cabin floor, and the landing gear: a nose leg and two main legs under the wings, each with its wheels */
+ bx(X0+L/2,-0.14,cz,L,0.28,w*0.92,sh);bx(X0+L/2,-0.3,cz,L*0.92,0.08,w*0.6,sg);
+ const leg=(x,z,two)=>{bx0(x,DK*0.5,z,0.07,DK,0.07,[0.55,0.56,0.6]);bx0(x-0.12,DK*0.45,z,0.22,0.04,0.04,[0.55,0.56,0.6]);
+  for(const o of two?[-0.13,0.13]:[0])bx0(x,0.14,z+o,0.28,0.28,0.1,[0.08,0.08,0.09]);bx0(x,0.14,z,0.1,0.1,two?0.34:0.12,[0.6,0.6,0.64]);};
+ if(!boom){leg(X1-0.8,cz,true);for(const sd of [-1,1])leg(X0+L*0.48,cz+sd*w*0.42,true);}
  if(roof){bx(X0+L/2,H/2,cz,L,H,w,sh);bx(X0+L/2,H+0.03,cz,L,0.06,w-0.1,sh);
   for(const z of [Z0-0.007,Z1+0.007])winAt(X0,L,z);
   for(const d of S.doors)bx(d.x,0.55,d.z+d.d*0.008,0.72,1.0,0.012,[0.08,0.08,0.1]);}
  else for(const q of S.e){if(q.hz){const z=q.z+q.o*t/2,len=q.x1-q.x0;bx((q.x0+q.x1)/2,H/2,z,len,H,t,sh);for(const sd of [-1,1])winAt(q.x0,len,z+sd*(t/2+0.006));}
   else{const x=q.x+q.o*t/2;bx(x,H/2,(q.z0+q.z1)/2,t,H,q.z1-q.z0,sh);}}
- for(const d of S.doors)drawAirstairs(bx,d.x,d.z,d.d,boom?sg:[0.88,0.88,0.9]);
+ for(const d of S.doors)drawAirstairs(bx0,d.x,d.z,d.d,boom?sg:[0.88,0.88,0.9],DK+0.02);
  /* nose: a tapering cone with the cockpit windscreen; tail: tapered cone, swept fin and a T-tail */
- const bm=(x,y,z,ry,rx,sx,sy,sz,c,em,rz)=>B.box(A.mul(A.mul(A.mul(A.mul(A.T(x,y,z),A.RY(ry)),A.RX(rx)),A.RZ(rz||0)),A.S(sx,sy,sz)),c,!!em);
+ const bm=(x,y,z,ry,rx,sx,sy,sz,c,em,rz)=>B.box(A.mul(A.mul(A.mul(A.mul(A.T(x,y+DK,z),A.RY(ry)),A.RX(rx)),A.RZ(rz||0)),A.S(sx,sy,sz)),c,!!em);
  /* a swept, tapered surface from (x,z) out along side sd: n overlapping boxes turned to the sweep angle, so the edges run straight */
  const surf=(x,y,z,sd,span,root,tip,sweep,th,dy,col,n)=>{const a=Math.atan2(sweep,span),seg=Math.hypot(span,sweep)/n;
   for(let k=0;k<n;k++){const f=(k+0.5)/n,c=root+(tip-root)*f;bm(x-sweep*f-c/2,y+dy*f,z+sd*span*f,-sd*a,0,c,th*(1-f*0.4),seg*1.06,col);}};
@@ -214,6 +227,7 @@ function drawJet(B,g,b,roof){const T=g.T||0,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(T
 /* the cabin, fitted out like a private jet: club seats facing over walnut tables, a leather divan, the bar, the cockpit behind a
    bulkhead, gold on a pallet in the hold, a runner down the aisle and lights along the ceiling. The seat cells ('k') are solid. */
 function drawCabin(B,g,b,bx,bm){if(g.jet&&g.jet.boom)return;const at=(c,r)=>[b.x0+(c-10)+0.5,b.z0+(r-4)+0.5],T=g.T||0;
+ {const S=jetSkin(g,b);for(let ix=b.x0+1;ix<b.x1-1;ix++)for(let iz=b.z0+1;iz<b.z1-1;iz++)if(!S.set.has(ix+','+iz))bx(ix+0.5,-0.03,iz+0.5,1.01,0.06,1.01,(ix+iz)%2?[0.3,0.2,0.24]:[0.33,0.22,0.26]);}
  const lea=[0.86,0.79,0.64],lea2=[0.74,0.66,0.52],wal=[0.36,0.2,0.1],gold=[0.95,0.75,0.25],cream=[0.92,0.88,0.78];
  const seat=(c,r,d,col)=>{const [x,z]=at(c,r),cl=col||lea;bx(x,0.16,z,0.62,0.3,0.6,[0.25,0.22,0.2]);bx(x+d*0.04,0.36,z,0.58,0.12,0.56,cl);
   bx(x-d*0.27,0.66,z,0.14,0.62,0.56,cl);bx(x-d*0.3,0.98,z,0.12,0.18,0.34,lea2);for(const sd of [-1,1])bx(x,0.48,z+sd*0.3,0.56,0.12,0.08,lea2);};
@@ -228,11 +242,17 @@ function drawCabin(B,g,b,bx,bm){if(g.jet&&g.jet.boom)return;const at=(c,r)=>[b.x
  {const [x0,z]=at(21,5),x=x0+0.5;bx(x,0.45,z-0.05,1.9,0.9,0.6,wal);bx(x,0.92,z-0.05,1.96,0.05,0.66,[0.95,0.94,0.92]);bx(x,0.6,z+0.26,1.86,0.03,0.02,gold);
   const bc=[[0.2,0.5,0.2],[0.6,0.35,0.1],[0.85,0.85,0.9],[0.5,0.1,0.12],[0.75,0.55,0.2]];for(let k=0;k<5;k++)bx(x-0.7+k*0.32,1.06,z-0.18,0.08,0.22,0.08,bc[k],k===2);
   for(let k=0;k<3;k++)bx(x-0.4+k*0.4,0.99,z+0.08,0.06,0.09,0.06,[0.85,0.9,0.95]);}
- /* bulkhead to the cockpit (the aisle stays open), pilot seats, the panel and the yokes */
+ /* bulkhead to the cockpit (the aisle stays open). The cockpit is walk-in: two pilot seats, the yokes, the centre pedestal with the
+    throttles, and across the nose the instrument panel with its screens, dials and the glare shield */
  {const bxh=b.x0+14;for(const r of [5,7]){const [,z]=at(24,r);bx(bxh,0.575,z,0.08,1.15,1.0,[0.93,0.93,0.94]);bx(bxh-0.045,0.5,z,0.01,0.06,1.0,wal);}
-  for(const r of [5,7])seat(24,r,1,[0.32,0.33,0.36]);const [px,pz]=at(25,6);bx(px-0.25,0.7,pz,0.25,0.4,1.9,[0.1,0.1,0.12]);
-  for(let k=0;k<8;k++){const on=Math.sin(T*2+k*1.7)>-0.3;bx(px-0.38,0.82,pz-0.75+k*0.21,0.01,0.08,0.12,k%3?[0.2,0.9,0.4]:[1,0.7,0.2],on);}
-  for(const r of [5,7]){const [x,z]=at(24,r);bx(x+0.35,0.62,z,0.05,0.26,0.05,[0.2,0.2,0.22]);bx(x+0.35,0.76,z,0.04,0.06,0.26,[0.2,0.2,0.22]);}}
+  const dk=[0.1,0.1,0.12],gy=[0.22,0.23,0.26];for(const r of [5,7])seat(26,r,1,[0.32,0.33,0.36]);
+  const PX=b.x1-1.32,[,pz]=at(26,6);bx(PX,0.42,pz,0.5,0.84,2.7,dk);bx(PX-0.05,0.86,pz,0.62,0.06,2.8,[0.05,0.05,0.06]);
+  for(let k=0;k<4;k++){const z=pz-1.0+k*0.66,hue=[[0.15,0.5,0.95],[0.2,0.85,0.4],[0.15,0.5,0.95],[0.95,0.6,0.15]][k];bx(PX-0.26,0.6,z,0.01,0.26,0.36,[0.03,0.03,0.04]);bx(PX-0.265,0.6,z,0.01,0.2,0.3,hue,Math.sin(T*1.5+k)>-0.6);}
+  for(let k=0;k<10;k++)bx(PX-0.262,0.34,pz-1.1+k*0.24,0.01,0.05,0.05,k%4===0?[1,0.25,0.2]:[1,0.8,0.3],Math.sin(T*3+k*2.1)>0.2);
+  {const [cx]=at(26,6);bx(cx+0.05,0.28,pz,0.6,0.56,0.36,gy);for(let k=0;k<3;k++)bx(cx-0.1+k*0.14,0.62,pz,0.03,0.14,0.03,[0.6,0.6,0.62]);for(let k=0;k<3;k++)bx(cx-0.1+k*0.14,0.7,pz,0.06,0.04,0.06,k===1?[0.9,0.2,0.2]:GOLD);
+   bx(cx+0.25,0.57,pz,0.12,0.02,0.3,[0.03,0.03,0.04]);bx(cx+0.25,0.58,pz,0.1,0.01,0.24,[0.3,0.9,0.5],true);}
+  for(const r of [5,7]){const [x,z]=at(26,r);bx(x+0.4,0.4,z,0.05,0.4,0.05,[0.2,0.2,0.22]);bx(x+0.38,0.62,z,0.04,0.06,0.3,[0.2,0.2,0.22]);for(const sd of [-1,1])bx(x+0.38,0.66,z+sd*0.14,0.04,0.1,0.04,[0.2,0.2,0.22]);
+   bx(x,0.32,z+(r===5?-0.42:0.42),0.7,0.3,0.12,gy);}}
  /* gold on a pallet in the hold */
  {const [x,z]=at(11,7);bx(x,0.06,z,0.8,0.12,0.8,[0.5,0.38,0.22]);for(let l=0;l<3;l++)for(let k=0;k<(3-l);k++)for(let m=0;m<2;m++)bx(x-0.2+k*0.2+l*0.1,0.17+l*0.09,z-0.12+m*0.24,0.17,0.08,0.2,gold,l===2);}
  /* the aisle runner and the ceiling lights */

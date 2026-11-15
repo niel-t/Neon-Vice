@@ -811,7 +811,7 @@ function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game'
  const SC=[scale*S[0],0,0,0,0,scale*S[1],0,0,0,0,scale*S[2],0,0,0,0,1];let bx0=c.x+(c.lox||0),bz0=c.z+(c.loz||0);
  /* in bed the head goes on the pillow: the root (feet) sits one body length from it, whatever her height */
  if(lying&&c.bed&&c.bedHX!==undefined){const len=1.8*scale*S[1];bx0=c.bedHX+Math.sin(c.a||0)*len;bz0=c.bedHZ+Math.cos(c.a||0)*len;}
- let base=M4.mul(M4.T(bx0,c.y||0,bz0),M4.R([0,1,0],c.a||0));
+ let base=M4.mul(M4.T(bx0,(c.y||0)+(typeof liftAt==='function'?liftAt(c.x,c.z):0),bz0),M4.R([0,1,0],c.a||0));
  /* lying down: tip over first and scale after, so a body keeps its standing height as its length and its depth as its thickness */
  if(lying){const fe=c.fall===undefined?1:1-Math.pow(1-c.fall,2);base=M4.mul(base,M4.mul(M4.T(0,(c.bed?0.15:0.2)*fe*scale*S[2],0),M4.mul(M4.R([1,0,0],(c.alive&&!c.bed?1:-1)*Math.PI/2*fe),SC)));}
  else base=M4.mul(base,SC);
