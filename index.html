@@ -103,7 +103,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 .dlv summary{font-family:'Press Start 2P',monospace;font-size:clamp(8px,.5em,13px);color:#c9a8e8;cursor:pointer;padding:.4em 0}
 .dlFoot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 10px;padding-top:.4em;border-top:2px solid rgba(255,45,149,.35)}
 .dlFoot .tapnext{font-size:.62em;margin:0}.dlFoot .btn{margin:4px 0;font-size:clamp(10px,.42em,16px)}
-.dlog.done #chatTap,.dlog.done #bDlSkip,.dlog:not(.done) #bGo,.dlog:not(.done) #dlJobs{display:none}
+.dlog.done #chatTap,.dlog.done #bDlSkip,.dlog:not(.done) #bGo,.dlog:not(.done) #dlJobs,.dlog:not(.done) #dlNeg{display:none}
 .dlog.choosing #chatTap,.dlog.choosing #bDlSkip,.dlog:not(.choosing) #chatPick{display:none}
 .dlChoices{list-style:none;margin:.2em 0 .1em;padding:0}
 .dlChoices button{display:flex;gap:.5em;width:100%;text-align:left;font:inherit;line-height:1.3;color:#ffd0ea;background:rgba(255,45,149,.08);border:0;border-left:3px solid transparent;padding:.22em .5em;margin:.14em 0;cursor:pointer}
@@ -182,7 +182,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <div id="sBrief" class="screen briefScr"><div class="selHead"><div class="selTop" id="brFrom">McWEY TOWER</div><div class="gname" data-t="McWEY">McWEY</div><div class="quote" id="brQuote"></div></div><div style="flex:1"></div>
  <div class="dlog" id="dlog"><div class="dlHead"><span id="dlogTitle"></span><button id="bDlText" title="Text size">TEXT A&plus;<span class="kbhint"> (T)</span><span class="padhint"> (Y)</span></button></div>
   <div id="dlogScroll"><div class="dlBody"><div id="dlogHist"></div><div id="dlogLines"></div></div></div>
-  <div class="dlFoot"><span class="tapnext" id="chatTap">SPACE / TAP<span class="padhint"> / (A)</span> &middot; NEXT</span><span class="tapnext" id="chatPick"><span class="kbhint">1&ndash;3 / &uarr;&darr; SPACE</span><span class="padhint">&uarr;&darr; (A)</span> &middot; CHOOSE</span><button class="btn alt sm" id="bDlSkip">SKIP<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button><span id="dlJobs"></span><button class="btn" id="bGo">TAKE THE JOB</button></div></div></div>
+  <div class="dlFoot"><span class="tapnext" id="chatTap">SPACE / TAP<span class="padhint"> / (A)</span> &middot; NEXT</span><span class="tapnext" id="chatPick"><span class="kbhint">1&ndash;3 / &uarr;&darr; SPACE</span><span class="padhint">&uarr;&darr; (A)</span> &middot; CHOOSE</span><button class="btn alt sm" id="bDlSkip">SKIP<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button><span id="dlNeg"></span><span id="dlJobs"></span><button class="btn" id="bGo">TAKE THE JOB</button></div></div></div>
 <div id="sElev" class="screen"><div class="elev"><div class="elT">McWEY TOWER</div><div class="elN"><span>&#9650;</span><b id="elFloor">01</b></div><div class="elT2">TAP TO SKIP</div></div></div>
 <div id="sDead" class="screen dim"><div class="big red">YOU'RE DEAD</div><div class="hint" id="deadCause" style="color:#ffb3bd"></div><div class="hint" id="deadXP" style="color:#ffd36b"></div><div class="hint" id="deadTip"></div><div class="rowc"><button class="btn" id="bRetry">RETRY<span class="kbhint"> (R)</span><span class="padhint"> (A)</span></button><button class="btn alt" id="bDeadRestartJob" style="display:none">RESTART JOB</button><button class="btn alt" id="bDeadWalk">WALK AWAY<span class="padhint"> (X)</span></button><button class="btn alt" id="bDeadQuit">QUIT<span class="padhint"> (B)</span></button></div><div class="hint" style="opacity:.75">Retry keeps what you brought in · Walk away to go home with it</div></div>
 <div id="sResults" class="screen dim"><div class="logo2" id="rTitle">FLOOR CLEAR</div><div class="stats" id="rStats"></div><div class="grade" id="rGrade">A</div><div class="rowc"><button class="btn alt" id="bRetryLvl">RETRY<span class="padhint"> (X)</span></button><button class="btn" id="bNextLvl">NEXT FLOOR</button></div></div>
@@ -2926,7 +2926,13 @@ function arm(){const p=myProg();if(typeof p.wallet!=='number')p.wallet=0;if(p.de
  if(!p.cars)p.cars=['beater'];if(p.car===undefined||!CARS[p.car])p.car='beater';if(!p.carx)p.carx={};if(!p.jewel)p.jewel={};if(!p.seen)p.seen={};
  if(!p.arm)p.arm={};const a=p.arm;for(const [k,v] of Object.entries({owned:[],eq:null,mags:0,vest:0,stock:[],key:-1,met:false,jobs:0}))if(a[k]===undefined)a[k]=v;return a;}
 function wallet(){arm();return myProg().wallet;}
-let LASTPAY=null;function cutOf(take){const p=myProg();arm();return p.debt>0?Math.min(p.debt,Math.ceil(take*MC_CUT)):0;}
+let LASTPAY=null;
+/* McWey's cut is a rate you can renegotiate (mcNegotiate): a share of every campaign take while you owe him, then a smaller partner's
+   share once you're square ("you work with me"). The Lex job pays out whole, as he says it does. p.rate={debt,part} keeps each haggled rate. */
+const MC_RATE={debt:{base:0.6,min:0.4,max:0.7},part:{base:0.15,min:0.05,max:0.25}},MC_STEP=0.05;
+const mcKind=p=>p.debt>0?'debt':'part',mcPct=v=>Math.round(v*100)+'%';
+function mcRate(p){p=p||myProg();const k=mcKind(p),R=MC_RATE[k],v=p.rate&&p.rate[k];return typeof v==='number'&&isFinite(v)?clamp(Math.round(v*100)/100,R.min,R.max):R.base;}
+function cutOf(take){const p=myProg();arm();if(p.debt>0)return Math.min(p.debt,Math.ceil(take*mcRate(p)));return levelIdx===7?0:Math.ceil(take*mcRate(p));}
 function payout(){if(!G||G.paid||!G.take)return;G.paid=1;const a=arm(),p=myProg();medsUsed(p);
  /* non-campaign jobs: no cut, no debt, no story flags; only their own reward flags */
  if(!missionIsCampaign(MISSION)){p.wallet+=G.take;mallRent(p);p.couchBlood=0;for(const r of MISSIONS[MISSION].rewards||[])if(r&&typeof r.flag==='string')dlgObj(p,'wflags')[r.flag]=1;saveProg();return;}
@@ -3978,14 +3984,14 @@ function drawElevDyn(B,P){B.reset();P.reset();if(!ENH())floorQuad(P,elevChar.x,e
   B.box(TRS(x,y+h/2,z,0,w,h,w),i%3?[0.3,0.27,0.45]:[0.25,0.4,0.55],true,TUV[i%3?33:35]);}
  for(let i=0;i<10;i++){const x=-6+i*1.3,y=((i*3.1-off*1.6)%14+14)%14-4;B.box(TRS(x,y,-2.2,0,0.04,0.04,0.04),[1,0.9,0.6],true);}}
 /* ---- chat with McWey ---- */
-const MC_LOAN=12000,MC_CUT=0.6;
+const MC_LOAN=12000;
 const mcFill=(t,o)=>t.replace(/\{(\w+)\}/g,(s,k)=>k in o?o[k]:s);
 // The grade and the money share one line. Returns true when the payday is a story beat.
 // busy: another scene follows this visit, so squaring the debt is one line, not a choice.
 function mcPayday(m,dq,g,busy){const L=LASTPAY;LASTPAY=null;if(!L){m(g);return false;}
  const v={take:fmt(L.take),cut:fmt(L.cut),debt:fmt(L.debt)},say=k=>m(g+' '+mcFill(MC_PAY[k],v)),ul=unlockLine(L.lvl);
  if(L.yacht){say('yacht');if(L.cleared>0)m(MC_PAY.yacht2);return true;}
- if(L.squared){say('square');if(busy)m(DLG.square.nodes.a.say[0][1]);else dq('square');}else say(L.cut>0?(L.debt<=MC_LOAN*0.25?'near':'owe'):'free');
+ if(L.squared){say('square');if(busy)m(DLG.square.nodes.a.say[0][1]);else dq('square');}else say(L.cut>0?(L.debt>0?(L.debt<=MC_LOAN*0.25?'near':'owe'):'share'):'free');
  if(ul)m(ul);return !!(L.squared||ul);}
 // One reaction per visit at most; the others keep for later visits.
 function mcReact(m){const p=myProg(),sn=p.seen||(p.seen={}),kid=p.paid?'partner':'kid',su=mySuit(),hg=kitHand(kit()),J=mcHaul();let t=null;
@@ -4001,7 +4007,7 @@ const chatWho=me=>me?CHARS[selIdx].name:'McWEY';
 const chatName=L=>L.who==='p'?chatWho(true):(L.name&&DLG_WHO[L.name])||chatWho(false);
 // DLG pointers in the queue expand when reached, so choices can splice their branch in.
 function chatExpand(){let L;while((L=CHAT.q[CHAT.i])&&L.dlg&&!L.choose)CHAT.q.splice(CHAT.i,1,...dlgItems(L.dlg,L.n));}
-function chatDone(){CHAT.done=true;CHAT.phase='done';typeFull='';typeI=0;$('dlog').classList.add('done');dlogFollow();}
+function chatDone(){CHAT.done=true;CHAT.phase='done';mcNegRefresh();typeFull='';typeI=0;$('dlog').classList.add('done');dlogFollow();}
 function chatNext(){chatClearTimers();chatExpand();if(CHAT.i>=CHAT.q.length){chatDone();return;}if(CHAT.q[CHAT.i].choose){chatChoose(CHAT.q[CHAT.i]);return;}
  const L=CHAT.q[CHAT.i++],me=L.who==='p';const tx=dlogLine(chatName(L),me,L.t);tx.innerHTML='<span class="typing"><i></i><i></i><i></i></span>';CHAT.phase='dots';CHAT.cur={tx,t:L.t,me};typeFull='';typeI=0;
  CHAT.tm=setTimeout(()=>chatType(),me?350:650);}
@@ -4011,7 +4017,7 @@ function chatChoose(L){CHAT.i++;const opts=L.choose.filter(o=>dlgReqOk(o.req)),o
 function chatSel(k){if(CHAT.phase!=='choose')return;const n=CHAT.ch.opts.length;CHAT.ch.sel=(k%n+n)%n;dlogChoiceSel(CHAT.ch.sel);}
 function chatPick(k){if(state!=='brief'||CHAT.phase!=='choose'||!(k>=0&&k<CHAT.ch.opts.length))return;const o=CHAT.ch.opts[k],d=CHAT.ch.dlg,t=dlgText(o.say||o.t);
  CHAT.ch=null;CHAT.phase='picked';dlogChoicesClear();$('dlog').classList.remove('choosing');dlogLine(chatWho(true),true,t).textContent=t;
- dlgApply(o.set);if(o.to)CHAT.q.splice(CHAT.i,0,{dlg:d,n:o.to});sfx('pick');CHAT.tm=setTimeout(chatNext,350);}
+ dlgApply(o.set);if(o.to)CHAT.q.splice(CHAT.i,0,{dlg:d,n:o.to});if(o.fn)CHAT.q.splice(CHAT.i,0,...o.fn());sfx('pick');CHAT.tm=setTimeout(chatNext,350);}
 function chatType(){const C=CHAT.cur;CHAT.phase='typing';C.tx.textContent='';if(!C.me){typeFull=C.t;typeI=0;}let i=0;clearInterval(typeT);
  typeT=setInterval(()=>{i++;C.tx.textContent=C.t.slice(0,i);dlogFollow();if(!C.me){typeI=i;if(i%2===0)sfx('type');}if(i>=C.t.length){clearInterval(typeT);chatRead();}},24);}
 function chatRead(){const C=CHAT.cur;CHAT.phase='read';C.tx.textContent=C.t;dlogFollow();typeI=typeFull.length;CHAT.tm=setTimeout(chatNext,900+C.t.length*28);}
@@ -4036,8 +4042,28 @@ function talkMcWey(){if(briefBuilt&&briefKey!==mcHaul()+'|'+briefAct())briefBuil
  $('brQuote').textContent='"'+(vi.next==='end'?RUNEND.quote:MC_QUOTE[vi.next])+'"';
  $('bGo').innerHTML=(vi.next==='end'?'TAKE THE GOLD':'TAKE THE JOB: '+LEVELS[vi.next].name)+'<span class="padhint"> (A)</span>';
  /* McWey's other work: unlocked non-campaign jobs, offered next to the campaign job */
- const ctx=missionCtx(),KL={bonus:'BONUS',story:'STORY',side:'ERRAND'};$('dlJobs').innerHTML=vi.next==='end'?'':extraIds().filter(id=>missionUnlocked(id,ctx)).map(id=>`<button class="btn alt sm" data-mid="${id}">${KL[MISSIONS[id].kind]||'JOB'}: ${missionName(id)}${missionDone(id)?' \u2713':''}</button>`).join('');
+ const ctx=missionCtx(),KL={bonus:'BONUS',story:'STORY',side:'ERRAND'};$('dlJobs').innerHTML=vi.next==='end'?'':extraIds().filter(id=>missionUnlocked(id,ctx)).map(id=>`<button class="btn alt sm" data-mid="${id}">${KL[MISSIONS[id].kind]||'JOB'}: ${missionName(id)}${missionDone(id)?' \u2713':''}</button>`).join('');$('dlNeg').innerHTML=mcNegBtn();
  CHAT.tm=setTimeout(chatNext,500);}
+/* ---- renegotiating McWey's cut: once per finished job, at any visit. The odds rest on the pitch, the last grade and how much he likes you;
+   asking at every visit wears him out, and the hard pitch costs you when it fails. MC_ROLL (tests) fixes the dice. ---- */
+const MC_NEG_GRADE={S:0.15,'A+':0.1,A:0.08,B:0,C:-0.05,D:-0.1};let MC_ROLL=null;
+const mcNegUsed=()=>{const p=myProg(),a=arm();return !!(p.neg&&p.neg.j===a.jobs);};
+function mcNegChance(hard){const p=myProg(),s=(p.neg&&p.neg.s)||0,gr=VISIT.debrief!==null?MC_NEG_GRADE[VISIT.grade]||0:0;
+ return clamp((hard?0.3:0.45)+gr+relGet('mcwey')*0.04-0.15*s,0.05,0.85);}
+function mcNegBtn(){if(VISIT.next==='end')return'';const r=mcPct(mcRate()),u=mcNegUsed();
+ return `<button class="btn alt sm" id="bNeg"${u?' disabled style="opacity:.55"':''}>${u?'CUT '+r+' · ASK AFTER NEXT JOB':'RENEGOTIATE CUT · '+r+'<span class="kbhint"> (R)</span>'}</button>`;}
+function mcNegRefresh(){const b=$('dlNeg');if(b&&state==='brief')b.innerHTML=mcNegBtn();}
+function mcNegotiate(){if(state!=='brief'||!CHAT.done||VISIT.next==='end'||mcNegUsed())return;chatClearTimers();sfx('pick');
+ CHAT.done=false;CHAT.phase='idle';$('dlog').classList.remove('done');
+ CHAT.q.push({who:'m',t:MC_NEG.open[dlgKid()]},{choose:[{t:MC_NEG.soft,fn:()=>mcNegRoll(false)},{t:MC_NEG.hard,fn:()=>mcNegRoll(true)},{t:MC_NEG.drop,fn:()=>[{who:'m',t:MC_NEG.drew}]}]});
+ chatNext();}
+function mcNegRoll(hard){const p=myProg(),a=arm(),k=mcKind(p),R=MC_RATE[k],was=mcRate(p),n=p.neg&&typeof p.neg==='object'?p.neg:(p.neg={});
+ n.s=n.j===a.jobs-1?(n.s||0)+1:0;n.j=a.jobs;const c=mcNegChance(hard),roll=typeof MC_ROLL==='number'?MC_ROLL:Math.random();let now=was,t,ok=false;
+ if(was<=R.min+1e-6)t=MC_NEG.floor;
+ else if(roll<c){ok=true;now=Math.max(R.min,was-(hard?2:1)*MC_STEP);t=pick(MC_NEG[hard?'yesHard':'yes']);}
+ else{const tired=n.s>=2;if(hard||tired)now=Math.min(R.max,was+MC_STEP);if(hard)dlgApply({rel:{mcwey:-1}});t=tired?MC_NEG.tired:pick(MC_NEG[hard?'noHard':'no']);}
+ now=Math.round(now*100)/100;const rt=p.rate&&typeof p.rate==='object'?p.rate:(p.rate={});rt[k]=now;n.last={ok,was,now};saveProg();
+ sfx(ok?'cash':'blip');return [{who:'m',t:mcFill(t,{pct:mcPct(now),was:mcPct(was)})}];}
 function chatGo(pick){if(!CHAT.done)return;chatClearTimers();sfx('pick');if(VISIT.next==='end'){showEnd();return;}NEXTJOB=VISIT.next;JOBPICK=typeof pick==='string'&&missionKnown(pick)&&!missionIsCampaign(pick)?pick:null;fadeTo(()=>enterElevator(true));}
 function showEnd(){state='end';$('eStats').innerHTML=`CREW<b>${CHARS[selIdx].name}</b><br>BODIES<b>${totalKills}</b><br>TIME<b>${mmss(totalTime)}</b><br>TOTAL TAKE<b>$${fmt(totalScore)}</b>${RUNEND?'<br>ENDING<b>'+RUNEND.title+'</b>':''}`;show('sEnd');}
 HUBLEG_FOOT['.']={};
@@ -4752,7 +4778,7 @@ function finishLevel(){const g=G;if(g.stageManaged&&!stageFinal(g)){banner('STAG
  const acc=g.shots?Math.round(Math.min(1,g.hits/g.shots)*100)+'%':'—';
  $('rStats').innerHTML=`DIFFICULTY<b>${Dd().name}</b><br>KILLS<b>${g.kills}</b><br>EXECUTIONS<b>${g.execs}</b><br>BEST COMBO<b>x${g.maxCombo}</b><br>HEADS TAKEN<b>${g.heads}</b><br>STYLE<b>${rsty.toUpperCase()}</b><br>REPUTATION<b>${repLine()}</b><br>STYLE BONUS<b style="color:#2de2e6">+$${fmt(g.styleB||0)}${g.multis||g.switches?` <span style="opacity:.7">(${g.multis||0} MULTI · ${g.switches||0} SWITCH-UP)</span>`:''}</b><br>BY WEAPON<b>${Object.entries(g.kb).sort((a,b)=>b[1]-a[1]).map(([k,v])=>(KNAME[k]||k)+' '+v).join(' · ')||'—'}</b><br>ACCURACY<b>${acc}</b><br>TIME<b>${mmss(g.time)}  (PAR ${mmss(parOf(levelIdx))})</b><br>KILL MONEY<b>$${fmt(g.score)}</b><br>SPEED BONUS<b>$${fmt(tb)}</b><br>TAKE HOME<b>$${fmt(total)}</b><br>GRADE POINTS<b style="color:#ffd36b">${fmt(gp)}${nextG?'  ·  '+nextG[0]+' AT '+fmt(Math.floor(nextG[1]*gden)+1):'  ·  TOP GRADE'}</b>`;
  let xp=0;if(!g.xpGiven){g.xpGiven=1;xp=runXP(g,true,gr);awardXP(xp);}const pr=myProg();{const a4=act4Results(g);$('rTitle').textContent=a4?a4.title:'FLOOR CLEAR';if(a4)$('rStats').innerHTML+=a4.html;}$('rStats').innerHTML+=(g.twist==='ghost'?`<br>NO ALARM<b style="color:${g.alarm?'#ff8a95':'#7dff9a'}">${g.alarm?'THE ALARM WENT OFF':'+$'+fmt(GHOST_PAY)}</b>`:'')+(g.getaway?`<br>CLEAN GETAWAY<b style="color:#7dff9a">+$${fmt(ESC_PAY)}</b>`:'')+`<br>XP EARNED<b style="color:#ffd36b">+${xp}</b><br>LEVEL<b style="color:#ffd36b">${pr.lvl}  (${pr.xp}/${xpNeed(pr.lvl)})</b>`;
- if(g.sj){const s=sjState(g);g.sjPay=s.ok?sjPay(g.sj,levelIdx):0;$('rStats').innerHTML+=`<br>SIDE JOB<b style="color:${s.ok?'#7dff9a':'#ff8a95'}">${SIDEJOBS[g.sj].name} · ${s.ok?'PAID +$'+fmt(g.sjPay)+' (NO CUT)':'FAILED'}</b>`;}{const wl=wallet(),ct=missionIsCampaign(MISSION)?cutOf(total):0,ow=myProg().debt;$('rStats').innerHTML+=(ct?`<br>McWEY'S CUT<b style="color:#ff8a95">-$${fmt(ct)}</b><br>STILL OWED<b style="color:#ff8a95">$${fmt(ow-ct)}</b>`:'')+`<br>WALLET<b style="color:#7dff9a">$${fmt(wl)} &rarr; $${fmt(wl+total-ct+(g.sjPay||0))}</b>`;}{const rec={g:gr,t:g.time,s:total,c:g.maxCombo,ch:CHARS[selIdx].id,d:SET.diff},camp=missionIsCampaign(MISSION),nr=camp&&g.mod?recordNight(levelIdx,g.mod,rec):null,mr=camp?null:recordMission(MISSION,g.variant,rec),nb=nr?nr.nb:camp?recordBest(levelIdx,rec):mr.nb,b=nr?nr.b:camp?JOBS.best[levelIdx]:mr.b;if(g.daily){const o=saveObject(JOBS.daily)&&JOBS.daily.d===g.daily?JOBS.daily:null;if(!o||GRANK(gr)<GRANK(o.g)||(gr===o.g&&g.time<o.t)){JOBS.daily={d:g.daily,g:gr,t:g.time,s:total};saveJobs();}g.dailyLine=dailyLine(g,gr);$('rStats').innerHTML+=`<br>DAILY JOB<b style="color:#ffd36b">${g.dailyLine} <button id="bCopyDaily" style="font:inherit;background:#24123a;color:#ffd36b;border:1px solid #ffd36b;cursor:pointer">COPY</button></b>`;}$('rStats').innerHTML+=`<br>${g.mod?'NIGHT 2 · '+NIGHT_MODS[g.mod].n+' BEST':'PERSONAL BEST'}<b style="color:#2de2e6">${b.g} · ${mmss(b.t)} · $${fmt(b.s)} · x${b.c}</b>`+(nb.length?`<br>NEW<b style="color:#ff5fb8">${nb.join(' · ')}</b>`:'');}if(missionIsCampaign(MISSION)){const cr=checkChallenges(levelIdx,g);$('rStats').innerHTML+='<br>CHALLENGES<b>'+cr.out.map(c=>`<span style="color:${c.ok?'#7dff9a':'#ff8a95'}">${c.ok?'\u2605':'\u2606'} ${c.n}${c.fresh?' +$'+fmt(CH_PAY):''}</span>`).join(' · ')+'</b>'+(cr.pay?`<br>CHALLENGE BONUS<b style="color:#7dff9a">+$${fmt(cr.pay)} TO WALLET</b>`:'');}G.grade=gr;$('rGrade').textContent=gr;{const cb=$('bCopyDaily');if(cb)cb.onclick=()=>{try{navigator.clipboard.writeText(G.dailyLine);cb.textContent='COPIED';}catch(e){cb.textContent='SELECT AND COPY';}};}$('bNextLvl').innerHTML='HEAD BACK HOME'+'<span class="padhint"> (A)</span>';if(pendingPerks>0)setTimeout(()=>{if(state==='results')showPerkPick('results');},900);show('sResults');sfx('cash');}
+ if(g.sj){const s=sjState(g);g.sjPay=s.ok?sjPay(g.sj,levelIdx):0;$('rStats').innerHTML+=`<br>SIDE JOB<b style="color:${s.ok?'#7dff9a':'#ff8a95'}">${SIDEJOBS[g.sj].name} · ${s.ok?'PAID +$'+fmt(g.sjPay)+' (NO CUT)':'FAILED'}</b>`;}{const wl=wallet(),ct=missionIsCampaign(MISSION)?cutOf(total):0,ow=myProg().debt;$('rStats').innerHTML+=(ct?`<br>McWEY'S ${ow>0?'CUT':'SHARE'} (${mcPct(mcRate())})<b style="color:#ff8a95">-$${fmt(ct)}</b>`+(ow>0?`<br>STILL OWED<b style="color:#ff8a95">$${fmt(ow-ct)}</b>`:''):'')+`<br>WALLET<b style="color:#7dff9a">$${fmt(wl)} &rarr; $${fmt(wl+total-ct+(g.sjPay||0))}</b>`;}{const rec={g:gr,t:g.time,s:total,c:g.maxCombo,ch:CHARS[selIdx].id,d:SET.diff},camp=missionIsCampaign(MISSION),nr=camp&&g.mod?recordNight(levelIdx,g.mod,rec):null,mr=camp?null:recordMission(MISSION,g.variant,rec),nb=nr?nr.nb:camp?recordBest(levelIdx,rec):mr.nb,b=nr?nr.b:camp?JOBS.best[levelIdx]:mr.b;if(g.daily){const o=saveObject(JOBS.daily)&&JOBS.daily.d===g.daily?JOBS.daily:null;if(!o||GRANK(gr)<GRANK(o.g)||(gr===o.g&&g.time<o.t)){JOBS.daily={d:g.daily,g:gr,t:g.time,s:total};saveJobs();}g.dailyLine=dailyLine(g,gr);$('rStats').innerHTML+=`<br>DAILY JOB<b style="color:#ffd36b">${g.dailyLine} <button id="bCopyDaily" style="font:inherit;background:#24123a;color:#ffd36b;border:1px solid #ffd36b;cursor:pointer">COPY</button></b>`;}$('rStats').innerHTML+=`<br>${g.mod?'NIGHT 2 · '+NIGHT_MODS[g.mod].n+' BEST':'PERSONAL BEST'}<b style="color:#2de2e6">${b.g} · ${mmss(b.t)} · $${fmt(b.s)} · x${b.c}</b>`+(nb.length?`<br>NEW<b style="color:#ff5fb8">${nb.join(' · ')}</b>`:'');}if(missionIsCampaign(MISSION)){const cr=checkChallenges(levelIdx,g);$('rStats').innerHTML+='<br>CHALLENGES<b>'+cr.out.map(c=>`<span style="color:${c.ok?'#7dff9a':'#ff8a95'}">${c.ok?'\u2605':'\u2606'} ${c.n}${c.fresh?' +$'+fmt(CH_PAY):''}</span>`).join(' · ')+'</b>'+(cr.pay?`<br>CHALLENGE BONUS<b style="color:#7dff9a">+$${fmt(cr.pay)} TO WALLET</b>`:'');}G.grade=gr;$('rGrade').textContent=gr;{const cb=$('bCopyDaily');if(cb)cb.onclick=()=>{try{navigator.clipboard.writeText(G.dailyLine);cb.textContent='COPIED';}catch(e){cb.textContent='SELECT AND COPY';}};}$('bNextLvl').innerHTML='HEAD BACK HOME'+'<span class="padhint"> (A)</span>';if(pendingPerks>0)setTimeout(()=>{if(state==='results')showPerkPick('results');},900);show('sResults');sfx('cash');}
 /* W1eB: grid-only checkpoints. Geometry, GPU batches, effects, projectiles and AI work
    queues are rebuilt, never retained. Mission totals live in the manager bag, not per-floor data. */
 const STAGE_ENEMY=['id','x','z','a','hp','maxhp','alive','look','body','pers','weapon','headless','wounds','splat','down','vx','vz','rmul','spd','r','kind'];
@@ -5119,9 +5145,9 @@ $('pkCards').addEventListener('click',e=>{const b=e.target.closest('.pcard');if(
 $('bPrev').onclick=()=>{selIdx=(selIdx+2)%3;updateSelect();sfx('blip');};
 $('bNext').onclick=()=>{selIdx=(selIdx+1)%3;updateSelect();sfx('blip');};
 $('bPlay').onclick=()=>{const st=Math.min(JOBS.sel,JOBS.top),p=myProg();if(p.run){runWalkAway(p);saveProg();}sessionReset(st);sfx('pick');const nj=NEXTJOB;NEXTJOB=null;const must=mcMust();NEXTJOB=nj;if(must)fadeTo(goDrive);else{takeNextJob();fadeTo(wakeAtHome);}};$('bResumeJob').onclick=()=>{const r=resumeRun();if(!r||fading)return;selIdx=r.ci;sessionReset(r.st);NEXTJOB=r.st;sfx('pick');fadeTo(()=>{startMission(r.id);showObjCard();});};$('bDeadWalk').onclick=()=>walkAway();$('bWalk').onclick=()=>walkAway();syncResume();
-$('sBrief').onclick=e=>{if(CHAT.phase==='choose'||e.target.closest('#bGo,#dlJobs,#bDlSkip,#bDlText,summary,#dlogHist,.dlChoices'))return;chatTap();};$('bDlSkip').onclick=()=>chatSkipAll();$('bDlText').onclick=()=>cycleTextSize();
+$('sBrief').onclick=e=>{if(CHAT.phase==='choose'||e.target.closest('#bGo,#dlJobs,#dlNeg,#bDlSkip,#bDlText,summary,#dlogHist,.dlChoices'))return;chatTap();};$('bDlSkip').onclick=()=>chatSkipAll();$('bDlText').onclick=()=>cycleTextSize();
 $('sObj').onclick=()=>objCardGo();$('sElev').onclick=()=>skipElev();$('cine').onclick=()=>cineSkip();$('bSkip').onclick=()=>hubSkip();
-$('bGo').onclick=()=>chatGo();$('dlJobs').onclick=e=>{const b=e.target.closest('[data-mid]');if(b)chatGo(b.dataset.mid);};
+$('bGo').onclick=()=>chatGo();$('dlNeg').onclick=e=>{if(e.target.closest('#bNeg'))mcNegotiate();};$('dlJobs').onclick=e=>{const b=e.target.closest('[data-mid]');if(b)chatGo(b.dataset.mid);};
 $('bNextLvl').onclick=()=>{if(pendingPerks>0){showPerkPick('results');return;}if(fading)return;kitCommit();payout();VISIT=missionIsCampaign(MISSION)?{debrief:levelIdx,grade:G.grade,take:G.take,style:G.style,next:levelIdx+1<CAMPAIGN_LEN?levelIdx+1:'end'}:{debrief:null,grade:G.grade,take:G.take,style:G.style,next:NEXTJOB};fadeTo(goHome);};
 $('bRetryLvl').onclick=()=>restart();
 $('bAgain').onclick=()=>{state='select';G=null;updateSelect();show('sSelect');};
@@ -5141,7 +5167,7 @@ if(state==='objcard'){if(!e.repeat&&['Enter','Space','Escape','NumpadEnter','Key
  if((e.code==='Enter'||e.code==='Space')&&state==='brief'){chatTap();e.preventDefault();return;}
  if(state==='brief'){if(CHAT.phase==='choose'){const d=/^(?:Digit|Numpad)([1-9])$/.exec(e.code);if(d){chatPick(+d[1]-1);e.preventDefault();return;}
    if(e.code==='ArrowUp'||e.code==='ArrowDown'){chatSel(CHAT.ch.sel+(e.code==='ArrowUp'?-1:1));e.preventDefault();return;}}
-  const sc={ArrowUp:-60,ArrowDown:60,PageUp:-400,PageDown:400}[e.code];if(sc){dlogScrollBy(sc);e.preventDefault();return;}if(e.code==='Escape'){chatSkipAll();return;}if(e.code==='KeyT'){cycleTextSize();return;}}
+  const sc={ArrowUp:-60,ArrowDown:60,PageUp:-400,PageDown:400}[e.code];if(sc){dlogScrollBy(sc);e.preventDefault();return;}if(e.code==='Escape'){chatSkipAll();return;}if(e.code==='KeyT'){cycleTextSize();return;}if(e.code==='KeyR'&&CHAT.done){mcNegotiate();return;}}
  if(e.code==='Enter'&&state==='select'){$('bPlay').click();return;}if(state==='select'&&(e.code==='ArrowUp'||e.code==='KeyW'))stepFloor(1);if(state==='select'&&(e.code==='ArrowDown'||e.code==='KeyS'))stepFloor(-1);if(state==='select'&&(e.code==='ArrowLeft'||e.code==='KeyA'))$('bPrev').click();if(state==='select'&&(e.code==='ArrowRight'||e.code==='KeyD'))$('bNext').click();
  if(e.code==='Enter'&&state==='results'){$('bNextLvl').click();return;}
  if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();});
