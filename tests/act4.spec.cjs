@@ -164,3 +164,36 @@ test('act 4 floor 3: if the jet is not stopped in time it runs off the runway an
   await page.evaluate(() => { G.jet.crash = 0.05; });
   await expect.poll(() => page.evaluate(() => ({ boom: G.jet.boom, crashed: G.jet.crashed, alive: G.player.alive })), { timeout: 20_000 }).toEqual({ boom: 1, crashed: 1, alive: false });
 });
+
+test('act 4 sets: the garage ramps are switchbacks that come out in the same corner, and the hangar side door brings you in at the same spot', async ({ openGame }) => {
+  test.setTimeout(240_000);
+  const page = await openGame();
+  const p1 = await page.evaluate(() => { NOARRIVE = true; startLevel(11); const r = a4Ramps(G);
+    return { sid: G.sid, lanes: r.map(q => q.k).join(), props: G.a4.props.length > 12, floor: G.floorX[3 * G.W + 20], wall: G.wallX.some(v => v === 224) }; });
+  expect(p1).toEqual({ sid: 'p1', lanes: 'down,up', props: true, floor: 223, wall: true });
+  // halfway up the lane down the player has sunk; past the clearance bar they are on level floor again
+  expect(await page.evaluate(() => { const d = a4Ramps(G).find(q => q.k === 'down'); return [a4RampY(G, d.x0 + 1, d.z0 + 1), a4RampY(G, d.x0 + 1, d.z0 + 3.5)]; }))
+    .toEqual([expect.any(Number), 0]);
+  expect(await page.evaluate(() => { const d = a4Ramps(G).find(q => q.k === 'down'); return a4RampY(G, d.x0 + 1, d.z0 + 1) < -0.2; })).toBe(true);
+  // take the ramp: the walk down sinks, and on P2 you come off the lane beside it, in the same top-right corner, from above
+  await page.evaluate(() => { for (const e of G.enemies) e.alive = false; });
+  await toStairs(page, 'ramp');
+  await expect.poll(() => page.evaluate(() => G.climb ? G.climb.mode : G.sid), { timeout: 20_000 }).toMatch(/down|p2/);
+  await page.waitForFunction(() => G.sid === 'p2', null, { timeout: 60_000 });
+  const p2 = await page.evaluate(() => ({ arr: G.climbIn ? [G.climbIn.x0, G.climbIn.y0 > 0] : null, lanes: a4Ramps(G).map(q => q.k).join() }));
+  expect(p2.lanes).toBe('down,up,arrive');
+  if (p2.arr) expect(p2.arr).toEqual([32, true]);
+  await go(page, 'p2');
+  expect(await page.evaluate(() => [G.player.x, G.player.z, G.player.y])).toEqual([32, 4.5, 0]);
+  await page.evaluate(() => { for (const e of G.enemies) e.alive = false; });
+  await toStairs(page, 'ramp');
+  await go(page, 'dock');
+  expect(await page.evaluate(() => [G.player.x, G.player.z, a4Ramps(G).map(q => q.k).join(), G.vans.length])).toEqual([6, 4.5, 'arrive', 3]);
+  // the hangar: through the apron's side door in its top-right corner, in through the hangar's own door in the same corner
+  await page.evaluate(() => { NOARRIVE = true; delete myProg().run; startLevel(13); for (const e of G.enemies) e.alive = false; });
+  await go(page, 'apron');
+  await toStairs(page, 'door');
+  await page.waitForFunction(() => G.sid === 'hangar', null, { timeout: 60_000 });
+  await go(page, 'hangar');
+  expect(await page.evaluate(() => [G.player.x, G.player.z, G.player.y, G.a4.k, !!G.a4.jetBox])).toEqual([41.5, 2.5, 0, 'hangar', true]);
+});

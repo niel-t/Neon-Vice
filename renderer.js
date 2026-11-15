@@ -366,6 +366,29 @@ function makeAtlas(){
      st=dk?'rgba(140,124,132,.35)':'rgba('+v+','+(v-8)+','+(v-4)+',.5)',bx=Math.cos(a)*l,by=Math.sin(a)*l,kx=(r()-0.5)*1.5;
     x.strokeStyle=st;x.lineWidth=0.6+r()*0.6;
     for(const ox of [-32,0,32])for(const oy of [-32,0,32]){x.beginPath();x.moveTo(px+ox,py+oy);x.quadraticCurveTo(px+ox+bx*0.5+kx,py+oy+by*0.5,px+ox+bx,py+oy+by);x.stroke();}}});
+  /* Act 4 sets (act4sets.js), each with its own random stream: 223 garage slab (poured concrete, trowel arcs, an oil spot, saw-cut
+     joints), 224 garage wall (painted block over a dark dado, a blue stripe, a hazard band at the foot), 225 the Coral Room's
+     coral terrazzo with brass strips, 226 its wall (deep teal over a mahogany dado, gold deco fans), 227 hangar epoxy, 228 apron slab,
+     229 diamond plate for the vault dock */
+  {let s4=4401;const q=()=>(s4=(s4*16807)%2147483647)/2147483647,dots4=(x,n,cols,a=0,b=0,w=32,h=32)=>{for(let i=0;i<n;i++)R(x,cols[i%cols.length],a+q()*w,b+q()*h,1,1);};
+   tile(223,x=>{R(x,'#8c8a8e',0,0,32,32);for(let k=0;k<10;k++){x.fillStyle=q()<0.5?'rgba(70,68,74,.06)':'rgba(170,168,172,.06)';x.beginPath();x.arc(q()*32,q()*32,5+q()*8,0,TAU);x.fill();}
+    x.strokeStyle='rgba(60,58,64,.1)';x.lineWidth=0.5;for(let k=0;k<5;k++){const a=q()*32,b=q()*32,r0=5+q()*8,t=q()*TAU;x.beginPath();x.arc(a,b,r0,t,t+1.2);x.stroke();}
+    dots4(x,120,['#7a787e','#9a989e','#6c6a70','#a4a2a8']);    R(x,'#6e6c72',0,0,32,0.7);R(x,'#6e6c72',0,0,0.7,32);R(x,'rgba(255,255,255,.12)',0,0.7,32,0.5);});
+   tile(224,x=>{R(x,'#d9d6cf',0,0,32,32);for(let y=0;y<18;y+=4){R(x,'#c3bfb8',0,y,32,0.6);for(let k=(y/4%2)*8;k<32;k+=16)R(x,'#c3bfb8',k,y,0.6,4);}
+    R(x,'#2a5aa8',0,13,32,2.4);R(x,'#5a5c62',0,18,32,10);for(let y=18;y<28;y+=4)R(x,'#4c4e54',0,y,32,0.6);dots4(x,40,['#686a70','#505258'],0,18,32,10);
+    for(let k=-4;k<36;k+=6){x.fillStyle='#e8b818';x.beginPath();x.moveTo(k,28);x.lineTo(k+3,28);x.lineTo(k+7,32);x.lineTo(k+4,32);x.fill();x.fillStyle='#16161a';x.beginPath();x.moveTo(k+3,28);x.lineTo(k+6,28);x.lineTo(k+10,32);x.lineTo(k+7,32);x.fill();}
+    x.fillStyle='rgba(60,50,40,.18)';x.fillRect(6+q()*20,2,1,10);});
+   tile(225,x=>{R(x,'#f1d3c6',0,0,32,32);dots4(x,170,['#e08a78','#ffffff','#c9a49a','#f6b8a4','#b05a4a','#e6e0d8']);dots4(x,30,['#d0705e','#fff6ee']);
+    R(x,'#c9a24a',0,0,32,1);R(x,'#c9a24a',0,0,1,32);R(x,'rgba(255,240,200,.5)',0,1,32,0.4);R(x,'rgba(201,162,74,.55)',15.6,0,0.8,32);R(x,'rgba(201,162,74,.55)',0,15.6,32,0.8);});
+   tile(226,x=>{R(x,'#0e5458',0,0,32,32);dots4(x,40,['#0b4a4e','#12605f']);
+    for(const cx of [8,24]){for(let k=0;k<5;k++){const a=Math.PI+k*Math.PI/4;x.strokeStyle='#c9a24a';x.lineWidth=0.7;x.beginPath();x.moveTo(cx,15);x.lineTo(cx+Math.cos(a)*6,15+Math.sin(a)*6);x.stroke();}
+     x.beginPath();x.arc(cx,15,6.5,Math.PI,TAU);x.stroke();x.beginPath();x.arc(cx,15,2,Math.PI,TAU);x.stroke();}
+    R(x,'#c9a24a',0,1,32,0.8);R(x,'#c9a24a',0,17,32,1.2);R(x,'#5a2414',0,18.2,32,10);for(let k=2;k<32;k+=8){R(x,'#6e301c',k,19.5,6,7.5);R(x,'#4a1c10',k,26.6,6,0.5);}R(x,'#2a0e08',0,28.2,32,3.8);R(x,'#c9a24a',0,28.2,32,0.5);});
+   tile(227,x=>{R(x,'#c4c7cb',0,0,32,32);dots4(x,90,['#b6b9be','#d2d5d9','#babdc2']);    x.fillStyle='rgba(255,255,255,.22)';x.beginPath();x.moveTo(4,0);x.lineTo(10,0);x.lineTo(0,10);x.lineTo(0,4);x.fill();R(x,'#a8abb0',0,0,32,0.6);R(x,'#a8abb0',0,0,0.6,32);});
+   tile(228,x=>{R(x,'#aca89f',0,0,32,32);dots4(x,150,['#9c988f','#bcb8af','#a29e95','#b8b4ab']);for(let k=0;k<4;k++){x.fillStyle='rgba(60,56,50,.05)';x.beginPath();x.arc(q()*32,q()*32,2+q()*5,0,TAU);x.fill();}
+    R(x,'#3c3a36',0,0,32,1);R(x,'#3c3a36',0,0,1,32);R(x,'rgba(255,255,255,.18)',1,1,31,0.5);});
+   tile(229,x=>{R(x,'#7e8288',0,0,32,32);for(let j=0;j<8;j++)for(let i=0;i<8;i++){const a=i*4+(j%2)*2,b=j*4;x.fillStyle='#9ca0a6';x.save();x.translate(a+1,b+2);x.rotate(j%2?0.7:-0.7);x.fillRect(-1.6,-0.4,3.2,0.8);x.restore();}
+    dots4(x,40,['#6e7278','#8a8e94']);R(x,'#5c6066',0,0,32,0.6);R(x,'#5c6066',0,0,0.6,32);});}
   /* lamp-lit window variants, picked per storey by surfPick */
   for(const [t,v] of [[172,213],[173,214],[174,215],[183,216],[175,217]])TVAR[t]=[v];}
  for(const t of ATILES)if(!legacy.has(t)){gutter(t);const [cx,cy]=TCELL(t),n=ax.getImageData(cx*64,cy*64,64,64).data;for(let j=0;j<64;j++)d.set(n.subarray(j*256,j*256+256),((cy*64+j)*ATLAS+cx*64)*4);}
