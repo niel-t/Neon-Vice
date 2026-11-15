@@ -135,7 +135,18 @@ const WORLD=(()=>{
    if(FURN[c]){g.furn[ii]=FURN[c];continue;}
    if(c==='D'){const sx=isW(ch(x-1,z))&&isW(ch(x+1,z));g.doorSpecs.push(sx?{hx:x,hz:z+0.5,base:0}:{hx:x+0.5,hz:z,base:Math.PI/2});}
   }
+  if(def.front)frontGrid(g);
   return g;
+ }
+ /* def.front (Act 1 streets, act1.js dresses them): the '=' rows under the building are, top to bottom, the sidewalk, the parking
+    lay-by, two road lanes and a sand verge. The sidewalk gets paving (37); the verge is a sand strip (38) on a low kerb you can't walk onto;
+    the loader's padding ring is flattened along the street so the road and the sidewalk run off the edge instead of into a wall. */
+ function frontGrid(g){const {W,H,rows}=g,zs=[];for(let z=0;z<H;z++)if(rows[z].indexOf('=')>=0)zs.push(z);if(zs.length<5)return;
+  const zT=zs[0],zV=zs[zs.length-1];g.front={zT,zV,bay:zT+1,lane:[zT+2,zV-1]};
+  for(let x=0;x<W;x++)for(let z=zT;z<H;z++){const ii=z*W+x,pad=x===0||x===W-1||z===H-1;
+   if(pad){g.solid[ii]=1;g.floorT[ii]=-1;g.wh[ii]=0.02;g.wallT[ii]=g.topT[ii]=z===zT?37:z>=zV?38:7;if(z===zV)g.wallT[ii]=37;continue;}
+   if(z===zV){g.solid[ii]=1;g.wallT[ii]=37;g.wh[ii]=0.18;g.topT[ii]=38;g.floorT[ii]=-1;continue;}
+   if(z===zT&&!g.solid[ii])g.floorT[ii]=37;}
  }
  function isSolid(g,cx,cz){if(!g||cx<0||cz<0||cx>=g.W||cz>=g.H)return true;return g.solid[cz*g.W+cx]===1;}
  function isBlock(g,cx,cz){if(!g||cx<0||cz<0||cx>=g.W||cz>=g.H)return true;const i=cz*g.W+cx;return g.solid[i]===1||g.furn[i]>0;}
@@ -781,7 +792,7 @@ const WORLD=(()=>{
   function adapterRooms(st){
    const g=st.legacy,W=g.W,H=g.H,labels=new Int16Array(W*H).fill(-1),doorCells=new Set((g.doorSpecs||[]).map(d=>Math.floor(d.hz+Math.sin(d.base)*.49)*W+Math.floor(d.hx+Math.cos(d.base)*.49)));
    st.roomTiles=labels;
-   const zone=i=>g.floorT?.[i]===7?'exterior':'interior';
+   const zone=i=>g.floorT?.[i]===7||g.front&&i>=g.front.zT*W?'exterior':'interior';
    for(let i=0;i<labels.length;i++){
     if(g.solid[i]||doorCells.has(i)||labels[i]>=0)continue;
     if(st.rooms.length>=255)throw new RangeError('Adapter exceeds 255 topological rooms');
