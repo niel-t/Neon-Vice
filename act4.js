@@ -145,7 +145,7 @@ function jetTick(dt,g){const J=g.jet,p=g.player,b=g.jetBody,bo=g.boss;if(!J||!b)
  if(J.boom&&Math.random()<dt*40){const x=rnd(b.x0,b.x1),z=rnd(b.z0,b.z1);g.parts.push({t:'c',x,y:rnd(0.3,1.2),z,vx:rnd(-0.4,0.4),vy:rnd(1,2.6),vz:rnd(-0.4,0.4),s:rnd(0.08,0.16),c:Math.random()<0.6?[1,rnd(0.35,0.7),0.08]:[0.18,0.16,0.16],life:rnd(0.5,1.1)});}}
 /* the jet goes up: a chain of blasts down the fuselage, everybody near it dies (you too, if you are still close), and the accident
    is graded: CLEAN when Vale was not shot */
-function jetBoom(g){const J=g.jet,b=g.jetBody,p=g.player,R=3.2;J.boom=1;
+function jetBoom(g){const J=g.jet,b=g.jetBody,p=g.player,R=2.6;J.boom=1;
  for(let k=0;k<6;k++)a4Later(g,k*140,()=>explode({x:b.x0+1+(b.x1-b.x0-2)*k/5,z:b.cz+rnd(-0.8,0.8),own:'p'}));
  shake(1.2);rumble(1,1,900);g.flash=0.6;g.flashC=[1,0.6,0.2];
  for(let i=0;i<70;i++){const a=rnd(0,TAU),v=rnd(3,9);g.parts.push({t:'c',x:rnd(b.x0,b.x1),y:0.8,z:b.cz,vx:Math.cos(a)*v,vy:rnd(2,7),vz:Math.sin(a)*v,s:rnd(0.08,0.2),c:Math.random()<0.55?[1,rnd(0.4,0.8),0.1]:[0.2,0.18,0.18],life:rnd(0.6,1.4)});}
@@ -161,34 +161,43 @@ function valvePull(p){const g=G,J=g.jet;if(!J||!J.valve||J.fuse>0||J.boom)return
 /* the airliner-style private jet: nose cone east, tail fin and engines west, swept wings north and south of the cabin. In the hangar the
    body is a solid block (j cells, lower) and gets a roof; on the runway the cabin is open so you can see the fight inside. */
 /* the jet: a thin white skin with a row of small windows. The 'j' cells keep the collision but sit flat (h 0.02); the skin is drawn on
-   each fuselage cell's edge that faces the cabin, so the walls are thin and the cabin keeps its width. */
-function jetSkin(g,b){if(g.jetSkin&&g.jetSkin.b===b)return g.jetSkin.e;const set=new Set(a4Cells(g,'j').map(q=>q.ix+','+q.iz)),e=[];
+   each fuselage cell's edge that faces the cabin, so the walls are thin and the cabin keeps its width. The outline cells outside the
+   skin are the plane's shadow on the tarmac. A gap in the outline's top or bottom row is the door: airstairs run down from it. */
+function jetSkin(g,b){if(g.jetSkin&&g.jetSkin.b===b)return g.jetSkin;const cells=a4Cells(g,'j'),set=new Set(cells.map(q=>q.ix+','+q.iz)),e=[],doors=[];
  const inner=(x,z)=>x>b.x0&&x<b.x1-1&&z>b.z0&&z<b.z1-1&&!set.has(x+','+z);
  for(const k of set){const [x,z]=k.split(',').map(Number);
   if(inner(x,z+1))e.push({x0:x,x1:x+1,z:z+1,hz:1,o:-1});if(inner(x,z-1))e.push({x0:x,x1:x+1,z:z,hz:1,o:1});
   if(inner(x+1,z))e.push({z0:z,z1:z+1,x:x+1,hz:0,o:-1});if(inner(x-1,z))e.push({z0:z,z1:z+1,x:x,hz:0,o:1});}
- g.jetSkin={b,e};return e;}
-function drawJet(B,g,b,roof){const T=g.T||0,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,ry||0,sx,sy,sz),c,!!em),wh=[0.95,0.95,0.96],gr=[0.75,0.77,0.8],st=[0.12,0.2,0.42];
- const boom=g.jet&&g.jet.boom,sh=boom?[0.12,0.1,0.1]:wh,sg=boom?[0.1,0.09,0.09]:gr,win=boom?[0.06,0.05,0.05]:[0.1,0.14,0.22],H=1.15,t=0.1;
+ for(const z of [b.z0,b.z1-1])for(let x=b.x0+1;x<b.x1-1;x++)if(!set.has(x+','+z)&&set.has((x-1)+','+z))doors.push({x:x+0.5,z:z===b.z0?z+1:z,d:z===b.z0?-1:1});
+ g.jetSkin={b,e,doors,cells};return g.jetSkin;}
+/* airstairs from a door at hull face z down to the tarmac, d = +1 south / -1 north */
+function drawAirstairs(bx,x,z,d,c){const n=7,len=2.0,top=1.0,rail=[0.7,0.72,0.76];
+ for(let k=0;k<n;k++){const f=(k+0.5)/n,y=top*(1-f),zz=z+d*f*len;bx(x,y,zz,0.78,0.05,len/n+0.02,c);
+  for(const sd of [-1,1])bx(x+sd*0.42,y+0.45,zz,0.04,0.04,len/n+0.02,rail);if(k%2===0)for(const sd of [-1,1])bx(x+sd*0.42,y+0.22,zz,0.03,0.45,0.03,rail);}
+ for(const sd of [-1,1])bx(x+sd*0.38,top*0.5,z+d*len*0.5,0.05,0.05,len*1.02,[0.55,0.57,0.6]);}
+function drawJet(B,g,b,roof){const T=g.T||0,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,ry||0,sx,sy,sz),c,!!em),wh=[0.95,0.95,0.96],gr=[0.75,0.77,0.8];
+ const boom=g.jet&&g.jet.boom,sh=boom?[0.12,0.1,0.1]:wh,sg=boom?[0.1,0.09,0.09]:gr,win=boom?[0.06,0.05,0.05]:[0.1,0.14,0.22],H=1.15,t=0.1,S=jetSkin(g,b);
  /* the visible hull is one cell in from the outline */
  const X0=b.x0+1,X1=b.x1-1,Z0=b.z0+1,Z1=b.z1-1,L=X1-X0,cz=b.cz,w=Z1-Z0;
- for(const q of jetSkin(g,b)){if(q.hz){const z=q.z+q.o*t/2,len=q.x1-q.x0,cx=(q.x0+q.x1)/2;bx(cx,H/2,z,len,H,t,sh);
-   /* small rounded windows on both faces, two to a cell */
-   for(const f of [0.3,0.7])for(const sd of [-1,1]){const wx=q.x0+f*len,wz=z+sd*(t/2+0.006);bx(wx,0.74,wz,0.16,0.22,0.012,win);bx(wx,0.74,wz,0.2,0.16,0.012,win);}}
+ const winAt=(x0,len,z)=>{for(let k=0;k<len;k++)for(const f of [0.3,0.7]){const wx=x0+k+f;if(S.doors.some(d=>Math.abs(d.x-wx)<0.6&&Math.abs(d.z-z)<0.2))continue;bx(wx,0.74,z,0.18,0.2,0.012,win);}};
+ bx((b.x0+b.x1)/2,0.012,cz,b.x1-b.x0-0.6,0.012,b.z1-b.z0-0.3,[0.05,0.05,0.06]);
+ if(roof){bx(X0+L/2,H/2,cz,L,H,w,sh);bx(X0+L/2,H+0.03,cz,L,0.06,w-0.1,sh);
+  for(const z of [Z0-0.007,Z1+0.007])winAt(X0,L,z);
+  for(const d of S.doors)bx(d.x,0.55,d.z+d.d*0.008,0.72,1.0,0.012,[0.08,0.08,0.1]);}
+ else for(const q of S.e){if(q.hz){const z=q.z+q.o*t/2,len=q.x1-q.x0;bx((q.x0+q.x1)/2,H/2,z,len,H,t,sh);for(const sd of [-1,1])winAt(q.x0,len,z+sd*(t/2+0.006));}
   else{const x=q.x+q.o*t/2;bx(x,H/2,(q.z0+q.z1)/2,t,H,q.z1-q.z0,sh);}}
+ for(const d of S.doors)drawAirstairs(bx,d.x,d.z,d.d,boom?sg:[0.88,0.88,0.9]);
  /* nose and tail */
- for(let k=0;k<3;k++)bx(X1+0.3+k*0.5,0.6-k*0.06,cz,0.55,1.1-k*0.28,w*(0.86-k*0.26),sh);bx(X1+0.75,0.95,cz,0.45,0.22,w*0.5,boom?sg:[0.12,0.16,0.26]);
- bx(X0-0.5,0.7,cz,1.0,0.9,w*0.6,sh);bx(X0-0.8,1.9,cz,0.9,1.6,0.12,sh);bx(X0-0.9,2.6,cz,0.7,0.1,2.4,sh);
+ for(let k=0;k<3;k++)bx(X1+0.3+k*0.45,0.6-k*0.06,cz,0.5,1.1-k*0.28,w*(0.86-k*0.26),sh);bx(X1+0.7,0.95,cz,0.4,0.22,w*0.5,boom?sg:[0.12,0.16,0.26]);
+ bx(X0-0.45,0.7,cz,0.9,0.9,w*0.6,sh);bx(X0-0.7,1.8,cz,0.8,1.4,0.1,sh);bx(X0-0.8,2.4,cz,0.6,0.08,2.0,sh);
  /* wings and engines */
- for(const sd of [-1,1]){const wz=sd>0?Z1:Z0,mx=X0+L*0.55;for(let k=0;k<5;k++)bx(mx-k*0.55,0.55,wz+sd*(0.6+k*0.75),2.2-k*0.3,0.06,0.8,sg);bx(mx-2.4,0.6,wz+sd*4.1,0.5,0.4,0.1,sh);
-  bx(X0+1.0,0.95,wz+sd*0.4,1.4,0.5,0.5,sg);bx(X0+1.75,0.95,wz+sd*0.4,0.06,0.46,0.46,[0.08,0.08,0.1]);}
- if(roof)bx(X0+L/2,H+0.03,cz,L,0.06,w,sh);
- if(!boom&&(Math.sin(T*3)>0.6))for(const sd of [-1,1])bx(X0+L*0.55-2.4,0.65,(sd>0?Z1:Z0)+sd*4.2,0.12,0.12,0.12,sd>0?[0.2,1,0.3]:[1,0.15,0.15],true);}
+ for(const sd of [-1,1]){const wz=sd>0?Z1:Z0,mx=X0+L*0.55;for(let k=0;k<4;k++)bx(mx-k*0.5,0.5,wz+sd*(0.55+k*0.7),1.8-k*0.3,0.05,0.75,sg);bx(mx-1.9,0.55,wz+sd*3.2,0.4,0.35,0.08,sh);
+  bx(X0+0.9,0.95,wz+sd*0.35,1.2,0.45,0.45,sg);bx(X0+1.55,0.95,wz+sd*0.35,0.05,0.4,0.4,[0.08,0.08,0.1]);}
+ if(!boom&&(Math.sin(T*3)>0.6))for(const sd of [-1,1])bx(X0+L*0.55-1.9,0.6,(sd>0?Z1:Z0)+sd*3.3,0.1,0.1,0.1,sd>0?[0.2,1,0.3]:[1,0.15,0.15],true);}
 function drawHangar(B,g){const bx=(x,y,z,sx,sy,sz,c,em)=>B.box(TRS(x,y,z,0,sx,sy,sz),c,!!em),T=g.T||0;
  if(g.sid==='hangar'&&g.jetBody){drawJet(B,g,g.jetBody,true);const W=g.valeW;if(W){if(!W.aboard&&!fogHid(W.n.x,W.n.z))drawChar(CB(W.n),W.n);const s=W.stairs;
-   for(let k=0;k<5;k++)bx(s.x-0.1,0.12+k*0.2,s.z-0.35-k*0.18,0.9,0.08,0.22,[0.85,0.85,0.88]);bx(s.x-0.55,0.6,s.z-0.7,0.05,1.1,1.2,[0.7,0.72,0.76]);bx(s.x+0.35,0.6,s.z-0.7,0.05,1.1,1.2,[0.7,0.72,0.76]);
-   bx(s.x-0.1,0.03,s.z,0.9,0.015,0.9,W.aboard?[0.3,1,0.5]:[1,0.25,0.25],true);}
-  const b=g.jetBody;bx(b.x1+4.2,0.35,b.cz,1.4,0.6,1.0,[0.95,0.75,0.1]);bx(b.x1+3.2,0.25,b.cz,1.2,0.04,0.06,[0.1,0.1,0.12]);}
+   bx(s.x,0.03,s.z,0.9,0.015,0.9,W.aboard?[0.3,1,0.5]:[1,0.25,0.25],true);}
+  const b=g.jetBody;bx(b.x1+2.4,0.35,b.cz,1.4,0.6,1.0,[0.95,0.75,0.1]);bx(b.x1+1.4,0.25,b.cz,1.2,0.04,0.06,[0.1,0.1,0.12]);}
  if(g.sid==='jet'&&g.jetBody){drawJet(B,g,g.jetBody,false);const J=g.jet;if(J&&J.valve&&!J.boom){const v=J.valve,ready=g.boss&&!g.boss.alive&&!(J.fuse>0);bx(v.x,0.5,v.z,0.6,1.0,0.5,[0.85,0.2,0.15]);bx(v.x,1.05,v.z,0.3,0.06,0.3,[0.1,0.1,0.12]);
    bx(v.x,1.15,v.z,0.36,0.08,0.08,ready?[1,0.85,0.2]:[0.4,0.32,0.1],ready&&Math.sin(T*8)>0);if(J.fuse>0)bx(v.x,0.02,v.z,1.2+0.2*Math.sin(T*6),0.01,1.2,[0.5,0.42,0.18]);}}
  if(g.sid==='apron'){for(let k=0;k<8;k++)bx(6+k*4.2,0.02,g.H-8.5,1.8,0.01,0.16,[1,0.85,0.2]);}}

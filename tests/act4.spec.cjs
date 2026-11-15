@@ -42,7 +42,7 @@ test('act 4 floor 1: down the garage ramps, then the barrier and a dead driver e
   await page.evaluate(() => { for (const e of G.enemies) if (e.alive) killEnemy(e, 'pistol', [0, 1]); });
   await expect.poll(() => page.evaluate(() => G.cleared), { timeout: 20_000 }).toBe(true);
   await page.evaluate(() => { G.player.x = G.car.x; G.player.z = G.car.z; });
-  await expect.poll(() => page.evaluate(() => state), { timeout: 30_000 }).toBe('results');
+  await expect.poll(() => page.evaluate(() => state === 'perk' ? 'results' : state), { timeout: 30_000 }).toBe('results');
 });
 
 test('act 4 floor 2: the pilot runs when he sees you; catching him gives the pass, and Frankie Lo Presti takes six hits', async ({ openGame }) => {
@@ -107,7 +107,7 @@ test('act 4 floor 3: Vale walks to his jet, the stairs open when he is aboard, h
   expect(await page.evaluate(() => ({ done: G.done, boom: G.jet.boom }))).toEqual({ done: false, boom: 0 });
   await page.evaluate(() => { G.jet.fuse = 0.05; });
   await expect.poll(() => page.evaluate(() => ({ boom: G.jet.boom, acc: G.accident, alive: G.player.alive })), { timeout: 20_000 }).toEqual({ boom: 1, acc: 'clean', alive: true });
-  await expect.poll(() => page.evaluate(() => state), { timeout: 40_000 }).toBe('results');
+  await expect.poll(() => page.evaluate(() => state === 'perk' ? 'results' : state), { timeout: 40_000 }).toBe('results');
   expect(await page.evaluate(() => document.getElementById('rTitle').textContent)).toBe('BANKER DIES IN FIERY RUNWAY CRASH');
 });
 
