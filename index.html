@@ -295,6 +295,7 @@ const TRS=(x,y,z,ry,sx,sy,sz)=>A.mul(A.mul(A.T(x,y,z),A.RY(ry)),A.S(sx,sy,sz));
 <script src="streets.js"></script>
 <script src="act1.js"></script>
 <script src="marina.js"></script>
+<script src="act3.js"></script>
 <script src="upstairs.js"></script>
 <script src="mansion.js"></script>
 <script src="slap.js"></script>
@@ -1013,7 +1014,7 @@ function makeEnemy(g,def,i,k,boss,cx,cz,a){const L0=boss?(def.boss?def.boss.look
  const melee=!k||WD[k].melee;e.state=Math.random()<(melee?0.6:0.3)?'patrol':'idle';e.pa=e.a;e.ta=e.a;e.turnT=rnd(1,4);e.pauseT=0;e.react=0;e.wind=0;e.id=g.enemies.length;e.pers=pick(['rush','careful','flank','flank']);e.seeT=99;e.lkx=cx;e.lkz=cz;e.burst=0;e.searchT=0;g.enemies.push(e);return e;}
 function makeItem(g,t,cx,cz){const it={x:cx,z:cz,type:t,ammo:WD[t].ammo||0,vx:0,vz:0,rot:rnd(0,TAU),flying:false,fresh:true,flyT:0};g.items.push(it);return it;}
 function furnBox(B,m,c,uv){B.box(m,c,false,uv);}
-function buildFurniture(B,g,x,z,f){const cx=x+0.5,cz=z+0.5,W=g.W;const same=(ox,oz)=>g.furn[(z+oz)*W+x+ox]===f;
+function buildFurniture(B,g,x,z,f){if(act3Furn(B,g,x,z,f))return;const cx=x+0.5,cz=z+0.5,W=g.W;const same=(ox,oz)=>g.furn[(z+oz)*W+x+ox]===f;
  const wallDir=()=>{for(const [ox,oz,a] of [[0,-1,0],[0,1,Math.PI],[-1,0,Math.PI/2],[1,0,-Math.PI/2]])if(isSolid(x+ox,z+oz))return a;return 0;};
  if(f===1){furnBox(B,TRS(cx,0.72,cz,0,0.96,0.07,0.96),[1,1,1],TUV[4]);for(const [ox,oz] of [[-0.4,-0.4],[0.4,-0.4],[-0.4,0.4],[0.4,0.4]])if(!(same(Math.sign(ox),0)&&same(0,Math.sign(oz))))furnBox(B,TRS(cx+ox,0.35,cz+oz,0,0.07,0.7,0.07),hex(0x3a2212));
   if(((x*3+z*5)%4)===0){furnBox(B,TRS(cx+0.15,0.8,cz-0.1,0.3,0.22,0.02,0.3),hex(0xf2efe6));furnBox(B,TRS(cx-0.2,0.8,cz+0.15,0,0.08,0.1,0.08),hex(0x8b2c2c));}}
@@ -1163,7 +1164,9 @@ function endLeave(){const g=G,L=g.leave;if(!L||L.fin)return;L.fin=true;L.hide=tr
 function arriveSfx(){if(typeof AC==='undefined'||!AC||!SET.sound)return;try{const t=AC.currentTime;
  tone(t,2.2,'sawtooth',95,38,0.07,undefined,0.15);tone(t,2.2,'square',48,26,0.04,undefined,0.15);noise(t+1.75,0.45,'bandpass',2600,1400,0.05,undefined,6);}catch(e){}}
 
-function dressStreet(g){if(act1Of(g)){act1Dress(g);marinaDress(g);return;}const W=g.W,H=g.H;streetPlan(g);if(g.arr&&g.arr.type==='alley')dressAlley(g);
+/* Act 3's sets (act3.js) dress after the street kit, which resets the wall overrides they paint */
+function dressStreet(g){dressStreet0(g);act3Dress(g);}
+function dressStreet0(g){if(act1Of(g)){act1Dress(g);marinaDress(g);return;}const W=g.W,H=g.H;streetPlan(g);if(g.arr&&g.arr.type==='alley')dressAlley(g);
  const street=(x,z)=>x>=0&&z>=0&&x<W&&z<H&&!g.solid[z*W+x]&&g.floorT[z*W+x]===7&&!(g.arr&&g.arr.ax&&x>=g.arr.ax[0]&&x<=g.arr.ax[1]&&z>=g.arr.zT-1);
  const occ=(x,z)=>g.rows[z][x]!=='=';
  for(let z=0;z<H;z++)for(let x=0;x<W;x++){if(!street(x,z))continue;
@@ -1199,7 +1202,7 @@ function drawDeco(B,g,d){const cx=d.x+0.5,cz=d.z+0.5;
  else if(d.t==='hydrant'){const z=d.z+0.2;B.box(TRS(cx,0.22,z,0,0.18,0.44,0.18),hex(0xc0202a));B.box(TRS(cx,0.46,z,0,0.13,0.08,0.13),hex(0xd03030));B.box(TRS(cx,0.28,z,0,0.3,0.07,0.07),hex(0xa01a22));}
  else if(d.t==='bags'){for(let i=0;i<3;i++){const u=hsh(d.x,d.z,10+i);B.box(TRS(d.x+0.25+u*0.5,0.17,d.z+0.55+hsh(d.x,d.z,20+i)*0.3,u*3,0.38,0.34,0.34),i===1?hex(0x2a3a2a):hex(0x15151a));}}
  else if(d.t.startsWith('k_'))drawKerbDeco(B,g,d);}
-function clutter(B,g,x,z){if(g.def.hub||g.front&&z>=g.front.zT-1)return;const ch=g.rows[z][x];if(!(ch in FLOORCH)&&ch!=='r')return;if(hsh(x,z,1)>0.14)return;const st=g.floorT[z*g.W+x]===7,out=isOut(g,x,z);
+function clutter(B,g,x,z){if(g.def.hub||g.front&&z>=g.front.zT-1)return;if(act3Clutter(B,g,x,z))return;const ch=g.rows[z][x];if(!(ch in FLOORCH)&&ch!=='r')return;if(hsh(x,z,1)>0.14)return;const st=g.floorT[z*g.W+x]===7,out=isOut(g,x,z);
  const lvl=levelIdx;const pool=st?['can','paper','can','butts']:out?['can','butts','bottle','can','paper']:lvl===1?['bottle','cards','bottle','can','butts','paper','cards']:lvl===2?['cash','paper','bottle','cash','casings','paper']:['bottle','can','paper','pizza','butts','casings','paper'];
  const t=pool[Math.floor(hsh(x,z,2)*pool.length)];const u=x+0.2+hsh(x,z,3)*0.6,v=z+0.2+hsh(x,z,4)*0.6,r=hsh(x,z,5)*TAU;
  if(t==='bottle'){if(hsh(x,z,6)<0.5)B.box(TRS(u,0.09,v,r,0.05,0.18,0.05),hex(0x2f7a3a));else B.box(A.mul(A.mul(A.T(u,0.03,v),A.RY(r)),A.S(0.05,0.05,0.18)),hex(0x8a5a1a));}
@@ -1259,7 +1262,7 @@ function buildStatic(g){const B=g.staticB;B.reset();const W=g.W,H=g.H;
   if(!any){for(const [ox,oz] of [[-1,-1],[1,-1],[-1,1],[1,1]]){const nx=x+ox,nz=z+oz;if(nx>=0&&nz>=0&&nx<W&&nz<H&&!g.solid[nz*W+nx])any=true;}}
   B.room=0;const tt=g.topX&&g.topX[i]||g.topT[i];if(any||tt)B.quad([[x,h,z+1],[x+1,h,z+1],[x+1,h,z],[x,h,z]],0,1,0,tt?TUV[tt]:WUV,tt?(g.glow[i]===2?[0.85,0.95,1.15]:[1,1,1]):top);
  }
- for(const d of g.deco)drawDeco(B,g,d);drawStreetscape(B,g);venueStatic(B,g);drawAct1(B,g);drawMarina(B,g);if(g.def===HUBS.lobby)drawMcDesk(B,g);if(g.def===HUBS.bunker)drawNineFront(B,g);if(g.def.hub==='drive'){drawSign(B,g.car.x,g.car.z-0.47);drawEntrance(B,g.car.x,g.car.z-0.5);drawCineSky(B,g);}
+ for(const d of g.deco)drawDeco(B,g,d);drawStreetscape(B,g);venueStatic(B,g);drawAct1(B,g);drawMarina(B,g);drawAct3(B,g);if(g.def===HUBS.lobby)drawMcDesk(B,g);if(g.def===HUBS.bunker)drawNineFront(B,g);if(g.def.hub==='drive'){drawSign(B,g.car.x,g.car.z-0.47);drawEntrance(B,g.car.x,g.car.z-0.5);drawCineSky(B,g);}
  B.upload(true);}
 function buildRadar(g){const c=document.createElement('canvas');c.width=g.W*4;c.height=g.H*4;const x=c.getContext('2d');
  for(let z=0;z<g.H;z++)for(let xx=0;xx<g.W;xx++){const i=z*g.W+xx;if(g.solid[i]){let edge=false;for(const [a,b] of [[1,0],[-1,0],[0,1],[0,-1]])if(!isSolid(xx+a,z+b))edge=true;if(edge){x.fillStyle='#e07ab4';x.fillRect(xx*4,z*4,4,4);}}
@@ -5061,12 +5064,12 @@ function stageIntro(g){if(act4Intro(g))return true;if(!isTower(g))return false;
  if(isKade(g)){if(g.sid==='site')banner('KADE TOWER','The hoist needs the foreman\'s key. The stairs are open, and they are long.');else if(g.sid==='stair')banner('STEEL STAIRS','Hard hats on every landing.');else{placeStash(g,10);if(stageSeen(g,'stair'))banner('THE TOP FLOOR','You came up the stairs. Kade does not know yet.');else{g.ambush=0.4;banner('THE TOP FLOOR','The hoist doors open. Kade was watching the lift.');}}return true;}
  if(g.sid==='lobby')banner('CORAL TOWER LOBBY','The elevator needs the keycard from the security office. The stairs are open.');
  else if(g.sid==='stair')banner('STAIRWELL','The service level is above you. One guard per landing.');
- else{placeStash(g,2);if(stageSeen(g,'stair'))banner('THE PENTHOUSE','You came in through the kitchen. Nobody saw you.');else{g.ambush=0.4;banner('THE PENTHOUSE','The doors open. They were waiting.');}}
+ else{placeStash(g,2);if(stageSeen(g,'stair'))banner('THE PENTHOUSE','The back stairs come up in the bedroom. Nobody saw you.');else{g.ambush=0.4;banner('THE PENTHOUSE','The doors open. They were waiting.');}}
  return true;}
 /* Kade Tower top floor: a crane drops a load down a red lane (it crushes the player and any hard hat in it), and at half health Kade calls three more hard hats up the hoist */
 /* KADE'S SECOND ACT: a yellow crane console in the top floor's corner. Grab it (CRANE on touch) and the next load drops down Kade's
    lane instead of yours: a yellow lane, and if he is still in it when it lands he takes a third of his health. 12 s cooldown. */
-const craneLeverAt=g=>({x:2.5,z:2.5});
+const craneLeverAt=g=>({x:2.5,z:g.H-2.5}); /* bottom-left corner: the stairs come up in the top-left one */
 function craneLever(p){const g=G;if(!isKade(g)||g.sid!=='pent'||!g.boss||!g.boss.alive)return false;const L=craneLeverAt(g);if(Math.hypot(p.x-L.x,p.z-L.z)>1.4)return false;
  if(g.leverT>0){popup(L.x,L.z,'CRANE RESETTING','#ffd36b');return true;}const c=g.crane||(g.crane={t:3,ph:0,x:g.W/2,w:2.4});
  g.bossSeen=true;c.ph=1;c.t=1.1;c.x=clamp(g.boss.x,3,g.W-4);c.mine=1;g.leverT=12;sfx('blip');banner('CRANE OVERRIDE','The load is coming down on Kade');return true;}
@@ -5113,7 +5116,9 @@ function drawStage(B,g){drawAct4(B,g);if((isGarage(g)||isHangar(g))&&g.stageRun)
  for(const s of g.stageRun.describe(g.sid).stairs){const lock=stageLocked(g,s),x=s.at[0],z=s.at[1];
   if(s.id==='elev')bx(x,0.03,z,0.9,0.015,0.9,lock?[1,0.25,0.25]:[0.3,1,0.5],true);else drawStairs(B,g,x,z);
   if(s.id==='elev'){bx(x,0.95,z-0.44,3.2,1.9,0.08,steel);bx(x-1.7,1.0,z-0.42,0.12,2.0,0.12,brass);bx(x+1.7,1.0,z-0.42,0.12,2.0,0.12,brass);bx(x,2.05,z-0.4,0.5,0.12,0.06,lock?[1,0.2,0.2]:[0.3,1,0.5],true);}}
- {const ar=g.stageRun.describe(g.sid).arrivals;for(const k of ['bottom','stairs'])if(ar&&ar[k])drawStairsDown(B,g,ar[k].at[0],ar[k].at[1]);}
+ {const ar=g.stageRun.describe(g.sid).arrivals;for(const k of ['bottom','stairs'])if(ar&&ar[k])drawStairsDown(B,g,ar[k].at[0],ar[k].at[1]);
+  /* the lift you came up in: its doors stand in the top wall right where the lift is on the floor below */
+  if(ar&&ar.elev){const x=ar.elev.at[0],zw=Math.floor(ar.elev.at[1]);bx(x,0.95,zw+0.04,1.5,1.9,0.06,steel);bx(x,0.95,zw+0.075,0.02,1.86,0.02,[0.3,0.32,0.36]);bx(x-0.8,1.0,zw+0.06,0.1,2.0,0.1,brass);bx(x+0.8,1.0,zw+0.06,0.1,2.0,0.1,brass);bx(x,2.0,zw+0.06,1.7,0.1,0.1,brass);bx(x,2.12,zw+0.09,0.4,0.1,0.04,[0.3,1,0.5],true);bx(x,0.012,zw+0.45,1.4,0.012,0.7,[0.24,0.24,0.28]);}}
  if(g.crane&&g.crane.ph>0){const c=g.crane;bx(c.x,0.04,g.H/2,c.w,0.02,g.H-3,c.mine?[1,0.8,0.2]:[1,0.15,0.15],c.ph===2||Math.sin(g.T*20)>0);if(c.ph===2)bx(c.x,0.8,g.H/2,c.w*0.9,1.6,g.H-4,[0.45,0.4,0.2]);}
  if(isKade(g)&&g.sid==='pent'){const L=craneLeverAt(g),ready=!(g.leverT>0);bx(L.x,0.55,L.z,0.5,1.1,0.4,[0.95,0.75,0.1]);bx(L.x,1.12,L.z+0.05,0.3,0.06,0.3,[0.1,0.1,0.12]);bx(L.x,1.2,L.z+0.05,0.16,0.12,0.16,ready?[1,0.15,0.15]:[0.35,0.1,0.1],ready&&Math.sin(g.T*8)>0);}
  if(g.sid==='pent'){const c=g.car;bx(c.x+0.5,0.95,c.z+0.55,2.0,1.9,0.08,steel);bx(c.x-0.5,1.0,c.z+0.5,0.12,2.0,0.12,brass);bx(c.x+1.5,1.0,c.z+0.5,0.12,2.0,0.12,brass);bx(c.x+0.5,2.05,c.z+0.5,0.5,0.12,0.06,g.cleared?[0.3,1,0.5]:[1,0.3,0.3],true);}
@@ -5147,8 +5152,10 @@ function stageStairs(g){
   /* a weapon still in the air cannot be saved with the floor: wait the moment it takes to land. A cash lure is simply left behind. */
   if(g.items.some(it=>it.flying&&it.flyT<=0.7))return false;g.cash=[];
   const r=myProg().run,m=MISSION,climb=s.id!=='elev'&&!window.NOCLIMB;state='stagefade';
-  const accepted=fadeTo(()=>{const back=()=>{g.climb=null;g.cam.lift=0;g.player.y=0;g.player.vx=g.player.vz=0;};if(G!==g||MISSION!==m||myProg().run!==r){back();return;}if(!stageCanLeave(g)){back();state='play';return;}back();
-   enterStage(s.to,s.arrive);if(G===g)state='play';else if(climb)climbArrive(G,s);},climb?{climb:true,ms:800}:undefined);
+  /* a refused change (the fight flared up mid-fade, or the next floor would not build) lets go of the latch, so standing on the stairs
+     tries again instead of making you step off and back on */
+  const accepted=fadeTo(()=>{const back=()=>{g.climb=null;g.cam.lift=0;g.player.y=0;g.player.vx=g.player.vz=0;};if(G!==g||MISSION!==m||myProg().run!==r){back();return;}if(!stageCanLeave(g)){back();g.stairLatch.delete(s.id);state='play';return;}back();
+   enterStage(s.to,s.arrive);if(G===g){g.stairLatch.delete(s.id);state='play';}else if(climb)climbArrive(G,s);},climb?{climb:true,ms:800}:undefined);
   if(!accepted){state='play';return false;}if(climb)climbStart(g,s);g.stairLatch.add(s.id);return true;
  }return false;
 }

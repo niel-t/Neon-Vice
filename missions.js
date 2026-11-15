@@ -38,14 +38,16 @@ if(typeof LEVELS!=='undefined'){
  const L=LEVELS[2],rows=L.map.slice(),s=rows.findIndex(r=>r[0]==='='),set=(x,z,c)=>{rows[z]=rows[z].slice(0,x)+c+rows[z].slice(x+1);};
  for(let z=s;z<rows.length;z++)rows[z]='#'.repeat(rows[z].length);
  set(11,s-2,'P');set(22,s-1,'C');
+ /* arrivals line up with where you left: the stairs come up in the bedroom's top-left corner, the lift opens in the middle of the top wall */
+ set(4,2,',');set(9,4,'s');set(22,3,'_');set(25,6,'X');set(18,2,'_');set(16,5,'u');
  MISSIONS.c2.stages=['lobby','stair','pent'];MISSIONS.c2.start='lobby';MISSIONS.c2.was='legacy';
  MISSIONS.c2.stageDefs={
   lobby:{id:'lobby',kind:'grid',rev:1,def:{name:'CORAL TOWER LOBBY',front:1,wall:42,floor:41,legend:{'.':{f:41},'e':{f:41},'n':{f:41}},map:["####################################", "#KK.....#p.L....eee.....L.p#......n#", "#.....T.#...rrr....rrr.....#.6.....#", "#...h...#.....*.....*.s....#.......#", "#.......#...KKKKKK.........#...k...#", "#.......#................4.#......p#", "#..T....D..g...............D.......#", "#.1.....#.....b*.....u*....#..g....#", "#L......#pS..............Sp#......L#", "################..##################", "=================P==================", "=================C==================", "====================================", "====================================", "===================================="]},
    stairs:[{id:'elev',to:'pent',at:[18.5,2.5],r:1.2,arrive:'elev',oneWay:true},{id:'up',to:'stair',at:[35.5,2.5],r:0.9,arrive:'bottom',oneWay:true}]},
-  stair:{id:'stair',kind:'grid',rev:1,def:{name:'STAIRWELL AND SERVICE LEVEL',noCar:true,wall:42,floor:41,legend:{'.':{f:41},'n':{f:41}},map:["##########################", "#L.......#.KK...........n#", "#..5.....#...s...T.......#", "#....g...D..........b....#", "#........#...............#", "#...SSS..#...............#", "#........D......k........#", "#........#..2........u...#", "#.PC....p#..............L#", "##########################"]},
-   arrivals:{bottom:{at:[3.5,9.5]}},stairs:[{id:'up',to:'pent',at:[25.5,2.5],r:0.9,arrive:'stairs',oneWay:true}]},
-  pent:{id:'pent',kind:'grid',rev:1,def:{name:L.name,noCar:true,wall:L.wall,sofa:L.sofa,map:rows},
-   arrivals:{elev:{at:[23.5,12.5]},stairs:{at:[12.5,12.5]}}}
+  stair:{id:'stair',kind:'grid',rev:2,def:{name:'STAIRWELL AND SERVICE LEVEL',noCar:true,wall:42,floor:41,legend:{'.':{f:41},'n':{f:41}},map:["##########################", "#n......L#.KK............#", "#..5.....#...s...T.......#", "#....g...D..........b....#", "#........#...............#", "#...SSS..#...............#", "#........D......k........#", "#........#..2........u...#", "#.PC....p#..............L#", "##########################"]},
+   arrivals:{bottom:{at:[25.5,2.5]}},stairs:[{id:'up',to:'pent',at:[2.5,2.5],r:0.9,arrive:'stairs',oneWay:true}]},
+  pent:{id:'pent',kind:'grid',rev:2,def:{name:L.name,noCar:true,wall:L.wall,sofa:L.sofa,map:rows},
+   arrivals:{elev:{at:[19.5,2.5]},stairs:{at:[6.5,2.5]}}}
  };
 }
 /* c10 Kade Tower (Act 3 finale) has the Coral Tower shape: the site, then the hoist (key from the foreman) or the steel stairs, then the top
@@ -57,10 +59,10 @@ if(typeof LEVELS!=='undefined'&&LEVELS[10]){
  MISSIONS.c10.stageDefs={
   site:{id:'site',kind:'grid',rev:1,def:{name:'KADE TOWER: SITE GATE',front:1,hardhat:true,wall:6,legend:{'e':{f:1},'n':{f:1}},map:["####################################", "#.......#.......eee........#......n#", "#.KK..4.#.b..............b.#.......#", "#.......#..FF.s.......FF...#..x..s.#", "#....T..#..........x.......#.......#", "#...h...#6...Z.......Z.....#.......#", "#.......D...s.F.........F..D..g....#", "#.b...K.#.F....u....F..g...#....b..#", "#.......#.........2........#.5.....#", "###..###########..##################", "============P=======================", "=======================C============", "====================================", "====================================", "===================================="]},
    stairs:[{id:'elev',to:'pent',at:[18.5,2.5],r:1.2,arrive:'elev',oneWay:true},{id:'up',to:'stair',at:[35.5,2.5],r:0.9,arrive:'bottom',oneWay:true}]},
-  stair:{id:'stair',kind:'grid',rev:1,def:{name:'KADE TOWER: STEEL STAIRS',noCar:true,hardhat:true,wall:6,legend:{'n':{f:1}},map:["##########################", "#KK......#..KK..........n#", "#.4......#....2..Z.......#", "#.b..s...D............x..#", "#........#.....g.........#", "#..FFF...#...............#", "#........D........b......#", "#....x...#..s........u...#", "#.PC.....#...............#", "##########################"]},
-   arrivals:{bottom:{at:[3.5,9.5]}},stairs:[{id:'up',to:'pent',at:[25.5,2.5],r:0.9,arrive:'stairs',oneWay:true}]},
-  pent:{id:'pent',kind:'grid',rev:1,def:{name:K.name,noCar:true,hardhat:true,wall:K.wall,sofa:K.sofa,boss:K.boss,map:K.map},
-   arrivals:{elev:{at:[23.5,12.5]},stairs:{at:[12.5,12.5]}}}
+  stair:{id:'stair',kind:'grid',rev:2,def:{name:'KADE TOWER: STEEL STAIRS',noCar:true,hardhat:true,wall:6,legend:{'n':{f:1}},map:["##########################", "#n....KK.#..KK...........#", "#.4......#....2..Z.......#", "#.b..s...D...............#", "#........#.....g.x.......#", "#..FFF...#...............#", "#........D........b......#", "#....x...#..s........u...#", "#.PC.....#...............#", "##########################"]},
+   arrivals:{bottom:{at:[25.5,2.5]}},stairs:[{id:'up',to:'pent',at:[2.5,2.5],r:0.9,arrive:'stairs',oneWay:true}]},
+  pent:{id:'pent',kind:'grid',rev:2,def:{name:K.name,noCar:true,hardhat:true,wall:K.wall,sofa:K.sofa,boss:K.boss,map:K.map},
+   arrivals:{elev:{at:[18.5,2.5]},stairs:{at:[3.5,2.5]}}}
  };
 }
 /* Act 4. c11 Vale Trust Garage: the street ramp (P1), down the ramp to the parking deck (P2), down again to the vault loading dock, where

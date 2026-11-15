@@ -335,3 +335,24 @@ test('stages: Kade Tower stairs and hoist still take you up after an execution',
   // the execution timer used to stop a hair below zero, and any non-zero value blocked every stair and lift
   expect(result).toEqual({ up: { executed: true, timer: 0, sid: 'stair', state: 'play' }, elev: { executed: true, timer: 0, sid: 'pent', state: 'play' } });
 });
+
+test('stages: stairs and lifts bring you out in the same corner of the floor above', async ({ openGame }) => {
+  const page = await openGame();
+  const result = await page.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)), out = [];
+    // where a point sits inside a floor's walls, as a fraction of its width and depth (street rows left out)
+    const frac = (g, x, z) => { const rows = g.def.map, last = rows.findIndex(r => r[0] === '='), w = rows[0].length - 2, h = (last < 0 ? rows.length : last) - 2;
+      return [(x - 2) / (w - 1), (z - 2) / (h - 1)]; };
+    for (const [mission, route] of [['c2', 'up'], ['c2', 'elev'], ['c10', 'up'], ['c10', 'elev']]) {
+      window.NOARRIVE = 1; delete myProg().run; startMission(mission); if (G.arrive) endArrive();
+      const from = G, s = from.stageRun.describe(from.sid).stairs.find(q => q.id === route), f0 = frac(from, ...s.at);
+      for (const e of from.enemies) e.alive = false;
+      from.keycard = true; from.player.x = s.at[0]; from.player.z = s.at[1];
+      for (let i = 0; i < 60 && (G === from || fading || G.climbIn || state !== 'play'); i++) await wait(100);
+      const f1 = frac(G, G.player.x, G.player.z);
+      out.push([mission, route, G.sid, Math.abs(f0[0] - f1[0]) < 0.15 && Math.abs(f0[1] - f1[1]) < 0.22]);
+    }
+    return out;
+  });
+  expect(result).toEqual([['c2', 'up', 'stair', true], ['c2', 'elev', 'pent', true], ['c10', 'up', 'stair', true], ['c10', 'elev', 'pent', true]]);
+});
