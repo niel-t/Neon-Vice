@@ -239,7 +239,7 @@ function drawDog(B,e){const T=G.T,I=B&&B.box&&(B===IBhi||B===IBlo)?B:anBatch(e.x
 /* pets at home, and Pesos on the job where you have to find him: he wanders, sits when he stops (the tiger and the cat lie down),
    looks around, wags and pants */
 const AN_PETK={dog:'mutt',cat:'cat',tigerpet:'tiger'};
-function drawPet(B,q,T){const x=q.x,z=q.z,I=anBatch(x,z),pr=I.r,pt=I.tp,pu=I.uv;I.uv=null;
+function drawPet(B,q,T){if(q.k==='doberman'&&typeof hiDoberman==='function')return hiDoberman(q,T,G&&G.player);const x=q.x,z=q.z,I=anBatch(x,z),pr=I.r,pt=I.tp,pu=I.uv;I.uv=null;
  const sp=AN_SPEC[AN_PETK[q.k]],s=anTrack(q,T,sp?sp.stride:0.12),M=A.mul(A.T(x,0,z),A.RY(q.a||0));
  if(q.k==='iguana')anLizard(I,M,{T,ph:s.ph,v:s.v/0.3,look:s.look});
  else if(sp){const v=s.v/(q.k==='tigerpet'?0.9:0.8);anQuad(I,M,sp,{T,ph:s.ph,v,gait:v>1.6?'trot':'walk',rest:s.rest,restKind:q.k==='dog'?'sit':'lie',look:s.look,tilt:q.k==='dog'?Math.sin(T*0.4)*0.12*s.rest:0,

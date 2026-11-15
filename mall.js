@@ -65,7 +65,7 @@ const MALL_PROPS=[
  {k:'motel',name:'PALM BREEZE MOTEL',price:70000,rent:2500,desc:'Pink stucco, a pool, rooms by the hour or the week.'},
  {k:'marina',name:'BISCAYNE MARINA SLIPS',price:150000,rent:5500,desc:'Forty boat slips. The boats come and go at night.'}];
 /* furniture Casa Bonita doesn't stock: animals, people. Those stay on the home phone */
-const MALL_NOFURN=['girls','guards','dog','cat','iguana','tigerpet'];
+const MALL_NOFURN=['girls','guards','dog','cat','iguana','tigerpet','doberman'];
 let mallSayTxt='';
 function mallProps(p){return p.props||(p.props={});}
 function mallRent(p){const o=mallProps(p);let r=0;for(const q of MALL_PROPS)if(o[q.k])r+=q.rent;if(r){p.wallet+=r;p.rentTot=(p.rentTot||0)+r;}return r;}
@@ -362,7 +362,7 @@ function renderMallShop(msg){const p=myProg(),s=MALL_SHOPS[storeMode],sec=(id,on
   const rent=MALL_PROPS.reduce((a,q)=>a+(pr[q.k]?q.rent:0),0);$('stGoldH').textContent='INVESTMENT PROPERTY · RENT AFTER EVERY JOB'+(rent?' · $'+fmt(rent)+' A JOB · EARNED $'+fmt(p.rentTot||0):'');
   $('stGold').innerHTML=MALL_PROPS.map(q=>mallCard(`data-inv="${q.k}"`,q.name,q.desc+' Rent $'+fmt(q.rent)+' a job.',pr[q.k]?'YOURS · $'+fmt(q.rent)+' A JOB':'BUY $'+fmt(q.price),!!pr[q.k],false,n++)).join('');}
  $('stMsg').textContent=msg||'';const cs=document.querySelectorAll('#sStore .scard');if(storeFocus>=cs.length)storeFocus=0;cs.forEach((b,i)=>b.style.outline=padMode&&i===storeFocus?'3px solid #ffd36b':'');if(padMode&&cs[storeFocus]&&cs[storeFocus].scrollIntoView)cs[storeFocus].scrollIntoView({block:'nearest'});}
-function furnAt(t){const p=myProg();p.furn=p.furn||{};return p.furn[t]||(p.furn[t]={});}
+function furnAt(t){const p=myProg();p.furn=p.furn||{};hiMigrateFurn(p);return p.furn[t]||(p.furn[t]={});}
 function mallPoor(){sfx('blip');mallSay(pick(MALL_SHOPS[storeMode].poor));return renderStore('Not enough cash. Come back richer.');}
 function buyFurnAt(t,k){const p=myProg(),it=catOf(t).find(q=>q.k===k);if(!it||MALL_NOFURN.includes(k)||!(p.homes||[0]).includes(t))return;const f=furnAt(t);if(f[k])return renderStore('Already delivered.');
  if(p.wallet<it.price)return mallPoor();p.wallet-=it.price;f[k]=1;saveProg();sfx('cash');mallSay(pick(MALL_SHOPS.furn.sold));renderStore('DELIVERED TO '+HOMEDEF[t].name+': '+it.name+'.');}

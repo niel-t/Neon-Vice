@@ -6,7 +6,7 @@ test('animals: every animal draws, animates, and rests when it stops', async ({ 
   const page = await openGame();
   const out = await page.evaluate(() => {
     selIdx = 2; sessionReset(Math.min(JOBS.sel, JOBS.top)); const p = myProg(); arm();
-    p.home = 2; p.homes = [0, 1, 2]; p.furn = { 2: { dog: 1, cat: 1, iguana: 1, tigerpet: 1, tank: 1 } }; loadHub('home2', 'home'); if (G.seq) seqSkip();
+    p.home = 2; p.homes = [0, 1, 2]; p.furn = { 2: { dog: 1, cat: 1, iguana: 1, doberman: 1, tank: 1 } }; loadHub('home2', 'home'); if (G.seq) seqSkip();
     const snap = fn => { IBhi.reset(); IBlo.reset(); dynB.reset(); fn(); const B = IBhi.n ? IBhi : dynB; return { n: IBhi.n + IBlo.n + Math.round(dynB.n / 36), f: Array.from(B.f.slice(0, 2400)) }; };
     const differ = (a, b) => a.f.some((v, i) => Math.abs(v - b.f[i]) > 1e-4);
     const o = { pets: {} };
@@ -27,11 +27,11 @@ test('animals: every animal draws, animates, and rests when it stops', async ({ 
     o.fish = snap(() => drawHomeFish(1, 2, 0, 1.4, 0, 0.5, 1.2)).n;
     return o;
   });
-  for (const k of ['dog', 'cat', 'iguana', 'tigerpet']) {
+  for (const k of ['dog', 'cat', 'iguana', 'doberman']) {
     expect(out.pets[k].n).toBeGreaterThan(25);
     expect(out.pets[k].walks).toBe(true);
   }
-  for (const k of ['dog', 'cat', 'tigerpet']) expect(out.pets[k].rest).toBeGreaterThan(0.9);
+  for (const k of ['dog', 'cat', 'doberman']) expect(out.pets[k].rest).toBeGreaterThan(0.9);
   expect(out.dog.n).toBeGreaterThan(40);
   expect(out.dog.runs).toBe(true);
   expect(out.deadDog).toBeGreaterThan(40);
@@ -41,5 +41,5 @@ test('animals: every animal draws, animates, and rests when it stops', async ({ 
   expect(out.fish).toBeGreaterThan(40);
   // nothing explodes in size: keep each animal cheap enough for phones
   expect(out.dog.n).toBeLessThan(140);
-  expect(out.pets.tigerpet.n).toBeLessThan(220);
+  expect(out.pets.doberman.n).toBeLessThan(220);
 });

@@ -250,7 +250,7 @@ function mvBaseSetup(g){const W=g.W,H=g.H;
 function mansionExtras(g){const f=homeFurn(),S=g.slots,fl=g.mfl,sp=g.spawned;g.fixK=-1;
  if(fl===0){
   if(f.guards&&!sp.guards){sp.guards=1;(g.spots.g||[]).forEach(q=>{const n=mvChar(g,'bguard',q.x,q.z,BGLOOK(2),0);n.a=n.a0=q.z>40?Math.PI:0;});}
-  if(f.tigerpet&&!sp.tigerpet&&S.t){sp.tigerpet=1;g.pets.push({k:'tigerpet',x:S.t.x+0.6,z:S.t.z-0.4,a:0,tx:S.t.x,tz:S.t.z,wait:1,step:0});}
+  if(f.doberman&&!sp.doberman&&S.t){sp.doberman=1;g.pets.push({k:'doberman',x:S.t.x+0.6,z:S.t.z-0.4,a:0,tx:S.t.x,tz:S.t.z,wait:1,step:0,post:{x:S.t.x+0.6,z:S.t.z-0.4}});}
   if(f.cabana&&!g.cabLit){g.cabLit=1;mvSolid(g,31.2,10.2,34.0,11.4);g.lights.push({x:32.6,y:1.8,z:11,r:4.5,c:[1.2,0.7,0.35]});}
   if(f.court&&!g.courtLit){g.courtLit=1;for(const [x,z] of [[36.5,5.5],[46.5,5.5],[36.5,21.5],[46.5,21.5]])g.lights.push({x,y:3.2,z,r:9,c:[1.0,1.0,0.95]});}}
  if(fl===-1&&f.dj&&!sp.dj){sp.dj=1;mvSolid(g,18.0,6.0,20.0,7.2);g.mansion.dj=mvChar(g,'mdj',19.0,5.6,mvLooks.dj(),0);g.lights.push({x:19,y:2,z:6.6,r:4,c:[0.3,1.0,1.3]});}
@@ -374,13 +374,8 @@ function mvGroundStatic(B,g){const bx=mvBx(B),f=homeFurn(),M=TUV[63],T0=0;
  bx(6,0.18,8,0.9,0.36,0.9,[0.2,0.2,0.22],false,Math.PI/4);bx(6,0.37,8,0.7,0.02,0.7,[0.1,0.08,0.06],false,Math.PI/4);
  for(const [x,z,s,l] of [[2.4,5.6,1.15,0.2],[2.4,11.6,1.0,-0.15],[10.6,11.8,0.95,0.1],[33.4,5.6,1.1,-0.2],[11.0,5.2,0.85,0.25],[29.0,11.9,0.9,0.15]])if(!(f.cabana&&x>30&&z>9))mvPalm(B,x,z,s,l);
  for(const x of [5.0,13.0,27.0,34.0]){bx(x,0.5,13.4,0.05,1.0,0.05,[0.4,0.28,0.15]);bx(x,1.02,13.4,0.12,0.12,0.12,[0.3,0.2,0.1]);}
- if(f.cabana){for(const [x,z] of [[31.3,10.15],[33.9,10.15],[31.3,12.0],[33.9,12.0]])bx(x,0.75,z,0.07,1.5,0.07,MV_WH);
-  for(let i=0;i<7;i++)bx(31.1+i*0.43+0.21,1.52,11.08,0.43,0.04,2.1,i%2?MV_WH:MV_PINK);bx(32.6,1.55,11.08,3.1,0.03,2.2,MV_WH);
-  bx(32.6,0.48,10.75,2.6,0.96,0.5,[0.12,0.1,0.13]);bx(32.6,0.97,10.75,2.7,0.04,0.6,MV_WH,false,0,M);bx(32.6,0.85,10.49,2.5,0.04,0.02,MV_CYAN,true);
-  for(const x of [31.6,32.6,33.6])bx(x,0.32,10.2,0.28,0.04,0.28,MV_PINK);mallWord(B,'CABANA',32.6,1.62,10.0,0.14,MV_PINK);}
- if(f.yacht){const yx=42,yz=2.3;bx(yx,0.25,yz,10.2,0.5,1.9,MV_WH);bx(yx+5.3,0.25,yz,0.9,0.5,1.3,MV_WH,false,0);bx(yx,0.32,yz+0.96,10.2,0.08,0.02,[0.1,0.3,0.7]);
-  bx(yx-0.5,0.72,yz,6.0,0.45,1.5,MV_WH);bx(yx-0.5,0.74,yz+0.76,5.6,0.2,0.02,[0.06,0.08,0.12]);bx(yx-1.0,1.12,yz,3.6,0.36,1.2,MV_WH);bx(yx-1.0,1.14,yz+0.61,3.2,0.16,0.02,[0.06,0.08,0.12]);
-  bx(yx-1.6,1.5,yz,0.12,0.5,0.9,MV_WH);bx(yx-1.6,1.76,yz,0.6,0.05,0.1,[0.2,0.2,0.22]);bx(yx-3.6,0.64,yz,1.6,0.25,0.8,[0.95,0.95,0.92]);mallWord(B,'SOLANA',yx+2.2,0.12,yz+0.97,0.18,GOLD);}
+ if(f.cabana)hiCabana(B);
+ if(f.yacht)hiYacht(B);
  /* ===== the tennis court: lines, net, chain-link fence, the umpire's chair and a bench ===== */
  bx(42,0.004,14,12.8,0.006,18.8,[0.18,0.42,0.32]);bx(42,0.007,14,8.4,0.006,16.4,[0.16,0.32,0.62]);const LN=[0.96,0.96,0.96];for(const z of [6,22])bx(42,0.012,z,8.06,0.01,0.07,LN);for(const x of [38,46,39,45])bx(x,0.012,14,0.06,0.01,16,LN);
  for(const z of [10,18])bx(42,0.012,z,6,0.01,0.06,LN);bx(42,0.012,14,0.06,0.01,8,LN);for(const z of [6.15,21.85])bx(42,0.012,z,0.06,0.01,0.3,LN);
@@ -391,7 +386,7 @@ function mvGroundStatic(B,g){const bx=mvBx(B),f=homeFurn(),M=TUV[63],T0=0;
  for(const x of [41.0,43.0])bx(x,0.9,23.5,0.08,1.8,0.08,MV_WH);bx(42,1.78,23.5,2.1,0.06,0.08,MV_PINK,true);
  bx(37.0,0.55,14,0.5,0.06,0.5,MV_WH);for(const [lx,lz] of [[-0.2,-0.2],[0.2,-0.2],[-0.2,0.2],[0.2,0.2]])bx(37.0+lx,0.27,14+lz,0.04,0.55,0.04,MV_WH);bx(37.0,0.75,14,0.45,0.4,0.06,MV_WH,false,Math.PI/2);
  bx(36.5,0.22,10.5,0.4,0.06,1.6,MV_WOOD);bx(36.5,0.11,10.5,0.3,0.22,1.4,[0.3,0.3,0.32]);bx(36.5,0.16,17.5,0.4,0.3,0.5,[0.2,0.5,0.85]);bx(36.5,0.32,17.5,0.42,0.04,0.52,MV_WH);
- if(f.court)for(const [x,z] of [[35.9,4.9],[48.1,4.9],[35.9,23.1],[48.1,23.1]]){bx(x,1.6,z,0.12,3.2,0.12,[0.3,0.3,0.33]);bx(x,3.25,z,0.8,0.25,0.4,[0.2,0.2,0.22]);bx(x,3.2,z+(z<10?0.21:-0.21),0.7,0.18,0.02,[1.3,1.3,1.2],true);}
+ if(f.court)hiFlood(B);
  /* ===== the house: neon on the facade, pilasters, a portico over the front doors, the steps ===== */
  for(let x=5;x<=33;x++){const ch=MV_G[30][x-1];if(ch==='#'){bx(x+0.5,1.19,31.5,1.12,0.08,1.12,MV_WH);bx(x+0.5,0.58,32.03,0.05,0.96,0.02,MV_PINK,true);}}
  bx(19.5,1.17,32.04,29,0.035,0.02,MV_CYAN,true);bx(19.5,1.17,13.97,29,0.035,0.02,MV_PINK,true);
@@ -454,8 +449,7 @@ function mvGroundStatic(B,g){const bx=mvBx(B),f=homeFurn(),M=TUV[63],T0=0;
  const FX=20,FZ=38.5;for(let i=0;i<8;i++){const a=i*TAU/8+TAU/16;bx(FX+Math.sin(a)*1.85,0.22,FZ+Math.cos(a)*1.85,1.55,0.44,0.26,MV_WH,false,a,M);bx(FX+Math.sin(a)*2.0,0.45,FZ+Math.cos(a)*2.0,1.45,0.02,0.04,MV_PINK,true,a);}
  bx(FX,0.32,FZ,3.4,0.02,3.4,[0.25,0.6,0.85],false,Math.PI/8);bx(FX,0.322,FZ,3.4,0.02,3.4,[0.25,0.6,0.85]);
  bx(FX,0.6,FZ,0.4,1.0,0.4,MV_WH,false,0,M);for(const r of [0,Math.PI/4])bx(FX,1.06,FZ,1.3,0.1,1.3,MV_WH,false,r,M);bx(FX,1.4,FZ,0.22,0.6,0.22,MV_WH,false,0,M);for(const r of [0,Math.PI/4])bx(FX,1.62,FZ,0.66,0.07,0.66,MV_WH,false,r,M);
- if(f.statue){const P=(x,y,z,sx,sy,sz,rz,rx)=>B.box(A.mul(A.T(FX+x,1.66+y,FZ+z),A.mul(A.RZ(rz||0),A.mul(A.RX(rx||0),A.S(sx,sy,sz)))),GOLD,true);
-  P(0.05,0.28,0,0.025,0.56,0.025,0.1);P(-0.05,0.3,0,0.025,0.6,0.025,-0.25);P(0,0.68,0,0.42,0.22,0.24,0.25);P(-0.2,0.66,0,0.2,0.1,0.18,0.6);P(0.2,0.95,0,0.06,0.42,0.06,-0.35);P(0.28,1.18,0,0.16,0.09,0.1);P(0.38,1.14,0,0.12,0.04,0.05,-0.6);}
+ if(f.statue)hiFlamingo(B,FX,FZ);
  for(let i=0;i<10;i++){const a=i*TAU/10+TAU/20;if(Math.abs(Math.cos(a))>0.95)continue;const x=FX+Math.sin(a)*5.8/0.82,z=FZ+Math.cos(a)*5.8;bx(x,0.7,z,0.06,1.4,0.06,[0.16,0.14,0.18]);bx(x,1.42,z,0.2,0.2,0.2,[1.2,0.95,0.6],true);bx(x,0.02,z,0.24,0.04,0.24,GOLD);}
  for(const [x,z,s,l] of [[13.0,34.2,1.0,0.15],[27.0,34.2,1.0,-0.15],[12.2,40.8,1.1,0.1],[27.8,40.8,1.05,-0.1],[15.8,43.0,0.9,0],[24.2,43.0,0.9,0],[3.5,34.5,1.2,0.2],[3.5,40.5,1.0,-0.1],[8.0,37.5,1.15,0.1],[32.5,36.0,1.1,-0.2],[38.0,29.5,1.2,0.1],[44.0,34.0,1.0,-0.1],[40.0,40.5,1.15,0.2],[45.5,26.5,0.95,0],[3.5,27.0,1.1,0.15],[3.5,18.0,1.0,-0.1],[34.0,27.0,1.05,0.1]])mvPalm(B,x,z,s,l);
  for(const x of [17.6,22.4]){bx(x,1.0,44.5,1.0,2.0,1.0,MV_WH,false,0,M);bx(x,2.05,44.5,1.1,0.1,1.1,GOLD);bx(x,2.28,44.5,0.34,0.34,0.34,GOLD,false,Math.PI/4);bx(x,1.5,44.0,0.5,0.5,0.02,[0.08,0.03,0.1]);mallWord(B,'VS',x,1.36,43.98,0.24,MV_PINK);}
@@ -605,8 +599,7 @@ function mvBaseStatic(B,g){const bx=mvBx(B),f=homeFurn(),M=TUV[63],LT=[0.9,0.9,0
  bx(15.6,0.22,16.6,0.9,0.44,0.6,[0.85,0.2,0.55]);bx(15.95,0.48,16.6,0.2,0.5,0.6,[0.85,0.2,0.55]);
  mallSign(B,14.6,1.62,17.7,['MAMA ROSA','HIRE A GIRL'],MV_PINK,0.13);
  /* ===== the DJ booth (an upgrade) ===== */
- if(f.dj){bx(19,0.45,6.6,2.0,0.9,1.2,MV_BLK,false,0,M);bx(19,0.91,6.6,2.04,0.03,1.24,GOLD);bx(19,0.45,7.21,1.9,0.8,0.02,[0.06,0.02,0.1]);for(const x of [18.5,19.5]){bx(x,0.94,6.5,0.5,0.03,0.5,[0.12,0.12,0.14]);}bx(19,0.96,6.8,0.4,0.04,0.2,[0.2,0.2,0.22]);
-  for(const x of [17.7,20.3]){bx(x,0.45,6.6,0.5,0.9,0.5,[0.1,0.1,0.12]);bx(x,0.6,6.86,0.3,0.3,0.02,[0.25,0.25,0.28]);bx(x,0.25,6.86,0.2,0.2,0.02,[0.25,0.25,0.28]);}}
+ if(f.dj)hiDJ(B);
  /* ===== the arch out to the cellar hall, the club wall's neon ===== */
  for(const x of [11.05,12.95]){bx(x,0.6,19.0,0.18,1.2,0.3,GOLD);bx(x,0.6,18.96,0.06,1.0,0.32,MV_PINK,true);}bx(12,1.2,19.0,2.2,0.12,0.32,GOLD);
  bx(12,0.02,1.95,20,0.04,0.04,MV_PINK,true);bx(2.04,1.1,10,0.04,0.04,16,MV_CYAN,true);
@@ -642,7 +635,7 @@ function mvBaseDyn(D,g){const T=g.T,bx=mvBx(D),M=g.mansion,f=homeFurn();
  const fl=Math.sin(T*23)>0.97?0.4:1;bx(12,0.66,2.11,4.2,0.02,0.01,[0.2*fl,0.05*fl,0.15*fl],true);
  for(let i=0;i<6;i++)for(let j=0;j<5;j++){const k=(Math.floor(T*2.5)+i*3+j*5+((i+j)%2)*7)%6,c=NEON[k%4],on=k<3;if(!on)continue;bx(9.0+i,0.014,8.5+j,0.92,0.006,0.92,c.map(v=>v*0.75),true);}
  drawDisco(D,g);for(let i=0;i<8;i++){const an=T*1.1+i*TAU/8,rr=2.2+Math.sin(T*0.7+i)*0.8;bx(11.5+Math.cos(an)*rr,0.016,10.5+Math.sin(an)*rr,0.3,0.004,0.3,NEON[i%4],true);}
- if(f.dj){for(const x of [18.5,19.5])D.box(A.mul(A.T(x,0.96,6.5),A.mul(A.RY(T*4*(x<19?1:-1)),A.S(0.42,0.01,0.42))),[0.08,0.08,0.09]);for(let i=0;i<8;i++){const h=0.06+0.18*Math.abs(Math.sin(T*7+i*1.3));bx(18.3+i*0.2,0.45+h/2-0.3,7.23,0.12,h,0.01,NEON[i%4],true);}}
+ if(f.dj)hiDJDyn(D,T);
  /* the range: paper targets on their carriers, the hit monitor, bullets, flashes */
  const R=g.range,DK=[0.1,0.1,0.12],ST=[0.5,0.5,0.55],RED=[1,0.2,0.25];
  if(R)for(const L of R.lanes){const x=L.x,z=L.z,dn=L.down,hl=L.flash>0?1:0;
