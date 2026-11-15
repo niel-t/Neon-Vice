@@ -134,7 +134,7 @@ function jetSetup(g){const b=a4Body(g),N=a4Cells(g,'N')[0];if(!b)return;g.jetBod
  if(lexFate()==='dead'){for(const [x,z] of [[b.x1-3,b.z0-2],[b.x1-6,b.z1+2]]){const e=makeEnemy(g,g.def,13,'mac10',false,x,z);e.state='idle';}if(typeof buildRadar==='function')buildRadar(g);}}
 function jetTick(dt,g){const J=g.jet,p=g.player,b=g.jetBody,bo=g.boss;if(!J||!b)return;
  if(bo&&bo.alive&&!J.roll&&bo.hp<=bo.maxhp/2){J.roll=1;banner('THE JET IS ROLLING','Vale told the pilot to go. Stay on your feet.');sfx('boss');
-  for(const [x,z] of [[b.x1-2.5,b.cz-0.6],[b.x1-2.5,b.cz+0.6]]){if(blk(g,x,z))continue;const e=makeEnemy(g,g.def,13,'colt45',false,x,z);e.state='chase';e.seeT=0;}if(typeof buildRadar==='function')buildRadar(g);
+  for(const [x,z] of [[b.x1-3.5,b.cz-0.6],[b.x1-3.5,b.cz+0.6]]){if(blk(g,x,z))continue;const e=makeEnemy(g,g.def,13,'colt45',false,x,z);e.state='chase';e.seeT=0;}if(typeof buildRadar==='function')buildRadar(g);
   if(lexFate()==='spared')a4Later(g,1500,()=>popup(p.x,p.z-0.5,'LEX: "HE CAN\'T SHOOT WHILE IT MOVES. RUSH HIM!"','#7dff9a'));}
  if(J.roll&&!J.boom&&bo&&bo.alive){J.rollT-=dt;if(J.rollT<=0){J.rollT=rnd(1.6,2.8);shake(0.3);rumble(0.4,0.4,200);}
   const inJet=q=>q.x>b.x0&&q.x<b.x1&&q.z>b.z0&&q.z<b.z1;if(p.alive&&inJet(p)&&!blk(g,p.x-dt*0.55,p.z))p.x-=dt*0.55;
@@ -175,7 +175,7 @@ function drawAirstairs(bx,x,z,d,c){const n=7,len=2.0,top=1.0,rail=[0.7,0.72,0.76
  for(let k=0;k<n;k++){const f=(k+0.5)/n,y=top*(1-f),zz=z+d*f*len;bx(x,y,zz,0.78,0.05,len/n+0.02,c);
   for(const sd of [-1,1])bx(x+sd*0.42,y+0.45,zz,0.04,0.04,len/n+0.02,rail);if(k%2===0)for(const sd of [-1,1])bx(x+sd*0.42,y+0.22,zz,0.03,0.45,0.03,rail);}
  for(const sd of [-1,1])bx(x+sd*0.38,top*0.5,z+d*len*0.5,0.05,0.05,len*1.02,[0.55,0.57,0.6]);}
-function drawJet(B,g,b,roof){const T=g.T||0,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,ry||0,sx,sy,sz),c,!!em),wh=[0.95,0.95,0.96],gr=[0.75,0.77,0.8];
+function drawJet(B,g,b,roof){const T=g.T||0,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,ry||0,sx,sy,sz),c,!!em),wh=[0.95,0.95,0.96],gr=[0.75,0.77,0.8],st=[0.12,0.2,0.42];
  const boom=g.jet&&g.jet.boom,sh=boom?[0.12,0.1,0.1]:wh,sg=boom?[0.1,0.09,0.09]:gr,win=boom?[0.06,0.05,0.05]:[0.1,0.14,0.22],H=1.15,t=0.1,S=jetSkin(g,b);
  /* the visible hull is one cell in from the outline */
  const X0=b.x0+1,X1=b.x1-1,Z0=b.z0+1,Z1=b.z1-1,L=X1-X0,cz=b.cz,w=Z1-Z0;
@@ -187,13 +187,57 @@ function drawJet(B,g,b,roof){const T=g.T||0,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(T
  else for(const q of S.e){if(q.hz){const z=q.z+q.o*t/2,len=q.x1-q.x0;bx((q.x0+q.x1)/2,H/2,z,len,H,t,sh);for(const sd of [-1,1])winAt(q.x0,len,z+sd*(t/2+0.006));}
   else{const x=q.x+q.o*t/2;bx(x,H/2,(q.z0+q.z1)/2,t,H,q.z1-q.z0,sh);}}
  for(const d of S.doors)drawAirstairs(bx,d.x,d.z,d.d,boom?sg:[0.88,0.88,0.9]);
- /* nose and tail */
- for(let k=0;k<3;k++)bx(X1+0.3+k*0.45,0.6-k*0.06,cz,0.5,1.1-k*0.28,w*(0.86-k*0.26),sh);bx(X1+0.7,0.95,cz,0.4,0.22,w*0.5,boom?sg:[0.12,0.16,0.26]);
- bx(X0-0.45,0.7,cz,0.9,0.9,w*0.6,sh);bx(X0-0.7,1.8,cz,0.8,1.4,0.1,sh);bx(X0-0.8,2.4,cz,0.6,0.08,2.0,sh);
- /* wings and engines */
- for(const sd of [-1,1]){const wz=sd>0?Z1:Z0,mx=X0+L*0.55;for(let k=0;k<4;k++)bx(mx-k*0.5,0.5,wz+sd*(0.55+k*0.7),1.8-k*0.3,0.05,0.75,sg);bx(mx-1.9,0.55,wz+sd*3.2,0.4,0.35,0.08,sh);
-  bx(X0+0.9,0.95,wz+sd*0.35,1.2,0.45,0.45,sg);bx(X0+1.55,0.95,wz+sd*0.35,0.05,0.4,0.4,[0.08,0.08,0.1]);}
- if(!boom&&(Math.sin(T*3)>0.6))for(const sd of [-1,1])bx(X0+L*0.55-1.9,0.6,(sd>0?Z1:Z0)+sd*3.3,0.1,0.1,0.1,sd>0?[0.2,1,0.3]:[1,0.15,0.15],true);}
+ /* nose: a tapering cone with the cockpit windscreen; tail: tapered cone, swept fin and a T-tail */
+ const bm=(x,y,z,ry,rx,sx,sy,sz,c,em,rz)=>B.box(A.mul(A.mul(A.mul(A.mul(A.T(x,y,z),A.RY(ry)),A.RX(rx)),A.RZ(rz||0)),A.S(sx,sy,sz)),c,!!em);
+ /* a swept, tapered surface from (x,z) out along side sd: n overlapping boxes turned to the sweep angle, so the edges run straight */
+ const surf=(x,y,z,sd,span,root,tip,sweep,th,dy,col,n)=>{const a=Math.atan2(sweep,span),seg=Math.hypot(span,sweep)/n;
+  for(let k=0;k<n;k++){const f=(k+0.5)/n,c=root+(tip-root)*f;bm(x-sweep*f-c/2,y+dy*f,z+sd*span*f,-sd*a,0,c,th*(1-f*0.4),seg*1.06,col);}};
+ for(let k=0;k<8;k++){const f=(k+0.5)/8,h=1.15*(1-f*f*0.6),ww=w*Math.sqrt(1-f*f*0.92);bx(X1+k*0.2+0.1,0.06+h/2-f*0.04,cz,0.21,h,ww,sh);}
+ for(const sd of [-1,1])bm(X1+0.5,0.98,cz+sd*w*0.2,sd*0.5,0,0.34,0.16,w*0.3,boom?sg:[0.08,0.1,0.16]);
+ for(let k=0;k<8;k++){const f=(k+0.5)/8,h=1.15*(1-f*0.5),ww=w*(1-f*0.72);bx(X0-k*0.22-0.11,0.06+h/2+f*0.3,cz,0.23,h,ww,sh);}
+ /* swept fin and T-tail */
+ bm(X0-0.95,1.75,cz,0,0,1.1,1.25,0.09,sh,false,0.45);bm(X0-0.75,1.15,cz,0,0,1.5,0.3,0.12,sh);
+ for(const sd of [-1,1])surf(X0-1.05,2.36,cz,sd,1.3,0.75,0.35,0.45,0.06,0,sh,3);
+ /* wings: low, swept back and tapered, with a winglet at each tip, a flap line, a fairing at the root and the nav lights */
+ const span=3.3,root=2.3,tip=0.7,sweep=1.5,xr=X0+L*0.6;
+ for(const sd of [-1,1]){const wz=sd>0?Z1:Z0;
+  surf(xr,0.42,wz,sd,span,root,tip,sweep,0.08,0.1,sg,4);surf(xr-root+0.32,0.47,wz,sd,span*0.62,0.42,0.3,sweep*0.62*(1-0.15),0.02,0.06,boom?sg:[0.6,0.62,0.66],3);
+  const tz=wz+sd*span,tle=xr-sweep;bm(tle-tip/2-0.08,0.8,tz+sd*0.02,0,0,tip*0.85,0.6,0.05,sh,false,0.35);bm(tle-tip/2-0.2,1.09,tz+sd*0.02,0,0,tip*0.5,0.06,0.05,boom?sg:st);
+  bx(xr-root*0.45,0.36,wz+sd*0.18,root*0.95,0.2,0.4,sg);
+  if(!boom&&(Math.sin(T*3)>0.6))bx(tle-0.12,0.55,tz+sd*0.04,0.1,0.1,0.1,sd>0?[0.2,1,0.3]:[1,0.15,0.15],true);
+ /* engines on the rear fuselage: pylon, an eight-sided nacelle, dark intake and exhaust */
+  const ex=X0+0.9,ez=wz+sd*0.62,ey=1.0;bx(ex+0.05,ey,wz+sd*0.22,0.7,0.12,0.4,sg);
+  for(let r=0;r<4;r++)bm(ex,ey,ez,0,r*Math.PI/4,1.55,0.24,0.58,r%2?sg:sh);
+  bm(ex+0.79,ey,ez,0,Math.PI/8,0.02,0.44,0.44,[0.05,0.05,0.07]);bm(ex+0.8,ey,ez,0,0,0.03,0.16,0.16,boom?sg:[0.4,0.42,0.46]);
+  bm(ex-0.8,ey,ez,0,Math.PI/8,0.06,0.36,0.36,[0.12,0.12,0.14]);}
+ if(!roof)drawCabin(B,g,b,bx,bm);}
+/* the cabin, fitted out like a private jet: club seats facing over walnut tables, a leather divan, the bar, the cockpit behind a
+   bulkhead, gold on a pallet in the hold, a runner down the aisle and lights along the ceiling. The seat cells ('k') are solid. */
+function drawCabin(B,g,b,bx,bm){if(g.jet&&g.jet.boom)return;const at=(c,r)=>[b.x0+(c-10)+0.5,b.z0+(r-4)+0.5],T=g.T||0;
+ const lea=[0.86,0.79,0.64],lea2=[0.74,0.66,0.52],wal=[0.36,0.2,0.1],gold=[0.95,0.75,0.25],cream=[0.92,0.88,0.78];
+ const seat=(c,r,d,col)=>{const [x,z]=at(c,r),cl=col||lea;bx(x,0.16,z,0.62,0.3,0.6,[0.25,0.22,0.2]);bx(x+d*0.04,0.36,z,0.58,0.12,0.56,cl);
+  bx(x-d*0.27,0.66,z,0.14,0.62,0.56,cl);bx(x-d*0.3,0.98,z,0.12,0.18,0.34,lea2);for(const sd of [-1,1])bx(x,0.48,z+sd*0.3,0.56,0.12,0.08,lea2);};
+ const table=(c,r)=>{const [x,z]=at(c,r);bx(x,0.3,z,0.1,0.55,0.1,[0.6,0.6,0.62]);bx(x,0.58,z,0.62,0.04,0.66,wal);bx(x,0.605,z,0.66,0.012,0.7,gold);
+  bx(x+0.12,0.66,z-0.1,0.05,0.09,0.05,[0.85,0.9,0.95]);bx(x-0.1,0.625,z+0.12,0.2,0.03,0.14,[0.08,0.08,0.08]);};
+ /* club seats either side of a table, on both sides of the aisle */
+ for(const r of [5,7]){seat(14,r,1);table(15,r);seat(16,r,-1);}
+ /* the divan along the starboard wall */
+ {const [x0,z]=at(18,7),x=x0+0.5;bx(x,0.18,z,1.9,0.34,0.62,[0.25,0.22,0.2]);bx(x,0.4,z-0.03,1.86,0.12,0.56,lea);bx(x,0.68,z+0.3,1.9,0.5,0.14,lea);
+  for(const sd of [-1,1])bx(x+sd*0.92,0.5,z,0.1,0.3,0.6,lea2);for(const k of [-0.5,0.5])bx(x+k,0.52,z+0.18,0.32,0.2,0.1,[0.55,0.15,0.18]);}
+ /* the bar along the port wall: walnut, a marble top, bottles and glasses */
+ {const [x0,z]=at(21,5),x=x0+0.5;bx(x,0.45,z-0.05,1.9,0.9,0.6,wal);bx(x,0.92,z-0.05,1.96,0.05,0.66,[0.95,0.94,0.92]);bx(x,0.6,z+0.26,1.86,0.03,0.02,gold);
+  const bc=[[0.2,0.5,0.2],[0.6,0.35,0.1],[0.85,0.85,0.9],[0.5,0.1,0.12],[0.75,0.55,0.2]];for(let k=0;k<5;k++)bx(x-0.7+k*0.32,1.06,z-0.18,0.08,0.22,0.08,bc[k],k===2);
+  for(let k=0;k<3;k++)bx(x-0.4+k*0.4,0.99,z+0.08,0.06,0.09,0.06,[0.85,0.9,0.95]);}
+ /* bulkhead to the cockpit (the aisle stays open), pilot seats, the panel and the yokes */
+ {const bxh=b.x0+14;for(const r of [5,7]){const [,z]=at(24,r);bx(bxh,0.575,z,0.08,1.15,1.0,[0.93,0.93,0.94]);bx(bxh-0.045,0.5,z,0.01,0.06,1.0,wal);}
+  for(const r of [5,7])seat(24,r,1,[0.32,0.33,0.36]);const [px,pz]=at(25,6);bx(px-0.25,0.7,pz,0.25,0.4,1.9,[0.1,0.1,0.12]);
+  for(let k=0;k<8;k++){const on=Math.sin(T*2+k*1.7)>-0.3;bx(px-0.38,0.82,pz-0.75+k*0.21,0.01,0.08,0.12,k%3?[0.2,0.9,0.4]:[1,0.7,0.2],on);}
+  for(const r of [5,7]){const [x,z]=at(24,r);bx(x+0.35,0.62,z,0.05,0.26,0.05,[0.2,0.2,0.22]);bx(x+0.35,0.76,z,0.04,0.06,0.26,[0.2,0.2,0.22]);}}
+ /* gold on a pallet in the hold */
+ {const [x,z]=at(11,7);bx(x,0.06,z,0.8,0.12,0.8,[0.5,0.38,0.22]);for(let l=0;l<3;l++)for(let k=0;k<(3-l);k++)for(let m=0;m<2;m++)bx(x-0.2+k*0.2+l*0.1,0.17+l*0.09,z-0.12+m*0.24,0.17,0.08,0.2,gold,l===2);}
+ /* the aisle runner and the ceiling lights */
+ {const [x0,z]=at(11,6),[x1]=at(25,6);bx((x0+x1)/2,0.008,z,x1-x0+0.6,0.006,0.5,cream);for(const sd of [-1,1])bx((x0+x1)/2,0.01,z+sd*0.24,x1-x0+0.6,0.006,0.03,gold);
+  for(let x=x0;x<=x1;x+=1.0)for(const sd of [-1,1])bx(x,1.08,z+sd*1.32,0.12,0.03,0.08,[1,0.92,0.75],true);}}
 function drawHangar(B,g){const bx=(x,y,z,sx,sy,sz,c,em)=>B.box(TRS(x,y,z,0,sx,sy,sz),c,!!em),T=g.T||0;
  if(g.sid==='hangar'&&g.jetBody){drawJet(B,g,g.jetBody,true);const W=g.valeW;if(W){if(!W.aboard&&!fogHid(W.n.x,W.n.z))drawChar(CB(W.n),W.n);const s=W.stairs;
    bx(s.x,0.03,s.z,0.9,0.015,0.9,W.aboard?[0.3,1,0.5]:[1,0.25,0.25],true);}

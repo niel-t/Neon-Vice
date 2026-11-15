@@ -538,9 +538,9 @@
           "#.....g................s......#",
           "#.............................#",
           "#.........jjjjjjjjjjjjjjjj....#",
-          "#.........jN,S,S,,,,,,,,,jj...#",
+          "#.........jN,,kkk,,,,kk,kjj...#",
           "#.........j,,X,,,,,u,,,,,,j...#",
-          "#.........j,,S,S,,,,g,,,,jj...#",
+          "#.........jk,,kkk,kk,g,,kjj...#",
           "#.........jjjjjjjjjjjj.jjj....#",
           "#.............................#",
           "#............................h#",
@@ -561,16 +561,20 @@
             "w": 7,
             "h": 0.02,
             "top": 7
+          },
+          "k": {
+            "f": 41,
+            "furn": 22
           }
         },
         "wall": 34,
         "floor": 7,
         "paletteSize": 6
       },
-      "gridHash": "dd09c82027fad9bb4710a4e5a15a678d3c08973805200530356347ede92f7d27",
-      "loadedHash": "e6c6185aed22e6247fe257445343e994fc3409c2ca4b65d7a74cd9656aa39daf",
-      "queryHash": "e2caee191925e53f2e56763497a2f6b8dc83d1f560cefc4eaab30c79da4adcb7",
-      "cellHash": "cfe86c4260875ab1cbb429b3479f364d83e8a00b9033204bcb85743cb2f17167"
+      "gridHash": "9f3db7b6d8f17de691f9e4a0cd3e58c8eb68db26f099f3988ae1aae148db5ffc",
+      "loadedHash": "1cd124d377a5dd3e0a3492cab696cbc70bb57252b5c04766d666a27193768dc3",
+      "queryHash": "04690df9b67eb24e9ccb0ee1dc9a9bb97f09b13ab7d7da157c89a8b7d64c5c0a",
+      "cellHash": "65bf7df1ff4f2bef372c14bcf22df25653c155859dcde7affddeb4cbeb3069dc"
     },
     {
       "key": "hub:drive:0",
