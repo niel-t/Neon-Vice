@@ -362,7 +362,7 @@ function renderMallShop(msg){const p=myProg(),s=MALL_SHOPS[storeMode],sec=(id,on
     :`<div class="pd">Buy it at Sunshine Realty first, then Lola's boys deliver.</div>`;});}
  else if(storeMode==='elec'||storeMode==='clinic'||storeMode==='arcade')up2Render(storeMode,p,sec);
  else{sec('stCars',1);sec('stGold',1);sec('stHome',0);const pr=mallProps(p);$('stCarsH').textContent='HOMES · YOU WAKE UP IN THE ONE YOU LIVE IN';
-  $('stCars').innerHTML=HOMEDEF.map((h,i)=>{const own=(p.homes||[0]).includes(i),cur=(p.home||0)===i,lock=h.needs&&!p[h.needs];return mallCard(`data-ho="${i}"`,h.name,h.desc,cur?'LIVING HERE':own?'MOVE BACK IN':lock?'AFTER THE SHARK IS DEAD':'BUY $'+fmt(h.price),cur,lock,n++);}).join('');
+  $('stCars').innerHTML=HOMEDEF.map((h,i)=>{const own=(p.homes||[0]).includes(i),cur=(p.home||0)===i,lock=h.needs&&!p[h.needs];return mallCard(`data-ho="${i}"`,h.name,h.desc,cur?'LIVING HERE':own?'MOVE BACK IN':lock?(h.lockTxt||'AFTER THE SHARK IS DEAD'):'BUY $'+fmt(h.price),cur,lock,n++);}).join('');
   const rent=MALL_PROPS.reduce((a,q)=>a+(pr[q.k]?q.rent:0),0);$('stGoldH').textContent='INVESTMENT PROPERTY · RENT AFTER EVERY JOB'+(rent?' · $'+fmt(rent)+' A JOB · EARNED $'+fmt(p.rentTot||0):'');
   $('stGold').innerHTML=MALL_PROPS.map(q=>mallCard(`data-inv="${q.k}"`,q.name,q.desc+' Rent $'+fmt(q.rent)+' a job.',pr[q.k]?'YOURS · $'+fmt(q.rent)+' A JOB':'BUY $'+fmt(q.price),!!pr[q.k],false,n++)).join('');}
  $('stMsg').textContent=msg||'';const cs=document.querySelectorAll('#sStore .scard');if(storeFocus>=cs.length)storeFocus=0;cs.forEach((b,i)=>b.style.outline=padMode&&i===storeFocus?'3px solid #ffd36b':'');if(padMode&&cs[storeFocus]&&cs[storeFocus].scrollIntoView)cs[storeFocus].scrollIntoView({block:'nearest'});}
