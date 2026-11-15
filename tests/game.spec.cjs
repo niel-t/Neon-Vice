@@ -159,7 +159,9 @@ test('arrival: every floor opens with the car pulling up to a real entrance, ski
   // Doors stop rounds: a pistol shot into the gate and into a wooden door ends at the leaf and swings it.
   expect(await page.evaluate(() => {
     G.enemies.forEach(en => { en.alive = false; });
+    // Shut the leaf first: the drive-in swings the gate open, and how far it has settled depends on the machine's frame rate.
     const shoot = d => {
+      d.th = 0; d.w = 0;
       const e = doorEnd(d), mx = (d.hx + e[0]) / 2, mz = (d.hz + e[1]) / 2, p = bProj('pistol');
       const b = { x: mx, z: mz + 1.5, dx: 0, dz: -1, sp: 34, life: 1.2, own: 'p', pierce: 1, type: 'pistol', hit: [], p, e: p.e0, tum: 1, y: 1.3, sx: mx, sz: mz + 1.5, st: 'stand' };
       G.bullets.push(b); for (let k = 0; k < 6; k++) updateBullets(1 / 60);

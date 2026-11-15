@@ -13,8 +13,11 @@ test('backstory: people around town and McWey talk about the operator you picked
       const brief0 = DLG.brief0.nodes.a.choose.filter(o => !o.req || o.req.char === id).length;
       out[id] = { n: lines.length, leak: lines.filter(l => others.includes(l)).length, mornings, brief0, file: !!CHARS[i].bio };
     }
+    // storyPick prefers an unheard story line 60% of the time; pin the roll so the check doesn't depend on chance.
     STORY_HEARD.clear(); selIdx = 2;
+    const rnd = Math.random; Math.random = () => 0;
     const first = storyPick('lawyer', ['old line']);
+    Math.random = rnd;
     return { out, first, heard: STORY_HEARD.has(first) };
   });
   for (const id of ['don', 'consigliere', 'money']) {

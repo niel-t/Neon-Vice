@@ -23,9 +23,10 @@ test('act 4 floor 1: down the garage ramps, then the barrier and a dead driver e
   expect(s).toEqual({ vans: 3, obj: 'STOP THE GOLD VANS', drivers: true, exit: 'Take the freight lift up' });
   await page.evaluate(() => { G.player.hp = 99; G.player.maxhp = 99; for (const e of G.enemies) if (!e.driver) e.spd = 0.0001; });
   // Van 1: the barrier. Start it, drop the boom from the lever while it is on the lane.
+  // (Put it on the lane short of the boom, so a slow CI machine doesn't race the boom's 7 seconds.)
   await page.evaluate(() => { G.vanT = G.vans[0].go; });
-  await expect.poll(() => page.evaluate(() => G.vans[0].z >= G.lane.z - 0.01 && G.vans[0].x > G.boom.x - 9), { timeout: 30_000 }).toBe(true);
-  const ctx = await page.evaluate(() => { const p = G.player; p.x = G.lever.x; p.z = G.lever.z + 0.6; const l = ctxAction(p).l; playerGrab(p); return { l, down: G.boom.down > 0 }; });
+  await expect.poll(() => page.evaluate(() => G.vans[0].st), { timeout: 30_000 }).toBe('go');
+  const ctx = await page.evaluate(() => { const v = G.vans[0]; v.z = G.lane.z; v.x = G.boom.x - 8; v.sp = 2.3; const p = G.player; p.x = G.lever.x; p.z = G.lever.z + 0.6; const l = ctxAction(p).l; playerGrab(p); return { l, down: G.boom.down > 0 }; });
   expect(ctx).toEqual({ l: 'BARRIER', down: true });
   await expect.poll(() => page.evaluate(() => G.vans[0].st), { timeout: 30_000 }).toBe('stopped');
   expect(await page.evaluate(() => ({ why: G.vans[0].why, driverOut: G.vans[0].e.driver === null }))).toEqual({ why: 'boom', driverOut: true });
