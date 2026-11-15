@@ -298,6 +298,7 @@ const TRS=(x,y,z,ry,sx,sy,sz)=>A.mul(A.mul(A.T(x,y,z),A.RY(ry)),A.S(sx,sy,sz));
 <script src="upstairs.js"></script>
 <script src="mansion.js"></script>
 <script src="slap.js"></script>
+<script src="club.js"></script>
 <script src="guide.js"></script>
 <script src="animals.js"></script>
 <script src="act4.js"></script>
@@ -2482,8 +2483,8 @@ const HUBS={
      front door (D) into the foyer in the south-west corner with the bouncer (g) and red sofas (h), an arch into the main room (stage S with poles j, bar K/B with Tony T, red booths h + tables o
      along the west wall), and three private VIP rooms behind their own doors; the dressing room is up north behind the curtain door. floorFn takes world cells (map + 1). */
   floorFn:(x,z)=>{const X=x-1,Z=z-1;if(Z<5||Z>=28)return 0;if(Z>=5&&Z<=7&&X>=13&&X<=15)return 19;if(Z>=23)return X<10?43:19;return 43;},
-  legend:{'b':{w:33,h:'rand',tint:1,top:34},',':{f:7},'L':{f:7,lamp:1},'.':{f:43},'~':{f:43},'S':{f:19},'j':{f:19},'i':{f:43},'u':{f:43},'y':{f:43},'v':{f:43,npc:'guest'},'T':{f:43,npc:'tony'},'K':{f:43,furn:7},'B':{f:43,furn:2},'*':{f:43,light:'neon'},'w':{f:43,light:'warm'},'h':{f:43,furn:3},'o':{f:43,furn:1},'g':{f:43},'s':{f:37},'l':{f:37,lamp:1},'p':{f:7},'v':{w:38,h:0.03,top:38}},
-  map:["bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "##############################", "#########*..........*#########", "#########h..........h#########", "#########h..........h#########", "##############D###############", "#*..........................*#", "#h..~~~~~~~~~~~~~~~..vw......#", "#ho.~v~~~~~~~~~~~v~.....K..B.#", "#h..~~~~~uiuii~~~~~....yK..B.#", "#...~~~~iSSSSSi~~~~..v..K..B.#", "#h..~~~~iSjSjSu~~~~....yKT.B.#", "#ho.~~~~uSSSSSi~~~~.....K..B.#", "#h.v~~~~iSSjSSi~~~~....yK..B.#", "#...~~~~iSSSSSi~~~~.....K..B.#", "#h..~~~~~iiiiu~~~~~....yK..B.#", "#ho.~~v~~~~~~~~~~v~.v........#", "#h..~~~~~~~~~~~~~~~...w......#", "#*..........................*#", "####..#######D#####D#####D####", "#*.......h#.....#.....#.....##", "#........h#.....#.....#.....##", "#......g..#.....#.....#.....##", "#*........#.....#.....#.....##", "####D#########################", "#ssssPsssssssssssssssssssssss#", "#sslssssssslssssssslsssssslss#", "pppppppCpppppppppppppppppppppp", ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,", ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,", "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"]},
+  legend:{'b':{w:33,h:'rand',tint:1,top:34},',':{f:7},'L':{f:7,lamp:1},'.':{f:43},'~':{f:43},'S':{f:19},'j':{f:19},'i':{f:43},'u':{f:43},'y':{f:43},'G':{f:43,npc:'guest'},'T':{f:43,npc:'tony'},'K':{f:43,furn:7},'B':{f:43,furn:2},'*':{f:43,light:'neon'},'w':{f:43,light:'warm'},'h':{f:43,furn:3},'o':{f:43,furn:1},'g':{f:43},'s':{f:37},'l':{f:37,lamp:1},'p':{f:7},'v':{w:38,h:0.03,top:38}},
+  map:["bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "##############################", "#########*..........*#########", "#########h..........h#########", "#########h..........h#########", "##############D###############", "#*..........................*#", "#h..~~~~~~~~~~~~~~~G..w......#", "#ho.~G~~~~~~~~~~~G~.....K..B.#", "#h..~~~~~uiuii~~~~~....yK..B.#", "#...~~~~iSSSSSi~~~~..G..K..B.#", "#h..~~~~iSjSjSu~~~~....yKT.B.#", "#ho.~~~~uSSSSSi~~~~.G...K..B.#", "#h.G~~~~iSSjSSi~~~~....yK..B.#", "#...~~~~iSSSSSi~~~~..G..K..B.#", "#h..~~~~~iiiiu~~~~~....yK..B.#", "#ho.~~G~~~~~~~~~~G~.G........#", "#h..~~~~~~G~~~~~~~~...w......#", "#*..........................*#", "####..#######D#####D#####D####", "#*.......h#.....#.....#.....##", "#........h#.....#.....#.....##", "#......g..#.....#.....#.....##", "#*........#.....#.....#.....##", "####D#########################", "#ssssPsssssssssssssssssssssss#", "#sslssssssslssssssslsssssslss#", "pppppppCpppppppppppppppppppppp", ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,", ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,", "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"]},
  mall:{name:'BISCAYNE GALLERIA',hub:'foot',wall:42,floor:61,sofa:0xff6fae,grime:0.08,amb:[0.42,0.38,0.42],lc:[0.64,0.56,0.56],track:'c_palms',where:'BISCAYNE GALLERIA · SHOPPING MALL',obj:'SHOP AROUND · THEN BACK TO YOUR CAR',
    /* the shopping mall (mall.js dresses it), entered from the front: Victory Motors at the back (Vic V, turntables 1-4, desk K) behind its
       glass front onto the atrium; the atrium (fountain F, the food court in front of the doors, shoppers g) with glass shopfronts H (a low kerb; mall.js puts up
@@ -2841,7 +2842,7 @@ function drawGarage(D,g,F){const B=F===undefined?D:F,gr=g.garage,c=g.hcar,T=g.T,
  B.box(TRS(13,1.08,2.04,0,4.2,0.1,0.06),GOLD);B.box(TRS(13,1.08,2.08,0,0.9,0.06,0.02),[1,0.82,0.4],true);for(const x of [10.96,15.04])B.box(TRS(x,0.55,2.05,0,0.08,1.1,0.08),GOLD);
  B.box(TRS(15.5,0.7,2.04,0,0.12,0.22,0.04),GOLD);B.box(TRS(15.5,0.74,2.07,0,0.05,0.05,0.02),[1,0.3,0.2],true);B.box(TRS(13,0.007,2.75,0,4.2,0.012,1.4),[0.55,0.04,0.12]);}
 function npcStep(dt){const g=G,p=g.player;if(g.talkT>0)g.talkT-=dt;const vi=Math.min(3,VISIT.debrief===null?0:VISIT.debrief+1);
- for(const n of g.npcs){if(n.kind==='guest'&&g.club){clubWalk(n,dt,g,p);}else if(n.kind==='guest'&&g.mall)mallWalk(n,dt,g,p);else if((n.kind==='guest'||n.kind==='pgirl')&&!n.bed&&!n.tub)guestStep(n,dt,g,p);else if(n.cast)castStep(n,dt,g,p);if(n.kind==='dancer'||n.kind==='sdancer'||n.kind==='patron')continue;const dx=p.x-n.x,dz=p.z-n.z,d=Math.hypot(dx,dz);
+ for(const n of g.npcs){if(n.kind==='guest'&&g.club){if(!n.busy)clubWalk(n,dt,g,p);}else if(n.kind==='guest'&&g.mall)mallWalk(n,dt,g,p);else if((n.kind==='guest'||n.kind==='pgirl')&&!n.bed&&!n.tub)guestStep(n,dt,g,p);else if(n.cast)castStep(n,dt,g,p);if(n.kind==='dancer'||n.kind==='sdancer'||n.kind==='patron')continue;const dx=p.x-n.x,dz=p.z-n.z,d=Math.hypot(dx,dz);
   if(d<(n.kind==='guest'||(n.cast&&(n.vx||n.vz))?1.6:3)){const ta=Math.atan2(dx,dz);n.a+=clamp(angDiff(n.a,ta),-4*dt,4*dt);}else if(n.kind!=='guest')n.a+=clamp(angDiff(n.a,n.a0),-2*dt,2*dt);if(n.seat)n.a=n.a0+clamp(angDiff(n.a0,n.a),-0.9,0.9);
   if(d<2.2&&!n.said&&!(g.talkT>0)&&(NPCLINES[n.kind]||HOME_NPC_LINES[n.kind]||n.kind==='recep'||n.kind==='hguard')){n.said=true;const L=n.kind==='recep'&&RECEP_GRADE[VISIT.grade]?RECEP_GRADE[VISIT.grade]:n.kind==='hguard'?[hguardLine()]:HOME_NPC_LINES[n.kind]?[storyPick(n.kind,HOME_NPC_LINES[n.kind])]:(NPCLINES[n.kind][vi]||NPCLINES[n.kind][0]);g.talkT=L.length*1.5+0.4;const qg=g.quipGen=(g.quipGen||0)+1;let t=0;for(const line of L){setTimeout(()=>{if(G===g&&g.quipGen===qg)popup(n.x,n.z,line,'#ffe9a8');},t);t+=1500;}}
   if(d<n.r+p.r&&d>1e-4){const k=(n.r+p.r-d);p.x+=dx/d*k;p.z+=dz/d*k;}}}
@@ -3026,7 +3027,7 @@ function renderVip(msg){const p=myProg(),g=G;
  for(const id of ['stCars','stCarsH'])$(id).style.display='';
  $('stCarsH').textContent="TONIGHT'S GIRLS";
  const ds=g&&g.club?g.club.dancers:[];
- $('stCars').innerHTML=ds.map((d,i)=>`<button class="scard" data-vip="${i}"><div class="pn">${d.dname}</div><div class="pd">${d.walking?'Heading back to the stage.':'Private dance in a red velvet room, just the two of you.'}</div><div class="sp">BOOK · $500<span class="kbhint"> (${i+1})</span></div></button>`).join('')
+ $('stCars').innerHTML=ds.map((d,i)=>`<button class="scard" data-vip="${i}"><div class="pn">${d.dname}</div><div class="pd">${d.npcVip?'In a VIP room with another guest right now.':d.walking?'Heading back to the stage.':'Private dance in a fur-lined lounge, just the two of you.'}</div><div class="sp">BOOK · $500<span class="kbhint"> (${i+1})</span></div></button>`).join('')
   +`<button class="scard" data-vipchat="1"><div class="pn">JUST TALK</div><div class="pd">Have a drink and hear what Tony knows.</div><div class="sp">CHAT<span class="kbhint"> (${ds.length+1})</span></div></button>`;
  $('stMsg').textContent=msg||'';}
 /* the apartment gun locker (W6d): what you carry is your kit for the next job; everything else waits here (LOCKER_CAP items) */
@@ -3227,15 +3228,16 @@ function clubSetup(g){const W=g.W,cells=ch=>{const o=[];for(let z=0;z<g.H;z++)fo
  const vip={chairX:rooms[0].chairX,chairZ:rooms[0].chairZ,doorX:rooms[0].doorX,doorZ:rooms[0].doorZ,active:false,dancer:null,room:null,escort:null,t:0,camK:0};
  let front=null;for(let z=g.H-1;z>doorZ&&!front;z--){const x=g.rows[z].indexOf('D');if(x>=0)front={x,z:z+1};}
  g.club={front,dancers,tony:g.npcs.find(n=>n.kind==='tony'),stools:cells('i').concat(cells('y')),sc,talkI:0,vip,rooms,room,flow:new Int16Array(W*g.H),flowT:0,back:null};if(g.club.tony)g.club.tony.a=g.club.tony.a0=-Math.PI/2;
- g.car={x:sc.x,z:sc.z};g.obj='TIP THE DANCERS · BOOK A VIP ROOM WITH TONY';banner('VELVET PALMS',touchMode?'Tap a dancer to tip · book a VIP room with Tony at the bar':'Press E on a dancer to throw $100 · book a VIP room with Tony at the bar');}
+ g.car={x:sc.x,z:sc.z};clubLife(g);g.obj='TIP THE DANCERS · BOOK A VIP ROOM WITH TONY';banner('VELVET PALMS',touchMode?'Tap a dancer to tip · book a VIP room with Tony at the bar':'Press E on a dancer to throw $100 · book a VIP room with Tony at the bar');}
 /* a cell next to the stage edge where a dancer steps down, nearest to (x,z) */
 function stageStep(g,x,z){const st=g.stage;let best=null,bd=1e9;for(let cz=Math.floor(st.z0)-1;cz<=Math.ceil(st.z1);cz++)for(let cx=Math.floor(st.x0)-1;cx<=Math.ceil(st.x1);cx++){if(isBlock(cx,cz))continue;const inX=cx>=st.x0&&cx<st.x1,inZ=cz>=st.z0&&cz<st.z1;if(inX&&inZ)continue;const d=Math.hypot(cx+0.5-x,cz+0.5-z);if(d<bd){bd=d;best={x:cx+0.5,z:cz+0.5};}}return best||{x:st.x0-0.5,z:st.z1+0.5};}
 /* Tony books the room: pay $500, pick a girl, she steps off the stage and walks with you to whichever VIP room you go into */
 function startLapdance(idx){const g=G,p=myProg();if(!g||!g.club)return;arm();
  const d=g.club.dancers[idx],v=g.club.vip;if(!d)return;
  if(v.active||v.escort){sfx('blip');return renderStore('You already have a girl booked. Enjoy her first.');}
- if(d.walking){sfx('blip');return renderStore(d.dname+' is on her way back to the stage. Pick another girl.');}
  if(p.wallet<500){sfx('blip');return renderStore('Not enough cash ($500 needed for VIP Private Dance).');}
+ if(d.npcVip){sfx('blip');return renderStore(d.dname+' is in a VIP room with another guest. Pick another girl.');}
+ if(d.walking){sfx('blip');return renderStore(d.dname+' is on her way back to the stage. Pick another girl.');}
  p.wallet-=500;saveProg();sfx('cash');
  const st=stageStep(g,g.player.x,g.player.z);d.walking=true;d.lapDance=false;d.boost=0.6;d.vx=d.vz=0;
  v.escort={d,ph:'down',t:0,fx:d.x,fz:d.z,fy:d.y,tx:st.x,tz:st.z};
@@ -3305,12 +3307,13 @@ function clubTick(dt){const g=G,c=g.club,v=c.vip,p=g.player;
   else{c.flowT-=dt;if(c.flowT<=0){WORLD.cell.bfs(g,c.flow,Math.floor(p.x),Math.floor(p.z));c.flowT=0.25;}
    const dist=Math.hypot(p.x-d.x,p.z-d.z);
    if(dist>1.05)clubStep(g,d,c.flow,p.x,p.z,dist>3?3.4:2.4,dt);else{d.vx=d.vz=0;d.a+=clamp(angDiff(d.a,Math.atan2(p.x-d.x,p.z-d.z)),-5*dt,5*dt);}
-   for(const r of c.rooms)if(inRoom(r,p.x,p.z)&&inRoom(r,d.x,d.z)&&dist<2.2){beginLapdance(r);break;}}}
+   for(const r of c.rooms)if(inRoom(r,p.x,p.z)&&inRoom(r,d.x,d.z)&&dist<2.2&&!clubRoomBusy(g,r)){beginLapdance(r);break;}}}
  const b=c.back;
  if(b){const d=b.d;b.t+=dt;
   if(b.ph==='walk'){if(Math.hypot(b.tx-d.x,b.tz-d.z)>0.35&&b.t<25)clubStep(g,d,b.f,b.tx,b.tz,2.2,dt);else{b.ph='up';b.t=0;b.fx=d.x;b.fz=d.z;}}
   else{const k=Math.min(1,b.t/0.8);d.x=b.fx+(d.pole.x-b.fx)*k;d.z=b.fz+(d.pole.z-b.fz)*k;d.y=0.36*k+Math.sin(k*Math.PI)*0.25;if(k>=1){d.walking=false;d.vx=d.vz=0;c.back=null;}}}
- for(const d of c.dancers){if(d.lapDance||d.walking)continue;danceTick(g,d,dt);d.boost=Math.max(0,d.boost-dt*0.25);}}
+ for(const d of c.dancers){if(d.lapDance||d.walking)continue;danceTick(g,d,dt);d.boost=Math.max(0,d.boost-dt*0.25);}
+ clubLifeTick(g,dt);}
 function tipDancer(d){const p=myProg(),g=G;arm();if(d.cold>0){popup(d.x,d.z,d.dname+' WON\'T TAKE YOUR MONEY','#ff8a95');sfx('blip');return;}if(p.wallet<100){popup(g.player.x,g.player.z,'OUT OF CASH','#ff8a95');sfx('blip');return;}
  p.wallet-=100;saveProg();d.tips++;d.boost=Math.min(1.6,d.boost+0.7);sfx('cash');
  throwBills(g,g.player.x,1.05,g.player.z,d.x,d.z,8,0.4,2.5,4.5,1,2.5,rnd(3,4),(d.y||0)+0.02);
@@ -3342,7 +3345,9 @@ function drawClub(D,g,F){const B=F===undefined?D:F,T=g.T,st=g.stage,bx=(x,y,z,sx
   const on=Math.floor(T*3)%2;dx(24.98,0.16,R.z0+6,0.03,0.05,8,on?neon:pink,true);
   for(let i=0;i<14;i++){const lit=(Math.floor(T*8)+i)%3>0,col=lit?[1,0.85,0.4]:[0.3,0.2,0.1];dx(ox-1.7+i*3.4/13,H+0.92,fz+0.1,0.07,0.07,0.04,col,lit);dx(ox-1.7+i*3.4/13,H+0.18,fz+0.1,0.07,0.07,0.04,col,lit);}
   for(const r of c.rooms){heart(dx,r.chairX,1.0,r.z1-0.12,0.009,(Math.floor(T*2)+r.n)%2?neon:pink);dx(r.doorX,H+0.06,r.doorZ,0.9,0.1,0.5,(Math.floor(T*2)+r.n)%2?neon:pink,true);}}
+ drawClubXDyn(D,g);
  if(!B)return;
+ drawClubX(B,g);
  const cx=(st.x0+st.x1)/2,cz=(st.z0+st.z1)/2,w=st.x1-st.x0,d=st.z1-st.z0;bx(cx,0.17,cz,w,0.34,d,[0.25,0.04,0.12]);bx(cx,0.345,cz,w-0.1,0.01,d-0.1,[0.22,0.04,0.12]);
  for(const q of g.club.dancers){bx(q.pole.x,1.6,q.pole.z,0.05,2.5,0.05,GOLD);bx(q.pole.x,0.36,q.pole.z,0.5,0.02,0.5,[1,0.3,0.75],true);}
  for(const q of g.club.stools){bx(q.x,0.3,q.z,0.04,0.6,0.04,[0.75,0.75,0.8]);bx(q.x,0.62,q.z,0.34,0.06,0.34,[0.7,0.05,0.2]);}
