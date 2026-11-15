@@ -17,6 +17,15 @@ const WD={
  dual:{name:'DUAL 9MMs',ammo:26,cal:'9mm',mag:30,rl:2.6,ar:[0.5,0.12],cd:0.1,pel:1,spr:0.05,mv:0.08,bloom:0.02,bloomMax:0.16,ecd:0.35,burst:6,loud:13,len:0.2,snd:'dual',kick:0.08},
  m16:{name:'M16',ammo:30,cal:'556',mag:30,rl:2.2,ar:[0.5,0.13],cd:0.32,pel:1,spr:0.015,mv:0.09,bloom:0.02,ecd:0.9,burst3:true,loud:15,pierce:2,len:0.66,snd:'rifle',kick:0.14,spd:0.92,two:true},
  tknife:{name:'THROWING KNIVES',toss:true,ammo:4,cal:null,mag:4,cd:0.3,loud:0,len:0.27,snd:'throw'},
+ /* 1986 additions, each built from the real gun with its own recordings. base = stock weapon for animation and gore; cyc = a manual action
+    (pump/lever/bolt) worked after every shot: the rack clip plays and the fore-end, lever or bolt moves */
+ colt45:{name:'COLT .45',base:'pistol',ammo:7,cal:'45',mag:7,rl:1.4,ar:[0.45,0.16],cd:0.27,pel:1,spr:0.02,mv:0.07,bloom:0.06,ecd:0.9,loud:14,pierce:2,len:0.22,snd:'colt',kick:0.17},
+ mac10:{name:'MAC-10',base:'smg',ammo:30,cal:'45',mag:30,rl:1.6,ar:[0.5,0.14],cd:0.05,pel:1,spr:0.085,mv:0.1,bloom:0.035,bloomMax:0.3,ecd:0.1,burst:6,loud:14,len:0.2,snd:'mac',kick:0.07},
+ spas12:{name:'SPAS-12',base:'shotgun',ammo:8,cal:'12ga',mag:8,rl:3.4,ar:[0.55,0.12],cd:0.36,pel:6,spr:0.22,mv:0.05,bloom:0.03,bloomMax:0.12,ecd:1.0,loud:16,len:0.66,snd:'spas',kick:0.42,spd:0.93,two:true},
+ mini14:{name:'RUGER MINI-14',base:'m16',ammo:20,cal:'556',mag:20,rl:2.0,ar:[0.5,0.14],cd:0.16,pel:1,spr:0.012,mv:0.08,bloom:0.025,bloomMax:0.12,ecd:0.7,loud:15,pierce:2,len:0.62,snd:'mini',kick:0.13,spd:0.94,two:true},
+ lever:{name:'LEVER-ACTION .30-30',base:'m16',ammo:6,cal:'3030',mag:6,rl:2.9,ar:[0.6,0.12],cd:0.62,pel:1,spr:0.008,mv:0.07,bloom:0,ecd:1.2,loud:16,pierce:3,len:0.68,snd:'lever',kick:0.3,spd:0.95,two:true,cyc:'lever'},
+ hunter:{name:'SCOPED .30-06',base:'m16',ammo:5,cal:'3006',mag:5,rl:3.0,ar:[0.62,0.1],cd:1.0,pel:1,spr:0.003,mv:0.12,bloom:0,ecd:1.6,loud:18,pierce:4,len:0.8,snd:'hunter',kick:0.5,spd:0.9,two:true,cyc:'bolt'},
+ golf:{name:'GOLF CLUB',base:'bat',melee:true,range:1.4,cd:0.42,kill:true,len:0.9,snd:'swing_golf',arc:1.2},
  /* Nine of Nine exclusives: base = the stock weapon whose animation, gore and sounds they borrow */
  goldak:{name:'GOLDEN AK-47',base:'m16',excl:true,ammo:40,cal:'762',mag:40,rl:2.5,ar:[0.5,0.12],cd:0.09,pel:1,spr:0.03,mv:0.08,bloom:0.02,bloomMax:0.16,ecd:0.2,burst:5,loud:15,pierce:2,len:0.62,snd:'ak',kick:0.12,spd:0.94,two:true},
  golddeagle:{name:'GOLDEN DEAGLES',base:'dual',excl:true,ammo:16,cal:'50ae',mag:14,rl:2.8,ar:[0.5,0.1],cd:0.16,pel:1,spr:0.03,mv:0.07,bloom:0.05,bloomMax:0.2,ecd:0.5,loud:16,pierce:3,len:0.26,snd:'deagle',kick:0.24},
@@ -28,7 +37,7 @@ const WD={
    2014; credits in audio/CREDITS.md, cut by scripts/gun-audio.py). GUNCLIP = clip name -> [start s, length s] in the sprite.
    GUNSND = per weapon: fire = shot clips (one picked per shot), rack = clip after each shot, rl = reload steps [fraction of the
    reload, clip] (the last step plays when the reload completes), dry = empty click. Data only: index.html plays them. */
-const GUNCLIP={pistol1:[0.12,0.55],pistol2:[0.79,0.55],pistol3:[1.46,0.55],silenced1:[2.13,0.35],silenced2:[2.6,0.35],revolver1:[3.07,0.6],revolver2:[3.79,0.6],shotgun1:[4.51,0.7],shotgun2:[5.3299,0.7],double1:[6.1499,0.7],double2:[6.9699,0.7],smg1:[7.7899,0.4],smg2:[8.3099,0.4],smg3:[8.8299,0.4],rifle1:[9.3499,0.55],rifle2:[10.0199,0.55],ak1:[10.6899,0.55],ak2:[11.3599,0.55],ak3:[12.0299,0.55],deagle1:[12.6999,0.6],deagle2:[13.4199,0.6],gl1:[14.1399,0.6],gl2:[14.8599,0.6],ppq_out:[15.5799,0.4],ppq_in:[16.0999,0.35],ppq_slide:[16.5698,0.3],ppq_dry:[16.9898,0.15],sw_open:[17.2598,0.5],sw_eject:[17.8798,0.85],sw_load:[18.8498,0.8],sw_close:[19.7698,0.4],sw_dry:[20.2898,0.2],pump_shell:[20.6098,0.65],pump_cycle:[21.3798,0.6],pump_dry:[22.0998,0.15],brk_open:[22.3698,0.35],brk_shell:[22.8398,0.4],brk_close:[23.3598,0.45],smg_out:[23.9298,0.3],smg_in:[24.3498,0.4],smg_bolt:[24.8698,0.4],ar_out:[25.3898,0.35],ar_in:[25.8598,0.5],ar_bolt:[26.4798,0.5],ar_dry:[27.0998,0.15],ak_out:[27.3698,0.3],ak_in:[27.7898,0.3],ak_back:[28.2098,0.4],ak_fwd:[28.7298,0.35],m1911_out:[29.1998,0.35],m1911_in:[29.6698,0.35],m1911_slide:[30.1397,0.4]};
+const GUNCLIP={pistol1:[0.12,0.55],pistol2:[0.79,0.55],pistol3:[1.46,0.55],silenced1:[2.13,0.35],silenced2:[2.6,0.35],revolver1:[3.07,0.6],revolver2:[3.79,0.6],shotgun1:[4.51,0.7],shotgun2:[5.3299,0.7],double1:[6.1499,0.7],double2:[6.9699,0.7],smg1:[7.7899,0.4],smg2:[8.3099,0.4],smg3:[8.8299,0.4],rifle1:[9.3499,0.55],rifle2:[10.0199,0.55],ak1:[10.6899,0.55],ak2:[11.3599,0.55],ak3:[12.0299,0.55],deagle1:[12.6999,0.6],deagle2:[13.4199,0.6],gl1:[14.1399,0.6],gl2:[14.8599,0.6],ppq_out:[15.5799,0.4],ppq_in:[16.0999,0.35],ppq_slide:[16.5698,0.3],ppq_dry:[16.9898,0.15],sw_open:[17.2598,0.5],sw_eject:[17.8798,0.85],sw_load:[18.8498,0.8],sw_close:[19.7698,0.4],sw_dry:[20.2898,0.2],pump_shell:[20.6098,0.65],pump_cycle:[21.3798,0.6],pump_dry:[22.0998,0.15],brk_open:[22.3698,0.35],brk_shell:[22.8398,0.4],brk_close:[23.3598,0.45],smg_out:[23.9298,0.3],smg_in:[24.3498,0.4],smg_bolt:[24.8698,0.4],ar_out:[25.3898,0.35],ar_in:[25.8598,0.5],ar_bolt:[26.4798,0.5],ar_dry:[27.0998,0.15],ak_out:[27.3698,0.3],ak_in:[27.7898,0.3],ak_back:[28.2098,0.4],ak_fwd:[28.7298,0.35],m1911_out:[29.1998,0.35],m1911_in:[29.6698,0.35],m1911_slide:[30.1397,0.4],colt1:[30.6597,0.55],colt2:[31.3297,0.55],colt3:[31.9997,0.55],colt_slide:[32.6697,0.35],colt_dry:[33.1397,0.15],mac1:[33.4097,0.32],mac2:[33.8497,0.32],mac3:[34.2897,0.32],mac4:[34.7297,0.32],mac_out:[35.1697,0.3],mac_in:[35.5897,0.4],mac_bolt:[36.1097,0.4],mac_dry:[36.6297,0.15],spas1:[36.8997,0.7],spas2:[37.7197,0.7],spas_shell:[38.5397,0.45],spas_bolt:[39.1097,0.45],spas_dry:[39.6797,0.15],mini1:[39.9497,0.55],mini2:[40.6197,0.55],mini3:[41.2897,0.55],mini_back:[41.9597,0.35],mini_in:[42.4296,0.5],mini_fwd:[43.0496,0.4],mini_dry:[43.5696,0.15],lever1:[43.8396,0.8],lever2:[44.7596,0.8],lever_cyc:[45.6796,0.6],lever_load1:[46.3996,0.45],lever_load2:[46.9696,0.45],lever_dry:[47.5396,0.2],hunt1:[47.8596,0.95],hunt2:[48.9296,0.95],hunt_cyc:[49.9996,1.0],hunt_up:[51.1196,0.3],hunt_back:[51.5396,0.3],hunt_out:[51.9596,0.35],hunt_in:[52.4296,0.4],hunt_fwd:[52.9496,0.35],hunt_dry:[53.4196,0.15]};
 const RL_PPQ=[[0.06,'ppq_out'],[0.55,'ppq_in'],[1,'ppq_slide']],RL_BRK=[[0.04,'brk_open'],[0.38,'brk_shell'],[0.6,'brk_shell'],[1,'brk_close']];
 const GUNSND={
  pistol:{fire:['pistol1','pistol2','pistol3'],rl:RL_PPQ,dry:'ppq_dry',tink:1},
@@ -41,10 +50,16 @@ const GUNSND={
  m16:{fire:['rifle1','rifle2'],rl:[[0.06,'ar_out'],[0.55,'ar_in'],[1,'ar_bolt']],dry:'ar_dry',tink:1},
  goldak:{fire:['ak1','ak2','ak3'],rl:[[0.06,'ak_out'],[0.5,'ak_in'],[0.82,'ak_back'],[1,'ak_fwd']],dry:'ar_dry',tink:1},
  golddeagle:{fire:['deagle1','deagle2'],rl:[[0.04,'m1911_out'],[0.3,'m1911_in'],[0.48,'m1911_out'],[0.74,'m1911_in'],[1,'m1911_slide']],dry:'ppq_dry',tink:1},
+ colt45:{fire:['colt1','colt2','colt3'],rl:[[0.06,'m1911_out'],[0.5,'m1911_in'],[1,'colt_slide']],dry:'colt_dry',tink:1},
+ mac10:{fire:['mac1','mac2','mac3','mac4'],rl:[[0.06,'mac_out'],[0.5,'mac_in'],[1,'mac_bolt']],dry:'mac_dry',tink:0.35},
+ spas12:{fire:['spas1','spas2'],rl:[[0.04,'spas_shell'],[0.16,'spas_shell'],[0.28,'spas_shell'],[0.4,'spas_shell'],[0.52,'spas_shell'],[0.64,'spas_shell'],[0.76,'spas_shell'],[1,'spas_bolt']],dry:'spas_dry',tink:0.8},
+ mini14:{fire:['mini1','mini2','mini3'],rl:[[0.06,'mini_back'],[0.45,'mini_in'],[1,'mini_fwd']],dry:'mini_dry',tink:1},
+ lever:{fire:['lever1','lever2'],rack:'lever_cyc',rackAt:0.24,rl:[[0.08,'lever_load1'],[0.24,'lever_load2'],[0.4,'lever_load1'],[0.56,'lever_load2'],[0.72,'lever_load1'],[1,'lever_cyc']],dry:'lever_dry'},
+ hunter:{fire:['hunt1','hunt2'],rack:'hunt_cyc',rackAt:0.42,rl:[[0.04,'hunt_up'],[0.14,'hunt_back'],[0.36,'hunt_out'],[0.64,'hunt_in'],[1,'hunt_fwd']],dry:'hunt_dry'},
  goldgl:{fire:['gl1','gl2'],rl:[[0.04,'brk_open'],[0.5,'brk_shell'],[1,'brk_close']],dry:'pump_dry'},
 };
 /* sfx name -> weapon whose shot clips it plays (WD.snd keys) */
-const SND_GUN={pistol:'pistol',silenced:'silenced',dual:'dual',revolver:'revolver',shotgun:'shotgun',double:'double',smg:'smg',rifle:'m16',ak:'goldak',deagle:'golddeagle',gl:'goldgl'};
+const SND_GUN={pistol:'pistol',silenced:'silenced',dual:'dual',revolver:'revolver',shotgun:'shotgun',double:'double',smg:'smg',rifle:'m16',ak:'goldak',deagle:'golddeagle',gl:'goldgl',colt:'colt45',mac:'mac10',spas:'spas12',mini:'mini14',lever:'lever',hunter:'hunter'};
 const BT=t=>(WD[t]&&WD[t].base)||t;
 /* calibers shared by every gun that chambers them (one pool per caliber in the kit).
    box=rounds per box at Nine's, price=$ per box, cap=base pool capacity before upgrades, up=capacity added per upgrade.
@@ -57,6 +72,9 @@ const CAL={
  '556':{name:'5.56MM',box:30,price:600,cap:90,up:45,e0:1750,hard:1,metal:1,rifle:true,dmg:1},
  '762':{name:'7.62MM',box:30,price:700,cap:90,up:45,e0:2030,hard:1.3,metal:1,rifle:true,dmg:1},
  '50ae':{name:'.50 AE',box:14,price:900,cap:42,up:14,e0:1965,hard:0.8,metal:1.5,dmg:1},
+ '45':{name:'.45 ACP',box:25,price:350,cap:75,up:25,e0:548,hard:1,metal:1.25,dmg:1},
+ '3030':{name:'.30-30',box:20,price:600,cap:40,up:20,e0:2400,hard:1.1,metal:1,rifle:true,dmg:1},
+ '3006':{name:'.30-06',box:20,price:800,cap:30,up:15,e0:3900,hard:1.5,metal:1.2,rifle:true,dmg:1},
  '40mm':{name:'40MM GRENADE',box:3,price:1500,cap:9,up:3},
 };
 WD.smg.eMul=1.22;
