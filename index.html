@@ -57,6 +57,8 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 .quote{font-size:clamp(17px,3vw,26px);color:#ffb3d6;margin-top:12px;text-shadow:2px 2px 0 #000;font-style:italic}
 @media (max-height:520px){#cPerk{font-size:14px;margin-bottom:4px}.stats3{font-size:13px}.info{margin-top:6px;padding:6px 8px}.quote{margin-top:4px;font-size:15px}.gname{margin-top:4px;font-size:22px}.selBar .btn{margin:3px;padding:9px 14px}}
 #cName{font-family:'Press Start 2P',monospace;font-size:clamp(12px,2.8vw,18px);color:#ffd36b;text-shadow:2px 2px 0 #7a2b00;margin-bottom:8px}
+.bio{max-width:min(560px,92vw);margin-top:8px;text-align:left;background:rgba(10,0,22,.82);border-left:3px solid #ff2d95;padding:5px 9px}.bio summary{cursor:pointer;font-family:'Press Start 2P',monospace;font-size:clamp(8px,1.4vw,11px);color:#ffd36b;line-height:1.5}.bio div{font-size:clamp(14px,2vw,17px);line-height:1.3;color:#f3e6ff;margin-top:5px}
+@media (max-height:520px){.bio{margin-top:4px;padding:3px 7px}.bio div{font-size:13px}}
 #cPerk{font-size:clamp(15px,2.2vw,20px);line-height:1.15;color:#f3e6ff;margin-bottom:8px;text-align:left}
 .stats3{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;align-items:center;font-size:clamp(14px,2.4vw,18px);text-align:left;margin:0 auto;max-width:420px}
 .bar{height:9px;background:#2a1640;position:relative}.bar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#ff2d95,#2de2e6)}
@@ -173,7 +175,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
   <div class="hint">One hit kills, you included. Red lasers mean a gunman is about to fire.<br>Stand still to shoot straight. Silenced guns don't wake the floor.<br>Slam doors into people. Hit downed enemies to finish them.<br>Your kit carries between jobs. Nine of Nine sells and buys gear; spares wait in your apartment's gun locker.</div>
   <button class="btn" id="bHelpBack">GOT IT<span class="padhint"> (A)</span></button></div>
 <div id="sSelect" class="screen">
-  <div class="selHead"><div class="selTop">CHOOSE YOUR CHARACTER</div><div class="gname" id="cBig" data-t=""></div><div class="quote" id="cQuote"></div>
+  <div class="selHead"><div class="selTop">CHOOSE YOUR CHARACTER</div><div class="gname" id="cBig" data-t=""></div><div class="quote" id="cQuote"></div><details class="bio" id="cBioBox"><summary id="cBioS"></summary><div id="cBio"></div></details>
    <div class="info"><div id="cPerk"></div><div class="stats3" id="cStats"></div><div class="diff" id="cDiff"></div><div class="ddesc" id="cDiffD"></div><div class="diff" id="cFloor"></div><div class="ddesc" id="cFloorD"></div><div class="diff" id="cNight"></div><div class="ddesc" id="cNightD"></div></div></div>
   <div class="selBar"><button class="arrow" id="bPrev">&#9664;</button><button class="btn" id="bPlay">TAKE THE JOB<span class="padhint"> (A)</span></button><button class="arrow" id="bNext">&#9654;</button></div>
 </div>
@@ -628,9 +630,12 @@ const LOOKS={
  don:{body:'stocky',bw:1.05,bd:1.08,skin:hex(0xdcab84),jacket:hex(0xf4f1ec),shirt:hex(0x7b2fc0),pants:hex(0xefebe4),shoes:hex(0x5a3a22),hair:hex(0x3a2416),beard:hex(0x3a2416),glasses:hex(0x1c1a1a),chain:true,cigar:true,watch:true},
 };
 const CHARS=[
- {id:'consigliere',name:'THE CONSIGLIERE',quote:'"I give advice. With these."',speed:4.0,stats:{SPEED:2,TOUGHNESS:5,FIREPOWER:2},start:'Gold knuckle dusters',perk:'<b>KNUCKLE DUSTERS</b> — gold dusters on both fists: punches kill outright, and a vest under the suit soaks up one bullet.'},
- {id:'money',name:'THE MONEY MAN',quote:'"Everybody has a price. I know all of them."',speed:4.5,stats:{SPEED:5,TOUGHNESS:1,FIREPOWER:2},start:'Fists + cash',perk:'<b>MAKE IT RAIN</b> — throw a stack of cash to lure guards away. Tracks every enemy on radar and through walls. +25% $.'},
- {id:'don',name:'THE DON',quote:'"This city answers to one family."',speed:4.2,stats:{SPEED:3,TOUGHNESS:2,FIREPOWER:5},start:'.357 Magnum',perk:'<b>THE BOSS</b> — brings his own .357 that goes through bodies. +50% ammo from pickups. Lightning-fast executions.'},
+ {id:'consigliere',name:'THE CONSIGLIERE',quote:'"I give advice. With these."',speed:4.0,stats:{SPEED:2,TOUGHNESS:5,FIREPOWER:2},start:'Gold knuckle dusters',perk:'<b>KNUCKLE DUSTERS</b> — gold dusters on both fists: punches kill outright, and a vest under the suit soaks up one bullet.',
+  real:'Gus Ferrante',from:'South Philadelphia',bio:'Golden Gloves heavyweight, night-school lawyer, consigliere to a Philadelphia family. Something happened at a diner in \'84, and only Gus walked out. Ask around.'},
+ {id:'money',name:'THE MONEY MAN',quote:'"Everybody has a price. I know all of them."',speed:4.5,stats:{SPEED:5,TOUGHNESS:1,FIREPOWER:2},start:'Fists + cash',perk:'<b>MAKE IT RAIN</b> — throw a stack of cash to lure guards away. Tracks every enemy on radar and through walls. +25% $.',
+  real:'Jules Pryce',from:'Brickell, by way of Wharton',bio:'Wharton \'77. Kept the books for half of Brickell, until his partner disappeared and the Feds froze every dollar he had. People in this town know why.'},
+ {id:'don',name:'THE DON',quote:'"This city answers to one family."',speed:4.2,stats:{SPEED:3,TOUGHNESS:2,FIREPOWER:5},start:'.357 Magnum',perk:'<b>THE BOSS</b> — brings his own .357 that goes through bodies. +50% ammo from pickups. Lightning-fast executions.',
+  real:'Sal Benedetti',from:'Federal Hill, Providence',bio:'Third Don of the Benedetti family, until a wire in \'85 put the family away. He came south with his father\'s .357 and not much else. Miami has no one family. Yet.'},
 ];
 const KILLPTS={dual:300,fists:500,bat:450,knife:450,machete:450,exec:800,door:600,throw:550,pistol:300,silenced:400,revolver:350,smg:250,m16:300,shotgun:300,double:300};
 const NEON=[[1,0.25,0.7],[0.2,0.85,1],[0.65,0.3,1],[1,0.55,0.2]];
@@ -2756,7 +2761,7 @@ function drawGarage(D,g,F){const B=F===undefined?D:F,gr=g.garage,c=g.hcar,T=g.T,
 function npcStep(dt){const g=G,p=g.player;if(g.talkT>0)g.talkT-=dt;const vi=Math.min(3,VISIT.debrief===null?0:VISIT.debrief+1);
  for(const n of g.npcs){if(n.kind==='guest'&&g.club){clubWalk(n,dt,g,p);}else if(n.kind==='guest'&&g.mall)mallWalk(n,dt,g,p);else if((n.kind==='guest'||n.kind==='pgirl')&&!n.bed)guestStep(n,dt,g,p);else if(n.cast)castStep(n,dt,g,p);if(n.kind==='dancer'||n.kind==='sdancer'||n.kind==='patron')continue;const dx=p.x-n.x,dz=p.z-n.z,d=Math.hypot(dx,dz);
   if(d<(n.kind==='guest'||(n.cast&&(n.vx||n.vz))?1.6:3)){const ta=Math.atan2(dx,dz);n.a+=clamp(angDiff(n.a,ta),-4*dt,4*dt);}else if(n.kind!=='guest')n.a+=clamp(angDiff(n.a,n.a0),-2*dt,2*dt);if(n.seat)n.a=n.a0+clamp(angDiff(n.a0,n.a),-0.9,0.9);
-  if(d<2.2&&!n.said&&!(g.talkT>0)&&(NPCLINES[n.kind]||HOME_NPC_LINES[n.kind]||n.kind==='recep'||n.kind==='hguard')){n.said=true;const L=n.kind==='recep'&&RECEP_GRADE[VISIT.grade]?RECEP_GRADE[VISIT.grade]:n.kind==='hguard'?[hguardLine()]:HOME_NPC_LINES[n.kind]?[pick(HOME_NPC_LINES[n.kind])]:(NPCLINES[n.kind][vi]||NPCLINES[n.kind][0]);g.talkT=L.length*1.5+0.4;const qg=g.quipGen=(g.quipGen||0)+1;let t=0;for(const line of L){setTimeout(()=>{if(G===g&&g.quipGen===qg)popup(n.x,n.z,line,'#ffe9a8');},t);t+=1500;}}
+  if(d<2.2&&!n.said&&!(g.talkT>0)&&(NPCLINES[n.kind]||HOME_NPC_LINES[n.kind]||n.kind==='recep'||n.kind==='hguard')){n.said=true;const L=n.kind==='recep'&&RECEP_GRADE[VISIT.grade]?RECEP_GRADE[VISIT.grade]:n.kind==='hguard'?[hguardLine()]:HOME_NPC_LINES[n.kind]?[storyPick(n.kind,HOME_NPC_LINES[n.kind])]:(NPCLINES[n.kind][vi]||NPCLINES[n.kind][0]);g.talkT=L.length*1.5+0.4;const qg=g.quipGen=(g.quipGen||0)+1;let t=0;for(const line of L){setTimeout(()=>{if(G===g&&g.quipGen===qg)popup(n.x,n.z,line,'#ffe9a8');},t);t+=1500;}}
   if(d<n.r+p.r&&d>1e-4){const k=(n.r+p.r-d);p.x+=dx/d*k;p.z+=dz/d*k;}}}
 let ENG=null;
 function engineOn(on){if(!AC)return;if(!ENG){if(!on)return;const o1=AC.createOscillator(),o2=AC.createOscillator(),f=AC.createBiquadFilter(),gg=AC.createGain();o1.type='sawtooth';o2.type='square';f.type='lowpass';f.frequency.value=500;gg.gain.value=0;o1.connect(f);o2.connect(f);f.connect(gg);gg.connect(sfxG);o1.start();o2.start();ENG={o1,o2,f,g:gg,on:false};}
@@ -3176,6 +3181,9 @@ const TONY_LINES=[()=>"Name's Tony. First drink's on the house; the second one c
  ()=>"Nine of Nine was in here last week. Paid for a round with a Soviet rifle. I didn't ask.",
  ()=>myProg().lexDead?"Lex used to sit in that booth, no socks, no tips. Can't say anybody's missed him.":"Lex Sterling? Sits in the VIP booth, never tips, never wears socks. I don't trust a man without socks.",
  ()=>"Cherry, Destiny, Crystal... none of them use their real names. Neither does anybody else in here.",
+ ()=>({don:"Fella from Providence was asking about you. Said the Benedettis used to own a whole hill. I said this is Florida, we don't have hills.",
+  consigliere:"Guy came in from Philly asking about a big lawyer with gold on his knuckles. I told him lawyers don't drink here. Was I right?",
+  money:"Morty Glass used to sit right where you're sitting, counting his tips twice. Then one day he stopped coming in. Funny, that."})[CHARS[selIdx].id],
  ()=>"The more you throw, the harder they dance. Basic economics.",
  ()=>"You want my advice? Never trust a guy in a linen suit, or a guy who gives advice.",
  ()=>myProg().car==='sig'?"That "+carName('sig')+" outside yours? The valet's been crying about it all night.":"Saw your "+carName(myCar())+" outside. Bold choice."];
@@ -3304,6 +3312,13 @@ const MORNING=[
  {who:'NINE OF NINE',msg:'Good morning my friend! Free sample, calibrated with mathematics. Is very ludicrous. Tell your friends.',need:()=>{const k=kit(),g=kitGun(k),c=g&&WD[g.type].cal;return !!c&&(k.pool[c]|0)<capOf(k,c);},fxt:'+1 BOX OF AMMO FOR YOUR GUN',fx:p=>{const k=kit(),g=kitGun(k);poolAdd(k,WD[g.type].cal,CAL[WD[g.type].cal].box);}},
  {who:'MRS. ORTEGA, UPSTAIRS',msg:'She brings flan and an envelope. "My nephew had a problem with some men. Now he does not. Thank you."',fxt:'+$700',fx:p=>{p.wallet+=700;}},
  {who:'AN UNKNOWN CALLER',msg:'"They\'re expecting you loud tonight. Go quiet." Click. There\'s something taped under the phone.',fxt:'SILENCED 9MM WAITING ON YOUR NEXT FLOOR',fx:p=>{p.gift='silenced';}},
+ {who:'A LETTER FROM PROVIDENCE',need:()=>CHARS[selIdx].id==='don',msg:'Your mother writes that the tomatoes came up fine, considering what was buried under them. Forty dollars inside, "for gas".',fxt:'+$40',fx:p=>{p.wallet+=40;}},
+ {who:'THE PAWN TICKET',need:()=>CHARS[selIdx].id==='don',msg:'It falls out of your wallet: Federal Hill Loan & Jewelry, one gold chain, 22 inches. The real one. Thirty days left on it.',fxt:'THE CHAIN WAITS IN PROVIDENCE',fx:()=>{}},
+ {who:'A POSTCARD FROM PHILADELPHIA',need:()=>CHARS[selIdx].id==='consigliere',msg:'The Liberty Bell on the front. On the back, in a woman\'s hand: "Carmine should have listened to all of it. I know that now. R."',fxt:'SOMEBODY IN PHILLY REMEMBERS',fx:()=>{}},
+ {who:'AN OLD SPARRING PARTNER',need:()=>CHARS[selIdx].id==='consigliere',msg:'"Gus! Saw you in the Herald, sort of. Still got the left hook? You still owe me twenty from \'63." He settles for a hundred.',fxt:'-$100',fx:p=>{p.wallet=Math.max(0,p.wallet-100);}},
+ {who:'A FEDERAL ENVELOPE',need:()=>CHARS[selIdx].id==='money',msg:'"Re: Glass & Pryce, assets under review." Page two lists a safe-deposit box in Morty Glass\'s name. Page three is blacked out.',fxt:'THE FEDS ARE STILL COUNTING',fx:()=>{}},
+ {who:"MORTY'S WIDOW",need:()=>CHARS[selIdx].id==='money',msg:'She leaves a casserole and a note: "He always said you were the honest one. I hope that was a compliment." No forwarding address.',fxt:'A CASSEROLE, STILL WARM',fx:()=>{}},
+ {who:'A GOLD-EDGED CARD',msg:'From McWey: "My mother would have liked you. She liked anybody who paid on time." A crisp hundred is tucked inside.',fxt:'+$100',fx:p=>{p.wallet+=100;}},
  {who:'PESOS THE DOG',need:()=>homeFurn().dog,msg:'Pesos drags a soggy roll of hundreds out from under the couch. Whose was it? Who cares. Good boy.',fxt:'+$800',fx:p=>{p.wallet+=800;}}];
 function showMorning(ev){state='morning';$('mnWho').textContent=ev.who;$('mnMsg').textContent=ev.msg;$('mnFx').textContent=ev.fxt;show('sMorning');sfx('blip');}
 /* waking up keeps you at home: McWey only has to be seen to take on a new act (see mcMust), not every morning */
@@ -3755,6 +3770,7 @@ function hguardLine(){const p=myProg(),sn=p.seen||(p.seen={}),j=p.jewel||{};
  const react=[['watch',j.watch,"Is that real gold? Don't answer. I don't wanna know."],['chain',j.chain,"Nice chain. Very Ocean Drive."],['rings',j.rings,"Rings on the pinky. Now you look like a man who means it."],['mid',p.car==='mid',"New coupe? Better than the "+carName('beater')+". Anything's better than the "+carName('beater')+"."],['sig',p.car==='sig',"A tourist just walked into a palm tree looking at your car."]];
  for(const [k,on,l] of react)if(on&&!sn['g_'+k]){sn['g_'+k]=1;saveProg();return l;}
  if((p.home||0)===0&&p.car!=='beater'&&!sn.g_old){sn.g_old=1;saveProg();return "Your old "+carName('beater')+"'s still out in the lot. Nobody'll steal it. We tried.";}
+ {const st=storyChat('hguard').filter(l=>!STORY_HEARD.has(l));if(st.length&&Math.random()<0.4)return storyPick('hguard');}
  if(Math.random()<0.3)return pick(p.debt>0?HG_DEBT:HG_FREE);return pick(HG_TIER[p.home||0]);}
 /* ---- Act 1 cameo: Lex "Silks" Sterling walks past at Club Flamingo (sets up Act 2) ---- */
 let LEXMET=false;
@@ -3991,7 +4007,7 @@ function drawLobbyTV(B,g){const t=g.tv,fl=0.85+Math.sin(g.T*7)*0.05+(Math.sin(g.
 function drawTVTicker(c,g,u){const t=g.tv,a=project(t.x-0.68,1.44,t.z+0.03),b=project(t.x+0.68,0.68,t.z+0.03);if(!a||!b)return;const x0=Math.min(a[0],b[0]),x1=Math.max(a[0],b[0]),y0=Math.min(a[1],b[1]),y1=Math.max(a[1],b[1]),w=x1-x0,h=y1-y0;if(w<40||x1<0||x0>vw||y1<0||y0>vh)return;
  c.save();c.beginPath();c.rect(x0,y0,w,h);c.clip();const fs=Math.max(9,h*0.3);c.fillStyle='rgba(8,14,48,.55)';c.fillRect(x0,y0,w,h);c.fillStyle='#c0182a';c.fillRect(x0,y0,w,fs*0.9);c.font=PXF(fs*0.5);txt(c,'CH 9 NEWS',x0+4,y0+fs*0.18,'#fff','left',fs*0.5);
  c.fillStyle='rgba(0,0,0,.6)';c.fillRect(x0,y1-fs*1.25,w,fs*1.25);c.font=VTF(fs);const tw=c.measureText(t.msg).width,off=(g.T*fs*2.2)%tw;for(let xx=x1-off-tw;xx<x1;xx+=tw)if(xx+tw>x0)txt(c,t.msg,xx,y1-fs*1.15,'#ffd36b','left',fs);c.restore();}
-function npcTalk(g,n){if(g.chatT>g.T)return;g.chatT=g.T+0.5;g.quipGen=(g.quipGen||0)+1;g.popups=g.popups.filter(q=>Math.hypot(q.x-n.x,q.z-n.z)>0.6);const pool=NPC_CHAT[n.kind]||[];let L=pick(pool);if(L===n.lastLine&&pool.length>1)L=pool[(pool.indexOf(L)+1)%pool.length];n.lastLine=L;n.said=true;g.talkT=1.4;popup(n.x,n.z,L,'#ffe9a8');sfx('blip');}
+function npcTalk(g,n){if(g.chatT>g.T)return;g.chatT=g.T+0.5;g.quipGen=(g.quipGen||0)+1;g.popups=g.popups.filter(q=>Math.hypot(q.x-n.x,q.z-n.z)>0.6);const pool=NPC_CHAT[n.kind]||[];let L=storyPick(n.kind,pool);if(L===n.lastLine&&pool.length>1)L=pool[(pool.indexOf(L)+1)%pool.length];n.lastLine=L;n.said=true;g.talkT=1.4;popup(n.x,n.z,L,'#ffe9a8');sfx('blip');}
 /* ---------- the fountain actually sounds like water ---------- */
 let FOUNT=null;
 function fountainHum(g){if(!AC||!noiseBuf)return;const on=state==='play'&&g&&g.fount&&g.player;if(!FOUNT){if(!on)return;const s=AC.createBufferSource();s.buffer=noiseBuf;s.loop=true;const f=AC.createBiquadFilter();f.type='bandpass';f.frequency.value=1600;f.Q.value=0.6;const f2=AC.createBiquadFilter();f2.type='lowpass';f2.frequency.value=4200;const gg=AC.createGain();gg.gain.value=0;s.connect(f);f.connect(f2);f2.connect(gg);gg.connect(sfxG);s.start();FOUNT={g:gg};}
@@ -4553,7 +4569,7 @@ function drawHUD0(){const c=hctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0
 const SCREENS=['sObj','sElev','sTitle','sHelp','sSelect','sBrief','sDead','sResults','sEnd','sPause','sPerk','sCar','sShop','sStore','sMorning'];
 function show(id){if(id==='sDead'||id==='sPause')WALK_ARM=performance.now()+500;SCREENS.forEach(s=>$(s).classList.toggle('on',s===id));if(id==='sTitle')syncResume();if(id)$('banner').classList.remove('on');}
 let bannerT=null,LASTBAN=null;function banner(a,b){LASTBAN=[a,b];const el=$('banner');el.innerHTML='<div class="b1">'+a+'</div>'+(b?'<div class="b2">'+b+'</div>':'');el.classList.add('on');clearTimeout(bannerT);bannerT=setTimeout(()=>el.classList.remove('on'),2400);}
-function updateSelect(){const c=CHARS[selIdx];const gb=$('cBig');gb.textContent=c.name;gb.dataset.t=c.name;$('cQuote').textContent=c.quote;$('cPerk').innerHTML=c.perk;
+function updateSelect(){const c=CHARS[selIdx];const gb=$('cBig');gb.textContent=c.name;gb.dataset.t=c.name;$('cQuote').textContent=c.quote;$('cBioS').textContent='FILE · '+c.real.toUpperCase()+' · '+c.from.toUpperCase();$('cBio').textContent=c.bio;$('cPerk').innerHTML=c.perk;
  $('cDiff').innerHTML='<span>DIFFICULTY</span>'+Object.entries(DIFF).map(([k,d])=>`<button data-d="${k}" class="${SET.diff===k?'on':''}">${d.name}</button>`).join('');$('cDiffD').textContent=Dd().desc;$('cFloor').innerHTML=floorHTML();$('cFloorD').innerHTML=floorDesc()+'<br>'+chHTML(JOBS.sel);$('cNight').innerHTML=nightHTML();$('cNightD').textContent=nightDesc();
  $('cStats').innerHTML=Object.entries(c.stats).map(([k,v])=>`<span>${k}</span><div class="bar"><i style="width:${v*20}%"></i></div>`).join('')+`<span>STARTS WITH</span><span style="color:#ffd36b">${c.start}</span>`+xpBarHTML()+`<span>REPUTATION</span><span style="color:#ff9ec7;font-size:.85em">${repLine()}</span><span>PERKS</span><span style="color:#7dff9a;font-size:.85em">${perkList()}</span>`+suitHTML();PS2C.applySuit(c.id);}
 function suitHTML(){const p=myProg(),cur=mySuit();return '<span>SUIT</span><div class="suits" style="display:flex;gap:4px;flex-wrap:wrap;grid-column:1/-1">'+SUITKEYS.map(k=>{const S=SUITS[k],ok=suitOK(p,k);return `<button data-suit="${k}" class="${cur===k?'on':''}" ${ok?'':'disabled'} style="font-size:.7em;padding:4px 7px;opacity:${ok?1:.45}">${ok?S.name:S.name+(S.shop?' · TAILOR':S.act2?' · ACT 2':' · LV '+S.lvl)}</button>`;}).join('')+'</div><span style="color:#ffd36b;font-size:.8em;grid-column:1/-1">'+SUITS[cur].desc+'</span>';}
