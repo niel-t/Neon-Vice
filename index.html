@@ -81,6 +81,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 #bCover{right:182px;bottom:calc(50% - 10px);background:rgba(120,90,220,.38)}
 #bPause{left:50%;top:6px;margin-left:-50px;width:42px;height:38px;border-radius:8px}
 #bRestart{left:50%;top:6px;margin-left:8px;width:42px;height:38px;border-radius:8px}
+#slapUI{position:fixed;inset:0;z-index:3;pointer-events:none;display:none}#bSlap{right:18px;bottom:calc(50% - 10px);background:rgba(255,90,170,.5);font-size:10px}
 #mercyUI{position:fixed;left:0;right:0;bottom:22%;z-index:4;display:none;justify-content:center;gap:28px;pointer-events:none}
 #mercyUI .tb{position:static;width:150px;height:64px;border-radius:12px;font-size:11px}
 #bSpare{background:rgba(60,200,110,.55)}#bFinish{background:rgba(230,40,70,.6)}
@@ -159,7 +160,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <body>
 <canvas id="gl"></canvas><canvas id="hud"></canvas>
 <div id="banner"></div><div id="cine"><div class="lb t"></div><div class="lb b"></div><div id="cineT"><div class="c1"></div><div class="c2"></div></div><div class="skp">TAP TO SKIP</div></div><div id="fade"></div><button class="btn sm" id="bSkip">SKIP TO McWEY<span class="kbhint"> (TAB)</span><span class="padhint"> (Y)</span></button>
-<div id="mercyUI"><div class="tb" id="bSpare">SPARE HIM</div><div class="tb" id="bFinish">FINISH HIM</div></div>
+<div id="slapUI"><div class="tb" id="bSlap">SLAP</div></div><div id="mercyUI"><div class="tb" id="bSpare">SPARE HIM</div><div class="tb" id="bFinish">FINISH HIM</div></div>
 <div id="touchUI"><div class="tb" id="bGrab">GRAB</div><div class="tb" id="bReload">RELOAD</div><div class="tb" id="bSwap">SWITCH</div><div class="tb" id="bPerk">CASH</div><div class="tb" id="bCover" style="display:none">COVER</div><div class="tb" id="bPause">II</div><div class="tb" id="bRestart">&#8635;</div></div>
 <div id="sTitle" class="screen on">
   <div class="logo">NEON VICE</div><div class="logo2">OCEAN DRIVE</div>
@@ -170,7 +171,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
   <div class="hint" style="opacity:.75">Best in landscape · sound on · Xbox controller supported</div>
 </div>
 <div id="sHelp" class="screen dim"><div class="logo2">HOW TO PLAY</div>
-  <div class="kv"><span>MOVE</span><span>WASD / left thumb</span><span>AIM</span><span>Mouse / right thumb</span><span>ATTACK</span><span>Click / push right thumb</span><span>GRAB / THROW</span><span>E / right-click / GRAB</span><span>PERK</span><span>Space / CASH</span><span>SPRINT</span><span>Shift / LB / push left thumb to the edge</span><span>LOOK AHEAD</span><span>Hold F</span><span>RELOAD</span><span>R / RELOAD (again in the green window: instant)</span><span>SWITCH WEAPON</span><span>Wheel / Tab / <span id="hSlots">1 2</span> / SWITCH</span><span>RESTART</span><span>Backspace / &#8635;</span><span>PAUSE</span><span>Esc / II</span></div>
+  <div class="kv"><span>MOVE</span><span>WASD / left thumb</span><span>AIM</span><span>Mouse / right thumb</span><span>ATTACK</span><span>Click / push right thumb</span><span>GRAB / THROW</span><span>E / right-click / GRAB</span><span>SLAP (girls)</span><span>F / SLAP</span><span>PERK</span><span>Space / CASH</span><span>SPRINT</span><span>Shift / LB / push left thumb to the edge</span><span>LOOK AHEAD</span><span>Hold F</span><span>RELOAD</span><span>R / RELOAD (again in the green window: instant)</span><span>SWITCH WEAPON</span><span>Wheel / Tab / <span id="hSlots">1 2</span> / SWITCH</span><span>RESTART</span><span>Backspace / &#8635;</span><span>PAUSE</span><span>Esc / II</span></div>
   <div class="logo2" style="font-size:clamp(10px,2vw,14px);margin-top:4px">XBOX CONTROLLER</div><div class="kv"><span>MOVE</span><span>Left stick</span><span>AIM</span><span>Right stick</span><span>ATTACK</span><span>RT (or RB)</span><span>GRAB / THROW</span><span>A</span><span>CASH PERK</span><span>X</span><span>RELOAD</span><span>LT</span><span>SWITCH WEAPON</span><span>Y</span><span>SPRINT</span><span>Hold LB / click L3</span><span>PAUSE / RESTART</span><span>Start / Back</span></div>
   <div class="hint">One hit kills, you included. Red lasers mean a gunman is about to fire.<br>Stand still to shoot straight. Silenced guns don't wake the floor.<br>Slam doors into people. Hit downed enemies to finish them.<br>Your kit carries between jobs. Nine of Nine sells and buys gear; spares wait in your apartment's gun locker.</div>
   <button class="btn" id="bHelpBack">GOT IT<span class="padhint"> (A)</span></button></div>
@@ -210,6 +211,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <script src="plans/penthouse.js"></script>
 <script src="mesh.js"></script>
 <script src="missions.js"></script>
+<script src="mocap.js"></script>
 <script src="models.js"></script>
 <script>
 'use strict';
@@ -295,6 +297,7 @@ const TRS=(x,y,z,ry,sx,sy,sz)=>A.mul(A.mul(A.T(x,y,z),A.RY(ry)),A.S(sx,sy,sz));
 <script src="marina.js"></script>
 <script src="upstairs.js"></script>
 <script src="mansion.js"></script>
+<script src="slap.js"></script>
 <script src="guide.js"></script>
 <script src="animals.js"></script>
 <script src="act4.js"></script>
@@ -923,7 +926,7 @@ function padMenus(dt){if(!PAD.on)return;PAD.navT-=dt;const ax=PAD.gp.axes[0]||0;
   case 'shop':shopPadInput(dir,dt);break;
   case 'perk':{const cs=document.querySelectorAll('.pcard');const i=pdown(4)?0:pdown(0)?1:pdown(5)?2:-1;if(i>=0&&cs[i])choosePerk(cs[i].dataset.k);}break;
   case 'pause':if(pdown(9)||pdown(1))togglePause();else if(pdown(8))restart();else if(padWalk())walkAway();else if(pdown(3))$('bQuit').click();break;
-  case 'play':if(G&&G.cine&&(pdown(0)||pdown(2))){cineSkip();break;}if(G&&G.def.hub&&pdown(3)){hubSkip();break;}if(pdown(9))togglePause();else if(pdown(8))restart();else{if(pdown(0))pressed.grab=true;if(pdown(1)&&SET.cover&&G&&!G.def.hub)pressed.cover=true;if(pdown(2))pressed.perk=true;if(pdown(3))pressed.swap=true;if(pdown(6))pressed.reload=true;}break;}}
+  case 'play':if(G&&G.cine&&(pdown(0)||pdown(2))){cineSkip();break;}if(G&&G.def.hub&&pdown(3)){hubSkip();break;}if(pdown(9))togglePause();else if(pdown(8))restart();else{if(pdown(0))pressed.grab=true;if(pdown(1)&&SET.cover&&G&&!G.def.hub)pressed.cover=true;if(pdown(1)&&G&&G.def.hub)pressed.slap=true;if(pdown(2))pressed.perk=true;if(pdown(3))pressed.swap=true;if(pdown(6))pressed.reload=true;}break;}}
 addEventListener('gamepadconnected',()=>{padMode=true;touchMode=false;mouse.active=false;banner('CONTROLLER CONNECTED','Left stick move · Right stick aim · RT attack · A grab · X cash');});
 
 function isSolid(cx,cz){return WORLD.cell.isSolid(G,cx,cz);}
@@ -2675,7 +2678,7 @@ function travel(go,t1,t2){const g=G,L=g&&HUBMODE==='home'&&HOME_LIFT[g.home];
 function onHubTrigger(t){if(fading)return false;if(t==='leave')return homeLeave();if(t==='lift')return liftUp();if(t==='exit'){sfx('blip');return fadeTo(()=>loadHub('drive','parked'));}if(t==='tower'){sfx('blip');return fadeTo(()=>loadHub('lobby'));}else if(t==='elevator'){sfx('ding');return fadeTo(enterElevator);}else if(t==='mcwey'){return fadeTo(talkMcWey);}return true;}
 function updateHub(dt){const g=G;g.T+=dt;g.time+=dt;if(g.np)g.np.t+=dt;carDoorTick(g.park,dt);carDoorTick(g.hcar,dt);carDoorTick(g.pcar,dt);
  if(g.seq){updateSeq(dt);if(G!==g)return;if(g.def.hub!=='drive')npcStep(dt);else if(g.parked)parkedStreet(dt);if(g.slots)homeTick(dt);updateFX(dt);seqCam(dt);return;}
- if(g.cine)updateCine(dt);else if(g.def.hub==='drive'&&!g.parked)updateDrive(dt);else{if(g.range)rangePre(dt);hubInteract();updatePlayer(dt);if(g.seatP)seatHold(g);if(g.range){rangeTick(dt);updateDoors(dt);}if(g.solids&&g.player)for(const s of g.solids)boxPush(s,g.player);npcStep(dt);if(g.seatP)seatHold(g);if(g.mcDesk)officeTick(g,dt);if(g.parked)parkedStreet(dt);if(g.slots)homeTick(dt);if(g.club)clubTick(dt);}
+ if(g.cine)updateCine(dt);else if(g.def.hub==='drive'&&!g.parked)updateDrive(dt);else{if(g.range)rangePre(dt);hubInteract();updatePlayer(dt);if(g.seatP)seatHold(g);if(g.range){rangeTick(dt);updateDoors(dt);}if(g.solids&&g.player)for(const s of g.solids)boxPush(s,g.player);npcStep(dt);slapTick(dt);if(g.seatP)seatHold(g);if(g.mcDesk)officeTick(g,dt);if(g.parked)parkedStreet(dt);if(g.slots)homeTick(dt);if(g.club)clubTick(dt);}
  updateFX(dt);
  if(!g.hubDone&&!g.cine){const p=g.def.hub==='drive'?g.pcar:g.player,rr2=g.def.hub==='drive'?1.7:0.75;
   /* after a scene leaves you standing on a trigger (stepping out of the elevator onto the way back down), it waits until you have walked off it */
@@ -2899,6 +2902,7 @@ function drawHubHUD(c,g,u,m){if(g.cine)return;if(g.seq){drawSeqHUD(c,g,u);return
  if(g.say&&g.say.t<g.say.dur){g.say.t+=1/60;drawSay(c,g.say,u);}
  if(g.ia&&g.ia.k==='talk'){const s3=project(g.ia.x,1.9,g.ia.z);if(s3){const lbl=padMode?'(A)':touchMode?'TAP':'E';c.font=VTF(12*u);const tw=c.measureText(lbl).width;c.fillStyle='rgba(10,4,18,.55)';c.fillRect(s3[0]-tw/2-4*u,s3[1]-17*u,tw+8*u,14*u);txt(c,lbl,s3[0],s3[1]-16*u,'#ffd36b','center',12*u);}}
  else if(g.ia){const s3=project(g.ia.x,1.9,g.ia.z);if(s3){c.font=VTF(18*u);const lbl=(padMode?'(A) ':touchMode?'TAP: ':'[E] / CLICK: ')+g.ia.lbl,tw=c.measureText(lbl).width;c.fillStyle='rgba(10,4,18,.85)';c.fillRect(s3[0]-tw/2-7*u,s3[1]-24*u,tw+14*u,22*u);c.fillStyle='#ffd36b';c.fillRect(s3[0]-tw/2-7*u,s3[1]-24*u,3*u,22*u);txt(c,lbl,s3[0],s3[1]-22*u,'#fff','center',18*u);}}
+ drawSlapHint(c,g,u);
  c.font=VTF(18*u);for(const pp of g.popups){const s2=project(pp.x,1.6+pp.t*0.5,pp.z);if(!s2)continue;c.globalAlpha=clamp(2.2-pp.t*1.3,0,1);const tw=c.measureText(pp.txt).width;c.fillStyle='rgba(10,4,18,.75)';c.fillRect(s2[0]-tw/2-6*u,s2[1]-2*u,tw+12*u,22*u);txt(c,pp.txt,s2[0],s2[1],pp.col,'center',18*u);}c.globalAlpha=1;}
 /* ---- after the briefing: lift down, your car, Nine of Nine's gun shop ---- */
 let HUBMODE='in',NEXTJOB=0,MISSION='c0',JOBPICK=null; // MISSION: the job being played; JOBPICK: a non-campaign job taken from McWey's menu
@@ -2986,7 +2990,7 @@ $('bCarPhone').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('ring');stat
 $('bCarShop').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);travel(()=>{loadHub('bunker');hubArrive(G);},"NINE OF NINE'S",'EXOTIC MACHINERY OF DEATH');};
 $('bCarBack').onclick=()=>closeCarMenu();
 $('bCarHome').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);departTo(goHome,HOMEDEF[myProg().home||0].name,'HOME');};
-$('bCarClub').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);travel(()=>{loadHub('club');hubArrive(G);},'VELVET PALMS',"GENTLEMEN'S CLUB");};
+$('bCarClub').onclick=()=>{if(state!=='carmenu'||fading)return;if(clubBanned()){sfx('blip');banner('VELVET PALMS',"Tony's bouncers won't let you in. Do another job first.");return;}sfx('pick');state='play';show(null);travel(()=>{loadHub('club');hubArrive(G);},'VELVET PALMS',"GENTLEMEN'S CLUB");};
 $('bCarDealer').onclick=()=>{if(state!=='carmenu'||fading)return;sfx('pick');state='play';show(null);travel(()=>{loadHub('mall');hubArrive(G);},'BISCAYNE GALLERIA','JEWELRY · FURNITURE · REAL ESTATE · CARS');};
 /* jewelry from Gold Coast Jewelers in the mall (mall.js). p.jewel[k]: true while worn, 'off' while it sits in the box. Every piece shows on the PS2 model */
 const JEWEL={watch:{name:'GOLD WATCH',price:2500,desc:'Tells time. Mostly tells people you have money.'},bracelet:{name:'GOLD ID BRACELET',price:4000,desc:'Chunky links on the other wrist. Your name, engraved, misspelled.'},chain:{name:'GOLD CHAIN',price:6000,desc:'Real gold, a diamond drop. No green marks on this neck.'},
@@ -3174,7 +3178,7 @@ function drawAct2(B,g){const T=g.T,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,
  if(g.tank){const t=g.tank;drawTankLife(B,T,t.x0,t.x1,(t.z0+t.z1)/2,(t.z1-t.z0)*0.3,0.08,0.03,1.1,0.06,0.3);}
  if(g.wreck){for(let i=0;i<5;i++)bx(g.car.x-0.9+i*0.45,0.55,g.car.z+((i*37)%3-1)*0.2,0.3,0.04,0.3,[0.05,0.05,0.05]);}}
 /* ---- Velvet Palms: stage, dancers, Tony at the bar ---- */
-const CLUB_MOVES=['sway','pole','hair','spin','drop','strut'];
+const CLUB_MOVES=['sway','pole','lambada','hair','spin','drop','strut'];
 const DANCER_NAMES=['CHERRY','DESTINY','CRYSTAL','ROXANNE','STARR','MONIQUE','JADE','BAMBI'];
 const STAGE_FITS=[[0xff2d95,0xffd36b],[0x2de2e6,0xffffff],[0xc9b6f2,0xff6fae],[0xffd36b,0x1a1a22],[0x7dff9a,0xff2d95]];
 /* every girl is her own person: hair colour and style, skin, body size and lingerie style are rolled once (dancerProf) and kept
@@ -3259,14 +3263,14 @@ function clubWalk(n,dt,g,p){if(!n.tgt||Math.hypot(n.tgt[0]-n.x,n.tgt[1]-n.z)<0.3
 function clubStep(g,d,f,tx,tz,sp,dt){let gx=tx,gz=tz;if(!pathClear(g,d.x,d.z,tx,tz,0.22)){const s=flowStep(f,d,tx,tz);if(s){gx=s[0];gz=s[1];}}
  const dx=gx-d.x,dz=gz-d.z,L=Math.hypot(dx,dz)||1,ox=d.x,oz=d.z;d.vx=dx/L*sp;d.vz=dz/L*sp;d.x+=d.vx*dt;d.z+=d.vz*dt;collideGrid(d);
  const m=Math.hypot(d.x-ox,d.z-oz);d.walk=(d.walk||0)+m*9;d.a+=clamp(angDiff(d.a,Math.atan2(dx,dz)),-8*dt,8*dt);}
-/* stage routines: each dancer flows through sway / pole / hair / spin / drop / strut around her own pole; tips make her move faster */
+/* stage routines: each dancer flows through sway / pole / lambada (motion capture) / hair / spin / drop / strut around her own pole; tips make her move faster */
 function danceTick(g,d,dt){const sc=g.club.sc,q=d.pole,sp=1+d.boost*0.6+(d.stage>=2?0.25:0);
- d.mt+=dt;if(d.mt>=d.md){let n=d.move;while(n===d.move)n=pick(CLUB_MOVES);d.move=n;d.mt=0;d.md=n==='spin'?rnd(3,4.5):n==='strut'?rnd(4,6):rnd(5,8);}
- d.moveE=Math.max(0,Math.min(1,d.mt/0.7,(d.md-d.mt)/0.7));d.ph+=dt*3.4*sp;
+ d.mt+=dt;if(d.mt>=d.md){let n=d.move;while(n===d.move)n=pick(CLUB_MOVES);d.move=n;d.mt=0;d.md=n==='spin'?rnd(3,4.5):n==='strut'?rnd(4,6):n==='lambada'?rnd(8,12):rnd(5,8);}
+ d.moveE=Math.max(0,Math.min(1,d.mt/1.1,(d.md-d.mt)/1.1));d.moveE=d.moveE*d.moveE*(3-2*d.moveE);d.ph+=dt*3.4*sp;
  const out=Math.atan2(q.x-sc.x,q.z-sc.z),fa=(Math.abs(q.x-sc.x)+Math.abs(q.z-sc.z)<0.3?0:out*0.5)+0.75*Math.sin(g.T*0.23+d.fit*1.7);
  let tx=q.x+Math.sin(fa)*0.32,tz=q.z+Math.cos(fa)*0.32,ta=fa+0.2*Math.sin(d.ph*0.5),ty=0.36;
  if(d.move==='pole'){tx=q.x+Math.sin(fa)*0.2;tz=q.z+Math.cos(fa)*0.2;}
- else if(d.move==='spin'){d.sa+=dt*2.6*sp;tx=q.x+Math.cos(d.sa)*0.3;tz=q.z+Math.sin(d.sa)*0.3;ta=Math.atan2(-Math.sin(d.sa),Math.cos(d.sa))+Math.PI/2;ty=0.36+0.2*d.moveE;}
+ else if(d.move==='spin'){/* walks round the pole holding it with her right hand, then swings off the floor */d.sa+=dt*(1.2+0.6*d.moveE)*sp;tx=q.x+Math.cos(d.sa)*0.26;tz=q.z+Math.sin(d.sa)*0.26;ta=-d.sa;ty=0.36+0.1*d.moveE;}
  else if(d.move==='strut'){d.sa+=dt*1.1*sp;const R=0.72;tx=q.x+Math.cos(d.sa)*R;tz=q.z+Math.sin(d.sa)*R;ta=Math.atan2(-Math.sin(d.sa),Math.cos(d.sa));d.walk=(d.walk||0)+dt*1.1*sp*R*9;}
  else ty=0.36+Math.abs(Math.sin(d.ph))*0.025;
  const k=Math.min(1,dt*(d.move==='spin'?14:6)),ox=d.x,oz=d.z;d.x+=(tx-d.x)*k;d.z+=(tz-d.z)*k;d.y+=(ty-d.y)*Math.min(1,dt*8);d.vx=d.vz=0;
@@ -3297,7 +3301,7 @@ function clubTick(dt){const g=G,c=g.club,v=c.vip,p=g.player;
   if(b.ph==='walk'){if(Math.hypot(b.tx-d.x,b.tz-d.z)>0.35&&b.t<25)clubStep(g,d,b.f,b.tx,b.tz,2.2,dt);else{b.ph='up';b.t=0;b.fx=d.x;b.fz=d.z;}}
   else{const k=Math.min(1,b.t/0.8);d.x=b.fx+(d.pole.x-b.fx)*k;d.z=b.fz+(d.pole.z-b.fz)*k;d.y=0.36*k+Math.sin(k*Math.PI)*0.25;if(k>=1){d.walking=false;d.vx=d.vz=0;c.back=null;}}}
  for(const d of c.dancers){if(d.lapDance||d.walking)continue;danceTick(g,d,dt);d.boost=Math.max(0,d.boost-dt*0.25);}}
-function tipDancer(d){const p=myProg(),g=G;arm();if(p.wallet<100){popup(g.player.x,g.player.z,'OUT OF CASH','#ff8a95');sfx('blip');return;}
+function tipDancer(d){const p=myProg(),g=G;arm();if(d.cold>0){popup(d.x,d.z,d.dname+' WON\'T TAKE YOUR MONEY','#ff8a95');sfx('blip');return;}if(p.wallet<100){popup(g.player.x,g.player.z,'OUT OF CASH','#ff8a95');sfx('blip');return;}
  p.wallet-=100;saveProg();d.tips++;d.boost=Math.min(1.6,d.boost+0.7);sfx('cash');
  for(let i=0;i<8;i++){const a=Math.atan2(d.x-g.player.x,d.z-g.player.z)+rnd(-0.4,0.4),v=rnd(2.5,4.5);g.parts.push({t:'c',x:g.player.x,y:1.1,z:g.player.z,vx:Math.sin(a)*v,vy:rnd(1,2.5),vz:Math.cos(a)*v,s:0.08,c:[0.35,0.8,0.4],life:1.0});}
  popup(d.x,d.z,'-$100 · '+pick(['WOO!','OOH, BIG SPENDER','DON\'T STOP NOW','MORE!','THANK YOU, SUGAR']),'#7dff9a');
@@ -5160,11 +5164,11 @@ $('bGrain').onclick=()=>{const L=[0,0.2,0.35,0.6];SET.grain=L[(L.indexOf(SET.gra
 $('bHints').onclick=()=>{SET.hints=!SET.hints;saveSet();syncSetBtns();};$('bCoverSet').onclick=()=>{SET.cover=!SET.cover;saveSet();syncSetBtns();};$('bFog').onclick=()=>{SET.fog=SET.fog==='on'?'off':SET.fog==='off'?'auto':'on';saveSet();syncSetBtns();};$('bGore').onclick=()=>{SET.gore=SET.gore==='normal'?'extreme':'normal';saveSet();syncSetBtns();};$('bText').onclick=()=>cycleTextSize();
 $('bQuit').onclick=()=>{state='title';G=null;show('sTitle');};
 const tbtn=(id,fn)=>{const el=$(id);el.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();fn();},{passive:false});el.addEventListener('mousedown',e=>{e.stopPropagation();fn();});};
-tbtn('bSpare',()=>pressed.spare=true);tbtn('bFinish',()=>pressed.finish=true);tbtn('bGrab',()=>pressed.grab=true);tbtn('bReload',()=>pressed.reload=true);tbtn('bSwap',()=>pressed.swap=true);tbtn('bPerk',()=>pressed.perk=true);tbtn('bCover',()=>pressed.cover=true);tbtn('bPause',()=>togglePause());tbtn('bRestart',()=>restart());
+tbtn('bSpare',()=>pressed.spare=true);tbtn('bSlap',()=>pressed.slap=true);tbtn('bFinish',()=>pressed.finish=true);tbtn('bGrab',()=>pressed.grab=true);tbtn('bReload',()=>pressed.reload=true);tbtn('bSwap',()=>pressed.swap=true);tbtn('bPerk',()=>pressed.perk=true);tbtn('bCover',()=>pressed.cover=true);tbtn('bPause',()=>togglePause());tbtn('bRestart',()=>restart());
 
 /* ================= INPUT ================= */
 addEventListener('keydown',e=>{if(contextLost)return;keys[e.code]=true;if(state==='play'&&G&&G.seq&&!e.repeat&&(e.code==='Enter'||e.code==='Space'||e.code==='NumpadEnter'))G.seq.tap=true;// a quick tap can come and go between two slow frames
-if(state==='objcard'){if(!e.repeat&&['Enter','Space','Escape','NumpadEnter','KeyE'].includes(e.code)){objCardGo();e.preventDefault();}return;}if(state==='morning'&&(e.code==='Enter'||e.code==='Space')){$('bMorning').click();e.preventDefault();return;}if(state==='carmenu'||state==='shop'||state==='store'){menuKey(e);e.preventDefault();return;}if((e.code==='Space'||e.code==='Enter')&&state==='play'&&G&&G.cine){cineSkip();e.preventDefault();return;}if(e.code==='Tab'&&state==='play'&&G&&G.def.hub){hubSkip();e.preventDefault();return;}if((e.code==='Enter'||e.code==='Space')&&state==='elev'){skipElev();e.preventDefault();return;}if(state==='perk'&&/^Digit[123]$/.test(e.code)){const cs=document.querySelectorAll('.pcard');const b=cs[+e.code.slice(5)-1];if(b)choosePerk(b.dataset.k);return;}if(padMode&&/^(Key[WASD]|Arrow)/.test(e.code))padMode=false;{const inJob=state==='play'&&G&&!G.def.hub;if(e.code==='KeyR'){if(inJob){if(!e.repeat)pressed.reload=true;}else pressed.restart=true;}if(e.code==='Backspace'&&G&&!G.def.hub&&(inJob||state==='dead'||state==='results')){pressed.restart=true;e.preventDefault();}if(e.code==='Tab'&&inJob){pressed.swap=true;e.preventDefault();}const dg=inJob&&/^(?:Digit|Numpad)([123])$/.exec(e.code);if(dg)pressed.slot=+dg[1];}if(e.code==='KeyE')pressed.grab=true;if(e.code==='Space'&&SET.cover&&state==='play'&&G&&!G.def.hub){if(!e.repeat)pressed.cover=true;}else if(e.code==='Space'||e.code==='KeyQ')pressed.perk=true;if(e.code==='Escape'||e.code==='KeyP')pressed.pause=true;if(SETMENU&&e.code==='Escape')$('bSetBack').click();if(e.code==='KeyM')toggleMute();
+if(state==='objcard'){if(!e.repeat&&['Enter','Space','Escape','NumpadEnter','KeyE'].includes(e.code)){objCardGo();e.preventDefault();}return;}if(state==='morning'&&(e.code==='Enter'||e.code==='Space')){$('bMorning').click();e.preventDefault();return;}if(state==='carmenu'||state==='shop'||state==='store'){menuKey(e);e.preventDefault();return;}if((e.code==='Space'||e.code==='Enter')&&state==='play'&&G&&G.cine){cineSkip();e.preventDefault();return;}if(e.code==='Tab'&&state==='play'&&G&&G.def.hub){hubSkip();e.preventDefault();return;}if((e.code==='Enter'||e.code==='Space')&&state==='elev'){skipElev();e.preventDefault();return;}if(state==='perk'&&/^Digit[123]$/.test(e.code)){const cs=document.querySelectorAll('.pcard');const b=cs[+e.code.slice(5)-1];if(b)choosePerk(b.dataset.k);return;}if(padMode&&/^(Key[WASD]|Arrow)/.test(e.code))padMode=false;{const inJob=state==='play'&&G&&!G.def.hub;if(e.code==='KeyR'){if(inJob){if(!e.repeat)pressed.reload=true;}else pressed.restart=true;}if(e.code==='Backspace'&&G&&!G.def.hub&&(inJob||state==='dead'||state==='results')){pressed.restart=true;e.preventDefault();}if(e.code==='Tab'&&inJob){pressed.swap=true;e.preventDefault();}const dg=inJob&&/^(?:Digit|Numpad)([123])$/.exec(e.code);if(dg)pressed.slot=+dg[1];}if(e.code==='KeyE')pressed.grab=true;if(e.code==='KeyF')pressed.slap=true;if(e.code==='Space'&&SET.cover&&state==='play'&&G&&!G.def.hub){if(!e.repeat)pressed.cover=true;}else if(e.code==='Space'||e.code==='KeyQ')pressed.perk=true;if(e.code==='Escape'||e.code==='KeyP')pressed.pause=true;if(SETMENU&&e.code==='Escape')$('bSetBack').click();if(e.code==='KeyM')toggleMute();
  if((e.code==='Enter'||e.code==='Space')&&state==='title'){$('bStart').click();e.preventDefault();return;}
  if((e.code==='Enter'||e.code==='Space')&&state==='brief'){chatTap();e.preventDefault();return;}
  if(state==='brief'){if(CHAT.phase==='choose'){const d=/^(?:Digit|Numpad)([1-9])$/.exec(e.code);if(d){chatPick(+d[1]-1);e.preventDefault();return;}
@@ -5205,8 +5209,9 @@ function frame(now){if(contextLost||gl.isContextLost())return;requestAnimationFr
  if(state==='elev')updateElev(dt);else if(state==='brief')updateBrief(dt);else if(state==='shop')updateNine(dt);else if(state==='title'||state==='select'||state==='help'||!G)updateMenu(dt);
  if(AC){let tr;if(state==='play'||state==='dead'||state==='pause'||state==='objcard'){if(G&&G.def.hub)tr=G.track;else if(G&&G.cleared)tr=afterTrack();else if(G&&G.boss&&G.boss.alive&&G.bossSeen)tr='boss';else tr=(G&&G.track)||'game';}else if(state==='carmenu'||state==='shop'||state==='store')tr=(G&&G.track)||'c_palms';else tr=state==='results'?afterTrack():state==='elev'?'c_pastel':(state==='brief'&&G&&G.def.hub)?'c_tide':'menu';setTrack(tr);setMuffle(state==='dead'||state==='pause'||state==='brief');}
  engineOn(state==='play'&&!!G&&G.def.hub==='drive'&&!G.parked&&SET.sound);$('cine').style.display=(state==='play'&&G&&G.cine)?'block':'none';$('bSkip').style.display=(state==='play'&&G&&G.def.hub)?'block':'none';
- pressed.grab=pressed.perk=pressed.restart=pressed.pause=pressed.reload=pressed.swap=pressed.cover=false;pressed.slot=0;
+ pressed.grab=pressed.perk=pressed.restart=pressed.pause=pressed.reload=pressed.swap=pressed.cover=pressed.slap=false;pressed.slot=0;
  const tui=touchMode&&state==='play'&&!(G&&G.def.hub&&!G.rangeOn);$('touchUI').style.display=tui?'block':'none';
+ {const su=$('slapUI'),on=!!(touchMode&&state==='play'&&G&&G.def&&G.def.hub&&G.slapN);if(su._on!==on){su._on=on;su.style.display=on?'block':'none';}}
  {const mu=$('mercyUI'),on=!!(G&&G.mercy&&G.mercy.ask&&state==='play')&&!padMode;if(mu._on!==on){mu._on=on;mu.style.display=on?'flex':'none';}}
  if(tui&&G){$('bPerk').style.display=CHARS[selIdx].id==='money'?'flex':'none';$('bCover').style.display=SET.cover?'flex':'none';const p=G.player,ca=p.alive?ctxAction(p):{l:'GRAB'},lbl=ca.l;const b=$('bGrab');if(b.dataset.l!==lbl){b.innerHTML=lbl;b.dataset.l=lbl;b.style.background=ca.hot?'rgba(255,211,107,.55)':'';b.style.boxShadow=ca.hot?'0 0 14px #ffd36b':'';}}
  try{render();drawHUD();}catch(err){console.error(err);}}
