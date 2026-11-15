@@ -27,8 +27,8 @@ function guideStage(g){if(!g.stageManaged||!g.stageRun||stageFinal(g))return nul
  const s=guideNear(g.player,st.map(s=>({x:s.at[0],z:s.at[1],s})));if(!s)return null;
  return {x:s.x,z:s.z,k:'stage',lbl:s.s.id==='elev'?(isKade(g)?'TAKE THE HOIST':'TAKE THE ELEVATOR'):typeof A4_STAIR_LBL!=='undefined'&&A4_STAIR_LBL[s.s.id]||'TAKE THE STAIRS'};}
 function guideTarget(g){if(!g||!g.def||g.def.hub||g.done||!g.player||!g.player.alive||g.arrive||g.cameo||g.fin||g.mercy||g.climb||g.climbIn||g.twist==='rush')return null;
- if(g.gdT===g.T&&g.gdV!==undefined)return g.gdV;let t=typeof act4Guide==='function'&&!g.cleared?act4Guide(g):null;
- if(t){}else if(g.cleared){if(stageMayFinish(g)){const late=g.esc&&g.esc.late;t={x:g.car.x,z:g.car.z,k:late?'late':'exit',lbl:(g.def.noCar?(g.def.exit?'FREIGHT LIFT':'ELEVATOR DOWN'):boatArrival(g)?'BACK TO THE BOAT':'BACK TO THE CAR')};}}
+ if(g.gdT===g.T&&g.gdV!==undefined)return g.gdV;let t=typeof act4Guide==='function'&&(!g.cleared||g.jet)?act4Guide(g):null;
+ if(t){}else if(g.cleared){if(!g.jet&&stageMayFinish(g)){const late=g.esc&&g.esc.late;t={x:g.car.x,z:g.car.z,k:late?'late':'exit',lbl:(g.def.noCar?(g.def.exit?'FREIGHT LIFT':'ELEVATOR DOWN'):boatArrival(g)?'BACK TO THE BOAT':'BACK TO THE CAR')};}}
  else{const foes=guideFoes(g);if(!foes||g.tip)t=guideObj(g);if(!t&&(!foes||g.keycard))t=guideStage(g);}
  g.gdT=g.T;g.gdV=t;if(t&&(!g.gdK||g.gdK!==t.k+t.lbl.slice(0,6))){g.gdK=t.k+t.lbl.slice(0,6);g.gdS=g.T;}return t;}
 /* world marker: ring on the floor that breathes, a thin light post, and a spinning diamond on top */

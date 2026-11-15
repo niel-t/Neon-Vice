@@ -132,7 +132,17 @@ function a4Body(g){const c=a4Cells(g,'j');if(!c.length)return null;let x0=1e9,x1
    pushes the throttles and the jet starts its take-off run (the airstairs come up, the door is shut). Hack the cockpit door, deal
    with Vale (he begs: spare him or finish him), and pull the throttles back before the jet runs off the end of the runway. Then the
    fuel valve, the run and the blast. J.ph: 'guards' > 'roll' (door shut) > 'vale' (door open) > 'stop' (Vale dealt with) > 'stopped'. */
-const A4_CRASH=75,A4_HACK=5;
+const A4_CRASH=75,A4_HACK=5,A4_VMAX=9;
+/* the take-off run: the jet leaves the tarmac behind (men still outside, loose guns, the car, the stash) and the runway slides past */
+function jetLeaveTarmac(g){const b=g.jetBody,p=g.player;
+ for(const e of g.enemies)if(e.alive&&!e.boss&&!inJetB(b,e)){e.alive=false;e.sunk=true;}
+ g.items=g.items.filter(it=>inJetB(b,it));if(g.stash&&!g.stash.got)g.stash=null;
+ if(g.car){g.car.x=-60;g.car.z=-60;}
+ if(p&&p.alive&&!inJetB(b,p)){const d=jetSkin(g,b).doors[0];if(d){p.x=d.x;p.z=d.z-d.d*0.8;p.vx=p.vz=0;}}}
+/* out through the door: drop to the tarmac and run, the jet goes up behind you and the floor is done */
+function jetExit(g,d){const J=g.jet,p=g.player,bo=g.boss;J.out=1;p.x=d.x+0.4;p.z=d.z+d.d*2.3;p.vx=p.vz=0;sfx('door');
+ if(bo&&bo.alive&&bo.cuffed){bo.x=p.x-0.9;bo.z=p.z+d.d*0.2;bo.vx=bo.vz=0;popup(bo.x,bo.z-0.5,'VALE COMES ALONG QUIETLY','#7dff9a');}
+ banner('OUT OF THE JET','Run!');J.fuse=Math.min(J.fuse,1.2);}
 function jetSetup(g){const b=a4Body(g),N=a4Cells(g,'N')[0],D=a4Cells(g,'Y')[0];if(!b)return;g.jetBody=b;
  g.jet={valve:N?{x:N.x,z:N.z}:null,fuse:0,boom:0,roll:0,rollT:0,open:false,ph:'guards',crash:A4_CRASH,hack:0,door:D?{x:D.x,z:D.z,ix:D.ix,iz:D.iz,o:0}:null,stopped:0};g.lift=(x,z)=>jetLift(g,x,z);
  if(N)g.solid[N.iz*g.W+N.ix]=1;
@@ -145,16 +155,22 @@ function at13(g,c,r){const b=g.jetBody;return [b.x0+(c-10)+0.5,b.z0+(r-4)+0.5];}
 const inJetB=(b,q)=>q.x>b.x0&&q.x<b.x1&&q.z>b.z0&&q.z<b.z1;
 function jetDoorSeal(g,on){const S=jetSkin(g,g.jetBody);for(const d of S.doors){const ix=Math.floor(d.x),iz=d.d>0?Math.floor(d.z):Math.floor(d.z)-1;g.solid[iz*g.W+ix]=on?1:0;}}
 function jetLabel(g){const J=g.jet,t=Math.max(0,Math.ceil(J.crash)),ts=' '+Math.floor(t/60)+':'+String(t%60).padStart(2,'0');
- g.obj.label=J.ph==='guards'?'TAKE OUT VALE\'S BODYGUARDS':J.ph==='roll'?'HACK THE COCKPIT DOOR'+ts:J.ph==='vale'?'DEAL WITH VALE'+ts:J.ph==='stop'?'STOP THE JET'+ts:'MAKE IT LOOK LIKE AN ACCIDENT';}
+ g.obj.label=J.ph==='guards'?'TAKE OUT VALE\'S BODYGUARDS':J.ph==='roll'?'HACK THE COCKPIT DOOR'+ts:J.ph==='vale'?'DEAL WITH VALE'+ts:J.ph==='stop'?'STOP THE JET'+ts:J.fuse>0||J.out?'GET OUT THROUGH THE DOOR':'OPEN THE FUEL VALVE';}
 function jetTick(dt,g){const J=g.jet,p=g.player,b=g.jetBody,bo=g.boss;if(!J||!b)return;
- if(J.ph==='guards'&&!g.enemies.some(e=>e.alive&&!e.boss&&!e.spared&&inJetB(b,e))){J.ph='roll';J.roll=1;jetDoorSeal(g,true);sfx('boss');shake(0.5);
+ if(J.ph==='guards'&&!g.enemies.some(e=>e.alive&&!e.boss&&!e.spared&&inJetB(b,e))){J.ph='roll';J.roll=1;J.rolled=1;J.spd=0;jetDoorSeal(g,true);sfx('boss');shake(0.5);jetLeaveTarmac(g);
   banner('THE JET IS ROLLING','Vale is at the controls behind a locked door. Hack it and stop the jet before it runs off the runway.');
   if(lexFate()==='spared')a4Later(g,1500,()=>popup(p.x,p.z-0.5,'LEX: "THAT DOOR HAS A SERVICE PANEL. HACK IT!"','#7dff9a'));}
  if(J.roll&&!J.stopped&&!J.boom){J.crash-=dt;J.rollT-=dt;if(J.rollT<=0){J.rollT=rnd(1.4,2.6);shake(0.25+0.25*(1-J.crash/A4_CRASH));rumble(0.4,0.4,200);}
   const s0=Math.ceil(J.crash+dt);if(Math.ceil(J.crash)!==s0&&J.crash<=10&&J.crash>0){popup(p.x,p.z-0.6,'RUNWAY END  '+Math.ceil(J.crash),'#ff8a95');sfx('blip');}
+  J.spd=Math.min(A4_VMAX,J.spd+dt*0.3);
   if(p.alive&&inJetB(b,p)&&!blk(g,p.x-dt*0.45,p.z))p.x-=dt*0.45;
   for(const it of g.items)if(!it.flying&&inJetB(b,it)&&!blk(g,it.x-dt*1.0,it.z))it.x-=dt*1.0;
   if(J.crash<=0){J.crash=0;J.crashed=1;banner('THE JET RAN OFF THE RUNWAY','Nobody walks away from that.');jetBoom(g);}}
+ else if(J.spd>0)J.spd=Math.max(0,J.spd-dt*(J.boom?9:4));
+ J.dist=(J.dist||0)+J.spd*dt;
+ if(J.spd>1&&!J.boom&&Math.random()<J.spd*dt*4)g.parts.push({t:'c',x:b.x0+0.3,y:1.1,z:b.cz+rnd(-0.5,0.5),vx:-J.spd*0.6,vy:rnd(0,0.2),vz:rnd(-0.2,0.2),s:0.07,c:[0.55,0.55,0.58],life:0.6});
+ /* stopped and rigged: walk to the cabin door to get out */
+ if(J.stopped&&!J.out&&!J.boom&&p.alive){const d=jetSkin(g,b).doors[0];if(d&&Math.abs(p.x-d.x)<0.62&&Math.abs(p.z-d.z)<0.85){if(J.fuse>0)jetExit(g,d);else if((g.T||0)>(J.doorT||0)){J.doorT=(g.T||0)+2.5;popup(d.x,d.z-0.5,'OPEN THE FUEL VALVE FIRST','#ff8a95');sfx('blip');}}}
  /* the hack: stand at the door's panel; it pauses if you step away */
  const D=J.door;if(D&&J.ph==='roll'&&J.hacking){if(Math.hypot(p.x-D.x,p.z-D.z)<1.7&&p.alive){const h0=Math.floor(J.hack*5);J.hack=Math.min(1,J.hack+dt/A4_HACK);if(Math.floor(J.hack*5)!==h0&&J.hack<1){popup(D.x,D.z-0.4,'HACKING '+Math.floor(J.hack*100)+'%','#7dff9a');sfx('blip');}
    if(J.hack>=1){J.ph='vale';J.hacking=0;D.o=0.001;g.solid[D.iz*g.W+D.ix]=0;sfx('door');banner('THE DOOR IS OPEN','Vale is at the controls.');if(bo&&bo.alive){bo.spd=bo.spd0||bo.spd;bo.sealed=0;bo.state='chase';bo.seeT=0;AI.know(bo,AI.belief.make(p.x,p.z,g.T||0,'call'));popup(bo.x,bo.z-0.4,'"YOU\'RE TOO LATE. WE\'RE GOING UP."','#ffd36b');}}}
@@ -168,8 +184,8 @@ function jetTick(dt,g){const J=g.jet,p=g.player,b=g.jetBody,bo=g.boss;if(!J||!b)
  if(J.boom&&Math.random()<dt*40){const x=rnd(b.x0,b.x1),z=rnd(b.z0,b.z1);g.parts.push({t:'c',x,y:rnd(0.3,1.2),z,vx:rnd(-0.4,0.4),vy:rnd(1,2.6),vz:rnd(-0.4,0.4),s:rnd(0.08,0.16),c:Math.random()<0.6?[1,rnd(0.35,0.7),0.08]:[0.18,0.16,0.16],life:rnd(0.5,1.1)});}}
 function hackStart(p){const g=G,J=g.jet,D=J&&J.door;if(!D||J.ph!=='roll'||Math.hypot(p.x-D.x,p.z-D.z)>1.5)return false;J.hacking=1;J.hackWarn=0;popup(D.x,D.z-0.4,'HACKING '+Math.floor(J.hack*100)+'%','#7dff9a');sfx('blip');return true;}
 function brakesPull(p){const g=G,J=g.jet;if(!J||J.ph!=='stop'||Math.hypot(p.x-J.thr.x,p.z-J.thr.z)>1.3)return false;
- J.ph='stopped';J.stopped=1;J.roll=0;jetDoorSeal(g,false);sfx('door');shake(0.6);banner('THE JET IS STOPPED',Math.ceil(J.crash)+' seconds of runway to spare. Now the fuel valve in the rear hold.');
- const bo=g.boss;if(bo&&bo.alive&&bo.spared){const c=g.car;bo.x=c.x+1.6;bo.z=c.z-0.6;bo.vx=bo.vz=0;bo.down=0;bo.hp=Math.max(1,bo.hp);bo.state='idle';bo.cuffed=1;popup(c.x,c.z-0.6,'McWEY\'S PEOPLE TAKE VALE TO THE CAR','#7dff9a');}
+ J.ph='stopped';J.stopped=1;J.roll=0;sfx('door');shake(0.6);banner('THE JET IS STOPPED',Math.ceil(J.crash)+' seconds of runway to spare. Open the fuel valve in the rear hold, then get out through the door.');
+ const bo=g.boss;if(bo&&bo.alive&&bo.spared){bo.vx=bo.vz=0;bo.down=0;bo.hp=Math.max(1,bo.hp);bo.state='idle';bo.cuffed=1;}
  return true;}
 /* the jet goes up: a chain of blasts down the fuselage, everybody near it dies (you too, if you are still close), and the accident
    is graded: CLEAN when Vale was not shot */
@@ -179,13 +195,14 @@ function jetBoom(g){const J=g.jet,b=g.jetBody,p=g.player,R=2.6;J.boom=1;
  for(let i=0;i<70;i++){const a=rnd(0,TAU),v=rnd(3,9);g.parts.push({t:'c',x:rnd(b.x0,b.x1),y:0.8,z:b.cz,vx:Math.cos(a)*v,vy:rnd(2,7),vz:Math.sin(a)*v,s:rnd(0.08,0.2),c:Math.random()<0.55?[1,rnd(0.4,0.8),0.1]:[0.2,0.18,0.18],life:rnd(0.6,1.4)});}
  const near=q=>q.x>b.x0-R&&q.x<b.x1+R&&q.z>b.z0-R&&q.z<b.z1+R;
  for(const e of g.enemies)if(e.alive&&near(e)&&!e.cuffed)killEnemy(e,'shotgun',[0,1]);
- if(p.alive&&near(p)){p.armor=0;p.armorT=0;const d=[Math.sign(p.x-(b.x0+b.x1)/2)||1,0];for(let k=0;k<8&&p.alive;k++){p.armorT=0;hurtPlayer(d,'grenade',99);}}
+ if(p.alive&&near(p)&&!J.out){p.armor=0;p.armorT=0;const d=[Math.sign(p.x-(b.x0+b.x1)/2)||1,0];for(let k=0;k<8&&p.alive;k++){p.armorT=0;hurtPlayer(d,'grenade',99);}}
  g.accident=g.valeShot?'messy':'clean';
  if(p.alive){if(g.accident==='clean'){const pay=Math.round(A4_CLEAN_PAY*Dd().mult);g.score+=pay;g.gpts=(g.gpts||0)+2000;popup(p.x,p.z-0.5,'A CLEAN ACCIDENT  +$'+fmt(pay),'#7dff9a');}
-  a4Later(g,900,()=>banner('BANKER DIES IN FIERY RUNWAY CRASH',g.accident==='clean'?'"Investigators blame a fuel leak." Back to the car.':'"Police puzzled by bullet holes." Back to the car.'));}}
+  a4Later(g,900,()=>banner('BANKER DIES IN FIERY RUNWAY CRASH',g.accident==='clean'?'"Investigators blame a fuel leak."':'"Police puzzled by bullet holes."'));
+  if(J.out)a4Later(g,3200,()=>{if(G===g&&state==='play'&&!g.done&&g.player.alive){g.done=true;finishLevel();}});}}
 function valvePull(p){const g=G,J=g.jet;if(!J||!J.valve||J.fuse>0||J.boom)return false;if(Math.hypot(p.x-J.valve.x,p.z-J.valve.z)>1.4)return false;
  if(!J.stopped){popup(J.valve.x,J.valve.z,J.ph==='guards'?'NOT WHILE HIS MEN ARE ABOARD':'STOP THE JET FIRST','#ff8a95');return true;}
- J.fuse=A4_FUSE;J.open=true;g.obj.n=1;g.obj.done=true;g.objNow=false;sfx('door');banner('THE FUEL IS POURING','Get clear of the jet before it goes up: '+A4_FUSE+' seconds');return true;}
+ J.fuse=A4_FUSE;J.open=true;g.obj.n=1;g.obj.done=true;g.objNow=false;sfx('door');banner('THE FUEL IS POURING','Get out through the cabin door before it goes up: '+A4_FUSE+' seconds');return true;}
 /* the airliner-style private jet: nose cone east, tail fin and engines west, swept wings north and south of the cabin. In the hangar the
    body is a solid block (j cells, lower) and gets a roof; on the runway the cabin is open so you can see the fight inside. */
 /* the jet: a thin white skin with a row of small windows. The 'j' cells keep the collision but sit flat (h 0.02); the skin is drawn on
@@ -203,7 +220,7 @@ function jetSkin(g,b){if(g.jetSkin&&g.jetSkin.b===b)return g.jetSkin;const cells
 const JET_DECK=0.8;
 function jetLift(g,x,z){const b=g.jetBody;if(!b)return 0;const S=jetSkin(g,b),ix=Math.floor(x),iz=Math.floor(z);
  if(ix>b.x0&&ix<b.x1-1&&iz>b.z0&&iz<b.z1-1&&!S.set.has(ix+','+iz))return JET_DECK;
- if(!(g.jet&&g.jet.roll&&!g.jet.stopped))for(const d of S.doors)if(Math.abs(x-d.x)<0.62){const t=(z-d.z)*d.d;if(t>-0.05&&t<2)return JET_DECK*Math.min(1,1-t/2);}
+ if(!(g.jet&&g.jet.rolled))for(const d of S.doors)if(Math.abs(x-d.x)<0.62){const t=(z-d.z)*d.d;if(t>-0.05&&t<2)return JET_DECK*Math.min(1,1-t/2);}
  return 0;}
 function liftAt(x,z){const g=G;return g&&g.lift?g.lift(x,z):0;}
 /* airstairs from a door at hull face z down to the tarmac, d = +1 south / -1 north */
@@ -216,7 +233,7 @@ function drawJet(B,g,b,roof){const T=g.T||0,DK=JET_DECK,bx0=(x,y,z,sx,sy,sz,c,em
  /* the visible hull is one cell in from the outline */
  const X0=b.x0+1,X1=b.x1-1,Z0=b.z0+1,Z1=b.z1-1,L=X1-X0,cz=b.cz,w=Z1-Z0;
  const winAt=(x0,len,z)=>{for(let k=0;k<len;k++)for(const f of [0.3,0.7]){const wx=x0+k+f;if(S.doors.some(d=>Math.abs(d.x-wx)<0.6&&Math.abs(d.z-z)<0.2))continue;bx(wx,0.74,z,0.18,0.2,0.012,win);}};
- bx0((b.x0+b.x1)/2,0.012,cz,b.x1-b.x0-0.6,0.012,b.z1-b.z0-0.3,[0.05,0.05,0.06]);
+ bx0((b.x0+b.x1)/2,0.036,cz,b.x1-b.x0-0.6,0.01,b.z1-b.z0-0.3,[0.05,0.05,0.06]);
  /* the belly under the cabin floor, and the landing gear: a nose leg and two main legs under the wings, each with its wheels */
  bx(X0+L/2,-0.14,cz,L,0.28,w*0.92,sh);bx(X0+L/2,-0.3,cz,L*0.92,0.08,w*0.6,sg);
  const leg=(x,z,two)=>{bx0(x,DK*0.5,z,0.07,DK,0.07,[0.55,0.56,0.6]);bx0(x-0.12,DK*0.45,z,0.22,0.04,0.04,[0.55,0.56,0.6]);
@@ -227,8 +244,10 @@ function drawJet(B,g,b,roof){const T=g.T||0,DK=JET_DECK,bx0=(x,y,z,sx,sy,sz,c,em
   for(const d of S.doors)bx(d.x,0.55,d.z+d.d*0.008,0.72,1.0,0.012,[0.08,0.08,0.1]);}
  else for(const q of S.e){if(q.hz){const z=q.z+q.o*t/2,len=q.x1-q.x0;bx((q.x0+q.x1)/2,H/2,z,len,H,t,sh);for(const sd of [-1,1])winAt(q.x0,len,z+sd*(t/2+0.006));}
   else{const x=q.x+q.o*t/2;bx(x,H/2,(q.z0+q.z1)/2,t,H,q.z1-q.z0,sh);}}
- const rolling=g.jet&&g.jet.roll&&!g.jet.stopped;
- for(const d of S.doors){if(!rolling)drawAirstairs(bx0,d.x,d.z,d.d,boom?sg:[0.88,0.88,0.9],DK+0.02);else bx(d.x,1.15/2,d.z-d.d*0.05,0.98,1.15,0.1,sh);}
+ const J=g.jet,rolled=J&&J.rolled,open=J&&J.stopped&&!boom;
+ for(const d of S.doors){if(!rolled)drawAirstairs(bx0,d.x,d.z,d.d,boom?sg:[0.88,0.88,0.9],DK+0.02);
+  else if(!open)bx(d.x,1.15/2,d.z-d.d*0.05,0.98,1.15,0.1,sh);
+  else{bx(d.x+0.95,1.15/2,d.z+d.d*0.07,0.98,1.15,0.06,sh);const hot=J.fuse>0;bx(d.x,0.03,d.z-d.d*0.45,0.8,0.012,0.7,hot?[0.2,0.6,0.3]:[0.2,0.35,0.25]);if(hot)bx(d.x,1.3,d.z-d.d*0.1,0.5,0.1,0.04,Math.sin(T*8)>0?[0.3,1,0.5]:[0.1,0.4,0.2],Math.sin(T*8)>0);}}
  /* nose: a tapering cone with the cockpit windscreen; tail: tapered cone, swept fin and a T-tail */
  const bm=(x,y,z,ry,rx,sx,sy,sz,c,em,rz)=>B.box(A.mul(A.mul(A.mul(A.mul(A.T(x,y+DK,z),A.RY(ry)),A.RX(rx)),A.RZ(rz||0)),A.S(sx,sy,sz)),c,!!em);
  /* a swept, tapered surface from (x,z) out along side sd: n overlapping boxes turned to the sweep angle, so the edges run straight */
@@ -294,11 +313,22 @@ function drawCabin(B,g,b,bx,bm){if(g.jet&&g.jet.boom)return;const at=(c,r)=>[b.x
  /* the aisle runner and the ceiling lights */
  {const [x0,z]=at(11,6),[x1]=at(25,6);bx((x0+x1)/2,0.008,z,x1-x0+0.6,0.006,0.5,cream);for(const sd of [-1,1])bx((x0+x1)/2,0.01,z+sd*0.24,x1-x0+0.6,0.006,0.03,gold);
   for(let x=x0;x<=x1;x+=1.0)for(const sd of [-1,1])bx(x,1.08,z+sd*1.32,0.12,0.03,0.08,[1,0.92,0.75],true);}}
+/* the runway under the jet: asphalt, centre-line dashes, edge lines and lights, distance blocks. During the take-off run they all
+   slide west past the jet (J.dist), so the plane reads as moving east down the runway. */
+function drawRunway(bx,g,b){const J=g.jet,o=J?(J.dist||0):0,T=g.T||0,cz=b.cz,W=g.W,hw=4.1,x0=1,x1=W-1,X=(x1+x0)/2,wht=[0.9,0.9,0.86];
+ bx(X,0.008,cz,x1-x0,0.008,hw*2,[0.12,0.12,0.13]);
+ for(const sd of [-1,1]){bx(X,0.02,cz+sd*(hw-0.25),x1-x0,0.008,0.1,wht);bx(X,0.008,cz+sd*(hw+0.9),x1-x0,0.008,1.6,[0.16,0.3,0.14]);}
+ const rep=(gap,f)=>{const s=((o%gap)+gap)%gap;for(let x=x0-gap+gap-s;x<x1+gap;x+=gap)if(x>x0+0.3&&x<x1-0.3)f(x);};
+ rep(2.4,x=>bx(x,0.02,cz,1.3,0.008,0.14,wht));
+ rep(9,x=>{for(const sd of [-1,1])bx(x,0.02,cz+sd*1.9,2.2,0.008,0.5,wht);});
+ rep(3,x=>{for(const sd of [-1,1]){bx(x,0.05,cz+sd*(hw+0.15),0.12,0.08,0.12,[0.25,0.25,0.25]);bx(x,0.1,cz+sd*(hw+0.15),0.1,0.04,0.1,[1,0.95,0.7],true);}});
+ rep(17,x=>{for(const sd of [-1,1]){bx(x,0.25,cz+sd*(hw+1.2),0.9,0.5,0.12,[0.06,0.06,0.07]);bx(x,0.25,cz+sd*(hw+1.13),0.6,0.3,0.02,[1,1,1],true);}});
+}
 function drawHangar(B,g){const bx=(x,y,z,sx,sy,sz,c,em)=>B.box(TRS(x,y,z,0,sx,sy,sz),c,!!em),T=g.T||0;
  if(g.sid==='hangar'&&g.jetBody){drawJet(B,g,g.jetBody,true);const W=g.valeW;if(W){if(!W.aboard&&!fogHid(W.n.x,W.n.z))drawChar(CB(W.n),W.n);const s=W.stairs;
    bx(s.x,0.03,s.z,0.9,0.015,0.9,W.aboard?[0.3,1,0.5]:[1,0.25,0.25],true);}
   const b=g.jetBody;bx(b.x1+2.4,0.35,b.cz,1.4,0.6,1.0,[0.95,0.75,0.1]);bx(b.x1+1.4,0.25,b.cz,1.2,0.04,0.06,[0.1,0.1,0.12]);}
- if(g.sid==='jet'&&g.jetBody){drawJet(B,g,g.jetBody,false);const J=g.jet;if(J&&J.valve&&!J.boom){const v=J.valve,ready=g.boss&&!g.boss.alive&&!(J.fuse>0);bx(v.x,0.5,v.z,0.6,1.0,0.5,[0.85,0.2,0.15]);bx(v.x,1.05,v.z,0.3,0.06,0.3,[0.1,0.1,0.12]);
+ if(g.sid==='jet'&&g.jetBody){drawRunway(bx,g,g.jetBody);drawJet(B,g,g.jetBody,false);const J=g.jet;if(J&&J.valve&&!J.boom){const v=J.valve,ready=g.boss&&!g.boss.alive&&!(J.fuse>0);bx(v.x,0.5,v.z,0.6,1.0,0.5,[0.85,0.2,0.15]);bx(v.x,1.05,v.z,0.3,0.06,0.3,[0.1,0.1,0.12]);
    bx(v.x,1.15,v.z,0.36,0.08,0.08,ready?[1,0.85,0.2]:[0.4,0.32,0.1],ready&&Math.sin(T*8)>0);if(J.fuse>0)bx(v.x,0.02,v.z,1.2+0.2*Math.sin(T*6),0.01,1.2,[0.5,0.42,0.18]);}}
  if(g.sid==='apron'){for(let k=0;k<8;k++)bx(6+k*4.2,0.02,g.H-8.5,1.8,0.01,0.16,[1,0.85,0.2]);}}
 /* the ramps, side door and boarding stairs between stages */
@@ -333,7 +363,7 @@ function act4Kill(e,type){const g=G;if(!g)return;
  if(e.mini==='frankie'){const gus=CHARS[selIdx].id==='consigliere';popup(e.x,e.z-0.4,gus?'"IT WAS BUSINESS, GUS. JUST BUSINESS."':'"VALE... PAYS... BETTER..."','#ffd36b');
   if(gus)a4Later(g,1600,()=>banner('FRANKIE LO PRESTI','The man who set up the diner on Passyunk Avenue. Philadelphia will hear about it.'));}}
 function act4Guide(g){const p=g.player;
- if(g.jet&&g.jet.fuse>0&&!g.jet.boom){const c=g.car;return {x:c.x,z:c.z,k:'late',lbl:'GET CLEAR'};}
+ if(g.jet&&g.jet.fuse>0&&!g.jet.boom&&!g.jet.out){const d=jetSkin(g,g.jetBody).doors[0];if(d)return {x:d.x,z:d.z,k:'late',lbl:'GET OUT'};}
  {const J=g.jet;if(J&&!J.boom&&!g.fin&&!g.mercy){if(J.ph==='roll'&&J.door)return {x:J.door.x,z:J.door.z,k:'obj',lbl:'HACK THE DOOR'};
   if(J.ph==='vale'&&g.boss&&g.boss.alive&&!g.boss.spared)return {x:g.boss.x,z:g.boss.z,k:'obj',lbl:'VALE'};
   if(J.ph==='stop')return {x:J.thr.x,z:J.thr.z,k:'obj',lbl:'THE THROTTLES'};

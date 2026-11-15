@@ -108,16 +108,21 @@ test('act 4 floor 3: Vale walks to his jet, the stairs open when he is aboard, h
   await page.evaluate(() => { keys.Digit2 = false; while (G.fin) { G.fin.t = 2; pressed.grab = true; updateFin(0.01); pressed.grab = false; } });
   await expect.poll(() => page.evaluate(() => G.jet.ph), { timeout: 20_000 }).toBe('stop');
   expect(await page.evaluate(() => G.valeShot)).toBe(false);
-  // The throttles stop the jet; the airstairs come back down.
+  // The jet is moving down the runway: the tarmac scrolls past, the airstairs are gone, the car was left behind.
+  expect(await page.evaluate(() => { const d = jetSkin(G, G.jetBody).doors[0]; return { moving: G.jet.dist > 0, stairs: liftAt(d.x, d.z + d.d * 1.0), carGone: G.car.x < 0 }; })).toEqual({ moving: true, stairs: 0, carGone: true });
+  // The throttles stop the jet; the door stays shut until the valve is open.
   const st = await page.evaluate(() => { G.items = []; const p = G.player, t = G.jet.thr; p.x = t.x - 0.8; p.z = t.z; const l = ctxAction(p).l; playerGrab(p); return { l, stopped: G.jet.stopped }; });
   expect(st).toEqual({ l: 'BRAKES', stopped: 1 });
+  const atDoor = () => { const p = G.player, d = jetSkin(G, G.jetBody).doors[0]; p.x = d.x; p.z = d.z - d.d * 0.5; };
+  await page.evaluate(atDoor);
+  await page.waitForFunction(() => G.jet.doorT > 0, null, { timeout: 20_000 });
+  expect(await page.evaluate(() => ({ out: !!G.jet.out, stairs: liftAt(G.player.x, G.player.z + 1.5) }))).toEqual({ out: false, stairs: 0 });
   const v = await page.evaluate(() => { const p = G.player, v = G.jet.valve; p.x = v.x + 1.1; p.z = v.z; const l = ctxAction(p).l; playerGrab(p); return { l, fuse: G.jet.fuse > 0, done: G.obj.done }; });
   expect(v).toEqual({ l: 'VALVE', fuse: true, done: true });
-  // Not done until the jet blows: standing at the car early does not finish the floor.
-  await page.evaluate(() => { G.player.x = G.car.x; G.player.z = G.car.z; });
-  await expect.poll(() => page.evaluate(() => G.cleared), { timeout: 30_000 }).toBe(true);
+  // Out through the cabin door: the jet goes up behind you and the floor ends.
   expect(await page.evaluate(() => ({ done: G.done, boom: G.jet.boom }))).toEqual({ done: false, boom: 0 });
-  await page.evaluate(() => { G.jet.fuse = 0.05; });
+  await page.evaluate(atDoor);
+  await expect.poll(() => page.evaluate(() => !!G.jet.out), { timeout: 20_000 }).toBe(true);
   await expect.poll(() => page.evaluate(() => ({ boom: G.jet.boom, acc: G.accident, alive: G.player.alive })), { timeout: 20_000 }).toEqual({ boom: 1, acc: 'clean', alive: true });
   await expect.poll(() => page.evaluate(() => state === 'perk' ? 'results' : state), { timeout: 40_000 }).toBe('results');
   expect(await page.evaluate(() => document.getElementById('rTitle').textContent)).toBe('BANKER DIES IN FIERY RUNWAY CRASH');
@@ -136,7 +141,7 @@ const toJet = async page => {
   await expect.poll(() => page.evaluate(() => G.jet.ph), { timeout: 20_000 }).toBe('roll');
 };
 
-test('act 4 floor 3: spare Vale and McWey takes him; the jet still goes up as an accident', async ({ openGame }) => {
+test('act 4 floor 3: spare Vale, he walks out with you and the jet still goes up as an accident', async ({ openGame }) => {
   test.setTimeout(240_000);
   const page = await openGame();
   await toJet(page);
@@ -145,9 +150,10 @@ test('act 4 floor 3: spare Vale and McWey takes him; the jet still goes up as an
   await page.evaluate(() => { killEnemy(G.boss, 'pistol', [0, 1]); G.mercy.t = 2; keys.Digit1 = true; });
   await expect.poll(() => page.evaluate(() => ({ m: !!G.mercy, spared: !!G.boss.spared, ph: G.jet.ph })), { timeout: 20_000 }).toEqual({ m: false, spared: true, ph: 'stop' });
   await page.evaluate(() => { keys.Digit1 = false; G.items = []; const t = G.jet.thr; G.player.x = t.x - 0.8; G.player.z = t.z; playerGrab(G.player); });
-  expect(await page.evaluate(() => ({ stopped: G.jet.stopped, nearCar: Math.hypot(G.boss.x - G.car.x, G.boss.z - G.car.z) < 2.5 }))).toEqual({ stopped: 1, nearCar: true });
-  await page.evaluate(() => { const v = G.jet.valve; G.player.x = v.x + 1.1; G.player.z = v.z; playerGrab(G.player); G.player.x = G.car.x + 1; G.player.z = G.car.z; G.jet.fuse = 0.05; });
-  await expect.poll(() => page.evaluate(() => ({ boom: G.jet.boom, acc: G.accident, vale: G.boss.alive, me: G.player.alive })), { timeout: 20_000 }).toEqual({ boom: 1, acc: 'clean', vale: true, me: true });
+  expect(await page.evaluate(() => ({ stopped: G.jet.stopped, cuffed: G.boss.cuffed }))).toEqual({ stopped: 1, cuffed: 1 });
+  await page.evaluate(() => { const v = G.jet.valve; G.player.x = v.x + 1.1; G.player.z = v.z; playerGrab(G.player); const d = jetSkin(G, G.jetBody).doors[0]; G.player.x = d.x; G.player.z = d.z - d.d * 0.5; });
+  await expect.poll(() => page.evaluate(() => ({ boom: G.jet.boom, acc: G.accident, vale: G.boss.alive, me: G.player.alive, out: G.boss.z > G.jetBody.z1 - 1 })), { timeout: 20_000 }).toEqual({ boom: 1, acc: 'clean', vale: true, me: true, out: true });
+  await expect.poll(() => page.evaluate(() => state === 'perk' ? 'results' : state), { timeout: 40_000 }).toBe('results');
 });
 
 test('act 4 floor 3: if the jet is not stopped in time it runs off the runway and you die with it', async ({ openGame }) => {
