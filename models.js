@@ -16,6 +16,8 @@ const BONES=[ // name, parent, pivot, end
  ['thighL',0,[0.1,0.93,0],[0.105,0.51,0.01]],['shinL',11,[0.105,0.51,0.01],[0.11,0.1,-0.01]],['footL',12,[0.11,0.1,-0.01],[0.115,0.03,0.17]],
  ['thighR',0,[-0.1,0.93,0],[-0.105,0.51,0.01]],['shinR',14,[-0.105,0.51,0.01],[-0.11,0.1,-0.01]],['footR',15,[-0.11,0.1,-0.01],[-0.115,0.03,0.17]]];
 const BI={};BONES.forEach((b,i)=>BI[b[0]]=i);
+/* two soft bones after the rig, never posed or mocapped: the left and right cheek of a woman's seat, moved by softSeat's springs */
+const SOFT_L=BONES.length,SOFT_R=BONES.length+1,NBS=BONES.length+2;
 const KIDS=BONES.map((_,i)=>BONES.map((b,j)=>b[1]===i?j:-1).filter(j=>j>=0));
 /* ================= TEXTURES (painted at load, PS2-sized) ================= */
 let SKIN=[196,138,102],LAV=[162,132,210],LAVD=[100,76,148],PANTS=[154,126,202],SHD=[40,20,70];
@@ -193,7 +195,7 @@ function tri(M,a,b,c,out){const P=i=>[M.p[i*3],M.p[i*3+1],M.p[i*3+2]];const n=V.
 /* loft rings: ring = {c, s(side), f(front), rx, rz, v, w, mod, sq} ; u wraps 0..1 with the front (phi=0) at u=0.5 */
 function loft(M,rings,segs,o={}){GRP++;const u0=o.u0||0,u1=o.u1===undefined?1:o.u1,ph0=o.ph0||0;const id=[];
  for(const r of rings){const row=[];for(let i=0;i<=segs;i++){const ph=-Math.PI+2*Math.PI*i/segs+ph0;let sn=Math.sin(ph),cs=Math.cos(ph);if(r.sq){sn=Math.sign(sn)*Math.pow(Math.abs(sn),r.sq);cs=Math.sign(cs)*Math.pow(Math.abs(cs),r.sq);}
-   let p=V.add(r.c,V.add(V.mul(r.s,sn*r.rx),V.mul(r.f,cs*r.rz)));if(r.mod)p=r.mod(p,ph,r);row.push(addV(M,p,o.uvf?o.uvf(i/segs,r):[lerp(u0,u1,i/segs),r.v],r.w));}id.push(row);}
+   let p=V.add(r.c,V.add(V.mul(r.s,sn*r.rx),V.mul(r.f,cs*r.rz)));if(r.mod)p=r.mod(p,ph,r);row.push(addV(M,p,o.uvf?o.uvf(i/segs,r):[lerp(u0,u1,i/segs),r.v],r.wm?r.wm(p,ph,r):r.w));}id.push(row);}
  for(let k=0;k<rings.length-1;k++)for(let i=0;i<segs;i++){const a=id[k][i],b=id[k][i+1],c=id[k+1][i+1],d=id[k+1][i];const cen=V.mul(V.add(rings[k].c,rings[k+1].c),0.5),P=j=>[M.p[j*3],M.p[j*3+1],M.p[j*3+2]];const out=V.sub(V.mul(V.add(V.add(P(a),P(b)),V.add(P(c),P(d))),0.25),cen);tri(M,a,b,c,out);tri(M,a,c,d,out);}
  const cap=(k,dir,uv,lift)=>{const r=rings[k],cc=addV(M,V.add(r.c,V.mul(dir,lift||0)),uv||[0.5,r.v],r.w);for(let i=0;i<segs;i++)tri(M,id[k][i],id[k][i+1],cc,dir);};
  if(o.capA)cap(0,o.capA.dir,o.capA.uv,o.capA.lift);if(o.capB)cap(rings.length-1,o.capB.dir,o.capB.uv,o.capB.lift);return id;}
@@ -240,7 +242,7 @@ function buildBody(B){const M=newMesh(),X=[1,0,0],Y=[0,1,0],Z=[0,0,1],BP=B.fem?B
  /* dancers: fuller bust and seat, capped and spread over three rows so a big figure stays round instead of coming to a point */
  /* sizes: bustK / hipK run about 0.6 (petite) to 1.6 (very full); the mapping spreads them so a small one really is small */
  const cv=B.curve||1,sz=k=>Math.max(0.3,0.35+((k||1)-0.62)*1.4),bM = B.dancer ? Math.min(2.6,1.3*(0.8+0.2*cv)*sz(B.bustK)) : 1.15;
- const gM = B.dancer ? Math.min(3.3,1.75*(0.75+0.25*cv)*Math.max(0.35,0.4+((B.hipK||1)-0.6)*1.32)) : 1.25;
+ const gM = B.dancer ? Math.min(2.7,1.75*(0.75+0.25*cv)*Math.max(0.35,0.4+((B.hipK||1)-0.6)*1.32)) : 1.25;
  /* dancers: a cinched waist (narrowest at the navel, easing out into the ribs and the hips) */
  const wq=y=>B.dancer?1-(1-(B.waist||1))*Math.exp(-Math.pow((y-1.1)/0.085,2)):1;
  const T=torsoRows(B), SHx=B.shoulders||0;
@@ -252,8 +254,12 @@ function buildBody(B){const M=newMesh(),X=[1,0,0],Y=[0,1,0],Z=[0,0,1],BP=B.fem?B
  const bustAt=(y,ph)=>{const t=(y-bY)/(y<bY?bLo:bHi);if(t*t>=1)return 0;const v=y<bY?Math.pow(1-t*t,0.45):Math.pow(1-t*t,1.15);
   const c=Math.cos(ph);if(c<=0)return 0;const u=(Math.abs(Math.sin(ph))-bX)/0.4,dome=u*u<1?Math.pow(1-u*u,0.55):0;return bPk*v*Math.pow(c,0.7)*(0.88*dome+0.12*Math.exp(-Math.pow(Math.sin(ph)/0.3,2)));};
  /* the seat: a round dome too, fullest a little below the middle of the hips, curving under into the legs instead of coming to a ridge */
- const gluteAt=y=>{const t=(y-0.885)/0.13;if(t*t>=1)return 0;return y<0.885?Math.pow(1-t*t,0.5):1-t*t;};
- loft(M,T.map(r=>({c:[0,r[0],r[3]],s:X,f:Z,rx:r[1]*(B.dancer&&r[0]<0.96?1+0.12*cv*(B.hipK||1):1)*wq(r[0]),rz:r[2]*(0.4+0.6*wq(r[0])),v:tv(r[0]),w:r[4],mod:(p,ph)=>{if(r[0]>1.44&&r[0]<1.48){p[1]+=0.006*Math.cos(2*ph);}if(B.fem){p[2]+=bustAt(r[0],ph);if(BP.glute){const yw=gluteAt(r[0]);if(yw>0){const k=Math.max(0,-Math.cos(ph)),kk=Math.pow(k,1.25),cheek=0.74+0.4*Math.exp(-Math.pow((Math.abs(Math.sin(ph))-0.36)/0.3,2));p[2]-=(BP.glute*gM)*kk*yw*cheek;p[1]-=0.01*kk*yw;}}return p;}if(Math.cos(ph)>0.2&&r[0]>1.05&&r[0]<1.4)p[2]+=0.008*Math.cos(ph);return p;}})),BP.segs,{capA:{dir:[0,-1,0],uv:[0.5,0.555]},capB:{dir:[0,1,0],uv:[0.5,0.002],lift:-0.012}});
+ const gluteAt=y=>{const t=(y-0.885)/0.13;if(t*t>=1)return 0;return Math.pow(1-t*t,y<0.885?0.5:0.8);};
+ /* across the back: two round cheeks either side of the centre line, the fullness wrapping well round the sides so it reads as a
+    bubble from behind and in profile rather than a shelf; seatAt is 0..1 and also sets how much each vertex follows the soft cheek bones */
+ const seatAt=(y,ph)=>{const yw=gluteAt(y),c=-Math.cos(ph);if(yw<=0||c<=0)return 0;const u=(Math.abs(Math.sin(ph))-0.33)/0.42,dome=u*u<1?Math.pow(1-u*u,0.6):0;return yw*Math.pow(c,0.6)*(0.3+0.7*dome);};
+ const softW=B.fem&&BP.glute?(p,ph,r)=>{const f=0.9*seatAt(r.y0,ph)*(B.skirt?0.35:1);if(f<=0.01)return r.w;const sL=clamp(0.5+p[0]/0.05,0,1);return r.w.map(q=>[q[0],q[1]*(1-f)]).concat([[SOFT_L,f*sL],[SOFT_R,f*(1-sL)]]);}:null;
+ loft(M,T.map(r=>({c:[0,r[0],r[3]],s:X,f:Z,y0:r[0],wm:softW,rx:r[1]*(B.dancer&&r[0]<0.96?1+0.12*cv*(B.hipK||1):1)*wq(r[0]),rz:r[2]*(0.4+0.6*wq(r[0])),v:tv(r[0]),w:r[4],mod:(p,ph)=>{if(r[0]>1.44&&r[0]<1.48){p[1]+=0.006*Math.cos(2*ph);}if(B.fem){p[2]+=bustAt(r[0],ph);if(BP.glute){const f=seatAt(r[0],ph);if(f>0){p[2]-=0.85*BP.glute*gM*f;p[1]-=0.01*f;}}return p;}if(Math.cos(ph)>0.2&&r[0]>1.05&&r[0]<1.4)p[2]+=0.008*Math.cos(ph);return p;}})),BP.segs,{capA:{dir:[0,-1,0],uv:[0.5,0.555]},capB:{dir:[0,1,0],uv:[0.5,0.002],lift:-0.012}});
  /* lapel ridge: a thin raised strip so the lapels catch light (PS2 games modelled these as a few polys) */
  if(!B.fem)for(const s of [1,-1]){GRP++;const pts=[];for(const Y of [1.18,1.3,1.45]){const vw=0.012+(Y-1.12)*0.36,xx=s*(vw+0.04),zz=Math.sqrt(Math.max(0,1-Math.pow(xx/(Y>1.38?0.24:0.25),2)))*0.156+0.008+(Y<1.4?0.008:0);pts.push([xx,Y,zz]);}
   const uvp=p=>[0.5+p[0]*340/512,((TY1-p[1])/(TY1-TY0)*ROW.t)/512];const w=W1(BI.chest),ids=[];for(const p of pts){ids.push(addV(M,V.add(p,[-s*0.03,0,0.004]),uvp(V.add(p,[-s*0.03,0,0])),w),addV(M,V.add(p,[s*0.03,0,0.006]),uvp(V.add(p,[s*0.03,0,0])),w));}
@@ -480,6 +486,24 @@ function mocapPose(MP,R,root){const C=mocapClip(MP.c);if(!C)return false;const n
 function rigid3(a){let n=Math.hypot(a[0],a[1],a[2])||1;a[0]/=n;a[1]/=n;a[2]/=n;const d=a[0]*a[4]+a[1]*a[5]+a[2]*a[6];a[4]-=d*a[0];a[5]-=d*a[1];a[6]-=d*a[2];
  n=Math.hypot(a[4],a[5],a[6])||1;a[4]/=n;a[5]/=n;a[6]/=n;a[8]=a[1]*a[6]-a[2]*a[5];a[9]=a[2]*a[4]-a[0]*a[6];a[10]=a[0]*a[5]-a[1]*a[4];}
 function invRigid(m){return[m[0],m[4],m[8],0,m[1],m[5],m[9],0,m[2],m[6],m[10],0,-(m[0]*m[12]+m[1]*m[13]+m[2]*m[14]),-(m[4]*m[12]+m[5]*m[13]+m[6]*m[14]),-(m[8]*m[12]+m[9]*m[13]+m[10]*m[14]),1];}
+/* bubble-butt physics: each cheek is a bouncy damped spring hung on the pelvis. The pelvis's own acceleration (every step, hip bumps and
+   drops in a dance, sitting down) swings it, and a slap kicks it; the cheek shifts and squashes/stretches about its own centre, which the
+   soft bones carry (vertices on the seat are weighted to them in buildBody). Left and right ring at slightly different rates, so they wobble. */
+const SOFT_C=[[0.085,0.885,-0.105],[-0.085,0.885,-0.105]],SOFT_HZ=[4.1,4.6],SOFT_Z=0.12,SOFT_G=[3.8,5.2,4.2],SOFT_MAX=[0.022,0.03,0.026];
+function softSeat(c,Wb,t,still){const P=Wb[BI.pelvis],o=M4.ap(P,[0,0.95,0]);let s=c._bb;const dt=s?t-s.t:0;
+ if(!s||dt<0||dt>0.25||still){s=c._bb={t,p:o,v:null,q:[[0,0,0,0,0,0],[0,0,0,0,0,0]],sl:false};}
+ else if(dt>0){const v=[0,1,2].map(j=>(o[j]-s.p[j])/dt);/* the first step after a (re)start only learns the speed, so walking on screen doesn't kick */
+  let a=s.v?[0,1,2].map(j=>(v[j]-s.v[j])/dt):[0,0,0];const am=Math.hypot(a[0],a[1],a[2]);if(am>45)a=a.map(x=>x*45/am);
+  s.p=o;s.v=v;s.t=t;
+  /* the pelvis's acceleration in its own frame (axes read off the bone matrix, so its scale and turn drop out) */
+  const ax=[0,1,2].map(k=>{const e=M4.ap(P,[k===0?1:0,0.95+(k===1?1:0),k===2?1:0]),d=[e[0]-o[0],e[1]-o[1],e[2]-o[2]],n=Math.hypot(d[0],d[1],d[2])||1;return(a[0]*d[0]+a[1]*d[1]+a[2]*d[2])/n;});
+  /* a slap: the cheeks get pushed in and up, then bounce back */
+  if(c.slapT>0.6&&!s.sl){s.sl=true;s.q[0][5]+=0.55;s.q[0][4]+=0.35;s.q[1][5]+=0.42;s.q[1][4]+=0.25;}else if(!(c.slapT>0))s.sl=false;
+  const n=Math.max(1,Math.ceil(dt*120)),h=dt/n;
+  for(let i=0;i<2;i++){const w=2*Math.PI*SOFT_HZ[i],k=w*w,d=2*SOFT_Z*w,q=s.q[i];
+   for(let st=0;st<n;st++)for(let j=0;j<3;j++){const f=-k*q[j]-d*q[j+3]-ax[j]*SOFT_G[j];q[j+3]+=f*h;q[j]+=q[j+3]*h;if(Math.abs(q[j])>SOFT_MAX[j]){q[j]=Math.sign(q[j])*SOFT_MAX[j];q[j+3]*=-0.3;}}}}
+ for(let i=0;i<2;i++){const q=s.q[i],C=SOFT_C[i],sy=1+q[1]*5,sx=1-q[1]*2.5,sz=1-q[1]*2.5-q[2]*2;
+  Wb[SOFT_L+i]=M4.mul(P,[sx,0,0,0,0,sy,0,0,0,0,sz,0,C[0]+q[0]-sx*C[0],C[1]+q[1]-sy*C[1],C[2]+q[2]-sz*C[2],1]);}}
 function blendPose(c,W,t){const L=W.map((w,i)=>BONES[i][1]<0?w.slice():M4.mul(invRigid(W[BONES[i][1]]),w)),P=c._pw,dt=t-(c._pwT||0);
  if(!P||dt<0||dt>0.3){c._pw=L;c._pwT=t;return W;}
  if(dt>0){c._pwT=t;const k=1-Math.exp(-dt*11);
@@ -666,7 +690,7 @@ function tropicalCanvas(){const c=document.createElement('canvas');c.width=c.hei
 function shirtCanvas(col){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');x.fillStyle=rgb(col);x.fillRect(0,0,64,64);
  x.globalAlpha=0.08;x.strokeStyle='#000';for(let i=0;i<64;i+=2){x.beginPath();x.moveTo(i,0);x.lineTo(i,64);x.stroke();}x.globalAlpha=0.06;x.strokeStyle='#fff';for(let i=1;i<64;i+=3){x.beginPath();x.moveTo(0,i);x.lineTo(64,i);x.stroke();}return c;}
 const VS=`attribute vec3 aP;attribute vec3 aN;attribute vec2 aT;attribute vec4 aBi;attribute vec4 aBw;
-uniform mat4 uVP;uniform mat4 uB[${NB}];uniform vec4 uPL[8];uniform vec3 uPC[8];uniform vec3 uAmb;uniform vec3 uLD;uniform vec3 uLC;uniform vec3 uCam;uniform vec2 uFog;
+uniform mat4 uVP;uniform mat4 uB[${NBS}];uniform vec4 uPL[8];uniform vec3 uPC[8];uniform vec3 uAmb;uniform vec3 uLD;uniform vec3 uLC;uniform vec3 uCam;uniform vec2 uFog;
 varying vec2 vT;varying vec3 vL;varying float vS;varying float vF;
 void main(){mat4 M=uB[int(aBi.x)]*aBw.x+uB[int(aBi.y)]*aBw.y+uB[int(aBi.z)]*aBw.z+uB[int(aBi.w)]*aBw.w;
  vec4 w=M*vec4(aP,1.0);vec3 n=normalize((M*vec4(aN,0.0)).xyz);vec3 V=normalize(uCam-w.xyz);
@@ -921,12 +945,13 @@ function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game'
  /* lying down: tip over first and scale after, so a body keeps its standing height as its length and its depth as its thickness */
  if(lying){const fe=c.fall===undefined?1:1-Math.pow(1-c.fall,2);base=M4.mul(base,M4.mul(M4.T(0,(c.bed?0.15:0.2)*fe*scale*S[2],0),M4.mul(M4.R([1,0,0],(c.alive&&!c.bed?1:-1)*Math.PI/2*fe),SC)));}
  else base=M4.mul(base,SC);
- const Wb=[];const B=new Float32Array(NB*16);for(let i=0;i<NB;i++)Wb[i]=M4.mul(base,W[i]);if(CH[id].neckDrop){const h=BI.head;Wb[h]=M4.mul(base,M4.mul(M4.T(0,-CH[id].neckDrop,0),W[h]));}
+ const Wb=[];const B=new Float32Array(NBS*16);for(let i=0;i<NB;i++)Wb[i]=M4.mul(base,W[i]);if(CH[id].neckDrop){const h=BI.head;Wb[h]=M4.mul(base,M4.mul(M4.T(0,-CH[id].neckDrop,0),W[h]));}
  const cut=[],SEV={armL:['uarmL','farmL','handL'],armR:['uarmR','farmR','handR'],legL:['thighL','shinL','footL'],legR:['thighR','shinR','footR']};
  if(c.sev)for(const l in c.sev)cut.push(SEV[l]);if(c.headless)cut.push(['head']);
  for(const grp of cut){const b0=BI[grp[0]],pv=M4.ap(Wb[b0],BONES[b0][2]);const Z0=[0,0,0,0,0,0,0,0,0,0,0,0,pv[0],pv[1],pv[2],1];for(const nm of grp)Wb[BI[nm]]=Z0;
   if(IB){const pr=IB.r,pu=IB.uv;IB.r=0.8;IB.uv=null;IB.box(A.mul(A.T(pv[0],pv[1],pv[2]),A.S(0.11*scale,0.11*scale,0.11*scale)),[0.55,0.03,0.06]);IB.box(A.mul(A.T(pv[0],pv[1],pv[2]),A.S(0.05*scale,0.05*scale,0.05*scale)),[0.92,0.85,0.8]);if(grp[0]==='head'){IB.box(A.mul(A.T(pv[0],pv[1]+0.03*scale,pv[2]),A.S(0.035*scale,0.08*scale,0.035*scale)),[0.95,0.9,0.85]);IB.box(A.mul(A.T(pv[0]+0.03*scale,pv[1]+0.01,pv[2]+0.02*scale),A.S(0.06*scale,0.05*scale,0.05*scale)),[0.7,0.08,0.12]);}IB.r=pr;IB.uv=pu;}}
- for(let i=0;i<NB;i++)B.set(Wb[i],i*16);queue.push({B,id});
+ Wb[SOFT_L]=Wb[SOFT_R]=Wb[BI.pelvis];if(mode==='game'&&(c.look?c.look.fem:CH[id].B&&CH[id].B.fem))softSeat(c,Wb,t,lying);
+ for(let i=0;i<NBS;i++)B.set(Wb[i],i*16);queue.push({B,id});
  if(mode==='game'&&(CH[id].npc||c.player)){const lvl=!c.alive?(c.execd?3:2):(c.hp<(c.maxhp||1)?1:0);if(lvl>(c._bl||0)){c._bl=lvl;bloodify(id,lvl,c);}}
  if(IB&&gun&&WD[gun]&&!(c.sev&&c.sev.armR)){const sw=1.65*scale;const wm=handFrame(Wb,false,sw),hg=gun==='dual'?'pistol':gun;if(typeof mastLv==='function')WGOLD=!!c.player&&mode==='game'&&mastLv(gun)>=3;if(mode==='game'&&typeof weaponAnim==='function')weaponAnim(c,gun);drawWeapon(IB,wm,hg);WKICK=WPUMP=0;if(typeof mastLv==='function')WGOLD=false;if(gun==='shotgun'&&!(c.sev&&c.sev.armL)){const fm=handFrame(Wb,true,1);const pr=IB.r,pu=IB.uv;IB.r=0.4;IB.uv=null;IB.box(A.mul(fm,A.mul(A.T(0,0.02,0.03),A.S(0.05*scale,0.05*scale,0.16*scale))),[0.35,0.22,0.12]);IB.r=pr;IB.uv=pu;}c.muzzle=apply(wm,0,0.05,(WD[gun].len||0.2)+0.12);if(dual){if(mode==='game'&&typeof weaponAnim==='function')weaponAnim(c,gun);drawWeapon(IB,handFrame(Wb,true,sw),hg);WKICK=WPUMP=0;}}
  if(IB&&cash){const hm=handFrame(Wb,true,1);const pr=IB.r,pu=IB.uv;IB.r=0;for(let i=-2;i<=2;i++){const m=A.mul(A.mul(A.mul(hm,A.T(0,0.03,0.04)),A.RY(i*0.26)),A.T(0,0.004*i,0.085));IB.box(A.mul(m,A.S(0.075,0.004,0.16)),[1,1,1],false,TUV[11]);}IB.r=pr;IB.uv=pu;}
