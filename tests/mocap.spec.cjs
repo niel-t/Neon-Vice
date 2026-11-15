@@ -27,3 +27,25 @@ test('mocap: clips decode, loop cleanly, and play on dancers and home girls', as
   await page.waitForTimeout(1500);
   expect(await page.evaluate(() => G.club.dancers.slice(0, 2).every(d => d._pw && d._pw.length === 17))).toBe(true);
 });
+
+// the pole dancer at home runs the Velvet Palms routines (incl. the lambada) on her own little stage, turned to you, and can be slapped
+test('home pole dancer: stage routines on her platform, facing you', async ({ openGame }) => {
+  const page = await openGame();
+  const o = await page.evaluate(() => {
+    selIdx = 2; sessionReset(Math.min(JOBS.sel, JOBS.top)); const p = myProg(); arm(); p.homes = [0, 1, 2]; p.home = 2; p.furn = { 2: { pole: 1 } }; fadeTo = f => { f(); return true; };
+    loadHub('home2', 'home'); if (G.seq) seqSkip();
+    const d = G.dancer, moves = new Set(); let far = 0;
+    const q = G.slots.p; G.player.x = q.x + 2.5; G.player.z = q.z + 1;
+    for (let i = 0; i < 60 * 40; i++) { homeTick(1 / 60); moves.add(d.move); far = Math.max(far, Math.hypot(d.x - q.x, d.z - q.z)); }
+    d.move = 'sway'; d.mt = 1; d.md = 99; for (let i = 0; i < 120; i++) homeTick(1 / 60);
+    const face = Math.cos(angDiff(d.a, Math.atan2(G.player.x - d.x, G.player.z - d.z)));
+    G.player.x = d.x + 0.8; G.player.z = d.z + 0.8; slapTick(1 / 60);
+    return { pole: !!d.pole, moves: moves.size, far, y: d.y, face, slap: G.slapN === d };
+  });
+  expect(o.pole).toBe(true);
+  expect(o.moves).toBeGreaterThanOrEqual(4);
+  expect(o.far).toBeLessThan(0.6);
+  expect(o.y).toBeLessThan(0.3);
+  expect(o.face).toBeGreaterThan(0.4);
+  expect(o.slap).toBe(true);
+});

@@ -3264,15 +3264,16 @@ function clubStep(g,d,f,tx,tz,sp,dt){let gx=tx,gz=tz;if(!pathClear(g,d.x,d.z,tx,
  const dx=gx-d.x,dz=gz-d.z,L=Math.hypot(dx,dz)||1,ox=d.x,oz=d.z;d.vx=dx/L*sp;d.vz=dz/L*sp;d.x+=d.vx*dt;d.z+=d.vz*dt;collideGrid(d);
  const m=Math.hypot(d.x-ox,d.z-oz);d.walk=(d.walk||0)+m*9;d.a+=clamp(angDiff(d.a,Math.atan2(dx,dz)),-8*dt,8*dt);}
 /* stage routines: each dancer flows through sway / pole / lambada (motion capture) / hair / spin / drop / strut around her own pole; tips make her move faster */
-function danceTick(g,d,dt){const sc=g.club.sc,q=d.pole,sp=1+d.boost*0.6+(d.stage>=2?0.25:0);
+/* d.baseY: the stage top (club default), d.faceK: how far she turns out from the centre, d.strutR: how far she struts from the pole */
+function danceTick(g,d,dt){const sc=g.club.sc,q=d.pole,y0=d.baseY===undefined?0.36:d.baseY,sp=1+d.boost*0.6+(d.stage>=2?0.25:0);
  d.mt+=dt;if(d.mt>=d.md){let n=d.move;while(n===d.move)n=pick(CLUB_MOVES);d.move=n;d.mt=0;d.md=n==='spin'?rnd(3,4.5):n==='strut'?rnd(4,6):n==='lambada'?rnd(8,12):rnd(5,8);}
  d.moveE=Math.max(0,Math.min(1,d.mt/1.1,(d.md-d.mt)/1.1));d.moveE=d.moveE*d.moveE*(3-2*d.moveE);d.ph+=dt*3.4*sp;
- const out=Math.atan2(q.x-sc.x,q.z-sc.z),fa=(Math.abs(q.x-sc.x)+Math.abs(q.z-sc.z)<0.3?0:out*0.5)+0.75*Math.sin(g.T*0.23+d.fit*1.7);
- let tx=q.x+Math.sin(fa)*0.32,tz=q.z+Math.cos(fa)*0.32,ta=fa+0.2*Math.sin(d.ph*0.5),ty=0.36;
+ const out=Math.atan2(q.x-sc.x,q.z-sc.z),fa=(Math.abs(q.x-sc.x)+Math.abs(q.z-sc.z)<0.3?0:out*(d.faceK||0.5))+(d.faceK?0.35:0.75)*Math.sin(g.T*0.23+d.fit*1.7);
+ let tx=q.x+Math.sin(fa)*0.32,tz=q.z+Math.cos(fa)*0.32,ta=fa+0.2*Math.sin(d.ph*0.5),ty=y0;
  if(d.move==='pole'){tx=q.x+Math.sin(fa)*0.2;tz=q.z+Math.cos(fa)*0.2;}
- else if(d.move==='spin'){/* walks round the pole holding it with her right hand, then swings off the floor */d.sa+=dt*(1.2+0.6*d.moveE)*sp;tx=q.x+Math.cos(d.sa)*0.26;tz=q.z+Math.sin(d.sa)*0.26;ta=-d.sa;ty=0.36+0.1*d.moveE;}
- else if(d.move==='strut'){d.sa+=dt*1.1*sp;const R=0.72;tx=q.x+Math.cos(d.sa)*R;tz=q.z+Math.sin(d.sa)*R;ta=Math.atan2(-Math.sin(d.sa),Math.cos(d.sa));d.walk=(d.walk||0)+dt*1.1*sp*R*9;}
- else ty=0.36+Math.abs(Math.sin(d.ph))*0.025;
+ else if(d.move==='spin'){/* walks round the pole holding it with her right hand, then swings off the floor */d.sa+=dt*(1.2+0.6*d.moveE)*sp;tx=q.x+Math.cos(d.sa)*0.26;tz=q.z+Math.sin(d.sa)*0.26;ta=-d.sa;ty=y0+0.1*d.moveE;}
+ else if(d.move==='strut'){d.sa+=dt*1.1*sp;const R=d.strutR||0.72;tx=q.x+Math.cos(d.sa)*R;tz=q.z+Math.sin(d.sa)*R;ta=Math.atan2(-Math.sin(d.sa),Math.cos(d.sa));d.walk=(d.walk||0)+dt*1.1*sp*R*9;}
+ else ty=y0+Math.abs(Math.sin(d.ph))*0.025;
  const k=Math.min(1,dt*(d.move==='spin'?14:6)),ox=d.x,oz=d.z;d.x+=(tx-d.x)*k;d.z+=(tz-d.z)*k;d.y+=(ty-d.y)*Math.min(1,dt*8);d.vx=d.vz=0;
  d.a+=clamp(angDiff(d.a,ta),-7*dt,7*dt);
  if(d.stage>=2&&Math.random()<dt*6)g.parts.push({t:'c',x:d.x+rnd(-0.6,0.6),y:2.4,z:d.z+rnd(-0.6,0.6),vx:rnd(-0.2,0.2),vy:-0.8,vz:rnd(-0.2,0.2),s:0.07,c:[0.35,0.8,0.4],life:2.4});}
@@ -3506,7 +3507,7 @@ function homeExtras(g){if(g.home===3)return mansionExtras(g);const f=homeFurn(),
  /* Room 14 patio upgrades: the kiddie pool (west) and the barbecue (east) */
  if(g.home===0&&f.kpool)sol(4.2,5.1,1.7,0.8);if(g.home===0&&f.bbq){sol(16.2,5.1,0.7,0.7);if(!g.bbqLit){g.bbqLit=1;g.lights.push({x:16.5,y:0.9,z:5.5,r:3,c:[1.1,0.45,0.1]});}}
  /* studio terrace upgrades: the hot tub (west) and the sun deck (east) */
- if(g.home===1&&f.tub){sol(4.3,8.1,2.4,1.8);if(!g.tubLit){g.tubLit=1;g.lights.push({x:5.5,y:0.8,z:9,r:4.5,c:[0.3,0.9,1.1]});}}
+ if(g.home===1&&f.tub){sol(4.3,8.1,2.4,1.8);if(!g.tubLit){g.tubLit=1;g.lights.push({x:5.5,y:0.8,z:9,r:4.5,c:[0.18,0.55,0.7]});}}
  if(g.home===1&&f.deck){sol(24.2,8.2,0.6,1.7);sol(26.2,8.2,0.6,1.7);}
  /* penthouse terrace upgrades: the sky lounge and its fire (west) and the helipad (east) */
  if(g.home===2&&f.sky){sol(2.1,5.1,3.8,0.8);sol(2.1,6.1,0.8,1.8);sol(4.1,6.5,0.8,0.5);if(!g.skyLit){g.skyLit=1;g.fire={x:4.5,y:0.6,z:6.8,r:4.5,c:[1.1,0.5,0.12]};g.lights.push(g.fire);}}
@@ -3532,7 +3533,9 @@ function homeTick(dt){const g=G,S=g.slots;if(!S)return;homeLightTick(g);bedTick(
  if(g.home===1){updateDoors(dt);const p=g.player,near=!!p&&Math.abs(p.x-16)<1.8&&Math.abs(p.z-11.5)<2;g.slideT=clamp((g.slideT||0)+(near?dt:-dt)*3.5,0,1);}
  for(const q of g.pets){const sp=q.k==='tigerpet'?0.9:q.k==='iguana'?0.35:0.8;q.wait-=dt;if(q.wait<=0){const dx=q.tx-q.x,dz=q.tz-q.z,d=Math.hypot(dx,dz);if(d<0.1){q.wait=rnd(1.5,4);q.tx=clamp(q.x+rnd(-3,3),1.6,g.W-2.6);q.tz=clamp(q.z+rnd(-3,3),1.6,g.H-2.6);const ix=Math.floor(q.tx),iz=Math.floor(q.tz);if(g.solid[iz*g.W+ix]||g.rows[iz][ix]==='D'){q.tx=q.x;q.tz=q.z;}}else{const st=Math.min(d,sp*dt);const nx=q.x+dx/d*st,nz=q.z+dz/d*st;if(g.solid[Math.floor(nz)*g.W+Math.floor(nx)]||g.rows[Math.floor(nz)][Math.floor(nx)]==='D'){q.tx=q.x;q.tz=q.z;}else{q.x=nx;q.z=nz;q.a=Math.atan2(dx,dz);q.step+=st*14;}}}}
  if(g.home===3)mansionTick(g,dt);
- if(g.dancer&&S.p){const d=g.dancer,an=g.T*1.6;d.x=S.p.x+Math.cos(an)*0.36;d.z=S.p.z+Math.sin(an)*0.36;d.a=Math.atan2(S.p.x-d.x,S.p.z-d.z)+Math.PI/2;}}
+ if(g.dancer&&S.p){/* the home pole dancer runs the same routines as the Velvet Palms girls, on her own little stage, turned to you */
+  const d=g.dancer,pl=g.player;if(!d.pole)Object.assign(d,{pole:{x:S.p.x,z:S.p.z},baseY:0.125,faceK:1,strutR:0.42,y:0.125,boost:0,stage:0,ph:0,fit:3,sa:0,move:'sway',mt:0,md:rnd(4,7),moveE:0});
+  if(!(d.slapT>0)){const q=d.pole,dx=pl?pl.x-q.x:0,dz=pl?pl.z-q.z:1;danceTick({club:{sc:{x:q.x-dx,z:q.z-dz}},T:g.T,parts:g.parts},d,dt);}d.boost=Math.max(0,d.boost-dt*0.25);}}
 /* the gun locker: a steel cabinet with a lit count strip, so you can see from the door whether it is empty */
 function drawLocker(B,g){const p=homeLockerPos(g),n=myProg().locker.items.length,bx=(x,y,z,sx,sy,sz,c,em)=>B.box(TRS(x,y,z,0,sx,sy,sz),c,!!em),x=p.x,z=p.z;
  bx(x,0.95,z,0.5,1.9,0.92,[0.2,0.22,0.26]);bx(x-0.255,0.95,z-0.225,0.02,1.78,0.42,[0.32,0.34,0.4]);bx(x-0.255,0.95,z+0.225,0.02,1.78,0.42,[0.32,0.34,0.4]);
@@ -3773,12 +3776,12 @@ function drawHomeDecor(B0,g){const t=g.home,T=g.T,W=g.W-2,H=g.H-2,f=homeFurn(),O
   bx(17.3,0.15,4.4,0.3,0.3,0.3,GOLD);bx(17.3,0.4,4.4,0.07,0.2,0.07,[0.15,0.35,0.18]);bx(17.3,0.51,4.4,0.04,0.04,0.04,GOLD);
   for(const [ex,ez] of [[-0.2,0.15],[0.2,0.15],[0,-0.22]])B.box(A.mul(A.T(20.5,0.3,4.5),A.mul(A.T(ex,0,ez),A.S(0.035,0.6,0.035))),GOLD);B.box(A.mul(A.T(20.5,0.68,4.5),A.mul(A.RX(0.4),A.S(0.1,0.1,0.7))),GOLD);bx(20.5,0.6,4.5,0.14,0.06,0.14,BK);
   /* the infinity pool: it runs right up to the rail, lit from below */
-  bx(12,0.035,5,4.0,0.07,2.0,[0.05,0.2,0.3]);bx(12,0.075,4.95,3.8,0.012,1.86,[0.2,0.7,0.9],true);bx(12,0.06,6.0,4.2,0.12,0.12,GOLD);for(const lx of [9.95,14.05])bx(lx,0.06,5,0.12,0.12,2.1,GOLD);
-  for(let i=0;i<4;i++)bx(12+Math.sin(T*0.6+i*2)*1.4,0.085,4.95+Math.cos(T*0.8+i)*0.6,0.42,0.008,0.3,[0.45,0.88,1.05],true);
+  bx(12,0.035,5,4.0,0.07,2.0,[0.05,0.2,0.3]);bx(12,0.075,4.95,3.8,0.012,1.86,[0.06,0.3,0.46],true);bx(12,0.06,6.0,4.2,0.12,0.12,GOLD);for(const lx of [9.95,14.05])bx(lx,0.06,5,0.12,0.12,2.1,GOLD);
+  for(let i=0;i<4;i++)bx(12+Math.sin(T*0.6+i*2)*1.4,0.085,4.95+Math.cos(T*0.8+i)*0.6,0.42,0.008,0.3,[0.16,0.44,0.6],true);
   for(const lx of [13.2,13.55]){bx(lx,0.24,6.0,0.03,0.4,0.03,CH);bx(lx,0.44,6.08,0.03,0.03,0.2,CH);}
   /* the jacuzzi: rounded black marble with a gold band, lit from below, always bubbling (you and the girls can get in) */
-  {const jx=7.2,jz=5.8;I.r=1;I.box(TRS(jx,0.006,jz,0,2.4,0.012,2.4),[0.2,0.6,0.8],true);I.box(TRS(jx,0.25,jz,0,2.1,0.5,2.1),MB);I.box(TRS(jx,0.42,jz,0,2.14,0.05,2.14),GOLD);I.box(TRS(jx,0.505,jz,0,1.8,0.012,1.8),[0.25,0.78,1.0],true);I.r=0;
-   for(let i=0;i<9;i++){const a=T*0.9+i*2.4,rr=0.2+((i*37)%7)/10;bx(jx+Math.sin(a)*rr,0.515,jz+Math.cos(a*1.1)*rr,0.1,0.01,0.1,[0.9,1,1],true);}
+  {const jx=7.2,jz=5.8;I.r=1;I.box(TRS(jx,0.006,jz,0,2.4,0.012,2.4),[0.08,0.28,0.4],true);I.box(TRS(jx,0.25,jz,0,2.1,0.5,2.1),MB);I.box(TRS(jx,0.42,jz,0,2.14,0.05,2.14),GOLD);I.box(TRS(jx,0.505,jz,0,1.8,0.012,1.8),[0.07,0.34,0.52],true);I.r=0;
+   for(let i=0;i<9;i++){const a=T*0.9+i*2.4,rr=0.2+((i*37)%7)/10;bx(jx+Math.sin(a)*rr,0.515,jz+Math.cos(a*1.1)*rr,0.1,0.01,0.1,[0.5,0.66,0.74],true);}
    bx(jx+1.05,0.12,jz+0.75,0.4,0.24,0.5,MB,false,-0.6);bx(jx+1.05,0.245,jz+0.75,0.42,0.01,0.52,GOLD,false,-0.6);
    if(Math.random()<0.2)g.parts.push({t:'c',x:jx+1+rnd(-0.7,0.7),y:0.62,z:jz+1+rnd(-0.7,0.7),vx:rnd(-0.1,0.1),vy:rnd(0.3,0.6),vz:0,s:0.05,c:[0.85,0.95,1],life:0.9});}
   /* upgrade: the sky lounge, white daybeds around a gas fire */
@@ -3872,7 +3875,7 @@ function drawHome(B,g){const f=homeFurn(),S=g.slots,T=g.T,id=rideId(),bx=(x,y,z,
   if(f.duffel){bx(c.x-0.2,0.2,c.z,0.95,0.38,0.46,[0.3,0.34,0.2]);bx(c.x-0.2,0.4,c.z,0.9,0.04,0.06,[0.2,0.22,0.14]);for(let i=0;i<9;i++)bx(c.x-0.8+i*0.14,0.025,c.z+0.35+((i*37)%5)*0.04,0.05,0.05,0.1,i%3?[0.75,0.1,0.1]:[0.85,0.7,0.3],false,i*0.7);bx(c.x+0.4,0.04,c.z+0.3,0.08,0.06,0.2,[0.12,0.12,0.14],false,0.5);}
   if(f.fan){bx(d.x-0.2,0.35,d.z+0.1,0.06,0.7,0.06,[0.75,0.75,0.78]);bx(d.x-0.2,0.04,d.z+0.1,0.35,0.06,0.3,[0.6,0.6,0.64]);for(let i=0;i<4;i++){const an=T*16+i*Math.PI/2;B.box(A.mul(A.mul(A.T(d.x-0.2,0.78,d.z+0.18),A.RZ(an)),A.S(0.34,0.05,0.01)),[0.7,0.85,0.9]);}
    if(Math.random()<0.06)g.parts.push({t:'c',x:d.x-0.2,y:0.05,z:d.z+0.4,vx:rnd(-0.6,0.2),vy:0,vz:rnd(0.6,1.4),s:0.07,c:[0.35,0.8,0.4],life:1.4});}
-  if(f.kpool){const x=5.05,z=5.6;IBhi.r=1;IBhi.box(TRS(x,0.13,z,0,1.7,0.26,1.0),[0.2,0.55,0.9]);IBhi.r=0;for(let i=0;i<8;i++)bx(x-0.7+i*0.2,0.265,z,0.1,0.01,0.96,i%2?[0.95,0.95,0.9]:[0.9,0.3,0.3]);bx(x,0.27,z,1.4,0.01,0.72,[0.3,0.7,0.85],true);
+  if(f.kpool){const x=5.05,z=5.6;IBhi.r=1;IBhi.box(TRS(x,0.13,z,0,1.7,0.26,1.0),[0.2,0.55,0.9]);IBhi.r=0;for(let i=0;i<8;i++)bx(x-0.7+i*0.2,0.265,z,0.1,0.01,0.96,i%2?[0.95,0.95,0.9]:[0.9,0.3,0.3]);bx(x,0.27,z,1.4,0.01,0.72,[0.08,0.34,0.5],true);
    bx(x+Math.sin(T*0.7)*0.4,0.31,z+Math.cos(T*0.9)*0.15,0.08,0.07,0.08,[0.75,0.6,0.2],false,T*0.3);bx(x-0.4+Math.cos(T*0.5)*0.15,0.3,z+0.1,0.14,0.05,0.1,[1,0.85,0.2],false,T*0.2);bx(x+1.2,0.03,z+0.3,0.9,0.04,0.04,[0.2,0.5,0.25],false,0.5);}
   if(f.bbq){const x=16.55,z=5.5;for(const [lx,lz] of [[-0.22,-0.22],[0.22,-0.22],[-0.22,0.22],[0.22,0.22]])bx(x+lx,0.25,z+lz,0.03,0.5,0.03,[0.25,0.2,0.18]);IBhi.r=0.6;IBhi.tp=0.3;IBhi.box(TRS(x,0.6,z,0,0.62,0.26,0.62),[0.3,0.16,0.1]);IBhi.tp=0;IBhi.r=0;
    bx(x,0.735,z,0.5,0.01,0.5,[1.2*(0.8+0.2*Math.sin(T*5)),0.4,0.08],true);for(let i=0;i<5;i++)bx(x-0.2+i*0.1,0.75,z,0.015,0.01,0.5,[0.15,0.15,0.16]);for(const [px,pz] of [[-0.1,-0.08],[0.1,0.1]])bx(x+px,0.77,z+pz,0.14,0.03,0.14,[0.45,0.2,0.1]);
@@ -3890,8 +3893,8 @@ function drawHome(B,g){const f=homeFurn(),S=g.slots,T=g.T,id=rideId(),bx=(x,y,z,
    bx(c.x,0.38,c.z+0.3,1.2,0.04,0.7,[0.7,0.9,1.0]);for(const [lx,lz] of [[-0.55,-0.3],[0.55,-0.3],[-0.55,0.3],[0.55,0.3]])bx(c.x+lx,0.18,c.z+0.3+lz,0.04,0.36,0.04,[0.85,0.85,0.9]);bx(c.x+0.15,0.41,c.z+0.3,0.36,0.01,0.26,[0.92,0.95,1],true);}
   if(f.peg){const px=d.x+0.9,pz=d.z-0.44;bx(px,1.3,pz,1.9,1.2,0.04,[0.9,0.9,0.88]);bx(px,1.3,pz-0.01,2.0,1.3,0.02,[0.3,0.9,1],true);guns.forEach((t,i)=>drawWeapon(B,A.mul(A.mul(A.T(px-0.6+(i%3)*0.6,1.55-Math.floor(i/3)*0.5,pz+0.06),A.RY(Math.PI/2)),A.S(1.4,1.4,1.4)),t));}
   bx(o.x,0.58,o.z,0.22,0.12,0.18,[0.8,0.12,0.15]);bx(o.x,0.65,o.z,0.2,0.03,0.06,[0.75,0.1,0.13]);
-  if(f.tub){const x=5.5,z=9.0;IBhi.r=0.35;IBhi.box(TRS(x,0.3,z,0,2.4,0.6,1.8),[0.97,0.95,0.97]);IBhi.r=0;bx(x,0.03,z,2.56,0.04,1.96,[1,0.3,0.72],true);bx(x,0.605,z,2.0,0.01,1.4,[0.3,0.82,0.95],true);
-   for(let i=0;i<7;i++)bx(x+Math.sin(T*1.7+i*2.1)*0.8,0.615,z+Math.cos(T*1.3+i*1.4)*0.5,0.12,0.01,0.12,[0.92,1,1],true);
+  if(f.tub){const x=5.5,z=9.0;IBhi.r=0.35;IBhi.box(TRS(x,0.3,z,0,2.4,0.6,1.8),[0.97,0.95,0.97]);IBhi.r=0;bx(x,0.03,z,2.56,0.04,1.96,[1,0.3,0.72],true);bx(x,0.605,z,2.0,0.01,1.4,[0.07,0.36,0.5],true);
+   for(let i=0;i<7;i++)bx(x+Math.sin(T*1.7+i*2.1)*0.8,0.615,z+Math.cos(T*1.3+i*1.4)*0.5,0.12,0.01,0.12,[0.5,0.66,0.74],true);
    bx(x+1.42,0.14,z,0.4,0.28,0.8,[0.85,0.7,0.5]);IBhi.r=0.8;IBhi.tp=-0.2;IBhi.box(TRS(x-0.95,0.72,z-0.65,0,0.22,0.24,0.22),[0.8,0.82,0.88]);IBhi.tp=0;IBhi.r=0;bx(x-0.93,0.9,z-0.65,0.06,0.26,0.06,[0.15,0.4,0.2]);
    if(Math.random()<0.25)g.parts.push({t:'c',x:x+rnd(-0.8,0.8),y:0.7,z:z+rnd(-0.5,0.5),vx:rnd(-0.1,0.1),vy:rnd(0.3,0.6),vz:0,s:0.05,c:[0.85,0.95,1],life:0.9});}
   if(f.deck){[[24.5,[1,0.55,0.72]],[26.5,[0.3,0.82,0.82]]].forEach(([x,cc])=>{bx(x,0.2,9.25,0.62,0.07,1.25,[0.97,0.97,0.97]);B.box(A.mul(A.T(x,0.2,8.62),A.mul(A.RX(0.7),A.mul(A.T(0,0,-0.3),A.S(0.62,0.07,0.66)))),[0.97,0.97,0.97]);

@@ -22,7 +22,7 @@ const slapClub=g=>!!(g&&g.club);
 function slapList(g){const o=[];if(!g||!g.def||!g.def.hub||!g.player)return o;
  if(g.club){const v=g.club.vip;if(v.active&&v.dancer)return[{d:v.dancer,r:2.2}];if(v.escort)o.push({d:v.escort.d,r:SLAP_R});
   for(const d of g.club.dancers)if(!d.walking&&!d.lapDance)o.push({d,r:SLAP_STAGE_R});return o;}
- for(const n of g.npcs){if(n.kind==='pgirl'&&!n.bed&&!n.tub&&n.alive!==false)o.push({d:n,r:SLAP_R});else if(n.kind==='sdancer'&&g.mansion)o.push({d:n,r:SLAP_STAGE_R});}
+ for(const n of g.npcs){if(n.kind==='pgirl'&&!n.bed&&!n.tub&&n.alive!==false)o.push({d:n,r:SLAP_R});else if(n.kind==='sdancer'&&g.mansion)o.push({d:n,r:SLAP_STAGE_R});else if(n.kind==='dancer'&&g.slots)o.push({d:n,r:SLAP_STAGE_R});}
  return o;}
 function slapNear(g){const p=g&&g.player;if(!p||g.seq||g.cine||g.seatP||p.bed||g.hubDone)return null;let best=null,bd=1e9;
  for(const q of slapList(g)){const d=Math.hypot(q.d.x-p.x,q.d.z-p.z);if(d<q.r&&d<bd){bd=d;best=q.d;}}return best;}

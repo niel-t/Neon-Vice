@@ -197,7 +197,7 @@ function mvGroundSetup(g){const W=g.W,H=g.H;
  const c=g.hcar={x:20.0,z:34.7,a:0,spin:0};g.solids.push({x:c.x,z:c.z,w:2.35,d:1.05});g.trigs.push({x:20.0,z:33.55,t:'leave'});g.car={x:c.x,z:c.z};
  const L=(x,z,r,c,y)=>g.lights.push({x,z,r,c,y:y||2.1});
  L(20,25,7,[1.0,0.86,0.7],2.6);L(20,17,6,[0.95,0.8,0.7]);L(10,18,6,[0.9,0.74,0.6]);L(10,26,6,[0.85,0.66,0.6]);L(29,18,6,[0.95,0.78,0.55]);L(29,27,6,[0.85,0.85,0.9]);
- L(20,7,9,[0.35,0.9,1.15],0.6);L(13,10,5,[1.2,0.35,0.8],0.9);L(27,10,5,[1.2,0.35,0.8],0.9);L(30.5,6.5,4,[0.4,1.0,1.2],0.8);L(6,8,5,[1.0,0.6,0.35],1.4);
+ L(20,7,9,[0.22,0.55,0.7],0.6);L(13,10,5,[1.2,0.35,0.8],0.9);L(27,10,5,[1.2,0.35,0.8],0.9);L(30.5,6.5,4,[0.22,0.55,0.7],0.8);L(6,8,5,[1.0,0.6,0.35],1.4);
  L(20,38.5,6,[0.5,0.9,1.2],1.2);L(20,33,5,[1.1,0.75,0.45],2.4);L(17.6,44,4,[1.2,0.8,0.4],1.6);L(22.4,44,4,[1.2,0.8,0.4],1.6);L(41,27.5,6,[0.85,0.9,1.1],2.4);L(11.7,26.6,4,[0.3,0.75,1.2],1.2);L(41.5,13.5,8,[0.75,0.85,0.95],2.4);
  /* the household: the butler in the foyer, two guards at the gate, the tennis pro and his partner rallying on the court */
  mvChar(g,'butler',21.6,24.8,mvLooks.butler(),0);
@@ -358,7 +358,7 @@ function drawMansion(D,g,F){const B=F===undefined?D:F;if(!g.mansion)return;
 function mvGroundStatic(B,g){const bx=mvBx(B),f=homeFurn(),M=TUV[63],T0=0;
  /* ===== the terrace and the infinity pool: coping on three sides, the north edge spills into the bay ===== */
  bx(20,0.05,9.12,16.5,0.1,0.25,MV_WH,false,0,M);bx(11.88,0.05,6.5,0.25,0.1,5.25,MV_WH,false,0,M);bx(28.12,0.05,6.5,0.25,0.1,5.25,MV_WH,false,0,M);
- bx(20,0.035,4.03,16.0,0.05,0.06,[0.05,0.1,0.14]);bx(20,0.014,3.86,16.2,0.02,0.24,[0.55,0.92,1.0],true);
+ bx(20,0.035,4.03,16.0,0.05,0.06,[0.05,0.1,0.14]);bx(20,0.014,3.86,16.2,0.02,0.24,[0.25,0.55,0.7],true);
  for(let i=0;i<6;i++)bx(13.6+i*2.56,0.03,8.86,0.5,0.012,0.1,i%2?MV_PINK:MV_CYAN,true);
  for(let i=0;i<3;i++)bx(12.25+i*0.3,0.026,7.6,0.26,0.012,1.6,[0.8,0.92,0.98]);
  for(const [x,c] of [[14.2,MV_PINK],[16.6,MV_CYAN],[23.4,MV_PINK],[25.8,MV_CYAN]])mvLounger(B,x,10.75,Math.PI,c);
@@ -464,7 +464,7 @@ function mvGroundDyn(D,g){const T=g.T,bx=mvBx(D),f=homeFurn(),M=g.mansion;
  for(let i=0;i<16;i++){const x=12.6+((i*3.7+T*0.35*(i%3+1))%15),z=4.6+((i*1.9+Math.sin(T*0.6+i)*0.8)%4.2+4.2)%4.2;bx(x,0.035,z,0.35+0.15*Math.sin(T*2+i),0.004,0.06,[0.75,0.95,1.05],true,Math.sin(i)*0.4);}
  {const x=19+Math.sin(T*0.13)*5,z=6.5+Math.sin(T*0.21)*1.3,a=T*0.2;const m0=A.mul(A.T(x,0.06,z),A.RY(a)),P=(px,py,pz,sx,sy,sz,c)=>D.box(A.mul(m0,TRS(px,py,pz,0,sx,sy,sz)),c);
   for(let i=0;i<8;i++){const an=i*TAU/8;D.box(A.mul(m0,A.mul(A.T(Math.sin(an)*0.35,0.05,Math.cos(an)*0.35),A.mul(A.RY(an),A.S(0.3,0.14,0.16)))),[1,0.45,0.7]);}P(0,0.32,0.35,0.07,0.42,0.07,[1,0.45,0.7]);P(0,0.53,0.42,0.1,0.08,0.18,[1,0.45,0.7]);P(0,0.53,0.53,0.05,0.04,0.08,[0.1,0.1,0.1]);}
- bx(30.5,0.36,6.5,1.8,0.01,1.8,[0.3,0.85,1.05],true,Math.PI/8);for(let i=0;i<9;i++){const a=T*1.7+i*2.3,r=0.2+((i*0.37+T*0.5)%0.6);bx(30.5+Math.sin(a)*r,0.375,6.5+Math.cos(a)*r,0.1,0.01,0.1,[0.92,1,1],true);}
+ bx(30.5,0.36,6.5,1.8,0.01,1.8,[0.07,0.36,0.54],true,Math.PI/8);for(let i=0;i<9;i++){const a=T*1.7+i*2.3,r=0.2+((i*0.37+T*0.5)%0.6);bx(30.5+Math.sin(a)*r,0.375,6.5+Math.cos(a)*r,0.1,0.01,0.1,[0.5,0.66,0.74],true);}
  {const fl=0.85+0.15*Math.sin(T*9)*Math.sin(T*5.3);for(let i=0;i<5;i++)bx(6+Math.sin(T*3+i)*0.12,0.42+i*0.07*fl,8+Math.cos(T*2.5+i)*0.12,0.3-i*0.05,0.08,0.3-i*0.05,[1.3,0.55+i*0.08,0.12],true,i);
   for(const x of [5.0,13.0,27.0,34.0])bx(x,1.14+Math.sin(T*9+x)*0.02,13.4,0.09,0.14+Math.sin(T*11+x)*0.03,0.09,[1.3,0.7,0.2],true);}
  drawFountainWater(D,{x:20,z:38.5},T);for(let k=0;k<3;k++){const ph=(T*0.4+k/3)%1,r=1.3+ph*0.4;for(let j=0;j<16;j++){const an=j*TAU/16;bx(20+Math.sin(an)*r,0.335,38.5+Math.cos(an)*r,0.03,0.004,r*0.38,[0.75,0.92,1].map(v=>v*(1-ph)),true,an+Math.PI/2);}}
@@ -572,7 +572,7 @@ function mvUpDyn(D,g){const T=g.T,bx=mvBx(D);
  {const fl=0.85+0.15*Math.sin(T*9)*Math.sin(T*5.3);for(let i=0;i<5;i++)bx(13.25,0.14+i*0.06*fl,18.5+i*0.15+Math.sin(T*3+i)*0.05,0.06,0.1,0.18-i*0.02,[1.3,0.5+i*0.1,0.12],true,i);}
  mvFireworks(D,T,2.4,1.8);
  /* water in the sunken tub, the chandelier hanging down the stairwell, the TV, candles on the balcony */
- const TB=MV_TUBS[1];bx(TB.x,0.02,17.1,3.3,0.01,2.2,[0.3,0.75,1.0],true);for(let i=0;i<8;i++){const a=T*1.3+i*2.1,r=0.3+((i*0.31+T*0.4)%0.8);bx(TB.x+Math.sin(a)*r*1.3,0.03,17.1+Math.cos(a)*r*0.8,0.1,0.01,0.1,[0.9,1,1],true);}
+ const TB=MV_TUBS[1];bx(TB.x,0.02,17.1,3.3,0.01,2.2,[0.07,0.33,0.52],true);for(let i=0;i<8;i++){const a=T*1.3+i*2.1,r=0.3+((i*0.31+T*0.4)%0.8);bx(TB.x+Math.sin(a)*r*1.3,0.03,17.1+Math.cos(a)*r*0.8,0.1,0.01,0.1,[0.5,0.66,0.74],true);}
  drawChandelier(D,IBhi,20,28.5,MV_LOW+1.6,T);
  {const ph=Math.floor(T*0.5)%4,c=[[1,0.35,0.75],[0.3,0.9,1],[1,0.85,0.3],[0.6,0.4,1]][ph];bx(24.8,1.14,15.8,1.3,0.54,0.01,c.map(v=>v*(0.8+0.2*Math.sin(T*6))),true);}
  for(const [x,z] of [[20.4,11.45],[20.62,11.55]])bx(x,0.62+Math.sin(T*9+x)*0.01,z,0.03,0.05+Math.sin(T*12+x)*0.01,0.03,[1.3,0.75,0.25],true);
