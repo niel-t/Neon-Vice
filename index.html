@@ -814,6 +814,7 @@ const PERKS={
  second:{name:'SECOND WIND',max:1,cap:12,desc:'CAPSTONE. Once per floor a fatal hit leaves you on your last hit instead'},
  slammer:{name:'SLAM MASTER',max:1,cap:12,desc:'CAPSTONE. Every slam refills the magazine in your hand'},
  phantom:{name:'GHOST',max:1,cap:12,desc:'CAPSTONE. Your shots make no noise until your first kill on each floor'}};
+const HOME_COUNT=4;
 const PROG=(()=>{const o=readSave('nb86prog');for(const c of CHARS){
  savedField('nb86prog',o,c.id,{},saveObject);const p=o[c.id];
  savedField('nb86prog',p,'lvl',1,n=>Number.isInteger(n)&&n>=1&&n<=30);
@@ -822,7 +823,8 @@ const PROG=(()=>{const o=readSave('nb86prog');for(const c of CHARS){
  for(const k of ['jewel','seen','furn','rel','wflags','mast','mods','rep','carx','props','tailor','gear','meds','arcade','shades'])if(p[k]!=null)savedField('nb86prog',p,k,{},saveObject);
  if(p.cars!=null)savedField('nb86prog',p,'cars',['beater'],Array.isArray);
  if(p.homes!=null)savedField('nb86prog',p,'homes',[0],Array.isArray);
- if(p.home!=null)savedField('nb86prog',p,'home',0,n=>Number.isInteger(n)&&n>=0&&n<HOMEDEF.length&&(p.homes||[0]).includes(n));
+ /* HOMEDEF is declared further down (after the saves load), so the number of homes is a plain constant here: motel, studio, penthouse, mansion */
+ if(p.home!=null)savedField('nb86prog',p,'home',0,n=>Number.isInteger(n)&&n>=0&&n<HOME_COUNT&&(p.homes||[0]).includes(n));
  if(p.arm!=null){savedField('nb86prog',p,'arm',{},saveObject);for(const k of ['owned','stock'])savedField('nb86prog',p.arm,k,[],Array.isArray);}
  if(p.kit!=null)savedField('nb86prog',p,'kit',null,kitShape);
  if(p.locker!=null)savedField('nb86prog',p,'locker',null,lockerShape);
