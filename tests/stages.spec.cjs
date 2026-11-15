@@ -311,3 +311,27 @@ test('stages: taking the stairs climbs into the next floor with no black screen'
   });
   expect(result).toEqual({ sid: 'stair', state: 'play', black: false, climbed: true, snap: true, sawArrive: true, cameUp: true, landed: true });
 });
+
+test('stages: Kade Tower stairs and hoist still take you up after an execution', async ({ openGame }) => {
+  const page = await openGame();
+  const result = await page.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)), out = {};
+    for (const route of ['up', 'elev']) {
+      window.NOARRIVE = 1; delete myProg().run; startMission('c10'); if (G.arrive) endArrive();
+      const site = G, p = site.player, s = site.stageRun.describe(site.sid).stairs.find(q => q.id === route);
+      // a finisher on a downed hard hat, played out in game time until well after its timer runs out
+      const e = site.enemies.find(q => q.alive && !q.boss); e.x = p.x + 0.6; e.z = p.z; e.down = 3;
+      for (const q of site.enemies) if (q !== e) q.alive = false;
+      execute(p, e);
+      for (let i = 0; i < 100; i++) update(0.05);
+      if (route === 'elev') site.keycard = true;
+      const timer = p.exec;
+      p.x = s.at[0]; p.z = s.at[1];
+      for (let i = 0; i < 60 && (G === site || fading || G.climbIn || state !== 'play'); i++) await wait(100);
+      out[route] = { executed: !e.alive && !p.ex, timer, sid: G.sid, state };
+    }
+    return out;
+  });
+  // the execution timer used to stop a hair below zero, and any non-zero value blocked every stair and lift
+  expect(result).toEqual({ up: { executed: true, timer: 0, sid: 'stair', state: 'play' }, elev: { executed: true, timer: 0, sid: 'pent', state: 'play' } });
+});
