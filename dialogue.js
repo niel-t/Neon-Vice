@@ -81,7 +81,27 @@ const DEB_STYLE={clean:[["Not a scratch on you, and the motel manager slept righ
 const MC_GRADE={S:"Not a hair out of place, beautiful.",'A+':"Sharp work, really sharp.",A:"Sharp work.",B:"Solid, no complaints.",C:"Messy, but messy pays the same.",D:"I had to send a man with a mop, and he quit."};
 const MC_PAY={owe:"${take} for you, ${cut} for me, and you still owe me ${debt}.",near:"${take} for you, ${cut} for me, and ${debt} more and we're square. Nearly there.",
  square:"${take} for you, ${cut} for me, and that, believe it or not, is the last of it.",free:"${take}, all of it yours. Count it here where I can watch; I enjoy it.",yacht:"${take}, all yours, and she comes with a yacht.",
- yacht2:"Whatever you still owed me, forget it. You don't work for me any more, you work with me."};
+ yacht2:"Whatever you still owed me, forget it. You don't work for me any more, you work with me.",
+ share:"${take} on the table, ${cut} of it is my share, partner. Count the rest where I can see it."};
+// Renegotiating McWey's cut (index.html mcNegotiate). {pct} is the rate after the answer, {was} the rate before.
+// open is McWey's line when you raise it; the pitches are the player's; each outcome is one McWey line, picked at random.
+const MC_NEG={open:{kid:"You want to talk about my cut, while you still owe me money? Sit down, then. I like watching a man ask.",
+  partner:"Partner, you've got that look people get right before they ask me for money. Go on, I'm pouring anyway."},
+ soft:{don:"Look at what I've brought you. I want a better split.",consigliere:"A word about the split, Mr McWey, if you'd allow it.",money:"I ran the numbers. Your cut's too fat for my work."},
+ hard:{don:"Drop your cut, or my work goes somewhere else.",consigliere:"Other offices in this town would treat me better.",money:"I've had better offers. Match them or lose me."},
+ drop:{_:"Forget I asked."},
+ yes:["Fine, {pct} from now on, and if anybody asks, you held a gun to my head.","You've earned a little, I'll admit it. Call it {pct}, and don't tell the shark I went soft.",
+  "My accountant is going to cry, but he cries anyway. {pct}, and that's a gift, not a precedent."],
+ yesHard:["You've got nerve, and nerve is worth something in this town. {pct}, and stop looking at the door like that.",
+  "Nobody talks to me that way and keeps the old rate. You get {pct}, because I happen to like nerve today."],
+ no:["My mother scrubbed floors at the Grand Biscayne for less than I'm leaving you. It stays at {pct}.",
+  "I had the shark's tank cleaned this morning, and it cost more than you're asking for. No, it stays {pct}.",
+  "I love that you asked, and I love even more that the answer is no. We stay at {pct}."],
+ noHard:["Walk out that door and see who lends you a car next time. My cut is {pct} now, and that's for the lip.",
+  "Other offices? Name one I don't own the lease on. It's {pct} now, and you can thank your mouth for that."],
+ tired:"Every time you come up here you ask, and every time it costs me a drink to listen. It's {pct} now; ask when you've earned it.",
+ floor:"{pct} is as low as I go for anybody, and I went that low exactly once, for my mother. The answer is no.",
+ drew:"Then drink your drink, and we'll pretend that you never said a word about my money."};
 // [3] is keyed on the marina_u_kept wflag (W14): kept afloat vs. all sunk. The boat itself is always granted.
 const UNLOCK_LINE={3:{kept:"One of Lex's speedboats somehow didn't sink. It's tied up under your window, with a bow on it.",sunk:"Every one of Lex's boats is on the bottom, so I bought you one of your own. It's under your window; try not to sink it out of habit."},4:"And for God's sake lose the street clothes. My tailor's waiting downstairs, and he's already measured you by eye.",5:"Lex torched your car, so I had a new one waiting at the kerb before the smoke cleared. Same colour. Fewer bullet holes."};
 // Header quote card for each job; the log never repeats it. The only place a motto belongs (§4).
@@ -187,7 +207,8 @@ const DLG={
 const mcLines=()=>[MC_FIRST,...MC_LOAN_LINES,...Object.values(MC_HI).flat(),...MC_DEBRIEF.flat(),...['clean','gore','ruthless'].flatMap(k=>DEB_STYLE[k].flat()),
  ...Object.values(MC_GRADE),...Object.values(UNLOCK_LINE).flatMap(u=>typeof u==='string'?u:Object.values(u)),...MC_QUOTE,...Object.values(END_STYLE).flatMap(e=>[e.line,e.quote]),
  ...Object.values(MC_SUIT),...Object.values(MC_GUN),...Object.values(MC_JEWEL),...Object.values(MC_CAR),...MC_HAUL.slice(1),MC_PAY.yacht2,
- ...Object.values(MC_GRADE).flatMap(g=>['owe','near','square','free','yacht'].map(k=>g+' '+MC_PAY[k].replace(/\{(take|cut|debt)\}/g,'120,000')))];
+ ...Object.values(MC_NEG.open),...['yes','yesHard','no','noHard'].flatMap(k=>MC_NEG[k]),MC_NEG.tired,MC_NEG.floor,MC_NEG.drew].map(t=>t.replace(/\{(pct|was)\}/g,'60%')).concat([
+ ...Object.values(MC_GRADE).flatMap(g=>['owe','near','square','free','yacht','share'].map(k=>g+' '+MC_PAY[k].replace(/\{(take|cut|debt)\}/g,'120,000')))]);
 
 /* ---- DLG runtime hooks: rel (PROG[c].rel), world flags (PROG[c].wflags), collectibles (hasCollect, W14) ---- */
 const dlgProg=()=>typeof myProg==='function'?myProg():null;
