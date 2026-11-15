@@ -234,6 +234,7 @@ function a4DrawRamps(B,g){const C=A4C,N=A4R.N,R=A4R.RISE,bx=(px,py,pz,sx,sy,sz,c
   else{/* a raised lane: steps under a sloped plate, kerb, then a closed one gets a barrier and a no-entry sign */
    const S=10,L=N-0.5;for(let i=0;i<S;i++){const t=(i+0.5)/S,h=R*(1-(i+1)/S)+0.002,zc=z0+t*L;bx(x,h/2,zc,1.98,h,L/S,[0.5,0.49,0.47]);}
    const th=Math.atan2(R,L);B.box(A.mul(A.mul(A.T(x,R/2+0.01,z0+L/2),A.RX(th)),A.S(2,0.03,Math.hypot(L,R))),[0.58,0.57,0.55],false);
+   for(let i=1;i<12;i++){const t=i/12;bx(x,R*(1-t)+0.03,z0+t*L,1.9,0.006,0.035,[0.36,0.35,0.34]);}for(const ex of [r.x0+0.12,r.x0+1.88])B.box(A.mul(A.mul(A.T(ex,R/2+0.03,z0+L/2),A.RX(th)),A.S(0.06,0.006,Math.hypot(L,R))),C.yel,false);
    const kx=r.right?r.x0+0.05:r.x0+1.95,kxo=r.right?r.x0+1.95:r.x0+0.05;
    B.box(A.mul(A.mul(A.T(kx,R/2+0.08,z0+L/2),A.RX(th)),A.S(0.1,0.14,Math.hypot(L,R))),[0.68,0.66,0.62],false);
    for(let i=0;i<5;i++){const t=(i+0.5)/5;bx(kx,R*(1-t)*0.5+0.02,z0+t*L,0.09,R*(1-t)+0.04,L/5,[0.62,0.6,0.56]);}
