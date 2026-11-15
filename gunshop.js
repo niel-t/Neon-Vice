@@ -251,7 +251,8 @@ function bunkerSetup(g){for(const [x0,z0,x1,z1] of BK_SOLID)for(let z=z0;z<=z1;z
  L(4,18.5,5,[0.75,0.7,0.55]);L(12,18.5,5,[0.95,0.8,0.55]);L(18.5,18,4.5,[0.6,0.5,0.9]);
  L(26.5,9.5,7,[0.95,1.0,1.1],2.5);L(26.5,6.6,5,[1.2,0.25,0.25],1.8);L(26.5,17,5.5,[0.9,0.95,1.05]);L(26.5,20,4.5,[0.5,0.6,0.9]);L(19.5,23.4,4.5,[1.1,0.45,0.9],2.6);L(15,25,7,[0.75,0.6,0.85],3);
  g.range={lanes:BK.lanes.map((x,i)=>({x:x+1,z:BK.tz[i]+1,base:x+1,down:0,t:0,flash:0})),on:false,loan:null,prev:null,list:[],i:0,rl:0,fired:0,hits:0,pts:0,best:0,last:null,lastAmmo:0};}
-function rangeZone(p){return p.x>BK.strip[0]+1.05&&p.x<BK.strip[1]+0.95&&p.z>BK.strip[2]+0.62&&p.z<BK.strip[3]+1.3;}
+/* a range can name its own firing line (world coordinates, R.zone: Villa Solana's basement); Nine's uses BK */
+function rangeZone(p){const Z=G&&G.range&&G.range.zone;if(Z)return p.x>Z.x0&&p.x<Z.x1&&p.z>Z.z0&&p.z<Z.z1;return p.x>BK.strip[0]+1.05&&p.x<BK.strip[1]+0.95&&p.z>BK.strip[2]+0.62&&p.z<BK.strip[3]+1.3;}
 function rangeGuns(R){const k=kit(),o=[];if(R.loan)o.push(R.loan);for(const s of [k.active,1-k.active]){const it=k.guns[s];if(it&&rangeOK(it.type)&&!o.includes(it.type))o.push(it.type);}if(!o.length)o.push('pistol');return o;}
 function rangeEquip(R,p,t){p.weapon={type:t,ammo:WD[t].mag};p.rl=null;p.burstQ=0;p.cd=Math.max(p.cd,hasMod('sling')?0.08:0.3);R.rl=0;R.lastAmmo=WD[t].mag;sfx('pick');popup(p.x,p.z,WD[t].name+(t===R.loan?' · LOANER':t==='pistol'&&!kitHas(kit(),'pistol')?' · HOUSE GUN':''),'#2de2e6');}
 /* runs before updatePlayer: the firing line hands out the gun, reloads for free, and takes a loaner back when you leave */
@@ -285,7 +286,7 @@ function rangeTick(dt){const g=G,R=g.range;if(!R)return;const T=g.T;
 function drawRangeHUD(c,g,u,m){const R=g.range,p=g.player;if(!R||!R.on||!p||!p.weapon)return;const w=p.weapon,wd=WD[w.type];
  const acc=R.fired?Math.round(R.hits/R.fired*100):0,bw=Math.min(vw*0.46,260*u),bh=62*u,x=vw-m-bw,y=m+58*u;
  c.fillStyle='rgba(10,4,18,.82)';c.fillRect(x,y,bw,bh);c.fillStyle='#ff2d95';c.fillRect(x,y,bw,3*u);
- c.font=PXF(7*u);txt(c,'NINE\'S RANGE · '+wd.name+(w.type===R.loan?' · LOANER':''),x+8*u,y+8*u,'#ffd36b','left',7*u);
+ c.font=PXF(7*u);txt(c,(R.name||'NINE\'S RANGE')+' · '+wd.name+(w.type===R.loan?' · LOANER':''),x+8*u,y+8*u,'#ffd36b','left',7*u);
  c.font=VTF(17*u);txt(c,R.rl>0?'RELOADING…':'AMMO '+w.ammo+'/'+wd.mag,x+8*u,y+19*u,R.rl>0?'#ff8a95':'#fff','left',17*u);txt(c,'SCORE '+R.pts,x+bw-8*u,y+19*u,'#ffd36b','right',17*u);
  txt(c,'HITS '+R.hits+' · '+acc+'%'+(R.best>R.pts?' · BEST '+R.best:''),x+8*u,y+36*u,'#7dff9a','left',17*u);
  c.font=PXF(5.5*u);txt(c,(touchMode?'SWITCH: NEXT GUN · RELOAD':padMode?'Y: NEXT GUN · X: RELOAD':'Q: NEXT GUN · R: RELOAD')+(R.list.length>1?' ('+R.list.length+' GUNS)':''),x+8*u,y+54*u,'#e9c7ff','left',5.5*u);
