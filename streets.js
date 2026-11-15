@@ -339,11 +339,12 @@ function drawMcDesk(B,g){let x0=99,x1=-1,z0=0;for(let i=0;i<g.furn.length;i++)if
  B.round=r0;}
 /* ---- lobby seats: the free spots on the lounge sofas and the armchair, sat in with E / tap like the club's VIP chair ---- */
 function lobbySeats(g){const L=g.lounge;if(!L)return[];return[{x:L.x+0.55,z:L.z-1.18,a:0,lbl:'SIT ON THE SOFA'},{x:2.68,z:L.z-0.45,a:Math.PI/2,lbl:'SIT ON THE SOFA'},{x:L.x+1.97,z:L.z,a:-Math.PI/2,lbl:'SIT IN THE ARMCHAIR'}];}
-function seatTargets(g,t){const p=g.player;if(g.seatP){t.push({k:'stand',x:g.seatP.x,z:g.seatP.z,r:1.2,lbl:'STAND UP'});return;}
- for(const s of lobbySeats(g)){if(g.npcs.some(n=>Math.hypot(n.x-s.x,n.z-s.z)<0.5))continue;t.push({k:'sit',s,x:s.x,z:s.z,r:1.45,lbl:s.lbl});}}
+function seatTargets(g,t,list){const p=g.player;if(g.seatP){t.push({k:'stand',x:g.seatP.x,z:g.seatP.z,r:1.2,lbl:g.seatP.tub?'GET OUT':'STAND UP'});return;}
+ for(const s of list||lobbySeats(g)){if(g.npcs.some(n=>Math.hypot(n.x-s.x,n.z-s.z)<0.5))continue;t.push({k:'sit',s,x:s.x,z:s.z,r:1.45,lbl:s.lbl});}}
 function sitDown(g,s){const p=g.player;g.seatP=s;g.seatFrom={x:p.x,z:p.z};seatHold(g);sfx('click');}
-function seatUp(g){const p=g.player,s=g.seatP;if(!s)return;g.seatP=null;p.y=0;p.crouchK=0;p.seatK=0;p.x=s.x+Math.sin(s.a)*0.75;p.z=s.z+Math.cos(s.a)*0.75;p.vx=p.vz=0;}
-function seatHold(g){const p=g.player,s=g.seatP;p.x=s.x;p.z=s.z;p.y=SEAT_Y;p.vx=p.vz=0;p.a=s.a;p.crouchK=0;p.seatK=1;}
+/* a seat can say where you step off it (s.out: behind a bar stool, out of a hot tub); a tub sends the girls back out with you */
+function seatUp(g){const p=g.player,s=g.seatP;if(!s)return;g.seatP=null;p.y=0;p.crouchK=0;p.seatK=0;if(s.out){p.x=s.out.x;p.z=s.out.z;}else{p.x=s.x+Math.sin(s.a)*0.75;p.z=s.z+Math.cos(s.a)*0.75;}p.vx=p.vz=0;if(s.tub&&typeof tubOut==='function')tubOut(g,s);}
+function seatHold(g){const p=g.player,s=g.seatP;p.x=s.x;p.z=s.z;p.y=s.y!==undefined?s.y:SEAT_Y;p.vx=p.vz=0;p.a=s.a;p.crouchK=0;p.seatK=1;}
 const SEAT_Y=0.1;
 /* ---- Nine of Nine's regulars (world coordinates = map + 1): browsing the cases, the ammo wall and the counter; his cousin restocks ---- */
 const NINE_CAST=[
