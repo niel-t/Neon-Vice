@@ -213,13 +213,61 @@ const LEVELS=[
  "#.......u.........6........u.......#",
  "#..........P..........C............#",
  "####################################"]},
+ {name:'VALE TRUST GARAGE',act:4,wall:34,floor:30,sofa:0x5a5e68,from:'McWEY',legend:{'.':{f:30},'q':{f:30},'o':{f:30},'y':{w:36,h:1.15,top:36},'c':{f:30,furn:21},'v':{f:30,furn:22}},
+  brief:"Conrad Vale is emptying his vault tonight. Three armored vans are loading gold under his bank in Brickell. Not one of them leaves that garage.",map:[
+ "########################################",
+ "#GCGG.G#...q........q........q.....#..G#",
+ "#......#...........................#...#",
+ "#..g...D......s.............s......D.4.#",
+ "#.P....#....ZZ.......ZZ.......ZZ...#...#",
+ "#......#...........................#.g.#",
+ "#.p..T.#.......u..........h........#...#",
+ "####D###...........................##D##",
+ "#......................................#",
+ "#..b...................m..............y#",
+ "#................................o.....#",
+ "########################################"]},
+ {name:'THE CORAL ROOM',front:1,act:4,wall:12,floor:63,sofa:0x7a1622,from:'McWEY',legend:{'.':{f:63},',':{f:44},'t':{f:63},'o':{f:63},'N':{f:4},'l':{f:4},'a':{w:39,h:0.02,top:39,water:1}},
+  brief:"Vale eats at the Coral Room on Key Biscayne every Saturday, and his pilot eats with him. Vale has already left. The pilot is still finishing his lobster. Get me his hangar pass.",map:[
+ "########################################",
+ "#,,,,,,,,,#....................#.g.SS..#",
+ "#,KK,,KK,,#..T...T...T...T...u.#..TT..o#",
+ "#,,,,x,,,,D......*.........*...D..TT...#",
+ "#,KK,kKK,,#..T.g.T...T...T.....#.......#",
+ "#,,k,,,,,,#....................#########",
+ "#,,,,,,,,,D..T...T..tT...T..g..Dlllllll#",
+ "#####D#####....................#lllslll#",
+ "#RR....RR.#..T...T..JJ...T.....Dllsllaa#",
+ "#.....5...#......h.............#llNllaa#",
+ "#RR..g.RR.#..........*...u.....#lllllaa#",
+ "####..##########........##########..####",
+ "====P===================================",
+ "======================C=================",
+ "========================================",
+ "========================================",
+ "========================================"]},
+ {name:'OPA-LOCKA HANGAR 7',act:4,wall:34,floor:7,sofa:0xe8dcc0,from:'McWEY',legend:{'.':{f:7},',':{f:41},'N':{f:41},'j':{w:7,h:0.02,top:7},'k':{f:41,furn:22},'w':{w:7,h:0.02,top:7},'Y':{w:7,h:0.02,top:7}},boss:{name:'CONRAD VALE',look:()=>({skin:[0.93,0.8,0.7],jacket:[0.42,0.43,0.47],shirt:[0.95,0.95,0.97],tie:[0.32,0.08,0.12],vest:[0.38,0.39,0.43],pants:[0.42,0.43,0.47],shoes:[0.1,0.08,0.07],hair:[0.86,0.86,0.9],hs:'slick',glasses:true,watch:true,chain:true,bw:1.0,bd:1.0,bh:1.02}),weapon:'colt45',hp:18,vale:true,intro:'Vale, behind an armoured cockpit door with a gold Colt. His bodyguards are in the cabin.',dead:'THE BANKER IS DEAD'},
+  brief:"Vale's jet leaves Opa-locka tonight with the Family's gold in the hold and his black book in his pocket. Get on that plane, finish him, and make it look like an accident.",map:[
+ "#################################",
+ "#...............................#",
+ "#.....g................s........#",
+ "#...............................#",
+ "#.........jjjjjjjjjjjjjjjjjj....#",
+ "#.........jN,,kkk,,,,kk,w,kjj...#",
+ "#.........j,g,,,,,,u,,,,YX,,j...#",
+ "#.........jk,,kkk,kk,g,,w,kjj...#",
+ "#.........jjjjjjjjjjjj.jjjjj....#",
+ "#...............................#",
+ "#..............................h#",
+ "#...PC..........................#",
+ "#################################"]},
 ];
 /*END*/
 
 /* grading: par time per floor (seconds), and grade points that ignore difficulty/perk/character money multipliers */
-const PAR=[60,55,120,60,65,90,65,60,75,80,130];const GRADES=[['S',2.3],['A+',1.8],['A',1.4],['B',1.0],['C',0.65],['D',-1]];
+const PAR=[60,55,120,60,65,90,65,60,75,80,130,125,85,140];const GRADES=[['S',2.3],['A+',1.8],['A',1.4],['B',1.0],['C',0.65],['D',-1]];
 
 /* hidden stashes: [map x, map z, hi-fi track unlocked (or null), cash]. Saved in JOBS.stash[floor]=1 */
-const STASH=[[5,4,'n_nightdrive',1500],[29,5,'n_haze',1500],[12,5,'n_concrete',2000],[37,3,'n_redtide',2000],[37,2,'n_overdrive',2000],[38,4,'n_rampage',2000],[29,1,null,4000],[39,4,null,5000],[38,9,null,3000],[38,10,null,3500],[34,1,null,6000]];
+const STASH=[[5,4,'n_nightdrive',1500],[29,5,'n_haze',1500],[12,5,'n_concrete',2000],[37,3,'n_redtide',2000],[37,2,'n_overdrive',2000],[38,4,'n_rampage',2000],[29,1,null,4000],[39,4,null,5000],[38,9,null,3000],[38,10,null,3500],[34,1,null,6000],[37,2,null,6000],[8,9,null,6500],[28,1,null,8000]];
 
-const LEVEL_TRACKS=[['game','n_nightdrive','n_haze','n_concrete'],['n_crystal','n_overdrive','n_nightdrive','n_haze'],['n_redtide','n_rampage','n_concrete','n_overdrive'],['n_nightdrive','n_crystal'],['n_overdrive','n_crystal'],['n_haze','n_redtide'],['n_rampage','n_overdrive'],['n_redtide','n_rampage'],['n_concrete','n_overdrive','n_rampage'],['n_nightdrive','n_crystal','n_haze'],['n_redtide','n_rampage']];
+const LEVEL_TRACKS=[['game','n_nightdrive','n_haze','n_concrete'],['n_crystal','n_overdrive','n_nightdrive','n_haze'],['n_redtide','n_rampage','n_concrete','n_overdrive'],['n_nightdrive','n_crystal'],['n_overdrive','n_crystal'],['n_haze','n_redtide'],['n_rampage','n_overdrive'],['n_redtide','n_rampage'],['n_concrete','n_overdrive','n_rampage'],['n_nightdrive','n_crystal','n_haze'],['n_redtide','n_rampage'],['n_concrete','n_haze','n_overdrive'],['n_crystal','n_nightdrive','n_haze'],['n_rampage','n_redtide']];

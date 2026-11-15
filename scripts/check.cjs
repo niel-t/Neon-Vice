@@ -7,7 +7,7 @@ const { files } = require('./build.cjs');
 function gameData() {
   const html = readFileSync(resolve(__dirname, '..', 'index.html'), 'utf8');
   const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
-  const order = ['art.js', 'levels.js', 'world.js', 'plan.js', 'plans/motel.js', 'plans/penthouse.js', 'mesh.js', 'missions.js', 'models.js', null, 'gfxnext.js', 'renderer.js', 'weapons.js', 'ai.js', 'cover.js', 'dialogue.js', 'overworld.js', 'cars.js', 'gunshop.js', 'mall.js', 'venues.js', 'streets.js', 'act1.js', 'marina.js', 'upstairs.js', 'mansion.js', 'guide.js', 'animals.js', null, 'music.js'];
+  const order = ['art.js', 'levels.js', 'world.js', 'plan.js', 'plans/motel.js', 'plans/penthouse.js', 'mesh.js', 'missions.js', 'models.js', null, 'gfxnext.js', 'renderer.js', 'weapons.js', 'ai.js', 'cover.js', 'dialogue.js', 'overworld.js', 'cars.js', 'gunshop.js', 'mall.js', 'venues.js', 'streets.js', 'act1.js', 'marina.js', 'upstairs.js', 'mansion.js', 'guide.js', 'animals.js', 'act4.js', null, 'music.js'];
   assert.equal(scripts.length, order.length, 'Expected ordered assets followed by the inline classic game script');
   scripts.forEach((script, i) => assert.equal(script[1].trim(), order[i] ? `src="${order[i]}"` : '', 'Scripts must retain synchronous classic loading order'));
   const sources = scripts.map((script, i) => {
@@ -86,7 +86,7 @@ function check() {
     assert(!w.base || WD[w.base], `${type}: unknown base weapon`);
   }
   const names = ['MOTEL SUNSET', 'CLUB FLAMINGO', 'THE PENTHOUSE', 'VICE MARINA',
-    'STARLIGHT ARCADE', 'OCEAN VIEW MALL', 'THE RECORDING STUDIO', 'THE ROYAL FLUSH', 'OCEAN DRIVE DEMOLITION', 'THE GRAND BISCAYNE GALA', 'KADE TOWER'];
+    'STARLIGHT ARCADE', 'OCEAN VIEW MALL', 'THE RECORDING STUDIO', 'THE ROYAL FLUSH', 'OCEAN DRIVE DEMOLITION', 'THE GRAND BISCAYNE GALA', 'KADE TOWER', 'VALE TRUST GARAGE', 'THE CORAL ROOM', 'OPA-LOCKA HANGAR 7'];
   assert.equal(LEVELS.length, names.length, 'Review append-only level/save indexes before changing campaign length');
   assert.equal(PAR.length, LEVELS.length);
   assert.equal(LEVEL_TRACKS.length, LEVELS.length);
@@ -95,7 +95,7 @@ function check() {
   }
   LEVELS.forEach((def, i) => {
     assert.equal(def.name, names[i], 'Level indexes are persistent save/story identifiers');
-    assert.equal(def.act || 1, i < 3 ? 1 : i < 8 ? 2 : 3, 'Campaign must retain the 3 + 5 + 3 act split');
+    assert.equal(def.act || 1, i < 3 ? 1 : i < 8 ? 2 : i < 11 ? 3 : 4, 'Campaign must retain the 3 + 5 + 3 + 3 act split');
     assert(def.map.length && def.map.every(row => typeof row === 'string' && row.length), `${def.name}: empty map`);
     assert(PAR[i] > 0 && Number.isFinite(PAR[i]), `${def.name}: invalid par`);
     assert(LEVEL_TRACKS[i].length, `${def.name}: missing music`);
@@ -106,7 +106,7 @@ function check() {
     assert(map.enemies > 0, `${def.name}: no combat enemies`);
     console.log(`${i}: ${def.name} (${map.enemies} enemies, ${map.items} items; ragged padding allowed)`);
   });
-  for (const [i, glyphs] of [[3, 'Y'], [4, 'ca'], [5, 'ne'], [6, '%!'], [7, 'y'], [8, 'N'], [9, 'N']]) {
+  for (const [i, glyphs] of [[3, 'Y'], [4, 'ca'], [5, 'ne'], [6, '%!'], [7, 'y'], [8, 'N'], [9, 'N'], [11, 'qoy'], [12, 'toNa'], [13, 'NX']]) {
     for (const glyph of glyphs) assert(LEVELS[i].map.join('').includes(glyph), `Floor ${i}: missing story glyph ${glyph}`);
   }
 }
