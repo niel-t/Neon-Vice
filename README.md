@@ -92,3 +92,7 @@ GitLab merge-request and default-branch pipelines use matching pinned Playwright
 versions, without blanket retries. Pages downloads the exact tested assembly, never a second
 build. Run the applicable local suite before a direct main merge/push. The published game
 contains no Node packages.
+
+## Credits
+
+Girls' walk, idle and lambada motion: CMU Graphics Lab Motion Capture Database (http://mocap.cs.cmu.edu), created with funding from NSF EIA-0196217; BVH conversion by Bruce Hahne. See `scripts/mocap/`.

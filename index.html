@@ -211,6 +211,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <script src="plans/penthouse.js"></script>
 <script src="mesh.js"></script>
 <script src="missions.js"></script>
+<script src="mocap.js"></script>
 <script src="models.js"></script>
 <script>
 'use strict';
@@ -3177,7 +3178,7 @@ function drawAct2(B,g){const T=g.T,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,
  if(g.tank){const t=g.tank;drawTankLife(B,T,t.x0,t.x1,(t.z0+t.z1)/2,(t.z1-t.z0)*0.3,0.08,0.03,1.1,0.06,0.3);}
  if(g.wreck){for(let i=0;i<5;i++)bx(g.car.x-0.9+i*0.45,0.55,g.car.z+((i*37)%3-1)*0.2,0.3,0.04,0.3,[0.05,0.05,0.05]);}}
 /* ---- Velvet Palms: stage, dancers, Tony at the bar ---- */
-const CLUB_MOVES=['sway','pole','hair','spin','drop','strut'];
+const CLUB_MOVES=['sway','pole','lambada','hair','spin','drop','strut'];
 const DANCER_NAMES=['CHERRY','DESTINY','CRYSTAL','ROXANNE','STARR','MONIQUE','JADE','BAMBI'];
 const STAGE_FITS=[[0xff2d95,0xffd36b],[0x2de2e6,0xffffff],[0xc9b6f2,0xff6fae],[0xffd36b,0x1a1a22],[0x7dff9a,0xff2d95]];
 /* every girl is her own person: hair colour and style, skin, body size and lingerie style are rolled once (dancerProf) and kept
@@ -3262,9 +3263,9 @@ function clubWalk(n,dt,g,p){if(!n.tgt||Math.hypot(n.tgt[0]-n.x,n.tgt[1]-n.z)<0.3
 function clubStep(g,d,f,tx,tz,sp,dt){let gx=tx,gz=tz;if(!pathClear(g,d.x,d.z,tx,tz,0.22)){const s=flowStep(f,d,tx,tz);if(s){gx=s[0];gz=s[1];}}
  const dx=gx-d.x,dz=gz-d.z,L=Math.hypot(dx,dz)||1,ox=d.x,oz=d.z;d.vx=dx/L*sp;d.vz=dz/L*sp;d.x+=d.vx*dt;d.z+=d.vz*dt;collideGrid(d);
  const m=Math.hypot(d.x-ox,d.z-oz);d.walk=(d.walk||0)+m*9;d.a+=clamp(angDiff(d.a,Math.atan2(dx,dz)),-8*dt,8*dt);}
-/* stage routines: each dancer flows through sway / pole / hair / spin / drop / strut around her own pole; tips make her move faster */
+/* stage routines: each dancer flows through sway / pole / lambada (motion capture) / hair / spin / drop / strut around her own pole; tips make her move faster */
 function danceTick(g,d,dt){const sc=g.club.sc,q=d.pole,sp=1+d.boost*0.6+(d.stage>=2?0.25:0);
- d.mt+=dt;if(d.mt>=d.md){let n=d.move;while(n===d.move)n=pick(CLUB_MOVES);d.move=n;d.mt=0;d.md=n==='spin'?rnd(3,4.5):n==='strut'?rnd(4,6):rnd(5,8);}
+ d.mt+=dt;if(d.mt>=d.md){let n=d.move;while(n===d.move)n=pick(CLUB_MOVES);d.move=n;d.mt=0;d.md=n==='spin'?rnd(3,4.5):n==='strut'?rnd(4,6):n==='lambada'?rnd(8,12):rnd(5,8);}
  d.moveE=Math.max(0,Math.min(1,d.mt/1.1,(d.md-d.mt)/1.1));d.moveE=d.moveE*d.moveE*(3-2*d.moveE);d.ph+=dt*3.4*sp;
  const out=Math.atan2(q.x-sc.x,q.z-sc.z),fa=(Math.abs(q.x-sc.x)+Math.abs(q.z-sc.z)<0.3?0:out*0.5)+0.75*Math.sin(g.T*0.23+d.fit*1.7);
  let tx=q.x+Math.sin(fa)*0.32,tz=q.z+Math.cos(fa)*0.32,ta=fa+0.2*Math.sin(d.ph*0.5),ty=0.36;

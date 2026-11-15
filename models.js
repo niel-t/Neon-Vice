@@ -434,6 +434,19 @@ function danceArms(tt,b,ws,party,o,en){const S=DANCE_SEQ[party?'party':'stage'],
  for(const [j,s] of [[0,1],[1,-1]]){const p=DANCE_ARMS[a[j]](s,b,ws),q=DANCE_ARMS[n[j]](s,b,ws),l=DANCE_ARMS.loose(s,b,ws),r=[0,1,2].map(k=>p[k]+(q[k]-p[k])*w);
   out.push({lw:l[0]+(r[0]-l[0])*en,fx:l[1]+(r[1]-l[1])*en,el:l[2]+(r[2]-l[2])*en});}
  return out;}
+/* motion capture playback (mocap.js): clips are decoded once; a frame is two keys nlerped. MP.t plays by time, MP.d by distance
+   walked (one loop per clip stride). Fills R (local bone rotations) and MP.root. */
+const MOCAP={};
+function mocapClip(k){if(MOCAP[k])return MOCAP[k];if(typeof MOCAP_SRC==='undefined'||!MOCAP_SRC[k])return null;const S=MOCAP_SRC[k],b=atob(S.d),n=S.n,F=3+NB*4,A=new Float32Array(n*F);
+ for(let i=0;i<n*F;i++){let v=b.charCodeAt(i);if(v>127)v-=256;A[i]=v/127*((i%F)<3?0.25:1);}
+ return MOCAP[k]={n,F,A,stride:S.stride};}
+function mocapPose(MP,R,root){const C=mocapClip(MP.c);if(!C)return false;const n=C.n,F=C.F,A=C.A;
+ let f=MP.d!==undefined&&C.stride>0?MP.d/C.stride*n:MP.t*30;f=((f%n)+n)%n;const i0=Math.floor(f),i1=(i0+1)%n,w=f-i0,a=i0*F,b=i1*F;
+ MP.root=[A[a]+(A[b]-A[a])*w,A[a+1]+(A[b+1]-A[a+1])*w,A[a+2]+(A[b+2]-A[a+2])*w];
+ for(let j=0;j<NB;j++){const p=a+3+j*4,q=b+3+j*4,sg=(A[p]*A[q]+A[p+1]*A[q+1]+A[p+2]*A[q+2]+A[p+3]*A[q+3])<0?-1:1;
+  let x=A[p]+(A[q]*sg-A[p])*w,y=A[p+1]+(A[q+1]*sg-A[p+1])*w,z=A[p+2]+(A[q+2]*sg-A[p+2])*w,s=A[p+3]+(A[q+3]*sg-A[p+3])*w;const l=Math.hypot(x,y,z,s)||1;x/=l;y/=l;z/=l;s/=l;
+  R[BONES[j][0]]=[1-2*(y*y+z*z),2*(x*y+z*s),2*(x*z-y*s),0,2*(x*y-z*s),1-2*(x*x+z*z),2*(y*z+x*s),0,2*(x*z+y*s),2*(y*z-x*s),1-2*(x*x+y*y),0,0,0,0,1];}
+ return true;}
 /* a short cross-fade between whole poses, so a dancer flows between walking and dancing, between routines and into a flinch instead
    of snapping. Each bone's local rotation eases toward the new pose (lerped, then made rigid again) and is turned about its own
    joint, so limbs never stretch; the hips' offset eases too. c._pw keeps the last local pose shown. */
@@ -454,7 +467,12 @@ function blendPose(c,W,t){const L=W.map((w,i)=>BONES[i][1]<0?w.slice():M4.mul(in
 function pose(t,anim,jab,arms,kick,gait){const R={},rot=(b,ax,a)=>{R[b]=M4.mul(M4.R(ax,a),R[b]||M4.id());};let root=[0,0,0];const run=gait==='runway',fem=gait==='fem'||run;
  const armHinge=s=>V.norm(V.cross([AD[0]*s,AD[1],0],Z));
  const lower=(s,a)=>rot(s>0?'uarmL':'uarmR',Z,-a*s);
- if(anim==='idle'&&fem){/* contrapposto: weight on the right leg, hip up on that side, left knee eased, shoulders counter-tilted */
+ const MP=window.MOCAP_PLAY;
+ if(MP&&mocapPose(MP,R,root)){root=MP.root;
+  /* the lambada was captured with a partner, so her arms dance on their own instead (the drifting gestures) */
+  if(MP.arms){const b=MP.t*1.95*Math.PI*0.5,AR=danceArms(MP.t,b,Math.sin(b),false,MP.o||0,1);for(const nm of ['uarmL','farmL','handL','uarmR','farmR','handR'])delete R[nm];
+   for(const sd of [1,-1]){const q=AR[sd>0?0:1],u=sd>0?'uarmL':'uarmR';lower(sd,q.lw);rot(u,X,q.fx);rot(sd>0?'farmL':'farmR',armHinge(sd),q.el);}}}
+ else if(anim==='idle'&&fem){/* contrapposto: weight on the right leg, hip up on that side, left knee eased, shoulders counter-tilted */
   const br=Math.sin(t*1.6),sw=Math.sin(t*0.45)*0.012;lower(1,0.6);lower(-1,0.58);rot('uarmL',X,-0.04);rot('uarmR',X,-0.08);rot('farmL',armHinge(1),0.3);rot('farmR',armHinge(-1),0.38);
   rot('pelvis',Z,-0.07-sw);rot('pelvis',Y,0.06);rot('thighR',Z,0.075+sw);rot('thighL',Z,0.03+sw);rot('thighL',X,-0.1);rot('shinL',X,0.2);rot('footL',X,-0.08);rot('thighR',X,0.02);
   rot('spine',Z,0.05+sw*0.6);rot('chest',Z,0.035);rot('chest',X,-0.02*br);rot('spine',X,0.01);rot('neck',Z,-0.02);rot('neck',Y,Math.sin(t*0.5)*0.06);rot('head',X,Math.sin(t*0.37)*0.05);
@@ -835,10 +853,19 @@ function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game'
  if(mode==='game'&&c.ex){const kd=c.ex.kind;if(kd==='gun'){arms='execGun';anim='idle';}else if(kd==='fists'){anim='stance';jab=atk>0?Math.sin(ap*Math.PI):0;}window.EXLEAN=1;}else window.EXLEAN=0;
  window.CROUCH=mode==='game'&&c.alive&&!(c.down>0)?(c.crouchK||0):0;window.SIT=mode==='game'&&c.alive&&!(c.down>0)?(c.seatK||0):0;
  window.PUMP=0;if(gun==='shotgun'&&c.pumpAt!==undefined&&G){const dt2=G.T-c.pumpAt;if(dt2>0.3&&dt2<0.62)window.PUMP=Math.sin((dt2-0.3)/0.32*Math.PI);}
+ let mcp=null;
  if(mode==='game'&&c.alive&&(c.kind==='sdancer'||c.kind==='dancer'||c.kind==='pgirl'||c.lapDance)){
+  const o0=c.dOff===undefined?(c.dOff=Math.random()*4):c.dOff,still=!(c.seatK>0.01)&&!c.tub&&!c.bed;
   if(c.walking){}/* a dancer walking with you (or back to the stage) walks */
   else if(c.move==='strut'&&!c.lapDance)anim='walk';
+  else if(c.kind==='pgirl'&&sp>=0.15){}
+  else if(c.kind==='pgirl'&&!c.lapDance&&still){/* at home she dances in spells (her party groove or the lambada) and stands between them */
+   const q=(t+o0*7)%26,sp2=Math.floor((t+o0*7)/26);if(q<16){anim='dance';if(sp2%2)mcp={c:'lambada',t:t+o0*5,arms:1,o:o0};}else mcp={c:o0>2?'idle':'idle2',t:t+o0*9};}
+  else if(c.move==='lambada'&&!c.lapDance){anim='dance';mcp={c:'lambada',t:t+o0*5,arms:1,o:o0};}
   else if(c.kind!=='pgirl'||sp<0.15)anim=c.lapDance?'lapdance':'dance';
+  /* mocap walk (the distance walked drives it, so the feet keep pace) and mocap standing for the girls */
+  if(still&&!c.lapDance&&anim==='walk')mcp={c:o0>2?'walk2':'walk',d:(c.walk||0)/9};
+  else if(still&&!c.lapDance&&anim==='idle')mcp={c:o0>2?'idle':'idle2',t:t+o0*9};
   /* girls at home ease into a smaller party groove once they stop walking (c.dK) */
   const home=c.kind==='pgirl'&&!c.lapDance;if(home){const dtc=Math.max(0,Math.min(0.1,t-(c._dkT===undefined?t:c._dkT)));c._dkT=t;c.dK=(c.dK||0)+((anim==='dance'?1:0)-(c.dK||0))*Math.min(1,dtc*1.4);}
   window.DANCE_MOVE={m:home?'party':c.move||'sway',e:c.moveE===undefined?1:c.moveE,t:c.mt||0,o:c.dOff===undefined?(c.dOff=Math.random()*4):c.dOff,en:home?c.dK:1};
@@ -856,7 +883,8 @@ function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game'
  const lying=mode==='game'&&(!c.alive||c.down>0||!!c.bed);if(lying){arms=null;gun=null;anim='idle';window.DANCE_JIGGLE=null;}
  /* a playful slap: the player's hand swings (arms 'slap'), the girl jumps and looks back over her shoulder (window.SLAPK) */
  if(mode==='game'&&c.slapT>0){if(c.player){arms='slap';k=1-c.slapT/0.4;gun=null;dual=false;}else window.SLAPK=Math.sin(Math.PI*clamp(1-c.slapT/0.8,0,1))*(c.slapS||1);}
- let W=pose(lying?0:tt,anim,jab,arms,k,CH[id].gait);window.SLAPK=0;
+ window.MOCAP_PLAY=!lying&&mcp&&typeof mocapClip==='function'?mcp:null;
+ let W=pose(lying?0:tt,anim,jab,arms,k,CH[id].gait);window.SLAPK=0;window.MOCAP_PLAY=null;
  if(mode==='game'&&!lying&&(c.kind==='sdancer'||c.kind==='dancer'||c.kind==='pgirl'||c.lapDance||c.slapT>0||c._pw))W=blendPose(c,W,t);else if(lying)c._pw=null;
  window.DANCE_JIGGLE=null;window.DANCE_MOVE=null;window.EXLEAN=0;window.CROUCH=0;window.SIT=0;const S=CH[id].scale;
  const SC=[scale*S[0],0,0,0,0,scale*S[1],0,0,0,0,scale*S[2],0,0,0,0,1];let bx0=c.x+(c.lox||0),bz0=c.z+(c.loz||0);
@@ -885,4 +913,4 @@ function flush(VPm,u){if(NX&&NX.live){NX.takeChars(queue,MODELS);queue.length=0;
   const at=(n,b,s)=>{const l=Lc[n];if(l<0)return;gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.vertexAttribPointer(l,s,gl.FLOAT,false,0,0);};
   at('aP',mm.p,3);at('aN',mm.n,3);at('aT',mm.t,2);at('aBi',mm.bi,4);at('aBw',mm.bw,4);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,mm.i);gl.drawElements(gl.TRIANGLES,mm.n_i,gl.UNSIGNED_SHORT,0);}}
  for(const kk of ['aP','aN','aT','aBi','aBw']){const l=Lc[kk];if(l>=0)gl.disableVertexAttribArray(l);}gl.disable(gl.CULL_FACE);gl.bindTexture(gl.TEXTURE_2D,atlasTex);queue.length=0;}
-return{init,add,flush,has,applySuit,rebuild,beginFrame,lookVerts,jewelB,modelStatus:id=>modelStates[id],get status(){return status;},get ready(){return ready;}};})();
+return{init,add,flush,has,applySuit,rebuild,beginFrame,lookVerts,jewelB,mocapClip,modelStatus:id=>modelStates[id],get status(){return status;},get ready(){return ready;}};})();
