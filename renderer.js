@@ -357,6 +357,15 @@ function makeAtlas(){
   221:x=>{R(x,'#d8d8da',0,0,32,32);for(let y=0;y<32;y+=4){R(x,'#efeff1',0,y,32,1.2);R(x,'#b4b4b8',0,y+2.2,32,1);}
    x.fillStyle='rgba(130,80,50,.25)';for(let k=0;k<6;k++)x.fillRect(r()*30,r()*30,1+r()*2,0.8+r());R(x,'#9a9aa0',0,0,0.8,32);R(x,'#9a9aa0',31.2,0,0.8,32);}};
   for(const k in ST)tile(+k,ST[k]);
+  /* 222: faux fur (the Velvet Palms VIP lounges): soft pale strands over a shaded base, tinted per use. Its own random stream, so the tiles above keep theirs */
+  tile(222,x=>{let s=90173;const r=()=>(s=(s*16807)%2147483647)/2147483647;R(x,'#cfc6ca',0,0,32,32);x.lineCap='round';
+   /* soft clumps of pile (wrapped, so panels tile seamlessly), then long, low-contrast strands that lie downward */
+   for(let k=0;k<26;k++){const cx=r()*32,cy=r()*32,rr=2.5+r()*4,v=r()<0.5;x.fillStyle=v?'rgba(150,136,144,.28)':'rgba(240,232,236,.3)';
+    for(const ox of [-32,0,32])for(const oy of [-32,0,32]){x.beginPath();x.arc(cx+ox,cy+oy,rr,0,TAU);x.fill();}}
+   for(let k=0;k<300;k++){const px=r()*32,py=r()*32,l=3+r()*4,a=Math.PI/2+(r()-0.5)*0.9,v=196+r()*50|0,dk=r()<0.25,
+     st=dk?'rgba(140,124,132,.35)':'rgba('+v+','+(v-8)+','+(v-4)+',.5)',bx=Math.cos(a)*l,by=Math.sin(a)*l,kx=(r()-0.5)*1.5;
+    x.strokeStyle=st;x.lineWidth=0.6+r()*0.6;
+    for(const ox of [-32,0,32])for(const oy of [-32,0,32]){x.beginPath();x.moveTo(px+ox,py+oy);x.quadraticCurveTo(px+ox+bx*0.5+kx,py+oy+by*0.5,px+ox+bx,py+oy+by);x.stroke();}}});
   /* lamp-lit window variants, picked per storey by surfPick */
   for(const [t,v] of [[172,213],[173,214],[174,215],[183,216],[175,217]])TVAR[t]=[v];}
  for(const t of ATILES)if(!legacy.has(t)){gutter(t);const [cx,cy]=TCELL(t),n=ax.getImageData(cx*64,cy*64,64,64).data;for(let j=0;j<64;j++)d.set(n.subarray(j*256,j*256+256),((cy*64+j)*ATLAS+cx*64)*4);}

@@ -29,10 +29,17 @@ test('club: book a VIP room with Tony, walk her to a private room, and she goes 
       const r = c.rooms[1]; p.x = r.chairX; p.z = r.z0 + 1.6;
       o.arrived = tick(20, () => v.active);
       o.dance = { room: v.room && v.room.n, x: p.x, z: p.z, lap: !!d.lapDance, end: hubTargets(G).some(t => t.k === 'laptip'), inRoom: d.x > r.x0 && d.x < r.x1 && d.z > r.z0 && d.z < r.z1 };
+      // nothing falls on her until you throw money, and then it is real bills
+      const cash = () => G.parts.filter(q => q.t === 'c' && q.c[0] < 0.5 && q.c[1] > 0.7);
+      tick(3); o.quiet = cash().length;
+      // the room is a lounge: fur on the walls (its own atlas tile), a velvet couch, a table with champagne
+      const uvs = []; drawVipLounge({ box: (m, col, em, uv) => uvs.push(uv) }, r, WALL_H);
+      o.lounge = { fur: ATILES.has(222) && uvs.filter(u => u === TUV[222]).length > 100, velvet: uvs.some(u => u === TUV[44]), boxes: uvs.length > 200 };
       // make it rain: $100 a throw while she dances, and she dances longer
       myProg().wallet = 300; const t0 = v.t; G.player.x = v.chairX;
       o.laptip = (hubTargets(G).find(t => t.k === 'laptip') || {}).lbl; lapTip(); lapTip();
       o.rain = { wallet: myProg().wallet, longer: v.t > t0 + 7, tips: v.tips };
+      o.bills = { n: cash().length, all: cash().every(q => q.bill), toward: cash().every(q => (q.vz < 0) === (d.z < G.player.z)) };
       myProg().wallet = 100;
       tick(60, () => !v.active);
       o.after = { active: v.active, standing: p.z < r.chairZ - 1, back: !!c.back };
@@ -60,7 +67,10 @@ test('club: book a VIP room with Tony, walk her to a private room, and she goes 
   expect(out.arrived).toBe(true);
   expect(out.dance).toEqual({ room: 2, x: out.dance.x, z: out.dance.z, lap: true, end: true, inRoom: true });
   expect(out.laptip).toMatch(/THROW \$100.*MOVE TO STAND UP/);
+  expect(out.quiet).toBe(0);
+  expect(out.lounge).toEqual({ fur: true, velvet: true, boxes: true });
   expect(out.rain).toEqual({ wallet: 100, longer: true, tips: 2 });
+  expect(out.bills).toEqual({ n: 28, all: true, toward: true });
   expect(out.after).toEqual({ active: false, standing: true, back: true });
   expect(out.home).toBe(true);
   expect(out.pole).toBe(true);
