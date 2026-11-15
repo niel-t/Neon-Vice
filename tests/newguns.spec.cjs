@@ -82,8 +82,10 @@ test('new guns: from floor 2 on, some guards carry them, chosen by enemy index s
     out.floor1 = types(0).some(t => ['colt45', 'mac10', 'mini14', 'spas12'].includes(t));
     const later = []; for (let i = 1; i < LEVELS.length; i++) later.push(...types(i));
     out.later = ['colt45', 'mac10', 'mini14', 'spas12'].filter(t => later.includes(t)).length >= 3;
-    const a = types(4), b = types(4);
-    out.same = JSON.stringify(a) === JSON.stringify(b);
+    // the pick depends only on the floor and each guard's index: the same guards always get the same guns
+    const mk = () => ({ enemies: [0, 1, 2, 3, 4, 5].map(id => ({ id, weapon: { type: 'smg', ammo: 99 } })) });
+    const a = mk(), b = mk(); applyArsenal(a, 4); applyArsenal(b, 4);
+    out.same = JSON.stringify(a) === JSON.stringify(b) && a.enemies.map(e => e.weapon.type).join() === 'smg,mac10,smg,smg,mac10,smg';
     return out;
   })).toEqual({ floor1: false, later: true, same: true });
 });
