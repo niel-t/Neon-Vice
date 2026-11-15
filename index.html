@@ -295,6 +295,7 @@ const TRS=(x,y,z,ry,sx,sy,sz)=>A.mul(A.mul(A.T(x,y,z),A.RY(ry)),A.S(sx,sy,sz));
 <script src="streets.js"></script>
 <script src="act1.js"></script>
 <script src="marina.js"></script>
+<script src="act3.js"></script>
 <script src="upstairs.js"></script>
 <script src="mansion.js"></script>
 <script src="slap.js"></script>
@@ -1013,7 +1014,7 @@ function makeEnemy(g,def,i,k,boss,cx,cz,a){const L0=boss?(def.boss?def.boss.look
  const melee=!k||WD[k].melee;e.state=Math.random()<(melee?0.6:0.3)?'patrol':'idle';e.pa=e.a;e.ta=e.a;e.turnT=rnd(1,4);e.pauseT=0;e.react=0;e.wind=0;e.id=g.enemies.length;e.pers=pick(['rush','careful','flank','flank']);e.seeT=99;e.lkx=cx;e.lkz=cz;e.burst=0;e.searchT=0;g.enemies.push(e);return e;}
 function makeItem(g,t,cx,cz){const it={x:cx,z:cz,type:t,ammo:WD[t].ammo||0,vx:0,vz:0,rot:rnd(0,TAU),flying:false,fresh:true,flyT:0};g.items.push(it);return it;}
 function furnBox(B,m,c,uv){B.box(m,c,false,uv);}
-function buildFurniture(B,g,x,z,f){const cx=x+0.5,cz=z+0.5,W=g.W;const same=(ox,oz)=>g.furn[(z+oz)*W+x+ox]===f;
+function buildFurniture(B,g,x,z,f){if(act3Furn(B,g,x,z,f))return;const cx=x+0.5,cz=z+0.5,W=g.W;const same=(ox,oz)=>g.furn[(z+oz)*W+x+ox]===f;
  const wallDir=()=>{for(const [ox,oz,a] of [[0,-1,0],[0,1,Math.PI],[-1,0,Math.PI/2],[1,0,-Math.PI/2]])if(isSolid(x+ox,z+oz))return a;return 0;};
  if(f===1){furnBox(B,TRS(cx,0.72,cz,0,0.96,0.07,0.96),[1,1,1],TUV[4]);for(const [ox,oz] of [[-0.4,-0.4],[0.4,-0.4],[-0.4,0.4],[0.4,0.4]])if(!(same(Math.sign(ox),0)&&same(0,Math.sign(oz))))furnBox(B,TRS(cx+ox,0.35,cz+oz,0,0.07,0.7,0.07),hex(0x3a2212));
   if(((x*3+z*5)%4)===0){furnBox(B,TRS(cx+0.15,0.8,cz-0.1,0.3,0.22,0.02,0.3),hex(0xf2efe6));furnBox(B,TRS(cx-0.2,0.8,cz+0.15,0,0.08,0.1,0.08),hex(0x8b2c2c));}}
@@ -1163,7 +1164,9 @@ function endLeave(){const g=G,L=g.leave;if(!L||L.fin)return;L.fin=true;L.hide=tr
 function arriveSfx(){if(typeof AC==='undefined'||!AC||!SET.sound)return;try{const t=AC.currentTime;
  tone(t,2.2,'sawtooth',95,38,0.07,undefined,0.15);tone(t,2.2,'square',48,26,0.04,undefined,0.15);noise(t+1.75,0.45,'bandpass',2600,1400,0.05,undefined,6);}catch(e){}}
 
-function dressStreet(g){if(act1Of(g)){act1Dress(g);marinaDress(g);return;}const W=g.W,H=g.H;streetPlan(g);if(g.arr&&g.arr.type==='alley')dressAlley(g);
+/* Act 3's sets (act3.js) dress after the street kit, which resets the wall overrides they paint */
+function dressStreet(g){dressStreet0(g);act3Dress(g);}
+function dressStreet0(g){if(act1Of(g)){act1Dress(g);marinaDress(g);return;}const W=g.W,H=g.H;streetPlan(g);if(g.arr&&g.arr.type==='alley')dressAlley(g);
  const street=(x,z)=>x>=0&&z>=0&&x<W&&z<H&&!g.solid[z*W+x]&&g.floorT[z*W+x]===7&&!(g.arr&&g.arr.ax&&x>=g.arr.ax[0]&&x<=g.arr.ax[1]&&z>=g.arr.zT-1);
  const occ=(x,z)=>g.rows[z][x]!=='=';
  for(let z=0;z<H;z++)for(let x=0;x<W;x++){if(!street(x,z))continue;
@@ -1199,7 +1202,7 @@ function drawDeco(B,g,d){const cx=d.x+0.5,cz=d.z+0.5;
  else if(d.t==='hydrant'){const z=d.z+0.2;B.box(TRS(cx,0.22,z,0,0.18,0.44,0.18),hex(0xc0202a));B.box(TRS(cx,0.46,z,0,0.13,0.08,0.13),hex(0xd03030));B.box(TRS(cx,0.28,z,0,0.3,0.07,0.07),hex(0xa01a22));}
  else if(d.t==='bags'){for(let i=0;i<3;i++){const u=hsh(d.x,d.z,10+i);B.box(TRS(d.x+0.25+u*0.5,0.17,d.z+0.55+hsh(d.x,d.z,20+i)*0.3,u*3,0.38,0.34,0.34),i===1?hex(0x2a3a2a):hex(0x15151a));}}
  else if(d.t.startsWith('k_'))drawKerbDeco(B,g,d);}
-function clutter(B,g,x,z){if(g.def.hub||g.front&&z>=g.front.zT-1)return;const ch=g.rows[z][x];if(!(ch in FLOORCH)&&ch!=='r')return;if(hsh(x,z,1)>0.14)return;const st=g.floorT[z*g.W+x]===7,out=isOut(g,x,z);
+function clutter(B,g,x,z){if(g.def.hub||g.front&&z>=g.front.zT-1)return;if(act3Clutter(B,g,x,z))return;const ch=g.rows[z][x];if(!(ch in FLOORCH)&&ch!=='r')return;if(hsh(x,z,1)>0.14)return;const st=g.floorT[z*g.W+x]===7,out=isOut(g,x,z);
  const lvl=levelIdx;const pool=st?['can','paper','can','butts']:out?['can','butts','bottle','can','paper']:lvl===1?['bottle','cards','bottle','can','butts','paper','cards']:lvl===2?['cash','paper','bottle','cash','casings','paper']:['bottle','can','paper','pizza','butts','casings','paper'];
  const t=pool[Math.floor(hsh(x,z,2)*pool.length)];const u=x+0.2+hsh(x,z,3)*0.6,v=z+0.2+hsh(x,z,4)*0.6,r=hsh(x,z,5)*TAU;
  if(t==='bottle'){if(hsh(x,z,6)<0.5)B.box(TRS(u,0.09,v,r,0.05,0.18,0.05),hex(0x2f7a3a));else B.box(A.mul(A.mul(A.T(u,0.03,v),A.RY(r)),A.S(0.05,0.05,0.18)),hex(0x8a5a1a));}
@@ -1259,7 +1262,7 @@ function buildStatic(g){const B=g.staticB;B.reset();const W=g.W,H=g.H;
   if(!any){for(const [ox,oz] of [[-1,-1],[1,-1],[-1,1],[1,1]]){const nx=x+ox,nz=z+oz;if(nx>=0&&nz>=0&&nx<W&&nz<H&&!g.solid[nz*W+nx])any=true;}}
   B.room=0;const tt=g.topX&&g.topX[i]||g.topT[i];if(any||tt)B.quad([[x,h,z+1],[x+1,h,z+1],[x+1,h,z],[x,h,z]],0,1,0,tt?TUV[tt]:WUV,tt?(g.glow[i]===2?[0.85,0.95,1.15]:[1,1,1]):top);
  }
- for(const d of g.deco)drawDeco(B,g,d);drawStreetscape(B,g);venueStatic(B,g);drawAct1(B,g);drawMarina(B,g);if(g.def===HUBS.lobby)drawMcDesk(B,g);if(g.def===HUBS.bunker)drawNineFront(B,g);if(g.def.hub==='drive'){drawSign(B,g.car.x,g.car.z-0.47);drawEntrance(B,g.car.x,g.car.z-0.5);drawCineSky(B,g);}
+ for(const d of g.deco)drawDeco(B,g,d);drawStreetscape(B,g);venueStatic(B,g);drawAct1(B,g);drawMarina(B,g);drawAct3(B,g);if(g.def===HUBS.lobby)drawMcDesk(B,g);if(g.def===HUBS.bunker)drawNineFront(B,g);if(g.def.hub==='drive'){drawSign(B,g.car.x,g.car.z-0.47);drawEntrance(B,g.car.x,g.car.z-0.5);drawCineSky(B,g);}
  B.upload(true);}
 function buildRadar(g){const c=document.createElement('canvas');c.width=g.W*4;c.height=g.H*4;const x=c.getContext('2d');
  for(let z=0;z<g.H;z++)for(let xx=0;xx<g.W;xx++){const i=z*g.W+xx;if(g.solid[i]){let edge=false;for(const [a,b] of [[1,0],[-1,0],[0,1],[0,-1]])if(!isSolid(xx+a,z+b))edge=true;if(edge){x.fillStyle='#e07ab4';x.fillRect(xx*4,z*4,4,4);}}
@@ -1763,7 +1766,7 @@ function updatePlayer(dt){const g=G,p=g.player,ch=CHARS[selIdx];
  if(kitOn(p)&&!p.weapon&&g.hand!==null){g.hand=null;autoDraw(p);}
  let mx=0,mz=0;if(keys.KeyW||keys.ArrowUp)mz-=1;if(keys.KeyS||keys.ArrowDown)mz+=1;if(keys.KeyA||keys.ArrowLeft)mx-=1;if(keys.KeyD||keys.ArrowRight)mx+=1;
  if(sticks.L){const v=stickVec(sticks.L);mx+=v[0];mz+=v[1];}if(padMode&&PAD.on){mx+=PAD.lx;mz+=PAD.ly;}const ml=Math.hypot(mx,mz);if(ml>1){mx/=ml;mz/=ml;}if(g.seatP&&ml>0.3)seatUp(g);
- if(p.exec>0){p.exec-=dt;mx=mz=0;}
+ if(p.exec>0){p.exec=Math.max(0,p.exec-dt);mx=mz=0;} // clamp: a leftover negative timer is truthy and used to block every floor change
  const cs=playerCover(p,mx,mz,dt);
  const sraw=sticks.L?Math.hypot(sticks.L.x-sticks.L.ox,sticks.L.y-sticks.L.oy):0;const wantS=!cs&&(keys.ShiftLeft||keys.ShiftRight||(padMode&&PAD.on&&(PAD.b[4]||PAD.b[10]))||sraw>68)&&ml>0.3;
  if(p.stam===undefined){p.stam=1;p.stamT=0;}p.sprinting=wantS&&p.stam>0.02&&!p.tired&&!(p.exec>0);
@@ -5007,7 +5010,7 @@ function startGridRun(id,arrive=null){
   if(moved)banner(missionName(id)+' WAS REBUILT','This floor changed since you saved. Starting again from the beginning, with everything you brought.');return true;
  }catch(e){ARR_GO=null;stageRelease(fresh);return stageFailure(e);}
 }
-function stageCanLeave(g){return !!(g&&g===G&&g.stageManaged&&g.stageRun?.active&&g.mission===MISSION&&myProg().run===g.runOwner&&myProg().run?.mission===MISSION&&myProg().run.stage===g.sid&&g.player.alive&&Number.isFinite(g.player.hp)&&g.player.hp>0&&!g.player.ex&&!g.player.exec&&!g.done&&!g.fin&&!g.cine&&!g.cameo);}
+function stageCanLeave(g){return !!(g&&g===G&&g.stageManaged&&g.stageRun?.active&&g.mission===MISSION&&myProg().run===g.runOwner&&myProg().run?.mission===MISSION&&myProg().run.stage===g.sid&&g.player.alive&&Number.isFinite(g.player.hp)&&g.player.hp>0&&!g.player.ex&&!(g.player.exec>0)&&!g.done&&!g.fin&&!g.cine&&!g.cameo);}
 /* A floor change must never be refused over fight leftovers. stageSettle puts anything the strict snapshot would reject into a state it
    accepts (things in the air land, odd numbers become safe ones); it only runs after a strict attempt has failed. */
 function stageSettle(g){
@@ -5061,12 +5064,12 @@ function stageIntro(g){if(act4Intro(g))return true;if(!isTower(g))return false;
  if(isKade(g)){if(g.sid==='site')banner('KADE TOWER','The hoist needs the foreman\'s key. The stairs are open, and they are long.');else if(g.sid==='stair')banner('STEEL STAIRS','Hard hats on every landing.');else{placeStash(g,10);if(stageSeen(g,'stair'))banner('THE TOP FLOOR','You came up the stairs. Kade does not know yet.');else{g.ambush=0.4;banner('THE TOP FLOOR','The hoist doors open. Kade was watching the lift.');}}return true;}
  if(g.sid==='lobby')banner('CORAL TOWER LOBBY','The elevator needs the keycard from the security office. The stairs are open.');
  else if(g.sid==='stair')banner('STAIRWELL','The service level is above you. One guard per landing.');
- else{placeStash(g,2);if(stageSeen(g,'stair'))banner('THE PENTHOUSE','You came in through the kitchen. Nobody saw you.');else{g.ambush=0.4;banner('THE PENTHOUSE','The doors open. They were waiting.');}}
+ else{placeStash(g,2);if(stageSeen(g,'stair'))banner('THE PENTHOUSE','The back stairs come up in the bedroom. Nobody saw you.');else{g.ambush=0.4;banner('THE PENTHOUSE','The doors open. They were waiting.');}}
  return true;}
 /* Kade Tower top floor: a crane drops a load down a red lane (it crushes the player and any hard hat in it), and at half health Kade calls three more hard hats up the hoist */
 /* KADE'S SECOND ACT: a yellow crane console in the top floor's corner. Grab it (CRANE on touch) and the next load drops down Kade's
    lane instead of yours: a yellow lane, and if he is still in it when it lands he takes a third of his health. 12 s cooldown. */
-const craneLeverAt=g=>({x:2.5,z:2.5});
+const craneLeverAt=g=>({x:2.5,z:g.H-2.5}); /* bottom-left corner: the stairs come up in the top-left one */
 function craneLever(p){const g=G;if(!isKade(g)||g.sid!=='pent'||!g.boss||!g.boss.alive)return false;const L=craneLeverAt(g);if(Math.hypot(p.x-L.x,p.z-L.z)>1.4)return false;
  if(g.leverT>0){popup(L.x,L.z,'CRANE RESETTING','#ffd36b');return true;}const c=g.crane||(g.crane={t:3,ph:0,x:g.W/2,w:2.4});
  g.bossSeen=true;c.ph=1;c.t=1.1;c.x=clamp(g.boss.x,3,g.W-4);c.mine=1;g.leverT=12;sfx('blip');banner('CRANE OVERRIDE','The load is coming down on Kade');return true;}
@@ -5079,41 +5082,47 @@ function kadeStage(dt,g,p){if(g.leverT>0)g.leverT-=dt;if(g.sid!=='pent'||!g.boss
  else if(c.ph===2&&c.t<=0){c.mine=0;c.ph=0;c.t=b.hp<=b.maxhp/2?4:6;}
  if(!g.kP2&&b.hp<=b.maxhp/2){g.kP2=1;banner('KADE CALLS FOR HELP','Hard hats up the hoist');const dead=lexFate()==='dead';if(lexFate()==='spared')setTimeout(()=>{if(G===g&&state==='play')popup(g.player.x,g.player.z-0.5,'LEX: "HE PANICS. HIT HIM HARD!"','#7dff9a');},1500);for(const [x,z] of [[5.5,2.5],[g.W-5.5,2.5],[g.W/2,g.H-3.5],...(dead?[[g.W/2-4,2.5],[g.W/2+4,2.5]]:[])]){const e=makeEnemy(g,g.def,8,'bat',false,x,z);e.state='chase';e.seeT=0;}}}
 function updateStage(dt){const g=G;act4Tick(dt);if(!isTower(g))return;const p=g.player;
+ if(!g.climb&&!g.climbIn&&!g.seatP)p.y=wellY(g,p.x,p.z);
  if(g.ambush>0&&(g.ambush-=dt)<=0)alertNoise(p.x,p.z,12,'elev');
  if(isKade(g))kadeStage(dt,g,p);
  if(g.sid!==(isKade(g)?'site':'lobby')||g.keycard)return;
  if(g.keyEn===undefined)g.keyEn=g.enemies.find(e=>e.weapon&&e.weapon.type==='silenced')||null;
  if(!g.key&&g.keyEn&&!g.keyEn.alive){g.key={x:g.keyEn.x,z:g.keyEn.z};popup(g.key.x,g.key.z,isKade(g)?'HOIST KEY DROPPED':'KEYCARD DROPPED','#ffd36b');}
  if(g.key&&p.alive&&Math.hypot(p.x-g.key.x,p.z-g.key.z)<0.8){g.keycard=true;g.key=null;sfx('cash');popup(p.x,p.z,isKade(g)?'HOIST KEY  -  THE HOIST IS OPEN':'KEYCARD  -  THE ELEVATOR IS OPEN','#7dff9a');}}
-/* A flight of stairs up through a doorway in the wall behind its cell (the stair cells sit against the top wall): six steps with lit
-   nosings, a handrail on each side, a dark doorway with a brass frame and a lit sign, and floor chevrons that pulse toward it. Drawn
-   only; the walk-on trigger is still the circle around the cell centre in stageStairs. */
-function drawStairs(B,g,x,z){const bx=(px,py,pz,sx,sy,sz,c,em,ry)=>B.box(TRS(px,py,pz,ry||0,sx,sy,sz),c,!!em),brass=[0.85,0.68,0.22],amber=[1,0.85,0.35],N=6,D=0.15,R=0.1,z0=z+0.45;
- for(let i=0;i<N;i++){const h=(i+1)*R,zc=z0-(i+0.5)*D;bx(x,h/2,zc,0.86,h,D,i%2?[0.5,0.5,0.56]:[0.44,0.44,0.5]);bx(x,h+0.006,zc+D/2-0.02,0.86,0.012,0.035,amber,true);
-  for(const sx of [-0.45,0.45])bx(x+sx,h+0.62,zc,0.04,0.04,D+0.02,brass);}
- for(const sx of [-0.45,0.45]){bx(x+sx,0.36,z0-0.03,0.04,0.72,0.04,brass);bx(x+sx,N*R+0.31,z0-N*D+0.03,0.04,0.62,0.04,brass);}
- const top=N*R,dz=z-0.47;bx(x,top+0.62,dz,0.82,1.24,0.05,[0.02,0.02,0.035]);bx(x-0.45,1.0,dz+0.02,0.08,2.0,0.08,brass);bx(x+0.45,1.0,dz+0.02,0.08,2.0,0.08,brass);bx(x,top+1.28,dz+0.02,0.98,0.08,0.08,brass);
- bx(x,2.05,dz+0.05,0.62,0.14,0.05,amber,true);
- for(let k=0;k<2;k++){const on=Math.sin((g.T||0)*5-k*1.6)>0,zc=z0+0.3+k*0.32,c=on?amber:[0.5,0.42,0.18];bx(x-0.13,0.03,zc,0.3,0.012,0.07,c,on,0.6);bx(x+0.13,0.03,zc,0.3,0.012,0.07,c,on,-0.6);}}
-/* The way back down, on the floor you arrived on: a doorway in the nearest wall to the arrival point with the top steps of the flight
-   going down inside it, a lit sign, and a landing mat. Looks only; the stairs are one way. Walls to the north, west and east are tried
-   before the south one, which the camera cannot see. */
-function stairsDownSpot(g,ax,az){const ix=Math.floor(ax),iz=Math.floor(az);let best=null;
- for(const [dx,dz] of [[0,-1],[-1,0],[1,0],[0,1]]){for(let k=1;k<=4;k++){const cx=ix+dx*k,cz=iz+dz*k;if(cx<0||cz<0||cx>=g.W||cz>=g.H)break;const i=cz*g.W+cx;
-   if(g.solid[i]){if(!g.furn[i]&&!g.glass[i]&&(!best||k<best.k))best={dx,dz,k};break;}}if(best&&best.k<=2)break;}
- if(!best)return null;const {dx,dz,k}=best;return{dx,dz,along:dx?0:1,fx:dx?(dx<0?ix-k+1:ix+k):ix+0.5,fz:dz?(dz<0?iz-k+1:iz+k):iz+0.5};}
-function drawStairsDown(B,g,ax,az){const brass=[0.85,0.68,0.22],amber=[1,0.85,0.35],sp=stairsDownSpot(g,ax,az);
- if(!sp)return;const {dx,dz,along,fx,fz}=sp;
- /* u runs along the wall, n out of it toward the room */
- const bx=(u,y,n,su,sy,sn,c,em)=>B.box(TRS(fx+(along?u:-dx*n),y,fz+(along?-dz*n:u),0,along?su:sn,sy,along?sn:su),c,!!em);
- bx(0,0.95,0.03,0.82,1.9,0.05,[0.02,0.02,0.035]);for(let i=0;i<3;i++)bx(0,0.5-i*0.17,0.062+i*0.004,0.7-i*0.12,0.03,0.012,i?[0.55,0.46,0.2]:amber,i===0);
- bx(-0.45,1.0,0.05,0.08,2.0,0.08,brass);bx(0.45,1.0,0.05,0.08,2.0,0.08,brass);bx(0,1.96,0.05,0.98,0.08,0.08,brass);bx(0,2.12,0.08,0.62,0.14,0.05,[0.45,0.75,1],true);
- bx(0,0.02,0.45,0.9,0.012,0.7,[0.2,0.2,0.26]);for(let i=0;i<4;i++)bx(0,0.03,0.16+i*0.17,0.78,0.012,0.06,i?[0.3,0.5,0.7]:[0.45,0.75,1],i===0);for(const u of [-0.45,0.45]){bx(u,0.36,0.2,0.04,0.72,0.04,brass);bx(u,0.36,0.75,0.04,0.72,0.04,brass);bx(u,0.7,0.475,0.04,0.04,0.59,brass);}}
+/* SWITCHBACK STAIRWELLS. Every staircase is a real piece of the floor plan in its corner: two flights, three cells deep, side by side
+   with a wall between them. You walk up one flight toward the wall, turn on the half landing between floors, and come up the flight beside
+   it facing the other way, so on the floor above you step off in the same corner, heading back into the room.
+   - Where a stair goes up (the stair's 'at' is the top cell of the flight), the flight beside it, past the divider, goes down: to the floor
+     below where there is one, otherwise it is taped off.
+   - Where you arrive (the arrival 'at' is the bottom cell of the flight you come up), the column on the far side of the divider is the
+     enclosed shaft going on up, unless that floor's own stairs are there.
+   The divider and shaft are ordinary wall cells in the maps; the flights are floor cells. The player rises up a flight and sinks down one
+   (wellY). Drawn only; the walk-on trigger is still the circle around the stair's top cell in stageStairs. */
+const WELL_N=3,WELL_RISE=0.6;
+function stageWells(g){if(g._wells)return g._wells;const out=[];if(!g.stageRun)return out;const d=g.stageRun.describe(g.sid),W=g.W;
+ for(const s of d.stairs||[]){if(s.id==='elev'||!isTower(g))continue;const col=Math.floor(s.at[0]),side=col<W/2?1:-1;out.push({up:col,down:col+2*side,z0:Math.floor(s.at[1]),live:false,taped:true,stair:s});}
+ for(const k of ['bottom','stairs']){const a=d.arrivals&&d.arrivals[k];if(!a||!isTower(g))continue;const col=Math.floor(a.at[0]),side=col<W/2?-1:1;out.push({up:null,down:col,shaft:col+2*side,z0:Math.floor(a.at[1])-WELL_N+1,live:true});}
+ return g._wells=out;}
+/* height of a point on a flight: up flights rise toward the wall, down flights sink toward it; level ground at the bottom cell's centre */
+function wellY(g,x,z){if(!isTower(g))return 0;for(const w of stageWells(g)){const t=(z-w.z0)/WELL_N;if(t<0||t>1)continue;const c=Math.floor(x),f=Math.max(0,1-t/((WELL_N-0.5)/WELL_N));
+  if(c===w.up)return WELL_RISE*f;if(c===w.down)return -WELL_RISE*f;}return 0;}
+function drawWells(B,g){const bx=(px,py,pz,sx,sy,sz,c,em,ry)=>B.box(TRS(px,py,pz,ry||0,sx,sy,sz),c,!!em),rail=[0.2,0.2,0.24],amber=[1,0.85,0.35],N=WELL_N*5,D=WELL_N/N;
+ for(const w of stageWells(g)){const z0=w.z0,zE=z0+WELL_N;
+  if(w.up!==null){const x=w.up+0.5;bx(x,0.004,z0+WELL_N/2,1,0.008,WELL_N,[0.05,0.05,0.07]);
+   for(let i=0;i<N;i++){const h=(i+1)*WELL_RISE/N*1.15,zc=zE-(i+0.5)*D,k=0.64-i*0.032;bx(x,h/2,zc,0.98,h,D,[k,k,k*1.08]);bx(x,h+0.004,zc+D/2-0.012,0.98,0.008,0.024,i<3?amber.map(v=>v*(0.7-i*0.2)):[k*1.3,k*1.3,k*1.4],i<2);}
+   for(const sd of [-0.47,0.47]){B.box(A.mul(A.mul(A.T(x+sd,0.5+WELL_RISE*0.55,z0+WELL_N/2),A.RX(Math.atan2(WELL_RISE*1.15,WELL_N))),A.S(0.04,0.04,Math.hypot(WELL_N,WELL_RISE*1.15))),rail,false);}
+   for(let k=0;k<2;k++){const on=Math.sin((g.T||0)*5-k*1.6)>0,zc=zE+0.22+k*0.26,c=on?amber:[0.5,0.42,0.18];bx(x-0.13,0.012,zc,0.3,0.012,0.06,c,on,0.6);bx(x+0.13,0.012,zc,0.3,0.012,0.06,c,on,-0.6);}}
+  {const x=w.down+0.5,room=w.up!==null?(w.down>w.up?1:-1):(w.down>w.shaft?1:-1);bx(x,0.003,z0+WELL_N/2,1,0.006,WELL_N,[0.02,0.02,0.03]);
+   for(let i=0;i<N;i++){const k=0.5*Math.pow(1-(i+0.5)/N,1.4)+0.02,zc=zE-(i+0.5)*D;bx(x,0.006,zc,0.94,0.006,D-0.02,[k,k,k*1.1]);bx(x,0.0075,zc+D/2-0.012,0.94,0.004,0.016,[k*1.6,k*1.5,k*1.2]);}
+   if(!isSolid(w.down+room,z0+1)){bx(x+room*0.48,0.02,z0+WELL_N/2,0.05,0.04,WELL_N,[0.14,0.14,0.17]);bx(x+room*0.48,0.45,z0+WELL_N/2-0.05,0.045,0.045,WELL_N-0.1,rail);for(let n=0;n<=WELL_N;n++)bx(x+room*0.48,0.225,z0+0.05+n*(WELL_N-0.15)/WELL_N,0.035,0.45,0.035,rail);}
+   if(w.taped){for(const sx of [-0.42,0.42])bx(x+sx,0.4,zE-0.08,0.05,0.8,0.05,[0.95,0.8,0.15]);for(let i=0;i<6;i++)bx(x-0.35+i*0.14,0.62,zE-0.08,0.14,0.07,0.02,i%2?[0.08,0.08,0.08]:[0.95,0.8,0.15]);}}}}
 function drawStage(B,g){drawAct4(B,g);if((isGarage(g)||isHangar(g))&&g.stageRun){for(const s of g.stageRun.describe(g.sid).stairs)drawA4Stairs(B,g,s);return;}if(!isTower(g)||!g.stageRun)return;const bx=(x,y,z,sx,sy,sz,c,em)=>B.box(TRS(x,y,z,0,sx,sy,sz),c,!!em),steel=[0.74,0.77,0.82],brass=[0.85,0.68,0.22];
  for(const s of g.stageRun.describe(g.sid).stairs){const lock=stageLocked(g,s),x=s.at[0],z=s.at[1];
-  if(s.id==='elev')bx(x,0.03,z,0.9,0.015,0.9,lock?[1,0.25,0.25]:[0.3,1,0.5],true);else drawStairs(B,g,x,z);
+  if(s.id==='elev')bx(x,0.03,z,0.9,0.015,0.9,lock?[1,0.25,0.25]:[0.3,1,0.5],true);
   if(s.id==='elev'){bx(x,0.95,z-0.44,3.2,1.9,0.08,steel);bx(x-1.7,1.0,z-0.42,0.12,2.0,0.12,brass);bx(x+1.7,1.0,z-0.42,0.12,2.0,0.12,brass);bx(x,2.05,z-0.4,0.5,0.12,0.06,lock?[1,0.2,0.2]:[0.3,1,0.5],true);}}
- {const ar=g.stageRun.describe(g.sid).arrivals;for(const k of ['bottom','stairs'])if(ar&&ar[k])drawStairsDown(B,g,ar[k].at[0],ar[k].at[1]);}
+ drawWells(B,g);{const ar=g.stageRun.describe(g.sid).arrivals;
+  /* the lift you came up in: its doors stand in the top wall right where the lift is on the floor below */
+  if(ar&&ar.elev){const x=ar.elev.at[0],zw=Math.floor(ar.elev.at[1]);bx(x,0.95,zw+0.04,1.5,1.9,0.06,steel);bx(x,0.95,zw+0.075,0.02,1.86,0.02,[0.3,0.32,0.36]);bx(x-0.8,1.0,zw+0.06,0.1,2.0,0.1,brass);bx(x+0.8,1.0,zw+0.06,0.1,2.0,0.1,brass);bx(x,2.0,zw+0.06,1.7,0.1,0.1,brass);bx(x,2.12,zw+0.09,0.4,0.1,0.04,[0.3,1,0.5],true);bx(x,0.012,zw+0.45,1.4,0.012,0.7,[0.24,0.24,0.28]);}}
  if(g.crane&&g.crane.ph>0){const c=g.crane;bx(c.x,0.04,g.H/2,c.w,0.02,g.H-3,c.mine?[1,0.8,0.2]:[1,0.15,0.15],c.ph===2||Math.sin(g.T*20)>0);if(c.ph===2)bx(c.x,0.8,g.H/2,c.w*0.9,1.6,g.H-4,[0.45,0.4,0.2]);}
  if(isKade(g)&&g.sid==='pent'){const L=craneLeverAt(g),ready=!(g.leverT>0);bx(L.x,0.55,L.z,0.5,1.1,0.4,[0.95,0.75,0.1]);bx(L.x,1.12,L.z+0.05,0.3,0.06,0.3,[0.1,0.1,0.12]);bx(L.x,1.2,L.z+0.05,0.16,0.12,0.16,ready?[1,0.15,0.15]:[0.35,0.1,0.1],ready&&Math.sin(g.T*8)>0);}
  if(g.sid==='pent'){const c=g.car;bx(c.x+0.5,0.95,c.z+0.55,2.0,1.9,0.08,steel);bx(c.x-0.5,1.0,c.z+0.5,0.12,2.0,0.12,brass);bx(c.x+1.5,1.0,c.z+0.5,0.12,2.0,0.12,brass);bx(c.x+0.5,2.05,c.z+0.5,0.5,0.12,0.06,g.cleared?[0.3,1,0.5]:[1,0.3,0.3],true);}
@@ -5122,16 +5131,17 @@ function drawStage(B,g){drawAct4(B,g);if((isGarage(g)||isHangar(g))&&g.stageRun)
    camera rises with them. At the top the last frame is held on screen and dissolves into the next floor, where the player walks up out
    of the stairwell onto the landing. The floor change itself is unchanged; only the black fade is replaced. The elevator keeps its fade. */
 let SNAP=null;
-function climbStart(g,s){const p=g.player;g.climb={t0:performance.now(),dur:0.8,x0:p.x,z0:p.z,sx:s.at[0],sz:s.at[1]+0.45,tz:s.at[1]-0.42};p.vx=p.vz=0;}
-function climbTick(dt,g){const c=g.climb,p=g.player;if(!c)return;const k=Math.min(1,(performance.now()-c.t0)/1000/c.dur),e=k*k*(3-2*k),ox=p.x,oz=p.z;
- if(k<0.3){const q=k/0.3;p.x=lerp(c.x0,c.sx,q);p.z=lerp(c.z0,c.sz,q);p.y=0;}else{const q=(k-0.3)/0.7;p.x=c.sx;p.z=lerp(c.sz,c.tz,q);p.y=q*0.6;}
+function climbStart(g,s){const p=g.player;g.climb={t0:performance.now(),dur:0.8,x0:p.x,z0:p.z,y0:p.y||0,sx:s.at[0],sz:s.at[1]+0.45,tz:s.at[1]-0.42};p.vx=p.vz=0;}
+function climbTick(dt,g){const c=g.climb,p=g.player;if(!c)return;const k=Math.min(1,(performance.now()-c.t0)/1000/c.dur),e=k*k*(3-2*k),ox=p.x,oz=p.z,ym=Math.max(c.y0,0.45);
+ if(k<0.3){const q=k/0.3;p.x=lerp(c.x0,c.sx,q);p.z=lerp(c.z0,c.sz,q);p.y=lerp(c.y0,ym,q);}else{const q=(k-0.3)/0.7;p.x=c.sx;p.z=lerp(c.sz,c.tz,q);p.y=ym+q*0.4;}
  const m=Math.hypot(p.x-ox,p.z-oz);p.walk=(p.walk||0)+m*9;p.vx=0;p.vz=dt>0?-Math.max(2.5,m/dt):0;p.a=Math.PI;g.cam.lift=e;
  const kk=1-Math.exp(-Math.max(dt,0.03)*10);g.cam.x+=(p.x-g.cam.x)*kk;g.cam.z+=(p.z-1-g.cam.z)*kk;}
-function climbArrive(g,s){const ar=g.stageRun?.describe(g.sid).arrivals?.[s.arrive];if(!ar)return;const sp=stairsDownSpot(g,ar.at[0],ar.at[1]),p=g.player;if(!sp)return;
- const sx=sp.along?sp.fx:sp.fx-sp.dx*0.05,sz=sp.along?sp.fz-sp.dz*0.05:sp.fz;g.climbIn={t0:performance.now(),dur:0.55,x0:sx,z0:sz,x1:p.x,z1:p.z,a:Math.atan2(p.x-sx,p.z-sz)};
- p.x=sx;p.z=sz;p.y=-0.35;p.a=g.climbIn.a;g.cam.x=p.x;g.cam.z=p.z-1;g.cam.lift=1;}
+/* coming up the second flight of the switchback: from the dark end by the wall, walking back into the room, to the arrival spot */
+function climbArrive(g,s){const ar=g.stageRun?.describe(g.sid).arrivals?.[s.arrive];if(!ar)return;const p=g.player,w=stageWells(g).find(q=>q.live&&q.down===Math.floor(ar.at[0]));if(!w)return;
+ const sx=ar.at[0],sz=w.z0+0.2;g.climbIn={t0:performance.now(),dur:0.9,x0:sx,z0:sz,y0:-WELL_RISE*1.1,x1:p.x,z1:p.z,a:Math.atan2(p.x-sx,p.z-sz)};
+ p.x=sx;p.z=sz;p.y=g.climbIn.y0;p.a=g.climbIn.a;g.cam.x=p.x;g.cam.z=p.z-1;g.cam.lift=1;}
 function climbInTick(dt,g){const c=g.climbIn,p=g.player;const k=Math.min(1,(performance.now()-c.t0)/1000/c.dur),e=k*k*(3-2*k),ox=p.x,oz=p.z;
- p.x=lerp(c.x0,c.x1,e);p.z=lerp(c.z0,c.z1,e);p.y=Math.min(0,-0.35*(1-k*1.6));p.a=c.a;const m=Math.hypot(p.x-ox,p.z-oz);p.walk=(p.walk||0)+m*9;
+ p.x=lerp(c.x0,c.x1,e);p.z=lerp(c.z0,c.z1,e);p.y=Math.min(0,c.y0*(1-e));p.a=c.a;const m=Math.hypot(p.x-ox,p.z-oz);p.walk=(p.walk||0)+m*9;
  const sp=dt>0?Math.max(2.5,m/dt):0;p.vx=Math.sin(c.a)*sp;p.vz=Math.cos(c.a)*sp;g.cam.lift=1-e;
  const kk=1-Math.exp(-Math.max(dt,0.03)*10);g.cam.x+=(p.x-g.cam.x)*kk;g.cam.z+=(p.z-1-g.cam.z)*kk;if(k>=1){g.climbIn=null;g.cam.lift=0;p.y=0;p.vx=p.vz=0;}}
 /* hold the frame just drawn (call only from the end of render, before the browser clears the drawing buffer) */
@@ -5147,8 +5157,10 @@ function stageStairs(g){
   /* a weapon still in the air cannot be saved with the floor: wait the moment it takes to land. A cash lure is simply left behind. */
   if(g.items.some(it=>it.flying&&it.flyT<=0.7))return false;g.cash=[];
   const r=myProg().run,m=MISSION,climb=s.id!=='elev'&&!window.NOCLIMB;state='stagefade';
-  const accepted=fadeTo(()=>{const back=()=>{g.climb=null;g.cam.lift=0;g.player.y=0;g.player.vx=g.player.vz=0;};if(G!==g||MISSION!==m||myProg().run!==r){back();return;}if(!stageCanLeave(g)){back();state='play';return;}back();
-   enterStage(s.to,s.arrive);if(G===g)state='play';else if(climb)climbArrive(G,s);},climb?{climb:true,ms:800}:undefined);
+  /* a refused change (the fight flared up mid-fade, or the next floor would not build) lets go of the latch, so standing on the stairs
+     tries again instead of making you step off and back on */
+  const accepted=fadeTo(()=>{const back=()=>{g.climb=null;g.cam.lift=0;g.player.y=0;g.player.vx=g.player.vz=0;};if(G!==g||MISSION!==m||myProg().run!==r){back();return;}if(!stageCanLeave(g)){back();g.stairLatch.delete(s.id);state='play';return;}back();
+   enterStage(s.to,s.arrive);if(G===g){g.stairLatch.delete(s.id);state='play';}else if(climb)climbArrive(G,s);},climb?{climb:true,ms:800}:undefined);
   if(!accepted){state='play';return false;}if(climb)climbStart(g,s);g.stairLatch.add(s.id);return true;
  }return false;
 }

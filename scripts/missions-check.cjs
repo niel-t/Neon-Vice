@@ -119,6 +119,31 @@ function checkMissions() {
   assert.equal(missionStage('toString', 'legacy'), null);
   // floor 2 used to be one map: runs saved there resume in the lobby with their kit, minus the old map's checkpoint
   for (const st of ['legacy', 's1', undefined]) assert.deepEqual({ ...missionStage('c2', st) }, { stage: 'lobby', keep: true, moved: true }, `c2 run saved at ${st}`);
+  checkCorners(MISSIONS);
+}
+
+/* Going up a floor keeps you where you were: take the stairs in the top-right corner and you come out of the same switchback stairwell
+   in the top-right corner of the next floor; the lift opens at the same spot along the top wall. Positions are compared inside each floor's walls (the street rows of a
+   front stage are left out), as fractions of its width and depth. Act 4's hangar door and jet steps are walk-throughs, not floor changes. */
+const SAME_SPOT = ['c2', 'c10'];
+function interior(def) {
+  const rows = def.map, last = rows.findIndex(r => r[0] === '=');
+  return { w: rows[0].length - 2, h: (last < 0 ? rows.length : last) - 2 };
+}
+function checkCorners(MISSIONS) {
+  for (const id of SAME_SPOT) {
+    const defs = MISSIONS[id].stageDefs;
+    for (const st of Object.values(defs)) for (const s of st.stairs || []) {
+      // a staircase is a three-cell switchback: compare the middles of the two flights (the stair's 'at' is the top of the flight up,
+      // the arrival's 'at' the bottom of the flight you come up)
+      const to = defs[s.to], a = interior(st.def), b = interior(to.def), lift = s.id === 'elev', ar0 = to.arrivals[s.arrive].at,
+        at = lift ? s.at : [s.at[0], s.at[1] + 1], ar = lift ? ar0 : [ar0[0], ar0[1] - 1];
+      // world coordinates carry the loader's one-cell padding ring and the wall ring: the first floor cell is at 2
+      const fx = (x, d) => (x - 2) / Math.max(1, d.w - 1), fz = (z, d) => (z - 2) / Math.max(1, d.h - 1);
+      const dx = Math.abs(fx(at[0], a) - fx(ar[0], b)), dz = Math.abs(fz(at[1], a) - fz(ar[1], b));
+      assert(dx <= 0.12 && dz <= 0.2, `${id} ${st.id}.${s.id} at ${s.at} comes out at ${to.id} ${ar}, not the same spot on the next floor (dx ${dx.toFixed(2)}, dz ${dz.toFixed(2)})`);
+    }
+  }
 }
 
 module.exports = { checkMissions, missionData };

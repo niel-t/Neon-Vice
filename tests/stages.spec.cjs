@@ -311,3 +311,50 @@ test('stages: taking the stairs climbs into the next floor with no black screen'
   });
   expect(result).toEqual({ sid: 'stair', state: 'play', black: false, climbed: true, snap: true, sawArrive: true, cameUp: true, landed: true });
 });
+
+test('stages: Kade Tower stairs and hoist still take you up after an execution', async ({ openGame }) => {
+  const page = await openGame();
+  const result = await page.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)), out = {};
+    for (const route of ['up', 'elev']) {
+      window.NOARRIVE = 1; delete myProg().run; startMission('c10'); if (G.arrive) endArrive();
+      const site = G, p = site.player, s = site.stageRun.describe(site.sid).stairs.find(q => q.id === route);
+      // a finisher on a downed hard hat, played out in game time until well after its timer runs out
+      const e = site.enemies.find(q => q.alive && !q.boss); e.x = p.x + 0.6; e.z = p.z; e.down = 3;
+      for (const q of site.enemies) if (q !== e) q.alive = false;
+      execute(p, e);
+      for (let i = 0; i < 100; i++) update(0.05);
+      if (route === 'elev') site.keycard = true;
+      const timer = p.exec;
+      p.x = s.at[0]; p.z = s.at[1];
+      for (let i = 0; i < 60 && (G === site || fading || G.climbIn || state !== 'play'); i++) await wait(100);
+      out[route] = { executed: !e.alive && !p.ex, timer, sid: G.sid, state };
+    }
+    return out;
+  });
+  // the execution timer used to stop a hair below zero, and any non-zero value blocked every stair and lift
+  expect(result).toEqual({ up: { executed: true, timer: 0, sid: 'stair', state: 'play' }, elev: { executed: true, timer: 0, sid: 'pent', state: 'play' } });
+});
+
+test('stages: stairs and lifts bring you out in the same corner of the floor above, coming up the switchback', async ({ openGame }) => {
+  const page = await openGame();
+  const result = await page.evaluate(async () => {
+    const wait = ms => new Promise(r => setTimeout(r, ms)), out = [];
+    // where a point sits inside a floor's walls, as a fraction of its width and depth (street rows left out)
+    const frac = (g, x, z) => { const rows = g.def.map, last = rows.findIndex(r => r[0] === '='), w = rows[0].length - 2, h = (last < 0 ? rows.length : last) - 2;
+      return [(x - 2) / (w - 1), (z - 2) / (h - 1)]; };
+    for (const [mission, route] of [['c2', 'up'], ['c2', 'elev'], ['c10', 'up'], ['c10', 'elev']]) {
+      window.NOARRIVE = 1; delete myProg().run; startMission(mission); if (G.arrive) endArrive();
+      // stairs are a three-cell switchback: the flight up's top cell and the next floor's arrival (the bottom of the other flight) sit
+      // two cells apart, so compare the middles of the two flights
+      const from = G, s = from.stageRun.describe(from.sid).stairs.find(q => q.id === route), lift = route === 'elev', f0 = frac(from, s.at[0], s.at[1] + (lift ? 0 : 1));
+      for (const e of from.enemies) e.alive = false;
+      from.keycard = true; from.player.x = s.at[0]; from.player.z = s.at[1];
+      for (let i = 0; i < 60 && (G === from || fading || G.climbIn || state !== 'play'); i++) await wait(100);
+      const f1 = frac(G, G.player.x, G.player.z - (lift ? 0 : 1));
+      out.push([mission, route, G.sid, Math.abs(f0[0] - f1[0]) < 0.15 && Math.abs(f0[1] - f1[1]) < 0.22]);
+    }
+    return out;
+  });
+  expect(result).toEqual([['c2', 'up', 'stair', true], ['c2', 'elev', 'pent', true], ['c10', 'up', 'stair', true], ['c10', 'elev', 'pent', true]]);
+});
