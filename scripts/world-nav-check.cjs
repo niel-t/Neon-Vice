@@ -21,7 +21,7 @@ function checkNavigation() {
     readFileSync(resolve(__dirname, '..', 'ai.js'), 'utf8').replace(/^'use strict';/, ''),
     section('function updateCash(', 'function updateFX(')
   ].join('\n');
-  function simulation({ weapon = 'bat', boss = false, lex = false, map, start = [6.5, 4.5], target = [13.5, 4.5], radius = .28, item, cash, facing, frames = 1200, rooms = false, init } = {}) {
+  function simulation({ weapon = 'bat', boss = false, lex = false, map, start = [4.5, 4.5], target = [11.5, 4.5], radius = .28, item, cash, facing, frames = 1200, rooms = false, init } = {}) {
     const g = WORLD.buildGrid(map || LEVELS[3], 3);
     g.flow = new Int16Array(g.W*g.H); g.nflow = new Int16Array(g.W*g.H);
     g.doors = g.doorSpecs.map(d => ({ ...d, th: 0, w: 0, pusher: '' }));
@@ -56,12 +56,12 @@ function checkNavigation() {
     return { g, e, attacks, maxZ, minD };
   }
   const marina = WORLD.buildGrid(LEVELS[3], 3);
-  assert.equal(WORLD.cell.moveClear(marina,6.5,4.5,13.5,4.5,.26),false);
+  assert.equal(WORLD.cell.moveClear(marina,4.5,4.5,11.5,4.5,.26),false); // two finger piers with a boat slip between
   const bat = simulation();
-  assert(bat.attacks > 0 && bat.e.x > 12, `Visible melee target across Marina water must be reached via the pier: ${JSON.stringify({x:bat.e.x,z:bat.e.z,attacks:bat.attacks,state:bat.e.state})}`);
+  assert(bat.attacks > 0 && bat.e.x > 10, `Visible melee target across Marina water must be reached via the pier: ${JSON.stringify({x:bat.e.x,z:bat.e.z,attacks:bat.attacks,state:bat.e.state})}`);
   assert(simulation({ weapon: null }).attacks > 0, 'Unarmed chase also routes around water');
   const boss = simulation({ weapon: 'm16', boss: true });
-  assert(boss.e.x > 8 && boss.attacks > 0, 'Boss retains attacks while routing its approach');
+  assert(boss.e.x > 6 && boss.attacks > 0, 'Boss retains attacks while routing its approach');
   const lex = simulation({ weapon: 'm16', boss: true, lex: true });
   assert(lex.maxZ > 5 && lex.attacks > 0, `Lex retains ranged attacks and can detour during an approach: ${JSON.stringify({x:lex.e.x,z:lex.e.z,maxZ:lex.maxZ,attacks:lex.attacks})}`);
   const room = { map: ['##########', '#........#', '#........#', '#........#', '##########'], wall: 1 };
