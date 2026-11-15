@@ -238,14 +238,20 @@ function buildBody(B){const M=newMesh(),X=[1,0,0],Y=[0,1,0],Z=[0,0,1],BP=B.fem?B
  const tv=y=>((TY1-y)/(TY1-TY0)*ROW.t)/512;
  /* torso: big frame, chest wider than the hips, padded 80s shoulders, open collar */
  /* dancers: fuller bust and seat, capped and spread over three rows so a big figure stays round instead of coming to a point */
- const cv=B.curve||1,bM = B.dancer ? Math.min(2.1,1.3*(0.8+0.2*cv)*(B.bustK||1)) : 1.15;
- const gM = B.dancer ? Math.min(3.0,1.75*(0.75+0.25*cv)*(B.hipK||1)) : 1.25;
+ /* sizes: bustK / hipK run about 0.6 (petite) to 1.6 (very full); the mapping spreads them so a small one really is small */
+ const cv=B.curve||1,sz=k=>Math.max(0.3,0.35+((k||1)-0.62)*1.4),bM = B.dancer ? Math.min(2.6,1.3*(0.8+0.2*cv)*sz(B.bustK)) : 1.15;
+ const gM = B.dancer ? Math.min(3.3,1.75*(0.75+0.25*cv)*Math.max(0.35,0.4+((B.hipK||1)-0.6)*1.32)) : 1.25;
  /* dancers: a cinched waist (narrowest at the navel, easing out into the ribs and the hips) */
  const wq=y=>B.dancer?1-(1-(B.waist||1))*Math.exp(-Math.pow((y-1.1)/0.085,2)):1;
- const T=torsoRows(B), BUST={}, SHx=B.shoulders||0;
- const BSH=B.dancer&&BP.bust?{1.2:0.075,1.28:0.112,1.36:0.08}:(BP.bust||{});
- for(let k in BSH) BUST[k] = BSH[k] * bM;
- loft(M,T.map(r=>({c:[0,r[0],r[3]],s:X,f:Z,rx:r[1]*(B.dancer&&r[0]<0.96?1+0.12*cv*(B.hipK||1):1)*wq(r[0]),rz:r[2]*(0.4+0.6*wq(r[0])),v:tv(r[0]),w:r[4],mod:(p,ph)=>{if(r[0]>1.44&&r[0]<1.48){p[1]+=0.006*Math.cos(2*ph);}if(B.fem){const b=BUST[r[0]];if(b){const c=Math.max(0,Math.cos(ph));p[2]+=b*c*c*Math.exp(-Math.pow((Math.abs(Math.sin(ph))-0.40)/0.32,2));}if(BP.glute&&r[0]>0.78&&r[0]<0.98){const k=Math.max(0,-Math.cos(ph)),yw=Math.sin(((r[0]-0.78)/0.20)*Math.PI),cheek=0.72+0.45*Math.exp(-Math.pow((Math.abs(Math.sin(ph))-0.38)/0.28,2));p[2]-=(BP.glute*gM)*k*k*yw*cheek;p[1]-=0.014*k*k*yw;}return p;}if(Math.cos(ph)>0.2&&r[0]>1.05&&r[0]<1.4)p[2]+=0.008*Math.cos(ph);return p;}})),BP.segs,{capA:{dir:[0,-1,0],uv:[0.5,0.555]},capB:{dir:[0,1,0],uv:[0.5,0.002],lift:-0.012}});
+ const T=torsoRows(B), SHx=B.shoulders||0;
+ /* women: a round bust. Extra rings through the chest so the profile is a dome, not a cone: full and round underneath, a gentle
+    slope on top, each side a rounded mound (bigger sizes sit a little lower and wider) */
+ if(B.fem){for(const y of [1.24,1.32]){const i=T.findIndex(r=>r[0]>y);if(i<1)continue;const a=T[i-1],b=T[i],k=(y-a[0])/(b[0]-a[0]);
+   T.splice(i,0,[y,a[1]+(b[1]-a[1])*k,a[2]+(b[2]-a[2])*k,a[3]+(b[3]-a[3])*k,k<0.5?a[4]:b[4]]);}}
+ const bPk=(B.dancer?0.112:0.118)*bM,bs=bM/1.4,bY=1.285-0.018*Math.max(0,bs-1),bLo=0.085+0.022*bs,bHi=0.125+0.02*bs,bX=0.38+0.03*Math.max(0,bs-1);
+ const bustAt=(y,ph)=>{const t=(y-bY)/(y<bY?bLo:bHi);if(t*t>=1)return 0;const v=y<bY?Math.pow(1-t*t,0.45):Math.pow(1-t*t,1.15);
+  const c=Math.cos(ph);if(c<=0)return 0;const u=(Math.abs(Math.sin(ph))-bX)/0.4,dome=u*u<1?Math.pow(1-u*u,0.55):0;return bPk*v*Math.pow(c,0.7)*(0.88*dome+0.12*Math.exp(-Math.pow(Math.sin(ph)/0.3,2)));};
+ loft(M,T.map(r=>({c:[0,r[0],r[3]],s:X,f:Z,rx:r[1]*(B.dancer&&r[0]<0.96?1+0.12*cv*(B.hipK||1):1)*wq(r[0]),rz:r[2]*(0.4+0.6*wq(r[0])),v:tv(r[0]),w:r[4],mod:(p,ph)=>{if(r[0]>1.44&&r[0]<1.48){p[1]+=0.006*Math.cos(2*ph);}if(B.fem){p[2]+=bustAt(r[0],ph);if(BP.glute&&r[0]>0.78&&r[0]<0.98){const k=Math.max(0,-Math.cos(ph)),yw=Math.sin(((r[0]-0.78)/0.20)*Math.PI),cheek=0.72+0.45*Math.exp(-Math.pow((Math.abs(Math.sin(ph))-0.38)/0.28,2));p[2]-=(BP.glute*gM)*k*k*yw*cheek;p[1]-=0.014*k*k*yw;}return p;}if(Math.cos(ph)>0.2&&r[0]>1.05&&r[0]<1.4)p[2]+=0.008*Math.cos(ph);return p;}})),BP.segs,{capA:{dir:[0,-1,0],uv:[0.5,0.555]},capB:{dir:[0,1,0],uv:[0.5,0.002],lift:-0.012}});
  /* lapel ridge: a thin raised strip so the lapels catch light (PS2 games modelled these as a few polys) */
  if(!B.fem)for(const s of [1,-1]){GRP++;const pts=[];for(const Y of [1.18,1.3,1.45]){const vw=0.012+(Y-1.12)*0.36,xx=s*(vw+0.04),zz=Math.sqrt(Math.max(0,1-Math.pow(xx/(Y>1.38?0.24:0.25),2)))*0.156+0.008+(Y<1.4?0.008:0);pts.push([xx,Y,zz]);}
   const uvp=p=>[0.5+p[0]*340/512,((TY1-p[1])/(TY1-TY0)*ROW.t)/512];const w=W1(BI.chest),ids=[];for(const p of pts){ids.push(addV(M,V.add(p,[-s*0.03,0,0.004]),uvp(V.add(p,[-s*0.03,0,0])),w),addV(M,V.add(p,[s*0.03,0,0.006]),uvp(V.add(p,[s*0.03,0,0])),w));}
@@ -932,4 +938,6 @@ function flush(VPm,u){if(NX&&NX.live){NX.takeChars(queue,MODELS);queue.length=0;
   const at=(n,b,s)=>{const l=Lc[n];if(l<0)return;gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.vertexAttribPointer(l,s,gl.FLOAT,false,0,0);};
   at('aP',mm.p,3);at('aN',mm.n,3);at('aT',mm.t,2);at('aBi',mm.bi,4);at('aBw',mm.bw,4);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,mm.i);gl.drawElements(gl.TRIANGLES,mm.n_i,gl.UNSIGNED_SHORT,0);}}
  for(const kk of ['aP','aN','aT','aBi','aBw']){const l=Lc[kk];if(l>=0)gl.disableVertexAttribArray(l);}gl.disable(gl.CULL_FACE);gl.bindTexture(gl.TEXTURE_2D,atlasTex);queue.length=0;}
-return{init,add,flush,has,applySuit,rebuild,beginFrame,lookVerts,jewelB,mocapClip,modelStatus:id=>modelStates[id],get status(){return status;},get ready(){return ready;}};})();
+/* how far the chest comes forward and the seat goes back on a look's body (tests use it to check the figure sizes) */
+function lookFigure(L){const B=lookCfg(L||{}).B,M=buildBody(B),P=M.p;let f=-1,b=1;for(let i=0;i<P.length;i+=3){const y=P[i+1],x=P[i],z=P[i+2];if(Math.abs(x)>0.22)continue;if(y>1.15&&y<1.42)f=Math.max(f,z);if(y>0.76&&y<1.0)b=Math.min(b,z);}return{bust:f,seat:-b};}
+return{init,add,flush,has,applySuit,rebuild,beginFrame,lookVerts,lookFigure,jewelB,mocapClip,modelStatus:id=>modelStates[id],get status(){return status;},get ready(){return ready;}};})();
