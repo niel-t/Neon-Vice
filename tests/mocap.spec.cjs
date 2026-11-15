@@ -24,7 +24,8 @@ test('mocap: clips decode, loop cleanly, and play on dancers and home girls', as
   expect(o.moves).toBe(true);
   // a stage girl doing the lambada and a girl walking render with the mocap pose
   await page.evaluate(() => { const d = G.club.dancers[0]; d.move = 'lambada'; d.mt = 2; d.md = 99; const e = G.club.dancers[1]; e.move = 'strut'; e.mt = 2; e.md = 99; });
-  await page.waitForTimeout(1500);
+  // the club is busy (patrons, guests, security) and one new look is built per frame, so give slow software rendering time to reach the girls
+  await page.waitForFunction(() => G.club.dancers.slice(0, 2).every(d => d._pw), null, { timeout: 30000 }).catch(() => {});
   expect(await page.evaluate(() => G.club.dancers.slice(0, 2).every(d => d._pw && d._pw.length === 17))).toBe(true);
 });
 

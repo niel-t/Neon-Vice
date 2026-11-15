@@ -224,7 +224,7 @@ function hairShell(M,rows,segs,o){const hu=[144/512,3/512],open=o.open||0,c0=o.c
 function hairLock(M,s,pts){const hu=[144/512,3/512];loft(M,pts.map(q=>({c:[s*q[0],q[1],q[2]],s:[1,0,0],f:[0,0,1],rx:q[3],rz:q[3]*0.7,v:hu[1],w:q[1]>1.6?W1(BI.head):W2(BI.neck,BI.head,clamp((q[1]-1.5)/0.1,0,1))})),6,{uvf:()=>hu,capA:{dir:[0,1,0],uv:hu},capB:{dir:[0,-1,0],uv:hu}});}
 /* a thin hanging strand (box braids): a tapered loft through pts [x,y,z,r], weighted head -> neck -> chest as it falls, with a little bead at the tip */
 function hairBraid(M,pts){const hu=[144/512,3/512],wy=y=>y>1.6?W1(BI.head):y>1.52?W2(BI.neck,BI.head,(y-1.52)/0.08):y>1.44?W2(BI.chest,BI.neck,(y-1.44)/0.08):W1(BI.chest);
- loft(M,pts.map(q=>({c:[q[0],q[1],q[2]],s:[1,0,0],f:[0,0,1],rx:q[3],rz:q[3],v:hu[1],w:wy(q[1])})),5,{uvf:()=>hu,capA:{dir:[0,1,0],uv:hu},capB:{dir:[0,-1,0],uv:hu}});}
+ loft(M,pts.map(q=>({c:[q[0],q[1],q[2]],s:[1,0,0],f:[0,0,1],rx:q[3],rz:q[3],v:hu[1],w:wy(q[1])})),3,{uvf:()=>hu,capB:{dir:[0,-1,0],uv:hu}});}/* the top end is buried in the braided cap, so only the tip is capped */
 /* torso profile rows [y, rx, rz, zc, weights] after body params, shoulders and belly (shared by the body and the armour shell) */
 function torsoRows(B){const BP=B.fem?BODYP.fem:BODYP.male;
  const T=[[0.8,0.206,0.143,0,W1(BI.pelvis)],[0.9,0.207,0.145,0,W1(BI.pelvis)],[1.0,0.2,0.147,0.008,W2(BI.pelvis,BI.spine,0.5)],[1.1,0.21,0.152,0.014,W1(BI.spine)],
@@ -238,14 +238,22 @@ function buildBody(B){const M=newMesh(),X=[1,0,0],Y=[0,1,0],Z=[0,0,1],BP=B.fem?B
  const tv=y=>((TY1-y)/(TY1-TY0)*ROW.t)/512;
  /* torso: big frame, chest wider than the hips, padded 80s shoulders, open collar */
  /* dancers: fuller bust and seat, capped and spread over three rows so a big figure stays round instead of coming to a point */
- const cv=B.curve||1,bM = B.dancer ? Math.min(2.1,1.3*(0.8+0.2*cv)*(B.bustK||1)) : 1.15;
- const gM = B.dancer ? Math.min(3.0,1.75*(0.75+0.25*cv)*(B.hipK||1)) : 1.25;
+ /* sizes: bustK / hipK run about 0.6 (petite) to 1.6 (very full); the mapping spreads them so a small one really is small */
+ const cv=B.curve||1,sz=k=>Math.max(0.3,0.35+((k||1)-0.62)*1.4),bM = B.dancer ? Math.min(2.6,1.3*(0.8+0.2*cv)*sz(B.bustK)) : 1.15;
+ const gM = B.dancer ? Math.min(3.3,1.75*(0.75+0.25*cv)*Math.max(0.35,0.4+((B.hipK||1)-0.6)*1.32)) : 1.25;
  /* dancers: a cinched waist (narrowest at the navel, easing out into the ribs and the hips) */
  const wq=y=>B.dancer?1-(1-(B.waist||1))*Math.exp(-Math.pow((y-1.1)/0.085,2)):1;
- const T=torsoRows(B), BUST={}, SHx=B.shoulders||0;
- const BSH=B.dancer&&BP.bust?{1.2:0.075,1.28:0.112,1.36:0.08}:(BP.bust||{});
- for(let k in BSH) BUST[k] = BSH[k] * bM;
- loft(M,T.map(r=>({c:[0,r[0],r[3]],s:X,f:Z,rx:r[1]*(B.dancer&&r[0]<0.96?1+0.12*cv*(B.hipK||1):1)*wq(r[0]),rz:r[2]*(0.4+0.6*wq(r[0])),v:tv(r[0]),w:r[4],mod:(p,ph)=>{if(r[0]>1.44&&r[0]<1.48){p[1]+=0.006*Math.cos(2*ph);}if(B.fem){const b=BUST[r[0]];if(b){const c=Math.max(0,Math.cos(ph));p[2]+=b*c*c*Math.exp(-Math.pow((Math.abs(Math.sin(ph))-0.40)/0.32,2));}if(BP.glute&&r[0]>0.78&&r[0]<0.98){const k=Math.max(0,-Math.cos(ph)),yw=Math.sin(((r[0]-0.78)/0.20)*Math.PI),cheek=0.72+0.45*Math.exp(-Math.pow((Math.abs(Math.sin(ph))-0.38)/0.28,2));p[2]-=(BP.glute*gM)*k*k*yw*cheek;p[1]-=0.014*k*k*yw;}return p;}if(Math.cos(ph)>0.2&&r[0]>1.05&&r[0]<1.4)p[2]+=0.008*Math.cos(ph);return p;}})),BP.segs,{capA:{dir:[0,-1,0],uv:[0.5,0.555]},capB:{dir:[0,1,0],uv:[0.5,0.002],lift:-0.012}});
+ const T=torsoRows(B), SHx=B.shoulders||0;
+ /* women: a round bust. An extra ring through the chest (and one through the seat) so the profile is a dome, not a cone: full and round underneath, a gentle
+    slope on top, each side a rounded mound (bigger sizes sit a little lower and wider) */
+ if(B.fem){for(const y of [0.85,1.25]){const i=T.findIndex(r=>r[0]>y);if(i<1)continue;const a=T[i-1],b=T[i],k=(y-a[0])/(b[0]-a[0]);
+   T.splice(i,0,[y,a[1]+(b[1]-a[1])*k,a[2]+(b[2]-a[2])*k,a[3]+(b[3]-a[3])*k,k<0.5?a[4]:b[4]]);}}
+ const bPk=(B.dancer?0.112:0.118)*bM,bs=bM/1.4,bY=1.285-0.018*Math.max(0,bs-1),bLo=0.085+0.022*bs,bHi=0.125+0.02*bs,bX=0.38+0.03*Math.max(0,bs-1);
+ const bustAt=(y,ph)=>{const t=(y-bY)/(y<bY?bLo:bHi);if(t*t>=1)return 0;const v=y<bY?Math.pow(1-t*t,0.45):Math.pow(1-t*t,1.15);
+  const c=Math.cos(ph);if(c<=0)return 0;const u=(Math.abs(Math.sin(ph))-bX)/0.4,dome=u*u<1?Math.pow(1-u*u,0.55):0;return bPk*v*Math.pow(c,0.7)*(0.88*dome+0.12*Math.exp(-Math.pow(Math.sin(ph)/0.3,2)));};
+ /* the seat: a round dome too, fullest a little below the middle of the hips, curving under into the legs instead of coming to a ridge */
+ const gluteAt=y=>{const t=(y-0.885)/0.13;if(t*t>=1)return 0;return y<0.885?Math.pow(1-t*t,0.5):1-t*t;};
+ loft(M,T.map(r=>({c:[0,r[0],r[3]],s:X,f:Z,rx:r[1]*(B.dancer&&r[0]<0.96?1+0.12*cv*(B.hipK||1):1)*wq(r[0]),rz:r[2]*(0.4+0.6*wq(r[0])),v:tv(r[0]),w:r[4],mod:(p,ph)=>{if(r[0]>1.44&&r[0]<1.48){p[1]+=0.006*Math.cos(2*ph);}if(B.fem){p[2]+=bustAt(r[0],ph);if(BP.glute){const yw=gluteAt(r[0]);if(yw>0){const k=Math.max(0,-Math.cos(ph)),kk=Math.pow(k,1.25),cheek=0.74+0.4*Math.exp(-Math.pow((Math.abs(Math.sin(ph))-0.36)/0.3,2));p[2]-=(BP.glute*gM)*kk*yw*cheek;p[1]-=0.01*kk*yw;}}return p;}if(Math.cos(ph)>0.2&&r[0]>1.05&&r[0]<1.4)p[2]+=0.008*Math.cos(ph);return p;}})),BP.segs,{capA:{dir:[0,-1,0],uv:[0.5,0.555]},capB:{dir:[0,1,0],uv:[0.5,0.002],lift:-0.012}});
  /* lapel ridge: a thin raised strip so the lapels catch light (PS2 games modelled these as a few polys) */
  if(!B.fem)for(const s of [1,-1]){GRP++;const pts=[];for(const Y of [1.18,1.3,1.45]){const vw=0.012+(Y-1.12)*0.36,xx=s*(vw+0.04),zz=Math.sqrt(Math.max(0,1-Math.pow(xx/(Y>1.38?0.24:0.25),2)))*0.156+0.008+(Y<1.4?0.008:0);pts.push([xx,Y,zz]);}
   const uvp=p=>[0.5+p[0]*340/512,((TY1-p[1])/(TY1-TY0)*ROW.t)/512];const w=W1(BI.chest),ids=[];for(const p of pts){ids.push(addV(M,V.add(p,[-s*0.03,0,0.004]),uvp(V.add(p,[-s*0.03,0,0])),w),addV(M,V.add(p,[s*0.03,0,0.006]),uvp(V.add(p,[s*0.03,0,0])),w));}
@@ -324,18 +332,18 @@ function buildHead(B){const M=newMesh(),X=[1,0,0],Z=[0,0,1],tv=y=>1-(y-HEAD.neck
   const hu=[144/512,3/512],R=(y,r,rz,z,w)=>({c:[0,y,z],s:[1,0,0],f:[0,0,1],rx:r,rz,w,v:hu[1]});
   loft(M,[R(1.76,0.12,0.09,-0.035,W1(BI.head)),R(1.66,0.125,0.08,-0.055,W1(BI.head)),R(1.56,0.128,0.068,-0.07,W2(BI.neck,BI.head,0.5)),R(1.46,0.124,0.056,-0.085,W2(BI.chest,BI.neck,0.5)),R(1.38,0.11,0.042,-0.1,W1(BI.chest))],12,{uvf:()=>hu,capB:{dir:[0,1,0],uv:hu},capA:{dir:[0,-1,0],uv:hu}});}
  if(B&&FH&&B.hs==='xlong'){/* sleek waist-length hair: straight and heavy down the back, a centre part, long face-framing panels to the collarbones */
-  hairShell(M,[[1.795,0.122,0.12,-0.014],[1.72,0.13,0.114,-0.026],[1.64,0.133,0.104,-0.04],[1.56,0.13,0.092,-0.06],[1.48,0.128,0.08,-0.084],[1.4,0.126,0.074,-0.1],[1.3,0.122,0.07,-0.112],[1.2,0.114,0.066,-0.118],[1.12,0.098,0.058,-0.12],[1.07,0.07,0.04,-0.12]],14,{open:1.775,c0:0.4,curl:0.005,bottom:1});
-  for(const s of [1,-1])hairLock(M,s,[[0.07,1.8,0.07,0.02],[0.112,1.74,0.056,0.026],[0.128,1.66,0.036,0.03],[0.126,1.58,0.02,0.03],[0.13,1.5,0.006,0.028],[0.136,1.44,-0.01,0.02]]);}
+  hairShell(M,[[1.795,0.122,0.12,-0.014],[1.72,0.13,0.114,-0.026],[1.64,0.133,0.104,-0.04],[1.56,0.13,0.092,-0.06],[1.48,0.128,0.08,-0.084],[1.4,0.126,0.074,-0.1],[1.2,0.116,0.068,-0.116],[1.08,0.084,0.05,-0.12]],12,{open:1.775,c0:0.4,curl:0.005,bottom:1});
+  for(const s of [1,-1])hairLock(M,s,[[0.07,1.8,0.07,0.02],[0.112,1.74,0.056,0.026],[0.128,1.66,0.036,0.03],[0.13,1.52,0.01,0.029],[0.136,1.44,-0.01,0.02]]);}
  else if(B&&FH&&B.hs==='waves'){/* long glamour waves: big soft volume falling past the shoulder blades, flaring out at the ends, with waved face-framing locks */
-  hairShell(M,[[1.8,0.126,0.122,-0.012],[1.73,0.14,0.122,-0.022],[1.65,0.148,0.114,-0.036],[1.56,0.152,0.104,-0.052],[1.47,0.158,0.096,-0.07],[1.38,0.162,0.09,-0.088],[1.3,0.156,0.082,-0.1],[1.24,0.136,0.068,-0.106],[1.21,0.1,0.05,-0.106]],16,{open:1.77,c0:0.42,curl:0.04,fq:1.3,bottom:1});
-  for(const s of [1,-1])hairLock(M,s,[[0.08,1.8,0.066,0.022],[0.124,1.73,0.05,0.03],[0.14,1.65,0.03,0.032],[0.128,1.57,0.022,0.03],[0.148,1.5,0.01,0.028],[0.142,1.44,-0.004,0.024],[0.16,1.4,-0.02,0.014]]);}
+  hairShell(M,[[1.8,0.126,0.122,-0.012],[1.73,0.14,0.122,-0.022],[1.56,0.152,0.104,-0.052],[1.47,0.158,0.096,-0.07],[1.38,0.162,0.09,-0.088],[1.28,0.15,0.078,-0.102],[1.21,0.1,0.05,-0.106]],14,{open:1.77,c0:0.42,curl:0.04,fq:1.3,bottom:1});
+  for(const s of [1,-1])hairLock(M,s,[[0.08,1.8,0.066,0.022],[0.124,1.73,0.05,0.03],[0.14,1.65,0.03,0.032],[0.14,1.52,0.014,0.029],[0.16,1.4,-0.02,0.014]]);}
  else if(B&&FH&&B.hs==='braids'){/* long box braids: a neat braided cap, then a curtain of thin braids from the crown down the back to the waist, a few over the shoulders */
-  hairShell(M,[[1.8,0.122,0.12,-0.012],[1.73,0.13,0.118,-0.02],[1.66,0.132,0.11,-0.032],[1.6,0.126,0.1,-0.04],[1.56,0.11,0.084,-0.046]],14,{open:1.77,c0:0.4,curl:0.012,fq:3,bottom:1});
-  const N=17;for(let i=0;i<N;i++){const a=-2.45+4.9*i/(N-1),sa=Math.sin(a),ca=Math.cos(a),side=Math.abs(sa)>0.86&&ca>-0.2,len=side?0.3:0.42+0.12*((i*7)%5)/4;
+  hairShell(M,[[1.8,0.122,0.12,-0.012],[1.72,0.131,0.116,-0.022],[1.62,0.13,0.104,-0.038],[1.56,0.11,0.084,-0.046]],12,{open:1.77,c0:0.4,curl:0.012,fq:3,bottom:1});
+  const N=8;for(let i=0;i<N;i++){const a=-2.45+4.9*i/(N-1),sa=Math.sin(a),ca=Math.cos(a),side=Math.abs(sa)>0.86&&ca>-0.2,len=side?0.3:0.42+0.12*((i*7)%5)/4;
    const x0=sa*0.128,z0=-0.02+ca*0.118,x1=sa*(side?0.14:0.1),z1=side?0.02:Math.min(z0,-0.1)-0.03+ca*0.02;
-   hairBraid(M,[[x0,1.66,z0,0.015],[sa*0.136,1.58,(z0+z1)/2-0.012,0.015],[x1,1.5,z1-0.012,0.014],[x1*0.96,1.5-len*0.5,z1-0.03,0.013],[x1*0.92,1.5-len,z1-0.034,0.011],[x1*0.92,1.49-len,z1-0.034,0.014]]);}}
+   hairBraid(M,[[x0,1.66,z0,0.019],[x1,1.5,z1-0.012,0.019],[x1*0.92,1.5-len,z1-0.034,0.014],[x1*0.92,1.49-len,z1-0.034,0.018]]);}}
  else if(B&&FH&&B.hs==='afro'){/* a big round afro: full, tightly curled volume all round the head, the face left open */
-  hairShell(M,[[1.975,0.06,0.06,-0.022],[1.955,0.135,0.13,-0.022],[1.91,0.188,0.178,-0.024],[1.85,0.212,0.198,-0.028],[1.78,0.214,0.196,-0.032],[1.71,0.2,0.18,-0.036],[1.65,0.172,0.152,-0.042],[1.6,0.136,0.116,-0.046],[1.575,0.1,0.086,-0.048]],22,{open:1.8,c0:0.46,k0:0.5,curl:0.05,fq:2.4,top:1,bottom:1});}
+  hairShell(M,[[1.975,0.06,0.06,-0.022],[1.955,0.135,0.13,-0.022],[1.91,0.188,0.178,-0.024],[1.85,0.212,0.198,-0.028],[1.78,0.214,0.196,-0.032],[1.71,0.2,0.18,-0.036],[1.65,0.172,0.152,-0.042],[1.6,0.136,0.116,-0.046],[1.575,0.1,0.086,-0.048]],16,{open:1.8,c0:0.46,k0:0.5,curl:0.05,fq:2.4,top:1,bottom:1});}
  else if(B&&FH&&B.hs==='puff'){/* afro puff: hair pulled back smooth into a big round puff on top of the crown, held with a band */
   hairShell(M,[[2.0,0.05,0.05,-0.072],[1.985,0.1,0.096,-0.072],[1.945,0.13,0.124,-0.07],[1.9,0.136,0.13,-0.066],[1.855,0.12,0.114,-0.062],[1.82,0.09,0.086,-0.058]],18,{curl:0.06,fq:2.4,top:1,bottom:1});
   const hu=[300/512,3/512],w=W1(BI.head),T=y=>({c:[0,y,-0.058],s:[1,0,0],f:[0,0,1],rx:0.062,rz:0.058,w,v:hu[1]});loft(M,[T(1.828),T(1.846)],12,{uvf:()=>hu});}
@@ -932,4 +940,6 @@ function flush(VPm,u){if(NX&&NX.live){NX.takeChars(queue,MODELS);queue.length=0;
   const at=(n,b,s)=>{const l=Lc[n];if(l<0)return;gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.vertexAttribPointer(l,s,gl.FLOAT,false,0,0);};
   at('aP',mm.p,3);at('aN',mm.n,3);at('aT',mm.t,2);at('aBi',mm.bi,4);at('aBw',mm.bw,4);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,mm.i);gl.drawElements(gl.TRIANGLES,mm.n_i,gl.UNSIGNED_SHORT,0);}}
  for(const kk of ['aP','aN','aT','aBi','aBw']){const l=Lc[kk];if(l>=0)gl.disableVertexAttribArray(l);}gl.disable(gl.CULL_FACE);gl.bindTexture(gl.TEXTURE_2D,atlasTex);queue.length=0;}
-return{init,add,flush,has,applySuit,rebuild,beginFrame,lookVerts,jewelB,mocapClip,modelStatus:id=>modelStates[id],get status(){return status;},get ready(){return ready;}};})();
+/* how far the chest comes forward and the seat goes back on a look's body (tests use it to check the figure sizes) */
+function lookFigure(L){const B=lookCfg(L||{}).B,M=buildBody(B),P=M.p;let f=-1,b=1;for(let i=0;i<P.length;i+=3){const y=P[i+1],x=P[i],z=P[i+2];if(Math.abs(x)>0.22)continue;if(y>1.15&&y<1.42)f=Math.max(f,z);if(y>0.76&&y<1.0)b=Math.min(b,z);}return{bust:f,seat:-b};}
+return{init,add,flush,has,applySuit,rebuild,beginFrame,lookVerts,lookFigure,jewelB,mocapClip,modelStatus:id=>modelStates[id],get status(){return status;},get ready(){return ready;}};})();

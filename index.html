@@ -3187,9 +3187,12 @@ const STAGE_FITS=[[0xff2d95,0xffd36b],[0x2de2e6,0xffffff],[0xc9b6f2,0xff6fae],[0
    when she changes outfit colours on stage. ix spreads the styles so the girls on one stage never look alike. */
 const DANCER_HAIR=[0xf3e3a0,0xe8c860,0xc8964a,0x101010,0x3a2214,0x6a3a1a,0xa5332a,0xd2452a,0xff6fae,0x3ab0ff,0x9a5ae0,0xf0f0f4];
 const DANCER_BODY=[{body:'slim',sc:[0.94,0.95,0.94],curve:1.0},{body:'slim',sc:[0.95,1.05,0.95],curve:1.1},{body:'normal',sc:[0.98,1,0.98],curve:1.2},{body:'normal',sc:[1.0,1,1.0],curve:1.32},{body:'normal',sc:[1.03,0.99,1.03],curve:1.45}];
-/* every girl's figure follows her look: skin tone and hair colour pick how full the bust and hips are and how small the waist */
+/* every girl's figure follows her look: skin tone and hair colour pick her bust size, her seat (hips and behind) and how small the waist is */
 function dancerFigure(P){const key=String(P.sk)+'|'+String(P.hair);let h=2166136261;for(let i=0;i<key.length;i++){h^=key.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}
- const u=k=>((h>>>(k*8))&255)/255;return{waist:0.74+0.1*u(0),bust:1.12+0.42*u(1),hips:1.15+0.4*u(2)};}
+ const u=k=>((h>>>(k*8))&255)/255;
+ /* sizes run from petite to very full, bust and seat picked separately, so every combination turns up */
+ const BUSTS=[0.62,0.82,1.02,1.22,1.42,1.62],SEATS=[0.6,0.8,1.0,1.2,1.4,1.62];
+ return{waist:0.74+0.1*u(0),bust:BUSTS[Math.floor(u(1)*6)%6]+0.08*(u(3)-0.5),hips:SEATS[Math.floor(u(2)*6)%6]+0.08*(((h*7)>>>4&255)/255-0.5)};}
 const DANCER_LING=['bikini','bodysuit','corset','lace','babydoll','leopard','strappy','leotard'];
 /* faces: eye colour, lipstick and eyeshadow; each girl gets her own mix */
 const DANCER_IRIS=['#3a2414','#5a3a1a','#6a5a24','#2e6a3a','#2a5a9a','#5a6470'],DANCER_LIP=[[225,30,90],[200,20,40],[240,90,110],[150,30,70],[235,110,80],[190,110,110]],DANCER_SHADOW=['rgba(150,60,140,.55)','rgba(60,110,210,.5)','rgba(235,90,160,.5)','rgba(210,160,60,.5)','rgba(40,30,40,.55)','rgba(40,170,160,.45)'];
