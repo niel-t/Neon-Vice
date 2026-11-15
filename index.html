@@ -3103,9 +3103,38 @@ function updateFin(dt){const g=G,f=g.fin,id=rideId(),L=FIN[id]||FIN.don,e=f.e,p=
 /* Act 2 props */
 /* every speedboat is the classic mahogany runabout (marina.js) */
 function drawSpeedboat(B,x,z,a,col){drawRiva(B,x,z,a,col);}
-function drawHeli(B,x,z,a,T){const {P}=rideKit(B,x,z,1,a),D1=[0.1,0.1,0.13];P(0,0.6,0,0,1.6,0.78,0.95,D1);P(0.78,0.62,0,0,0.5,0.6,0.86,[0.5,0.75,0.95]);P(-1.4,0.8,0,0,1.7,0.16,0.16,D1);P(-2.2,1.0,0,0,0.26,0.5,0.05,D1);P(-2.2,0.85,0.12,0,0.3,0.06,0.25,D1);
- for(const sd of [-1,1]){P(0,0.08,sd*0.46,0,1.8,0.05,0.05,[0.65,0.65,0.7]);P(0.4,0.22,sd*0.42,0,0.05,0.28,0.04,[0.65,0.65,0.7]);P(-0.4,0.22,sd*0.42,0,0.05,0.28,0.04,[0.65,0.65,0.7]);P(0,0.5,sd*0.48,0,1.5,0.06,0.01,GOLD);}
- P(0,1.02,0,0,0.12,0.12,0.12,D1);for(let i=0;i<2;i++)B.box(A.mul(A.mul(A.T(x,1.08,z),A.RY(T*14+i*Math.PI/2)),A.S(3.8,0.03,0.14)),[0.15,0.15,0.17]);}
+/* the chopper: a sleek twin-engine executive helicopter. Lofted fuselage (elliptic sections from the nose back to the tail boom),
+   wraparound tinted glass, a gold pinstripe, engine cowling on top, a shrouded tail fan, swept fin, skids, and a four-blade rotor */
+const HELI_ST=[[1.62,0.03,0.04,0.6],[1.5,0.2,0.2,0.6],[1.32,0.36,0.34,0.63],[1.05,0.48,0.46,0.68],[0.7,0.55,0.53,0.73],[0.2,0.58,0.56,0.77],[-0.35,0.56,0.55,0.79],[-0.8,0.46,0.47,0.84],
+ [-1.12,0.28,0.3,0.92],[-1.4,0.15,0.17,0.98],[-2.2,0.11,0.12,1.0],[-2.85,0.08,0.09,1.02],[-3.05,0.03,0.04,1.03]];
+function heliLoft(B,b,st,N,col){const GL=TUV[57],PT=TUV[56],R=st.map(([x,w,h,c])=>{const r=[];for(let k=0;k<=N;k++){const t=k/N*TAU;r.push([x,c+h*Math.sin(t),w*Math.cos(t)]);}return r;});
+ const tw=p=>apply(b,p[0],p[1],p[2]),nrm=(p0,p1,p2)=>{const u=[p1[0]-p0[0],p1[1]-p0[1],p1[2]-p0[2]],v=[p2[0]-p0[0],p2[1]-p0[1],p2[2]-p0[2]],n=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]],l=Math.hypot(n[0],n[1],n[2]);return l<1e-9?null:n.map(q=>q/l);};
+ for(let i=0;i<st.length-1;i++)for(let k=0;k<N;k++){const P=[R[i][k],R[i+1][k],R[i+1][k+1],R[i][k+1]],c0=[(st[i][0]+st[i+1][0])/2,(st[i][3]+st[i+1][3])/2,0],o=col(i,k,(k+0.5)/N*TAU,(st[i][0]+st[i+1][0])/2);
+  const T=P.map(tw);let n=nrm(T[0],T[1],T[2])||nrm(T[0],T[2],T[3]);if(!n)continue;const cw=tw(c0),m=[(T[0][0]+T[2][0])/2-cw[0],(T[0][1]+T[2][1])/2-cw[1],(T[0][2]+T[2][2])/2-cw[2]];
+  if(n[0]*m[0]+n[1]*m[1]+n[2]*m[2]<0){T.reverse();n=n.map(q=>-q);}B.quad(T,n[0],n[1],n[2],o.g?GL:PT,o.c);}}
+function drawHeli(B,x,z,a,T){const {b,P}=rideKit(B,x,z,1,a),BODY=[0.92,0.92,0.94],TRIM=[0.14,0.14,0.17],GLS=[0.05,0.08,0.13],CH=[0.72,0.72,0.76],DK=[0.1,0.1,0.12];
+ /* the fuselage: glass wraps the nose and runs down the cabin sides, a gold pinstripe below the windows, a pale belly */
+ heliLoft(B,b,HELI_ST,16,(i,k,t,cx)=>{const sn=Math.sin(t),cs=Math.abs(Math.cos(t));
+  if(cx>0.85&&sn>-0.15&&!(cx>1.45&&sn<0.2))return{c:GLS,g:1};if(cx>-0.55&&cx<0.7&&sn>0.08&&sn<0.62&&cs>0.6)return{c:GLS,g:1};
+  if(cx>-1.2&&sn>-0.18&&sn<-0.06)return{c:GOLD};if(sn<-0.75&&cx>-1.1)return{c:TRIM};return{c:BODY};});
+ /* the engine cowling and its intakes and exhausts on top */
+ heliLoft(B,b,[[0.75,0.02,0.02,1.3],[0.6,0.24,0.12,1.32],[0.0,0.34,0.16,1.36],[-0.7,0.3,0.15,1.33],[-1.15,0.16,0.1,1.24],[-1.3,0.02,0.02,1.22]],10,(i,k,t)=>({c:Math.sin(t)>0.6&&i===2?TRIM:BODY}));
+ for(const sd of [-1,1]){P(0.25,1.37,sd*0.32,0,0.36,0.1,0.04,DK);P(-1.05,1.3,sd*0.2,-0.3,0.22,0.1,0.12,[0.25,0.24,0.26]);P(-1.12,1.3,sd*0.2,-0.3,0.08,0.07,0.08,[0.05,0.05,0.05]);}
+ /* the doors: seams and gold handles, the step */
+ for(const sd of [-1,1]){const zz=sd*0.565;P(0.72,0.72,zz,0,0.015,0.62,0.01,DK);P(-0.6,0.72,zz,0,0.015,0.6,0.01,DK);P(0.0,0.62,sd*0.585,0,0.14,0.025,0.015,GOLD);P(0.05,0.3,sd*0.6,0,0.7,0.03,0.1,CH);}
+ /* the tail: swept fin over a shrouded fan, the horizontal stabiliser with its end plates, nav lights */
+ {const tx=-2.95;for(let k=0;k<12;k++){const an=k*TAU/12;P(tx+Math.cos(an)*0.26,1.03+Math.sin(an)*0.26,0,an,0.06,0.15,0.16,BODY);}P(tx,1.03,0,0,0.04,0.04,0.14,DK);
+  for(let k=0;k<7;k++){const an=k*TAU/7+T*40;P(tx+Math.cos(an)*0.11,1.03+Math.sin(an)*0.11,0,an,0.2,0.03,0.02,DK);}
+  P(tx-0.05,1.55,0,-0.45,0.34,0.62,0.05,BODY);P(tx-0.12,1.87,0,-0.45,0.2,0.08,0.05,GOLD);P(tx+0.1,0.72,0,0.35,0.22,0.3,0.04,BODY);
+  P(-2.35,1.03,0,0,0.3,0.03,1.3,BODY);for(const sd of [-1,1]){P(-2.38,1.08,sd*0.66,-0.2,0.28,0.24,0.03,BODY);P(-2.3,1.03,sd*0.68,0,0.05,0.05,0.05,sd>0?[0.1,1.4,0.3]:[1.4,0.1,0.1],undefined,true);}
+  P(-1.6,1.0,0,0,0.9,0.02,0.02,GOLD);}
+ /* skids: two tubes with turned-up toes on slanted cross tubes */
+ for(const sd of [-1,1]){const zz=sd*0.62;P(0.0,0.05,zz,0,2.0,0.05,0.05,CH);P(1.08,0.1,zz,0.5,0.24,0.05,0.05,CH);P(-1.05,0.08,zz,-0.35,0.14,0.05,0.05,CH);
+  for(const xx of [0.55,-0.55])B.box(A.mul(A.mul(b,A.T(xx,0.22,sd*0.5)),A.mul(A.RX(sd*0.55),A.S(0.05,0.36,0.05))),CH);}
+ /* the rotor: mast, hub, four tapered blades (spinning with T), a red beacon */
+ P(-0.15,1.5,0,0,0.1,0.18,0.1,DK);P(-0.15,1.6,0,0,0.26,0.06,0.26,CH);B.box(A.mul(A.mul(b,A.T(-0.15,0.3,0)),A.S(0.06,0.06,0.06)),[1.4,0.1,0.1],true);
+ for(let i=0;i<4;i++){const m0=A.mul(A.mul(b,A.T(-0.15,1.63,0)),A.RY(T*14+i*Math.PI/2));B.box(A.mul(m0,A.mul(A.T(1.1,0,0),A.S(2.0,0.025,0.17))),[0.12,0.12,0.14]);B.box(A.mul(m0,A.mul(A.T(2.2,0,0),A.S(0.25,0.024,0.12))),[0.12,0.12,0.14]);B.box(A.mul(m0,A.mul(A.T(2.27,0.002,0),A.S(0.12,0.026,0.125))),GOLD);}
+ P(-0.15,1.67,0,0,0.16,0.05,0.16,BODY);P(-0.15,1.7,0,0,0.05,0.04,0.05,[1.4,0.15,0.15],undefined,true);}
 function drawAct2(B,g){const T=g.T,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,ry||0,sx,sy,sz),c,!!em);
  if(g.nades)for(const n of g.nades){B.box(A.mul(A.mul(A.T(n.x,n.y,n.z),A.RY(n.spin)),A.S(0.13,0.13,0.17)),GOLD,true);}
  if(g.tip){for(const r of (g.rigs||[]))if(!r.cut)bx(r.x,1.2,r.z,0.07,2.4,0.07,[0.3,1,0.5],true);if(g.safe&&!(g.obj&&g.obj.done))bx(g.safe.x,1.4,g.safe.z,0.07,2.8,0.07,[0.3,1,0.5],true);}
@@ -3357,8 +3386,8 @@ function sjState(g){const k=g.sj,bl=(g.kb.knife||0)+(g.kb.machete||0)+(g.kb.thro
    Hiring one makes the bed a double, two or more a bed for three; when you sleep the girls who fit come to bed with you. */
 const GIRLS_MAX=3,girlsN=f=>f.girlsN!==undefined?f.girlsN:(f.girls?2:0),girlPrice=it=>Math.round(it.price/2),bedN=()=>{const t=myProg().home||0;return t===0?1:1+Math.min(t===3?3:2,girlsN(homeFurn()));};
 /* bed for n people: per home [centre x, centre z for one person, scale]; it grows toward the south */
-const BIG_BED=[[3.05,9.55,1],[2.6,12.5,1],[2.3,10.5,1.2],[13.35,14.95,1.25]];
-function bigBedAt(t,n){const [cx,cz,s]=BIG_BED[t];return{x:cx,z:cz+(t===0?0.245:0.49*s)*(n-1),s,w:0.98*s*n};}
+const BIG_BED=[[3.05,9.55,1],[2.6,12.5,1],[2.3,10.5,1.2],[18.5,17.8,1.0]];
+function bigBedAt(t,n){const [cx,cz,s]=BIG_BED[t];return{x:cx,z:t===3?cz:cz+(t===0?0.245:0.49*s)*(n-1),s,w:0.98*s*n};} /* Villa Solana's bed is round and stays put in the middle of the room */
 /* the same bed in world space: Studio and Penthouse decor is drawn one cell in from the padded grid */
 function bigBedWorld(t,n){const B=bigBedAt(t,n),o=t===0?0:1;return{x:B.x+o,z:B.z+o,s:B.s,w:B.w};}
 function drawBigBed(bx,t,n,frame,mat,sheet){const B=bigBedAt(t,n),cx=B.x,cz=B.z,s=B.s,w=B.w;
@@ -3367,13 +3396,13 @@ function drawBigBed(bx,t,n,frame,mat,sheet){const B=bigBedAt(t,n),cx=B.x,cz=B.z,
  for(let i=0;i<n;i++)bx(cx-0.72*s,0.6*s,cz-w/2+(i+0.5)*w/n,0.32*s,0.1*s,w/n*0.78,sheet);
  bx(cx+0.28*s,0.565*s,cz,1.32*s,0.03,w+0.02,sheet.map(v=>v*0.85));
  bx(cx-0.97*s,0.62*s,cz,0.06,0.6*s,w+0.06,frame.map(v=>v*0.7));bx(cx+0.97*s,0.5*s,cz,0.04,0.36*s,w+0.06,frame.map(v=>v*0.7));}
-const HOME_BED_WORLD=[{x:3.0,z:9.5},{x:3.6,z:13.5},{x:3.3,z:11.5},{x:14.35,z:15.95}];
+const HOME_BED_WORLD=[{x:3.0,z:9.5},{x:3.6,z:13.5},{x:3.3,z:11.5},{x:19.5,z:18.8}];
 /* everybody who fits lies down on the big bed (face up, heads on the pillows) and stays there until morning is over; moving gets you up */
 function tuckIn(g){const n=bedN(),B=bigBedWorld(g.home,n),gs=g.npcs.filter(q=>q.kind==='pgirl'),fit=gs.slice(0,n-1),who=fit.length>1?[fit[0],g.player].concat(fit.slice(1)):[g.player].concat(fit);
  who.forEach((c,i)=>{c.bed=true;c.bedT=c.player?90:1e9;c.bedI=i;c.x=B.x+0.88*B.s;c.z=B.z-B.w/2+(i+0.5)*B.w/n;c.a=Math.PI/2;c.y=0.56*B.s;c.vx=c.vz=0;c.bedX=c.x;c.bedZ=c.z;c.bedHX=B.x-0.86*B.s;c.bedHZ=c.z;});g.bedAt=g.T;}
 function bedTick(g,dt){const B=bigBedWorld(g.home,bedN());for(const c of g.npcs.concat([g.player])){if(!c||!c.bed)continue;c.bedT-=dt;
  const up=c.player?(state==='play'&&g.T-g.bedAt>1.5&&moveIntent())||c.bedT<=0:c.bedT<=0;
- if(up){c.bed=false;c.y=0;c.x=B.x+1.35*B.s;c.z=c.bedZ;c.a=Math.PI/2;if(c.player)for(const q of g.npcs)if(q.bed)q.bedT=Math.min(q.bedT,1.5+q.bedI*1.2);continue;}c.x=c.bedX;c.z=c.bedZ;c.a=Math.PI/2;c.y=0.56*B.s;c.vx=c.vz=0;}}
+ if(up){c.bed=false;c.y=0;c.x=B.x+(g.home===3?2.45:1.35)*B.s;c.z=c.bedZ;c.a=Math.PI/2;if(c.player)for(const q of g.npcs)if(q.bed)q.bedT=Math.min(q.bedT,1.5+q.bedI*1.2);continue;}c.x=c.bedX;c.z=c.bedZ;c.a=Math.PI/2;c.y=0.56*B.s;c.vx=c.vz=0;}}
 function homeBedPos(g){const n=bedN();if(n>1){const B=bigBedWorld(g.home,n);return{x:B.x,z:B.z};}return HOME_BED_WORLD[g.home]||HOME_BED_WORLD[0];}
 /* the gun locker stands against the east wall, one per home */
 const HOME_LOCKER_WORLD=[{x:23.72,z:14.5},{x:29.72,z:19.0},{x:31.72,z:17.5},{x:33.72,z:21.5}];
