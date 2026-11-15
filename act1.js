@@ -26,7 +26,7 @@ const ACT1={
  /* Act 2 and Act 3 fronts (the Royal Flush is at sea and keeps its speedboat) */
  'VICE MARINA':{entry:'main',gate:true,awning:0x2bb7b9,lamps:[-14,-7,7,14],
   kerb:[['pole',-10,'k',{t1:'VICE',t2:'MARINA',c1:[0.3,0.95,1],c2:[1,0.55,0.2],t3:'BOAT SLIPS'}],['bench',-4.5,'w'],['bench',4.5,'w'],['trash',6.5,'w'],['phone',-6.5,'w'],['hydrant',11,'k'],['news',12.5,'w']],
-  sign:null,side:{bulb:true,dumpsters:true}},
+  sign:null,side:{bulb:true}},
  'STARLIGHT ARCADE':{entry:'main',awning:0xe0459a,lamps:[-13,-6,7,13],
   kerb:[['posters',-2.6,'w'],['posters',2.6,'w'],['news',-5,'w'],['trash',5,'w'],['meter',-9,'k'],['meter',9,'k'],['hydrant',11,'k'],['phone',-11,'w']],
   sign:{t:'STARLIGHT',c:[0.75,0.45,1]},side:{bulb:true}},

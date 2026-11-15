@@ -292,6 +292,7 @@ const TRS=(x,y,z,ry,sx,sy,sz)=>A.mul(A.mul(A.T(x,y,z),A.RY(ry)),A.S(sx,sy,sz));
 <script src="venues.js"></script>
 <script src="streets.js"></script>
 <script src="act1.js"></script>
+<script src="marina.js"></script>
 <script src="upstairs.js"></script>
 <script src="guide.js"></script>
 <script src="animals.js"></script>
@@ -1144,7 +1145,7 @@ function endLeave(){const g=G,L=g.leave;if(!L||L.fin)return;L.fin=true;L.hide=tr
 function arriveSfx(){if(typeof AC==='undefined'||!AC||!SET.sound)return;try{const t=AC.currentTime;
  tone(t,2.2,'sawtooth',95,38,0.07,undefined,0.15);tone(t,2.2,'square',48,26,0.04,undefined,0.15);noise(t+1.75,0.45,'bandpass',2600,1400,0.05,undefined,6);}catch(e){}}
 
-function dressStreet(g){if(act1Of(g)){act1Dress(g);return;}const W=g.W,H=g.H;streetPlan(g);if(g.arr&&g.arr.type==='alley')dressAlley(g);
+function dressStreet(g){if(act1Of(g)){act1Dress(g);marinaDress(g);return;}const W=g.W,H=g.H;streetPlan(g);if(g.arr&&g.arr.type==='alley')dressAlley(g);
  const street=(x,z)=>x>=0&&z>=0&&x<W&&z<H&&!g.solid[z*W+x]&&g.floorT[z*W+x]===7&&!(g.arr&&g.arr.ax&&x>=g.arr.ax[0]&&x<=g.arr.ax[1]&&z>=g.arr.zT-1);
  const occ=(x,z)=>g.rows[z][x]!=='=';
  for(let z=0;z<H;z++)for(let x=0;x<W;x++){if(!street(x,z))continue;
@@ -1201,6 +1202,7 @@ const TALL_FURN={8:1,9:1,10:1,12:1,13:1,17:1};
 const SET_PIECE='cae%n';
 const setPiece=(g,x,z)=>SET_PIECE.includes(g.rows[z][x]);
 function wallDecorKind(g,x,z){const W=g.W,i=z*W+x,j=i+W;if(z+1>=g.H||g.solid[j]||setPiece(g,x,z+1))return null;
+ if(g.wallX&&g.wallX[i]>=218&&g.wallX[i]<=221)return null; /* the Marina's sheds and containers (marina.js) carry their own dressing */
  if((g.wh[i]||WALL_H)<WALL_H*0.9)return null;const f=g.furn[j];if(f&&!DECOR_FRONT_OK[f])return null;
  /* a one-cell wall stub between two openings is not a hosting wall; nor is a slot squeezed between tall props */
  if(x>0&&x<W-1&&!g.solid[i-1]&&!g.solid[i+1])return null;
@@ -1239,7 +1241,7 @@ function buildStatic(g){const B=g.staticB;B.reset();const W=g.W,H=g.H;
   if(!any){for(const [ox,oz] of [[-1,-1],[1,-1],[-1,1],[1,1]]){const nx=x+ox,nz=z+oz;if(nx>=0&&nz>=0&&nx<W&&nz<H&&!g.solid[nz*W+nx])any=true;}}
   B.room=0;const tt=g.topX&&g.topX[i]||g.topT[i];if(any||tt)B.quad([[x,h,z+1],[x+1,h,z+1],[x+1,h,z],[x,h,z]],0,1,0,tt?TUV[tt]:WUV,tt?(g.glow[i]===2?[0.85,0.95,1.15]:[1,1,1]):top);
  }
- for(const d of g.deco)drawDeco(B,g,d);drawStreetscape(B,g);venueStatic(B,g);drawAct1(B,g);if(g.def===HUBS.lobby)drawMcDesk(B,g);if(g.def===HUBS.bunker)drawNineFront(B,g);if(g.def.hub==='drive'){drawSign(B,g.car.x,g.car.z-0.47);drawEntrance(B,g.car.x,g.car.z-0.5);drawCineSky(B,g);}
+ for(const d of g.deco)drawDeco(B,g,d);drawStreetscape(B,g);venueStatic(B,g);drawAct1(B,g);drawMarina(B,g);if(g.def===HUBS.lobby)drawMcDesk(B,g);if(g.def===HUBS.bunker)drawNineFront(B,g);if(g.def.hub==='drive'){drawSign(B,g.car.x,g.car.z-0.47);drawEntrance(B,g.car.x,g.car.z-0.5);drawCineSky(B,g);}
  B.upload(true);}
 function buildRadar(g){const c=document.createElement('canvas');c.width=g.W*4;c.height=g.H*4;const x=c.getContext('2d');
  for(let z=0;z<g.H;z++)for(let xx=0;xx<g.W;xx++){const i=z*g.W+xx;if(g.solid[i]){let edge=false;for(const [a,b] of [[1,0],[-1,0],[0,1],[0,-1]])if(!isSolid(xx+a,z+b))edge=true;if(edge){x.fillStyle='#e07ab4';x.fillRect(xx*4,z*4,4,4);}}
@@ -3097,8 +3099,8 @@ function updateFin(dt){const g=G,f=g.fin,id=rideId(),L=FIN[id]||FIN.don,e=f.e,p=
  if(f.step<0){if(f.t>0.9)next();}else if(f.line){f.line.t+=dt;if(f.line.t>f.lineT)next();}
  if(f.t>1.2&&(pressed.perk||pressed.grab||mouse.down||keys.Enter)){mouse.down=false;keys.Enter=false;while(g.fin)next();}}
 /* Act 2 props */
-function drawSpeedboat(B,x,z,a,col){const {P}=rideKit(B,x,z,1,a),W1=[0.96,0.96,0.97],D1=[0.1,0.1,0.12];P(0,0.16,0,0,2.4,0.24,0.86,W1);P(1.35,0.17,0,0,0.5,0.18,0.56,W1);P(1.62,0.16,0,0,0.2,0.12,0.3,W1);
- for(const sd of [-1,1])P(0.1,0.2,sd*0.435,0,2.3,0.06,0.01,col,null,1);P(-0.05,0.38,0,0,0.6,0.18,0.7,[0.55,0.8,0.95]);P(-0.6,0.33,0,0,0.6,0.1,0.72,D1);P(-1.3,0.26,0,0,0.22,0.32,0.5,D1);P(-1.3,0.44,0,0,0.24,0.06,0.52,col,null,1);}
+/* every speedboat is the classic mahogany runabout (marina.js) */
+function drawSpeedboat(B,x,z,a,col){drawRiva(B,x,z,a,col);}
 function drawHeli(B,x,z,a,T){const {P}=rideKit(B,x,z,1,a),D1=[0.1,0.1,0.13];P(0,0.6,0,0,1.6,0.78,0.95,D1);P(0.78,0.62,0,0,0.5,0.6,0.86,[0.5,0.75,0.95]);P(-1.4,0.8,0,0,1.7,0.16,0.16,D1);P(-2.2,1.0,0,0,0.26,0.5,0.05,D1);P(-2.2,0.85,0.12,0,0.3,0.06,0.25,D1);
  for(const sd of [-1,1]){P(0,0.08,sd*0.46,0,1.8,0.05,0.05,[0.65,0.65,0.7]);P(0.4,0.22,sd*0.42,0,0.05,0.28,0.04,[0.65,0.65,0.7]);P(-0.4,0.22,sd*0.42,0,0.05,0.28,0.04,[0.65,0.65,0.7]);P(0,0.5,sd*0.48,0,1.5,0.06,0.01,GOLD);}
  P(0,1.02,0,0,0.12,0.12,0.12,D1);for(let i=0;i<2;i++)B.box(A.mul(A.mul(A.T(x,1.08,z),A.RY(T*14+i*Math.PI/2)),A.S(3.8,0.03,0.14)),[0.15,0.15,0.17]);}
@@ -3107,7 +3109,7 @@ function drawAct2(B,g){const T=g.T,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,
  if(g.tip){for(const r of (g.rigs||[]))if(!r.cut)bx(r.x,1.2,r.z,0.07,2.4,0.07,[0.3,1,0.5],true);if(g.safe&&!(g.obj&&g.obj.done))bx(g.safe.x,1.4,g.safe.z,0.07,2.8,0.07,[0.3,1,0.5],true);}
  if(g.safe){const q=g.safe;bx(q.x,0.45,q.z,0.7,0.9,0.6,[0.28,0.3,0.34]);bx(q.x,0.5,q.z+0.31,0.28,0.28,0.02,g.obj&&g.obj.done?[0.2,0.8,0.3]:[0.9,0.7,0.2],true);}
  if(g.rigs)g.rigs.forEach(r=>{bx(r.x,0.2,r.z,0.5,0.4,0.36,[0.5,0.1,0.1]);bx(r.x,0.45,r.z,0.1,0.1,0.1,r.cut?[0.2,0.8,0.3]:[1,0.1,0.1],r.cut||Math.sin(g.T*8)>0);});
- if(g.boats)g.boats.forEach((q,i)=>{if(q.sunk)return;drawSpeedboat(B,q.x,q.z,i%2?Math.PI:0,[[1,0.3,0.75],[0.2,0.9,1],[1,0.8,0.2]][i%3]);if(q.fuse>0&&Math.sin(g.T*22)>0)bx(q.x,0.9,q.z,0.3,0.3,0.3,[1,0.1,0.1],true);});
+ if(g.boats)g.boats.forEach((q,i)=>{if(q.sunk)return;drawMarinaBoat(B,g,q,i,[[1,0.3,0.75],[0.2,0.9,1],[1,0.8,0.2]][i%3]);if(q.fuse>0&&Math.sin(g.T*22)>0)bx(q.x,0.9,q.z,0.3,0.3,0.3,[1,0.1,0.1],true);});
  if(g.cabs)g.cabs.forEach((q,i)=>{bx(q.x,0.8,q.z,0.7,1.6,0.6,[0.12,0.05,0.2]);const cc=[[1,0.3,0.75],[0.3,0.9,1],[1,0.85,0.3],[0.5,1,0.5]][(i+Math.floor(T*2))%4];bx(q.x,1.05,q.z+0.31,0.5,0.4,0.01,cc,true);bx(q.x,1.55,q.z+0.31,0.6,0.12,0.01,[1,0.3,0.75],true);bx(q.x,0.75,q.z+0.33,0.55,0.08,0.1,[0.3,0.3,0.35]);});
  if(g.hockey)g.hockey.forEach((q,i)=>{bx(q.x,0.45,q.z,1.0,0.9,1.0,[0.12,0.1,0.18]);bx(q.x,0.905,q.z,0.96,0.02,0.96,[0.92,0.95,1]);bx(q.x,0.93,q.z,1.0,0.04,0.04,[0.3,0.9,1],true);if(i%4===0){const px=q.x+0.5+Math.sin(T*3+i)*0.6,pz=q.z+0.5+Math.cos(T*2.3+i)*0.6;bx(px,0.93,pz,0.12,0.03,0.12,[1,0.3,0.6],true);}});
  if(g.manq)for(const m of g.manq)drawChar(CB(m),m);if(g.singer)drawChar(CB(g.singer),g.singer);

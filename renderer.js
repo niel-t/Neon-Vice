@@ -344,7 +344,18 @@ function makeAtlas(){
   /* shop window posters and a cinema one-sheet */
   211:x=>{R(x,'#d9d2c4',0,0,32,32);const c=['#ff2d95','#2de2e6','#ffd36b','#7dff9a','#c0182a','#1d3557'];for(let i=0;i<3;i++)for(let j=0;j<2;j++){R(x,c[r()*6|0],1+i*10.4,1+j*15.5,9.6,14.5);R(x,'#fff',2+i*10.4,3+j*15.5,7.6,2);R(x,'rgba(0,0,0,.35)',2+i*10.4,8+j*15.5,7.6,5);}},
   212:x=>{const gr=x.createLinearGradient(0,0,0,32);gr.addColorStop(0,'#1a0830');gr.addColorStop(1,'#c0182a');x.fillStyle=gr;x.fillRect(0,0,32,32);x.fillStyle='#ffd36b';x.beginPath();x.arc(16,13,6,0,6.3);x.fill();R(x,'#1a0830',6,13,20,1.5);R(x,'#1a0830',8,16,16,1);
-   x.fillStyle='#fff';x.font='bold 5px sans-serif';x.fillText('NIGHT',8,26);x.fillText('HEAT',10,31);}};
+   x.fillStyle='#fff';x.font='bold 5px sans-serif';x.fillText('NIGHT',8,26);x.fillText('HEAT',10,31);},
+  /* Vice Marina dock yard (marina.js), painted light so the shed or container tint colours them:
+     218 corrugated sheet siding (vertical ribs, a lap seam with rivets, a rust streak, a dark plinth),
+     220 a shipping container's ribbed side (top and bottom rails), 221 the corrugated roof of a shed or a container */
+  218:x=>{R(x,'#e6e8ec',0,0,32,32);for(let k=0;k<32;k+=4){R(x,'#f8f9fb',k,0,1.2,32);R(x,'#c9cdd3',k+2,0,1,32);R(x,'#aeb2b9',k+3,0,0.8,32);}
+   R(x,'#9a9ea6',0,15.4,32,0.9);R(x,'#f4f5f7',0,16.3,32,0.5);for(let k=1;k<32;k+=4)R(x,'#70747c',k+0.6,14.8,0.9,0.9);
+   x.fillStyle='rgba(150,84,40,.28)';x.fillRect(9+r()*12,16.5,1.4,7+r()*6);x.fillRect(3+r()*24,1,1,4+r()*4);R(x,'#7b7f86',0,28.6,32,3.4);R(x,'#5c5f66',0,28.6,32,0.7);},
+  220:x=>{R(x,'#e2e2e2',0,0,32,32);for(let k=0;k<32;k+=5.33){R(x,'#f4f4f4',k,3,2.2,26);R(x,'#c2c2c2',k+2.6,3,1.4,26);R(x,'#d6d6d6',k+4,3,1.3,26);}
+   R(x,'#a6a6a6',0,0,32,3);R(x,'#cfcfcf',0,0.6,32,0.7);R(x,'#9a9a9a',0,29,32,3);R(x,'#7c7c7c',0,31,32,1);
+   x.fillStyle='rgba(120,70,40,.22)';for(let k=0;k<5;k++)x.fillRect(r()*30,4+r()*24,0.8+r(),0.8+r()*3);},
+  221:x=>{R(x,'#d8d8da',0,0,32,32);for(let y=0;y<32;y+=4){R(x,'#efeff1',0,y,32,1.2);R(x,'#b4b4b8',0,y+2.2,32,1);}
+   x.fillStyle='rgba(130,80,50,.25)';for(let k=0;k<6;k++)x.fillRect(r()*30,r()*30,1+r()*2,0.8+r());R(x,'#9a9aa0',0,0,0.8,32);R(x,'#9a9aa0',31.2,0,0.8,32);}};
   for(const k in ST)tile(+k,ST[k]);
   /* lamp-lit window variants, picked per storey by surfPick */
   for(const [t,v] of [[172,213],[173,214],[174,215],[183,216],[175,217]])TVAR[t]=[v];}
