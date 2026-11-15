@@ -103,7 +103,7 @@ test('integration: existing startLevel loads all eleven floors and advances real
   for (let i = 0; i < data.LEVELS.length; i++) {
     const expected = expectedMap(data.LEVELS[i], data);
     // Floor 2 is a building: startLevel(2) begins on the lobby stage (missions.js), not on the LEVELS[2] map.
-    if (i === 2) Object.assign(expected, { enemies: 7, items: 3, player: [[13.5, 12.5]], car: [[23.5, 12.5]] });
+    if (i === 2) Object.assign(expected, { enemies: 7, items: 3, player: [[18.5, 11.5]], car: [[18.5, 12.5]] });
     // Floor 10 is Kade Tower: startLevel(10) begins on the site stage (missions.js).
     if (i === 10) Object.assign(expected, { enemies: 13, items: 4, player: [[13.5, 12.5]], car: [[24.5, 12.5]] });
     const actual = await page.evaluate(i => {
@@ -124,20 +124,27 @@ test('arrival: every floor opens with the car pulling up to a real entrance, ski
   for (let i = 0; i < 11; i++) {
     const a = await page.evaluate(i => {
       NOARRIVE = false; ARR_SEEN = -1; startLevel(i);
-      const arriving = !!G.arrive, { type, gx, zT } = G.arr; endArrive();
+      const arriving = !!G.arrive, { type, gx, zT } = G.arr, front = !!G.arr.front; endArrive();
       const at = [G.player.x, G.player.z], car = [G.car.x, G.car.z], doors = G.doors.filter(d => d.front).length;
       const walkable = !G.solid[Math.floor(at[1]) * G.W + Math.floor(at[0])];
       startLevel(i);
-      return { arriving, type, gx, zT, at, car, doors, walkable, retry: !!G.arrive, again: [G.player.x, G.player.z] };
+      return { arriving, type, gx, zT, front, at, car, doors, walkable, retry: !!G.arrive, again: [G.player.x, G.player.z] };
     }, i);
     const front = a.type === 'front';
     expect(a.arriving, `Floor ${i} opens with the car arrival`).toBe(true);
     expect(a.walkable, `Floor ${i} entrance is walkable`).toBe(true);
     expect(a.doors, `Floor ${i} entrance has a real door`).toBeGreaterThan(0);
     expect(a.at[0], `Floor ${i} player at entrance`).toBeCloseTo(a.gx, 5);
-    expect(a.at[1], `Floor ${i} player at entrance`).toBeCloseTo(a.zT + (front ? 0.45 : 0.15), 5);
-    expect(Math.abs(a.car[0] - a.gx), `Floor ${i} car parked by entrance`).toBeCloseTo(0.55, 5);
-    expect(a.car[1], `Floor ${i} car parked by entrance`).toBeCloseTo(a.zT + (front ? 1.15 : 1), 5);
+    if (a.front) {
+      // Act 1 streets: the car sits in its bay beside the sidewalk, and the walk in ends just inside the door
+      expect(a.at[1], `Floor ${i} player inside the entrance`).toBeCloseTo(a.zT - 1.45, 5);
+      expect(Math.abs(a.car[0] - a.gx), `Floor ${i} car parked by entrance`).toBeLessThan(1.5);
+      expect(a.car[1], `Floor ${i} car in the bay by the sidewalk`).toBeCloseTo(a.zT + 1.5, 5);
+    } else {
+      expect(a.at[1], `Floor ${i} player at entrance`).toBeCloseTo(a.zT + (front ? 0.45 : 0.15), 5);
+      expect(Math.abs(a.car[0] - a.gx), `Floor ${i} car parked by entrance`).toBeCloseTo(0.55, 5);
+      expect(a.car[1], `Floor ${i} car parked by entrance`).toBeCloseTo(a.zT + (front ? 1.15 : 1), 5);
+    }
     expect(a.retry, `Floor ${i} retry skips the drive-in`).toBe(false);
     expect(a.again, `Floor ${i} retry starts at the entrance`).toEqual(a.at);
   }

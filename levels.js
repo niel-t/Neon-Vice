@@ -1,35 +1,37 @@
 'use strict';
 const EKIND={w:'dual',g:'pistol',h:'silenced',s:'shotgun',d:'double',u:'smg',m:'m16',b:'bat',k:'knife',x:'machete',i:null};
 const IKIND={'0':'dual','1':'pistol','2':'shotgun','3':'smg','4':'bat','5':'knife','6':'silenced','7':'m16','8':'double','9':'machete'};
-const FURN={T:1,B:2,S:3,O:4,p:5,W:6,K:7,H:8,F:9,A:10,J:11,Q:12,R:13,G:14,V:15,E:16,L:17,U:18,Z:19,M:20};/* table, bar, sofa, pool, plant, bed, counter */
-const COVER={2:1,7:1,9:1,10:1,11:1,12:1,13:1,14:1,19:1,20:1,21:1,22:1};/* tall furniture stops bullets */
+const FURN={f:30,T:1,B:2,S:3,O:4,p:5,W:6,K:7,H:8,F:9,A:10,J:11,Q:12,R:13,G:14,V:15,E:16,L:17,U:18,Z:19,M:20};/* table, bar, sofa, pool, plant, bed, counter */
+const COVER={30:1,2:1,7:1,9:1,10:1,11:1,12:1,13:1,14:1,19:1,20:1,21:1,22:1};/* tall furniture stops bullets */
 const FLOORCH={'.':1,',':3,'_':4,':':2,'=':7,'~':14};
 const WALL_H=1.15;
 /*LEVELS*/
 const LEVELS=[
- {name:'MOTEL SUNSET',wall:5,sofa:0x2a9ea3,from:'McWEY',
+ {name:'MOTEL SUNSET',wall:5,sofa:0x2a9ea3,from:'McWEY',front:1,
   brief:"It's McWey. Some out-of-town crew moved into the Sunset Motel on Route 1 and they're dealing on our streets. Nobody does that without asking. Go make it clear. Car's out front.",map:[
  "##################################",
- "#*....#WW...V#WW...V#...H....F...#",
- "#..g..#WW.b..#WW1.s.#..,rr,,,,,..#",
- "#.rr..#......#......#..,SS,,u,,..#",
- "#L..p.#....UT#*...UT#..,,,,,,,,.E#",
+ "#*TT.Z#WWL,~U#WWL,~U#SSS,,,,,.FFH#",
+ "#..g.Z#WW,b,,#WW1,s,#,rrr,,,,,,,.#",
+ "#.....#,,,,,,#,,,,,,#,rrr,,u,OO,.#",
+ "#L...Z#,,,ETV#*,,ETV#V,,,,,,,OO.E#",
  "##D####D######D######..,,,,,,,,*.#",
- "#Z..............................H#",
+ "#p..............................H#",
  "#..i.........4.........g.....*...#",
- "#H........Z.........L............#",
+ "#H.........ff...................p#",
  "######D########.########D#########",
- "#.6....F#   #Z..#   #V.....L#",
- "#.0TT.k.#   #...#   #..b...E#",
- "#..*...Z#   #.2.#   #.....p.#",
+ "#K6....F#   #K..#   #RR___GL#",
+ "#K0TT.k.#   #K..#   #_Tb___E#",
+ "#K.*...Z#   #.2p#   #V____p_#",
  "####.####   ##.##   ####.####",
+ "==============P===================",
+ "==============C===================",
  "==================================",
- "===P==========C===================",
+ "==================================",
  "=================================="]},
- {name:'CLUB FLAMINGO',wall:12,sofa:0xe0459a,from:'McWEY',
+ {name:'CLUB FLAMINGO',wall:12,sofa:0xe0459a,from:'McWEY',front:1,
   brief:"The motel was a front. The money runs through Club Flamingo on the strip, VIP lounge in the back. Shut it down. Permanently. Lot of guards tonight, so watch the doors.",map:[
  "######################################",
- "#SSS______H#AA::Q:TTT:Q:::::#BBBBBB.F#",
+ "#SSS______H#QQ::Q:fff:Q:::::#BBBBBB.F#",
  "#__h____*__#::::*:::::::*:::#..u..*..#",
  "#__OO______D::::::::g:::::::D........#",
  "#__OOs_rrr_#::::::::::::::::#..TE.T..#",
@@ -41,10 +43,12 @@ const LEVELS=[
  "####.#######H::::::::::::::H#.....d..#",
  "#H........L#######..#########EE......#",
  "#..w.......D.rr.....0....*..D.......H#",
- "#SS........#AA....4........p##########",
+ "#SS........#KK....4........p##########",
  "#####..##############..###############",
+ "=====================P================",
+ "=====================C================",
  "======================================",
- "===P================C=================",
+ "======================================",
  "======================================"]},
  {name:'THE PENTHOUSE',wall:13,sofa:0xe8dcc0,from:'McWEY',
   brief:"The man who owns the club lives on top of Coral Tower. He's got his best people up there with real hardware. Finish this tonight and Miami belongs to the Family.",map:[

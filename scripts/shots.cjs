@@ -24,7 +24,7 @@ const [vwid, vhei] = (opt('--size') || '1280x720').split('x').map(Number);
 const frames = (page, n = 3) => page.evaluate(n => window.__shotStep(n), n);
 
 async function main() {
-  const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+  const browser = await chromium.launch({ executablePath: process.env.PWCHROME || undefined, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const context = await browser.newContext({ viewport: { width: vwid, height: vhei }, deviceScaleFactor: 1 });
   await context.route('**/*', route => /fonts\.(googleapis|gstatic)\.com/.test(route.request().url()) ? route.fulfill({ status: 200, body: '' }) : route.continue());
   // Determinism: seeded Math.random (reseeded per level) and a frozen clock. performance.now, Date.now and rAF

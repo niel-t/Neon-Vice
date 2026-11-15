@@ -5,7 +5,7 @@
 const STANCE={stand:{eye:1.6,top:1.8},crouch:{eye:1.0,top:1.1,aim:0.7}};
 const COVER_REACH=0.85,COVER_HIGH=1.6,COVER_GAP=0.02,COVER_EDGE=0.45,COVER_PEEK=0.22,COVER_POP=0.35,COVER_END=0.12;
 /* legacy bullet-stopping furniture heights (metres): below COVER_HIGH you crouch behind it, else you lean */
-const COVER_FURN_H={2:1.0,7:1.0,9:1.6,10:1.6,11:1.35,12:1.5,13:1.8,14:0.95,19:1.3,20:1.15,21:1.3,22:1.3};
+const COVER_FURN_H={2:1.0,7:1.0,9:1.6,10:1.6,11:1.35,12:1.5,13:1.8,14:0.95,19:1.3,20:1.15,21:1.3,22:1.3,30:1.3};
 /* legacy grid adapter: h = height of a bullet-stopping cell (0 = none), walk = open floor */
 function coverGridQ(g){
  const inb=(cx,cz)=>cx>=0&&cz>=0&&cx<g.W&&cz<g.H;

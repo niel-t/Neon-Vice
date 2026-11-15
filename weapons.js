@@ -129,7 +129,7 @@ const LEGACY_BUILD={
   'THE ROYAL FLUSH':{int:'joinery_ply',ext:'alu_bulkhead',door:'door_hollow',pane:'glass_lam_windshield',out:' _oyY'},
  },
  prop:{2:'counter_cmu',7:'counter_cabinet',9:'steel_3mm',10:'counter_cabinet',11:'counter_cabinet',12:'counter_cabinet',13:'counter_cabinet',
-  14:'steel_10mm',19:'counter_cabinet',20:'counter_cabinet',21:'car_door',22:'car_door'},
+  14:'steel_10mm',19:'counter_cabinet',20:'counter_cabinet',21:'car_door',22:'car_door',30:'counter_cabinet'},
 };
 /* ================= KIT: the persistent inventory (save contract kit/locker/run v1) =================
    kit    = {v:1, guns:[{type,mag}|null ×2], active:0|1, melee:type|null, armour:{type,plates}|null,
