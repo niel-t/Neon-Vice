@@ -123,11 +123,9 @@ const MV_B=[
  "#......YYYYYYYY..................#",
  "##################################"];
 const MV_SLOTLEG=f=>{const L={};for(const c of '.otgmnx')L[c]={f};return L;};
-/* the ground floor's floors (world cells): terrace terrazzo, foyer checkerboard marble, dining parquet, kitchen tile, the drive, the lawn, the court */
-function mvFloorG(x,z){const X=x-1,Z=z-1,ch=(MV_G[Z]||'')[X];
- if(ch===',')return 11;if(ch==='=')return 37;if(ch==='_')return X>=34&&X<=47&&Z>=3&&Z<=22?61:3;
- if(Z<=12)return 61;if(Z>=31)return 63;
- if(X>=15&&X<=22&&Z>=18)return (X+Z)%2?43:63;if(X>=24&&Z<=21)return 4;if(X>=24)return 14;return 63;}
+/* the ground floor's floors (world cells): terrace terrazzo, foyer checkerboard marble, dining parquet, kitchen tile, the drive, the lawn, the court
+   (built with its own copy of the map: the world check re-evaluates floorFn's source on its own, with no globals) */
+const mvFloorG=new Function('x','z','const M='+JSON.stringify(MV_G)+';'+"const X=x-1,Z=z-1,ch=(M[Z]||'')[X];if(ch===',')return 11;if(ch==='=')return 37;if(ch==='_')return X>=34&&X<=47&&Z>=3&&Z<=22?61:3;if(Z<=12)return 61;if(Z>=31)return 63;if(X>=15&&X<=22&&Z>=18)return (X+Z)%2?43:63;if(X>=24&&Z<=21)return 4;if(X>=24)return 14;return 63;");
 function mvFloorU(x,z){const X=x-1,Z=z-1;if(Z<=12)return 61;if(Z<=21)return X<=10?43:X>=27?4:63;return X<=13?29:X>=24?4:63;}
 function mvFloorB(x,z){const X=x-1,Z=z-1;if(Z>=19)return 4;if(X>=22)return 61;return 43;}
 const MANSION_HUBS={
