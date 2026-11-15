@@ -67,7 +67,10 @@ test('mansion: the drive-in arrival ends at the front door, and bed upstairs', a
     const g = G, q = g.player, out = { hub: g.def === HUBS.home3, x: +q.x.toFixed(1), z: +q.z.toFixed(1), free: !g.solid[Math.floor(q.z) * g.W + Math.floor(q.x)], car: [+g.hcar.x.toFixed(1), +g.hcar.z.toFixed(1)], girls: g.npcs.filter(n => n.kind === 'pgirl').length, guards: g.npcs.filter(n => n.kind === 'bguard').length };
     const fade = fadeTo; try { fadeTo = f => { f(); return true; }; MV_FROM = 0; loadHub('home3u', 'home'); } finally { fadeTo = fade; }
     tuckIn(G); out.inBed = G.npcs.filter(n => n.bed).length + (G.player.bed ? 1 : 0);
+    // the round bed stays in the middle of the room whatever the count, blocks walking, and you get up beside it
+    const B = bigBedWorld(3, bedN()); out.bed = [B.x, B.z]; out.bedSolid = !!G.solid[Math.floor(B.z) * G.W + Math.floor(B.x)];
+    const ux = B.x + 2.45 * B.s; out.upFree = !G.solid[Math.floor(B.z) * G.W + Math.floor(ux)];
     return out;
   });
-  expect(r).toEqual({ hub: true, x: 20, z: 29.6, free: true, car: [20, 34.7], girls: 2, guards: 4, inBed: 3 });
+  expect(r).toEqual({ hub: true, x: 20, z: 29.6, free: true, car: [20, 34.7], girls: 2, guards: 4, inBed: 3, bed: [19.5, 18.8], bedSolid: true, upFree: true });
 });
