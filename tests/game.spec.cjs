@@ -96,7 +96,7 @@ test('UI journey: title/select/intro/elevator/brief/car/mission, spam and held m
   await progressing(page);
 });
 
-test('integration: existing startLevel loads all eleven floors and advances real simulation', async ({ openGame }) => {
+test('integration: existing startLevel loads all fourteen floors and advances real simulation', async ({ openGame }) => {
   const page = await openGame();
   const data = gameData();
   expect(await page.evaluate(() => LEVEL_TRACKS.every(list => list.every(track => !!TRACKS[track])))).toBe(true);
@@ -106,6 +106,10 @@ test('integration: existing startLevel loads all eleven floors and advances real
     if (i === 2) Object.assign(expected, { enemies: 7, items: 3, player: [[18.5, 11.5]], car: [[18.5, 12.5]] });
     // Floor 10 is Kade Tower: startLevel(10) begins on the site stage (missions.js).
     if (i === 10) Object.assign(expected, { enemies: 13, items: 4, player: [[13.5, 11.5]], car: [[24.5, 12.5]] });
+    // Floors 11 and 13 (Act 4 garage and hangar) begin on their street ramp and airfield apron stages (missions.js).
+    if (i === 11) Object.assign(expected, { enemies: 7, items: 1, player: [[5.5, 10.5]], car: [[17.5, 11.5]] });
+    if (i === 12) Object.assign(expected, { enemies: 13 });
+    if (i === 13) Object.assign(expected, { enemies: 8, items: 0, player: [[5.5, 11.5]], car: [[23.5, 12.5]] });
     const actual = await page.evaluate(i => {
       startLevel(i);
       return { enemies: G.enemies.length, items: G.items.length,
@@ -121,7 +125,7 @@ test('integration: existing startLevel loads all eleven floors and advances real
 test('arrival: every floor opens with the car pulling up to a real entrance, skipped on retry', async ({ openGame }) => {
   test.setTimeout(240_000);
   const page = await openGame();
-  for (let i = 0; i < 11; i++) {
+  for (let i = 0; i < 14; i++) {
     const a = await page.evaluate(i => {
       NOARRIVE = false; ARR_SEEN = -1; startLevel(i);
       const arriving = !!G.arrive, { type, gx, zT } = G.arr, front = !!G.arr.front; endArrive();
@@ -197,7 +201,7 @@ test('saves: historical migration, current round-trip, floor stepping and quota 
 
 test('saves: out-of-range floor records are clamped', async ({ openGame }) => {
   const bounds = await openGame({ nb86jobs: { mig: 1, top: 999, sel: -1 } });
-  expect(await bounds.evaluate(() => [JOBS.top, JOBS.sel])).toEqual([10, 0]);
+  expect(await bounds.evaluate(() => [JOBS.top, JOBS.sel])).toEqual([13, 0]);
 });
 
 test('saves: pre-RPG progress preserves purchases and loan history', async ({ openGame }) => {
@@ -291,7 +295,7 @@ test('act 3: the demolition floor needs its charges cut before it clears, and th
   test.setTimeout(120_000);
   const page = await openGame();
   const start = await page.evaluate(() => { NOARRIVE = true; startLevel(8); return { act: G.def.act, rigs: G.rigs.length, obj: G.obj.label, hats: G.enemies.filter(e => e.look.helmet === 'pasgt').length, last: CAMPAIGN_LEN - 1 }; });
-  expect(start).toMatchObject({ act: 3, rigs: 4, obj: 'CUT THE CHARGE WIRES', last: 10 });
+  expect(start).toMatchObject({ act: 3, rigs: 4, obj: 'CUT THE CHARGE WIRES', last: 13 });
   expect(start.hats).toBeGreaterThan(3);
   await page.evaluate(() => { for (const e of G.enemies) if (e.alive) killEnemy(e, 'pistol', [0, 1]); });
   await expect.poll(() => page.evaluate(() => G.enemies.every(e => !e.alive))).toBe(true);

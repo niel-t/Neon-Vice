@@ -12,7 +12,7 @@
    variants: {id:{when:<cond>, spawn?:[x,z] player start cell on the legacy map, clear?}}; the first match wins, else 'base'.
    briefFlags: wflags a mission's McWey brief sets; cleared when that brief starts so the latest choice wins.
    clear: {boss:'required'|'optional'} (default required): whether the floor clears with the boss still standing. */
-const CAMPAIGN_LEN=11;
+const CAMPAIGN_LEN=14;
 const MISSIONS={
  c0:{idx:0,kind:'campaign',stages:['legacy'],start:'legacy'},
  c1:{idx:1,kind:'campaign',stages:['legacy'],start:'legacy',briefFlags:['flamingo_back'],
@@ -26,6 +26,9 @@ const MISSIONS={
  c8:{idx:8,kind:'campaign',stages:['legacy'],start:'legacy'},
  c9:{idx:9,kind:'campaign',stages:['legacy'],start:'legacy'},
  c10:{idx:10,kind:'campaign',stages:['legacy'],start:'legacy'},
+ c11:{idx:11,kind:'campaign',stages:['legacy'],start:'legacy'},
+ c12:{idx:12,kind:'campaign',stages:['legacy'],start:'legacy'},
+ c13:{idx:13,kind:'campaign',stages:['legacy'],start:'legacy'},
 };
 /* c2 is a building: the lobby, then the elevator (keycard from the security office guard) or the stairwell and service level,
    then the penthouse (LEVELS[2] with the street walled off), out by the elevator. All three are grid stages on base index 2, so
@@ -58,6 +61,32 @@ if(typeof LEVELS!=='undefined'&&LEVELS[10]){
    arrivals:{bottom:{at:[3.5,9.5]}},stairs:[{id:'up',to:'pent',at:[25.5,2.5],r:0.9,arrive:'stairs',oneWay:true}]},
   pent:{id:'pent',kind:'grid',rev:1,def:{name:K.name,noCar:true,hardhat:true,wall:K.wall,sofa:K.sofa,boss:K.boss,map:K.map},
    arrivals:{elev:{at:[23.5,12.5]},stairs:{at:[12.5,12.5]}}}
+ };
+}
+/* Act 4. c11 Vale Trust Garage: the street ramp (P1), down the ramp to the parking deck (P2), down again to the vault loading dock, where
+   three gold vans leave one at a time (index.html act4 helpers). The dock is LEVELS[11]; it has no stairs out, so the floor finishes there,
+   out by the freight lift. c13 Opa-locka Hangar 7: the apron, the hangar where Vale walks to his jet (the boarding stairs open once he is
+   aboard), then the jet out on the runway, which is LEVELS[13] with Vale as the boss and your car parked on the tarmac. */
+if(typeof LEVELS!=='undefined'&&LEVELS[13]){
+ const D=LEVELS[11],J=LEVELS[13],GL={'.':{f:30},'n':{f:30},'e':{f:30},'c':{f:30,furn:21},'v':{f:30,furn:22}};
+ MISSIONS.c11.stages=['p1','p2','dock'];MISSIONS.c11.start='p1';
+ MISSIONS.c11.stageDefs={
+  p1:{id:'p1',kind:'grid',rev:1,def:{name:'VALE TRUST GARAGE: STREET LEVEL',front:1,wall:34,floor:30,legend:GL,map:["####################################", "#K....p.#.........................n#", "#.T..g..#..cv..cv..cv..cv.....b....#", "#.......#..........................#", "#..h....D.....g...........s........#", "#.......#..cv..cv..cv..cv..........#", "#.p..4..#....................u.....#", "#..ZZ...#..b.......Z.........Z.....#", "###..########..##############..#####", "====P===============================", "================C===================", "====================================", "====================================", "===================================="]},
+   stairs:[{id:'ramp',to:'p2',at:[35.5,2.5],r:1.1,arrive:'ramp',oneWay:true}]},
+  p2:{id:'p2',kind:'grid',rev:1,def:{name:'VALE TRUST GARAGE: P2',noCar:true,wall:34,floor:30,legend:GL,map:["##################################", "#n..........................s...e#", "#.....cv..cv..cv..cv..cv..cv.....#", "#............g...................#", "#..........ZZ.........b..........#", "#.....cv..cv..cv..cv..cv..cv..u..#", "#................................#", "#..b........h.......Z.......g....#", "#.....cv..cv..cv..cv..cv..cv.....#", "#.PC.......2................s....#", "##################################"]},
+   arrivals:{ramp:{at:[2.5,2.5]}},stairs:[{id:'ramp',to:'dock',at:[33.5,2.5],r:1.1,arrive:'ramp',oneWay:true}]},
+  dock:{id:'dock',kind:'grid',rev:1,def:{name:D.name,noCar:true,exit:'Take the freight lift up',wall:D.wall,floor:D.floor,sofa:D.sofa,legend:D.legend,map:D.map},
+   arrivals:{ramp:{at:[10.5,9.5]}}}
+ };
+ const HL={'.':{f:37},'n':{f:37},'t':{f:37},'j':{w:32,h:1.0,top:32}};
+ MISSIONS.c13.stages=['apron','hangar','jet'];MISSIONS.c13.start='apron';
+ MISSIONS.c13.stageDefs={
+  apron:{id:'apron',kind:'grid',rev:1,def:{name:'OPA-LOCKA: THE APRON',front:1,wall:34,floor:7,legend:{'.':{f:7},'n':{f:7}},map:["########################################", "#.........#..........................n.#", "#..K..h...#....ZZ.......ZZ.......b.....#", "#.........D............................#", "#..T......#.....u.........g............#", "#.........#..ZZ.....s........ZZ........#", "#####D#####............................#", "#..........................m.......Z...#", "#..g......ZZ........b..................#", "####..##########..........#########..###", "====P===================================", "======================C=================", "========================================", "========================================", "========================================"]},
+   stairs:[{id:'door',to:'hangar',at:[39.5,2.5],r:1.0,arrive:'side',oneWay:true}]},
+  hangar:{id:'hangar',kind:'grid',rev:1,def:{name:'HANGAR 7',noCar:true,wall:46,floor:37,legend:HL,map:["##########################################", "#.......#................................#", "#.K..T..#.......jjjjjjjjjjjjjjjjjj.......#", "#.......D.......jjjjjjjjjjjjjjjjjjjj.....#", "#..t....#.......jjjjjjjjjjjjjjjjjjjjj....#", "#.......#.......jjjjjjjjjjjjjjjjjjjj.....#", "####D####.......jjjjjjjjjjjjjjjjjj.......#", "#.....................................n..#", "#..g.......s..........b.........u........#", "#.......ZZ................ZZ.............#", "#..PC.......h.......x............g.......#", "##########################################"]},
+   arrivals:{side:{at:[2.5,8.5]}},stairs:[{id:'board',to:'jet',at:[39.5,8.5],r:1.1,arrive:'door',oneWay:true}]},
+  jet:{id:'jet',kind:'grid',rev:1,def:{name:J.name,wall:J.wall,floor:J.floor,sofa:J.sofa,legend:J.legend,boss:J.boss,map:J.map},
+   arrivals:{door:{at:[31.5,6.5]}}}
  };
 }
 /* bonus jobs (idea 6): odd jobs on existing maps with a twist that index.html applies after the map loads (applyTwist). They have no
