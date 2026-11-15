@@ -57,11 +57,22 @@ function paintFace(y){const C=128,dk=SKIN.map(v=>v*0.62),md=SKIN.map(v=>v*0.8),l
  /* forehead creases */
  if(!FO.fem){y.strokeStyle=INK+'.22)';y.lineWidth=0.8;for(const yy of [1.775,1.79]){y.beginPath();y.moveTo(C-15,V(yy)+1);y.quadraticCurveTo(C,V(yy)-1,C+15,V(yy)+1);y.stroke();}}
  /* eyes: almond whites, brown iris, heavy upper lid, dark bags (women: open almond eyes, light lids, no bags) */
- const ey=V(1.706),ex=U(0.031),eo=FO.fem?1.25:1;sym(s=>{const cx=C+s*(ex-C);
+ const ey=V(1.706),ex=U(0.031),eo=FO.fem?1.25:1;
+ /* women: big made-up eyes that still read from the game camera: eyeshadow, white almond, large dark iris with a catch-light,
+    thick liner with a flick, lashes, and a clean arched brow */
+ if(FO.fem){sym(s=>{const cx=C+s*(ex-C),ic=FO.iris||'#3a2414';
+   soft(cx,ey-2.5,10,6,FO.shadow||'rgba(150,60,140,.55)');
+   y.fillStyle='#f6f2ee';y.beginPath();y.moveTo(cx-7.5,ey+0.4);y.quadraticCurveTo(cx-1,ey-5.2,cx+7.5,ey-0.2);y.quadraticCurveTo(cx+1,ey+3.6,cx-7.5,ey+0.4);y.fill();
+   ell(cx-s*0.4,ey-0.6,3.3,3.4,ic);ell(cx-s*0.4,ey-0.6,1.7,1.8,'#050203');ell(cx-s*0.4-1,ey-1.8,0.9,0.9,'#fff');
+   y.strokeStyle='#0a0406';y.lineCap='round';y.lineWidth=2.6;y.beginPath();y.moveTo(cx-s*8,ey+0.6);y.quadraticCurveTo(cx-s*1,ey-5.8,cx+s*8,ey-0.6);y.lineTo(cx+s*11,ey-3.6);y.stroke();
+   y.lineWidth=1.1;for(let k=0;k<4;k++){const t=0.25+k*0.2,lx=cx+s*(-8+16*t),ly=ey-0.6-4.6*Math.sin(t*Math.PI)*0.95;y.beginPath();y.moveTo(lx,ly);y.lineTo(lx+s*1.4,ly-2.6);y.stroke();}
+   y.strokeStyle='rgba(10,4,6,.55)';y.lineWidth=0.9;y.beginPath();y.moveTo(cx-s*6.5,ey+1.8);y.quadraticCurveTo(cx,ey+3.6,cx+s*7,ey+0.8);y.stroke();
+   y.strokeStyle=FO.brow;y.lineWidth=2.4;y.beginPath();y.moveTo(cx-s*8,ey-7.2);y.quadraticCurveTo(cx+s*1,ey-12.4,cx+s*9.5,ey-7.6);y.stroke();y.lineCap='butt';});}
+ else sym(s=>{const cx=C+s*(ex-C);
   soft(cx,ey+3,8,4,rgb(dk,FO.fem?0.15:0.5));
   y.fillStyle='#ece4da';y.beginPath();y.moveTo(cx-6.5,ey);y.quadraticCurveTo(cx,ey-3.6*eo,cx+6.5,ey);y.quadraticCurveTo(cx,ey+2.6*eo,cx-6.5,ey);y.fill();
-  ell(cx-s*0.6,ey-0.2,2.4,2.4,'#4a2c18');ell(cx-s*0.6,ey-0.2,1.2,1.2,'#0c0604');ell(cx-s*0.6-0.7,ey-1,0.5,0.5,'#fff');
-  y.strokeStyle=INK+'1)';y.lineWidth=1.8;y.beginPath();y.moveTo(cx-7,ey+0.3);y.quadraticCurveTo(cx,ey-4.2*eo,cx+7,ey+0.2);y.stroke();
+  ell(cx-s*0.6,ey-0.2,2.8,2.8,'#3a2010');ell(cx-s*0.6,ey-0.2,1.4,1.4,'#080302');ell(cx-s*0.6-0.8,ey-1.1,0.7,0.7,'#fff');
+  y.strokeStyle=INK+'1)';y.lineWidth=2.2;y.beginPath();y.moveTo(cx-7,ey+0.3);y.quadraticCurveTo(cx,ey-4.2*eo,cx+7,ey+0.2);y.stroke();
   y.strokeStyle=INK+(FO.fem?'.2)':'.45)');y.lineWidth=0.7;y.beginPath();y.moveTo(cx-5,ey+2.2*eo);y.quadraticCurveTo(cx,ey+3.6*eo,cx+5,ey+2.2*eo);y.stroke();
   /* brows: arched & feminine for women, low & angled for men */
   if(FO.fem){y.strokeStyle=FO.brow;y.lineWidth=1.6;y.beginPath();y.moveTo(cx-s*8.5,ey-5.5);y.quadraticCurveTo(cx-s*1.5,ey-9.2,cx+s*8.5,ey-5.2);y.stroke();}
@@ -304,10 +315,16 @@ function buildHead(B){const M=newMesh(),X=[1,0,0],Z=[0,0,1],tv=y=>1-(y-HEAD.neck
  if(B&&B.hs==='long'&&FH){/* women's long feathered hair: full back and sides to the shoulder blades, a flicked fringe and face-framing wings */
   hairShell(M,[[1.79,0.122,0.118,-0.014],[1.72,0.132,0.114,-0.026],[1.64,0.136,0.104,-0.04],[1.56,0.132,0.09,-0.056],[1.48,0.126,0.074,-0.07],[1.4,0.122,0.06,-0.08],[1.35,0.126,0.05,-0.084]],14,{open:1.77,c0:0.4,curl:0.015,bottom:1});
   for(const s of [1,-1])hairLock(M,s,[[0.09,1.79,0.06,0.02],[0.118,1.73,0.05,0.026],[0.13,1.66,0.03,0.028],[0.124,1.58,0.02,0.026],[0.13,1.5,0.008,0.022],[0.15,1.45,-0.004,0.012]]);}
+ else if(B&&B.hs==='bob'&&FH){/* chin-length bob: a smooth helmet of hair cut level at the jaw, open at the face, with a straight fringe */
+  hairShell(M,[[1.8,0.122,0.12,-0.012],[1.73,0.134,0.12,-0.02],[1.66,0.138,0.112,-0.03],[1.6,0.134,0.102,-0.038],[1.565,0.13,0.096,-0.042]],14,{open:1.765,c0:0.4,curl:0.004,bottom:1});}
  else if(B&&B.hs==='long'){/* long hair: falls behind the head past the shoulders, framing the face */
   const hu=[144/512,3/512],R=(y,r,rz,z,w)=>({c:[0,y,z],s:[1,0,0],f:[0,0,1],rx:r,rz,w,v:hu[1]});
   loft(M,[R(1.76,0.12,0.09,-0.035,W1(BI.head)),R(1.66,0.125,0.08,-0.055,W1(BI.head)),R(1.56,0.128,0.068,-0.07,W2(BI.neck,BI.head,0.5)),R(1.46,0.124,0.056,-0.085,W2(BI.chest,BI.neck,0.5)),R(1.38,0.11,0.042,-0.1,W1(BI.chest))],12,{uvf:()=>hu,capB:{dir:[0,1,0],uv:hu},capA:{dir:[0,-1,0],uv:hu}});}
- if(B&&(B.hs==='normal'||B.hs==='slick'||B.hs==='buzz'||B.hs==='long')){const hu=[144/512,3/512],w=W1(BI.head),th=B.hs==='buzz'?0.004:B.hs==='slick'?0.009:FH&&B.hs==='long'?0.02:0.014,fr=FH&&B.hs==='long'?0.024:0;
+ if(B&&B.hs==='pony'){/* high ponytail: a scrunchie at the back of the crown and a thick tail swinging down to the shoulder blades */
+  const hu=[144/512,3/512],w=W1(BI.head),T=(y,z,r)=>({c:[0,y,z],s:[1,0,0],f:[0,0.35,-1],rx:r,rz:r*0.85,w,v:hu[1]});
+  loft(M,[T(1.83,-0.085,0.03),T(1.835,-0.125,0.034),T(1.8,-0.165,0.04),T(1.72,-0.185,0.038),T(1.62,-0.18,0.032),T(1.52,-0.165,0.022),T(1.46,-0.155,0.008)],10,{uvf:()=>hu,capA:{dir:[0,0,1],uv:hu}});
+  loft(M,[T(1.835,-0.1,0.036),T(1.835,-0.115,0.036)],10,{uvf:()=>[300/512,3/512]});}
+ if(B&&(B.hs==='normal'||B.hs==='slick'||B.hs==='buzz'||B.hs==='long'||B.hs==='pony')){const hu=[144/512,3/512],w=W1(BI.head),th=B.hs==='buzz'?0.004:B.hs==='slick'?0.009:FH&&B.hs==='long'?0.02:0.014,fr=FH&&B.hs==='long'?0.024:0;
   const R=(y,r,z,drop)=>({c:[0,y,z],s:[1,0,0],f:[0,0,1],rx:r+th,rz:r*1.045+th,w,v:hu[1],mod:(p,ph)=>{const back=Math.max(0,-Math.cos(ph)),fw=Math.max(0,Math.cos(ph));p[1]-=drop*back;if(B.hs==='slick')p[2]-=0.006*fw;
    if(fr&&y<1.8){const f=Math.pow(fw,3);p[1]-=fr*f;p[2]+=0.012*f;}return p;}});
   loft(M,[R(1.765,0.108,-0.004,0.07),R(1.79,0.1,-0.009,0.035),R(1.815,0.084,-0.012,0.012),R(1.834,0.06,-0.014,0),R(1.846,0.03,-0.014,0)],14,{uvf:()=>hu,capB:{dir:[0,1,0],uv:hu}});}
@@ -610,13 +627,16 @@ function paintHeadP(L){SKIN=C255(L.skin);const W=256,c=document.createElement('c
    const col=base.map(v=>v*(0.8+0.2*Math.max(0,Math.cos(ph)))*(0.92+0.08*t));const o=(V*W+U)*4;D[o]=col[0];D[o+1]=col[1];D[o+2]=col[2];D[o+3]=255;}}
  x.putImageData(out,0,0);
  const c2=document.createElement('canvas');c2.width=c2.height=512;const y=c2.getContext('2d');y.imageSmoothingQuality='high';y.drawImage(c,0,0,512,512);
- FO={calm:L.calm||0,brow:hair?rgb(hair.map(v=>v*0.7)):beard?rgb(beard.map(v=>v*0.7)):'#2a1a12',fem:L.fem?1:0};
+ FO={calm:L.calm||0,brow:L.fem?rgb((hair||[40,28,20]).map(v=>Math.min(v,120)*0.45)):hair?rgb(hair.map(v=>v*0.7)):beard?rgb(beard.map(v=>v*0.7)):'#2a1a12',fem:L.fem?1:0,iris:L.iris||null,shadow:L.shadow||null};
  y.save();y.scale(2,2);const fy=(HEAD.crownY-1.676)/(HEAD.crownY-HEAD.neckY)*256;y.translate(128,fy);y.scale(1.4,1.22);y.translate(-128,-fy);paintFace(y);
  const C=128,Vy=Y=>(HEAD.crownY-Y)/(HEAD.crownY-HEAD.neckY)*256,ey=Vy(1.706),ex=7.5;
  if(L.stache||L.beard){y.fillStyle=rgb((beard||hair||[40,28,20]).map(v=>v*0.8));y.beginPath();y.moveTo(C-12,Vy(1.646)+2);y.quadraticCurveTo(C-6,Vy(1.662),C,Vy(1.658));y.quadraticCurveTo(C+6,Vy(1.662),C+12,Vy(1.646)+2);y.quadraticCurveTo(C,Vy(1.652),C-12,Vy(1.646)+2);y.fill();}
  if(L.scar){y.strokeStyle='rgba(150,60,60,.8)';y.lineWidth=1.4;y.beginPath();y.moveTo(C+5,ey-12);y.lineTo(C+11,ey+9);y.stroke();for(let k=0;k<4;k++){y.beginPath();y.moveTo(C+5.5+k*1.5-2,ey-8+k*5);y.lineTo(C+5.5+k*1.5+2,ey-8+k*5);y.stroke();}}
- if(L.fem){for(const s of [1,-1]){y.fillStyle='rgba(210,70,165,.48)';y.beginPath();y.ellipse(C+s*ex,ey-3.4,6.8,2.6,0,0,6.3);y.fill();y.fillStyle='rgba(245,95,130,.32)';y.beginPath();y.ellipse(C+s*(ex+5),Vy(1.668),5.8,3.4,0,0,6.3);y.fill();y.strokeStyle='#12060a';y.lineWidth=1.8;y.beginPath();y.moveTo(C+s*(ex+5.5),ey-0.5);y.lineTo(C+s*(ex+10.2),ey-3.4);y.stroke();}
-  y.fillStyle='rgba(235,35,95,.92)';y.beginPath();y.ellipse(C,Vy(1.646),8.6,3.2,0,0,6.3);y.fill();y.fillStyle='rgba(255,210,225,.65)';y.fillRect(C-3.5,Vy(1.646)+0.5,7,1.2);}
+ if(L.fem){/* blush on the cheekbones and full painted lips (cupid's bow, darker line between the lips, a gloss highlight) */
+  const lc=L.lip||[225,30,90],ly=Vy(1.646);for(const s of [1,-1]){y.fillStyle='rgba(245,95,130,.30)';y.beginPath();y.ellipse(C+s*(ex+5),Vy(1.668),6,3.6,0,0,6.3);y.fill();}
+  y.fillStyle=rgb(lc);y.beginPath();y.moveTo(C-9.5,ly+0.6);y.quadraticCurveTo(C-5,ly-3.6,C,ly-1.6);y.quadraticCurveTo(C+5,ly-3.6,C+9.5,ly+0.6);y.quadraticCurveTo(C,ly+6.2,C-9.5,ly+0.6);y.fill();
+  y.strokeStyle=rgb(lc.map(v=>v*0.45));y.lineWidth=1.1;y.beginPath();y.moveTo(C-9.5,ly+0.6);y.quadraticCurveTo(C,ly+1.8,C+9.5,ly+0.6);y.stroke();
+  y.fillStyle='rgba(255,230,238,.7)';y.beginPath();y.ellipse(C-1,ly+3.1,3.4,0.9,0,0,6.3);y.fill();}
  if(L.shades||L.aviators){for(const s of [1,-1]){const cx=C+s*ex;y.fillStyle='rgba(10,10,14,.95)';y.beginPath();if(L.aviators){y.moveTo(cx-s*-7,ey-4);y.lineTo(cx+s*8,ey-4);y.quadraticCurveTo(cx+s*8,ey+6,cx+s*1,ey+6);y.quadraticCurveTo(cx-s*7,ey+5,cx-s*7,ey-4);}else{y.rect(cx-7.5,ey-4,15,8);}y.fill();y.fillStyle='rgba(120,170,220,.45)';y.fillRect(cx-5,ey-3,4,2);
   y.strokeStyle=L.aviators?'#d0a040':'#111';y.lineWidth=1;y.stroke();}y.strokeStyle=L.aviators?'#d0a040':'#111';y.lineWidth=1.4;y.beginPath();y.moveTo(C-2,ey-2);y.lineTo(C+2,ey-2);y.stroke();for(const s of [1,-1]){y.beginPath();y.moveTo(C+s*(ex+7.5),ey-3);y.lineTo(C+s*30,ey-2);y.stroke();}}
  else if(L.glasses){y.strokeStyle='#222';y.lineWidth=1.3;for(const s of [1,-1]){y.beginPath();y.ellipse(C+s*ex,ey,7,5.5,0,0,6.3);y.stroke();}y.beginPath();y.moveTo(C-1,ey-1);y.lineTo(C+1,ey-1);y.stroke();}
@@ -640,7 +660,7 @@ function paintBodyP(L){const sh=C255(L.shirt),jk=C255(L.jacket),sk=C255(L.skin);
   if(L.tank)for(const sx of [96,416]){x.fillStyle=rgb(sk);x.fillRect(sx-34,0,68,26);}}
  if(L.fem){if(L.dancer){
   fab(0,0,512,290,sk);fab(0,290,512,90,sk);fab(0,381,512,18,sk);fab(0,440,512,72,sk);
-  /* lingerie styles (L.ling): bikini (default), bodysuit, corset, lace; L.hose: stockings or fishnets on the legs */
+  /* lingerie styles (L.ling): bikini (default), bodysuit, corset, lace, babydoll, leopard, strappy, leotard; L.hose: stockings or fishnets on the legs */
   const ling=L.ling||'bikini',dk=jk.map(v=>v*0.6);
   for(const sd of [-1,1]){const g=x.createRadialGradient(256+sd*38,94,4,256+sd*38,102,52);g.addColorStop(0,'rgba(255,255,255,.26)');g.addColorStop(0.55,'rgba(255,255,255,0)');g.addColorStop(0.82,'rgba(0,0,0,.22)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(256+sd*38-55,40,110,115);}
   x.strokeStyle=rgb(sk.map(v=>v*0.62));x.lineWidth=2.5;x.beginPath();x.moveTo(256,68);x.lineTo(256,122);x.stroke();
@@ -659,6 +679,19 @@ function paintBodyP(L){const sh=C255(L.shirt),jk=C255(L.jacket),sk=C255(L.skin);
    x.fillStyle=rgb(sh);x.fillRect(0,106,512,4);x.fillRect(0,214,512,4);bottom();
    for(const gx of [40,140,372,472]){x.fillStyle=rgb(sh);x.fillRect(gx,218,4,60);}}
   else if(ling==='lace'){top();bottom();lace(92,108);lace(212,226);}
+  else if(ling==='babydoll'){/* sheer babydoll: a see-through chemise from the bust flaring to the upper hip over a matching set, ribbon bow under the bust */
+   top();bottom();x.globalAlpha=0.42;x.fillStyle=rgb(jk);x.fillRect(0,108,512,124);x.globalAlpha=1;lace(222,232);
+   x.fillStyle=rgb(sh);x.fillRect(0,108,512,5);x.beginPath();x.moveTo(256,112);x.lineTo(244,104);x.lineTo(244,120);x.closePath();x.moveTo(256,112);x.lineTo(268,104);x.lineTo(268,120);x.closePath();x.fill();}
+  else if(ling==='leopard'){/* leopard-print bikini, very 1986 */
+   top();bottom();const spots=(y0,y1)=>{x.fillStyle='rgba(40,22,10,.85)';for(let lx=4;lx<512;lx+=14)for(let ly=y0;ly<y1;ly+=10){const ox=(ly/10%2)*7;x.beginPath();x.ellipse(lx+ox,ly,3,2.2,0.5,0,6.3);x.fill();}};
+   x.save();x.beginPath();x.rect(0,58,512,56);x.clip();spots(60,114);x.restore();x.save();x.beginPath();x.rect(0,212,512,62);x.clip();spots(214,274);x.restore();}
+  else if(ling==='strappy'){/* strappy set: bikini with criss-cross straps over the midriff and a ring at the centre */
+   top();bottom();x.strokeStyle=rgb(jk);x.lineWidth=4;for(const sd of [-1,1]){x.beginPath();x.moveTo(256+sd*60,112);x.lineTo(256-sd*60,214);x.stroke();x.beginPath();x.moveTo(256+sd*140,112);x.lineTo(256+sd*30,214);x.stroke();}
+   x.strokeStyle='#e8b84a';x.lineWidth=3;x.beginPath();x.arc(256,163,8,0,6.3);x.stroke();}
+  else if(ling==='leotard'){/* 80s high-cut leotard: shoulder to hip in one colour, a contrast stripe across the bust, cut high over the hips */
+   x.fillStyle=rgb(jk);x.fillRect(0,40,512,190);x.fillStyle=rgb(sk);x.beginPath();x.ellipse(256,40,46,26,0,0,6.3);x.fill();
+   x.fillStyle=rgb(jk);x.beginPath();x.moveTo(214,230);x.lineTo(298,230);x.lineTo(256,278);x.closePath();x.fill();
+   x.fillStyle=rgb(sh);x.fillRect(0,128,512,12);x.fillStyle='rgba(255,255,255,.2)';x.fillRect(0,144,512,4);}
   else{top();bottom();}
   if(L.hose){/* stockings: sheer colour with a lace top, or fishnets */const hc=C255(L.hoseC||[0.05,0.05,0.07]);
    if(L.hose==='net'){x.strokeStyle=rgb(hc);x.lineWidth=1.4;for(let k=-80;k<600;k+=9){x.beginPath();x.moveTo(k,440);x.lineTo(k+72,512);x.moveTo(k+72,440);x.lineTo(k,512);x.stroke();}}
