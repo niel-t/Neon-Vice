@@ -55,7 +55,7 @@ function act3Dress(g){const k=a3Of(g);if(!k||!g.rows)return;const W=g.W,H=g.H,zT
   if(ch!=='N')g.floorT[i]=f;}
  /* keep clear of doors, front gaps, stairs, arrivals, objectives, the spawn and the crane console */
  const sd=a3StageDef(g),clear=[];
- if(sd){for(const s of sd.stairs||[])clear.push([s.at[0],s.at[1],2.2]);for(const q of Object.values(sd.arrivals||{}))clear.push([q.at[0],q.at[1],2]);}
+ if(sd){for(const s of sd.stairs||[])clear.push([s.at[0],s.at[1],2.2]);for(const q of Object.values(sd.arrivals||{}))clear.push([q.at[0],q.at[1],2]);}for(const c of stairClear(g))clear.push(c);
  if(g.player)clear.push([g.player.x,g.player.z,1.6]);if(k==='roof')clear.push([2.5,H-2.5,1.8]);
  for(let z=0;z<H;z++)for(let x=0;x<W;x++){const c=mapAt(x,z);if('DNenPC'.includes(c))clear.push([x+0.5,z+0.5,c==='D'?1.6:1.3]);}
  if(g.front)for(let x=1;x<W-1;x++)if(!g.solid[(zT)*W+x])clear.push([x+0.5,zT-0.5,1.8]);

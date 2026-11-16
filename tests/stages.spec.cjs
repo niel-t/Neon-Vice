@@ -336,7 +336,7 @@ test('stages: Kade Tower stairs and hoist still take you up after an execution',
   expect(result).toEqual({ up: { executed: true, timer: 0, sid: 'stair', state: 'play' }, elev: { executed: true, timer: 0, sid: 'pent', state: 'play' } });
 });
 
-test('stages: stairs and lifts bring you out in the same corner of the floor above, coming up the switchback', async ({ openGame }) => {
+test('stages: stairs and lifts bring you out in the same corner of the floor above, up plain stairs', async ({ openGame }) => {
   const page = await openGame();
   const result = await page.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)), out = [];
@@ -345,16 +345,18 @@ test('stages: stairs and lifts bring you out in the same corner of the floor abo
       return [(x - 2) / (w - 1), (z - 2) / (h - 1)]; };
     for (const [mission, route] of [['c2', 'up'], ['c2', 'elev'], ['c10', 'up'], ['c10', 'elev']]) {
       window.NOARRIVE = 1; delete myProg().run; startMission(mission); if (G.arrive) endArrive();
-      // stairs are a three-cell switchback: the flight up's top cell and the next floor's arrival (the bottom of the other flight) sit
-      // two cells apart, so compare the middles of the two flights
-      const from = G, s = from.stageRun.describe(from.sid).stairs.find(q => q.id === route), lift = route === 'elev', f0 = frac(from, s.at[0], s.at[1] + (lift ? 0 : 1));
+      // stairs are one straight flight along the top wall (stairs.js): you leave at its top and step off the same flight's top onto the
+      // landing beside it on the floor above, a cell along
+      const from = G, s = from.stageRun.describe(from.sid).stairs.find(q => q.id === route), lift = route === 'elev', f0 = frac(from, s.at[0], s.at[1]);
       for (const e of from.enemies) e.alive = false;
       from.keycard = true; from.player.x = s.at[0]; from.player.z = s.at[1];
       for (let i = 0; i < 60 && (G === from || fading || G.climbIn || state !== 'play'); i++) await wait(100);
-      const f1 = frac(G, G.player.x, G.player.z - (lift ? 0 : 1));
-      out.push([mission, route, G.sid, Math.abs(f0[0] - f1[0]) < 0.15 && Math.abs(f0[1] - f1[1]) < 0.22]);
+      const f1 = frac(G, G.player.x, G.player.z), fl = stairFlights(G).find(f => !f.go);
+      out.push([mission, route, G.sid, Math.abs(f0[0] - f1[0]) < 0.15 && Math.abs(f0[1] - f1[1]) < 0.22, lift ? null : [!!fl && fl.dir, G.player.y, isSolid(fl.top, fl.z0), G.wh[fl.z0 * G.W + fl.top] < 0]]);
     }
     return out;
   });
-  expect(result).toEqual([['c2', 'up', 'stair', true], ['c2', 'elev', 'pent', true], ['c10', 'up', 'stair', true], ['c10', 'elev', 'pent', true]]);
+  // up the stairs you come out of an open stairwell (solid, below the floor), standing level on the landing
+  const up = [1, 0, true, true];
+  expect(result).toEqual([['c2', 'up', 'stair', true, up], ['c2', 'elev', 'pent', true, null], ['c10', 'up', 'stair', true, up], ['c10', 'elev', 'pent', true, null]]);
 });

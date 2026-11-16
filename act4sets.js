@@ -14,19 +14,14 @@
    - OPA-LOCKA (the apron and Hangar 7): apron concrete slabs and corrugated hangar walls, baggage containers for the crates, ground
      power units, baggage carts, chocks, cones, a windsock; in the hangar epoxy floor, a jet engine on its stand, tool chests,
      workbenches, tyre stacks, maintenance stands, oxygen bottles, a yellow safety box painted round the jet and VALE TRUST on the wall.
-   RAMPS (the same-corner rule from Act 3): the garage ramps are switchbacks built into the floor plan like Act 3's stairwells, but
-   two cells wide. In a top corner: the lane down (the stair's 'at' sits on the line between its two cells, by the wall), a wall,
-   and beside it the lane coming up from the floor below (closed off). On the floor below you come down the lane beside, facing back
-   into the room, in the same corner (the arrival's 'at' is the bottom of that lane); past the divider the ramp is walled in.
-   The player sinks down a lane and comes off the arrival lane from above (a4RampY). The hangar side door brings you in through the
-   same top-right corner of the hangar.
+   STAIRS: the garage's ways down are plain staircases (stairs.js), the same as the towers'. The hangar side door brings you in
+   through the same top-right corner of the hangar.
    Everything here goes into the level's static batch (built once), so both renderers draw it and a phone pays nothing per frame.
    Furniture keeps its cells and its cover; only the look changes. Loaded after act4.js; nothing runs at load time. */
 
 const A4_KIND={'VALE TRUST GARAGE: STREET LEVEL':'p1','VALE TRUST GARAGE: P2':'p2','VALE TRUST GARAGE':'dock','THE CORAL ROOM':'rest','OPA-LOCKA: THE APRON':'apron','HANGAR 7':'hangar'};
 const a4Of=g=>g&&g.def&&!g.def.hub&&Object.prototype.hasOwnProperty.call(A4_KIND,g.def.name)?A4_KIND[g.def.name]:null;
 const a4Gar=k=>k==='p1'||k==='p2'||k==='dock';
-const A4R={N:3,RISE:0.6};
 /* floorT is an Int8Array (ids up to 127), so the set's floors go in their own override, g.floorX, which buildStatic reads first */
 const a4FT=(g,i)=>g.floorX&&g.floorX[i]||g.floorT[i];
 const A4C={conc:[0.6,0.59,0.57],dk:[0.12,0.12,0.14],steel:[0.66,0.68,0.72],wh:[0.94,0.93,0.9],yel:[0.96,0.76,0.12],red:[0.78,0.1,0.1],org:[1,0.45,0.1],
@@ -36,24 +31,13 @@ const A4C={conc:[0.6,0.59,0.57],dk:[0.12,0.12,0.14],steel:[0.66,0.68,0.72],wh:[0
 /* the stage def a map belongs to (by its name: stage maps carry their own) */
 function a4StageDef(g){if(typeof MISSIONS==='undefined')return null;for(const id of ['c11','c13']){const m=MISSIONS[id];if(m&&m.stageDefs)for(const s of Object.values(m.stageDefs))if(s.def&&s.def.name===g.def.name)return s;}return null;}
 
-/* ---------------- the ramps ---------------- */
-/* lanes on this map: {x0 (left cell), z0 (cell by the wall), k:'down' (the way down, sunken) | 'up' (closed lane coming up) | 'arrive'} */
-function a4Ramps(g){if(g._a4r)return g._a4r;const out=[];g._a4r=out;if(!a4Gar(a4Of(g)))return out;const sd=a4StageDef(g);if(!sd)return out;const W=g.W;
- for(const s of sd.stairs||[])if(s.id==='ramp'){const x0=Math.round(s.at[0])-1,z0=Math.floor(s.at[1]),right=x0>W/2;out.push({x0,z0,k:'down',to:s.to,right});out.push({x0:right?x0-3:x0+3,z0,k:'up',right});}
- const ar=sd.arrivals&&sd.arrivals.ramp;if(ar){const x0=Math.round(ar.at[0])-1,right=x0>W/2;out.push({x0,z0:Math.floor(ar.at[1])-A4R.N+1,k:'arrive',right});}
- return out;}
-/* height on a lane: 1 by the wall, level ground from the bottom cell's centre */
-function a4RampY(g,x,z){for(const r of a4Ramps(g)){const t=(z-r.z0)/A4R.N;if(t<0||t>1)continue;const c=Math.floor(x);if(c!==r.x0&&c!==r.x0+1)continue;
-  const f=Math.max(0,1-t/((A4R.N-0.5)/A4R.N));return r.k==='down'?-A4R.RISE*f:A4R.RISE*f;}return 0;}
-/* how the climb out looks: down a garage ramp, flat through the hangar side door, up the jet's airstairs (the default) */
-function a4ClimbMode(g,s){if(!g||!s)return null;if(s.id==='ramp'&&typeof isGarage==='function'&&isGarage(g))return 'down';if(s.id==='door')return 'flat';return null;}
-/* the walk in on the next floor: off the bottom of the arrival lane, or in through the hangar's side door */
+/* how the climb out looks: flat through the hangar side door, up the jet's airstairs (the default); the garage stairs are flights (stairs.js) */
+function a4ClimbMode(g,s){if(!g||!s)return null;if(s.id==='door')return 'flat';return null;}
+/* the walk in on the next floor through the hangar's side door */
 function a4ClimbArrive(g,s,ar){const p=g.player;if(!ar||!p)return;let sx,sz,y0;
- if(s.id==='ramp'){const r=a4Ramps(g).find(q=>q.k==='arrive');if(!r)return;sx=r.x0+1;sz=r.z0+0.2;y0=A4R.RISE*1.05;}
- else if(s.id==='door'){sx=ar.at[0];sz=Math.floor(ar.at[1])+0.05;y0=0;}else return;
+ if(s.id==='door'){sx=ar.at[0];sz=Math.floor(ar.at[1])+0.05;y0=0;}else return;
  g.climbIn={t0:performance.now(),dur:0.9,x0:sx,z0:sz,y0,x1:p.x,z1:p.z,a:Math.atan2(p.x-sx,p.z-sz)};
  p.x=sx;p.z=sz;p.y=y0;p.a=g.climbIn.a;g.cam.x=p.x;g.cam.z=p.z-1;g.cam.lift=s.id==='door'?0.3:1;}
-function a4RampTick(g){const p=g.player;if(!p||g.climb||g.climbIn||g.seatP)return;if(a4Ramps(g).length)p.y=a4RampY(g,p.x,p.z);}
 
 /* a tiny stencil font, three by five */
 const A4F={A:'010101111101101',B:'110101110101110',C:'011100100100011',D:'110101101101110',E:'111100110100111',F:'111100110100100',G:'011100101101011',H:'101101111101101',
@@ -76,10 +60,10 @@ function act4Dress(g){const k=a4Of(g);if(!k||!g.rows)return;const W=g.W,H=g.H,zT
   else if(k==='apron'){f=mx<=9&&mz<=5?41:228;}
   else if(k==='hangar'){f=mx<=7&&mz<=5?14:227;}
   FX[i]=f;}
- /* keep clear: ramps, stairs, arrivals, doors, objectives, the spawn, the car, the street gaps and (at the dock) the vans' paths */
+ /* keep clear: stairs, arrivals, doors, objectives, the spawn, the car, the street gaps and (at the dock) the vans' paths */
  const sd=a4StageDef(g),clear=[];
  if(sd){for(const s of sd.stairs||[])clear.push([s.at[0],s.at[1],2.4]);for(const q of Object.values(sd.arrivals||{}))clear.push([q.at[0],q.at[1],2.4]);}
- for(const r of a4Ramps(g))for(let dz=0;dz<A4R.N+1;dz++)for(let dx=-1;dx<3;dx++)clear.push([r.x0+dx+0.5,r.z0+dz+0.5,0.9]);
+ for(const c of stairClear(g))clear.push(c);
  if(g.player)clear.push([g.player.x,g.player.z,1.6]);if(g.car)clear.push([g.car.x,g.car.z,1.8]);
  for(let z=0;z<H;z++)for(let x=0;x<W;x++){const c=mapAt(x,z);if('DNnePCqoytmj'.includes(c))clear.push([x+0.5,z+0.5,c==='D'?1.6:c==='j'?1.6:1.3]);
   if(c==='q')for(let zz=z;zz<H-1;zz++)clear.push([x+0.5,zz+0.5,1.2]);if(c==='y')for(let xx=1;xx<W-1;xx++)clear.push([xx+0.5,z+0.5,1.1]);}
@@ -99,7 +83,7 @@ function act4Dress(g){const k=a4Of(g);if(!k||!g.rows)return;const W=g.W,H=g.H,zT
   A4.props.push({t,x:x+0.5+sx,z:z+0.5+sz,a,s:hsh(x,z,75)});taken.push([x,z]);}
  /* wall runs: pipes, tubes, sconces along the north walls (the faces the camera sees) */
  for(let z=2;z<zT;z++)for(let x=1;x<W-1;x++){const i=z*W+x;if(g.solid[i]||!g.solid[i-W]||g.glass&&g.glass[i-W])continue;if((g.wh[i-W]||WALL_H)<WALL_H*0.9)continue;
-  if(a4Ramps(g).some(r=>x>=r.x0-1&&x<=r.x0+2&&z>=r.z0&&z<=r.z0+A4R.N))continue;A4.runs.push({x,z,lit:false});}
+  if(a4NearStairs(g,x,z))continue;A4.runs.push({x,z,lit:false});}
  for(const r of A4.runs){const m=(r.x+r.z*3)%5===0;if(!m)continue;r.lit=true;if(lights<4&&(k!=='rest'||a4FT(g,r.z*W+r.x)===225)){lights++;
   g.lights.push({x:r.x+0.5,y:1.3,z:r.z+0.4,r:a4Gar(k)?5:4,c:a4Gar(k)?[0.82,0.95,1]:k==='rest'?[1,0.72,0.5]:[0.9,0.95,1]});}}
  /* the jet's parking box in the hangar */
@@ -208,10 +192,10 @@ function a4Paint(B,g){const A4=g.a4,k=A4.k,W=g.W,H=g.H,C=A4C,fl=(x,z,sx,sz,c,y,r
    for(const ex of [-0.4,2.4])fl(x+ex,z+0.5,0.06,1.0,C.wh);fl(x+1,z+0.03,2.86,0.06,C.wh);
    B.box(TRS(x+1,0.05,z+0.2,0,0.8,0.1,0.12),[0.62,0.6,0.56]);B.box(TRS(x+1,0.1,z+0.2,0,0.8,0.005,0.12),C.yel);}
   /* aisle arrows toward the way down */
-  const down=a4Ramps(g).find(r=>r.k==='down');
+  const down=stairFlights(g).find(f=>f.go);
   if(down)for(let z=2;z<H-2;z++)for(let x=2;x<W-2;x++){const i=z*W+x;if(g.solid[i]||g.furn[i]||(x*7+z*3)%11!==0||a4FT(g,i)!==223)continue;
-   if([-1,0,1].some(d=>g.furn[(z+d)*W+x]===21||g.furn[(z+d)*W+x-1]===21))continue;if(a4Ramps(g).some(r=>x>=r.x0-1&&x<=r.x0+2&&z<=r.z0+A4R.N+1))continue;
-   const dir=down.x0+1>x?1:-1;fl(x+0.5,z+0.5,0.5,0.08,C.wh);for(const s of [-1,1])fl(x+0.5+dir*0.24,z+0.5+s*0.08,0.26,0.07,C.wh,0.005,dir*s*0.7);}
+   if([-1,0,1].some(d=>g.furn[(z+d)*W+x]===21||g.furn[(z+d)*W+x-1]===21))continue;if(a4NearStairs(g,x,z))continue;
+   const dir=down.top+0.5>x?1:-1;fl(x+0.5,z+0.5,0.5,0.08,C.wh);for(const s of [-1,1])fl(x+0.5+dir*0.24,z+0.5+s*0.08,0.26,0.07,C.wh,0.005,dir*s*0.7);}
   if(k==='dock'){for(const q of a4Cells(g,'q')){for(const ex of [-0.65,0.65])fl(q.x+ex,q.z+0.5,0.08,1.9,C.yel);fl(q.x,q.z+1.45,1.38,0.08,C.yel);
      a4Text(B,String(a4Cells(g,'q').indexOf(q)+1),q.x,0.007,q.z+0.7,0.1,C.yel,false,'f');}
    const y=a4Cells(g,'y')[0];if(y){for(let x=9;x<y.x-0.5;x+=1){fl(x,y.z-0.55,0.5,0.06,C.yel);fl(x,y.z+0.55,0.5,0.06,C.yel);}
@@ -221,27 +205,8 @@ function a4Paint(B,g){const A4=g.a4,k=A4.k,W=g.W,H=g.H,C=A4C,fl=(x,z,sx,sz,c,y,r
  if(k==='hangar'&&A4.jetBox){const b=A4.jetBox,c=C.yel;fl((b.x0+b.x1)/2,b.z0,b.x1-b.x0,0.1,c);fl((b.x0+b.x1)/2,b.z1,b.x1-b.x0,0.1,c);fl(b.x0,(b.z0+b.z1)/2,0.1,b.z1-b.z0,c);fl(b.x1,(b.z0+b.z1)/2,0.1,b.z1-b.z0,c);
   for(let x=b.x0+0.6;x<b.x1-0.4;x+=0.8)fl(x,b.z0-0.25,0.35,0.08,[0.9,0.2,0.15],0.006,0.6);a4Text(B,'7',b.x1+2.4,0.007,b.z1-1.6,0.32,[0.95,0.95,0.92],false,'f');}}
 
-/* the ramps: the lane down sinks into the dark toward the wall; the lanes up (closed, or the one you came down) rise to the wall */
-function a4DrawRamps(B,g){const C=A4C,N=A4R.N,R=A4R.RISE,bx=(px,py,pz,sx,sy,sz,c,em,ry)=>B.box(TRS(px,py,pz,ry||0,sx,sy,sz),c,!!em),label={p2:'P2',dock:'VAULT'};
- for(const r of a4Ramps(g)){const x=r.x0+1,z0=r.z0,zE=z0+N;
-  if(r.k==='down'){bx(x,0.003,z0+N/2,2,0.006,N,[0.03,0.03,0.04]);const S=16;
-   for(let i=0;i<S;i++){const t=(i+0.5)/S,kk=0.42*Math.pow(1-t,1.3)+0.03,zc=zE-(i+0.5)*N/S;bx(x,0.006,zc,1.96,0.004,N/S-0.01,[kk,kk*0.98,kk*0.96]);}
-   for(const zc of [zE-0.6,zE-1.6])for(const s of [-1,1])bx(x+s*0.2,0.009,zc,0.5,0.004,0.1,C.yel,false,-s*0.7);
-   for(let i=0;i<8;i++)bx(r.x0+0.12+i*0.25,0.008,zE-0.06,0.22,0.004,0.1,i%2?C.dk:C.yel);
-   /* the clearance bar over the mouth, the sign on the end wall */
-   for(const px of [r.x0+0.08,r.x0+1.92])bx(px,0.9,zE+0.1,0.07,1.8,0.07,C.yel);for(let i=0;i<8;i++)bx(r.x0+0.12+i*0.25,1.78,zE+0.1,0.25,0.12,0.08,i%2?C.dk:C.yel);
-   bx(x,1.0,z0+0.04,1.4,0.42,0.04,[0.1,0.2,0.5]);a4Text(B,label[r.to]||'DOWN',x,1.12,z0+0.07,0.045,[1,1,1],true);}
-  else{/* a raised lane: steps under a sloped plate, kerb, then a closed one gets a barrier and a no-entry sign */
-   const S=10,L=N-0.5;for(let i=0;i<S;i++){const t=(i+0.5)/S,h=R*(1-(i+1)/S)+0.002,zc=z0+t*L;bx(x,h/2,zc,1.98,h,L/S,[0.5,0.49,0.47]);}
-   const th=Math.atan2(R,L);B.box(A.mul(A.mul(A.T(x,R/2+0.01,z0+L/2),A.RX(th)),A.S(2,0.03,Math.hypot(L,R))),[0.58,0.57,0.55],false);
-   for(let i=1;i<12;i++){const t=i/12;bx(x,R*(1-t)+0.03,z0+t*L,1.9,0.006,0.035,[0.36,0.35,0.34]);}for(const ex of [r.x0+0.12,r.x0+1.88])B.box(A.mul(A.mul(A.T(ex,R/2+0.03,z0+L/2),A.RX(th)),A.S(0.06,0.006,Math.hypot(L,R))),C.yel,false);
-   const kx=r.right?r.x0+0.05:r.x0+1.95,kxo=r.right?r.x0+1.95:r.x0+0.05;
-   B.box(A.mul(A.mul(A.T(kx,R/2+0.08,z0+L/2),A.RX(th)),A.S(0.1,0.14,Math.hypot(L,R))),[0.68,0.66,0.62],false);
-   for(let i=0;i<5;i++){const t=(i+0.5)/5;bx(kx,R*(1-t)*0.5+0.02,z0+t*L,0.09,R*(1-t)+0.04,L/5,[0.62,0.6,0.56]);}
-   if(r.k==='up'){for(let i=0;i<8;i++)bx(r.x0+0.12+i*0.25,0.75,zE-0.1,0.25,0.08,0.05,i%2?C.wh:C.red);bx(kxo,0.4,zE-0.1,0.08,0.8,0.08,C.dk);bx(kxo,0.82,zE-0.1,0.16,0.1,0.16,C.yel);
-    bx(x,1.0,z0+0.04,0.42,0.42,0.04,C.red);bx(x,1.0,z0+0.07,0.3,0.07,0.02,C.wh,true);}
-   else{for(const zc of [z0+1.6,z0+2.6]){bx(x,(zc<z0+L?R*(1-(zc-z0)/L):0)+0.014,zc,0.08,0.006,0.4,C.wh);for(const s of [-1,1])bx(x+s*0.1,(zc<z0+L?R*(1-(zc-z0)/L):0)+0.014,zc+0.16,0.24,0.006,0.07,C.wh,false,s*0.7);}
-    bx(x,1.0,z0+0.04,1.4,0.42,0.04,[0.1,0.2,0.5]);a4Text(B,g.a4.k==='dock'?'VAULT':'P2',x,1.12,z0+0.07,0.045,[1,1,1],true);}}}}
+/* a cell on or next to a staircase (stairs.js) */
+function a4NearStairs(g,x,z){return stairFlights(g).some(f=>z>=f.z0-1&&z<=f.z0+2&&(x+0.5-(f.xc+f.side))*(x+0.5-(f.xi-f.side))<=0);}
 
 /* big stencils and set pieces on the walls */
 function a4SetPieces(B,g){const A4=g.a4,k=A4.k,C=A4C,W=g.W,bx=(px,py,pz,sx,sy,sz,c,em,ry)=>B.box(TRS(px,py,pz,ry||0,sx,sy,sz),c,!!em);
@@ -261,7 +226,7 @@ function a4SetPieces(B,g){const A4=g.a4,k=A4.k,C=A4C,W=g.W,bx=(px,py,pz,sx,sy,sz
 
 /* clutter on bare floor (replaces the generic bottles and pizza boxes) */
 function act4Clutter(B,g,x,z){const k=g.a4&&g.a4.k;if(!k||a4Of(g)!==k)return false;if(g.front&&z>=g.front.zT-1)return true;if(hsh(x,z,1)>0.18)return true;
- if(g.a4.props.some(p=>Math.abs(p.x-x-0.5)<0.9&&Math.abs(p.z-z-0.5)<0.9))return true;if(a4Ramps(g).some(r=>x>=r.x0-1&&x<=r.x0+2&&z>=r.z0&&z<=r.z0+A4R.N))return true;
+ if(g.a4.props.some(p=>Math.abs(p.x-x-0.5)<0.9&&Math.abs(p.z-z-0.5)<0.9))return true;if(a4NearStairs(g,x,z))return true;
  const u=x+0.2+hsh(x,z,3)*0.6,v=z+0.2+hsh(x,z,4)*0.6,r=hsh(x,z,5)*TAU,h=hsh(x,z,2),bx=(dx,y,dz,sx,sy,sz,c,ry,em)=>B.box(TRS(u+dx,y,v+dz,r+(ry||0),sx,sy,sz),c,!!em);
  if(k==='rest'){const f=a4FT(g,z*g.W+x);if(f===44){if(h<0.5){bx(0,0.004,0,0.2,0.006,0.14,[0.95,0.6,0.2]);}else bx(0,0.01,0,0.12,0.02,0.04,[0.75,0.76,0.8]);return true;}
   if(h<0.35){for(let i=0;i<5;i++)bx((hsh(x,z,90+i)-0.5)*0.4,0.004,(hsh(x,z,95+i)-0.5)*0.4,0.06,0.006,0.04,[0.95,0.4,0.45],i);}
@@ -304,6 +269,6 @@ function act4Furn(B,g,x,z,f){const k=g.a4&&g.a4.k;if(!k||a4Of(g)!==k)return fals
 
 /* static: everything above, once, into the level's batch */
 function drawAct4Sets(B,g){const A4=g.a4;if(!A4||a4Of(g)!==A4.k)return;const r0=B.round;B.round=0;
- for(const p of A4.props)a4Prop(B,g,p);a4Runs(B,g);a4Paint(B,g);a4SetPieces(B,g);a4DrawRamps(B,g);B.round=r0;}
+ for(const p of A4.props)a4Prop(B,g,p);a4Runs(B,g);a4Paint(B,g);a4SetPieces(B,g);B.round=r0;}
 /* the generic wall posters, paintings and windows stay off the garage, the apron and the hangar (the Coral Room keeps its art) */
 const a4NoArt=g=>{const k=g&&g.a4&&g.a4.k;return !!k&&k!=='rest'&&a4Of(g)===k;};

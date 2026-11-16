@@ -139,20 +139,19 @@ function checkCorners(MISSIONS) {
       if (s.id === 'board') continue;
       const to = defs[s.to], a = interior(st.def), b = interior(to.def), ar0 = to.arrivals[s.arrive].at;
       let at = s.at, ar = ar0;
-      // a staircase is a three-cell switchback: compare the middles of the two flights (the stair's 'at' is the top of the flight up,
-      // the arrival's 'at' the bottom of the flight you come up)
-      if (s.id === 'up') { at = [s.at[0], s.at[1] + 1]; ar = [ar0[0], ar0[1] - 1]; }
-      // a garage ramp is two cells wide ('at' on the line between them): compare the divider wall between the lane down and the lane
-      // you come down, which stands in the same place on both floors
-      if (s.id === 'ramp') {
-        const div = (x, d, down) => { const x0 = Math.round(x) - 1, right = x0 > (d.w + 4) / 2; return down ? (right ? x0 - 0.5 : x0 + 2.5) : (right ? x0 + 2.5 : x0 - 0.5); };
-        at = [div(s.at[0], a, true), s.at[1] + 1]; ar = [div(ar0[0], b, false), ar0[1] - 1];
+      // a staircase is one straight flight along the top wall (stairs.js): the stair's 'at' is the flight's far-end cell, the arrival's
+      // 'at' the landing just past it. Compare the far-end cells: both floors must have the flight against the same top wall, running
+      // toward the same corner
+      if (s.id === 'up' || s.id === 'down') {
+        const side = (x, d) => (x < (d.w + 4) / 2 ? -1 : 1), sa = side(s.at[0], a), sb = side(ar0[0], b);
+        assert(sa === sb, `${id} ${st.id}.${s.id}: the flight runs to the ${sa < 0 ? 'left' : 'right'} corner but ${to.id} has it in the other one`);
+        assert(s.at[1] === 3 && ar0[1] === 3, `${id} ${st.id}.${s.id}: a flight runs along the top wall (z 3), not ${s.at[1]} / ${ar0[1]}`);
+        at = [Math.floor(s.at[0]) + 0.5, s.at[1]]; ar = [Math.floor(ar0[0]) + sb + 0.5, ar0[1]];
       }
       // world coordinates carry the loader's one-cell padding ring and the wall ring: the first floor cell is at 2
       const fx = (x, d) => (x - 2) / Math.max(1, d.w - 1), fz = (z, d) => (z - 2) / Math.max(1, d.h - 1);
       const dx = Math.abs(fx(at[0], a) - fx(ar[0], b)), dz = Math.abs(fz(at[1], a) - fz(ar[1], b));
       assert(dx <= 0.12 && dz <= 0.2, `${id} ${st.id}.${s.id} at ${s.at} comes out at ${to.id} ${ar0}, not the same spot on the next floor (dx ${dx.toFixed(2)}, dz ${dz.toFixed(2)})`);
-      if (s.id === 'ramp') assert(Math.abs(at[0] - ar[0]) < 0.01, `${id} ${st.id} ramp: the lane down and the lane you come down are not either side of the same divider (${at[0]} vs ${ar[0]})`);
     }
   }
 }

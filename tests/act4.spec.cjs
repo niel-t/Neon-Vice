@@ -10,14 +10,14 @@ test('act 4 opens after Kade: the floor index, labels, briefs and the old-save u
     .toEqual({ len: 14, top: 11, act: [4, 4, 4], brief: 'ACT 4 · FLOOR 1 / 3 — VALE TRUST GARAGE', last: 'ACT 4 · FLOOR 3 / 3 — OPA-LOCKA HANGAR 7', dlg: true, quote: 15, ch: 14, par: 14, stash: 14 });
 });
 
-test('act 4 floor 1: down the garage ramps, then the barrier and a dead driver each stop a gold van and the third gets away', async ({ openGame }) => {
+test('act 4 floor 1: down the garage stairs, then the barrier and a dead driver each stop a gold van and the third gets away', async ({ openGame }) => {
   test.setTimeout(240_000);
   const page = await openGame();
   expect(await page.evaluate(() => { NOARRIVE = true; startLevel(11); return { sid: G.sid, act: LEVELS[11].act }; })).toEqual({ sid: 'p1', act: 4 });
-  await toStairs(page, 'ramp');
+  await toStairs(page, 'down');
   await go(page, 'p2');
   await page.evaluate(() => { G.player.hp = 99; for (const e of G.enemies) e.spd = 0.0001; });
-  await toStairs(page, 'ramp');
+  await toStairs(page, 'down');
   await go(page, 'dock');
   const s = await page.evaluate(() => ({ vans: G.vans.length, obj: G.obj.label, drivers: G.vans.every(v => v.e.alive && v.e.driver === v), exit: G.def.exit }));
   expect(s).toEqual({ vans: 3, obj: 'STOP THE GOLD VANS', drivers: true, exit: 'Take the freight lift up' });
@@ -165,30 +165,30 @@ test('act 4 floor 3: if the jet is not stopped in time it runs off the runway an
   await expect.poll(() => page.evaluate(() => ({ boom: G.jet.boom, crashed: G.jet.crashed, alive: G.player.alive })), { timeout: 20_000 }).toEqual({ boom: 1, crashed: 1, alive: false });
 });
 
-test('act 4 sets: the garage ramps are switchbacks that come out in the same corner, and the hangar side door brings you in at the same spot', async ({ openGame }) => {
+test('act 4 sets: the garage stairs are plain flights that come out in the same corner, and the hangar side door brings you in at the same spot', async ({ openGame }) => {
   test.setTimeout(240_000);
   const page = await openGame();
-  const p1 = await page.evaluate(() => { NOARRIVE = true; startLevel(11); const r = a4Ramps(G);
-    return { sid: G.sid, lanes: r.map(q => q.k).join(), props: G.a4.props.length > 12, floor: G.floorX[3 * G.W + 20], wall: G.wallX.some(v => v === 224) }; });
-  expect(p1).toEqual({ sid: 'p1', lanes: 'down,up', props: true, floor: 223, wall: true });
-  // halfway up the lane down the player has sunk; past the clearance bar they are on level floor again
-  expect(await page.evaluate(() => { const d = a4Ramps(G).find(q => q.k === 'down'); return [a4RampY(G, d.x0 + 1, d.z0 + 1), a4RampY(G, d.x0 + 1, d.z0 + 3.5)]; }))
-    .toEqual([expect.any(Number), 0]);
-  expect(await page.evaluate(() => { const d = a4Ramps(G).find(q => q.k === 'down'); return a4RampY(G, d.x0 + 1, d.z0 + 1) < -0.2; })).toBe(true);
-  // take the ramp: the walk down sinks, and on P2 you come off the lane beside it, in the same top-right corner, from above
+  const p1 = await page.evaluate(() => { NOARRIVE = true; startLevel(11); const f = stairFlights(G);
+    return { sid: G.sid, fl: f.map(q => [q.go, q.dir, q.top, q.side]), pit: G.pit[3 * G.W + 34] === 1, props: G.a4.props.length > 12, floor: G.floorX[3 * G.W + 20], wall: G.wallX.some(v => v === 224) }; });
+  expect(p1).toEqual({ sid: 'p1', fl: [[true, -1, 33, 1]], pit: true, props: true, floor: 223, wall: true });
+  // walking down the flight toward the room the player sinks with the steps; off it they are on level floor
+  expect(await page.evaluate(() => { const f = stairFlights(G)[0]; return [Math.abs(flightY(f, f.xc)), flightY(f, f.top + 0.5) < -0.8, flightY(f, f.xi)]; })).toEqual([0, true, -1.2]);
+  // the rail along the room side keeps you off the steps except at the corner end
+  expect(await page.evaluate(() => { const p = G.player; p.x = 33.5; p.z = 4.2; stairTick(G); return p.z >= 4.07; })).toBe(true);
+  // take the stairs: on P2 you come down the same flight, in the same top-right corner, onto the landing
   await page.evaluate(() => { for (const e of G.enemies) e.alive = false; });
-  await toStairs(page, 'ramp');
-  await expect.poll(() => page.evaluate(() => G.climb ? G.climb.mode : G.sid), { timeout: 20_000 }).toMatch(/down|p2/);
+  await toStairs(page, 'down');
   await page.waitForFunction(() => G.sid === 'p2', null, { timeout: 60_000 });
-  const p2 = await page.evaluate(() => ({ arr: G.climbIn ? [G.climbIn.x0, G.climbIn.y0 > 0] : null, lanes: a4Ramps(G).map(q => q.k).join() }));
-  expect(p2.lanes).toBe('down,up,arrive');
-  if (p2.arr) expect(p2.arr).toEqual([32, true]);
+  const p2 = await page.evaluate(() => ({ arr: G.climbIn ? [G.climbIn.x0 > 33, G.climbIn.y0 > 0] : null, fl: stairFlights(G).map(q => [q.go, q.dir, q.top]), solid: isSolid(33, 2) }));
+  expect(p2.fl).toEqual([[true, -1, 4], [false, -1, 33]]);
+  expect(p2.solid).toBe(true);
+  if (p2.arr) expect(p2.arr).toEqual([true, true]);
   await go(page, 'p2');
-  expect(await page.evaluate(() => [G.player.x, G.player.z, G.player.y])).toEqual([32, 4.5, 0]);
+  expect(await page.evaluate(() => [G.player.x, G.player.z, G.player.y])).toEqual([32.5, 3, 0]);
   await page.evaluate(() => { for (const e of G.enemies) e.alive = false; });
-  await toStairs(page, 'ramp');
+  await toStairs(page, 'down');
   await go(page, 'dock');
-  expect(await page.evaluate(() => [G.player.x, G.player.z, a4Ramps(G).map(q => q.k).join(), G.vans.length])).toEqual([6, 4.5, 'arrive', 3]);
+  expect(await page.evaluate(() => [G.player.x, G.player.z, stairFlights(G).map(q => [q.go, q.top]), G.vans.length])).toEqual([5.5, 3, [[false, 4]], 3]);
   // the hangar: through the apron's side door in its top-right corner, in through the hangar's own door in the same corner
   await page.evaluate(() => { NOARRIVE = true; delete myProg().run; startLevel(13); for (const e of G.enemies) e.alive = false; });
   await go(page, 'apron');
