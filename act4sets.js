@@ -206,7 +206,7 @@ function a4Paint(B,g){const A4=g.a4,k=A4.k,W=g.W,H=g.H,C=A4C,fl=(x,z,sx,sz,c,y,r
   for(let x=b.x0+0.6;x<b.x1-0.4;x+=0.8)fl(x,b.z0-0.25,0.35,0.08,[0.9,0.2,0.15],0.006,0.6);a4Text(B,'7',b.x1+2.4,0.007,b.z1-1.6,0.32,[0.95,0.95,0.92],false,'f');}}
 
 /* a cell on or next to a staircase (stairs.js) */
-function a4NearStairs(g,x,z){return stairFlights(g).some(f=>z>=f.z0-1&&z<=f.z0+2&&(x+0.5-(f.xc+f.side))*(x+0.5-(f.xi-f.side))<=0);}
+function a4NearStairs(g,x,z){return stairFlights(g).some(f=>{const u=flU(f,x+0.5),v=flV(f,z+0.5);return u>-0.5&&v>-1.5&&((v<3.5&&u<5.5)||(v<5.5&&u<3.5));});}
 
 /* big stencils and set pieces on the walls */
 function a4SetPieces(B,g){const A4=g.a4,k=A4.k,C=A4C,W=g.W,bx=(px,py,pz,sx,sy,sz,c,em,ry)=>B.box(TRS(px,py,pz,ry||0,sx,sy,sz),c,!!em);

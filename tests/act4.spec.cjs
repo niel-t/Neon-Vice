@@ -165,30 +165,35 @@ test('act 4 floor 3: if the jet is not stopped in time it runs off the runway an
   await expect.poll(() => page.evaluate(() => ({ boom: G.jet.boom, crashed: G.jet.crashed, alive: G.player.alive })), { timeout: 20_000 }).toEqual({ boom: 1, crashed: 1, alive: false });
 });
 
-test('act 4 sets: the garage stairs are plain flights that come out in the same corner, and the hangar side door brings you in at the same spot', async ({ openGame }) => {
+test('act 4 sets: the garage stairs are corner staircases that come out in the same corner, and the hangar side door brings you in at the same spot', async ({ openGame }) => {
   test.setTimeout(240_000);
   const page = await openGame();
   const p1 = await page.evaluate(() => { NOARRIVE = true; startLevel(11); const f = stairFlights(G);
     return { sid: G.sid, fl: f.map(q => [q.go, q.dir, q.top, q.side]), pit: G.pit[3 * G.W + 34] === 1, props: G.a4.props.length > 12, floor: G.floorX[3 * G.W + 20], wall: G.wallX.some(v => v === 224) }; });
-  expect(p1).toEqual({ sid: 'p1', fl: [[true, -1, 33, 1]], pit: true, props: true, floor: 223, wall: true });
-  // walking down the flight toward the room the player sinks with the steps; off it they are on level floor
-  expect(await page.evaluate(() => { const f = stairFlights(G)[0]; return [Math.abs(flightY(f, f.xc)), flightY(f, f.top + 0.5) < -0.8, flightY(f, f.xi)]; })).toEqual([0, true, -1.2]);
-  // the rail along the room side keeps you off the steps except at the corner end
+  expect(p1).toEqual({ sid: 'p1', fl: [[true, -1, 32, 1]], pit: true, props: true, floor: 223, wall: true });
+  // you walk onto the first flight from the room at floor level and sink with the steps to the far end
+  expect(await page.evaluate(() => { const f = stairFlights(G)[0]; return [Math.abs(flightY(f, f.xw - f.side * 0.5, f.z0 + 3.95)) < 0.05, flightY(f, f.top + 0.5) < -0.8, flightY(f, f.xi)]; })).toEqual([true, true, -1.2]);
+  // you walk onto the first flight from the room and along the second without a rail or a wall in the way
+  expect(await page.evaluate(() => { const f = stairFlights(G)[0], p = G.player, path = [[flX(f, 1), f.z0 + 4.8], [flX(f, 1), f.z0 + 1], [flX(f, 3.3), f.z0 + 1]];let ok = true;
+    for (let k = 0; k + 1 < path.length; k++) for (let t = 0; t <= 1; t += 0.05) { const x = path[k][0] + (path[k + 1][0] - path[k][0]) * t, z = path[k][1] + (path[k + 1][1] - path[k][1]) * t;
+      if (isSolid(Math.floor(x), Math.floor(z))) ok = false; p.x = x; p.z = z; for (const r of flightRails(f)) boxPush(r, p); if (Math.hypot(p.x - x, p.z - z) > 0.01) ok = false; }
+    p.x = 20; p.z = 6; return ok; })).toBe(true);
+  // the rail along the second flight's room side keeps you off its side
   expect(await page.evaluate(() => { const p = G.player; p.x = 33.5; p.z = 4.2; stairTick(G); return p.z >= 4.07; })).toBe(true);
   // take the stairs: on P2 you come down the same flight, in the same top-right corner, onto the landing
   await page.evaluate(() => { for (const e of G.enemies) e.alive = false; });
   await toStairs(page, 'down');
   await page.waitForFunction(() => G.sid === 'p2', null, { timeout: 60_000 });
-  const p2 = await page.evaluate(() => ({ arr: G.climbIn ? [G.climbIn.x0 > 33, G.climbIn.y0 > 0] : null, fl: stairFlights(G).map(q => [q.go, q.dir, q.top]), solid: isSolid(33, 2) }));
-  expect(p2.fl).toEqual([[true, -1, 4], [false, -1, 33]]);
+  const p2 = await page.evaluate(() => ({ arr: G.climbIn ? [G.climbIn.x0 > 32, G.climbIn.y0 > 0] : null, fl: stairFlights(G).map(q => [q.go, q.dir, q.top]), solid: isSolid(33, 2) }));
+  expect(p2.fl).toEqual([[true, -1, 5], [false, -1, 32]]);
   expect(p2.solid).toBe(true);
   if (p2.arr) expect(p2.arr).toEqual([true, true]);
   await go(page, 'p2');
-  expect(await page.evaluate(() => [G.player.x, G.player.z, G.player.y])).toEqual([32.5, 3, 0]);
+  expect(await page.evaluate(() => [G.player.x, G.player.z, G.player.y])).toEqual([31.5, 3, 0]);
   await page.evaluate(() => { for (const e of G.enemies) e.alive = false; });
   await toStairs(page, 'down');
   await go(page, 'dock');
-  expect(await page.evaluate(() => [G.player.x, G.player.z, stairFlights(G).map(q => [q.go, q.top]), G.vans.length])).toEqual([5.5, 3, [[false, 4]], 3]);
+  expect(await page.evaluate(() => [G.player.x, G.player.z, stairFlights(G).map(q => [q.go, q.top]), G.vans.length])).toEqual([6.5, 3, [[false, 5]], 3]);
   // the hangar: through the apron's side door in its top-right corner, in through the hangar's own door in the same corner
   await page.evaluate(() => { NOARRIVE = true; delete myProg().run; startLevel(13); for (const e of G.enemies) e.alive = false; });
   await go(page, 'apron');
