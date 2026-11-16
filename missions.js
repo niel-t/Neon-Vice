@@ -40,16 +40,16 @@ if(typeof LEVELS!=='undefined'){
  set(11,s-2,'P');set(22,s-1,'C');
  /* arrivals line up with where you left: the stairs come up in the bedroom's top-left corner, the lift opens in the middle of the top wall */
  set(4,2,',');set(9,4,'s');
- /* the bedroom corner is the top of the back stairwell: its shaft and divider, with the beds and lamp moved along the wall */
- for(let z=1;z<=3;z++){set(1,z,'#');set(2,z,'#');set(3,z,',');}set(5,1,'W');set(6,1,'W');set(5,2,'W');set(6,2,'W');set(7,1,'L');set(22,3,'_');set(25,6,'X');set(18,2,'_');set(16,5,'u');
+ /* the bedroom's top-left corner is the open stairwell you come up (stairs.js), with the beds and lamp moved along the wall */
+ for(let z=1;z<=3;z++)for(let x=1;x<=3;x++)set(x,z,',');set(6,1,'W');set(7,1,'W');set(6,2,'W');set(7,2,'W');set(8,1,'L');set(22,3,'_');set(25,6,'X');set(18,2,'_');set(16,5,'u');
  MISSIONS.c2.stages=['lobby','stair','pent'];MISSIONS.c2.start='lobby';MISSIONS.c2.was='legacy';
  MISSIONS.c2.stageDefs={
-  lobby:{id:'lobby',kind:'grid',rev:2,def:{name:'CORAL TOWER LOBBY',front:1,wall:42,floor:41,legend:{'.':{f:41},'e':{f:41},'n':{f:41}},map:["####################################", "#KK.....#p.L....eee.....L.p#.....#n#", "#.....T.#...rrr....rrr.....#.6...#.#", "#...h...#.....*.....*.s....#.....#.#", "#.......#...KKKKKK.........#...k...#", "#.......#................4.#......p#", "#..T....D..g...............D.......#", "#.1.....#.....b*.....u*....#..g....#", "#L......#pS..............Sp#......L#", "################..##################", "=================P==================", "=================C==================", "====================================", "====================================", "===================================="]},
-   stairs:[{id:'elev',to:'pent',at:[18.5,2.5],r:1.2,arrive:'elev',oneWay:true},{id:'up',to:'stair',at:[35.5,2.5],r:0.9,arrive:'bottom',oneWay:true}]},
-  stair:{id:'stair',kind:'grid',rev:3,def:{name:'STAIRWELL AND SERVICE LEVEL',noCar:true,wall:42,floor:41,legend:{'.':{f:41},'n':{f:41}},map:["##########################", "#n#.....L#.KK..........###", "#.#..5...#...s...T.....###", "#.#..g...D..........b..###", "#........#...............#", "#...SSS..#...............#", "#........D......k........#", "#........#..2........u...#", "#.PC....p#..............L#", "##########################"]},
-   arrivals:{bottom:{at:[23.5,4.5]}},stairs:[{id:'up',to:'pent',at:[2.5,2.5],r:0.9,arrive:'stairs',oneWay:true}]},
-  pent:{id:'pent',kind:'grid',rev:3,def:{name:L.name,noCar:true,wall:L.wall,sofa:L.sofa,map:rows},
-   arrivals:{elev:{at:[19.5,2.5]},stairs:{at:[4.5,4.5]}}}
+  lobby:{id:'lobby',kind:'grid',rev:3,def:{name:'CORAL TOWER LOBBY',front:1,wall:42,floor:41,legend:{'.':{f:41},'e':{f:41},'n':{f:41}},map:["####################################", "#KK.....#p.L....eee.....L.p#.......#", "#.....T.#...rrr....rrr.....#.6.....#", "#...h...#.....*.....*.s....#.......#", "#.......#...KKKKKK.........#...k...#", "#.......#................4.#..p.....#", "#..T....D..g...............D.......#", "#.1.....#.....b*.....u*....#..g....#", "#L......#pS..............Sp#......L#", "################..##################", "=================P==================", "=================C==================", "====================================", "====================================", "===================================="]},
+   stairs:[{id:'elev',to:'pent',at:[18.5,2.5],r:1.2,arrive:'elev',oneWay:true},{id:'up',to:'stair',at:[32.5,3],r:0.9,arrive:'bottom',oneWay:true}]},
+  stair:{id:'stair',kind:'grid',rev:4,def:{name:'STAIRWELL AND SERVICE LEVEL',noCar:true,wall:42,floor:41,legend:{'.':{f:41},'n':{f:41}},map:["##########################", "#.......L#.KK............#", "#....5...#...s...T.......#", "#....g...D..........b....#", "#........#...............#", "#...SSS..#...............#", "#........D......k........#", "#........#..2........u...#", "#.PC....p#..............L#", "##########################"]},
+   arrivals:{bottom:{at:[21.5,3]}},stairs:[{id:'up',to:'pent',at:[5.5,3],r:0.9,arrive:'stairs',oneWay:true}]},
+  pent:{id:'pent',kind:'grid',rev:4,def:{name:L.name,noCar:true,wall:L.wall,sofa:L.sofa,map:rows},
+   arrivals:{elev:{at:[19.5,2.5]},stairs:{at:[6.5,3]}}}
  };
 }
 /* c10 Kade Tower (Act 3 finale) has the Coral Tower shape: the site, then the hoist (key from the foreman) or the steel stairs, then the top
@@ -59,15 +59,15 @@ if(typeof LEVELS!=='undefined'&&LEVELS[10]){
  const K=LEVELS[10];
  MISSIONS.c10.stages=['site','stair','pent'];MISSIONS.c10.start='site';
  MISSIONS.c10.stageDefs={
-  site:{id:'site',kind:'grid',rev:2,def:{name:'KADE TOWER: SITE GATE',front:1,hardhat:true,wall:6,legend:{'e':{f:1},'n':{f:1}},map:["####################################", "#.......#.......eee........#.....#n#", "#.KK..4.#.b..............b.#.....#.#", "#.......#..FF.s.......FF...#..x..#.#", "#....T..#..........x.......#.......#", "#...h...#6...Z.......Z.....#..s....#", "#.......D...s.F.........F..D..g....#", "#.b...K.#.F....u....F..g...#....b..#", "#.......#.........2........#.5.....#", "###..###########..##################", "============P=======================", "=======================C============", "====================================", "====================================", "===================================="]},
-   stairs:[{id:'elev',to:'pent',at:[18.5,2.5],r:1.2,arrive:'elev',oneWay:true},{id:'up',to:'stair',at:[35.5,2.5],r:0.9,arrive:'bottom',oneWay:true}]},
-  stair:{id:'stair',kind:'grid',rev:3,def:{name:'KADE TOWER: STEEL STAIRS',noCar:true,hardhat:true,wall:6,legend:{'n':{f:1}},map:["##########################", "#n#...KK.#..KK.........###", "#.#..4...#....2..Z.....###", "#.#..s...D.............###", "#....b...#.....g.x.......#", "#..FFF...#...............#", "#........D........b......#", "#....x...#..s........u...#", "#.PC.....#...............#", "##########################"]},
-   arrivals:{bottom:{at:[23.5,4.5]}},stairs:[{id:'up',to:'pent',at:[2.5,2.5],r:0.9,arrive:'stairs',oneWay:true}]},
-  pent:{id:'pent',kind:'grid',rev:3,def:{name:K.name,noCar:true,hardhat:true,wall:K.wall,sofa:K.sofa,boss:K.boss,map:K.map},
-   arrivals:{elev:{at:[18.5,2.5]},stairs:{at:[4.5,4.5]}}}
+  site:{id:'site',kind:'grid',rev:3,def:{name:'KADE TOWER: SITE GATE',front:1,hardhat:true,wall:6,legend:{'e':{f:1},'n':{f:1}},map:["####################################", "#.......#.......eee........#.......#", "#.KK..4.#.b..............b.#.......#", "#.......#..FF.s.......FF...#..x....#", "#....T..#..........x.......#.......#", "#...h...#6...Z.......Z.....#..s....#", "#.......D...s.F.........F..D..g....#", "#.b...K.#.F....u....F..g...#....b..#", "#.......#.........2........#.5.....#", "###..###########..##################", "============P=======================", "=======================C============", "====================================", "====================================", "===================================="]},
+   stairs:[{id:'elev',to:'pent',at:[18.5,2.5],r:1.2,arrive:'elev',oneWay:true},{id:'up',to:'stair',at:[32.5,3],r:0.9,arrive:'bottom',oneWay:true}]},
+  stair:{id:'stair',kind:'grid',rev:4,def:{name:'KADE TOWER: STEEL STAIRS',noCar:true,hardhat:true,wall:6,legend:{'n':{f:1}},map:["##########################", "#.....KK.#..KK...........#", "#....4...#....2..Z.......#", "#....s...D...............#", "#....b...#.....g.x.......#", "#..FFF...#...............#", "#........D........b......#", "#....x...#..s........u...#", "#.PC.....#...............#", "##########################"]},
+   arrivals:{bottom:{at:[21.5,3]}},stairs:[{id:'up',to:'pent',at:[5.5,3],r:0.9,arrive:'stairs',oneWay:true}]},
+  pent:{id:'pent',kind:'grid',rev:4,def:{name:K.name,noCar:true,hardhat:true,wall:K.wall,sofa:K.sofa,boss:K.boss,map:K.map},
+   arrivals:{elev:{at:[18.5,2.5]},stairs:{at:[6.5,3]}}}
  };
 }
-/* Act 4. c11 Vale Trust Garage: the street ramp (P1), down the ramp to the parking deck (P2), down again to the vault loading dock, where
+/* Act 4. c11 Vale Trust Garage: street level (P1), down the stairs to the parking deck (P2), down again to the vault loading dock, where
    three gold vans leave one at a time (index.html act4 helpers). The dock is LEVELS[11]; it has no stairs out, so the floor finishes there,
    out by the freight lift. c13 Opa-locka Hangar 7: the apron, the hangar where Vale walks to his jet (the boarding stairs open once he is
    aboard), then the jet out on the runway, which is LEVELS[13] with Vale as the boss and your car parked on the tarmac. */
@@ -75,20 +75,20 @@ if(typeof LEVELS!=='undefined'&&LEVELS[13]){
  const D=LEVELS[11],J=LEVELS[13],GL={'.':{f:30},'n':{f:30},'e':{f:30},'c':{f:30,furn:21},'v':{f:30,furn:22}};
  MISSIONS.c11.stages=['p1','p2','dock'];MISSIONS.c11.start='p1';
  MISSIONS.c11.stageDefs={
-  p1:{id:'p1',kind:'grid',rev:1,def:{name:'VALE TRUST GARAGE: STREET LEVEL',front:1,wall:34,floor:30,legend:GL,map:["####################################", "#K....p.#.........................n#", "#.T..g..#..cv..cv..cv..cv.....b....#", "#.......#..........................#", "#..h....D.....g...........s........#", "#.......#..cv..cv..cv..cv..........#", "#.p..4..#....................u.....#", "#..ZZ...#..b.......Z.........Z.....#", "###..########..##############..#####", "====P===============================", "================C===================", "====================================", "====================================", "===================================="]},
-   stairs:[{id:'ramp',to:'p2',at:[35.5,2.5],r:1.1,arrive:'ramp',oneWay:true}]},
-  p2:{id:'p2',kind:'grid',rev:1,def:{name:'VALE TRUST GARAGE: P2',noCar:true,wall:34,floor:30,legend:GL,map:["##################################", "#n..........................s...e#", "#.....cv..cv..cv..cv..cv..cv.....#", "#............g...................#", "#..........ZZ.........b..........#", "#.....cv..cv..cv..cv..cv..cv..u..#", "#................................#", "#..b........h.......Z.......g....#", "#.....cv..cv..cv..cv..cv..cv.....#", "#.PC.......2................s....#", "##################################"]},
-   arrivals:{ramp:{at:[2.5,2.5]}},stairs:[{id:'ramp',to:'dock',at:[33.5,2.5],r:1.1,arrive:'ramp',oneWay:true}]},
-  dock:{id:'dock',kind:'grid',rev:1,def:{name:D.name,noCar:true,exit:'Take the freight lift up',wall:D.wall,floor:D.floor,sofa:D.sofa,legend:D.legend,map:D.map},
-   arrivals:{ramp:{at:[10.5,9.5]}}}
+  p1:{id:'p1',kind:'grid',rev:3,def:{name:'VALE TRUST GARAGE: STREET LEVEL',front:1,wall:34,floor:30,legend:GL,map:["####################################", "#K....p.#..........................#", "#.T..g..#..cv..cv..cv..cv..........#", "#.......#..................b.......#", "#..h....D.....g...........s........#", "#.......#..cv..cv..cv..cv..........#", "#.p..4..#....................u.....#", "#..ZZ...#..b.......Z.........Z.....#", "###..########..##############..#####", "====P===============================", "================C===================", "====================================", "====================================", "===================================="]},
+   stairs:[{id:'down',to:'p2',at:[32.5,3],r:0.9,arrive:'stairs',oneWay:true}]},
+  p2:{id:'p2',kind:'grid',rev:3,def:{name:'VALE TRUST GARAGE: P2',noCar:true,wall:34,floor:30,legend:GL,map:["####################################", "#.......................s..........#", "#.....cv..cv..cv..cv..cv..cv.......#", "#............g.....................#", "#..........ZZ.........b............#", "#.....cv..cv..cv..cv..cv..cv.......#", "#..........................u.......#", "#..b........h.......Z.......g......#", "#.....cv..cv..cv..cv..cv..cv.......#", "#.PC.......2................s......#", "####################################"]},
+   arrivals:{stairs:{at:[31.5,3]}},stairs:[{id:'down',to:'dock',at:[5.5,3],r:0.9,arrive:'stairs',oneWay:true}]},
+  dock:{id:'dock',kind:'grid',rev:3,def:{name:D.name,noCar:true,exit:'Take the freight lift up',wall:D.wall,floor:D.floor,sofa:D.sofa,legend:D.legend,map:D.map},
+   arrivals:{stairs:{at:[6.5,3]}}}
  };
  const HL={'.':{f:37},'n':{f:37},'t':{f:37},'j':{w:37,h:0.02,top:37}};
  MISSIONS.c13.stages=['apron','hangar','jet'];MISSIONS.c13.start='apron';
  MISSIONS.c13.stageDefs={
   apron:{id:'apron',kind:'grid',rev:1,def:{name:'OPA-LOCKA: THE APRON',front:1,wall:34,floor:7,legend:{'.':{f:7},'n':{f:7}},map:["########################################", "#.........#..........................n.#", "#..K..h...#....ZZ.......ZZ.......b.....#", "#.........D............................#", "#..T......#.....u.........g............#", "#.........#..ZZ.....s........ZZ........#", "#####D#####............................#", "#..........................m.......Z...#", "#..g......ZZ........b..................#", "####..##########..........#########..###", "====P===================================", "======================C=================", "========================================", "========================================", "========================================"]},
    stairs:[{id:'door',to:'hangar',at:[39.5,2.5],r:1.0,arrive:'side',oneWay:true}]},
-  hangar:{id:'hangar',kind:'grid',rev:1,def:{name:'HANGAR 7',noCar:true,wall:46,floor:37,legend:HL,map:["##########################################", "#.......#................................#", "#.K..T..#.........jjjjjjjjjjjjjjjj.......#", "#.......D.........jjjjjjjjjjjjjjjjj......#", "#..t....#.........jjjjjjjjjjjjjjjjjj.....#", "#.......#.........jjjjjjjjjjjjjjjjj......#", "####D####.........jjjjjjjjjjj.jjjj.......#", "#........................................#", "#..g.......s..........b......n..u........#", "#.......ZZ................ZZ.............#", "#..PC.......h.......x............g.......#", "##########################################"]},
-   arrivals:{side:{at:[2.5,8.5]}},stairs:[{id:'board',to:'jet',at:[30.5,9.5],r:1.1,arrive:'door',oneWay:true}]},
+  hangar:{id:'hangar',kind:'grid',rev:2,def:{name:'HANGAR 7',noCar:true,wall:46,floor:37,legend:HL,map:["##########################################", "#.......#................................#", "#.K..T..#.........jjjjjjjjjjjjjjjj.......#", "#.......D.........jjjjjjjjjjjjjjjjj......#", "#..t....#.........jjjjjjjjjjjjjjjjjj.....#", "#.......#.........jjjjjjjjjjjjjjjjj......#", "####D####.........jjjjjjjjjjj.jjjj.......#", "#........................................#", "#..g.......s..........b......n..u........#", "#.......ZZ................ZZ.............#", "#..PC.......h.......x............g.......#", "##########################################"]},
+   arrivals:{side:{at:[41.5,2.5]}},stairs:[{id:'board',to:'jet',at:[30.5,9.5],r:1.1,arrive:'door',oneWay:true}]},
   jet:{id:'jet',kind:'grid',rev:1,def:{name:J.name,wall:J.wall,floor:J.floor,sofa:J.sofa,legend:J.legend,boss:J.boss,map:J.map},
    arrivals:{door:{at:[23.5,8.5]}}}
  };

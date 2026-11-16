@@ -32,7 +32,7 @@ function act4Lex(g,i){const f=typeof lexFate==='function'?lexFate():null;
 function act4Intro(g){
  if(isGarage(g)){
   if(g.sid==='p1'){banner('ACT 4: WHEELS UP','Floor 1: Vale Trust Garage · Conrad Vale is emptying his vault');act4Lex(g,11);}
-  else if(g.sid==='p2')banner('P2: THE PARKING DECK','The ramp down to the vault dock is at the far end.');
+  else if(g.sid==='p2')banner('P2: THE PARKING DECK','The stairs down to the vault dock are in the far corner.');
   else{placeStash(g,11);vanSetup(g);banner('THE VAULT DOCK','Three gold vans are leaving. Drop the boom barrier or shoot the drivers.');}
   return true;}
  if(isHangar(g)){
@@ -41,10 +41,10 @@ function act4Intro(g){
   else{placeStash(g,13);jetSetup(g);banner('ON THE RUNWAY','Vale has locked himself in the cockpit. Take out his bodyguards in the cabin first.');}
   return true;}
  return false;}
-function act4Goal(g){if(isGarage(g))return g.sid==='dock'?null:'TAKE THE RAMP DOWN';if(isHangar(g))return g.sid==='apron'?'GET INTO THE HANGAR':g.sid==='hangar'?(g.valeW&&g.valeW.aboard?'BOARD THE JET':'GET TO THE JET'):null;return null;}
+function act4Goal(g){if(isGarage(g))return g.sid==='dock'?null:'TAKE THE STAIRS DOWN';if(isHangar(g))return g.sid==='apron'?'GET INTO THE HANGAR':g.sid==='hangar'?(g.valeW&&g.valeW.aboard?'BOARD THE JET':'GET TO THE JET'):null;return null;}
 function act4Locked(g,s){return isHangar(g)&&s.id==='board'&&!(g.valeW&&g.valeW.aboard);}
 function act4LockHint(g){popup(g.player.x,g.player.z,'THE STAIRS GO UP WHEN VALE IS ABOARD','#ff8a95');}
-const A4_STAIR_LBL={ramp:'TAKE THE RAMP DOWN',door:'HANGAR SIDE DOOR',board:'BOARD THE JET'};
+const A4_STAIR_LBL={down:'TAKE THE STAIRS DOWN',door:'HANGAR SIDE DOOR',board:'BOARD THE JET'};
 
 /* ---------------- floor 12: the gold vans ---------------- */
 function vanSetup(g){const qs=a4Cells(g,'q').sort((a,b)=>a.x-b.x),y=a4Cells(g,'y')[0],o=a4Cells(g,'o')[0];if(!qs.length||!y||!o)return;
@@ -330,11 +330,10 @@ function drawHangar(B,g){const bx=(x,y,z,sx,sy,sz,c,em)=>B.box(TRS(x,y,z,0,sx,sy
   const b=g.jetBody;bx(b.x1+2.4,0.35,b.cz,1.4,0.6,1.0,[0.95,0.75,0.1]);bx(b.x1+1.4,0.25,b.cz,1.2,0.04,0.06,[0.1,0.1,0.12]);}
  if(g.sid==='jet'&&g.jetBody){drawRunway(bx,g,g.jetBody);drawJet(B,g,g.jetBody,false);const J=g.jet;if(J&&J.valve&&!J.boom){const v=J.valve,ready=g.boss&&!g.boss.alive&&!(J.fuse>0);bx(v.x,0.5,v.z,0.6,1.0,0.5,[0.85,0.2,0.15]);bx(v.x,1.05,v.z,0.3,0.06,0.3,[0.1,0.1,0.12]);
    bx(v.x,1.15,v.z,0.36,0.08,0.08,ready?[1,0.85,0.2]:[0.4,0.32,0.1],ready&&Math.sin(T*8)>0);if(J.fuse>0)bx(v.x,0.02,v.z,1.2+0.2*Math.sin(T*6),0.01,1.2,[0.5,0.42,0.18]);}}
- if(g.sid==='apron'){for(let k=0;k<8;k++)bx(6+k*4.2,0.02,g.H-8.5,1.8,0.01,0.16,[1,0.85,0.2]);}}
-/* the ramps, side door and boarding stairs between stages */
+}
+/* the side door and boarding stairs between stages (the garage stairs are stairs.js) */
 function drawA4Stairs(B,g,s){const x=s.at[0],z=s.at[1],bx=(px,py,pz,sx,sy,sz,c,em)=>B.box(TRS(px,py,pz,0,sx,sy,sz),c,!!em),T=g.T||0,lock=act4Locked(g,s);
- if(s.id==='ramp'){for(let k=0;k<4;k++)bx(x,0.02-k*0.004,z-0.3+k*0.25,1.6,0.012,0.22,k%2?[0.22,0.22,0.25]:[0.3,0.3,0.34]);for(let k=0;k<3;k++){const on=Math.sin(T*5-k*1.4)>0;bx(x,0.03,z+0.6-k*0.4,0.5,0.012,0.08,on?[1,0.85,0.3]:[0.4,0.32,0.1],on);}
-  bx(x,2.0,z-0.45,1.0,0.3,0.05,[0.1,0.2,0.5]);bx(x,2.0,z-0.42,0.7,0.12,0.02,[1,1,1],true);return;}
+ if(s.id==='down')return; /* the garage stairs are drawn once with the level (stairs.js) */
  if(s.id==='door'){bx(x,0.95,z-0.47,0.95,1.9,0.05,[0.02,0.02,0.04]);bx(x,2.0,z-0.44,0.6,0.14,0.05,[0.3,1,0.5],true);bx(x,0.02,z,0.9,0.012,0.9,[0.3,1,0.5],true);return;}
  if(s.id==='board'&&lock)return;}
 

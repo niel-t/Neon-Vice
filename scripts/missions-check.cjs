@@ -123,9 +123,11 @@ function checkMissions() {
 }
 
 /* Going up a floor keeps you where you were: take the stairs in the top-right corner and you come out of the same switchback stairwell
-   in the top-right corner of the next floor; the lift opens at the same spot along the top wall. Positions are compared inside each floor's walls (the street rows of a
-   front stage are left out), as fractions of its width and depth. Act 4's hangar door and jet steps are walk-throughs, not floor changes. */
-const SAME_SPOT = ['c2', 'c10'];
+   in the top-right corner of the next floor; the lift opens at the same spot along the top wall. Act 4 too: the garage ramps are
+   two-cell switchbacks (compare the divider between the lanes) and the hangar side door brings you in at the same spot. Positions are
+   compared inside each floor's walls (the street rows of a front stage are left out), as fractions of its width and depth. Boarding
+   the jet is a walk up its airstairs onto the runway, not a floor change, so it is left out. */
+const SAME_SPOT = ['c2', 'c10', 'c11', 'c13'];
 function interior(def) {
   const rows = def.map, last = rows.findIndex(r => r[0] === '=');
   return { w: rows[0].length - 2, h: (last < 0 ? rows.length : last) - 2 };
@@ -134,14 +136,22 @@ function checkCorners(MISSIONS) {
   for (const id of SAME_SPOT) {
     const defs = MISSIONS[id].stageDefs;
     for (const st of Object.values(defs)) for (const s of st.stairs || []) {
-      // a staircase is a three-cell switchback: compare the middles of the two flights (the stair's 'at' is the top of the flight up,
-      // the arrival's 'at' the bottom of the flight you come up)
-      const to = defs[s.to], a = interior(st.def), b = interior(to.def), lift = s.id === 'elev', ar0 = to.arrivals[s.arrive].at,
-        at = lift ? s.at : [s.at[0], s.at[1] + 1], ar = lift ? ar0 : [ar0[0], ar0[1] - 1];
+      if (s.id === 'board') continue;
+      const to = defs[s.to], a = interior(st.def), b = interior(to.def), ar0 = to.arrivals[s.arrive].at;
+      let at = s.at, ar = ar0;
+      // a staircase is one straight flight along the top wall (stairs.js): the stair's 'at' is the flight's far-end cell, the arrival's
+      // 'at' the landing just past it. Compare the far-end cells: both floors must have the flight against the same top wall, running
+      // toward the same corner
+      if (s.id === 'up' || s.id === 'down') {
+        const side = (x, d) => (x < (d.w + 4) / 2 ? -1 : 1), sa = side(s.at[0], a), sb = side(ar0[0], b);
+        assert(sa === sb, `${id} ${st.id}.${s.id}: the flight runs to the ${sa < 0 ? 'left' : 'right'} corner but ${to.id} has it in the other one`);
+        assert(s.at[1] === 3 && ar0[1] === 3, `${id} ${st.id}.${s.id}: a flight runs along the top wall (z 3), not ${s.at[1]} / ${ar0[1]}`);
+        at = [Math.floor(s.at[0]) + 0.5, s.at[1]]; ar = [Math.floor(ar0[0]) + sb + 0.5, ar0[1]];
+      }
       // world coordinates carry the loader's one-cell padding ring and the wall ring: the first floor cell is at 2
       const fx = (x, d) => (x - 2) / Math.max(1, d.w - 1), fz = (z, d) => (z - 2) / Math.max(1, d.h - 1);
       const dx = Math.abs(fx(at[0], a) - fx(ar[0], b)), dz = Math.abs(fz(at[1], a) - fz(ar[1], b));
-      assert(dx <= 0.12 && dz <= 0.2, `${id} ${st.id}.${s.id} at ${s.at} comes out at ${to.id} ${ar}, not the same spot on the next floor (dx ${dx.toFixed(2)}, dz ${dz.toFixed(2)})`);
+      assert(dx <= 0.12 && dz <= 0.2, `${id} ${st.id}.${s.id} at ${s.at} comes out at ${to.id} ${ar0}, not the same spot on the next floor (dx ${dx.toFixed(2)}, dz ${dz.toFixed(2)})`);
     }
   }
 }
