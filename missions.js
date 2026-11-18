@@ -110,6 +110,23 @@ Object.assign(MISSIONS,{
   brief:'Somebody paid to bring them all back for one night at the Starlight. The Shark, Lex, Kade. One after another. Bring the kit you trust.'},
  b_lex:{kind:'story',name:"LEX'S FAVOUR",base:9,stages:['legacy'],start:'legacy',unlock:{all:[{flag:'lex_spared'},{done:'c8'}]},rewards:[{flag:'lex_favour'}],rev:1,twist:'lex',
   brief:'Lex is calling in the favour: another of Kade\'s parties. He is on the radio and he can see every guard in the building.'}});
+/* EMPIRE (empire.js): once the loan is square and Lex's Royal Flush is gone, three crews move in on the businesses you already know.
+   Each front is a takeover job on that floor's map: beat the crew and its lieutenant and the reward flag own_<k> makes it yours. Owned
+   fronts pay after every finished job (empire.js empPay). need = the campaign floor that has to be done first (you know the place). */
+const EMP_FRONTS=[
+ {k:'motel',base:0,name:'MOTEL SUNSET',area:'SOUTH BEACH',gang:'snakes',pay:1200,need:0,at:[0.83,0.8]},
+ {k:'flamingo',base:1,name:'CLUB FLAMINGO',area:'SOUTH BEACH',gang:'rayos',pay:2000,need:1,at:[0.81,0.64]},
+ {k:'marina',base:3,name:'VICE MARINA',area:'BAYSIDE',gang:'rayos',pay:3500,need:3,at:[0.57,0.55]},
+ {k:'arcade',base:4,name:'STARLIGHT ARCADE',area:'LITTLE HAVANA',gang:'snakes',pay:1500,need:4,at:[0.3,0.6]},
+ {k:'mall',base:5,name:'OCEAN VIEW MALL',area:'COCONUT GROVE',gang:'ivory',pay:3000,need:5,at:[0.36,0.88]},
+ {k:'studio',base:6,name:'THE RECORDING STUDIO',area:'WYNWOOD',gang:'ivory',pay:2500,need:6,at:[0.44,0.32]},
+ {k:'site',base:8,name:'OCEAN DRIVE SITE',area:'MID-BEACH',gang:'snakes',pay:2500,need:8,at:[0.84,0.46]},
+ {k:'coral',base:12,name:'THE CORAL ROOM',area:'BRICKELL',gang:'ivory',pay:4500,need:12,at:[0.5,0.72]}];
+const EMP_BRIEF={snakes:'The Coral Snakes rolled in on their bikes the week Lex sank. Leather, chains, no manners. Their lieutenant runs the place from the back. Take it off them.',
+ rayos:'Los Rayos took over the moment the Royal Flush went down: white suits, gold teeth, a lot of product. Put their lieutenant down and the place is yours.',
+ ivory:'The Ivory Hand came down from New York to buy Miami cheap. Pinstripes and old money. Their lieutenant keeps the books here. Close them.'};
+for(const f of EMP_FRONTS)MISSIONS['e_'+f.k]={kind:'empire',name:'TAKE OVER '+f.name,base:f.base,stages:['legacy'],start:'legacy',
+ unlock:{all:[{done:'c7'},{done:'c'+f.need}]},rewards:[{flag:'own_'+f.k}],rev:1,twist:'turf',front:f.k,brief:EMP_BRIEF[f.gang]};
 const ownKey=(o,k)=>typeof k==='string'&&Object.prototype.hasOwnProperty.call(o,k);
 const missionId=i=>'c'+i;
 const missionKnown=id=>ownKey(MISSIONS,id);

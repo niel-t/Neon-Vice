@@ -52,7 +52,7 @@ function checkMissions() {
     const m = MISSIONS[id];
     assert(/^[a-z][a-z0-9_]*$/.test(id), `${id}: mission ids are lower-case identifiers`);
     assert(!(id in Object.prototype), `${id}: shadows an Object.prototype name`);
-    assert(['campaign', 'bonus', 'story', 'side'].includes(m.kind), `${id}: unknown kind ${m.kind}`);
+    assert(['campaign', 'bonus', 'story', 'side', 'empire'].includes(m.kind), `${id}: unknown kind ${m.kind}`);
     if (m.kind === 'campaign') assert(/^c\d+$/.test(id) && m.idx < CAMPAIGN_LEN, `${id}: campaign missions are c0..c${CAMPAIGN_LEN - 1}`);
     else {
       assert(!/^c\d+$/.test(id), `${id}: cN ids are reserved for the campaign`);
