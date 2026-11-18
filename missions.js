@@ -114,17 +114,28 @@ Object.assign(MISSIONS,{
    Each front is a takeover job on that floor's map: beat the crew and its lieutenant and the reward flag own_<k> makes it yours. Owned
    fronts pay after every finished job (empire.js empPay). need = the campaign floor that has to be done first (you know the place). */
 const EMP_FRONTS=[
- {k:'motel',base:0,name:'MOTEL SUNSET',area:'SOUTH BEACH',gang:'snakes',pay:1200,need:0,at:[0.825,0.665]},
- {k:'flamingo',base:1,name:'CLUB FLAMINGO',area:'SOUTH BEACH',gang:'rayos',pay:2000,need:1,at:[0.83,0.555]},
- {k:'marina',base:3,name:'VICE MARINA',area:'BAYSIDE',gang:'rayos',pay:3500,need:3,at:[0.585,0.445]},
- {k:'arcade',base:4,name:'STARLIGHT ARCADE',area:'LITTLE HAVANA',gang:'snakes',pay:1500,need:4,at:[0.34,0.52]},
- {k:'mall',base:5,name:'OCEAN VIEW MALL',area:'COCONUT GROVE',gang:'ivory',pay:3000,need:5,at:[0.43,0.81]},
- {k:'studio',base:6,name:'THE RECORDING STUDIO',area:'WYNWOOD',gang:'ivory',pay:2500,need:6,at:[0.47,0.28]},
- {k:'site',base:8,name:'OCEAN DRIVE SITE',area:'MID-BEACH',gang:'snakes',pay:2500,need:8,at:[0.84,0.37]},
- {k:'coral',base:12,name:'THE CORAL ROOM',area:'BRICKELL',gang:'ivory',pay:4500,need:12,at:[0.535,0.6]}];
+ {k:'motel',dist:'sobe',base:0,name:'MOTEL SUNSET',area:'SOUTH BEACH',gang:'snakes',pay:1200,need:0,at:[0.825,0.665]},
+ {k:'flamingo',dist:'sobe',base:1,name:'CLUB FLAMINGO',area:'SOUTH BEACH',gang:'rayos',pay:2000,need:1,at:[0.83,0.555]},
+ {k:'marina',dist:'dtwn',base:3,name:'VICE MARINA',area:'BAYSIDE',gang:'rayos',pay:3500,need:3,at:[0.585,0.445]},
+ {k:'arcade',dist:'lhav',base:4,name:'STARLIGHT ARCADE',area:'LITTLE HAVANA',gang:'snakes',pay:1500,need:4,at:[0.34,0.52]},
+ {k:'mall',dist:'grove',base:5,name:'OCEAN VIEW MALL',area:'COCONUT GROVE',gang:'ivory',pay:3000,need:5,at:[0.43,0.81]},
+ {k:'studio',dist:'wyn',base:6,name:'THE RECORDING STUDIO',area:'WYNWOOD',gang:'ivory',pay:2500,need:6,at:[0.47,0.28]},
+ {k:'site',dist:'midb',base:8,name:'OCEAN DRIVE SITE',area:'MID-BEACH',gang:'snakes',pay:2500,need:8,at:[0.84,0.37]},
+ {k:'coral',dist:'brk',base:12,name:'THE CORAL ROOM',area:'BRICKELL',gang:'ivory',pay:4500,need:12,at:[0.535,0.6]}];
 const EMP_BRIEF={snakes:'The Coral Snakes rolled in on their bikes the week Lex sank. Leather, chains, no manners. Their lieutenant runs the place from the back. Take it off them.',
  rayos:'Los Rayos took over the moment the Royal Flush went down: white suits, gold teeth, a lot of product. Put their lieutenant down and the place is yours.',
  ivory:'The Ivory Hand came down from New York to buy Miami cheap. Pinstripes and old money. Their lieutenant keeps the books here. Close them.'};
+/* each crew's headquarters: once it holds no fronts, you can hit its HQ and kill its boss; the reward flag wiped_<gang> ends the crew
+   (its rackets go independent and it never raids you again). base = a floor you know, its own boss swapped for the crew's. */
+const EMP_HQ=[
+ {g:'snakes',base:11,name:'THE SNAKEPIT',area:'HIALEAH',at:[0.13,0.3],need:11},
+ {g:'rayos',base:2,name:'VEGA\'S PENTHOUSE',area:'STAR ISLAND',at:[0.72,0.475],need:2},
+ {g:'ivory',base:9,name:'THE IVORY BALLROOM',area:'KEY BISCAYNE',at:[0.715,0.93],need:9}];
+for(const h of EMP_HQ)MISSIONS['hq_'+h.g]={kind:'empire',name:'HIT '+h.name,base:h.base,stages:['legacy'],start:'legacy',
+ unlock:{all:[{done:'c7'},{done:'c'+h.need}]},rewards:[{flag:'wiped_'+h.g}],rev:1,twist:'turf',hq:h.g,
+ brief:{snakes:'The Coral Snakes are down to their clubhouse. Mad Dog McCoy is holed up in there with everyone he has left. End them.',
+  rayos:'Los Rayos have nothing left but Don Vega\'s penthouse. He is up there with his gold rifle and his last soldiers. Go up and finish it.',
+  ivory:'The Ivory Hand is throwing one last ball to raise money for a war. Vincent Orsini is the host. Make it his farewell party.'}[h.g]};
 for(const f of EMP_FRONTS)MISSIONS['e_'+f.k]={kind:'empire',name:'TAKE OVER '+f.name,base:f.base,stages:['legacy'],start:'legacy',
  unlock:{all:[{done:'c7'},{done:'c'+f.need}]},rewards:[{flag:'own_'+f.k}],rev:1,twist:'turf',front:f.k,brief:EMP_BRIEF[f.gang]};
 const ownKey=(o,k)=>typeof k==='string'&&Object.prototype.hasOwnProperty.call(o,k);
