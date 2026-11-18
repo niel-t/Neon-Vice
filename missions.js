@@ -110,34 +110,102 @@ Object.assign(MISSIONS,{
   brief:'Somebody paid to bring them all back for one night at the Starlight. The Shark, Lex, Kade. One after another. Bring the kit you trust.'},
  b_lex:{kind:'story',name:"LEX'S FAVOUR",base:9,stages:['legacy'],start:'legacy',unlock:{all:[{flag:'lex_spared'},{done:'c8'}]},rewards:[{flag:'lex_favour'}],rev:1,twist:'lex',
   brief:'Lex is calling in the favour: another of Kade\'s parties. He is on the radio and he can see every guard in the building.'}});
-/* EMPIRE (empire.js): once the loan is square and Lex's Royal Flush is gone, three crews move in on the businesses you already know.
-   Each front is a takeover job on that floor's map: beat the crew and its lieutenant and the reward flag own_<k> makes it yours. Owned
-   fronts pay after every finished job (empire.js empPay). need = the campaign floor that has to be done first (you know the place). */
+/* EMPIRE (empire.js): once the loan is square and Lex's Royal Flush is gone, the crews move in on Miami. Everything you take, you take in
+   person: drive there, clear the crew out of the building and put down whoever runs it for them.
+   EMP_ACT = the campaign floor that has to be done before a crew turns up: the three street crews come at once, the leftovers of the
+   acts' villains (Lex's smugglers, Kade's wrecking crew, Vale's private security) only after you have finished that act.
+   FRONTS are the big places you already know (missions e_<k>, played on that floor's own map); RACKETS are smaller businesses
+   (missions r_<k>) played on a building of their type (EMP_VENUE: shop, garage, club, warehouse, office). Either way the reward flag
+   own_<k> makes it yours and it pays after every finished job (empire.js empPay). need = the campaign floor that has to be done first. */
+const EMP_ACT={snakes:7,rayos:7,ivory:7,silks:7,wreckers:10,vault:13};
 const EMP_FRONTS=[
  {k:'motel',dist:'sobe',base:0,name:'MOTEL SUNSET',area:'SOUTH BEACH',gang:'snakes',pay:1200,need:0,at:[0.825,0.665]},
  {k:'flamingo',dist:'sobe',base:1,name:'CLUB FLAMINGO',area:'SOUTH BEACH',gang:'rayos',pay:2000,need:1,at:[0.83,0.555]},
- {k:'marina',dist:'dtwn',base:3,name:'VICE MARINA',area:'BAYSIDE',gang:'rayos',pay:3500,need:3,at:[0.585,0.445]},
+ {k:'marina',dist:'dtwn',base:3,name:'VICE MARINA',area:'BAYSIDE',gang:'silks',pay:3500,need:3,at:[0.585,0.445]},
  {k:'arcade',dist:'lhav',base:4,name:'STARLIGHT ARCADE',area:'LITTLE HAVANA',gang:'snakes',pay:1500,need:4,at:[0.34,0.52]},
  {k:'mall',dist:'grove',base:5,name:'OCEAN VIEW MALL',area:'COCONUT GROVE',gang:'ivory',pay:3000,need:5,at:[0.43,0.81]},
  {k:'studio',dist:'wyn',base:6,name:'THE RECORDING STUDIO',area:'WYNWOOD',gang:'ivory',pay:2500,need:6,at:[0.47,0.28]},
- {k:'site',dist:'midb',base:8,name:'OCEAN DRIVE SITE',area:'MID-BEACH',gang:'snakes',pay:2500,need:8,at:[0.84,0.37]},
- {k:'coral',dist:'brk',base:12,name:'THE CORAL ROOM',area:'BRICKELL',gang:'ivory',pay:4500,need:12,at:[0.535,0.6]}];
+ {k:'site',dist:'midb',base:8,name:'OCEAN DRIVE SITE',area:'MID-BEACH',gang:'wreckers',pay:2500,need:8,at:[0.84,0.37]},
+ {k:'coral',dist:'brk',base:12,name:'THE CORAL ROOM',area:'BRICKELL',gang:'vault',pay:4500,need:12,at:[0.535,0.6]}];
+/* hard 1-3 = how many of the crew hang around and how tough their collector is */
+const EMP_RACKETS=[
+ {k:'nails',dist:'sobe',name:'NEON NAILS',type:'shop',gang:'snakes',pay:400,hard:1,at:[0.845,0.71]},
+ {k:'cabana',dist:'sobe',name:'CABANA RENTALS',type:'shop',gang:'rayos',pay:500,hard:1,at:[0.855,0.6]},
+ {k:'bowl',dist:'midb',name:'SURFSIDE BOWL-O-RAMA',type:'club',gang:'snakes',pay:600,hard:2,at:[0.83,0.24]},
+ {k:'pawn',dist:'midb',name:'COLLINS AVE PAWN',type:'shop',gang:'rayos',pay:700,hard:2,at:[0.855,0.45]},
+ {k:'taxi',dist:'dtwn',name:'BAYFRONT TAXI CO.',type:'garage',gang:'rayos',pay:800,hard:2,at:[0.555,0.4]},
+ {k:'news',dist:'dtwn',name:'BISCAYNE NEWSSTAND',type:'shop',gang:'ivory',pay:300,hard:1,at:[0.53,0.35]},
+ {k:'boatyard',dist:'dtwn',name:'CORAL KEY BOATYARD',type:'warehouse',gang:'silks',pay:900,hard:2,at:[0.575,0.485]},
+ {k:'wash',dist:'brk',name:'BRICKELL CAR WASH',type:'garage',gang:'ivory',pay:600,hard:1,at:[0.49,0.655]},
+ {k:'cash',dist:'brk',name:'BRICKELL CHECK CASHING',type:'office',gang:'ivory',pay:1000,hard:3,at:[0.56,0.54]},
+ {k:'armored',dist:'brk',name:'BRICKELL ARMORED CARS',type:'garage',gang:'vault',pay:1200,hard:3,at:[0.505,0.585]},
+ {k:'savings',dist:'brk',name:'PALM SAVINGS & LOAN',type:'office',gang:'vault',pay:1400,hard:3,at:[0.515,0.7]},
+ {k:'cigar',dist:'lhav',name:'CALLE OCHO CIGARS',type:'shop',gang:'rayos',pay:500,hard:1,at:[0.27,0.48]},
+ {k:'bodega',dist:'lhav',name:'DOMINO PARK BODEGA',type:'shop',gang:'rayos',pay:400,hard:1,at:[0.2,0.55]},
+ {k:'cafe',dist:'lhav',name:'LA PALMA CAFECITO',type:'club',gang:'rayos',pay:300,hard:1,at:[0.31,0.63]},
+ {k:'garment',dist:'wyn',name:'NORTHSIDE GARMENT CO.',type:'warehouse',gang:'ivory',pay:700,hard:2,at:[0.39,0.26]},
+ {k:'junk',dist:'wyn',name:'WYNWOOD JUNKYARD',type:'garage',gang:'snakes',pay:500,hard:1,at:[0.53,0.25]},
+ {k:'demo',dist:'wyn',name:'OVERTOWN DEMO YARD',type:'garage',gang:'wreckers',pay:800,hard:2,at:[0.44,0.37]},
+ {k:'cement',dist:'wyn',name:'MIDTOWN CEMENT CO.',type:'warehouse',gang:'wreckers',pay:900,hard:2,at:[0.5,0.19]},
+ {k:'chandler',dist:'grove',name:'GROVE YACHT CHANDLERY',type:'shop',gang:'ivory',pay:900,hard:2,at:[0.47,0.87]},
+ {k:'charter',dist:'grove',name:'DINNER KEY CHARTERS',type:'shop',gang:'silks',pay:700,hard:2,at:[0.5,0.78]},
+ {k:'disco',dist:'grove',name:'MAYFAIR DISCO',type:'club',gang:'ivory',pay:1100,hard:3,at:[0.37,0.76]}];
+/* the buildings rackets are played on (a front-street map like the c2 lobby: the car waits on the street below). base = the LEVELS
+   entry the map borrows its music and difficulty from (0/1: no floor-specific setup runs there). Glyphs as in levels.js. */
+const EMP_VENUE_MAP={
+ shop:["##############################", "#RRRR.RRRR.#Q..p.#U.....W....#", "#..........#.....#.....,W.L..#", "#..g...b...D..g..D...,,,,....#", "#RRRR.RRRR.#.....######.######", "#..........#######...........#", "#.....s.................h....#", "#KKKKKK..........T.....T.....#", "#p...........g..........L...p#", "#############..###############", "=============P================", "=============C================", "==============================", "==============================", "=============================="],
+ garage:["##############################", "#ZZ.....::::::::::::::...#KK.#", "#.......:::cv::::cv:::...#.h.#", "#..s....::::::::::::::...D...#", "#.......::::::g:::::::...#.Q.#", "#M......:::cv::::cv:::...#####", "#..g....::::::::::::::.......#", "#.......::::::::::::::..b....#", "#ZZ..p......u.........Z...ZZ.#", "#####.......#########..#######", "========P=====================", "========C=====================", "==============================", "==============================", "=============================="],
+ club:["##############################", "#BBBBBB...#SS.T.SS#..W..U....#", "#.........#.......#..........#", "#..g...b..D...s...D....h.....#", "#.........#.T...T.#####.######", "#*........#########.........*#", "#....,,,,,,,,.........S..S...#", "#....,,,@,,,,..u......T..T...#", "#p...,,,,,,,,.....g.........p#", "#############..###############", "=============P================", "=============C================", "==============================", "==============================", "=============================="],
+ warehouse:["##############################", "#RRRRRRR..ZZZZ..RRRRRRR.#KK..#", "#.....................s.#..h.#", "#RRRRRRR..ZZZZ..RRRRRRR.D....#", "#.........g.............#.Q..#", "#RRRRRRR..ZZZZ..RRRRRRR.######", "#..b..............u..........#", "#ZZ......g..........M.....ZZ.#", "#ZZ..p......................L#", "######.......#################", "=========P====================", "=========C====================", "==============================", "==============================", "=============================="],
+ office:["##############################", "#QQ..K..#E.T.E.#E.T.E.#.QQQQ.#", "#.......#......#......#......#", "#..h....D..g...D..s...D...u..#", "#.......#......#......#......#", "###..######..######..#####..##", "#............................#", "#.p..KKKKKKKK........SSS..p..#", "#L....g.......b.............L#", "##############..##############", "==============P===============", "==============C===============", "==============================", "==============================", "=============================="],
+ compound:["####################################", "#KK...Q.#.....T..S.S..T.....#.QQQQ.#", "#.......#...................#......#", "#..h....D.....s.......u.....D..m...#", "#.......#.......BBBBBB......#......#", "#..s....#...................#......#", "####.####.......g...........###.####", "#......Z.......*......*......Z.....#", "#..g.............................g.#", "#ZZ.....b.....ZZ......ZZ.....b...ZZ#", "#.................m................#", "###############.....################", "=================P==================", "=================C==================", "====================================", "====================================", "===================================="]};
+const EMP_VENUE={
+ shop:{base:0,n:'SHOP',wall:5,sofa:0x2a9ea3,legend:{}},
+ garage:{base:0,n:'GARAGE',wall:34,sofa:0x5a5a62,legend:{'.':{f:30},':':{f:7},'c':{f:30,furn:21},'v':{f:30,furn:22}}},
+ club:{base:1,n:'CLUB',wall:12,sofa:0xe0459a,legend:{}},
+ warehouse:{base:0,n:'WAREHOUSE',wall:6,sofa:0x6a5a3a,legend:{'.':{f:30}}},
+ office:{base:0,n:'OFFICE',wall:42,sofa:0x34343e,legend:{'.':{f:41}}},
+ compound:{base:0,n:'COMPOUND',wall:6,sofa:0x2a2030,legend:{}}};
+/* a building of one type with a racket's name on it. Kade's crew always wears hard hats */
+function empVenueDef(type,name,gang,o){const v=EMP_VENUE[type];return Object.assign({name,front:1,wall:v.wall,sofa:v.sofa,legend:v.legend,map:EMP_VENUE_MAP[type],venue:type,hardhat:gang==='wreckers'},o||{});}
 const EMP_BRIEF={snakes:'The Coral Snakes rolled in on their bikes the week Lex sank. Leather, chains, no manners. Their lieutenant runs the place from the back. Take it off them.',
  rayos:'Los Rayos took over the moment the Royal Flush went down: white suits, gold teeth, a lot of product. Put their lieutenant down and the place is yours.',
- ivory:'The Ivory Hand came down from New York to buy Miami cheap. Pinstripes and old money. Their lieutenant keeps the books here. Close them.'};
+ ivory:'The Ivory Hand came down from New York to buy Miami cheap. Pinstripes and old money. Their lieutenant keeps the books here. Close them.',
+ silks:'What is left of Lex Sterling\'s smugglers calls itself the Silk Syndicate now. Same boats, same silk shirts, new captain. Take the docks back off them.',
+ wreckers:'Kade is gone but his wrecking crew kept the hard hats and the payroll. They run the site like it is still his. Show them the job is over.',
+ vault:'Vale Trust Security still guards Conrad Vale\'s money, and now they keep it. Private army, good rifles, no boss to answer to. Close the account.'};
+const EMP_RBRIEF={snakes:'The Coral Snakes collect from this place every Friday. Drive over, clear them out and put down their collector, and the owner pays you instead.',
+ rayos:'Los Rayos have a collector sitting in here with a few of their boys. Go in, put them on the floor, and the owner pays you from now on.',
+ ivory:'The Ivory Hand runs this place through a bookkeeper and some muscle. Walk in, close their books, and it is yours.',
+ silks:'The Silk Syndicate moves its goods through here. Their collector is inside with a crew. Clear the building and the business is yours.',
+ wreckers:'Kade\'s old wrecking crew uses this yard. Hard hats, crowbars, guns. Clear them out and the yard pays you.',
+ vault:'Vale Trust Security guards this place like a bank vault. Get past the uniforms and their captain, and the money comes to you.'};
 /* each crew's headquarters: once it holds no fronts, you can hit its HQ and kill its boss; the reward flag wiped_<gang> ends the crew
-   (its rackets go independent and it never raids you again). base = a floor you know, its own boss swapped for the crew's. */
+   (its rackets go independent and it never raids you again). The street crews sit on a floor you know (base, its own boss swapped for
+   the crew's); the act crews dig in at a compound of their own. */
 const EMP_HQ=[
  {g:'snakes',base:11,name:'THE SNAKEPIT',area:'HIALEAH',at:[0.13,0.3],need:11},
  {g:'rayos',base:2,name:'VEGA\'S PENTHOUSE',area:'STAR ISLAND',at:[0.72,0.475],need:2},
- {g:'ivory',base:9,name:'THE IVORY BALLROOM',area:'KEY BISCAYNE',at:[0.715,0.93],need:9}];
-for(const h of EMP_HQ)MISSIONS['hq_'+h.g]={kind:'empire',name:'HIT '+h.name,base:h.base,stages:['legacy'],start:'legacy',
- unlock:{all:[{done:'c7'},{done:'c'+h.need}]},rewards:[{flag:'wiped_'+h.g}],rev:1,twist:'turf',hq:h.g,
- brief:{snakes:'The Coral Snakes are down to their clubhouse. Mad Dog McCoy is holed up in there with everyone he has left. End them.',
-  rayos:'Los Rayos have nothing left but Don Vega\'s penthouse. He is up there with his gold rifle and his last soldiers. Go up and finish it.',
-  ivory:'The Ivory Hand is throwing one last ball to raise money for a war. Vincent Orsini is the host. Make it his farewell party.'}[h.g]};
+ {g:'ivory',base:9,name:'THE IVORY BALLROOM',area:'KEY BISCAYNE',at:[0.715,0.93],need:9},
+ {g:'silks',base:0,name:'THE STERLING BOATHOUSE',area:'FISHER ISLAND',at:[0.806,0.79],need:7,venue:{wall:6}},
+ {g:'wreckers',base:0,name:'KADE\'S SITE OFFICE',area:'OVERTOWN',at:[0.47,0.445],need:10,venue:{wall:6}},
+ {g:'vault',base:0,name:'THE VALE TRUST VAULT',area:'DODGE ISLAND',at:[0.67,0.56],need:13,venue:{wall:42,legend:{'.':{f:41}}}}];
+const EMP_HQ_BRIEF={snakes:'The Coral Snakes are down to their clubhouse. Mad Dog McCoy is holed up in there with everyone he has left. End them.',
+ rayos:'Los Rayos have nothing left but Don Vega\'s penthouse. He is up there with his gold rifle and his last soldiers. Go up and finish it.',
+ ivory:'The Ivory Hand is throwing one last ball to raise money for a war. Vincent Orsini is the host. Make it his farewell party.',
+ silks:'Captain Nico Sterling, Lex\'s cousin, runs the Syndicate from the old family boathouse. He has every gun they own in there. Sink them for good.',
+ wreckers:'Bruno Kade, Dorian\'s brother, keeps the wrecking crew together from the site office. Knock it down with him in it.',
+ vault:'Marcus Vale, Conrad\'s son, sits in the trust\'s vault with what is left of the money and the men. Make the withdrawal.'};
+const empNeed=(n,g)=>({all:[{done:'c7'},{done:'c'+Math.max(n,EMP_ACT[g]||7)}]});
+for(const h of EMP_HQ)MISSIONS['hq_'+h.g]=Object.assign({kind:'empire',name:'HIT '+h.name,base:h.base,stages:['legacy'],start:'legacy',
+ unlock:empNeed(h.need,h.g),rewards:[{flag:'wiped_'+h.g}],rev:1,twist:'turf',hq:h.g,brief:EMP_HQ_BRIEF[h.g]},
+ h.venue?{venue:empVenueDef('compound',h.name,h.g,Object.assign({},h.venue))}:{});
 for(const f of EMP_FRONTS)MISSIONS['e_'+f.k]={kind:'empire',name:'TAKE OVER '+f.name,base:f.base,stages:['legacy'],start:'legacy',
- unlock:{all:[{done:'c7'},{done:'c'+f.need}]},rewards:[{flag:'own_'+f.k}],rev:1,twist:'turf',front:f.k,brief:EMP_BRIEF[f.gang]};
+ unlock:empNeed(f.need,f.gang),rewards:[{flag:'own_'+f.k}],rev:1,twist:'turf',front:f.k,brief:EMP_BRIEF[f.gang]};
+for(const r of EMP_RACKETS)MISSIONS['r_'+r.k]={kind:'empire',name:'MUSCLE IN ON '+r.name,base:EMP_VENUE[r.type].base,stages:['legacy'],start:'legacy',
+ unlock:empNeed(0,r.gang),rewards:[{flag:'own_'+r.k}],rev:1,twist:'turf',front:r.k,venue:empVenueDef(r.type,r.name,r.gang),brief:EMP_RBRIEF[r.gang]};
+/* the map a mission plays on when it is not its base floor's own (empire rackets and act-crew HQs) */
+const missionMap=id=>missionKnown(id)&&MISSIONS[id].venue||undefined;
 const ownKey=(o,k)=>typeof k==='string'&&Object.prototype.hasOwnProperty.call(o,k);
 const missionId=i=>'c'+i;
 const missionKnown=id=>ownKey(MISSIONS,id);
