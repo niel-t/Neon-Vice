@@ -9,7 +9,7 @@ test('empire: in-person rackets and fronts, act crews, raids and defence, HQ wip
   const page = await openGame();
   const r = await page.evaluate(() => {
     NOARRIVE = true; const fade = fadeTo, out = {};
-    const run = id => { startMission(id); const R = empRunInfo(); return { name: G.def.name, venue: G.def.venue || null, hat: !!G.def.hardhat, gang: G.turf && G.turf.gang, boss: bossName(), bosses: G.enemies.filter(e => e.boss && e.alive).length, inside: !isOut(G, Math.floor(G.boss.x), Math.floor(G.boss.z)), foes: G.enemies.filter(e => e.alive && !e.boss).length, lvl: levelIdx, free: !!(R && R.free) }; };
+    const run = id => { startMission(id); const R = empRunInfo(); return { name: G.def.name, venue: G.def.venue || null, hat: !!G.def.hardhat, gang: G.turf && G.turf.gang, boss: bossName(), bosses: G.enemies.filter(e => e.boss && e.alive).length, inside: !!G.boss && (G.def.site ? !'=PC'.includes(G.rows[Math.floor(G.boss.z)][Math.floor(G.boss.x)]) : !isOut(G, Math.floor(G.boss.x), Math.floor(G.boss.z))), site: G.def.site || null, props: G.furn.filter(f => f === 60).length, map: G.def.map.join(''), foes: G.enemies.filter(e => e.alive && !e.boss).length, lvl: levelIdx, free: !!(R && R.free) }; };
     const win = () => { EMP_NEWS.length = 0; G.take = 100; G.paid = 0; payout(); return EMP_NEWS.map(n => n[0]); };
     try {
       fadeTo = f => { f(); return true; };
@@ -81,6 +81,9 @@ test('empire: in-person rackets and fronts, act crews, raids and defence, HQ wip
       out.silksHq = run('hq_silks'); out.wreckYard = run('r_demo'); out.vaultHq = run('hq_vault');
       // the five kinds of building
       out.kinds = ['cigar', 'taxi', 'bowl', 'garment', 'cash'].map(k => run('r_' + k).venue);
+      // every racket and act-crew HQ is its own place: its own floor plan, dressed with props for that business
+      const sites = [...EMP_RACKETS.map(r => 'r_' + r.k), 'hq_silks', 'hq_wreckers', 'hq_vault'].map(run);
+      out.sites = { n: sites.length, own: sites.every((o, i) => o.site && o.site === (i < EMP_RACKETS.length ? EMP_RACKETS[i].k : ['hq_silks', 'hq_wreckers', 'hq_vault'][i - EMP_RACKETS.length])), maps: new Set(sites.map(o => o.map)).size, bare: sites.filter(o => o.props < 4).map(o => o.site) };
       // everything owned, every crew gone: KING OF MIAMI and +25% on top
       for (const x of EMP_PLACES) w['own_' + x.k] = 1; for (const g in EMP_GANGS) if (g !== 'ivory') w['wiped_' + g] = 1; p.emp.raid = {};
       MISSION = 'hq_ivory'; win();
@@ -130,5 +133,6 @@ test('empire: in-person rackets and fronts, act crews, raids and defence, HQ wip
   expect(r.kinds).toEqual(['shop', 'garage', 'club', 'warehouse', 'office']);
   expect(r.king).toEqual({ title: 'KING OF MIAMI', flag: true, news: true });
   expect(r.all).toEqual([]);
+  expect(r.sites).toEqual({ n: 24, own: true, maps: 24, bare: [] });
   expect(r.drawn).toBe('empire');
 });

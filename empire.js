@@ -143,7 +143,7 @@ function turfSetup(g){const r=empRunInfo();if(!r)return;const p=g.player;
  if(r.f&&r.f.t==='racket'){const keep=r.free?0.35:0.25+0.25*r.f.hard,es=g.enemies.filter(e=>!e.boss),n=Math.max(2,Math.round(es.length*keep));
   es.sort((a,b)=>Math.hypot(b.x-p.x,b.z-p.z)-Math.hypot(a.x-p.x,a.z-p.z));for(const e of es.slice(n)){e.alive=false;e.sunk=true;}g.enemies=g.enemies.filter(e=>e.alive);}
  g.turf={k:r.f?r.f.k:'hq_'+r.gang,gang:r.gang,boss:r.boss,defend:r.defend,hq:!!r.hq,racket:!!(r.f&&r.f.t==='racket')};
- let best=null,bd=0;for(let z=1;z<g.H-1;z++)for(let x=1;x<g.W-1;x++){const i=z*g.W+x;if(g.solid[i]||isOut(g,x,z)||g.furn[i])continue;const d=Math.hypot(x+0.5-p.x,z+0.5-p.z);if(d>bd){bd=d;best=[x+0.5,z+0.5];}}
+ let best=null,bd=0;for(let z=1;z<g.H-1;z++)for(let x=1;x<g.W-1;x++){const i=z*g.W+x;if(g.solid[i]||g.furn[i]||(g.def.site?'=PC'.includes(g.rows[z][x]):isOut(g,x,z)))continue;const d=Math.hypot(x+0.5-p.x,z+0.5-p.z);if(d>bd){bd=d;best=[x+0.5,z+0.5];}}
  if(best)makeEnemy(g,{boss:r.boss},levelIdx,r.boss.weapon,true,best[0],best[1]);}
 /* upgrades on an owned front: guards 0-3, expansion 0-2 */
 function empUpCost(f,kind,p){const u=empSave(p).up[f.k]||{};if(kind==='g')return (u.g|0)<3?EMP_GUARD[u.g|0]:null;return (u.x|0)<2?f.pay*((u.x|0)?8:4):null;}
@@ -344,6 +344,8 @@ function drawEmpVenue(B,g){const type=g.def&&g.def.venue;if(!type||!g.front||!g.
   B.box(TRS(cx,0.006,zf+0.45,0,d1-d0+0.6,0.01,0.6),type==='garage'||type==='warehouse'?[0.85,0.7,0.1]:[0.45,0.08,0.14]);
   for(const o of [-(d1-d0+1)/2-0.45,(d1-d0+1)/2+0.45]){B.box(TRS(cx+o,0.82,zf+0.06,0,0.1,0.22,0.1),[1.3,1.1,0.7],true);B.box(TRS(cx+o,0.95,zf+0.06,0,0.16,0.04,0.16),dark);}
   if(!g.evLit){g.evLit=1;g.lights.push({x:cx,y:1.5,z:zf+0.8,r:5,c:gc});}}
+ /* the place's own props */
+ B.round=0.12;for(let z=1;z<zW;z++)for(let x=1;x<W-1;x++)if(g.furn[z*W+x]===60){const ch=g.rows[z][x];if(ch!=='q'&&ch!=='v')empProp(B,g,x,z,ch);}B.round=0;
  /* wall pieces: on every wall face that looks at the camera, something of the trade */
  const P=(x,y,z,sx,sy,sz,c,em)=>B.box(TRS(x,y,z,0,sx,sy,sz),c,em);
  const GOODS=[[0.9,0.25,0.2],[0.95,0.8,0.2],[0.2,0.6,0.85],[0.3,0.75,0.4],[0.9,0.5,0.75],[0.95,0.95,0.9]];
@@ -371,3 +373,49 @@ function drawEmpVenue(B,g){const type=g.def&&g.def.venue;if(!type||!g.front||!g.
   if(type==='office'&&z===zW-3)P(cx,0.006,cz,1,0.008,0.8,[0.4,0.08,0.14]);
   if(x%5===2&&z%4===2&&free(x-1,z)&&free(x+1,z)&&free(x,z-1)&&free(x,z+1)&&type!=='club'){P(cx,WALL_H+0.5,cz,0.02,0.9,0.02,dark);P(cx,WALL_H+0.02,cz,0.34,0.07,0.34,type==='office'?[0.9,0.9,0.86]:[0.2,0.4,0.3]);P(cx,WALL_H-0.03,cz,0.2,0.03,0.2,[1.4,1.2,0.8],true);}}
  B.round=r0;}
+/* ---- the props of the rackets' own buildings (EMP_PROP glyphs in missions.js; every one stands on a solid furn-60 cell).
+   empProp draws one cell's prop into the static batch; two-cell props (boats o+q, vehicles c+v) are drawn from their first cell. ---- */
+const EMP_PAL=[[0.9,0.25,0.2],[0.95,0.8,0.2],[0.2,0.6,0.85],[0.3,0.75,0.4],[0.9,0.5,0.75],[0.95,0.95,0.9],[0.55,0.3,0.75],[0.95,0.55,0.15]];
+function empProp(B,g,x,z,ch){const cx=x+0.5,cz=z+0.5,h=hsh(x,z,91),h2=hsh(x,z,92),col=EMP_PAL[Math.floor(h*8)%8],col2=EMP_PAL[Math.floor(h2*8)%8];
+ const P=(X,y,Z,sx,sy,sz,c,em,ry)=>B.box(TRS(cx+X,y,cz+Z,ry||0,sx,sy,sz),c,em);
+ const WOOD=[0.45,0.3,0.17],DWOOD=[0.26,0.16,0.09],STEEL=[0.62,0.64,0.7],DARK=[0.09,0.08,0.11],WHITE=[0.93,0.93,0.9],GLASS=[0.55,0.8,0.95],RUST=[0.5,0.26,0.12],CONC=[0.6,0.6,0.62];
+ switch(ch){
+ case 'a':P(0,0.04,0,0.74,0.08,1,[0.78,0.58,0.32]);P(0,0.082,0,0.04,0.004,1,[0.5,0.32,0.15]);for(const s of [-0.43,0.43])P(s,0.03,0,0.12,0.06,1,DARK);break;
+ case 'e':P(0,0.04,0.2,0.74,0.08,0.6,[0.78,0.58,0.32]);P(0,0.5,-0.3,0.98,1.0,0.4,[0.16,0.1,0.22]);P(0,0.86,-0.09,0.9,0.14,0.03,[1.5,0.4,1.1],true);
+  for(const [px,pz] of [[0,0.38],[-0.12,0.26],[0.12,0.26],[-0.24,0.14],[0,0.14],[0.24,0.14]]){P(px,0.19,pz,0.07,0.22,0.07,WHITE);P(px,0.24,pz,0.075,0.03,0.075,[0.85,0.1,0.1]);}break;
+ case 'j':P(0,0.5,-0.42,0.8,1.0,0.1,[0.95,0.6,0.8]);P(0,0.72,-0.36,0.56,0.46,0.02,GLASS,true);P(0,0.42,-0.26,0.8,0.05,0.24,WHITE);for(let k=0;k<4;k++)P(-0.27+k*0.18,0.5,-0.26,0.05,0.12,0.05,EMP_PAL[(k+Math.floor(h*8))%8]);
+  P(0,0.28,0.14,0.42,0.1,0.42,[0.9,0.3,0.6]);P(0,0.52,0.33,0.42,0.42,0.08,[0.9,0.3,0.6]);P(0,0.12,0.14,0.1,0.24,0.1,STEEL);break;
+ case 'l':for(const [px,pz] of [[-0.46,-0.46],[0.46,-0.46],[-0.46,0.46],[0.46,0.46]])P(px,0.6,pz,0.05,1.2,0.05,WHITE);for(let k=0;k<6;k++)P(-0.42+k*0.168,1.22,0,0.168,0.05,1.04,k%2?WHITE:col);
+  P(0,0.16,0,0.5,0.08,0.86,WOOD);P(0,0.24,0,0.46,0.08,0.82,col2);P(0,0.34,-0.3,0.46,0.14,0.22,col2);break;
+ case 'n':P(0,0.5,-0.3,0.9,0.05,0.05,WOOD);for(const s of [-0.44,0.44])P(s,0.3,-0.3,0.05,0.6,0.05,WOOD);for(let k=0;k<3;k++){const c=EMP_PAL[(k*3+Math.floor(h*8))%8];B.box(A.mul(TRS(cx-0.28+k*0.28,0.62,cz-0.12,0,1,1,1),A.mul(A.RX(-0.28),A.S(0.2,1.24,0.05))),c);B.box(A.mul(TRS(cx-0.28+k*0.28,0.62,cz-0.09,0,1,1,1),A.mul(A.RX(-0.28),A.S(0.04,1.2,0.05))),WHITE);}break;
+ case 'o':{const X=0.5;for(const s of [-0.55,0.55]){P(X+s,0.14,0,0.08,0.28,0.7,RUST);}P(X,0.42,0,1.7,0.3,0.62,WHITE);P(X+0.9,0.44,0,0.26,0.24,0.4,WHITE);P(X+1.03,0.46,0,0.12,0.18,0.2,WHITE);P(X,0.34,0,1.72,0.06,0.64,col);
+  P(X,0.585,0,1.56,0.03,0.5,[0.55,0.33,0.16]);P(X+0.2,0.7,0,0.05,0.2,0.46,GLASS,true);P(X-0.3,0.66,0,0.5,0.12,0.4,WHITE);P(X-0.86,0.5,0,0.1,0.3,0.24,DARK);break;}
+ case 'c':{const v=g.def.veh,X=0.5;if(v==='taxi'){drawCarShapeRaw(B,cx+X,cz,0.56,0,'sedan',{col:[0.95,0.75,0.1]},0);P(X,0.86,0,0.24,0.08,0.12,[1.4,1.2,0.5],true);P(X,0.4,0.335,0.7,0.06,0.01,DARK);}
+  else if(v==='truck'){drawCarShapeRaw(B,cx+X,cz,0.6,0,'van',{col:[0.42,0.46,0.52]},0);P(X-0.1,0.5,0.375,0.9,0.1,0.01,[0.2,0.4,0.85]);P(X-0.1,0.5,-0.375,0.9,0.1,0.01,[0.2,0.4,0.85]);P(X-0.2,1.0,0,0.2,0.06,0.2,STEEL);}
+  else if(v==='dozer'){drawCarShapeRaw(B,cx+X,cz,0.56,0,'pickup',{col:[0.95,0.7,0.08]},0);P(X+1.08,0.28,0,0.08,0.5,1.0,STEEL);P(X+1.0,0.2,0,0.2,0.08,0.7,DARK);P(X-0.2,0.98,0,0.5,0.06,0.5,[0.95,0.7,0.08]);}
+  else if(v==='mixer'){drawCarShapeRaw(B,cx+X,cz,0.56,0,'pickup',{col:WHITE},0);B.box(A.mul(TRS(cx+X-0.36,0.9,cz,0,1,1,1),A.mul(A.RZ?A.RZ(0.25):A.RY(0),A.S(0.86,0.56,0.56))),[0.85,0.3,0.15]);P(X-0.36,0.9,0,0.2,0.6,0.6,WHITE);}
+  else drawCarShapeRaw(B,cx+X,cz,0.56,0,['sedan','wagon','hatch','coupe'][Math.floor(h*4)%4],{col},0);break;}
+ case 't':P(0,0.3,0,0.94,0.6,0.7,DWOOD);P(0,0.72,0,0.9,0.24,0.66,GLASS,true);P(0,0.86,0,0.94,0.03,0.7,[0.75,0.6,0.2]);for(let k=0;k<3;k++)P(-0.28+k*0.28,0.66,0,0.14,0.08,0.2,EMP_PAL[(k*2+Math.floor(h*8))%8]);break;
+ case 'y':P(0,0.6,-0.1,0.94,1.2,0.6,WHITE);P(0,0.62,0.21,0.8,1.0,0.02,[0.5,0.8,1.2],true);for(let r=0;r<3;r++)for(let k=0;k<4;k++)P(-0.27+k*0.18,0.3+r*0.32,0.19,0.1,0.18,0.06,EMP_PAL[(k+r*3+Math.floor(h*8))%8]);P(0,1.14,0.21,0.8,0.1,0.03,[1.3,0.3,0.3],true);break;
+ case 'z':P(0,0.2,0,0.84,0.4,0.84,WOOD);P(0,0.41,0,0.74,0.04,0.74,col);if(h<0.6){P(0.08,0.6,-0.06,0.6,0.36,0.6,[0.52,0.36,0.2],false,0.3);P(0.08,0.79,-0.06,0.5,0.04,0.5,col2,false,0.3);}for(const s of [-0.3,0.3])P(s,0.2,0.425,0.06,0.4,0.01,DWOOD);break;
+ case 'I':P(0,0.42,0,1,0.84,0.5,DWOOD);P(0,0.86,0,1,0.05,0.62,[0.85,0.83,0.78]);P(0,1.22,0,1,0.7,0.04,[0.5,0.8,1.0],true);P(0,1.59,0,1,0.06,0.1,[0.75,0.6,0.2]);for(const s of [-0.48,0.48])P(s,1.22,0,0.05,0.74,0.08,[0.75,0.6,0.2]);P(0,0.93,0.02,0.3,0.06,0.2,DARK);break;
+ case 'N':P(0,0.85,-0.2,1.0,1.7,0.5,[0.36,0.38,0.44]);P(0,0.8,0.1,0.82,1.4,0.16,STEEL);P(0,0.8,0.2,0.4,0.4,0.06,[0.8,0.82,0.86]);for(let k=0;k<4;k++)P(0,0.8,0.25,0.5,0.05,0.04,[0.75,0.6,0.2],false,0);
+  P(0,0.8,0.25,0.05,0.5,0.04,[0.75,0.6,0.2]);for(const s of [-0.36,0.36])for(const y of [0.3,1.3])P(s,y,0.19,0.08,0.08,0.04,DARK);break;
+ case 'Y':P(0,0.5,0,0.94,0.06,0.6,WOOD);for(const [px,pz] of [[-0.42,-0.25],[0.42,-0.25],[-0.42,0.25],[0.42,0.25]])P(px,0.24,pz,0.05,0.48,0.05,STEEL);P(-0.15,0.62,-0.05,0.36,0.2,0.16,WHITE);P(-0.3,0.72,-0.05,0.08,0.2,0.16,WHITE);P(-0.02,0.58,0.02,0.04,0.12,0.04,STEEL);
+  P(0.22,0.545,0.05,0.4,0.03,0.44,col);P(0.3,0.6,-0.2,0.1,0.14,0.1,col2);break;
+ case '!':for(const s of [-0.46,0.46])P(s,0.55,0,0.04,1.1,0.4,STEEL);P(0,1.08,0,0.96,0.04,0.04,STEEL);for(let k=0;k<7;k++){const c=EMP_PAL[(k*3+Math.floor(h*8))%8];P(-0.39+k*0.13,0.72,0,0.07,0.66,0.34,c);P(-0.39+k*0.13,1.03,0,0.03,0.08,0.03,DARK);}break;
+ case '$':P(0,0.46,0,0.9,0.06,0.7,DWOOD);for(const [px,pz] of [[-0.4,-0.3],[0.4,-0.3],[-0.4,0.3],[0.4,0.3]])P(px,0.22,pz,0.06,0.44,0.06,DWOOD);P(-0.2,0.5,0,0.4,0.02,0.5,[0.42,0.3,0.12]);for(let k=0;k<5;k++)P(0.2,0.51,-0.2+k*0.1,0.3,0.035,0.045,[0.36,0.2,0.08]);P(0.3,0.54,0.26,0.24,0.08,0.14,[0.75,0.6,0.2]);break;
+ case '&':for(const [px,pz,n] of [[-0.22,-0.2,3],[0.24,-0.16,2],[0,0.26,h<0.5?4:2]])for(let k=0;k<n;k++){P(px,0.09+k*0.17,pz,0.46,0.16,0.46,[0.07,0.07,0.08],false,k*0.4);P(px,0.09+k*0.17,pz,0.2,0.165,0.2,[0.3,0.3,0.33]);}break;
+ case '+':P(0,0.16,0,0.9,0.32,0.86,CONC,false,h*3);P(0.12,0.4,-0.1,0.56,0.3,0.5,[0.5,0.5,0.53],false,h2*3);P(-0.2,0.34,0.22,0.36,0.22,0.3,[0.66,0.4,0.3],false,h*5);B.box(A.mul(TRS(cx+0.1,0.6,cz,h*6,1,1,1),A.mul(A.RX(0.9),A.S(0.03,0.9,0.03))),RUST);if(h2<0.5)P(0.3,0.12,0.3,0.3,0.12,0.2,[0.7,0.34,0.22],false,1);break;
+ case '?':P(0,1.15,0,0.9,2.3,0.9,[0.72,0.73,0.76]);P(0,1.15,0,0.94,0.14,0.94,[0.85,0.3,0.15]);P(0,2.36,0,0.6,0.14,0.6,[0.6,0.6,0.64]);P(0,0.2,0.47,0.3,0.4,0.06,DARK);P(0.4,1.2,0.47,0.05,2.2,0.05,STEEL);break;
+ case '<':P(0,0.03,0,0.5,0.06,0.5,STEEL);P(0,0.7,0,0.1,1.4,0.1,STEEL);for(let k=0;k<6;k++)P(0,0.2+k*0.2,0,0.5,0.17,0.5,k%2?[0.2,0.45,0.95]:[0.92,0.2,0.3],false,k*0.5+h*3);P(0,1.42,0,0.3,0.06,0.3,DARK);break;
+ case '>':P(0,0.04,0,0.7,0.08,0.5,CONC);P(0,0.55,0,0.44,0.94,0.3,[0.85,0.12,0.14]);P(0,0.82,0.155,0.32,0.26,0.01,WHITE);P(0,1.08,0,0.5,0.14,0.34,WHITE);P(0,1.2,0,0.3,0.12,0.3,[1.3,1.1,0.6],true);P(0.25,0.5,0.1,0.04,0.5,0.04,DARK);break;
+ case '^':P(0,0.42,0.1,1,0.84,0.6,DARK);P(0,0.86,0.1,1,0.04,0.66,[0.2,0.18,0.26]);P(0,0.5,0.41,1,0.08,0.02,[1.6,0.3,1.1],true);P(0,0.25,0.41,1,0.05,0.02,[0.3,1.4,1.6],true);P(0,0.9,0.1,0.44,0.03,0.44,[0.05,0.05,0.06]);P(0,0.92,0.1,0.12,0.03,0.12,col);P(0,0.9,-0.4,0.9,1.5,0.18,[0.07,0.07,0.09]);for(const y of [0.5,1.1])P(0,y,-0.3,0.5,0.44,0.02,[0.22,0.22,0.26]);break;
+ case ';':P(0,0.55,-0.1,0.9,1.1,0.08,STEEL);for(let r=0;r<3;r++){P(0,0.2+r*0.34,0.02,0.9,0.03,0.26,STEEL);for(let k=0;k<4;k++)B.box(A.mul(TRS(cx-0.32+k*0.21,0.33+r*0.34,cz+0.02,0,1,1,1),A.mul(A.RX(-0.3),A.S(0.18,0.24,0.02))),EMP_PAL[(k+r*5+Math.floor(h*8))%8]);}break;
+ case '(':for(let k=0;k<(h<0.4?3:2);k++){const c=k===1?col2:col,y=0.2+k*0.38;P(0,y,0,1.0,0.3,0.86,c.map(v=>v*0.55+0.12),false,(k-1)*0.08);P(-0.05,y+0.17,0,0.5,0.08,0.7,[0.2,0.24,0.3],false,(k-1)*0.08);P(0.4,y-0.02,0,0.2,0.2,0.88,RUST,false,(k-1)*0.08);}break;
+ case ')':P(0,0.06,0,0.94,0.1,0.9,WOOD);for(let k=0;k<3;k++)for(const s of [-0.22,0.22])P(s+(k%2?0.03:-0.03),0.2+k*0.18,0,0.42,0.17,0.8,k%2?[0.82,0.78,0.68]:[0.76,0.72,0.62]);P(0,0.2,0.41,0.3,0.1,0.01,[0.8,0.25,0.15]);break;
+ case '{':P(0,0.45,0,1,0.9,0.7,DWOOD);P(0,0.92,0,1,0.05,0.78,[0.86,0.84,0.8]);if(h<0.4){P(0,1.12,-0.1,0.5,0.36,0.34,[0.8,0.82,0.86]);P(0,1.32,-0.1,0.54,0.05,0.38,[0.8,0.15,0.15]);P(0,1.0,0.1,0.34,0.03,0.14,DARK);}else for(let k=0;k<3;k++){P(-0.26+k*0.26,0.99,0.1,0.1,0.09,0.1,WHITE);P(-0.26+k*0.26,0.96,0.1,0.18,0.015,0.18,WHITE);}break;
+ case '}':P(0,0.5,0,0.7,0.05,0.7,[0.2,0.5,0.35]);P(0,0.25,0,0.1,0.5,0.1,DWOOD);for(let k=0;k<6;k++)P(-0.2+(k%3)*0.2,0.535,k<3?-0.08:0.1,0.08,0.02,0.15,WHITE,false,k*0.7);for(const s of [-0.5,0.5]){P(s*0.9,0.28,0.38*Math.sign(s),0.26,0.05,0.26,WOOD);P(s*0.9,0.14,0.38*Math.sign(s),0.06,0.28,0.06,DARK);}break;
+ case '[':P(0,0.65,-0.12,0.96,1.3,0.56,DWOOD);P(0,0.72,0.17,0.8,1.0,0.02,[0.9,0.75,0.4],true);for(let r=0;r<4;r++)for(let k=0;k<3;k++)P(-0.25+k*0.25,0.34+r*0.26,0.15,0.2,0.1,0.06,r%2?[0.5,0.3,0.12]:[0.7,0.5,0.2]);P(0,1.32,-0.12,1,0.06,0.6,[0.75,0.6,0.2]);break;
+ case ']':P(0,0.3,-0.2,0.96,0.6,0.5,DWOOD);if(h<0.5){B.box(A.mul(TRS(cx,0.95,cz-0.3,0,1,1,1),A.mul(A.RX(0.15),A.S(0.08,0.8,0.04))),WOOD);P(0,0.74,-0.24,0.3,0.36,0.08,col);P(0,0.74,-0.19,0.1,0.1,0.02,DARK);}else{P(0,0.86,-0.2,0.6,0.5,0.44,[0.3,0.2,0.12]);P(0,0.88,0.03,0.46,0.36,0.02,[0.5,0.8,1.1],true);P(0.2,1.2,-0.2,0.02,0.3,0.02,STEEL);}break;
+ default:break;}}
