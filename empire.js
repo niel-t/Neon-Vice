@@ -195,7 +195,7 @@ function empAct(i,act){if(state!=='empire'||fading)return;const en=empEntries()[
   return renderEmpire(res==='ok'?(act==='g'?'More guards on '+en.x.name+'. Raids fail more often.':en.x.name+' is bigger now and pays $'+fmt(empFrontPay(en.x,p))+' a job.'):res==='poor'?'Not enough cash.':res==='max'?'Nothing more to buy there.':'');}
  if(s==='lock'||s==='wiped'||s==='own'){sfx('blip');return renderEmpire(s==='own'?'Already yours.':s==='wiped'?'They are finished.':'Not yet.');}
  const id=en.t==='hq'?'hq_'+en.h.g:empMission(en.x),gk=en.t==='hq'?en.h.g:(empRaid(en.x,p)||{g:empHolder(en.x,p)}).g,gg=EMP_GANGS[gk]||EMP_GANGS[en.x.gang];
- sfx('pick');state='play';show(null);travel(()=>{JOBPICK=null;startMission(id);showObjCard();},en.name,(en.t==='hq'?'WIPE OUT ':s==='raid'?'DEFEND AGAINST ':en.t==='racket'?'MUSCLE IN · ':'TAKEOVER · ')+gg.name);}
+ sfx('pick');cruiseGo(id,en.name,(en.t==='hq'?'WIPE OUT ':s==='raid'?'DEFEND AGAINST ':en.t==='racket'?'MUSCLE IN · ':'TAKEOVER · ')+gg.name,en.t==='hq'?en.h.area:EMP_DIST[en.x.dist]);}
 function empPrimary(i){const en=empEntries()[i];if(!en)return;const s=empEntState(en);if(en.t==='front'&&s==='own')return empAct(i,'g');empAct(i,en.t==='hq'?'hq':'go');}
 function empKey(e){const c=e.code;if(c==='Escape'||c==='Backspace'||c==='KeyE'){closeEmpire();return;}
  if(c==='ArrowUp'||c==='ArrowLeft'||c==='KeyW'||c==='KeyA')empSelect(EMP_SEL-1);else if(c==='ArrowDown'||c==='ArrowRight'||c==='KeyS')empSelect(EMP_SEL+1);
@@ -328,3 +328,46 @@ $('emMap').onclick=e=>{const cv=$('emMap'),b=cv.getBoundingClientRect();if(!EMP_
  empEntries().forEach((en,i)=>{const x=EMP_RECT.ox+en.at[0]*EMP_RECT.mw,y=EMP_RECT.oy+en.at[1]*EMP_RECT.mh-EMP_RECT.u*(en.t==='racket'?0:10),d=Math.hypot(x-px,y-py);if(d<bd){bd=d;bi=i;}});if(bi>=0)empSelect(bi);};
 $('bEmpLeave').onclick=()=>closeEmpire();
 $('bCarEmpire').onclick=()=>openEmpire();
+/* ---- dressing the rackets' buildings (static, built with the level): a lit sign with the place's name over the door in the colours of
+   whoever holds it, an awning and door lights outside, and things on the walls and floor that belong to that kind of building.
+   Nothing here has a body: it is all mounted on walls, hung from the ceiling or painted on the floor. ---- */
+function empRGB(s,k){const n=parseInt(s.slice(1),16);k=k||1;return [((n>>16)&255)/255*k,((n>>8)&255)/255*k,(n&255)/255*k];}
+function drawEmpVenue(B,g){const type=g.def&&g.def.venue;if(!type||!g.front||!g.rows)return;const W=g.W,zW=g.front.zT-1,r=empRunInfo(),gc=empRGB(r&&EMP_GANGS[r.gang]?EMP_GANGS[r.gang].col:'#ff3fa4');
+ const free=(x,z)=>x>0&&z>0&&x<W-1&&z<zW&&!g.solid[z*W+x],neon=gc.map(v=>v*1.5),dark=[0.08,0.06,0.1],r0=B.round;B.round=0;
+ /* the door gap in the front wall */
+ let d0=-1,d1=-1;for(let x=1;x<W-1;x++)if(!g.solid[zW*W+x]){if(d0<0)d0=x;d1=x;}
+ if(d0>=0){const cx=(d0+d1+1)/2,zf=zW+1,nm=g.def.name||'',px=Math.min(0.055,5.2/(nm.length*6)),w=nm.length*6*px+0.4,y=WALL_H+0.42;
+  B.box(TRS(cx,y,zf-0.02,0,w+0.12,0.6,0.06),neon,true);B.box(TRS(cx,y,zf+0.02,0,w,0.5,0.06),dark);neonText(B,nm,cx,y,zf+0.07,px,neon);
+  for(const o of [-w/2+0.1,w/2-0.1])B.box(TRS(cx+o,WALL_H+0.06,zf-0.02,0,0.06,0.14,0.06),[0.25,0.25,0.3]);
+  /* awning in two colours over the door, a mat, and a lamp either side */
+  const aw=d1-d0+1.8;for(let k=0;k<8;k++)B.box(TRS(cx-aw/2+(k+0.5)*aw/8,WALL_H-0.12,zf+0.32,0,aw/8,0.05,0.66),k%2?[0.92,0.9,0.86]:gc);
+  B.box(TRS(cx,0.006,zf+0.45,0,d1-d0+0.6,0.01,0.6),type==='garage'||type==='warehouse'?[0.85,0.7,0.1]:[0.45,0.08,0.14]);
+  for(const o of [-(d1-d0+1)/2-0.45,(d1-d0+1)/2+0.45]){B.box(TRS(cx+o,0.82,zf+0.06,0,0.1,0.22,0.1),[1.3,1.1,0.7],true);B.box(TRS(cx+o,0.95,zf+0.06,0,0.16,0.04,0.16),dark);}
+  if(!g.evLit){g.evLit=1;g.lights.push({x:cx,y:1.5,z:zf+0.8,r:5,c:gc});}}
+ /* wall pieces: on every wall face that looks at the camera, something of the trade */
+ const P=(x,y,z,sx,sy,sz,c,em)=>B.box(TRS(x,y,z,0,sx,sy,sz),c,em);
+ const GOODS=[[0.9,0.25,0.2],[0.95,0.8,0.2],[0.2,0.6,0.85],[0.3,0.75,0.4],[0.9,0.5,0.75],[0.95,0.95,0.9]];
+ for(let z=1;z<zW-1;z++)for(let x=1;x<W-1;x++){if(!g.solid[z*W+x]||!free(x,z+1)||g.rows[z][x]==='D')continue;const cx=x+0.5,zf=z+1.012,h=hsh(x,z,71),h2=hsh(x,z,72);
+  if(type==='shop'){if(h<0.5){for(const y of [0.5,0.82]){P(cx,y,zf+0.05,0.9,0.03,0.12,[0.5,0.36,0.22]);for(let k=0;k<4;k++)P(cx-0.33+k*0.22,y+0.09,zf+0.05,0.13,0.14+hsh(x+k,z,73)*0.08,0.09,GOODS[Math.floor(hsh(x+k,z,74+y*10)*6)]);}}
+   else if(h<0.62){P(cx,0.75,zf,0.7,0.42,0.02,[0.95,0.9,0.3]);P(cx,0.75,zf+0.012,0.56,0.08,0.01,[0.8,0.1,0.15]);}}
+  else if(type==='garage'){if(h<0.3){P(cx,0.72,zf,0.86,0.5,0.02,[0.5,0.38,0.24]);for(let k=0;k<4;k++)P(cx-0.3+k*0.2,0.72+(hsh(x+k,z,75)-0.5)*0.2,zf+0.02,0.04,0.2+hsh(x+k,z,76)*0.14,0.02,[0.7,0.72,0.76]);}
+   else if(h<0.5){for(const o of [-0.22,0.22]){P(cx+o,0.7,zf+0.03,0.36,0.36,0.06,[0.07,0.07,0.08]);P(cx+o,0.7,zf+0.05,0.16,0.16,0.04,[0.6,0.6,0.64]);}}
+   else if(h<0.62){P(cx,0.8,zf,0.8,0.26,0.02,[0.95,0.75,0.1]);for(let k=0;k<4;k++)P(cx-0.3+k*0.2,0.8,zf+0.012,0.08,0.26,0.01,dark);}}
+  else if(type==='club'){if(h<0.55){P(cx,0.38+h2*0.5,zf+0.02,0.92,0.04,0.03,h2<0.5?[1.6,0.3,1.1]:[0.3,1.4,1.6],true);}
+   else if(h<0.7){P(cx,0.62,zf+0.1,0.5,0.7,0.2,[0.06,0.06,0.08]);for(const y of [0.42,0.78])P(cx,y,zf+0.21,0.3,0.26,0.02,[0.2,0.2,0.24]);}
+   else if(h<0.8){P(cx,0.75,zf,0.6,0.45,0.02,[1.2,0.9,0.3],true);P(cx,0.75,zf+0.012,0.5,0.35,0.01,[0.5,0.08,0.3]);}}
+  else if(type==='warehouse'){if(h<0.25){P(cx,0.85,zf,0.7,0.2,0.02,[0.95,0.75,0.1]);P(cx,0.85,zf+0.012,0.5,0.05,0.01,dark);}
+   else if(h<0.4){P(cx,0.55,zf+0.04,0.2,0.4,0.08,[0.8,0.1,0.1]);P(cx,0.8,zf+0.04,0.08,0.1,0.08,[0.2,0.2,0.2]);}
+   else if(h<0.52){P(cx,0.7,zf,0.8,0.5,0.02,[0.86,0.84,0.76]);for(let k=0;k<4;k++)P(cx,0.55+k*0.1,zf+0.012,0.64,0.02,0.01,[0.3,0.3,0.35]);}}
+  else if(type==='office'){if(h<0.35){P(cx,0.75,zf,0.56,0.42,0.03,[0.75,0.6,0.2]);P(cx,0.75,zf+0.02,0.46,0.32,0.01,GOODS[Math.floor(h2*6)].map(v=>v*0.6));}
+   else if(h<0.45){P(cx,0.85,zf+0.02,0.26,0.26,0.03,[0.95,0.95,0.92]);P(cx,0.88,zf+0.04,0.02,0.1,0.01,dark);P(cx+0.04,0.85,zf+0.04,0.08,0.02,0.01,dark);}
+   else if(h<0.55){P(cx,0.4,zf+0.12,0.3,0.8,0.24,[0.75,0.82,0.9]);P(cx,0.88,zf+0.12,0.24,0.2,0.2,[0.5,0.75,1.1],true);}}
+  else{if(h<0.3){P(cx,0.68,zf,0.5,0.8,0.02,gc);P(cx,0.68,zf+0.012,0.3,0.3,0.01,dark);P(cx,1.1,zf+0.01,0.56,0.04,0.04,[0.75,0.6,0.2]);}
+   else if(h<0.45){P(cx,0.82,zf+0.05,0.1,0.2,0.1,[1.3,1.0,0.6],true);}}}
+ /* floor and ceiling: oil and bay lines in a garage, lane paint in a warehouse, a runner in an office, hanging lamps everywhere */
+ for(let z=2;z<zW-1;z++)for(let x=2;x<W-2;x++){const i=z*W+x;if(g.solid[i]||g.furn[i]||g.rows[z][x]==='D')continue;const h=hsh(x,z,81),cx=x+0.5,cz=z+0.5;
+  if(type==='garage'&&h<0.07)floorQuad(B,cx,cz,0.9+h*8,h*90,TUV[47],[1,1,1],0.007);
+  if(type==='warehouse'&&x%6===3&&free(x,z-1)&&free(x,z+1))P(cx,0.006,cz,0.08,0.008,1,[0.95,0.75,0.1]);
+  if(type==='office'&&z===zW-3)P(cx,0.006,cz,1,0.008,0.8,[0.4,0.08,0.14]);
+  if(x%5===2&&z%4===2&&free(x-1,z)&&free(x+1,z)&&free(x,z-1)&&free(x,z+1)&&type!=='club'){P(cx,WALL_H+0.5,cz,0.02,0.9,0.02,dark);P(cx,WALL_H+0.02,cz,0.34,0.07,0.34,type==='office'?[0.9,0.9,0.86]:[0.2,0.4,0.3]);P(cx,WALL_H-0.03,cz,0.2,0.03,0.2,[1.4,1.2,0.8],true);}}
+ B.round=r0;}

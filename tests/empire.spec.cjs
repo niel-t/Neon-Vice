@@ -23,11 +23,21 @@ test('empire: in-person rackets and fronts, act crews, raids and defence, HQ wip
       // the act crews: Lex's smugglers are here after the Royal Flush, Kade's and Vale's men only after their acts
       const st = k => empEntState(empEntries().find(e => e.k === k), p);
       out.acts = { silks: empActive('silks'), wreck: empActive('wreckers'), vault: empActive('vault'), marina: st('marina'), boatyard: st('boatyard'), demo: st('demo'), site: st('site'), savings: st('savings'), hqWreck: st('hq_wreckers') };
-      // a racket is a job too: the map button drives you there
+      // a racket is a job too: the map button sends you there
       const iCigar = empEntries().findIndex(e => e.k === 'cigar');
       document.querySelector(`#emList [data-act="go"][data-i="${iCigar}"]`).click();
-      const dep = !!G.seq; for (let k = 0; k < 6 && MISSION !== 'r_cigar'; k++) { seqSkip(); if (G.seq) G.seq.t = 99; updateHub(0.1); }
-      out.drive = { dep, mission: MISSION, state, where: $('ojWhere').textContent };
+      // ...as a real drive: a few blocks of Miami with traffic, your car, and the place glowing at a kerb
+      const g0 = G, c = g0.pcar;
+      out.cruise = { hub: g0.def.hub, mode: HUBMODE, obj: g0.obj, traffic: g0.traffic.length > 20, far: Math.hypot(g0.dest.x - c.x, g0.dest.z - c.z) > 25, road: !isBlock(Math.floor(c.x), Math.floor(c.z)) && !isBlock(Math.floor(g0.dest.x), Math.floor(g0.dest.z)), same: JSON.stringify(cruiseDef('r_cigar', 'X').map) === JSON.stringify(g0.def.map) };
+      // car physics: it gathers speed, grips in a clean corner, and the handbrake throws the tail out and leaves rubber
+      g0.traffic = []; for (let k = 0; k < 90; k++) carStep(g0, c, { thr: 1, st: 0, hand: false, turbo: false }, 1 / 60); const v1 = c.v, x1 = c.x;
+      for (let k = 0; k < 12; k++) carStep(g0, c, { thr: 1, st: 0.5, hand: false, turbo: false }, 1 / 60); const clean = c.slip, d0 = g0.decals.length;
+      for (let k = 0; k < 25; k++) carStep(g0, c, { thr: 0, st: 1, hand: true, turbo: false }, 1 / 60);
+      out.phys = { fast: v1 > 7, moved: x1 > 15, clean: clean < 2.4, drift: c.slip > 2.4, rubber: g0.decals.length > d0, finite: [c.x, c.z, c.vx, c.vz, c.h].every(Number.isFinite) };
+      // pulling up at the place starts the job; so does skipping the drive
+      c.x = g0.dest.x; c.z = g0.dest.z; c.vx = c.vz = 0; cruiseTick(1 / 60); out.cruise.arrived = !!g0.arrived;
+      g0.arrived = false; g0.hubDone = false; hubSkip();
+      out.drive = { mission: MISSION, state, where: $('ojWhere').textContent };
       if (OBJCARD) { OBJCARD.t = 0; objCardGo(); }
       const R0 = empRunInfo();
       out.cigar = { name: G.def.name, venue: G.def.venue, twist: G.twist, gang: G.turf.gang, racket: G.turf.racket, boss: bossName(), hp: G.boss.hp, foes: G.enemies.filter(e => e.alive && !e.boss).length, base: R0.base };
@@ -87,7 +97,9 @@ test('empire: in-person rackets and fronts, act crews, raids and defence, HQ wip
   expect(r.btn).toBe(true);
   expect(r.screen).toEqual({ state: 'empire', cards: 35, crews: 6, off: 2, fronts: 8, rackets: 21, heads: 8, shake: 0 });
   expect(r.acts).toEqual({ silks: true, wreck: false, vault: false, marina: 'open', boatyard: 'open', demo: 'lock', site: 'lock', savings: 'lock', hqWreck: 'lock' });
-  expect(r.drive).toEqual({ dep: true, mission: 'r_cigar', state: 'objcard', where: 'TAKEOVER · LOS RAYOS' });
+  expect(r.cruise).toEqual({ hub: 'cruise', mode: 'cruise', obj: 'DRIVE TO CALLE OCHO CIGARS', traffic: true, far: true, road: true, same: true, arrived: true });
+  expect(r.phys).toEqual({ fast: true, moved: true, clean: true, drift: true, rubber: true, finite: true });
+  expect(r.drive).toEqual({ mission: 'r_cigar', state: 'objcard', where: 'TAKEOVER · LOS RAYOS' });
   expect(r.cigar).toEqual({ name: 'CALLE OCHO CIGARS', venue: 'shop', twist: 'turf', gang: 'rayos', racket: true, boss: 'LOS RAYOS COLLECTOR', hp: 5, foes: 3, base: 0 });
   expect(r.cigarCol).toBe(true);
   expect(r.cigarWin.news).toContain('CALLE OCHO CIGARS IS YOURS');

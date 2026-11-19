@@ -318,6 +318,7 @@ const TRS=(x,y,z,ry,sx,sy,sz)=>A.mul(A.mul(A.T(x,y,z),A.RY(ry)),A.S(sx,sy,sz));
 <script src="act4.js"></script>
 <script src="act4sets.js"></script>
 <script src="stairs.js"></script>
+<script src="drive.js"></script>
 <script src="empire.js"></script>
 <script>
 'use strict';
@@ -1213,6 +1214,7 @@ function drawDeco(B,g,d){const cx=d.x+0.5,cz=d.z+0.5;
  else if(d.t==='chair'){const k=[0.36,0.2,0.12];B.box(TRS(d.x,0.42,d.z,0,0.5,0.08,0.5),k);B.box(TRS(d.x,0.75,d.z-0.22,0,0.5,0.6,0.07),k);for(const [lx,lz] of [[-0.2,-0.2],[0.2,-0.2],[-0.2,0.2],[0.2,0.2]])B.box(TRS(d.x+lx,0.2,d.z+lz,0,0.06,0.4,0.06),k);}
  else if(d.t==='cigar'){B.box(TRS(d.x+0.1,1.12,d.z,0,0.22,0.05,0.05),[0.55,0.32,0.15]);B.box(TRS(d.x+0.22,1.12,d.z,0,0.04,0.06,0.06),[1,0.45,0.1]);}
   else if(d.t==='lane'){B.box(TRS(cx,0.004,d.z,0,0.55,0.006,0.07),[0.92,0.92,0.9]);}
+  else if(typeof d.t==='string'&&d.t.startsWith('cr_'))cruiseDeco(B,g,d);
  else if(d.t==='lamp'){const z=d.z+0.12;B.box(TRS(cx,1.05,z,0,0.07,2.1,0.07),hex(0x3a3a44));B.box(TRS(cx,2.1,z+0.22,0,0.07,0.07,0.5),hex(0x3a3a44));B.box(TRS(cx,2.05,z+0.42,0,0.22,0.08,0.3),[1,0.85,0.55],true);}
  else if(d.t==='awning'||d.t==='carpet'||d.t==='dumpster'||d.t==='bulb'||d.t==='escape'||d.t==='puddle'||d.t==='rail'||d.t==='arch')drawArriveDeco(B,g,d);
  else if(d.t==='hydrant'){const z=d.z+0.2;B.box(TRS(cx,0.22,z,0,0.18,0.44,0.18),hex(0xc0202a));B.box(TRS(cx,0.46,z,0,0.13,0.08,0.13),hex(0xd03030));B.box(TRS(cx,0.28,z,0,0.3,0.07,0.07),hex(0xa01a22));}
@@ -1278,7 +1280,7 @@ function buildStatic(g){const B=g.staticB;B.reset();const W=g.W,H=g.H;
   if(!any){for(const [ox,oz] of [[-1,-1],[1,-1],[-1,1],[1,1]]){const nx=x+ox,nz=z+oz;if(nx>=0&&nz>=0&&nx<W&&nz<H&&!g.solid[nz*W+nx])any=true;}}
   B.room=0;const tt=g.topX&&g.topX[i]||g.topT[i];if(any||tt)B.quad([[x,h,z+1],[x+1,h,z+1],[x+1,h,z],[x,h,z]],0,1,0,tt?TUV[tt]:WUV,tt?(g.glow[i]===2?[0.85,0.95,1.15]:[1,1,1]):top);
  }
- for(const d of g.deco)drawDeco(B,g,d);drawStreetscape(B,g);venueStatic(B,g);drawAct1(B,g);drawMarina(B,g);drawAct3(B,g);drawAct4Sets(B,g);drawFlights(B,g);if(g.def===HUBS.lobby)drawMcDesk(B,g);if(g.def===HUBS.bunker)drawNineFront(B,g);if(g.def.hub==='drive'){drawSign(B,g.car.x,g.car.z-0.47);drawEntrance(B,g.car.x,g.car.z-0.5);drawCineSky(B,g);}
+ for(const d of g.deco)drawDeco(B,g,d);drawStreetscape(B,g);venueStatic(B,g);drawAct1(B,g);drawMarina(B,g);drawAct3(B,g);drawAct4Sets(B,g);drawFlights(B,g);drawEmpVenue(B,g);if(g.def===HUBS.lobby)drawMcDesk(B,g);if(g.def===HUBS.bunker)drawNineFront(B,g);if(g.def.hub==='drive'){drawSign(B,g.car.x,g.car.z-0.47);drawEntrance(B,g.car.x,g.car.z-0.5);drawCineSky(B,g);}
  B.upload(true);}
 function buildRadar(g){const c=document.createElement('canvas');c.width=g.W*4;c.height=g.H*4;const x=c.getContext('2d');
  for(let z=0;z<g.H;z++)for(let xx=0;xx<g.W;xx++){const i=z*g.W+xx;if(g.solid[i]){let edge=false;for(const [a,b] of [[1,0],[-1,0],[0,1],[0,-1]])if(!isSolid(xx+a,z+b))edge=true;if(edge){x.fillStyle='#e07ab4';x.fillRect(xx*4,z*4,4,4);}}
@@ -2078,7 +2080,7 @@ function updateFX(dt){const g=G;
  for(const p of g.popups)p.t+=dt;g.popups=g.popups.filter(p=>p.t<(g.def.hub?2.2:1.3));
  g.shake*=Math.exp(-dt*8);g.flash=Math.max(0,g.flash-dt*1.5);g.cam.kx*=Math.exp(-dt*12);g.cam.kz*=Math.exp(-dt*12);}
 function updateCamera(dt){const g=G,p=g.player;let lx=0,lz=0;
- if(g.def.hub==='drive'){const c=g.pcar,tx=c.x+Math.sin(c.h)*c.v*0.28,tz=c.z+Math.cos(c.h)*c.v*0.28,k=1-Math.exp(-dt*4);g.cam.x+=(tx-g.cam.x)*k;g.cam.z+=(tz-g.cam.z)*k;return;}
+ if(g.def.hub==='drive'||g.def.hub==='cruise'){const c=g.pcar,tx=c.x+Math.sin(c.h)*c.v*0.28,tz=c.z+Math.cos(c.h)*c.v*0.28,k=1-Math.exp(-dt*4);g.cam.x+=(tx-g.cam.x)*k;g.cam.z+=(tz-g.cam.z)*k;return;}
  if(padMode){if(PAD.aim){lx=Math.sin(p.a)*2.6;lz=Math.cos(p.a)*2.6;}}
  else if(touchMode){if(sticks.R){lx=Math.sin(p.a)*2.4;lz=Math.cos(p.a)*2.4;}}
  else if(mouse.active){const f=keys.KeyF?0.6:0.3;lx=clamp((g.aimX-p.x)*f,-4,4);lz=clamp((g.aimZ-p.z)*f,-3.5,3.5);}
@@ -2662,6 +2664,7 @@ function hubSetup(g){const d=g.def;g.npcs=g.npcs||[];g.trigs=g.trigs||[];
  {const act=g.trigs.filter(trigOn),src=act.length?act:g.trigs.filter(t=>t.t!=='exit');if(src.length){let sx=0,sz=0;for(const t of src){sx+=t.x;sz+=t.z;}g.car={x:sx/src.length,z:sz/src.length};}}
  if(g.player){g.player.weapon=null;g.player.hp=g.player.maxhp=99;g.player.armor=0;}
  for(const n of g.npcs){n.said=false;}
+ if(d.hub==='cruise')cruiseSetup(g);
  if(d.hub==='drive'&&g.car&&HUBMODE==='in'){const v=makeChar(g.car.x+2.2,g.car.z+2.0,NPCLOOK.valet(),false);v.kind='valet';v.state='idle';v.a=v.a0=0;v.r=0.3;v.body=v.look.body;v.said=false;v.arrived=false;g.valet=v;g.npcs.push(v);}
  if(d.hub==='drive'){const p=g.player;g.pcar={x:p.x,z:p.z,h:Math.PI/2,v:0,boost:1,r:0.62,vx:0,vz:0};g.traffic=[];const cols=[[0.2,0.35,0.8],[0.9,0.9,0.86],[0.15,0.15,0.17],[0.25,0.65,0.65],[0.95,0.75,0.2],[0.7,0.2,0.8]];
   for(const L of d.lanes)for(let i=0;i<L.n;i++)g.traffic.push({x:6+i*(g.W-8)/L.n+rnd(-2,2),z:L.z,dir:L.dir,sp:L.sp*rnd(0.85,1.15),col:pick(cols),slow:0});
@@ -2670,7 +2673,7 @@ function hubSetup(g){const d=g.def;g.npcs=g.npcs||[];g.trigs=g.trigs||[];
  {const fk=[];for(let z=0;z<g.H;z++)for(let x=0;x<g.W;x++)if(g.furn[z*g.W+x]===25)fk.push([x,z]);if(fk.length){const xs=fk.map(t=>t[0]),zs=fk.map(t=>t[1]);g.fount={x:(Math.min(...xs)+Math.max(...xs)+1)/2,z:(Math.min(...zs)+Math.max(...zs)+1)/2};}}
  if(d===HUBS.office)officeSetup(g);else if(d===HUBS.lobby)lobbySetup(g);else if(d===HUBS.slobby)slobbySetup(g);else if(d===HUBS.garage)garageSetup(g);}
 function loadHub(name,mode){HUBMODE=mode||'in';const d=HUBS[name];loadLevel(levelIdx,d);G.track=d.track;MUS.track='';MUS.pending=null;state='play';show(null);
- const own=hubModeSetup(name);$('bSkip').innerHTML=(G.seq?'SKIP':HUBMODE==='home'?'GO SOMEWHERE':HUBMODE==='arrive'?'SKIP TO YOUR APARTMENT':HUBMODE==='in'?'SKIP TO McWEY':'SKIP TO YOUR CAR')+'<span class="kbhint"> (TAB)</span><span class="padhint"> (Y)</span>';if(own)return;
+ const own=hubModeSetup(name);$('bSkip').innerHTML=(G.seq?'SKIP':HUBMODE==='home'?'GO SOMEWHERE':HUBMODE==='arrive'?'SKIP TO YOUR APARTMENT':HUBMODE==='in'?'SKIP TO McWEY':HUBMODE==='cruise'?'SKIP THE DRIVE':'SKIP TO YOUR CAR')+'<span class="kbhint"> (TAB)</span><span class="padhint"> (Y)</span>';if(own)return;
  if(name==='drive')banner('OCEAN DRIVE, MIAMI',touchMode?'Left thumb steers &amp; drives · push to the edge for turbo':padMode?'Left stick steers &amp; drives · LB turbo':'W/S gas &amp; brake · A/D steer · Shift turbo');
  else if(name==='lobby')banner('McWEY TOWER','Take the elevator to the 52nd floor');}
 /* The helicopter ride is switched off for now: it only behaved like a car. Every trip is by car (the boat still takes you to the yacht).
@@ -2700,7 +2703,7 @@ function travel(go,t1,t2){const g=G,L=g&&HUBMODE==='home'&&HOME_LIFT[g.home];
 function onHubTrigger(t){if(fading)return false;if(t==='leave')return homeLeave();if(t==='lift')return liftUp();if(t==='exit'){sfx('blip');return fadeTo(()=>loadHub('drive','parked'));}if(t==='tower'){sfx('blip');return fadeTo(()=>loadHub('lobby'));}else if(t==='elevator'){sfx('ding');return fadeTo(enterElevator);}else if(t==='mcwey'){return fadeTo(talkMcWey);}return true;}
 function updateHub(dt){const g=G;g.T+=dt;g.time+=dt;if(g.np)g.np.t+=dt;carDoorTick(g.park,dt);carDoorTick(g.hcar,dt);carDoorTick(g.pcar,dt);
  if(g.seq){updateSeq(dt);if(G!==g)return;if(g.def.hub!=='drive')npcStep(dt);else if(g.parked)parkedStreet(dt);if(g.slots)homeTick(dt);updateFX(dt);seqCam(dt);return;}
- if(g.cine)updateCine(dt);else if(g.def.hub==='drive'&&!g.parked)updateDrive(dt);else{if(g.range)rangePre(dt);hubInteract();updatePlayer(dt);if(g.seatP)seatHold(g);if(g.range){rangeTick(dt);updateDoors(dt);}if(g.solids&&g.player)for(const s of g.solids)boxPush(s,g.player);npcStep(dt);slapTick(dt);if(g.seatP)seatHold(g);if(g.mcDesk)officeTick(g,dt);if(g.parked)parkedStreet(dt);if(g.slots)homeTick(dt);if(g.club)clubTick(dt);}
+ if(g.cine)updateCine(dt);else if(g.def.hub==='drive'&&!g.parked)updateDrive(dt);else if(g.def.hub==='cruise')cruiseTick(dt);else{if(g.range)rangePre(dt);hubInteract();updatePlayer(dt);if(g.seatP)seatHold(g);if(g.range){rangeTick(dt);updateDoors(dt);}if(g.solids&&g.player)for(const s of g.solids)boxPush(s,g.player);npcStep(dt);slapTick(dt);if(g.seatP)seatHold(g);if(g.mcDesk)officeTick(g,dt);if(g.parked)parkedStreet(dt);if(g.slots)homeTick(dt);if(g.club)clubTick(dt);}
  updateFX(dt);
  if(!g.hubDone&&!g.cine){const p=g.def.hub==='drive'?g.pcar:g.player,rr2=g.def.hub==='drive'?1.7:0.75;
   /* after a scene leaves you standing on a trigger (stepping out of the elevator onto the way back down), it waits until you have walked off it */
@@ -2761,7 +2764,7 @@ function seqEnd(g,s){const p=g.player;
  else if(s.k==='walk'&&p){const n=s.path.length,q=s.path[n-1],o=n>1?s.path[n-2]:[p.x,p.z];if(Math.hypot(q[0]-o[0],q[1]-o[1])>1e-4)p.a=Math.atan2(q[0]-o[0],q[1]-o[1]);p.x=q[0];p.z=q[1];if(s.face!==undefined)p.a=s.face;s.j=n;walkVel(p,0,0);}
  else if(s.k==='say'&&s.n)s.n.said=true;}
 function seqFinish(g){const S=g.seq;if(!S)return;if(S.keep){S.i=S.steps.length;return;}g.seq=null;g.card=null;g.trigLock=true;
- $('bSkip').innerHTML=(HUBMODE==='home'?'GO SOMEWHERE':HUBMODE==='arrive'?'SKIP TO YOUR APARTMENT':HUBMODE==='in'?'SKIP TO McWEY':'SKIP TO YOUR CAR')+'<span class="kbhint"> (TAB)</span><span class="padhint"> (Y)</span>';
+ $('bSkip').innerHTML=(HUBMODE==='home'?'GO SOMEWHERE':HUBMODE==='arrive'?'SKIP TO YOUR APARTMENT':HUBMODE==='in'?'SKIP TO McWEY':HUBMODE==='cruise'?'SKIP THE DRIVE':'SKIP TO YOUR CAR')+'<span class="kbhint"> (TAB)</span><span class="padhint"> (Y)</span>';
  if(S.done)S.done(g);}
 function seqSkip(){const g=G,S=g&&g.seq;if(!S||S.i>=S.steps.length)return;
  while(S.i<S.steps.length){const s=S.steps[S.i++];if(s.k==='call'){s.fn();if(G!==g)return;continue;}if(s.k==='card')continue;seqEnd(g,s);}
@@ -2873,25 +2876,11 @@ function engineOn(on){if(!AC)return;if(!ENG){if(!on)return;const o1=AC.createOsc
 function engineRev(v,boost){if(!ENG)return;const fr=42+Math.abs(v)*8.5+(boost?12:0);ENG.o1.frequency.setTargetAtTime(fr,AC.currentTime,0.06);ENG.o2.frequency.setTargetAtTime(fr*0.501,AC.currentTime,0.06);ENG.f.frequency.setTargetAtTime(350+Math.abs(v)*95,AC.currentTime,0.06);}
 Object.assign(SFX,{horn:(t,v=1)=>{tone(t,0.35,'square',392,392,0.08*v);tone(t,0.35,'square',494,494,0.06*v);},ding:(t)=>{tone(t,0.9,'sine',1318,1318,0.18);tone(t+0.22,1.1,'sine',1046,1046,0.16);},
  crash:(t)=>{noise(t,0.35,'lowpass',2600,200,0.9);pb(GB.chop,t,0.6,0.7);tone(t,0.25,'sine',80,30,0.8);}});
-function updateDrive(dt){const g=G,c=g.pcar,p=g.player;let thr=0,st=0,turbo=false;
- if(keys.KeyW||keys.ArrowUp)thr=1;if(keys.KeyS||keys.ArrowDown)thr=-0.7;if(keys.KeyA||keys.ArrowLeft)st+=1;if(keys.KeyD||keys.ArrowRight)st-=1;
- let sx=0,sz=0,mag=0;if(sticks.L){const v=stickVec(sticks.L);sx=v[0];sz=v[1];mag=Math.hypot(sx,sz);if(Math.hypot(sticks.L.x-sticks.L.ox,sticks.L.y-sticks.L.oy)>68)turbo=true;}
- if(padMode&&PAD.on){sx+=PAD.lx;sz+=PAD.ly;mag=Math.min(1,Math.hypot(sx,sz));if(PAD.b[4]||PAD.b[10])turbo=true;if(PAD.b[7])thr=Math.max(thr,PAD.rt);if(PAD.b[6])thr=-0.7;}
- if(mag>0.25){const ht=Math.atan2(sx,sz),df=angDiff(c.h,ht);st=clamp(df*2.2,-1,1);if(thr===0)thr=mag*(Math.cos(df)>-0.5?1:0.4);}
- if(keys.ShiftLeft||keys.ShiftRight)turbo=true;turbo=turbo&&thr>0&&c.boost>0.02;
- const cx=myProg().carx||{},eng=cx.eng?1.18:1,tb=cx.turbo?1:0;if(turbo){c.boost=Math.max(0,c.boost-dt*(tb?0.22:0.35));}else c.boost=Math.min(1,c.boost+dt*(tb?0.26:0.18));
- const maxV=turbo?19*eng+tb*3:13.5*eng;if(thr>0)c.v+=thr*(turbo?13+tb*3:9)*eng*dt;else if(thr<0)c.v+=thr*(c.v>0?16:7)*dt;else c.v*=Math.exp(-dt*1.1);
- c.v=clamp(c.v,-5,maxV);if(c.v>maxV)c.v=maxV;
- const grip=clamp(Math.abs(c.v)/4,0,1);c.h+=st*dt*2.5*grip*Math.sign(c.v||1);
- const fx=Math.sin(c.h),fz=Math.cos(c.h);const ox=c.x,oz=c.z;c.x+=fx*c.v*dt;c.z+=fz*c.v*dt;
- const hit={x:c.x,z:c.z,r:c.r};collideGrid(hit);const fpx=c.x+fx*0.95*Math.sign(c.v||1),fpz=c.z+fz*0.95*Math.sign(c.v||1);let bump=Math.hypot(hit.x-c.x,hit.z-c.z)>1e-3||isBlock(Math.floor(fpx),Math.floor(fpz));
- if(bump){c.x=hit.x;c.z=hit.z;if(isBlock(Math.floor(fpx),Math.floor(fpz))){c.x=ox;c.z=oz;}if(Math.abs(c.v)>4){sfx('crash');shake(0.35);rumble(0.7,0.7,200);sparks(c.x+fx*0.9,0.3,c.z+fz*0.9);}c.v*=-0.25;}
+function updateDrive(dt){const g=G,c=g.pcar,p=g.player;carStep(g,c,carInput(c),dt);const fx=Math.sin(c.h),fz=Math.cos(c.h);
  for(const t of g.traffic){t.slow=Math.max(0,t.slow-dt);t.x+=t.dir*t.sp*(t.slow>0?0.2:1)*dt;if(t.x>g.W+2)t.x=-2;if(t.x<-2)t.x=g.W+2;
   const dx=c.x-t.x,dz=c.z-t.z;if(Math.abs(dx)<1.75&&Math.abs(dz)<0.92){const px=1.75-Math.abs(dx),pz=0.92-Math.abs(dz);if(pz<px){c.z+=Math.sign(dz||1)*pz;}else{c.x+=Math.sign(dx||1)*px;}
-   if(Math.abs(c.v)>3||t.slow<=0){sfx('crash');sfx('horn');shake(0.4);rumble(0.8,0.8,220);sparks((c.x+t.x)/2,0.4,(c.z+t.z)/2);popup(t.x,t.z,pick(['HEY!','WATCH IT!','*HONK*','LEARN TO DRIVE!']),'#ffd36b');}c.v*=-0.3;t.slow=1.2;}}
- if(Math.abs(st)>0.6&&Math.abs(c.v)>9&&Math.random()<dt*30)addFloorDecal(c.x-fx*0.8,c.z-fz*0.8,0.35,c.h,10,[0.05,0.05,0.06]);
- if(turbo&&Math.random()<dt*25)g.parts.push({t:'c',x:c.x-fx*1.2,y:0.3,z:c.z-fz*1.2,vx:-fx*2+rnd(-0.5,0.5),vy:rnd(0,0.5),vz:-fz*2+rnd(-0.5,0.5),s:0.06,c:[1,0.4,0.9],life:0.3});
- engineRev(c.v,turbo);p.x=c.x;p.z=c.z;p.vx=fx*c.v;p.vz=fz*c.v;p.a=c.h;g.turbo=turbo;}
+   if(Math.abs(c.v)>3||t.slow<=0){sfx('crash');sfx('horn');shake(0.4);rumble(0.8,0.8,220);sparks((c.x+t.x)/2,0.4,(c.z+t.z)/2);popup(t.x,t.z,pick(['HEY!','WATCH IT!','*HONK*','LEARN TO DRIVE!']),'#ffd36b');}c.vx*=-0.3;c.vz*=-0.3;c.v*=-0.3;t.slow=1.2;}}
+ engineRev(c.v,g.turbo);}
 /* Fixed hub geometry: the parts of a hub's per-frame drawing that never move (Nine's shop, the club, the garage) are built once
    into g.fixB, uploaded once and drawn every frame next to dynB, instead of being rebuilt and re-uploaded every frame.
    hubFixStart returns the batch to build into when it needs (re)building, or false when it is current; hubFixEnd uploads it. */
@@ -2901,7 +2890,7 @@ function hubFixStart(g){const want=g.garage||g.club||g.mansion||g.def===HUBS.bun
  if(FIXB_LAST&&FIXB_LAST!==g&&FIXB_LAST.fixB&&FIXB_LAST.fixB.buf){gl.deleteBuffer(FIXB_LAST.fixB.buf);FIXB_LAST.fixB.buf=null;}FIXB_LAST=g;
  if(!g.fixB||!g.fixB.buf)g.fixB=new Batch();g.fixB.reset();g.fixB.round=dynB.round;g.fixK=k;return g.fixB;}
 function hubFixEnd(g,F){if(F)F.upload(true);}
-function drawHubDyn(B,O){const g=G;const FX=g.def.hub==='drive'?undefined:hubFixStart(g);
+function drawHubDyn(B,O){const g=G;if(g.def.hub==='cruise'){drawCruise(B,g);return;}const FX=g.def.hub==='drive'?undefined:hubFixStart(g);
  if(g.def.hub==='drive'){const c=g.pcar;if(g.parked&&rideHeli())drawHeli(B,c.x,c.z,0,g.T);else drawRide(B,c.x,c.z,1,c.h-Math.PI/2,null,c.wr||0);if(myProg().boat){const T0=g.tower||g.car;drawSpeedboat(B,T0.x+1,14.3+Math.sin(g.T*1.5)*0.05,0,[1,0.3,0.75]);}if((g.parked||g.cine&&g.cine.pout)&&g.player&&!g.hideP)drawChar(IBhi,g.player);if(!(g.parked&&rideHeli()))drawRideDoor(B,c.x,c.z,c.h-Math.PI/2,c.dr);for(const t of g.traffic)if(inView(t.x,0.6,t.z,2.6))drawCar(B,t.x,t.z,t.col,t.dir,t.wr||0);
   if(g.car){const T0=g.tower||g.car,pcx=T0.x+4.3,pcz=T0.z+0.7;carCache(B,'lambo|red',pcx,pcz,1,0,0,(K,x,z,sc,a,sp)=>drawLambo(K,x,z,sc,a,[0.82,0.04,0.08],sp));for(const sz of [-0.36,0.36])B.box(TRS(pcx,0.14,pcz+sz,0,2.3,0.035,0.05),GOLD,true);B.box(TRS(pcx,0.05,pcz,0,2.5,0.02,0.92),[0.95,0.72,0.25],true);}
   for(const n of g.npcs)drawChar(IBhi,n);
@@ -2914,7 +2903,7 @@ if(!g.cine&&!g.seq){const y=2.4+Math.sin(g.T*4)*0.2;B.box(A.mul(A.mul(A.T(g.car.
   if(g.fount)drawFountainWater(B,g.fount,g.T);if(g.mcDesk)drawMcOffice(B,g);if(g.tv)drawLobbyTV(B,g);if(g.lounge)drawLounge(B,g);if(g.cast)drawCast(B,g);
   if(!g.seq){const y=1.6+Math.sin(g.T*4)*0.12;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.22,0.22,0.22))),GOLD,true);}}
  for(const q of g.parts){if(q.bill){drawPartBill(B,q);continue;}B.box(A.mul(A.T(q.x,q.y,q.z),A.S(q.s,q.s,q.s)),q.c,q.t==='s');}hubFixEnd(g,FX);}
-function drawHubHUD(c,g,u,m){if(g.cine)return;if(g.seq){drawSeqHUD(c,g,u);return;}const d=g.def;c.font=PXF(7*u);txt(c,d.where,m,m,'#ffd36b','left',7*u);c.font=VTF(22*u);txt(c,g.obj||d.obj,m,m+10*u,'#fff','left',22*u);
+function drawHubHUD(c,g,u,m){if(g.cine)return;if(g.seq){drawSeqHUD(c,g,u);return;}if(g.def.hub==='cruise'){cruiseHUD(c,g,u,m);return;}const d=g.def;c.font=PXF(7*u);txt(c,d.where,m,m,'#ffd36b','left',7*u);c.font=VTF(22*u);txt(c,g.obj||d.obj,m,m+10*u,'#fff','left',22*u);
  c.font=PXF(13*u);txt(c,'$'+fmt(wallet()),vw-m,m,'#7dff9a','right',13*u);if(myProg().debt>0){c.font=VTF(15*u);txt(c,'OWED TO McWEY $'+fmt(myProg().debt),vw-m,m+38*u,'#ff8a95','right',15*u);}c.font=VTF(16*u);txt(c,CHARS[selIdx].name+' LV'+myProg().lvl,vw-m,m+20*u,'#e9c7ff','right',16*u);
  const R=Math.max(44,Math.min(vw,vh)*0.13),rcx=m+R,rcy=touchMode?m+62*u+R:vh-m-R;drawRadar(c,rcx,rcy,R);
  if(d.hub==='drive'&&!g.parked){const c2=g.pcar,mph=Math.round(Math.abs(c2.v)*9);c.font=PXF(26*u);txt(c,String(mph),vw-m,vh-m-58*u,g.turbo?'#ff5fb8':'#ffd36b','right',26*u);c.font=PXF(8*u);txt(c,'MPH',vw-m,vh-m-26*u,'#e9c7ff','right',8*u);
@@ -2929,7 +2918,7 @@ function drawHubHUD(c,g,u,m){if(g.cine)return;if(g.seq){drawSeqHUD(c,g,u);return
 /* ---- after the briefing: lift down, your car, Nine of Nine's gun shop ---- */
 let HUBMODE='in',NEXTJOB=0,MISSION='c0',JOBPICK=null; // MISSION: the job being played; JOBPICK: a non-campaign job taken from McWey's menu
 function trigOn(t){return HUBMODE==='home'?t.t==='leave':HUBMODE==='arrive'?t.t==='lift':HUBMODE==='in'?t.t!=='exit'&&t.t!=='leave':HUBMODE==='out'?t.t==='exit':false;}
-function hubModeSetup(name){const g=G,p=g.player;if(HUBMODE==='home'){homeSetup(g,g.def.homeT!==undefined?g.def.homeT:+name.slice(4));return true;}if(HUBMODE==='arrive')return arriveHubSetup(g,name);
+function hubModeSetup(name){const g=G,p=g.player;if(HUBMODE==='cruise')return true;if(HUBMODE==='home'){homeSetup(g,g.def.homeT!==undefined?g.def.homeT:+name.slice(4));return true;}if(HUBMODE==='arrive')return arriveHubSetup(g,name);
  if(HUBMODE==='out'){const el=g.trigs.filter(t=>t.t==='elevator');if(el.length&&p){p.x=el.reduce((a,t)=>a+t.x,0)/el.length;p.z=el[0].z+1.3;p.a=0;g.cam.x=p.x;g.cam.z=p.z-1;}
   g.obj='HEAD OUT TO YOUR CAR';banner('McWEY TOWER','Your car is parked outside');return true;}
  if(HUBMODE==='parked'){g.parked=true;g.tower={x:g.car.x,z:g.car.z};const c=g.pcar;c.x=g.tower.x-5.5;c.z=g.tower.z+1.05;c.h=Math.PI/2;c.v=0;
@@ -4247,7 +4236,7 @@ TRACKS.muzak=theme({title:'NINE (LOBBY VERSION)',bpm:96,dist:1.0,cut:5200,prog:T
  bass:[0,null,null,7,null,null,12,null,0,null,null,7,null,null,5,null],bassLen:1.5,bv:0.3,arp:[0,2,4,2],arpV:'bell',av:0.025,pad:true,pcut:1500,pv:0.03,lead:'bell',mv:0.06,melSec:0,mo:-12});
 const ARCH_LABEL={bruiser:'BRUISER',bouncer:'BRAWLER',bodyguard:'BODYGUARD',butcher:'BUTCHER',biker:'HEAVY BIKER',disco:'HEAVYWEIGHT',merc:'MERC',mobster:'MOBSTER',dealer:'DEALER',punk:'PUNK',hitman:'HITMAN'};
 const archLabel=e=>e.boss?'THE SHARK':(ARCH_LABEL[e.look&&e.look.arch]||'BRUISER');
-function hubSkip(){if(!(G&&G.def.hub&&state==='play'))return;if(G.seq){seqSkip();return;}if(HUBMODE==='arrive'){const L=G.def.lift;if(!G.hubDone&&L)G.hubDone=fadeTo(()=>enterHomeByLift(L.home));return;}if(HUBMODE==='home'){if(!G.hubDone)openCarMenu();return;}if(HUBMODE==='parked'||HUBMODE==='bunker'){openCarMenu();return;}if(HUBMODE==='out'){if(G.hubDone)return;G.hubDone=fadeTo(()=>{loadHub('drive','parked');openCarMenu();});return;}if(!G.hubDone)G.hubDone=fadeTo(talkMcWey);}
+function hubSkip(){if(!(G&&G.def.hub&&state==='play'))return;if(G.seq){seqSkip();return;}if(HUBMODE==='cruise'){cruiseArrive(true);return;}if(HUBMODE==='arrive'){const L=G.def.lift;if(!G.hubDone&&L)G.hubDone=fadeTo(()=>enterHomeByLift(L.home));return;}if(HUBMODE==='home'){if(!G.hubDone)openCarMenu();return;}if(HUBMODE==='parked'||HUBMODE==='bunker'){openCarMenu();return;}if(HUBMODE==='out'){if(G.hubDone)return;G.hubDone=fadeTo(()=>{loadHub('drive','parked');openCarMenu();});return;}if(!G.hubDone)G.hubDone=fadeTo(talkMcWey);}
 const SIGN_STROKES={M:[[0,0,0,1],[0,1,0.5,0.45],[0.5,0.45,1,1],[1,1,1,0]],c:[[0.6,0.55,0,0.55],[0,0.55,0,0],[0,0,0.6,0]],W:[[0,1,0.25,0],[0.25,0,0.5,0.6],[0.5,0.6,0.75,0],[0.75,0,1,1]],E:[[0,0,0,1],[0,1,0.8,1],[0,0.5,0.6,0.5],[0,0,0.8,0]],Y:[[0,1,0.5,0.5],[1,1,0.5,0.5],[0.5,0.5,0.5,0]]};
 function strokeBox(B,x0,y0,x1,y1,z,t,col){const dx=x1-x0,dy=y1-y0,L=Math.hypot(dx,dy)||0.01,a=Math.atan2(dy,dx);B.box(A.mul(A.mul(A.T((x0+x1)/2,(y0+y1)/2,z),A.RZ(a)),A.S(L+t,t,t)),col,true);}
 function drawSign(B,cx,z){B.quad([[cx-1.4,4.62,z-1.6],[cx+1.4,4.62,z-1.6],[cx+1.4,4.62,z-4.4],[cx-1.4,4.62,z-4.4]],0,1,0,TUV[36],[1,1,1]);B.box(TRS(cx,4.0,z-0.02,0,4.6,0.95,0.08),hex(0x120e16));B.box(TRS(cx,4.5,z+0.03,0,4.7,0.05,0.05),[1,0.3,0.75],true);B.box(TRS(cx,3.5,z+0.03,0,4.7,0.05,0.05),[1,0.3,0.75],true);
@@ -5249,7 +5238,7 @@ function frame(now){if(contextLost||gl.isContextLost())return;requestAnimationFr
  if(G&&(state==='play'||state==='dead')&&!portrait)update(dt);
  if(state==='elev')updateElev(dt);else if(state==='brief')updateBrief(dt);else if(state==='shop')updateNine(dt);else if(state==='title'||state==='select'||state==='help'||!G)updateMenu(dt);
  if(AC){let tr;if(state==='play'||state==='dead'||state==='pause'||state==='objcard'){if(G&&G.def.hub)tr=G.track;else if(G&&G.cleared)tr=afterTrack();else if(G&&G.boss&&G.boss.alive&&G.bossSeen)tr='boss';else tr=(G&&G.track)||'game';}else if(state==='carmenu'||state==='shop'||state==='store'||state==='empire')tr=(G&&G.track)||'c_palms';else tr=state==='results'?afterTrack():state==='elev'?'c_pastel':(state==='brief'&&G&&G.def.hub)?'c_tide':'menu';setTrack(tr);setMuffle(state==='dead'||state==='pause'||state==='brief');}
- engineOn(state==='play'&&!!G&&G.def.hub==='drive'&&!G.parked&&SET.sound);$('cine').style.display=(state==='play'&&G&&G.cine)?'block':'none';$('bSkip').style.display=(state==='play'&&G&&G.def.hub)?'block':'none';
+ engineOn(state==='play'&&!!G&&(G.def.hub==='drive'&&!G.parked||G.def.hub==='cruise')&&SET.sound);$('cine').style.display=(state==='play'&&G&&G.cine)?'block':'none';$('bSkip').style.display=(state==='play'&&G&&G.def.hub)?'block':'none';
  pressed.grab=pressed.perk=pressed.restart=pressed.pause=pressed.reload=pressed.swap=pressed.cover=pressed.slap=false;pressed.slot=0;
  const tui=touchMode&&state==='play'&&!(G&&G.def.hub&&!G.rangeOn);$('touchUI').style.display=tui?'block':'none';
  {const su=$('slapUI'),on=!!(touchMode&&state==='play'&&G&&G.def&&G.def.hub&&G.slapN);if(su._on!==on){su._on=on;su.style.display=on?'block':'none';}}
