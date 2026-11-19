@@ -264,9 +264,9 @@ const SET={sound:true,shake:true,retro:true,diff:'easy',hints:true,grain:0.35,gl
 Object.assign(SET,readSave('nb86'));
 function saveSet(){return writeSave('nb86',SET);}
 
-const DIFF={easy:{name:'EASY',hp:3,react:1.9,espr:0.17,ebSpd:15,vision:9,cone:0.85,ecd:1.5,assist:0.3,cones:true,regen:7,lunge:0.6,mult:1,fog:'off',desc:'3 hits, heal when out of fire · slow, sloppy guards · vision cones · aim assist'},
- normal:{name:'NORMAL',hp:2,react:1.35,espr:0.11,ebSpd:18,vision:11,cone:0.95,ecd:1.2,assist:0.16,cones:true,regen:12,lunge:0.4,mult:1.25,fog:'keep',desc:'2 hits · sharper guards · vision cones · light aim assist · fog of war · 1.25x $'},
- hard:{name:'HARD',hp:1,react:1,espr:0.07,ebSpd:22,vision:13,cone:1.0,ecd:1,assist:0,cones:false,regen:0,lunge:0.15,mult:1.6,fog:'grey',desc:"One hit and you're dead. Like the old days. Rooms out of sight go dark. 1.6x $"}};
+const DIFF={easy:{name:'EASY',hp:3,react:1.9,espr:0.17,ebSpd:15,vision:7,cone:0.6,ecd:1.5,assist:0.3,cones:true,regen:7,lunge:0.6,mult:1,fog:'off',desc:'3 hits, heal when out of fire · slow, sloppy guards · vision cones · aim assist'},
+ normal:{name:'NORMAL',hp:2,react:1.35,espr:0.11,ebSpd:18,vision:8.5,cone:0.68,ecd:1.2,assist:0.16,cones:true,regen:12,lunge:0.4,mult:1.25,fog:'keep',desc:'2 hits · sharper guards · vision cones · light aim assist · fog of war · 1.25x $'},
+ hard:{name:'HARD',hp:1,react:1,espr:0.07,ebSpd:22,vision:10,cone:0.75,ecd:1,assist:0,cones:false,regen:0,lunge:0.15,mult:1.6,fog:'grey',desc:"One hit and you're dead. Like the old days. Rooms out of sight go dark. 1.6x $"}};
 const Dd=()=>DIFF[SET.diff]||DIFF.easy;const HINTSEEN={};
 /* ================= MATH ================= */
 const M4={
