@@ -40,8 +40,8 @@ test('empire: in-person rackets and fronts, act crews, raids and defence, HQ wip
       out.drive = { mission: MISSION, state, where: $('ojWhere').textContent };
       if (OBJCARD) { OBJCARD.t = 0; objCardGo(); }
       const R0 = empRunInfo();
-      out.cigar = { name: G.def.name, venue: G.def.venue, twist: G.twist, gang: G.turf.gang, racket: G.turf.racket, boss: bossName(), hp: G.boss.hp, foes: G.enemies.filter(e => e.alive && !e.boss).length, base: R0.base };
-      out.cigarCol = G.enemies.filter(e => !e.boss).every(e => Math.abs(e.look.shirt[0] - 0x1f / 255) < 0.01 && e.look.jacket[0] > 0.9);
+      out.cigar = { name: G.def.name, venue: G.def.venue, twist: G.twist, gang: G.turf.gang, racket: G.turf.racket, boss: bossName(), hp: G.boss.hp, foes: G.enemies.filter(e => e.alive && !e.boss && !e.owner).length, base: R0.base };
+      out.cigarCol = G.enemies.filter(e => !e.boss && !e.owner).every(e => Math.abs(e.look.shirt[0] - 0x1f / 255) < 0.01 && e.look.jacket[0] > 0.9);
       EMP_ROLL = 0.99; out.cigarWin = { news: win(), own: empOwns(empRacket('cigar'), p), flag: !!p.wflags.own_cigar };
       // old saves: rackets shaken down from the map are owned places now
       p.emp.rk = { nails: 1 }; empSave(p); out.migrate = { own: empOwns(empRacket('nails'), p), rk: 'rk' in p.emp }; delete p.wflags.own_nails;

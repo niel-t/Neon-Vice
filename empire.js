@@ -71,7 +71,7 @@ const empOpen=()=>missionDone('c7');
 const empActive=g=>missionDone('c'+(EMP_ACT[g]||7));
 const empGangs=()=>Object.keys(EMP_GANGS).filter(empActive);
 function empSave(p){p=p||myProg();const e=p.emp&&typeof p.emp==='object'?p.emp:(p.emp={});
- for(const [k,v] of [['heat',{}],['hold',{}],['raid',{}],['up',{}]])if(!e[k]||typeof e[k]!=='object')e[k]=v;if(!Number.isFinite(e.day))e.day=0;
+ for(const [k,v] of [['heat',{}],['hold',{}],['raid',{}],['up',{}],['half',{}]])if(!e[k]||typeof e[k]!=='object')e[k]=v;if(!Number.isFinite(e.day))e.day=0;
  /* saves from before the in-person rackets kept shaken-down rackets in p.emp.rk: they are owned places now */
  if(e.rk&&typeof e.rk==='object'){const w=dlgObj(p,'wflags');for(const k in e.rk)if(e.rk[k]&&empRacket(k))w['own_'+k]=1;}delete e.rk;delete e.tried;
  for(const g in EMP_GANGS)if(!Number.isFinite(e.heat[g]))e.heat[g]=0;return e;}
@@ -92,7 +92,8 @@ function empRespect(p){p=p||myProg();return empRackets(p).length+2*empOwned(p).l
 const empKing=p=>EMP_PLACES.every(x=>empOwns(x,p))&&Object.keys(EMP_GANGS).every(g=>empWiped(g,p));
 function empTitle(p){if(empKing(p))return 'KING OF MIAMI';const r=empRespect(p);let t=EMP_TITLES[0][1];for(const [n,s] of EMP_TITLES)if(r>=n)t=s;return t;}
 const empFrontPay=(f,p)=>Math.round(f.pay*(1+0.5*((empSave(p).up[f.k]||{}).x|0)));
-const empPay1=(x,p)=>x.t==='front'?empFrontPay(x,p):x.pay;
+/* a place whose owner you shot pays half (p.emp.half) */
+const empPay1=(x,p)=>Math.round((x.t==='front'?empFrontPay(x,p):x.pay)*(empSave(p).half[x.k]?0.5:1));
 const empLive=(x,p)=>empOwns(x,p)&&!empRaid(x,p);
 function empDistOwned(d,p){return EMP_PLACES.filter(x=>x.dist===d).every(x=>empLive(x,p));}
 function empIncome(p){p=p||myProg();let tot=0;
@@ -129,7 +130,7 @@ function empTaken(p,k){const e=empSave(p),m=MISSIONS[MISSION]||{};
   for(const x of EMP_PLACES)if(e.raid[x.k]&&e.raid[x.k].g===g)delete e.raid[x.k];empNote(gg.name+' ARE FINISHED','Their rackets have nobody behind them now · respect +5');return empCrown(p);}
  const x=empPlace(k);if(!x)return;const r=e.raid[x.k];
  if(r){delete e.raid[x.k];e.heat[r.g]=Math.min(100,e.heat[r.g]+10);empNote('YOU HELD '+x.name,EMP_GANGS[r.g].short+' will think twice');return;}
- const was=ownKey(e.hold,x.k)?e.hold[x.k]:x.gang;delete e.hold[x.k];if(EMP_GANGS[was]&&!empWiped(was,p))e.heat[was]=Math.min(100,e.heat[was]+(x.t==='front'?30:12));
+ const was=ownKey(e.hold,x.k)?e.hold[x.k]:x.gang;delete e.hold[x.k];{const j=G&&G.emj;if(j&&j.owner){if(j.ownerDead&&!j.leaned)e.half[x.k]=1;else delete e.half[x.k];}}if(EMP_GANGS[was]&&!empWiped(was,p))e.heat[was]=Math.min(100,e.heat[was]+(x.t==='front'?30:12));
  empNote(x.name+' IS YOURS','+$'+fmt(empPay1(x,p))+' after every job'+(x.t==='front'?' · buy guards before they come back':' · keep an eye on it'));empCrown(p);}
 function empCrown(p){if(empKing(p)){const w=dlgObj(p,'wflags');if(!w.king_miami){w.king_miami=1;empNote('KING OF MIAMI','The whole city is yours · everything pays 25% more');}}}
 function empNews(){if(!EMP_NEWS.length)return;const n=EMP_NEWS.splice(0);let i=0;const next=()=>{if(i>=n.length)return;const b=n[i++];banner(b[0],b[1]);sfx('cash');if(i<n.length)setTimeout(next,3200);};setTimeout(next,2400);}
@@ -144,7 +145,8 @@ function turfSetup(g){const r=empRunInfo();if(!r)return;const p=g.player;
   es.sort((a,b)=>Math.hypot(b.x-p.x,b.z-p.z)-Math.hypot(a.x-p.x,a.z-p.z));for(const e of es.slice(n)){e.alive=false;e.sunk=true;}g.enemies=g.enemies.filter(e=>e.alive);}
  g.turf={k:r.f?r.f.k:'hq_'+r.gang,gang:r.gang,boss:r.boss,defend:r.defend,hq:!!r.hq,racket:!!(r.f&&r.f.t==='racket')};
  let best=null,bd=0;for(let z=1;z<g.H-1;z++)for(let x=1;x<g.W-1;x++){const i=z*g.W+x;if(g.solid[i]||g.furn[i]||(g.def.site?'=PC'.includes(g.rows[z][x]):isOut(g,x,z)))continue;const d=Math.hypot(x+0.5-p.x,z+0.5-p.z);if(d>bd){bd=d;best=[x+0.5,z+0.5];}}
- if(best)makeEnemy(g,{boss:r.boss},levelIdx,r.boss.weapon,true,best[0],best[1]);}
+ if(best)makeEnemy(g,{boss:r.boss},levelIdx,r.boss.weapon,true,best[0],best[1]);
+ empJobSetup(g,r);}
 /* upgrades on an owned front: guards 0-3, expansion 0-2 */
 function empUpCost(f,kind,p){const u=empSave(p).up[f.k]||{};if(kind==='g')return (u.g|0)<3?EMP_GUARD[u.g|0]:null;return (u.x|0)<2?f.pay*((u.x|0)?8:4):null;}
 function empUpgrade(k,kind){const p=myProg(),f=empFront(k),e=empSave(p);if(!f||!empOwns(f,p))return 'no';const c=empUpCost(f,kind,p);if(c==null)return 'max';if(p.wallet<c)return 'poor';
@@ -441,3 +443,112 @@ function empProp(B,g,x,z,ch){const as=EMP_SITE[g.def.site]&&EMP_SITE[g.def.site]
   for(let k=0;k<7;k++)P(-0.36+k*0.12,0.79,0.35,0.04,0.02,0.07,DARK);B.box(A.mul(TRS(cx,1.02,cz-0.3,0,1,1,1),A.mul(A.RX(-0.75),A.S(0.9,0.03,0.7))),[0.07,0.07,0.1]);P(0.3,0.9,-0.1,0.03,0.3,0.03,[0.75,0.6,0.2]);
   P(0,0.81,-0.06,0.84,0.02,0.7,[0.1,0.07,0.06]);P(0,0.83,-0.1,0.5,0.01,0.4,[0.5,0.4,0.14]);P(0,0.3,0.62,0.4,0.06,0.2,[0.3,0.05,0.08]);P(0,0.14,0.62,0.3,0.28,0.12,[0.05,0.05,0.07]);break;
  default:break;}}
+/* ================= EMPIRE JOBS PLAY DIFFERENTLY =================
+   Every Empire job used to be the same fight: clear the building, kill the man at the back. Now the kind of place decides the job
+   (g.emj, set up by empJobSetup at the end of turfSetup, ticked from updateObj, actions through objGrab/objAction):
+   - SHOP: SHAKEDOWN. The owner is behind his counter. Put the collector down, then lean on the owner (he pays a cut up front).
+     Shoot the owner and the place only ever pays half (p.emp.half[k]) and the crew's heat goes up.
+   - GARAGE: HOTWIRE. Stand by the crew's best car while you hotwire it; the engine cranking calls the whole yard over. Sold for cash.
+   - CLUB: THE BAG MAN. The collector carries tonight's take. Once anyone spots you he runs for the street (e.runTo, ai.js);
+     drop him before he is out for the take, or he is gone with it.
+   - WAREHOUSE / COMPOUND: TORCH THE STOCK. Plant charges on their stock (or their bikes) and get clear before they blow.
+   - OFFICE: CRACK THE SAFE. Stay by the vault while it opens. Starting it trips the alarm: everyone comes and backup walks in from
+     the street.
+   - FRONTS, on top of that: once the lieutenant is down the crew sends two waves of backup from the street. Hold the place.
+   - DEFEND (a raid on a place you own): the raiders are already inside wrecking it. They come in waves from the street, their
+     lieutenant with the last one; while any of them is inside, the DAMAGE meter climbs. At 100% the place is lost.
+   - HQ: the boss keeps two riot-shield bodyguards beside him, and at half health he calls everyone he has left in from the street. */
+const EMP_PLAY={
+ shop:{label:'LEAN ON THE OWNER',how:'Put the collector down, then lean on the owner behind the counter. Shoot him and the place only ever pays half'},
+ garage:{label:'HOTWIRE THEIR CAR',hold:3.5,pick:'c(&>',how:'Hotwire the crew\'s best car: stay beside it until it starts. The engine wakes the whole yard'},
+ club:{label:'STOP THE BAG MAN',bag:1,how:'The collector has tonight\'s take. The moment they spot you he runs for the street: drop him before he gets out'},
+ warehouse:{label:'TORCH THE STOCK',n:3,pick:'z)?Y!n<o(&',how:'Plant charges on their stock and get clear before they blow'},
+ compound:{label:'TORCH THEIR RIDES',n:3,pick:'<c&z)o',how:'Plant charges on their bikes and cars and get clear before they blow'},
+ office:{label:'CRACK THE SAFE',hold:6,pick:'NQ',how:'Crack their safe: stay beside it while it opens. It trips the alarm and backup walks in from the street'}};
+const EMP_OWNER_LOOK=()=>({skin:hex(0xc89068),jacket:hex(0xf2efe6),shirt:hex(0x7aa0c8),pants:hex(0x5a4a3a),shoes:hex(0x2a1a10),hair:hex(0x3a3a3a),hs:'slick',stache:true,bw:1.12,bd:1.1,bh:0.98,belly:true});
+const empBonus=(g,v,x,z,t)=>{g.score+=v;g.gpts=(g.gpts||0)+v;sfx('cash');popup(x,z,t+' +$'+fmt(v),'#7dff9a');};
+/* the street cells the crew's backup walks in from: the sidewalk in front of the door, as far from you as it gets */
+function empStreetCell(g,k){const p=g.player,W=g.W,z=g.front?g.front.zT:g.H-2,c=[];for(let x=1;x<W-1;x++)if(!g.solid[z*W+x]&&!g.furn[z*W+x])c.push([x+0.5,z+0.5]);
+ if(!c.length)return null;c.sort((a,b)=>Math.hypot(b[0]-p.x,b[1]-p.z)-Math.hypot(a[0]-p.x,a[1]-p.z));return c[Math.min(c.length-1,(k*3)%Math.max(1,Math.ceil(c.length/2)))];}
+function empWave(g,n,boss){const r=empRunInfo(),gg=EMP_GANGS[(r&&r.gang)||'snakes'],p=g.player,pool=['pistol','smg',gg.lt.weapon,'shotgun','pistol'];let made=0;
+ for(let k=0;k<n;k++){const c=empStreetCell(g,k);if(!c)break;const e=makeEnemy(g,g.def,levelIdx,pool[k%pool.length],false,c[0]+rnd(-0.2,0.2),c[1]);e.backup=1;e.state='search';
+  AI.know(e,AI.belief.make(p.x,p.z,g.T||0,'call'));AI.investigate(e,p.x,p.z,1);made++;}
+ if(boss){const c=empStreetCell(g,n);if(c){const e=makeEnemy(g,{boss},levelIdx,boss.weapon,true,c[0],c[1]);e.state='search';AI.know(e,AI.belief.make(p.x,p.z,g.T||0,'call'));AI.investigate(e,p.x,p.z,1);made++;}}
+ if(typeof buildRadar==='function')buildRadar(g);sfx('alert');return made;}
+const empInside=(g,e)=>!g.front||e.z<g.front.zT-1;
+/* prop cells of the kinds a job wants (EMP_PROP glyphs), spread out, each with a free cell beside it */
+function empTargets(g,pick,n){if(!g.rows)return [];const W=g.W,zW=g.front?g.front.zT-1:g.H,c=[];
+ for(let z=1;z<zW;z++)for(let x=1;x<W-1;x++){const i=z*W+x,ch=g.rows[z][x];if(!ch||!pick.includes(ch))continue;if(g.furn[i]!==60&&!(ch==='Q'&&g.furn[i]))continue;
+  const two=ch==='c'||ch==='o';const nb=[[1,0],[-1,0],[0,1],[0,-1],[2,0]].some(([dx,dz])=>{const j=(z+dz)*W+x+dx;return z+dz>0&&z+dz<zW&&!g.solid[j];});if(!nb)continue;
+  c.push({x:x+(two?1:0.5),z:z+0.5,ch,ord:pick.indexOf(ch)+hsh(x,z,77)});}
+ c.sort((a,b)=>a.ord-b.ord);const out=[];for(const t of c){if(out.length>=n)break;if(out.every(o=>Math.hypot(o.x-t.x,o.z-t.z)>3))out.push(t);}return out;}
+function empJobSetup(g,r){const p=g.player,j=g.emj={mode:null,how:null,t:0};
+ if(r.defend){j.mode='defend';j.how='They are inside wrecking the place. Drive them out before the damage hits 100%; more come in from the street, their lieutenant last';
+  j.boss=r.boss;for(const e of g.enemies)if(e.boss){e.alive=false;e.sunk=true;}g.boss=null;
+  const es=g.enemies.filter(e=>e.alive);es.sort((a,b)=>Math.hypot(b.x-p.x,b.z-p.z)-Math.hypot(a.x-p.x,a.z-p.z));for(const e of es.slice(2)){e.alive=false;e.sunk=true;}g.enemies=g.enemies.filter(e=>e.alive);
+  j.dmg=0;j.wave=0;j.next=4;g.obj={label:'DRIVE OFF THE RAID',n:0,total:3,done:false};return;}
+ if(r.hq){j.mode='hq';j.how='The boss keeps riot-shield bodyguards beside him and calls in the rest of the crew when he is hurt';
+  const b=g.enemies.find(e=>e.boss&&e.alive);if(b){j.bossE=b;for(let k=0;k<2;k++){for(let t=0;t<16;t++){const a=t*0.8+k*3.1,x=b.x+Math.sin(a)*1.3,z=b.z+Math.cos(a)*1.3;if(blk(g,x,z))continue;const e=makeEnemy(g,g.def,levelIdx,'pistol',false,x,z);setKind(e,'shield');e.state='idle';break;}}}return;}
+ const type=g.def&&g.def.venue,P=EMP_PLAY[type];if(!P)return;j.mode=type;j.how=P.how;j.front=!!(r.f&&r.f.t==='front');j.f=r.f;
+ const boss=g.enemies.find(e=>e.boss&&e.alive);j.bossE=boss||null;
+ if(type==='shop'){/* the owner: an unarmed man behind the counter who stands still (bribed: no AI, counts as spared) */
+  let best=null,bd=1e9;const W=g.W,zW=g.front?g.front.zT-1:g.H;for(let z=1;z<zW;z++)for(let x=1;x<W-1;x++){const i=z*W+x;if(g.solid[i]||g.furn[i]||isOut(g,x,z))continue;
+   const k=[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dz])=>g.rows&&g.rows[z+dz]&&'Kt[{'.includes(g.rows[z+dz][x+dx]||'#'));if(!k)continue;const d=Math.hypot(x+0.5-p.x,z+0.5-p.z)+(boss?Math.hypot(x+0.5-boss.x,z+0.5-boss.z)*0.5:0);if(d<bd){bd=d;best=[x+0.5,z+0.5];}}
+  if(best){const o=makeEnemy(g,g.def,levelIdx,null,false,best[0],best[1]);o.look=EMP_OWNER_LOOK();o.body='normal';o.bribed=1;o.spared=1;o.owner=1;o.pvis=false;j.owner=o;}
+  if(!j.owner){g.emj={mode:null};return;}g.obj={label:P.label,n:0,total:1,done:false};return;}
+ if(type==='club'){if(!boss){g.emj={mode:null};return;}boss.bag=1;g.obj={label:P.label,n:0,total:1,done:false};return;}
+ const n=P.n||1,ts=empTargets(g,P.pick,n);if(!ts.length){j.how=null;j.mode=j.front?'plain':null;return;}
+ j.tg=ts.map(t=>({x:t.x,z:t.z,ch:t.ch,prog:0,fuse:0,done:false}));j.hold=P.hold||0;g.obj={label:P.label,n:0,total:j.tg.length,done:false};}
+/* the objective action in reach (objAction) and doing it (objGrab) */
+function empJobAction(p){const g=G,j=g&&g.emj;if(!j||!j.mode||!g.obj||g.obj.done)return null;
+ if(j.owner&&j.owner.alive&&!(j.bossE&&j.bossE.alive)&&Math.hypot(j.owner.x-p.x,j.owner.z-p.z)<1.7)return {b:'LEAN',h:'LEAN ON THE OWNER'};
+ if(j.tg){const t=j.tg.find(t=>!t.done&&!(t.fuse>0)&&Math.hypot(t.x-p.x,t.z-p.z)<1.9);if(t&&!(j.act===t))return j.hold?{b:j.mode==='office'?'CRACK':'WIRE',h:j.mode==='office'?'CRACK THE SAFE':'HOTWIRE THE CAR'}:{b:'PLANT',h:'PLANT A CHARGE'};}
+ return null;}
+function empJobGrab(p){const g=G,j=g&&g.emj;if(!empJobAction(p))return false;
+ if(j.owner&&j.owner.alive&&Math.hypot(j.owner.x-p.x,j.owner.z-p.z)<1.7){const v=Math.round((j.f?j.f.pay:800)*1.5);j.leaned=1;g.obj.n=1;g.obj.done=true;j.owner.a=Math.atan2(p.x-j.owner.x,p.z-j.owner.z);
+  empBonus(g,v,j.owner.x,j.owner.z,'"OK, OK! TAKE IT!"');banner('HE PAYS',g.enemies.some(e=>e.alive&&!e.spared)?'And every week from now on. Finish off the crew':'And every week from now on. Back to the car');return true;}
+ const t=j.tg&&j.tg.find(t=>!t.done&&!(t.fuse>0)&&Math.hypot(t.x-p.x,t.z-p.z)<1.9);if(!t)return false;
+ if(j.hold){j.act=t;sfx('pick');if(!j.alarm){j.alarm=1;if(j.mode==='office'){sfx('alert');banner('ALARM!','Stay by the safe. Backup is coming in from the street');
+    for(const e of g.enemies)if(e.alive&&!e.spared){e.state='search';AI.know(e,AI.belief.make(p.x,p.z,g.T||0,'call'));AI.investigate(e,p.x,p.z,1);}j.backT=4;}
+   else lureNoise(t.x,t.z,14,'VRRM-VRRM');}return true;}
+ t.fuse=3;sfx('throw');popup(p.x,p.z,'CHARGE SET - GET CLEAR','#ffd36b');return true;}
+function empJobTick(dt){const g=G,j=g&&g.emj,p=g&&g.player;if(!j||!j.mode||!p)return;j.t+=dt;
+ if(j.mode==='defend')return empDefendTick(g,j,dt);
+ if(j.mode==='hq'){const b=j.bossE;if(b&&b.alive&&!j.called&&b.hp<=b.maxhp*0.5){j.called=1;banner(EMP_GANGS[g.turf.gang].boss.name,'"EVERYBODY IN HERE, NOW!"');empWave(g,4);}return;}
+ /* the owner: shot, he is gone and so is half the place's money */
+ if(j.owner&&!j.owner.alive&&!j.ownerDead){j.ownerDead=1;if(!j.leaned){g.obj.done=true;g.obj.label='THE OWNER IS DEAD';}banner('YOU SHOT THE OWNER','His nephew runs it now. It will only ever pay half');}
+ if(j.owner&&j.owner.alive&&!(j.bossE&&j.bossE.alive)){j.owner.a=Math.atan2(p.x-j.owner.x,p.z-j.owner.z);if(!j.toldOwner){j.toldOwner=1;popup(j.owner.x,j.owner.z,'"PLEASE! I PAY, I PAY!"','#ffd36b');}}
+ /* the bag man: runs for the street once anyone has seen you; out on the street he is gone with the take */
+ const b=j.bossE;if(b&&b.bag&&!j.bagDone){
+  if(b.alive&&!b.runTo&&(b.state==='chase'||g.enemies.some(e=>e.alive&&e.state==='chase'))){const c=empStreetCell(g,0);if(c){let d0=-1,d1=-1;const zW=g.front.zT-1;for(let x=1;x<g.W-1;x++)if(!g.solid[zW*g.W+x]){if(d0<0)d0=x;d1=x;}
+    b.runTo=[d0>=0?(d0+d1+1)/2:c[0],g.front.zT+1.5];banner('THE BAG MAN IS RUNNING','Drop him before he reaches the street');}}
+  if(b.alive&&b.runTo&&g.front&&b.z>g.front.zT+0.6){j.bagDone=1;b.alive=false;b.sunk=true;g.obj.done=true;g.obj.label='THE BAG MAN GOT AWAY';if(EMP_GANGS[g.turf.gang])empSave().heat[g.turf.gang]+=5;banner('HE GOT AWAY WITH THE TAKE','The place is still yours once the crew is down');sfx('crash');}
+  else if(!b.alive){j.bagDone=1;g.obj.n=1;g.obj.done=true;empBonus(g,Math.round((j.f?j.f.pay:900)*2),b.x,b.z,'TONIGHT\'S TAKE');}}
+ if(j.tg){for(const t of j.tg){
+   if(t.fuse>0){t.fuse-=dt;if(Math.random()<dt*25)g.parts.push({t:'c',x:t.x+rnd(-0.3,0.3),y:0.7,z:t.z+rnd(-0.3,0.3),vx:rnd(-0.3,0.3),vy:rnd(0.8,1.6),vz:rnd(-0.3,0.3),s:0.05,c:[1,0.5,0.1],life:0.5});
+    if(t.fuse<=0){t.fuse=0;t.done=true;explode({x:t.x,z:t.z,own:'p'});g.obj.n++;empBonus(g,500,t.x,t.z,'UP IN SMOKE');if(g.obj.n>=g.obj.total){g.obj.done=true;banner('THEIR STOCK IS GONE',g.enemies.some(e=>e.alive&&!e.spared)?'Finish off the crew':'Back to the car');}}}}
+  if(j.act&&!j.act.done){const t=j.act,near=p.alive&&Math.hypot(t.x-p.x,t.z-p.z)<2.1;if(near){t.prog+=dt;j.tick=(j.tick||0)-dt;if(j.tick<=0){j.tick=1.2;sfx('blip');if(j.mode==='garage')alertNoise(t.x,t.z,10);}}
+   g.obj.label=(j.mode==='office'?'CRACK THE SAFE ':'HOTWIRE THEIR CAR ')+Math.min(99,Math.floor(t.prog/j.hold*100))+'%'+(near?'':' · GET BACK TO IT');
+   if(t.prog>=j.hold){t.done=true;j.act=null;g.obj.n=g.obj.total;g.obj.done=true;g.obj.label=j.mode==='office'?'SAFE CRACKED':'CAR HOTWIRED';
+    if(j.mode==='office')empBonus(g,Math.round((j.f?j.f.pay:1000)*2),t.x,t.z,'THE SAFE');else empBonus(g,2500+1000*((j.f&&j.f.hard)|0),t.x,t.z,'SOLD TO A CHOP SHOP');}}
+  if(j.backT>0){j.backT-=dt;if(j.backT<=0)empWave(g,3);}}
+ /* a front: once their lieutenant is down and the job is done, the crew sends two waves of backup */
+ const down=g.enemies.every(e=>!e.alive||e.spared);
+ if(j.front&&!j.held&&down){
+  if(!j.hold2){if(!g.obj||g.obj.done){j.hold2={wave:0,t:2};g.obj={label:'HOLD THE PLACE',n:0,total:2,done:false};g.objWarn=1;banner('THEY SENT BACKUP','Hold the place against two waves from the street');}}
+  else{j.hold2.t-=dt;if(j.hold2.t<=0){if(j.hold2.wave>=2){j.held=1;g.obj.n=2;g.obj.done=true;banner('THE PLACE IS YOURS','They will not try that again tonight');}
+   else{j.hold2.wave++;g.obj.n=j.hold2.wave-1;j.hold2.t=2.5;empWave(g,2+j.hold2.wave+((((j.f&&j.f.hard)|0)>2)?1:0));banner('WAVE '+j.hold2.wave+' OF 2','Here they come');}}}}}
+function empDefendTick(g,j,dt){const p=g.player,live=g.enemies.filter(e=>e.alive&&!e.spared);
+ const inside=live.filter(e=>empInside(g,e)).length;if(inside&&!g.obj.done){j.dmg=Math.min(100,j.dmg+dt*Math.min(6,1.1*inside));}
+ g.obj.label='DRIVE OFF THE RAID · DAMAGE '+Math.floor(j.dmg)+'%';
+ if(j.dmg>=100&&p.alive&&!j.lost){j.lost=1;g.killedBy='wrecked';p.armorT=0;p.armor=0;hurtPlayer([0,1],'late',99);g.killedBy='wrecked';return;}
+ if(g.obj.done)return;j.next-=dt;
+ if(j.wave<3){if(!live.length&&j.next>2.5)j.next=2.5;if(j.next>0)return;
+  j.wave++;g.obj.n=j.wave-1;j.next=22;empWave(g,2+j.wave,j.wave===3?j.boss:null);banner('RAID · WAVE '+j.wave+' OF 3',j.wave===3?j.boss.name+' leads the last of them in':'More of them at the door');return;}
+ if(!live.length){g.obj.n=3;g.obj.done=true;g.obj.label='RAID DRIVEN OFF · DAMAGE '+Math.floor(j.dmg)+'%';banner('YOU HELD IT',j.dmg>50?'It is a mess, but it is still yours':'Barely a scratch');}}
+/* markers: a gold diamond over what the job wants, a progress ring while you work, a blinking charge, the bag man's bag */
+function drawEmpJob(B,g){const j=g.emj;if(!j||!j.mode)return;const T=g.T||0,dia=(x,z,c)=>{const y=1.55+Math.sin(T*3+x)*0.08;B.box(A.mul(A.mul(A.T(x,y,z),A.RY(T*2)),A.mul(A.RX(0.785),A.S(0.13,0.13,0.13))),c,true);};
+ if(j.owner&&j.owner.alive&&!j.leaned&&!(j.bossE&&j.bossE.alive))dia(j.owner.x,j.owner.z,[1.3,1.05,0.3]);
+ if(j.tg)for(const t of j.tg){if(t.done)continue;if(t.fuse>0){const on=Math.floor(t.fuse*(t.fuse<1?10:4))%2;B.box(TRS(t.x,1.0,t.z,0,0.12,0.12,0.12),on?[2,0.2,0.15]:[0.4,0.05,0.05],true);continue;}
+  if(!(g.obj&&g.obj.done))dia(t.x,t.z,[1.3,1.05,0.3]);if(j.hold&&t.prog>0){const N=16,f=Math.floor(t.prog/j.hold*N);for(let k=0;k<N;k++){const a=k/N*TAU;B.box(TRS(t.x+Math.sin(a)*0.8,0.04,t.z+Math.cos(a)*0.8,-a,0.2,0.02,0.07),k<f?[0.4,1.5,0.6]:[0.25,0.25,0.3],k<f);}}}
+ const b=j.bossE;if(b&&b.bag&&b.alive){const sa=Math.sin(b.a),ca=Math.cos(b.a);B.box(TRS(b.x-ca*0.3,0.5,b.z+sa*0.3,b.a,0.2,0.24,0.14),[0.35,0.75,0.4]);B.box(TRS(b.x-ca*0.3,0.67,b.z+sa*0.3,b.a,0.08,0.06,0.08),[0.25,0.5,0.3]);}}
