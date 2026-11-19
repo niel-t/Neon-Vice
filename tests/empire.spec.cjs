@@ -81,9 +81,9 @@ test('empire: in-person rackets and fronts, act crews, raids and defence, HQ wip
       out.silksHq = run('hq_silks'); out.wreckYard = run('r_demo'); out.vaultHq = run('hq_vault');
       // the five kinds of building
       out.kinds = ['cigar', 'taxi', 'bowl', 'garment', 'cash'].map(k => run('r_' + k).venue);
-      // every racket and act-crew HQ is its own place: its own floor plan, dressed with props for that business
-      const sites = [...EMP_RACKETS.map(r => 'r_' + r.k), 'hq_silks', 'hq_wreckers', 'hq_vault'].map(run);
-      out.sites = { n: sites.length, own: sites.every((o, i) => o.site && o.site === (i < EMP_RACKETS.length ? EMP_RACKETS[i].k : ['hq_silks', 'hq_wreckers', 'hq_vault'][i - EMP_RACKETS.length])), maps: new Set(sites.map(o => o.map)).size, bare: sites.filter(o => o.props < 4).map(o => o.site) };
+      // every front, racket and headquarters is its own place: its own floor plan, dressed with props for that business
+      const siteIds = [...EMP_FRONTS.map(f => 'e_' + f.k), ...EMP_RACKETS.map(r => 'r_' + r.k), ...EMP_HQ.map(h => 'hq_' + h.g)], sites = siteIds.map(run);
+      out.sites = { n: sites.length, own: sites.every((o, i) => o.site && o.site === siteIds[i].replace(/^[er]_/, '')), campaign: sites.filter(o => LEVELS.some(L => L.map.join('') === o.map)).length, maps: new Set(sites.map(o => o.map)).size, bare: sites.filter(o => o.props < 4).map(o => o.site) };
       // everything owned, every crew gone: KING OF MIAMI and +25% on top
       for (const x of EMP_PLACES) w['own_' + x.k] = 1; for (const g in EMP_GANGS) if (g !== 'ivory') w['wiped_' + g] = 1; p.emp.raid = {};
       MISSION = 'hq_ivory'; win();
@@ -109,7 +109,7 @@ test('empire: in-person rackets and fronts, act crews, raids and defence, HQ wip
   expect(r.cigarWin.own && r.cigarWin.flag).toBe(true);
   expect(r.migrate).toEqual({ own: true, rk: false });
   expect(r.mcList).toBe(true);
-  expect(r.run).toEqual({ lvl: 1, twist: 'turf', gang: 'rayos', boss: '"EL CHACAL" MENDOZA', hp: 8, where: 'TAKEOVER · LOS RAYOS', venue: null });
+  expect(r.run).toEqual({ lvl: 1, twist: 'turf', gang: 'rayos', boss: '"EL CHACAL" MENDOZA', hp: 8, where: 'TAKEOVER · LOS RAYOS', venue: 'club' });
   expect(r.won).toContain('CLUB FLAMINGO IS YOURS');
   expect(r.own).toBe(true);
   expect(r.up).toEqual({ g: 1, x: 1, pay: 1.5 });
@@ -121,7 +121,7 @@ test('empire: in-person rackets and fronts, act crews, raids and defence, HQ wip
   expect(r.rraid).toEqual({ st: 'raid', inc: 500, btn: true, defend: true, venue: 'shop', news: expect.arrayContaining(['YOU HELD CALLE OCHO CIGARS']), after: false });
   expect(r.lost).toEqual({ own: false, holder: 'rayos', news: true });
   expect(r.hqOpen).toBe('open');
-  expect(r.hq).toMatchObject({ boss: 'DON ALEJANDRO VEGA', bosses: 1, gang: 'rayos', venue: null });
+  expect(r.hq).toMatchObject({ boss: 'DON ALEJANDRO VEGA', bosses: 1, gang: 'rayos', venue: 'compound', name: "VEGA'S PENTHOUSE" });
   expect(r.wipeNews).toContain('LOS RAYOS ARE FINISHED');
   expect(r.wiped).toEqual({ flag: true, free: 'none', heat: 0 });
   expect(r.leftovers).toMatchObject({ venue: 'garage', free: true, bosses: 1 });
@@ -133,6 +133,6 @@ test('empire: in-person rackets and fronts, act crews, raids and defence, HQ wip
   expect(r.kinds).toEqual(['shop', 'garage', 'club', 'warehouse', 'office']);
   expect(r.king).toEqual({ title: 'KING OF MIAMI', flag: true, news: true });
   expect(r.all).toEqual([]);
-  expect(r.sites).toEqual({ n: 24, own: true, maps: 24, bare: [] });
+  expect(r.sites).toEqual({ n: 35, own: true, campaign: 0, maps: 35, bare: [] });
   expect(r.drawn).toBe('empire');
 });
