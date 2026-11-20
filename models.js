@@ -846,23 +846,27 @@ function paintHeadP(L){SKIN=C255(L.skin);const W=256,c=document.createElement('c
  let ns=(F.pores*977)|0;const noise=()=>{ns=(Math.imul(ns,1664525)+1013904223)>>>0;return ns/4294967296;};
  const grey=man&&F.age>0.82&&hair?hair.map(v=>lerp(v,200,0.55)):null,side=man&&hair&&hs&&hs!=='mohawk'&&hs!=='buzz'&&!hatOn;
  if(man&&!SCULPT)SCULPT=sculptMaps(W,FSX,FSY,fy0,gs);
+ /* per pixel in plain numbers (r,g,b), with no arrays made per pixel: the same sums in the same order as before, about four times quicker */
+ const S0=SKIN[0],S1=SKIN[1],S2=SKIN[2];
  for(let V=0;V<W;V++){const t=1-V/(W-1),Y=lerp(HEAD.neckY,HEAD.crownY,t);
-  for(let U=0;U<W;U++){const ph=(U/(W-1)-0.5)*2*Math.PI,ap=Math.abs(ph);let base=SKIN.slice(),bare=1;
+  for(let U=0;U<W;U++){const ph=(U/(W-1)-0.5)*2*Math.PI,ap=Math.abs(ph);let r=S0,g=S1,b=S2,bare=1;
    if(hair&&hs){const line=hl-0.11*clamp((ap-1.0)/1.0,0,1)-0.03*clamp((ap-2.2)/0.8,0,1);let inH=Y>line;if(hs==='mohawk')inH=Y>1.7&&Math.abs(Math.sin(ph))<0.22;
     /* sideburns down in front of the ears, like the heroes' own hair */
     if(side&&!inH&&ap>1.2&&ap<1.5&&Y>1.655)inH=true;
     if(inH){const k=hs==='buzz'?0.55:hs==='mohawk'?1:0.95,hc=grey&&ap>1.0&&Y<1.8?grey:hair,st=hs==='buzz'?1-0.12*noise():0.86+0.1*Math.sin(ph*70+Math.sin(Y*90)*2)+0.06*noise(),gl=hs==='slick'||hs==='big'?1+0.35*Math.exp(-Math.pow((Y-1.805)/0.014,2))*Math.max(0,Math.cos(ph-0.5)):1;
-     base=base.map((v,i)=>v+(Math.min(255,hc[i]*st*gl)-v)*k);bare=1-k;}}
+     r=r+(Math.min(255,hc[0]*st*gl)-r)*k;g=g+(Math.min(255,hc[1]*st*gl)-g)*k;b=b+(Math.min(255,hc[2]*st*gl)-b)*k;bare=1-k;}}
    /* beard and stubble follow the jaw: over the upper lip and chin, low on the cheeks, rising to meet the sideburns, soft at the edges */
    if(beard||L.stubble){const sm=e=>{e=clamp(e,0,1);return e*e*(3-2*e);},top=ap<0.3?1.664:ap<0.9?lerp(1.664,1.632,sm((ap-0.3)/0.6)):lerp(1.632,1.7,sm((ap-0.9)/0.5)),bot=lerp(1.548,1.585,sm((ap-0.9)/0.6)),
      m=sm((top-Y)/0.012)*sm((Y-bot)/0.012)*sm((1.62-ap)/0.14);
-    if(m>0.01){if(beard){const bn=0.8+0.25*noise(),bc=beard.map(v=>v*bn);base=base.map((v,i)=>v+(bc[i]-v)*m);bare*=1-m;}else{const d=noise()<0.5?0.2:0.05;base=base.map((v,i)=>v*(1-d*m)-(i===2?0:4)*d*m);}}}
+    if(m>0.01){if(beard){const bn=0.8+0.25*noise();r=r+(beard[0]*bn-r)*m;g=g+(beard[1]*bn-g)*m;b=b+(beard[2]*bn-b)*m;bare*=1-m;}else{const d=noise()<0.5?0.2:0.05;r=r*(1-d*m)-4*d*m;g=g*(1-d*m)-4*d*m;b=b*(1-d*m)-0*d*m;}}}
    /* sculpted skin: the heroes' faces come from photos with real light and shadow on them; generated faces get the same volume painted in:
       eye sockets, brow ridge, nose bridge, cheekbones and hollows, the chin, a shadow under the jaw, warm cheeks and ears, and skin grain */
-   if(!man){const col=base.map(v=>v*(0.8+0.2*Math.max(0,Math.cos(ph)))*(0.92+0.08*t));const o=(V*W+U)*4;D[o]=col[0];D[o+1]=col[1];D[o+2]=col[2];D[o+3]=255;continue;}
+   const o=(V*W+U)*4;
+   if(!man){const A=0.8+0.2*Math.max(0,Math.cos(ph)),B=0.92+0.08*t;D[o]=r*A*B;D[o+1]=g*A*B;D[o+2]=b*A*B;D[o+3]=255;continue;}
    const o0=V*W+U;let sc=SCULPT.s[o0]+SCULPT.h[o0]*(0.6+0.6*F.age),warm=SCULPT.w[o0];
    sc*=0.96+0.08*noise()*F.pores;
-   const tint=[1.03,0.95,0.9],col=base.map((v,i)=>Math.min(255,v*sc*(0.94+0.06*t)*(bare>0.5?tint[i]:1)+(i===0?14:i===1?-2:-4)*warm*bare));const o=(V*W+U)*4;D[o]=col[0];D[o+1]=col[1];D[o+2]=col[2];D[o+3]=255;}}
+   const lt=0.94+0.06*t,tn=bare>0.5;
+   D[o]=Math.min(255,r*sc*lt*(tn?1.03:1)+14*warm*bare);D[o+1]=Math.min(255,g*sc*lt*(tn?0.95:1)+-2*warm*bare);D[o+2]=Math.min(255,b*sc*lt*(tn?0.9:1)+-4*warm*bare);D[o+3]=255;}}
  x.putImageData(out,0,0);
  const c2=document.createElement('canvas');c2.width=c2.height=512;const y=c2.getContext('2d');y.imageSmoothingQuality='high';y.drawImage(c,0,0,512,512);
  FO={calm:L.calm||0,brow:L.fem?rgb((hair||[40,28,20]).map(v=>Math.min(v,120)*0.45)):hair?rgb(hair.map(v=>v*0.7)):beard?rgb(beard.map(v=>v*0.7)):'#2a1a12',fem:L.fem?1:0,iris:L.iris||(L.fem?null:F.iris),shadow:L.shadow||null};
@@ -1021,9 +1025,31 @@ function applySuit(id){const C=CH[id];if(!shaderReady||!C||!C.bcBase||!MODELS[id
 function resetMain(){for(const id in CH){const C=CH[id];if(C.npc||!C.bc0||!C.dirty)continue;C.dirty=false;C.bc.getContext('2d').drawImage(C.bc0,0,0);C.hc.getContext('2d').drawImage(C.hc0,0,0);
   for(const [cv,tex] of [[C.bc,MODELS[id][0].tex],[C.hc,MODELS[id][1].tex]]){gl.bindTexture(gl.TEXTURE_2D,tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cv);gl.generateMipmap(gl.TEXTURE_2D);}}gl.bindTexture(gl.TEXTURE_2D,atlasTex);}
 function levelCheck(){if(G!==lastG){lastG=G;freeLooks();resetMain();applySuit(CHARS[selIdx].id);}}
-function ensureLook(c){levelCheck();const k=lookKey(c);if(!k||failedLooks.has(k))return null;if(MODELS[k])return k;
+function ensureLook(c,warm){levelCheck();const k=lookKey(c);if(!k||failedLooks.has(k))return null;if(MODELS[k])return k;
  {const p=lookFromPool(lookSig(c));if(p){MODELS[k]=p.parts;CH[k]=p.ch;return k;}}
- if(buildsThisFrame>=1)return null;buildsThisFrame++;try{buildLook(k,c);}catch(e){failedLooks.add(k);$('modelWarning').style.display='block';console.error('PS2 look',e);return null;}finally{gl.bindTexture(gl.TEXTURE_2D,atlasTex);}return k;}
+ if(!warm){if(buildsThisFrame>=1)return null;buildsThisFrame++;}try{buildLook(k,c);}catch(e){failedLooks.add(k);$('modelWarning').style.display='block';console.error('PS2 look',e);return null;}finally{gl.bindTexture(gl.TEXTURE_2D,atlasTex);}
+ if(warm&&window.NVNEXT&&NVNEXT.impl&&NVNEXT.impl.prep)NVNEXT.impl.prep(MODELS[k]);return k;}
+/* first-sight stutter: everyone in a level used to get their model the first time they were drawn, one per frame, so walking
+   into a busy place (the club, the mall, a full floor) meant seconds of choppy frames while 20-40 people were built.
+   Now the first frame of a new level builds as many as fit in WARM_MS, nearest to the player first (that frame is the level
+   change anyway). The rest are built in the browser's idle time between frames, one at a time when the time left is longer
+   than a build takes, so they cost no frame time at all. Browsers without requestIdleCallback (Safari) build one per frame
+   on frames that built nothing else, as before. Anyone drawn before their turn is still built on sight. */
+const WARM_MS=200,OWNMODEL=new Set(['mcwey','nine','vic','jeweler','tailor','furnman','dog']);let warmG=null,warmQ=[],warmScan=0,idleOn=false,buildMs=8;
+function lookChars(g){const out=[],seen=new Set(),take=c=>{if(c&&typeof c==='object'&&c.look&&!c.player&&!OWNMODEL.has(c.kind)&&!seen.has(c)){seen.add(c);out.push(c);}};
+ for(const k in g){const v=g[k];if(Array.isArray(v)){if(v.length&&v.length<400)for(const c of v)take(c);}else if(v&&typeof v==='object'){take(v);if(Array.isArray(v.ppl))for(const c of v.ppl)take(c);}}
+ const p=g.player;if(p)out.sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z));return out.slice(0,48);}
+/* builds the next one still waiting; false when none is left */
+function warmOne(){while(warmQ.length){const c=warmQ.shift();if(!c.look||(c._ps2k&&MODELS[c._ps2k]))continue;const t=performance.now();ensureLook(c,true);buildMs=buildMs*0.7+(performance.now()-t)*0.3;return true;}return false;}
+function idleWarm(d){idleOn=false;if(G!==warmG)return;
+ while(warmQ.length&&(d.didTimeout||d.timeRemaining()>buildMs+1)){if(!warmOne())break;if(d.didTimeout)break;}
+ if(warmQ.length)idleSoon();}
+function idleSoon(){if(idleOn||!warmQ.length)return;idleOn=true;requestIdleCallback(idleWarm,{timeout:1500});}
+function warmLooks(){if(!shaderReady||typeof G==='undefined'||!G)return;
+ if(G!==warmG){warmG=G;try{warmQ=lookChars(G);}catch(e){warmQ=[];}const t0=performance.now();while(performance.now()-t0<WARM_MS&&warmOne());}
+ else if(!warmQ.length){/* people who turn up later (club patrons, backup waves) join the queue on the next look round */
+  const now=performance.now();if(now-warmScan<2000)return;warmScan=now;try{warmQ=lookChars(G).filter(c=>!(c._ps2k&&MODELS[c._ps2k]));}catch(e){warmQ=[];}if(!warmQ.length)return;}
+ if(typeof requestIdleCallback==='function')idleSoon();else if(!buildsThisFrame)warmOne();}
 
 function has(id){return !!CH[id];}
 /* c: game character; mode: 'menu' | 'game' | 'stand'; returns true when drawn */
@@ -1097,7 +1123,7 @@ function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game'
  if(IB&&cash){const hm=handFrame(Wb,true,1);const pr=IB.r,pu=IB.uv;IB.r=0;for(let i=-2;i<=2;i++){const m=A.mul(A.mul(A.mul(hm,A.T(0,0.03,0.04)),A.RY(i*0.26)),A.T(0,0.004*i,0.085));IB.box(A.mul(m,A.S(0.075,0.004,0.16)),[1,1,1],false,TUV[11]);}IB.r=pr;IB.uv=pu;}
  if(IB&&id==='mcwey'&&!gun){const hm=handFrame(Wb,false,1);const pr=IB.r,pu=IB.uv;IB.r=0.6;IB.uv=null;const cm=A.mul(hm,A.mul(A.T(0,0.035,0.02),A.RX(-0.5)));IB.box(A.mul(cm,A.mul(A.T(0,0,0.06),A.S(0.022,0.022,0.15))),[0.42,0.24,0.12]);IB.box(A.mul(cm,A.mul(A.T(0,0,0.0),A.S(0.024,0.024,0.018))),[0.85,0.65,0.25]);IB.box(A.mul(cm,A.mul(A.T(0,0,0.137),A.S(0.024,0.024,0.008))),[1,0.45,0.15],true);c.cig=apply(cm,0,0,0.145);IB.r=pr;IB.uv=pu;}
  return true;}
-function flush(VPm,u){if(NX&&NX.live){NX.takeChars(queue,MODELS);queue.length=0;return;}if(!shaderReady||!queue.length||!u){queue.length=0;return;}gl.useProgram(P);
+function flush(VPm,u){try{warmLooks();}catch(e){}if(NX&&NX.live){NX.takeChars(queue,MODELS);queue.length=0;return;}if(!shaderReady||!queue.length||!u){queue.length=0;return;}gl.useProgram(P);
  gl.uniformMatrix4fv(Lc.uVP,false,VPm);gl.uniform4fv(Lc.uPL,LBUF);gl.uniform3fv(Lc.uPC,CBUF);gl.uniform3fv(Lc.uAmb,u.amb.map(v=>v*1.35));gl.uniform3fv(Lc.uLD,u.ld);gl.uniform3fv(Lc.uLC,u.lc);gl.uniform3fv(Lc.uCam,u.eye);gl.uniform2fv(Lc.uFog,u.fog);gl.uniform3fv(Lc.uFogC,u.fogC);
  gl.uniform1i(Lc.uTex,0);gl.activeTexture(gl.TEXTURE0);gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);
  for(const kk of ['aP','aN','aT','aBi','aBw']){const l=Lc[kk];if(l>=0){gl.enableVertexAttribArray(l);if(EXT_I)EXT_I.vertexAttribDivisorANGLE(l,0);}}
@@ -1107,4 +1133,4 @@ function flush(VPm,u){if(NX&&NX.live){NX.takeChars(queue,MODELS);queue.length=0;
  for(const kk of ['aP','aN','aT','aBi','aBw']){const l=Lc[kk];if(l>=0)gl.disableVertexAttribArray(l);}gl.disable(gl.CULL_FACE);gl.bindTexture(gl.TEXTURE_2D,atlasTex);queue.length=0;}
 /* how far the chest comes forward and the seat goes back on a look's body (tests use it to check the figure sizes) */
 function lookFigure(L){const B=lookCfg(L||{}).B,M=buildBody(B),P=M.p;let f=-1,b=1;for(let i=0;i<P.length;i+=3){const y=P[i+1],x=P[i],z=P[i+2];if(Math.abs(x)>0.22)continue;if(y>1.15&&y<1.42)f=Math.max(f,z);if(y>0.76&&y<1.0)b=Math.min(b,z);}return{bust:f,seat:-b};}
-return{init,add,flush,has,applySuit,rebuild,coatOf:id=>!!(CH[id]&&CH[id].B.coat),beginFrame,lookVerts,lookFigure,headTex:L=>paintHeadP(L),faceOf,jewelB,mocapClip,modelStatus:id=>modelStates[id],get status(){return status;},get ready(){return ready;}};})();
+return{init,add,nbs:NBS,warmLooks,get warmLeft(){return warmQ.length;},get warmBuildMs(){return buildMs;},flush,has,applySuit,rebuild,coatOf:id=>!!(CH[id]&&CH[id].B.coat),beginFrame,lookVerts,lookFigure,headTex:L=>paintHeadP(L),faceOf,jewelB,mocapClip,modelStatus:id=>modelStates[id],get status(){return status;},get ready(){return ready;}};})();
