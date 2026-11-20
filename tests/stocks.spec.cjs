@@ -14,6 +14,11 @@ test('stocks: buy, sell, prices move after jobs, tips, story crashes, keys and t
       const b = $('bCarStocks');
       out.btn = !!b && b.offsetParent !== null && b.textContent.includes('DADE EXCHANGE');
       b.click();
+      // the first time, McWey is on the line and walks you through the screen; trades wait until he is done
+      const co = () => ({ on: $('sxCoach').classList.contains('on'), txt: $('sxCoach').textContent, hi: (document.querySelector('#sStocks .sxHi') || {}).id || ((document.querySelector('#sStocks .sxHi') || {}).className || '') });
+      out.coach = [co()]; stkKey({ code: 'Enter' }); out.coach.push(co()); stkAct(0, 'b0'); out.coachBlocks = !p.stk.own.mcw;
+      for (let k = 0; k < 4; k++) stkKey({ code: 'Enter' }); out.coach.push(co()); stkKey({ code: 'Escape' }); out.coach.push(co());
+      out.coachState = state; out.tut = p.stk.tut;
       out.screen = { state, on: $('sStocks').classList.contains('on'), cards: document.querySelectorAll('#sxList .sxC').length, kade: !!document.querySelector('#sxList').textContent.includes('KDV') };
       // buy $10K of McWey with the card button (a click, like a tap)
       const iM = stkVisible().findIndex(q => q.k === 'mcw');
@@ -75,6 +80,15 @@ EMP_NEWS.length = 0; const before = p.wallet;
     return out;
   });
   expect(r.btn).toBe(true);
+  expect(r.coach[0].on).toBe(true);
+  expect(r.coach[0].txt).toContain('McWEY');
+  expect(r.coach[1].hi).toBe('sxList');
+  expect(r.coachBlocks).toBe(true);
+  expect(r.coach[2].on).toBe(true);
+  expect(r.coach[2].txt).toContain('6/7');
+  expect(r.coach[3].on).toBe(false);
+  expect(r.coachState).toBe('stocks');
+  expect(r.tut).toBe(1);
   expect(r.screen).toEqual({ state: 'stocks', on: true, cards: 7, kade: false });
   expect(r.buy.n).toBeGreaterThan(200);
   expect(r.buy.spent).toBeLessThanOrEqual(10000);
@@ -113,4 +127,32 @@ EMP_NEWS.length = 0; const before = p.wallet;
   expect(r.book.trades).toBeGreaterThan(3);
   expect(r.rumShown).toBe(true);
   expect(r.detail).toBe(true);
+});
+
+// McWey explains the market in his office: the first visit after the loan talk, and by topic from ASK ABOUT THE MARKET
+test('stocks: McWey brings up the exchange and answers questions about it', async ({ openGame }) => {
+  const page = await openGame();
+  const lines = () => page.evaluate(() => $('dlogLines').innerText);
+  const visit = () => page.evaluate(() => {
+    VISIT = { debrief: null, next: 1, grade: null, take: 0, style: null }; talkMcWey(); chatClearTimers(); const q = CHAT.q.map(l => l.t || '').join(' '); CHAT.i = CHAT.q.length; chatDone();
+    return { q, btn: !!$('bStkAsk') && $('bStkAsk').offsetParent !== null };
+  });
+  await page.evaluate(() => { selIdx = 2; sessionReset(1); const p = myProg(); arm(); p.seen.loan = 1; p.debt = 8000; });
+  const v1 = await visit();
+  expect(v1.q).toContain('Dade Exchange');
+  expect(v1.btn).toBe(true);
+  expect(await page.evaluate(() => myProg().seen.stocks)).toBe(1);
+  // only once
+  expect((await visit()).q).not.toContain('Chip Whitmore');
+  // ask about shorting
+  await page.locator('#bStkAsk').click();
+  await expect.poll(() => page.evaluate(() => { if (CHAT.phase !== 'choose') chatTap(); return CHAT.phase; })).toBe('choose');
+  await expect(page.locator('#dlChoices button')).toHaveCount(6);
+  await page.locator('#dlChoices button').nth(1).click();
+  await expect.poll(() => page.evaluate(() => { if (!CHAT.done && CHAT.phase !== 'choose') chatTap(); return CHAT.done; })).toBe(true);
+  expect(await lines()).toContain('margin call');
+  // the keyboard asks too
+  await page.keyboard.press('KeyI');
+  await expect.poll(() => page.evaluate(() => { if (CHAT.phase !== 'choose') chatTap(); return CHAT.phase; })).toBe('choose');
+  expect(await page.evaluate(() => CHAT.ch.opts.length)).toBe(6);
 });

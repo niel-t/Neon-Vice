@@ -143,8 +143,8 @@ function stkRumor(kind){if(typeof myProg!=='function'||!G||!G.def||!G.def.hub)re
 /* ---- the screen: the ticker tape, the chosen stock big (chart, position, actions), the board of all stocks, tips and rumours ---- */
 function stkCarBtn(){const b=$('bCarStocks');if(!b)return;const p=myProg(),v=stkValue(p),c=stkCost(p);
  b.innerHTML='THE DADE EXCHANGE &middot; '+(v>0?'STOCKS $'+fmt(v)+' <span style="color:'+(v>=c?'#7dff9a':'#ff6a6a')+'">'+(v>=c?'+':'')+Math.round((v/c-1)*100)+'%</span>':'STOCKS &amp; TIPS')+'<span class="kbhint"> (I)</span><span class="padhint"> (&rarr;)</span>';}
-function openStocks(){if(state!=='carmenu'||fading)return;sfx('ring');state='stocks';stkSave();const L=stkVisible();STK_SEL=Math.max(0,Math.min(STK_SEL,L.length-1));show('sStocks');renderStocks('Chip Whitmore here. What are we buying?');}
-function closeStocks(){if(state!=='stocks')return;sfx('blip');openCarMenuForce();}
+function openStocks(){if(state!=='carmenu'||fading)return;sfx('ring');state='stocks';stkSave();const L=stkVisible();STK_SEL=Math.max(0,Math.min(STK_SEL,L.length-1));show('sStocks');renderStocks('Chip Whitmore here. What are we buying?');if(!stkSave().tut)stkCoachStart();}
+function closeStocks(){if(state!=='stocks')return;if(stkCoachOn()){STK_COACH_I=-1;stkCoachShow();}sfx('blip');openCarMenuForce();}
 const stkVisible=()=>STK_LIST.filter(stkListed);
 function stkChart(h,col,big,marks){const n=h.length,W=big?300:100,H=big?90:30;if(n<2)return `<svg class="${big?'sxBig':'sxSpark'}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"></svg>`;
  let lo=Math.min(...h),hi=Math.max(...h);for(const m of marks||[])if(m.v>0){lo=Math.min(lo,m.v);hi=Math.max(hi,m.v);}const sp=hi-lo||1,y=v=>(H-3-(v-lo)/sp*(H-6)).toFixed(1);
@@ -189,7 +189,7 @@ function renderStocks(msg){const p=myProg(),s=stkSave(p),L=stkVisible(),v=stkVal
  const el=$('sxList').querySelector('.sxC.sel');if(el&&el.scrollIntoView)try{el.scrollIntoView({block:'nearest'});}catch(e){}}
 function stkSelect(i){const n=stkVisible().length;STK_SEL=(i+n)%n;sfx('blip');renderStocks('');}
 const STK_SAY={poor:'Not enough cash for one share.',no:'Not on the board.',dead:'Nobody will lend you a dead stock to short.',none:'You have nothing to sell there.'};
-function stkAct(i,act){if(state!=='stocks'||fading)return;const p=myProg();
+function stkAct(i,act){if(state!=='stocks'||fading||stkCoachOn())return;const p=myProg();
  if(act==='tip'){const r=stkBuyTip();sfx(r==='ok'?'cash':'blip');return renderStocks(r==='ok'?'That one cost you $'+STK_TIP_COST+'. Your call what you do with it.':r==='poor'?'Tips cost money, pal.':'One tip a day. Go do a job.');}
  const q=stkVisible()[i];if(!q)return;STK_SEL=i;let r,say;
  if(act==='sell'||act==='half'){r=stkSell(q.k,act==='sell'?1:0.5);if(typeof r!=='string')say='Sold '+fmt(r.n)+' '+q.t+' for $'+fmt(r.cash)+'. '+(r.pl>=0?'Profit $'+fmt(r.pl)+'. Nice.':'Loss $'+fmt(-r.pl)+'. Ouch.');}
@@ -199,10 +199,10 @@ function stkAct(i,act){if(state!=='stocks'||fading)return;const p=myProg();
  else{r=stkBuy(q.k,act==='b0'?STK_BUY[0]:act==='b1'?STK_BUY[1]:p.wallet);if(typeof r!=='string')say='Bought '+fmt(r.n)+' '+q.t+' for $'+fmt(r.cost)+(act==='all'?'. All in. Bold.':'.')+' Prices move after your next job.';}
  if(typeof r==='string'){sfx('blip');return renderStocks(STK_SAY[r]||'');}
  sfx('cash');renderStocks(say);}
-function stkKey(e){const c=e.code;if(c==='Escape'||c==='Backspace'||c==='KeyI'){closeStocks();return;}
+function stkKey(e){if(stkCoachOn()){stkCoachKey(e);return;}const c=e.code;if(c==='Escape'||c==='Backspace'||c==='KeyI'){closeStocks();return;}
  const K={Enter:'b0',Space:'b0',KeyB:'b0',Digit1:'b0',Digit2:'b1',Digit3:'all',Digit4:'half',KeyH:'half',Digit5:'sell',KeyX:'sell',KeyZ:'s0',KeyC:'cover',KeyL:'stop',KeyT:'tip'};
- if(c==='ArrowUp'||c==='ArrowLeft'||c==='KeyW'||c==='KeyA')stkSelect(STK_SEL-1);else if(c==='ArrowDown'||c==='ArrowRight'||c==='KeyS')stkSelect(STK_SEL+1);else if(K[c])stkAct(STK_SEL,K[c]);}
-function stkPad(dir){if(pdown(1)||pdown(14)){closeStocks();return;}if(pdown(12)||dir<0)stkSelect(STK_SEL-1);else if(pdown(13)||dir>0)stkSelect(STK_SEL+1);
+ if(c==='ArrowUp'||c==='ArrowLeft'||c==='KeyW'||c==='KeyA')stkSelect(STK_SEL-1);else if(c==='ArrowDown'||c==='ArrowRight'||c==='KeyS')stkSelect(STK_SEL+1);else if(c==='Slash'||c==='F1')$('bStkHow').click();else if(K[c])stkAct(STK_SEL,K[c]);}
+function stkPad(dir){if(stkCoachOn()){stkCoachPad();return;}if(pdown(1)||pdown(14)){closeStocks();return;}if(pdown(12)||dir<0)stkSelect(STK_SEL-1);else if(pdown(13)||dir>0)stkSelect(STK_SEL+1);
  else if(pdown(0))stkAct(STK_SEL,'b0');else if(pdown(3))stkAct(STK_SEL,'b1');else if(pdown(2))stkAct(STK_SEL,'sell');else if(pdown(5))stkAct(STK_SEL,'tip');
  else if(pdown(4))stkAct(STK_SEL,'s0');else if(pdown(7))stkAct(STK_SEL,'cover');else if(pdown(6))stkAct(STK_SEL,'stop');}
 {/* the car-menu button sits above McWEY TOWER */
@@ -211,3 +211,56 @@ function stkPad(dir){if(pdown(1)||pdown(14)){closeStocks();return;}if(pdown(12)|
  $('sxDetail').addEventListener('click',e=>{const t=e.target.closest('button[data-act]');if(t&&!t.disabled)stkAct(+t.dataset.i,t.dataset.act);});
  $('sxTip').addEventListener('click',e=>{const t=e.target.closest('button[data-act]');if(t&&!t.disabled)stkAct(STK_SEL,'tip');});
  $('bStkLeave').onclick=()=>closeStocks();}
+
+/* ---- McWey explains it. (1) In his office: the first visit after the loan talk he brings the exchange up himself, and an ASK ABOUT
+   THE MARKET button (I, pad d-pad right) lets you ask again by topic. (2) The first time you open the exchange he is on the line and walks
+   you through the screen step by step, lighting up each part (#sxCoach); the HOW IT WORKS button plays it again. ---- */
+const stkKid=()=>typeof dlgKid==='function'?dlgKid():'kid';
+const STK_MC_INTRO=[
+ "One more thing, {kid}. Money sitting in your pocket is money asleep. Wake it up.",
+ "There's a broker who takes calls from any payphone in Miami. Chip Whitmore. The Dade Exchange. It's on your car menu now.",
+ "You buy a piece of a company. After every job you finish, the price moves. Up, you sell and keep the difference. Down, you wait, or you cut and run.",
+ "Steady stocks like mine pay you a little every job, just for holding them. Gold sits still until the market crashes, then it shines.",
+ "Think a company is going under? Chip lets you bet against it. You win what it drops. If it doubles instead, you lose everything you put up.",
+ "Chip sells tips. People in my lobby talk for free. Neither one is always right. Your job is knowing which half to believe.",
+ "Call Chip. Pick up the phone and he'll walk you through the board. And {kid}... never put in what you can't lose."];
+const STK_MC_TOPICS=[
+ {t:'How does the exchange work?',a:["You buy shares in a company with BUY. Chip takes one percent every trade, the crook.","Prices move once, after every job you finish. Not while you stare at the board. So you trade, you work, you come home and read the banner.","When it's up, SELL and keep the difference. SELL HALF if you can't make up your mind."]},
+ {t:'What is shorting?',a:["Shorting is betting a stock falls. You put up the money, Chip borrows the shares and sells them.","If it drops twenty percent, you make twenty percent. If it climbs, you pay. If it doubles, the bank calls it in and your money is gone. That's a margin call.","COVER SHORT when you've had enough, win or lose."]},
+ {t:'Tips and rumours?',a:["Chip sells one hot tip a job, five hundred dollars. He's right more often than not, and wrong just often enough to keep you honest.","People in hubs talk. The lobby, the club, the mall. Now and then somebody drops a rumour for free. Half of it is true.","A tip says DOWN? Sell what you hold, or short it. Says UP? You know what to do."]},
+ {t:'How do I not lose my shirt?',a:["Set a STOP-LOSS. If the price falls ten or twenty-five percent after a job, Chip sells for you. You lose a little instead of a lot.","Spread it around. McWey Corp, Neptune and the orange people pay you a dividend every job. Gold holds when everything crashes.","Everglades Gold is a swamp with a phone number. It can go bust overnight. Buy it with money you were going to burn anyway."]},
+ {t:'Any inside advice?',a:()=>{const L=["I don't give advice, {kid}. I give opinions, and my opinions make money."];
+  if(stkListed(stkQ('kdv'))&&!stkSave().ev.kade)L.push("Kade Development is climbing like a weed. Men like Dorian Kade don't stay on top forever. When he falls, you want to be out, or on the other side of it.");
+  else if(stkListed(stkQ('vtb'))&&!stkSave().ev.vale)L.push("Vale Trust looks solid. Banks always look solid. Right up until the day they don't. Remember who you're working against.");
+  else L.push("McWey Corp. It goes up because I make it go up. You could do worse.");return L;}}];
+const stkMcFill=t=>t.replace(/\{kid\}/g,stkKid());
+/* McWey's office: the first visit after the loan talk (talkMcWey calls this before mcReact) */
+function stkMcIntro(pr,m){if(!pr||!pr.seen||pr.seen.stocks||!pr.seen.loan)return false;pr.seen.stocks=1;saveProg();STK_MC_INTRO.forEach(t=>m(stkMcFill(t)));return true;}
+function stkMcBtn(){return `<button class="btn alt sm" id="bStkAsk">ASK ABOUT THE MARKET<span class="kbhint"> (I)</span><span class="padhint"> (&rarr;)</span></button>`;}
+function stkMcAsk(){if(state!=='brief'||!CHAT.done)return;chatClearTimers();sfx('pick');CHAT.done=false;CHAT.phase='idle';$('dlog').classList.remove('done');
+ const ans=o=>()=>(typeof o.a==='function'?o.a():o.a).map(t=>({who:'m',t:stkMcFill(t)}));
+ CHAT.q.push({who:'m',t:stkMcFill("The market? Sit down, {kid}. What do you want to know?")},{choose:STK_MC_TOPICS.map(o=>({t:o.t,fn:ans(o)})).concat([{t:"That's all.",fn:()=>[{who:'m',t:'Good. Now go earn something to invest.'}]}])});
+ chatNext();}
+/* the coach on the exchange screen */
+const STK_COACH=[
+ {sel:null,t:"{kid}, McWey. Chip patched me in. Before you lose your shirt, let me walk you through this board. Tap to go on."},
+ {sel:'#sxList',t:"This is the board. Every company in Miami worth owning. Prices move once, after every job you finish. Tap a stock to pick it."},
+ {sel:'#sxDetail .sxDL',t:"The one you picked comes up big. The last thirty days. Green is up, red is down. What you paid shows as a blue line."},
+ {sel:'#sxDetail .emBtns',t:"BUY when it's cheap, SELL when it's not. Chip takes one percent a trade. ALL IN bets your whole wallet. Don't, unless you know something."},
+ {sel:'#sxDetail .emBtns + .emBtns',t:"Think it'll fall? SHORT it. You win what it drops, but if it doubles you lose it all. STOP-LOSS sells for you if it slides."},
+ {sel:'#sxTip',t:"Chip sells one hot tip a job. People in my lobby pass rumours for free. Neither is always right. Your call."},
+ {sel:'#sxPort',t:"Up here: your cash and what your stocks are worth now. Steady stocks pay a dividend every job. Gold holds in a crash. Now go make me some money."}];
+let STK_COACH_I=-1;
+function stkCoachOn(){return STK_COACH_I>=0;}
+function stkCoachStart(){STK_COACH_I=0;const s=stkSave();s.tut=1;saveProg();stkCoachShow();}
+function stkCoachShow(){document.querySelectorAll('#sStocks .sxHi').forEach(e=>e.classList.remove('sxHi'));const c=$('sxCoach');
+ if(STK_COACH_I<0||STK_COACH_I>=STK_COACH.length){STK_COACH_I=-1;c.classList.remove('on');return;}
+ const st=STK_COACH[STK_COACH_I],el=st.sel&&document.querySelector('#sStocks '+st.sel);if(el){el.classList.add('sxHi');if(el.scrollIntoView)try{el.scrollIntoView({block:'nearest'});}catch(e){}}
+ const last=STK_COACH_I===STK_COACH.length-1;
+ c.innerHTML=`<div class="sxCoN">McWEY · ON THE LINE <span>${STK_COACH_I+1}/${STK_COACH.length}</span></div><div class="sxCoT">${stkMcFill(st.t)}</div><div class="sxCoB"><button class="btn sm" data-co="next">${last?'GOT IT':'NEXT'}<span class="kbhint"> (ENTER)</span><span class="padhint"> (A)</span></button>${last?'':'<button class="btn alt sm" data-co="skip">SKIP<span class="kbhint"> (ESC)</span><span class="padhint"> (B)</span></button>'}</div>`;
+ c.classList.add('on');}
+function stkCoachNext(skip){if(!stkCoachOn())return;sfx('blip');STK_COACH_I=skip?-1:STK_COACH_I+1;if(STK_COACH_I>=STK_COACH.length)STK_COACH_I=-1;stkCoachShow();}
+function stkCoachKey(e){const c=e.code;if(c==='Escape'||c==='Backspace')stkCoachNext(true);else if(c==='Enter'||c==='Space'||c==='NumpadEnter'||c==='ArrowRight')stkCoachNext(false);}
+function stkCoachPad(){if(pdown(1))stkCoachNext(true);else if(pdown(0))stkCoachNext(false);}
+{$('sxCoach').addEventListener('click',e=>{const b=e.target.closest('[data-co]');stkCoachNext(!!b&&b.dataset.co==='skip');});
+ $('bStkHow').onclick=()=>{if(state==='stocks'&&!stkCoachOn()){sfx('ring');stkCoachStart();}};}
