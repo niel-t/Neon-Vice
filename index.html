@@ -2973,7 +2973,7 @@ const MC_RATE={debt:{base:0.6,min:0.4,max:0.7},part:{base:0.15,min:0.05,max:0.25
 const mcKind=p=>p.debt>0?'debt':'part',mcPct=v=>Math.round(v*100)+'%';
 function mcRate(p){p=p||myProg();const k=mcKind(p),R=MC_RATE[k],v=p.rate&&p.rate[k];return typeof v==='number'&&isFinite(v)?clamp(Math.round(v*100)/100,R.min,R.max):R.base;}
 function cutOf(take){const p=myProg();arm();if(p.debt>0)return Math.min(p.debt,Math.ceil(take*mcRate(p)));return levelIdx===7?0:Math.ceil(take*mcRate(p));}
-function payout(){if(!G||G.paid||!G.take)return;G.paid=1;const a=arm(),p=myProg();medsUsed(p);
+function payout(){if(!G||G.paid||!G.take)return;G.paid=1;const a=arm(),p=myProg();medsUsed(p);restUsed(p);
  /* non-campaign jobs: no cut, no debt, no story flags; only their own reward flags */
  if(!missionIsCampaign(MISSION)){p.wallet+=G.take;mallRent(p);empPay(p);stkTick(p,-1);p.couchBlood=0;for(const r of MISSIONS[MISSION].rewards||[])if(r&&typeof r.flag==='string')dlgObj(p,'wflags')[r.flag]=1;if(MISSIONS[MISSION].kind==='empire')empTaken(p,MISSIONS[MISSION].front);saveProg();return;}
  const cut=cutOf(G.take),before=p.debt;p.debt-=cut;p.wallet+=G.take-cut;
@@ -3006,7 +3006,7 @@ function runWalkAway(p){if(!p.run)return false;delete p.run;return true;}
   if(typeof h==='number'){const s=k.guns[h],wd=WD[s.type];p.weapon={type:s.type,ammo:s.mag};if(s.mag<=0&&isCal(wd.cal)){const n=Math.min(G.live.pool[wd.cal]|0,wd.mag);G.live.pool[wd.cal]-=n;p.weapon.ammo=n;}G.live.guns[h]=null;}
   else if(h==='melee'){p.weapon={type:k.melee,ammo:0};G.live.melee=null;}
   p.kitPlates=k.armour?k.armour.plates:0;p.armLv=k.armour?ARMOUR[k.armour.type].lv:'II';p.armor=(p.armor||0)+p.kitPlates;p.armMax=p.armor;p.armSpd=(k.armour&&ARMOUR[k.armour.type].spd)||1;
-  medsApply(G,p);
+  medsApply(G,p);restApply(G,p);
   const gf=myProg().gift;if(!G.stageManaged&&gf&&WD[gf])G.items.push({x:p.x+0.7,z:p.z,type:gf,ammo:WD[gf].ammo||0,vx:0,vz:0,rot:0.6,flying:false,fresh:false,flyT:0});}
  function loadoutTxt(){const k=kit(),parts=[];for(const s of k.guns)if(s)parts.push(WD[s.type].name);if(k.melee)parts.push(WD[k.melee].name);
   const am=Object.keys(k.pool).filter(c=>k.pool[c]>0).map(c=>k.pool[c]+' '+CAL[c].name),ar=k.armour&&ARMOUR[k.armour.type];
@@ -3578,8 +3578,14 @@ const MORNING=[
  {who:'PESOS THE DOG',need:()=>homeFurn().dog,msg:'Pesos drags a soggy roll of hundreds out from under the couch. Whose was it? Who cares. Good boy.',fxt:'+$800',fx:p=>{p.wallet+=800;}}];
 function showMorning(ev){state='morning';$('mnWho').textContent=ev.who;$('mnMsg').textContent=ev.msg;$('mnFx').textContent=ev.fxt;show('sMorning');sfx('blip');}
 /* waking up keeps you at home: McWey only has to be seen to take on a new act (see mcMust), not every morning */
-$('bMorning').onclick=()=>{if(state!=='morning'||fading)return;sfx('pick');show(null);state='play';banner('GOOD MORNING',mcMust()?'McWey wants a word · your car is outside':'Your car is outside · go wherever you like');};
-function goSleep(){if(!G||!G.slots)return;sfx('pick');popup(G.player.x,G.player.z-0.6,'Z Z Z...','#9fd8ff');const gs=G.npcs.filter(q=>q.kind==='pgirl');if(gs.length&&bedN()>1){const g=G;setTimeout(()=>{if(G===g)tuckIn(g);},420);}
+$('bMorning').onclick=()=>{if(state!=='morning'||fading)return;sfx('pick');show(null);state='play';const rs=myProg().rest;banner('GOOD MORNING',(rs&&rs.n>0?'Well rested: +'+rs.n+(rs.n>1?' hits':' hit')+' on your next job · ':'')+(mcMust()?'McWey wants a word · your car is outside':'Your car is outside · go wherever you like'));};
+/* a night with the girls you pay for: every girl who fits in the bed with you is +1 hit on your next job (up to +2). Kept until you get paid, like Doc's meds */
+const REST_MAX=2;
+function restSet(n){const p=myProg();n=Math.min(REST_MAX,n|0);if(n<=0)return 0;p.rest={n:Math.max(n,(p.rest&&p.rest.n)|0)};saveProg();return p.rest.n;}
+function restApply(g,p){let r;try{r=myProg().rest;}catch(e){return;}if(!r||!(r.n>0)||!g||g.def.hub||g.restOn)return;const n=Math.min(REST_MAX,r.n|0);
+ p.maxhp+=n;p.hp+=n;g.restOn=n;popup(p.x,p.z-0.5,'WELL RESTED · +'+n+(n>1?' HITS':' HIT'),'#ff9ad5');}
+function restUsed(p){if(G&&G.restOn&&p&&p.rest)delete p.rest;}
+function goSleep(){if(!G||!G.slots)return;sfx('pick');popup(G.player.x,G.player.z-0.6,'Z Z Z...','#9fd8ff');const gs=G.npcs.filter(q=>q.kind==='pgirl');let rest=0;if(gs.length&&bedN()>1){const g=G;rest=restSet(Math.min(gs.length,bedN()-1));setTimeout(()=>{if(G===g){tuckIn(g);if(rest)popup(g.player.x,g.player.z-1,'WELL RESTED · +'+rest+(rest>1?' HITS':' HIT')+' NEXT JOB','#ff9ad5');}},420);}
  const g0=G,party=hlPartyOn(myProg(),g0.home),bye=()=>{if(party)hlEndParty(g0);};
  {const a=arm(),p=myProg();if(p.mornKey!==a.jobs){p.mornKey=a.jobs;const ev=pick((party?HL_MORNING:MORNING).filter(m=>!m.need||m.need()));ev.fx(p,a);saveProg();banner('YOU GET SOME SLEEP',party?'The last guests stumble out... somebody is at the door':'Somebody is at the door...');if(!fadeTo(()=>{bye();showMorning(ev);})){bye();showMorning(ev);}return;}}
  if(!fadeTo(()=>{bye();banner('YOU GET SOME SLEEP',party?'The guests let themselves out':mcMust()?'McWey wants a word · your car is outside':'Rested · your car is outside when you are ready');}))bye();}
