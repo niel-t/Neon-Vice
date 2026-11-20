@@ -6,6 +6,8 @@
    'lap'   perched on McWey's knee behind the big desk (and still there in the briefing close-up).
    McWey acts while he talks (models.js gestVec: points, spreads his hands, leans in, wags a finger, counts cash,
    sits back with his hands behind his head, sips his whisky, smokes). officeSetup/officeTick/drawMcOffice/talkMcWey call in here. */
+/* the McWEY letters are emissive, so they take a deeper gold that still reads as gold after bloom */
+const SIGN_GOLD=[0.62,0.36,0.04];
 const SEC_MODES=['desk','count','lap'];let SEC_LAST=null;
 const SEC_DESK={x:16,z:14.6,w:3.2,d:0.7},SEC_TABLE={x:26,z:7.4,w:1.4,d:0.72};
 function secLook(){return{fem:true,curvy:true,calm:1,sleeves:true,pads:true,skirt:0.5,heels:true,hose:'sheer',hoseC:[0.06,0.05,0.07],
@@ -42,7 +44,8 @@ function drawSecretaryDesk(B,g){const D=SEC_DESK,s=g.sec,WD0=hex(0x3a1a10),WD1=h
  B.box(TRS(D.x,0.47,D.z+D.d/2+0.06,0,D.w+0.1,0.94,0.12),CR);B.box(TRS(D.x,0.95,D.z+D.d/2+0.02,0,D.w+0.16,0.04,0.26),WD1,false,TUV[4]);
  B.box(TRS(D.x,0.8,D.z+D.d/2+0.125,0,D.w+0.1,0.03,0.01),GOLD);B.box(TRS(D.x,0.25,D.z+D.d/2+0.125,0,D.w+0.1,0.03,0.01),GOLD);
  for(const sd of [-1,1])B.box(TRS(D.x+sd*(D.w/2+0.03),0.47,D.z+D.d/2+0.125,0,0.03,0.92,0.01),GOLD);
- 'McWEY'.split('').forEach((ch,i)=>{const lx=D.x-0.95+i*0.4,w=ch==='c'?0.2:0.3,h=ch==='c'?0.18:0.3;for(const s2 of SIGN_STROKES[ch])strokeBox(B,lx+s2[0]*w,0.36+s2[1]*h,lx+s2[2]*w,0.36+s2[3]*h,D.z+D.d/2+0.13,0.035,GOLD);});
+ B.box(TRS(D.x,0.51,D.z+D.d/2+0.123,0,2.06,0.42,0.008),[1,1,1],false,TUV[43]);/* a black marble inlay behind the gold name */
+ 'McWEY'.split('').forEach((ch,i)=>{const lx=D.x-0.95+i*0.4,w=ch==='c'?0.2:0.3,h=ch==='c'?0.18:0.3;for(const s2 of SIGN_STROKES[ch])strokeBox(B,lx+s2[0]*w,0.36+s2[1]*h,lx+s2[2]*w,0.36+s2[3]*h,D.z+D.d/2+0.13,0.035,SIGN_GOLD);});
  /* typewriter, phone, in-tray, nameplate, flowers */
  const top=0.79;B.box(TRS(D.x-0.15,top+0.05,D.z-0.08,0,0.42,0.1,0.3),hex(0x2a2a30));B.box(TRS(D.x-0.15,top+0.11,D.z-0.18,0,0.44,0.05,0.1),hex(0x3a3a44));
  B.box(TRS(D.x-0.15,top+0.19,D.z-0.2,0.0,0.22,0.16,0.01),[0.98,0.98,0.95]);for(let i=0;i<4;i++)B.box(TRS(D.x-0.3+i*0.1,top+0.105,D.z+0.02,0,0.07,0.012,0.05),[0.9,0.9,0.85]);
@@ -86,7 +89,8 @@ function drawOfficeSet(B,g){const bx=(x,y,z,sx,sy,sz,c,em,ry,uv)=>B.box(TRS(x,y,
  bx(6.2,0.38,5.0,1.4,0.03,0.6,[0.55,0.8,0.9],true);for(const [ox,oz] of [[-0.62,-0.24],[0.62,-0.24],[-0.62,0.24],[0.62,0.24]])bx(6.2+ox,0.19,5.0+oz,0.04,0.38,0.04,GOLD);
  bx(6.05,0.55,4.95,0.09,0.3,0.09,hex(0x1a4a2a));bx(6.05,0.74,4.95,0.04,0.1,0.04,GOLD);for(const gx of [6.4,6.55])bx(gx,0.46,5.08,0.05,0.13,0.05,[0.85,0.9,0.95]);bx(5.7,0.42,4.9,0.26,0.06,0.26,GOLD);
  /* ===== McWEY sign beside his door, and gold planters with palms either side ===== */
- 'McWEY'.split('').forEach((ch,i)=>{const lx=10.6+i*0.55,w=ch==='c'?0.28:0.42,hh=ch==='c'?0.26:0.42;for(const s of SIGN_STROKES[ch])strokeBox(B,lx+s[0]*w,0.45+s[1]*hh,lx+s[2]*w,0.45+s[3]*hh,11.04,0.05,GOLD);});
+ bx(11.83,0.66,11.018,2.9,0.68,0.035,[1,1,1],false,0,TUV[43]);bx(11.83,1.01,11.03,2.96,0.03,0.04,GOLD);bx(11.83,0.31,11.03,2.96,0.03,0.04,GOLD);/* black marble plate so the gold letters read on the cream wall */
+ 'McWEY'.split('').forEach((ch,i)=>{const lx=10.6+i*0.55,w=ch==='c'?0.28:0.42,hh=ch==='c'?0.26:0.42;for(const s of SIGN_STROKES[ch])strokeBox(B,lx+s[0]*w,0.45+s[1]*hh,lx+s[2]*w,0.45+s[3]*hh,11.04,0.05,SIGN_GOLD);});
  for(const px of [14.2,17.8]){bx(px,0.25,11.6,0.5,0.5,0.5,GOLD);drawPalm(B,px,11.6,false,px);}
  /* ===== THE LOOT ROOM: through a vault door from his office. Gold in pyramids, pallets of cash, a jewel case, a chest of coins, sacks, paintings ===== */
  for(const [px,pz] of [[24.2,4.8],[28.6,4.8]]){for(let l=0;l<5;l++){const n=5-l;for(let i=0;i<n;i++)for(let k=0;k<3;k++)bx(px-(n-1)*0.13+i*0.26,0.05+l*0.09,pz-0.24+k*0.24,0.24,0.085,0.12+0.06*(k%2),GOLD);}}
