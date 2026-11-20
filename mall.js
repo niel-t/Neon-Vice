@@ -7,7 +7,7 @@
      CASA BONITA (east, north)   furniture for any home you own, delivered while you are out
      FONTAINE TAILORING (east, south)  suits made to measure that you wear (SUITS in index.html with shop:1)
      VICTORY MOTORS (at the back) Vic's showroom: the dealer screen and his turntables (cars.js)
-   Vic, Schmaltzy (jewelry), Felix (tailor) and Lola (furniture) have photo faces (ART / CH in models.js); Barbara is still a placeholder.
+   Vic, Schmaltzy (jewelry), Felix (tailor) and Lola (furniture) have photo faces (ART / CH in models.js); Barbara (realty) too, from Tristan's photo (peach suit, lilac lapels).
    Every shop screen is the shared #sStore screen in its own storeMode ('jewel', 'furn', 'realty').
    The hub map is HUBS.mall in index.html; map cell (x,z) is world (x+1,z+1) because the loader pads every map by one cell.
    Loaded after gunshop.js, before the main inline script: nothing here touches main-script globals at load time. */
@@ -135,7 +135,7 @@ function mallWalk(n,dt,g,p){const d=Math.hypot(p.x-n.x,p.z-n.z);n.vx=0;n.vz=0;if
  if(n.wait>0){n.wait-=dt;return;}
  const dx=n.tgt[0]-n.x,dz=n.tgt[1]-n.z,L=Math.hypot(dx,dz)||1,sp=0.8;n.vx=dx/L*sp;n.vz=dz/L*sp;const ox=n.x,oz=n.z;n.x+=n.vx*dt;n.z+=n.vz*dt;collideGrid(n);for(const s of g.solids)boxPush(s,n);
  const m=Math.hypot(n.x-ox,n.z-oz);n.walk=(n.walk||0)+m*9;if(m<sp*dt*0.3)n.stuck=(n.stuck||0)+dt;n.a+=clamp(angDiff(n.a,Math.atan2(dx,dz)),-5*dt,5*dt);}
-/* low-poly looks for the mall keepers (used when the photo-face models aren't drawn; Barbara is still a placeholder) */
+/* low-poly looks for the mall keepers (used when the photo-face models aren't drawn) */
 function mallLook(k){const hx=v=>[(v>>16&255)/255,(v>>8&255)/255,(v&255)/255];
  if(k==='jeweler')return{calm:1,skin:hx(0xd8a07a),jacket:hx(0xf6d6be),shirt:hx(0x2a8f8a),torsoTile:32,pants:hx(0xf0d0b8),shoes:hx(0xc8aa82),hs:'big',hair:hx(0x1a1210),chain:true,medallion:true,watch:true,bling:true,aviators:true,bw:1.0,bd:1.0,bh:0.98};
  if(k==='tailor')return{calm:1,skin:hx(0xe0aa80),jacket:hx(0xf4a8be),shirt:hx(0xd98aa4),torsoTile:32,pants:hx(0xf0a4ba),shoes:hx(0xf6f4ee),hs:'big',hair:hx(0x6a4426),stache:true,chain:true,watch:true,aviators:true,bw:1.0,bd:1.0,bh:1.02};
@@ -143,7 +143,7 @@ function mallLook(k){const hx=v=>[(v>>16&255)/255,(v>>8&255)/255,(v&255)/255];
  if(k==='ray')return{calm:1,skin:hx(0xe8b890),jacket:hx(0x2de2e6),shirt:hx(0xff6fae),torsoTile:32,pants:hx(0x2a2a33),shoes:hx(0xffffff),hs:'big',hair:hx(0x2a1a10),stache:true,glasses:true,watch:true,bw:1.08,bd:1.1,bh:0.98};
  if(k==='doc')return{calm:1,skin:hx(0xf0c8a8),jacket:hx(0xf6f6f6),shirt:hx(0x7dff9a),torsoTile:32,pants:hx(0x8a8a96),shoes:hx(0x2a1a14),hs:'slick',hair:hx(0xd8d8d8),glasses:true,watch:true,bw:0.96,bd:0.98,bh:1.02};
  if(k==='starla')return{fem:true,calm:1,sleeves:true,pads:true,heels:true,skirt:0.5,skin:hx(0xc88a5a),jacket:hx(0x9a5ad8),shirt:hx(0x2de2e6),pants:hx(0x1a1a22),shoes:hx(0xffffff),hs:'big',hair:hx(0x101010),chain:true,bw:0.86,bd:0.86,bh:1.0};
- return{fem:true,calm:1,sleeves:true,pads:true,heels:true,skirt:0.6,skin:hx(0xf0c8a0),jacket:hx(0xff6fae),shirt:hx(0xffffff),pants:hx(0xf0c8a0),shoes:hx(0xffffff),hs:'long',hair:hx(0xf0d070),medallion:true,bw:0.86,bd:0.86,bh:1.02};}
+ return{fem:true,calm:1,sleeves:true,pads:true,heels:true,skirt:0.55,skin:hx(0xeab494),jacket:hx(0xf8b096),shirt:hx(0xf6eede),pants:hx(0xf2a488),shoes:hx(0xecceb4),hs:'big',hair:hx(0xd8b47a),watch:true,bw:0.86,bd:0.86,bh:1.02};}
 
 /* ---------- signs: a stroke font for the neon lettering (unit cell, y up) ---------- */
 const MALL_FONT={A:[[0,0,0.5,1],[0.5,1,1,0],[0.22,0.42,0.78,0.42]],B:[[0,0,0,1],[0,1,0.72,1],[0.72,1,0.9,0.82],[0.9,0.82,0.72,0.52],[0,0.52,0.75,0.52],[0.75,0.52,1,0.3],[1,0.3,0.78,0],[0.78,0,0,0]],
@@ -363,7 +363,7 @@ function drawMallGlass(B,g){const H=2.6,CHR=[0.82,0.84,0.88],GL=[0.62,0.85,0.95]
   else{B.box(TRS(cx,H,cz,0,0.14,0.1,1.0),CHR);B.box(TRS(cx,H/2+0.15,z,0,0.07,H-0.3,0.07),CHR);if(!has(x,z+1))B.box(TRS(cx,H/2+0.15,z+1,0,0.07,H-0.3,0.07),CHR);
    B.box(TRS(cx,0.33,cz,0,0.04,0.02,0.98),GL,true);B.box(TRS(cx,H-0.06,cz,0,0.04,0.02,0.98),GL,true);}}}
 /* ---------- the shop screens ---------- */
-const MALL_PHOTO={jewel:'schmaltzy',tailor:'felix',furn:'lola'},mallImg={};
+const MALL_PHOTO={jewel:'schmaltzy',tailor:'felix',furn:'lola',realty:'barbara'},mallImg={};
 /* the keepers with a photo get the same neon-posterised portrait as Vic (cars.js paintVicFace); the others a drawn placeholder */
 function paintKeeperPhoto(cv,key){const go=()=>{if(storeMode!==Object.keys(MALL_PHOTO).find(k=>MALL_PHOTO[k]===key))return;const x=cv.getContext('2d',{willReadFrequently:true}),W=cv.width,H=cv.height;x.imageSmoothingEnabled=true;x.fillStyle='#2a0838';x.fillRect(0,0,W,H);x.drawImage(mallImg[key],30,0,320,355,0,0,W,H);
   const d=x.getImageData(0,0,W,H),P=d.data;for(let i=0;i<P.length;i+=4){const l=(P[i]*0.3+P[i+1]*0.55+P[i+2]*0.15)/255,q=v=>Math.round(v/255*5)/5*255;P[i]=Math.min(255,q(P[i])*1.04+(l<0.35?28:0));P[i+1]=q(P[i+1])*0.96;P[i+2]=Math.min(255,q(P[i+2])+(l<0.35?42:0));}

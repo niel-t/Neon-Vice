@@ -2293,7 +2293,7 @@ function handPose(c,wt,wd,ph,stride){const atk=c.atkT>0?clamp(c.atkT/c.atkDur,0,
   return{R:[0.16,0.6,0.18],L:[-0.18,0.5,0.08],w:[0.16,0.6,0.18],dir:[0.15,0.7,0.65]};}
  return{R:[0.2,0.42,0.05],L:[-0.2,0.42,0.05]};}
 function drawChar(B,c){const Lk=c.hitT>0?flashLook(c.look):c.look;const BT=Lk.body||c.body,LT=BT==='fat'?1.22:BT==='big'?1.2:BT==='thin'?0.8:BT==='slim'?0.9:BT==='stocky'?1.1:1,SW=BT==='big'?1.1:BT==='thin'?0.93:BT==='stocky'?1.04:1,CW=BT==='big'?1.12:BT==='thin'?0.94:BT==='slim'?0.96:BT==='stocky'?1.06:1;const upright=c.alive&&!(c.down>0);const sc=c.sc||1;const bw=Lk.bw||1,bh=Lk.bh||1,bd=Lk.bd||1;
- {const pid=c.player?CHARS[selIdx].id:c.kind==='mcwey'?'mcwey':c.kind==='nine'?'nine':c.kind==='vic'?'vic':c.kind==='jeweler'?'schmaltzy':c.kind==='tailor'?'felix':c.kind==='furnman'?'lola':'look';if(B!==stageB&&!(c.hitT>0)&&PS2C.add(c,'game',sc*0.74,menuT,B,pid))return;}
+ {const pid=c.player?CHARS[selIdx].id:c.kind==='mcwey'?'mcwey':c.kind==='nine'?'nine':c.kind==='vic'?'vic':c.kind==='jeweler'?'schmaltzy':c.kind==='tailor'?'felix':c.kind==='furnman'?'lola':c.kind==='realtor'?'barbara':'look';if(B!==stageB&&!(c.hitT>0)&&PS2C.add(c,'game',sc*0.74,menuT,B,pid))return;}
  let base=A.mul(A.mul(A.T(c.x,(c.y||0)+liftAt(c.x,c.z),c.z),A.RY(c.a)),A.S(sc,sc,sc));
  const fe=c.fall===undefined?1:1-Math.pow(1-c.fall,2);
  if(!c.alive)base=A.mul(base,A.mul(A.T(0,0.13*bd*fe,0),A.RX(-Math.PI/2*fe)));else if(c.down>0)base=A.mul(base,A.mul(A.T(0,0.13*bd*fe,0),A.RX(Math.PI/2*fe)));
