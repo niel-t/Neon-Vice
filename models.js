@@ -826,7 +826,7 @@ function paintHeadP(L){SKIN=C255(L.skin);const W=256,c=document.createElement('c
  if(ARMOR[L.armor]){const a=C255(L.armorC||(L.armor==='plate'?[0.27,0.29,0.21]:[0.13,0.14,0.17]));x2.fillStyle=rgb(a);x2.fillRect(330,0,24,6);x2.fillStyle=rgb(a.map(v=>v*0.6));x2.fillRect(358,0,24,6);}
  if(HELMET[L.helmet]){x2.fillStyle=rgb(C255(L.helmetC||(L.helmet==='riot'?[0.07,0.07,0.09]:[0.25,0.28,0.19])));x2.fillRect(386,0,24,6);x2.fillStyle='#5a7490';x2.fillRect(414,0,24,6);}return c2;}
 function paintBodyP(L){const sh=C255(L.shirt),jk=C255(L.jacket),sk=C255(L.skin);
- const B={jacket:jk,pants:C255(L.pants),shirt:sh,tie:L.tie?C255(L.tie):null,chain:!!(L.chain||L.medallion),pin:false,square:L.tie?'#e8e4dc':'#f0ece4',shoe:C255(L.shoes||[0.08,0.08,0.09]),shirtScale:1};
+ const B={jacket:jk,pants:C255(L.pants),shirt:sh,tie:L.tie?C255(L.tie):null,chain:!!(L.chain||L.medallion),chains:!!L.cuban,deepV:!!L.cuban,pin:false,square:L.tie?'#e8e4dc':'#f0ece4',shoe:C255(L.shoes||[0.08,0.08,0.09]),shirtScale:1};
  if(L.tee||L.tank){B.jacket=sh;}
  const c=paintBody(shirtCanvas(sh),B),x=c.getContext('2d');
  const fab=(x0,y0,w,h,col)=>{x.fillStyle=rgb(col);x.fillRect(x0,y0,w,h);x.globalAlpha=0.08;x.strokeStyle='#000';for(let i=x0;i<x0+w;i+=3){x.beginPath();x.moveTo(i,y0);x.lineTo(i+h*0.3,y0+h);x.stroke();}x.globalAlpha=1;const g=x.createLinearGradient(0,y0,0,y0+h);g.addColorStop(0,'rgba(255,255,255,.08)');g.addColorStop(1,'rgba(0,0,0,.18)');x.fillStyle=g;x.fillRect(x0,y0,w,h);};
@@ -902,7 +902,16 @@ function paintBodyP(L){const sh=C255(L.shirt),jk=C255(L.jacket),sk=C255(L.skin);
    helmet:'pasgt'|'riot' (any body) replaces hat and hides hair; helmetC:[r,g,b] 0..1 colour.
    fem only: heels:1 pumps; pads:1 80s shoulder pads; crop:1 bare midriff. */
 const ARMOR={vest:1,plate:1},HELMET={pasgt:1,riot:1};
-function lookCfg(L,bodyType){const fb=k=>BODYCFG[L.fem&&k==='thin'?'slim':k],bt=fb(bodyType)||fb(L.body)||BODYCFG.normal,helmet=HELMET[L.helmet]?L.helmet:null;
+/* enemies (looks with an archetype) are built like the heroes: the slim ones like the Money Man, the regulars a bit stockier,
+   the big ones broad in the shoulders like the Consigliere, the fat ones round like the Don. Visual only: hit sizes stay the archetype's. */
+const HEROBUILD={thin:{scale:[0.95,1.02,0.95],shoulders:0.06},normal:{scale:[1.14,1.0,1.1],shoulders:0.16},big:{scale:[1.2,1.1,1.16],shoulders:0.24},fat:{scale:[1.3,0.98,1.24],belly:0.13,shoulders:0.08}};
+/* hero accessories on enemies, rolled from the look (no Math.random): gold rings, chains on open shirts, a Cuban chain on dealers, glasses */
+const SUITS={mobster:1,hitman:1,bodyguard:1,dealer:1};
+function kitLook(L){if(!L||L.fem||!L.arch)return L;let h=2166136261;const k=JSON.stringify([L.skin,L.hair,L.arch,L.jacket,L.shirt,L.body,'kit']);for(let i=0;i<k.length;i++)h=Math.imul(h^k.charCodeAt(i),16777619);
+ const r=()=>{h=(h+0x6D2B79F5)|0;let t=Math.imul(h^(h>>>15),1|h);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};
+ const o=Object.assign({},L),suit=SUITS[L.arch];if(r()<(suit?0.5:0.35))o.bling=true;if(!L.tie&&r()<(suit?0.55:0.35))o.chain=true;if(L.arch==='dealer'&&r()<0.45)o.cuban=true;
+ if(!L.shades&&!L.aviators&&!L.glasses&&r()<(suit?0.22:0.1))o.glasses=true;return o;}
+function lookCfg(L,bodyType){const fb=k=>(!L.fem&&L.arch&&HEROBUILD[k])||BODYCFG[L.fem&&k==='thin'?'slim':k],bt=fb(bodyType)||fb(L.body)||BODYCFG.normal,helmet=HELMET[L.helmet]?L.helmet:null;
  return{L,B:{specs:L.glasses?1:0,fluff:!!(L.fluff&&L.beard),hs:(L.hair&&!L.hat&&!helmet)?L.hs:null,watch:L.watch?-1:0,cigar:!!(L.cigar||(!L.fem&&faceOf(L).cig)),hat:helmet?null:(L.hat||null),shoulders:bt.shoulders||0,belly:bt.belly||(L.belly?0.1:0),rings:L.bling?1:0,fem:!!L.fem,dancer:!!(L.fem&&L.dancer),curve:L.fem&&L.dancer?(L.curve||1):1,waist:L.fem&&L.dancer?(L.waist||1):1,bustK:L.fem&&L.dancer?(L.bust||1):1,hipK:L.fem&&L.dancer?(L.hips||1):1,skirt:L.fem?(L.skirt||0):0,
   armor:ARMOR[L.armor]?L.armor:null,helmet,...(L.fem?{}:(F=>({jaw:F.jaw,cheek:F.cheek,noseK:0.85+0.3*(F.nose-0.85)/0.4}))(faceOf(L))),heels:!!(L.fem&&L.heels),pads:!!(L.fem&&L.pads),crop:!!(L.fem&&L.crop)},scale:(L.fem?bt.scale.map((v,i)=>v*BODYP.fem.scale[i]):bt.scale).map((v,i)=>v*(L.sc?L.sc[i]:1)),gait:L.fem&&L.dancer?'runway':(L.fem?BODYP.fem:BODYP.male).gait};}
 /* vertex counts for a look without touching GL (budget checks: female <= 1.25x male) */
@@ -917,7 +926,7 @@ function bloodify(key,lvl,c){const C=CH[key];if(!C||!C.bc)return;C.dirty=true;co
  if(lvl>=1)paint(C.bc,front,lvl===1?4:10,lvl>1);if(lvl>=2)paint(C.bc,all,8,false);if(lvl>=3)paint(C.bc,[[150,0,212,140]],14,true);
  if(lvl>=2&&!c.headless)paint(C.hc,[[150,150,212,240]],lvl>=3?12:4,false);
  const re=(cv,tex)=>{gl.bindTexture(gl.TEXTURE_2D,tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cv);gl.generateMipmap(gl.TEXTURE_2D);};re(C.bc,MODELS[key][0].tex);re(C.hc,MODELS[key][1].tex);gl.bindTexture(gl.TEXTURE_2D,atlasTex);}
-function buildLook(key,c){const Lk=c.look,bt=c.boss?'boss':(c.body||Lk.body);const cfg=lookCfg(Lk,bt);
+function buildLook(key,c){const Lk=kitLook(c.look),bt=c.boss?'boss':(c.body||Lk.body);const cfg=lookCfg(Lk,bt);
  const ht=paintHeadP(Lk),btx=paintBodyP(Lk),parts=[];try{parts.push(upload(buildBody(cfg.B),mkTex(btx)));parts.push(upload(buildHead(cfg.B),mkTex(ht)));}catch(e){freeModel(parts);throw e;}
  MODELS[key]=parts;CH[key]={scale:cfg.scale,gait:cfg.gait,npc:true,bc:btx,hc:ht,sig:lookSig(c)};}
 /* NPC models are kept between levels: building one (painting two 512px textures, lofting the body and head, uploading) costs
