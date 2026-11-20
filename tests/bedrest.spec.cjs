@@ -41,3 +41,28 @@ test('home: going to bed with the girls gives extra hits on the next job', async
   expect(out.after).toBe(false);
   expect(out.next).toBe(out.base);
 });
+
+// A massage instead of sleep: you lie face down, one girl sits on your back; getting up lets her go, and you can still go to bed after.
+test('home: a girl gives you a massage on the bed', async ({ openGame }) => {
+  const page = await openGame();
+  const out = await page.evaluate(() => {
+    selIdx = 2; sessionReset(Math.min(JOBS.sel, JOBS.top)); const p = myProg(); arm();
+    p.home = 1; p.homes = [0, 1, 2]; p.furn = { 1: { girls: 1, girlsN: 2 } }; loadHub('home1', 'home'); if (G.seq) seqSkip();
+    const o = {}, t = hubTargets(G).find(q => q.k === 'massage');
+    o.label = t && t.lbl; t.fn(t);
+    const q = G.massage && G.massage.q;
+    for (let i = 0; i < 30; i++) { bedTick(G, 0.1); }
+    const B = bigBedWorld(1, bedN());
+    o.on = { prone: G.player.prone, bed: G.player.bed, girl: !!(q && q.massage && q.seatK === 1), onBed: Math.abs(q.z - B.z) < 0.3 && Math.abs(q.x - B.x) < B.s };
+    o.noTarget = !hubTargets(G).some(q => q.k === 'massage');
+    G.player.bedT = 0; bedTick(G, 0.1);
+    o.off = { prone: !!G.player.prone, bed: G.player.bed, girl: !!q.massage, massage: !!G.massage };
+    massageStart(G); tuckIn(G); o.sleep = { prone: !!G.player.prone, massage: !!G.massage, inBed: G.npcs.filter(n => n.bed).length };
+    return o;
+  });
+  expect(out.label).toBe('GET A MASSAGE');
+  expect(out.on).toEqual({ prone: true, bed: true, girl: true, onBed: true });
+  expect(out.noTarget).toBe(true);
+  expect(out.off).toEqual({ prone: false, bed: false, girl: false, massage: false });
+  expect(out.sleep).toEqual({ prone: false, massage: false, inBed: 2 });
+});
