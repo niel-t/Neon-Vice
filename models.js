@@ -48,6 +48,32 @@ function paintHead(img,F){const W=256,H=256,c=document.createElement('canvas');c
  ['#0b0b0e','#7a4410','#3a8ee8','#e85a98','#34343c','#e8b84a','#f4f4f2'].forEach((c,i)=>{x2.fillStyle=c;x2.fillRect(280+i*14,0,14,6);});return c;}
 function profAt(P,q){if(q<=P[0][0])return P[0][1];for(let i=1;i<P.length;i++)if(q<=P[i][0]){const a=P[i-1],b=P[i];return a[1]+(b[1]-a[1])*(q-a[0])/(b[0]-a[0]);}return P[P.length-1][1];}
 let FO={calm:0,brow:'#1e100a',fem:0};
+/* men's mouths for generated faces (the heroes' come from their artwork): 1 frown, 2 sneer, 3 smirk, 4 clenched grin, 5 thin and tight */
+function paintMouth(y,C,my,dk,lt,INK){const m=FO.mouth,lw=FO.lip||1,lc=rgb([SKIN[0]*0.72,SKIN[1]*0.42,SKIN[2]*0.4]),hw=10*(m===5?0.9:1),dn=m===1?2.6:m===5?0.6:1.2,sd=FO.side||1;
+ const cl=m===2||m===3?[dn-(m===2?3.2:2.6),dn]:[dn,dn],L0=sd>0?cl[0]:cl[1],R0=sd>0?cl[1]:cl[0];
+ const sh=(cx,cy,rx,ry,col)=>{const g=y.createRadialGradient(cx,cy,0,cx,cy,1);g.addColorStop(0,col);g.addColorStop(1,'rgba(0,0,0,0)');y.save();y.translate(cx,cy);y.scale(rx,ry);y.fillStyle=g;y.fillRect(-1,-1,2,2);y.restore();};
+ sh(C,my+3,12,3.4,rgb([150,70,60],0.45));
+ if(m===4){/* teeth clenched behind parted lips, like a man about to start something */
+  y.fillStyle='#2a0a0c';y.beginPath();y.moveTo(C-hw,my+L0-1);y.quadraticCurveTo(C,my-2.6,C+hw,my+R0-1);y.quadraticCurveTo(C,my+5.4,C-hw,my+L0-1);y.fill();
+  y.fillStyle='#efe6d6';y.beginPath();y.moveTo(C-hw+2,my+L0-0.8);y.quadraticCurveTo(C,my-1.8,C+hw-2,my+R0-0.8);y.quadraticCurveTo(C,my+3.8,C-hw+2,my+L0-0.8);y.fill();
+  y.strokeStyle='rgba(120,100,90,.6)';y.lineWidth=0.5;for(let i=-3;i<=3;i++){y.beginPath();y.moveTo(C+i*2.6,my-1.2+Math.abs(i)*0.3);y.lineTo(C+i*2.6,my+3);y.stroke();}y.beginPath();y.moveTo(C-hw+2,my+1);y.quadraticCurveTo(C,my+1.6,C+hw-2,my+1);y.stroke();}
+ /* upper lip, lower lip, the dark line between */
+ y.fillStyle=lc;y.beginPath();y.moveTo(C-hw,my+L0);y.quadraticCurveTo(C-hw*0.5,my-1.8*lw-(m===2&&sd<0?1.6:0),C,my-1.1*lw);y.quadraticCurveTo(C+hw*0.5,my-1.8*lw-(m===2&&sd>0?1.6:0),C+hw,my+R0);y.quadraticCurveTo(C,my+(m===4?-0.6:0.6),C-hw,my+L0);y.fill();
+ y.fillStyle=rgb([SKIN[0]*0.8,SKIN[1]*0.5,SKIN[2]*0.48]);y.beginPath();y.moveTo(C-hw*0.86,my+L0+0.4);y.quadraticCurveTo(C,my+(m===4?4.4:2)+3.4*lw,C+hw*0.86,my+R0+0.4);y.quadraticCurveTo(C,my+(m===4?3.6:1.4),C-hw*0.86,my+L0+0.4);y.fill();
+ y.strokeStyle=INK+'1)';y.lineWidth=m===5?1.9:1.5;y.beginPath();y.moveTo(C-hw-0.5,my+L0+0.5);y.quadraticCurveTo(C-hw*0.5,my+(m===4?-1:0.2),C,my+(m===4?-0.4:0.6));y.quadraticCurveTo(C+hw*0.5,my+(m===4?-1:0.2),C+hw+0.5,my+R0+0.5);y.stroke();
+ if(m===4){y.beginPath();y.moveTo(C-hw*0.8,my+L0+0.6);y.quadraticCurveTo(C,my+4.8,C+hw*0.8,my+R0+0.6);y.stroke();}
+ /* corner creases: down for a frown, a dimple on the raised side for a smirk or sneer */
+ y.strokeStyle=INK+'.5)';y.lineWidth=0.8;for(const s of [-1,1]){const c0=s<0?L0:R0;y.beginPath();y.moveTo(C+s*(hw+0.5),my+c0+0.5);y.quadraticCurveTo(C+s*(hw+2.2),my+c0+(c0<0?-0.8:1.5),C+s*(hw+2),my+c0+(c0<0?-2.6:3.6));y.stroke();}
+ y.fillStyle=rgb(lt,0.4);y.beginPath();y.ellipse(C,my+(m===4?5.2:3.1)+lw,4,0.9,0,0,6.3);y.fill();}
+/* the look's face, rolled from the look itself (no Math.random, so level spawns keep their random sequence): eye size and colour, brows, nose,
+   mouth, age lines and the head's jaw and cheekbones. Heroes and named characters have artwork faces and never come through here. */
+function faceOf(L){let h=2166136261;const k=JSON.stringify([L.skin,L.hair,L.hs,L.jacket,L.shirt,L.pants,L.arch,L.beard,L.stache,L.hat,L.body,L.fem]);for(let i=0;i<k.length;i++)h=Math.imul(h^k.charCodeAt(i),16777619);
+ const r=()=>{h=(h+0x6D2B79F5)|0;let t=Math.imul(h^(h>>>15),1|h);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;},pk=a=>a[r()*a.length|0];
+ const calm=(L.calm||0)>0.5,f={eo:1.12+r()*0.26,iris:pk(['#3a2010','#2a1608','#5a3a1a','#3a2010','#3c5a6a','#4a6a3a','#6a4a2a']),browT:0.85+r()*0.6,nose:0.85+r()*0.4,lip:0.8+r()*0.5,age:r(),side:r()<0.5?-1:1,
+  mouth:calm?pk([3,3,4,5]):pk([1,1,2,2,3,4,5]),jaw:0.95+r()*0.11,cheek:0.97+r()*0.07,pores:0.5+r()*0.5};
+ /* the Don's habit: some mobsters and bikers chew a cigar too */
+ f.cig=(L.arch==='mobster'||L.arch==='biker')&&!L.fem&&r()<0.45;
+ return f;}
 function paintFace(y){const C=128,dk=SKIN.map(v=>v*0.62),md=SKIN.map(v=>v*0.8),lt=SKIN.map(v=>Math.min(255,v*1.12)),INK='rgba(38,18,14,';
  const V=Y=>(HEAD.crownY-Y)/(HEAD.crownY-HEAD.neckY)*256,U=xm=>C+Math.asin(clamp(xm/0.108,-1,1))/(2*Math.PI)*256;
  const ell=(cx,cy,rx,ry,col,rot)=>{y.fillStyle=col;y.beginPath();y.ellipse(cx,cy,rx,ry,rot||0,0,6.3);y.fill();};
@@ -59,7 +85,7 @@ function paintFace(y){const C=128,dk=SKIN.map(v=>v*0.62),md=SKIN.map(v=>v*0.8),l
  /* forehead creases */
  if(!FO.fem){y.strokeStyle=INK+'.22)';y.lineWidth=0.8;for(const yy of [1.775,1.79]){y.beginPath();y.moveTo(C-15,V(yy)+1);y.quadraticCurveTo(C,V(yy)-1,C+15,V(yy)+1);y.stroke();}}
  /* eyes: almond whites, brown iris, heavy upper lid, dark bags (women: open almond eyes, light lids, no bags) */
- const ey=V(1.706),ex=U(0.031),eo=FO.fem?1.25:1;
+ const ey=V(1.706),ex=U(0.031),eo=FO.fem?1.25:(FO.eo||1);
  /* women: big made-up eyes that still read from the game camera: eyeshadow, white almond, large dark iris with a catch-light,
     thick liner with a flick, lashes, and a clean arched brow */
  if(FO.fem){sym(s=>{const cx=C+s*(ex-C),ic=FO.iris||'#3a2414';
@@ -73,24 +99,31 @@ function paintFace(y){const C=128,dk=SKIN.map(v=>v*0.62),md=SKIN.map(v=>v*0.8),l
  else sym(s=>{const cx=C+s*(ex-C);
   soft(cx,ey+3,8,4,rgb(dk,FO.fem?0.15:0.5));
   y.fillStyle='#ece4da';y.beginPath();y.moveTo(cx-6.5,ey);y.quadraticCurveTo(cx,ey-3.6*eo,cx+6.5,ey);y.quadraticCurveTo(cx,ey+2.6*eo,cx-6.5,ey);y.fill();
-  ell(cx-s*0.6,ey-0.2,2.8,2.8,'#3a2010');ell(cx-s*0.6,ey-0.2,1.4,1.4,'#080302');ell(cx-s*0.6-0.8,ey-1.1,0.7,0.7,'#fff');
+  ell(cx-s*0.6,ey-0.2,2.8*Math.min(eo,1.15),2.8*Math.min(eo,1.15),FO.iris||'#3a2010');ell(cx-s*0.6,ey-0.2,1.4,1.4,'#080302');ell(cx-s*0.6-0.8,ey-1.1,0.7,0.7,'#fff');
+  if(FO.eo){/* hero-style eyes: a lid crease above, a lash line below, the socket shadowed so the eye reads from the game camera */
+   y.strokeStyle=INK+'.4)';y.lineWidth=0.8;y.beginPath();y.moveTo(cx-6,ey-3.2*eo);y.quadraticCurveTo(cx,ey-6.2*eo,cx+6.5,ey-3);y.stroke();
+   y.strokeStyle=INK+'.75)';y.lineWidth=1;y.beginPath();y.moveTo(cx-6,ey+0.8);y.quadraticCurveTo(cx,ey+2.9*eo,cx+6.2,ey+0.6);y.stroke();
+   if(FO.age>0.55){y.strokeStyle=INK+(0.18+0.3*(FO.age-0.55))+')';y.lineWidth=0.7;for(let k=-1;k<=1;k++){y.beginPath();y.moveTo(cx+s*8,ey+k*1.6);y.lineTo(cx+s*12,ey+k*2.8-0.6);y.stroke();}}}
   y.strokeStyle=INK+'1)';y.lineWidth=2.2;y.beginPath();y.moveTo(cx-7,ey+0.3);y.quadraticCurveTo(cx,ey-4.2*eo,cx+7,ey+0.2);y.stroke();
   y.strokeStyle=INK+(FO.fem?'.2)':'.45)');y.lineWidth=0.7;y.beginPath();y.moveTo(cx-5,ey+2.2*eo);y.quadraticCurveTo(cx,ey+3.6*eo,cx+5,ey+2.2*eo);y.stroke();
   /* brows: arched & feminine for women, low & angled for men */
   if(FO.fem){y.strokeStyle=FO.brow;y.lineWidth=1.6;y.beginPath();y.moveTo(cx-s*8.5,ey-5.5);y.quadraticCurveTo(cx-s*1.5,ey-9.2,cx+s*8.5,ey-5.2);y.stroke();}
-  else{y.fillStyle=FO.brow;y.beginPath();y.moveTo(cx-s*9.5,ey-3.6-FO.calm*4.5);y.lineTo(cx+s*8.5,ey-9.2+FO.calm*2.2);y.lineTo(cx+s*8,ey-9.2+FO.calm*2.2+3.8);y.lineTo(cx-s*9.5,ey-3.6-FO.calm*4.5+2.2);y.closePath();y.fill();}});
+  else{const bt=FO.browT||1,eb=ey-(FO.eo?1.8:0);y.fillStyle=FO.brow;y.beginPath();y.moveTo(cx-s*9.5,eb-3.6-FO.calm*4.5);y.lineTo(cx+s*8.5,eb-9.2+FO.calm*2.2);y.lineTo(cx+s*8,eb-9.2+FO.calm*2.2+3.8*bt);y.lineTo(cx-s*9.5,eb-3.6-FO.calm*4.5+2.2*bt);y.closePath();y.fill();
+   if(FO.eo){/* brow hairs */y.strokeStyle=FO.brow;y.lineWidth=0.7;for(let k=0;k<9;k++){const t=k/8,bx=lerp(cx+s*8,cx-s*9,t),by=lerp(eb-9.2+FO.calm*2.2,eb-3.6-FO.calm*4.5,t)+1.4*bt;y.beginPath();y.moveTo(bx,by+1);y.lineTo(bx-s*2.2,by-1.6);y.stroke();}}}});
  /* frown crease between the brows */
  if(!FO.fem){y.strokeStyle=INK+(0.55*(1-FO.calm))+')';y.lineWidth=0.9;sym(s=>{y.beginPath();y.moveTo(C+s*2,ey-7);y.lineTo(C+s*1.2,ey-2);y.stroke();});}
  /* nose: one broad nose, bridge highlight, wing shading, nostrils */
  const nb=V(1.7),nt=V(1.672);y.fillStyle=rgb(lt,0.55);y.beginPath();y.moveTo(C-1.5,nb);y.lineTo(C+1.5,nb);y.lineTo(C+2.5,nt-2);y.lineTo(C-2.5,nt-2);y.fill();
- sym(s=>{soft(C+s*5,nt-6,2.5,9,rgb(dk,0.35));soft(C+s*7,nt,4,3.5,rgb(md,0.8));y.strokeStyle=INK+'.6)';y.lineWidth=0.9;y.beginPath();y.arc(C+s*6.5,nt,3.6,s>0?-1.2:Math.PI-0.3,s>0?0.3:Math.PI+1.2);y.stroke();});
+ const nw=FO.fem?1:(FO.nose||1);sym(s=>{soft(C+s*5*nw,nt-6,2.5,9,rgb(dk,0.35));soft(C+s*7*nw,nt,4,3.5,rgb(md,0.8));y.strokeStyle=INK+'.6)';y.lineWidth=0.9;y.beginPath();y.arc(C+s*6.5,nt,3.6,s>0?-1.2:Math.PI-0.3,s>0?0.3:Math.PI+1.2);y.stroke();});
  ell(C,nt-0.5,4,3,rgb(SKIN.map(v=>Math.min(255,v*1.05))));ell(C-0.8,nt-1.5,1.3,1,rgb(lt,0.8));sym(s=>ell(C+s*3.3,nt+2,1.6,1,'rgba(40,14,10,.85)'));
  /* nasolabial folds */
- if(!FO.fem){y.strokeStyle=INK+'.4)';y.lineWidth=0.9;sym(s=>{y.beginPath();y.moveTo(C+s*9,nt+1);y.quadraticCurveTo(C+s*13,V(1.655),C+s*12.5,V(1.638));y.stroke();});}
+ if(!FO.fem){y.strokeStyle=INK+(0.4+0.3*(FO.age||0))+')';y.lineWidth=0.9+0.5*(FO.age||0);sym(s=>{y.beginPath();y.moveTo(C+s*9,nt+1);y.quadraticCurveTo(C+s*13,V(1.655),C+s*12.5,V(1.638));y.stroke();});}
  /* mouth: firm, corners turned down; full lower lip */
- const my=V(1.646);soft(C,my+3,11,3,rgb([150,70,60],0.5));y.fillStyle='rgb(150,72,62)';y.beginPath();y.moveTo(C-10,my+1.2);y.quadraticCurveTo(C,my-2,C+10,my+1.2);y.quadraticCurveTo(C,my+4.6,C-10,my+1.2);y.fill();
+ const my=V(1.646);
+ if(FO.mouth&&!FO.fem)paintMouth(y,C,my,dk,lt,INK);else{
+ soft(C,my+3,11,3,rgb([150,70,60],0.5));y.fillStyle='rgb(150,72,62)';y.beginPath();y.moveTo(C-10,my+1.2);y.quadraticCurveTo(C,my-2,C+10,my+1.2);y.quadraticCurveTo(C,my+4.6,C-10,my+1.2);y.fill();
  y.strokeStyle=INK+'1)';y.lineWidth=1.6;y.beginPath();y.moveTo(C-10.5,my+1.8);y.quadraticCurveTo(C-5,my-0.3,C,my+0.3);y.quadraticCurveTo(C+5,my-0.3,C+10.5,my+1.8);y.stroke();
- y.fillStyle=rgb(lt,0.35);y.fillRect(C-4,my+2.4,8,1);soft(C,my+7,7,2.5,rgb(dk,0.4));
+ y.fillStyle=rgb(lt,0.35);y.fillRect(C-4,my+2.4,8,1);}soft(C,my+7,7,2.5,rgb(dk,0.4));
  /* chin + jaw line */
  soft(C,V(1.6),8,4,rgb(lt,0.25));y.strokeStyle=INK+'.25)';y.lineWidth=0.8;y.beginPath();y.moveTo(C-3,V(1.598));y.quadraticCurveTo(C,V(1.594),C+3,V(1.598));y.stroke();}
 function paintEars(x){
@@ -325,7 +358,9 @@ function buildHead(B){const M=newMesh(),X=[1,0,0],Z=[0,0,1],tv=y=>1-(y-HEAD.neck
   [1.702,0.108,0.112,0.006,0.92],[1.727,0.109,0.114,0.002,0.95],[1.757,0.107,0.114,-0.004,1],[1.787,0.099,0.107,-0.009,1],[1.812,0.083,0.092,-0.012,1],[1.83,0.058,0.065,-0.014,1]];
  /* women: tapered rounded jaw and a small chin, softer brow and a smaller nose; cheekbones stay full */
  if(FH){const J=HEADP.fem.jaw;for(const r of R){const j=J[r[0]];if(j){r[1]*=j[0];r[2]*=j[1];r[4]=Math.max(r[4],j[2]);}}}
- const HP=FH?HEADP.fem:HEADP.male,nose=HP.nose,brow=HP.brow,chin=HP.chin;
+ /* generated men get their own head shape (heroes keep the defaults): a wider or narrower jaw, fuller or flatter cheekbones */
+ else if(B&&(B.jaw||B.cheek)){for(const r of R){if(r[0]>1.54&&r[0]<1.64)r[1]*=lerp(B.jaw||1,1,clamp((r[0]-1.555)/0.085,0,1));if(r[0]>1.64&&r[0]<1.72)r[1]*=B.cheek||1;}}
+ const HP=FH?HEADP.fem:HEADP.male,nk0=B&&B.noseK||1,nose=nk0===1?HP.nose:Object.fromEntries(Object.entries(HP.nose).map(([k,v])=>[k,v*nk0])),brow=HP.brow,chin=HP.chin;
  loft(M,R.map(r=>({c:[0,r[0],r[3]],s:X,f:Z,rx:r[1],rz:r[2],sq:r[4],v:tv(r[0]),w:r[0]<1.6?W2(BI.neck,BI.head,clamp((r[0]-1.5)/0.1,0,1)):W1(BI.head),
   mod:(p,ph)=>{const c=Math.cos(ph);if(c>0.5){p[2]-=(c-0.5)*0.03;}const k=Math.max(0,c);const key=r[0];p[2]+=((nose[key]||0)*Math.pow(k,24)+(brow[key]||0)*k*k+(chin[key]||0)*Math.pow(k,4));return p;}})),16,{capB:{dir:[0,1,0],uv:[0.5,0.004],lift:0.012}});
  if(B&&B.cigar){const cu=[12/512,3/512],eu=[38/512,3/512],w=W1(BI.head);loft(M,[{c:[0.03,1.64,0.1],rx:0.009,rz:0.009},{c:[0.06,1.632,0.175],rx:0.0095,rz:0.0095}].map(r=>Object.assign(r,{s:[1,0,0],f:[0,1,0],w,v:cu[1]})),6,{uvf:()=>cu});loft(M,[{c:[0.06,1.632,0.175],rx:0.0096,rz:0.0096},{c:[0.062,1.6315,0.185],rx:0.0092,rz:0.0092}].map(r=>Object.assign(r,{s:[1,0,0],f:[0,1,0],w,v:eu[1]})),6,{uvf:()=>eu,capB:{dir:[0,0,1],uv:eu}});}
@@ -728,21 +763,51 @@ function handFrame(Wm,left,sw,base){const Mh=Wm[left?BI.handL:BI.handR],w=left?L
 /* ---------- generic PS2 models for NPCs & enemies, built from their game "look" ---------- */
 const C255=c=>(c||[0.5,0.5,0.5]).map(v=>Math.round(v*255));
 const BODYCFG={fat:{scale:[1.22,0.98,1.2],belly:0.12,shoulders:0.08},big:{scale:[1.14,1.06,1.1],shoulders:0.24},thin:{scale:[0.86,1.05,0.86]},slim:{scale:[0.93,1.02,0.93]},stocky:{scale:[1.08,0.96,1.08],shoulders:0.1},boss:{scale:[1.2,1.0,1.18],belly:0.1,shoulders:0.12},normal:{scale:[1,1,1]}};
+/* the men's face volume map is the same for every generated head (only the cheek hollows scale with age), so it is worked out once:
+   s = light and shade, h = cheek hollows, w = warmth on the cheeks, nose and ears. Building a look stays as cheap as before on phones. */
+let SCULPT=null;
+function sculptMaps(W,FSX,FSY,fy0,gs){const S=new Float32Array(W*W),H=new Float32Array(W*W),Wm=new Float32Array(W*W);
+ for(let V=0;V<W;V++){const t=1-V/(W-1),Y=lerp(HEAD.neckY,HEAD.crownY,t);for(let U=0;U<W;U++){const ph=(U/(W-1)-0.5)*2*Math.PI,ap=Math.abs(ph),o=V*W+U;
+  let sc=0.66+0.36*Math.pow(Math.max(0,Math.cos(ph)),0.8),warm=0,hol=0;
+  if(ap<1.7){const du=(U-128)/FSX,dv=fy0+(V-fy0)/FSY;
+   for(const s of [-1,1]){sc+=-0.22*gs(du,dv,s*12,93,8.5,7)+0.08*gs(du,dv,s*12,82,9,3)+0.12*gs(du,dv,s*20,107,7,5)-0.08*gs(du,dv,s*6,110,2.5,8);hol-=0.12*gs(du,dv,s*23,130,6,13);warm+=gs(du,dv,s*19,115,9,8);}
+   sc+=0.07*gs(du,dv,0,62,22,16)+0.09*gs(du,dv,0,104,3,12)+0.06*gs(du,dv,0,155,8,6)-0.1*gs(du,dv,0,142,8,3);warm+=0.6*gs(du,dv,0,117,4,3);}
+  let k=1;if(Y<1.6)k=1-0.26*clamp((1.6-Y)/0.03,0,1)*(Y>HEAD.chinY-0.05?1:0.9);
+  if(ap>1.45&&ap<1.85&&Y>1.66&&Y<1.76)warm+=0.5;
+  S[o]=sc*k;H[o]=hol*k;Wm[o]=warm;}}
+ return{s:S,h:H,w:Wm};}
 function paintHeadP(L){SKIN=C255(L.skin);const W=256,c=document.createElement('canvas');c.width=c.height=W;const x=c.getContext('2d');const out=x.createImageData(W,W),D=out.data;
  const hair=L.hair?C255(L.hair):null,hs=L.hs,beard=L.beard?C255(L.beard):null,hatOn=!!L.hat;
  const hl=hs==='buzz'?1.79:hs==='slick'||hs==='puff'?1.772:hs==='big'||hs==='long'||hs==='xlong'||hs==='waves'||hs==='braids'||hs==='afro'?1.75:1.768;
+ const F=faceOf(L),man=!L.fem;
+ /* men's skin a little richer, the way the photo faces of the heroes read in the club lights */
+ if(man){const lum=0.3*SKIN[0]+0.59*SKIN[1]+0.11*SKIN[2];SKIN=SKIN.map((v,i)=>clamp(lum+(v-lum)*1.3+(i===0?5:0),0,255));}
+ const FSX=man?1.72:1.4,FSY=man?1.3:1.22,fy0=(HEAD.crownY-1.676)/(HEAD.crownY-HEAD.neckY)*256,gs=(du,dv,cx,cy,rx,ry)=>Math.exp(-((du-cx)*(du-cx))/(rx*rx)-((dv-cy)*(dv-cy))/(ry*ry));
+ let ns=(F.pores*977)|0;const noise=()=>{ns=(Math.imul(ns,1664525)+1013904223)>>>0;return ns/4294967296;};
+ const grey=man&&F.age>0.82&&hair?hair.map(v=>lerp(v,200,0.55)):null,side=man&&hair&&hs&&hs!=='mohawk'&&hs!=='buzz'&&!hatOn;
+ if(man&&!SCULPT)SCULPT=sculptMaps(W,FSX,FSY,fy0,gs);
  for(let V=0;V<W;V++){const t=1-V/(W-1),Y=lerp(HEAD.neckY,HEAD.crownY,t);
-  for(let U=0;U<W;U++){const ph=(U/(W-1)-0.5)*2*Math.PI,ap=Math.abs(ph);let base=SKIN.slice();
+  for(let U=0;U<W;U++){const ph=(U/(W-1)-0.5)*2*Math.PI,ap=Math.abs(ph);let base=SKIN.slice(),bare=1;
    if(hair&&hs){const line=hl-0.11*clamp((ap-1.0)/1.0,0,1)-0.03*clamp((ap-2.2)/0.8,0,1);let inH=Y>line;if(hs==='mohawk')inH=Y>1.7&&Math.abs(Math.sin(ph))<0.22;
-    if(inH){const k=hs==='buzz'?0.55:hs==='mohawk'?1:0.95;base=base.map((v,i)=>v+(hair[i]-v)*k);}}
-   if(beard&&Y>1.552&&Y<1.668+0.02*clamp((ap-1)/0.5,0,1)&&ap<2.3){base=beard.slice();}
-   else if(L.stubble&&Y>1.555&&Y<1.655&&ap<2.2)base=base.map(v=>v*0.82);
-   if(L.scar&&false);
-   const col=base.map(v=>v*(0.8+0.2*Math.max(0,Math.cos(ph)))*(0.92+0.08*t));const o=(V*W+U)*4;D[o]=col[0];D[o+1]=col[1];D[o+2]=col[2];D[o+3]=255;}}
+    /* sideburns down in front of the ears, like the heroes' own hair */
+    if(side&&!inH&&ap>1.2&&ap<1.5&&Y>1.655)inH=true;
+    if(inH){const k=hs==='buzz'?0.55:hs==='mohawk'?1:0.95,hc=grey&&ap>1.0&&Y<1.8?grey:hair,st=hs==='buzz'?1-0.12*noise():0.86+0.1*Math.sin(ph*70+Math.sin(Y*90)*2)+0.06*noise(),gl=hs==='slick'||hs==='big'?1+0.35*Math.exp(-Math.pow((Y-1.805)/0.014,2))*Math.max(0,Math.cos(ph-0.5)):1;
+     base=base.map((v,i)=>v+(Math.min(255,hc[i]*st*gl)-v)*k);bare=1-k;}}
+   /* beard and stubble follow the jaw: over the upper lip and chin, low on the cheeks, rising to meet the sideburns, soft at the edges */
+   if(beard||L.stubble){const sm=e=>{e=clamp(e,0,1);return e*e*(3-2*e);},top=ap<0.3?1.664:ap<0.9?lerp(1.664,1.632,sm((ap-0.3)/0.6)):lerp(1.632,1.7,sm((ap-0.9)/0.5)),bot=lerp(1.548,1.585,sm((ap-0.9)/0.6)),
+     m=sm((top-Y)/0.012)*sm((Y-bot)/0.012)*sm((1.62-ap)/0.14);
+    if(m>0.01){if(beard){const bn=0.8+0.25*noise(),bc=beard.map(v=>v*bn);base=base.map((v,i)=>v+(bc[i]-v)*m);bare*=1-m;}else{const d=noise()<0.5?0.2:0.05;base=base.map((v,i)=>v*(1-d*m)-(i===2?0:4)*d*m);}}}
+   /* sculpted skin: the heroes' faces come from photos with real light and shadow on them; generated faces get the same volume painted in:
+      eye sockets, brow ridge, nose bridge, cheekbones and hollows, the chin, a shadow under the jaw, warm cheeks and ears, and skin grain */
+   if(!man){const col=base.map(v=>v*(0.8+0.2*Math.max(0,Math.cos(ph)))*(0.92+0.08*t));const o=(V*W+U)*4;D[o]=col[0];D[o+1]=col[1];D[o+2]=col[2];D[o+3]=255;continue;}
+   const o0=V*W+U;let sc=SCULPT.s[o0]+SCULPT.h[o0]*(0.6+0.6*F.age),warm=SCULPT.w[o0];
+   sc*=0.96+0.08*noise()*F.pores;
+   const tint=[1.03,0.95,0.9],col=base.map((v,i)=>Math.min(255,v*sc*(0.94+0.06*t)*(bare>0.5?tint[i]:1)+(i===0?14:i===1?-2:-4)*warm*bare));const o=(V*W+U)*4;D[o]=col[0];D[o+1]=col[1];D[o+2]=col[2];D[o+3]=255;}}
  x.putImageData(out,0,0);
  const c2=document.createElement('canvas');c2.width=c2.height=512;const y=c2.getContext('2d');y.imageSmoothingQuality='high';y.drawImage(c,0,0,512,512);
- FO={calm:L.calm||0,brow:L.fem?rgb((hair||[40,28,20]).map(v=>Math.min(v,120)*0.45)):hair?rgb(hair.map(v=>v*0.7)):beard?rgb(beard.map(v=>v*0.7)):'#2a1a12',fem:L.fem?1:0,iris:L.iris||null,shadow:L.shadow||null};
- y.save();y.scale(2,2);const fy=(HEAD.crownY-1.676)/(HEAD.crownY-HEAD.neckY)*256;y.translate(128,fy);y.scale(1.4,1.22);y.translate(-128,-fy);paintFace(y);
+ FO={calm:L.calm||0,brow:L.fem?rgb((hair||[40,28,20]).map(v=>Math.min(v,120)*0.45)):hair?rgb(hair.map(v=>v*0.7)):beard?rgb(beard.map(v=>v*0.7)):'#2a1a12',fem:L.fem?1:0,iris:L.iris||(L.fem?null:F.iris),shadow:L.shadow||null};
+ if(man)Object.assign(FO,{eo:F.eo,browT:F.browT,nose:F.nose,lip:F.lip,age:F.age,side:F.side,mouth:L.stache||L.beard?(F.mouth===4?1:F.mouth):F.mouth});
+ y.save();y.scale(2,2);const fy=(HEAD.crownY-1.676)/(HEAD.crownY-HEAD.neckY)*256;y.translate(128,fy);y.scale(FSX,FSY);y.translate(-128,-fy);paintFace(y);
  const C=128,Vy=Y=>(HEAD.crownY-Y)/(HEAD.crownY-HEAD.neckY)*256,ey=Vy(1.706),ex=7.5;
  if(L.stache||L.beard){y.fillStyle=rgb((beard||hair||[40,28,20]).map(v=>v*0.8));y.beginPath();y.moveTo(C-12,Vy(1.646)+2);y.quadraticCurveTo(C-6,Vy(1.662),C,Vy(1.658));y.quadraticCurveTo(C+6,Vy(1.662),C+12,Vy(1.646)+2);y.quadraticCurveTo(C,Vy(1.652),C-12,Vy(1.646)+2);y.fill();}
  if(L.scar){y.strokeStyle='rgba(150,60,60,.8)';y.lineWidth=1.4;y.beginPath();y.moveTo(C+5,ey-12);y.lineTo(C+11,ey+9);y.stroke();for(let k=0;k<4;k++){y.beginPath();y.moveTo(C+5.5+k*1.5-2,ey-8+k*5);y.lineTo(C+5.5+k*1.5+2,ey-8+k*5);y.stroke();}}
@@ -761,7 +826,7 @@ function paintHeadP(L){SKIN=C255(L.skin);const W=256,c=document.createElement('c
  if(ARMOR[L.armor]){const a=C255(L.armorC||(L.armor==='plate'?[0.27,0.29,0.21]:[0.13,0.14,0.17]));x2.fillStyle=rgb(a);x2.fillRect(330,0,24,6);x2.fillStyle=rgb(a.map(v=>v*0.6));x2.fillRect(358,0,24,6);}
  if(HELMET[L.helmet]){x2.fillStyle=rgb(C255(L.helmetC||(L.helmet==='riot'?[0.07,0.07,0.09]:[0.25,0.28,0.19])));x2.fillRect(386,0,24,6);x2.fillStyle='#5a7490';x2.fillRect(414,0,24,6);}return c2;}
 function paintBodyP(L){const sh=C255(L.shirt),jk=C255(L.jacket),sk=C255(L.skin);
- const B={jacket:jk,pants:C255(L.pants),shirt:sh,tie:L.tie?C255(L.tie):null,chain:!!(L.chain||L.medallion),pin:false,square:L.tie?'#e8e4dc':'#f0ece4',shoe:C255(L.shoes||[0.08,0.08,0.09]),shirtScale:1};
+ const B={jacket:jk,pants:C255(L.pants),shirt:sh,tie:L.tie?C255(L.tie):null,chain:!!(L.chain||L.medallion),chains:!!L.cuban,deepV:!!L.cuban,pin:false,square:L.tie?'#e8e4dc':'#f0ece4',shoe:C255(L.shoes||[0.08,0.08,0.09]),shirtScale:1};
  if(L.tee||L.tank){B.jacket=sh;}
  const c=paintBody(shirtCanvas(sh),B),x=c.getContext('2d');
  const fab=(x0,y0,w,h,col)=>{x.fillStyle=rgb(col);x.fillRect(x0,y0,w,h);x.globalAlpha=0.08;x.strokeStyle='#000';for(let i=x0;i<x0+w;i+=3){x.beginPath();x.moveTo(i,y0);x.lineTo(i+h*0.3,y0+h);x.stroke();}x.globalAlpha=1;const g=x.createLinearGradient(0,y0,0,y0+h);g.addColorStop(0,'rgba(255,255,255,.08)');g.addColorStop(1,'rgba(0,0,0,.18)');x.fillStyle=g;x.fillRect(x0,y0,w,h);};
@@ -837,9 +902,18 @@ function paintBodyP(L){const sh=C255(L.shirt),jk=C255(L.jacket),sk=C255(L.skin);
    helmet:'pasgt'|'riot' (any body) replaces hat and hides hair; helmetC:[r,g,b] 0..1 colour.
    fem only: heels:1 pumps; pads:1 80s shoulder pads; crop:1 bare midriff. */
 const ARMOR={vest:1,plate:1},HELMET={pasgt:1,riot:1};
-function lookCfg(L,bodyType){const fb=k=>BODYCFG[L.fem&&k==='thin'?'slim':k],bt=fb(bodyType)||fb(L.body)||BODYCFG.normal,helmet=HELMET[L.helmet]?L.helmet:null;
- return{L,B:{specs:L.glasses?1:0,fluff:!!(L.fluff&&L.beard),hs:(L.hair&&!L.hat&&!helmet)?L.hs:null,watch:L.watch?-1:0,cigar:!!L.cigar,hat:helmet?null:(L.hat||null),shoulders:bt.shoulders||0,belly:bt.belly||(L.belly?0.1:0),rings:L.bling?1:0,fem:!!L.fem,dancer:!!(L.fem&&L.dancer),curve:L.fem&&L.dancer?(L.curve||1):1,waist:L.fem&&L.dancer?(L.waist||1):1,bustK:L.fem&&L.dancer?(L.bust||1):1,hipK:L.fem&&L.dancer?(L.hips||1):1,skirt:L.fem?(L.skirt||0):0,
-  armor:ARMOR[L.armor]?L.armor:null,helmet,heels:!!(L.fem&&L.heels),pads:!!(L.fem&&L.pads),crop:!!(L.fem&&L.crop)},scale:(L.fem?bt.scale.map((v,i)=>v*BODYP.fem.scale[i]):bt.scale).map((v,i)=>v*(L.sc?L.sc[i]:1)),gait:L.fem&&L.dancer?'runway':(L.fem?BODYP.fem:BODYP.male).gait};}
+/* enemies (looks with an archetype) are built like the heroes: the slim ones like the Money Man, the regulars a bit stockier,
+   the big ones broad in the shoulders like the Consigliere, the fat ones round like the Don. Visual only: hit sizes stay the archetype's. */
+const HEROBUILD={thin:{scale:[0.95,1.02,0.95],shoulders:0.06},normal:{scale:[1.14,1.0,1.1],shoulders:0.16},big:{scale:[1.2,1.1,1.16],shoulders:0.24},fat:{scale:[1.3,0.98,1.24],belly:0.13,shoulders:0.08}};
+/* hero accessories on enemies, rolled from the look (no Math.random): gold rings, chains on open shirts, a Cuban chain on dealers, glasses */
+const SUITS={mobster:1,hitman:1,bodyguard:1,dealer:1};
+function kitLook(L){if(!L||L.fem||!L.arch)return L;let h=2166136261;const k=JSON.stringify([L.skin,L.hair,L.arch,L.jacket,L.shirt,L.body,'kit']);for(let i=0;i<k.length;i++)h=Math.imul(h^k.charCodeAt(i),16777619);
+ const r=()=>{h=(h+0x6D2B79F5)|0;let t=Math.imul(h^(h>>>15),1|h);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};
+ const o=Object.assign({},L),suit=SUITS[L.arch];if(r()<(suit?0.5:0.35))o.bling=true;if(!L.tie&&r()<(suit?0.55:0.35))o.chain=true;if(L.arch==='dealer'&&r()<0.45)o.cuban=true;
+ if(!L.shades&&!L.aviators&&!L.glasses&&r()<(suit?0.22:0.1))o.glasses=true;return o;}
+function lookCfg(L,bodyType){const fb=k=>(!L.fem&&L.arch&&HEROBUILD[k])||BODYCFG[L.fem&&k==='thin'?'slim':k],bt=fb(bodyType)||fb(L.body)||BODYCFG.normal,helmet=HELMET[L.helmet]?L.helmet:null;
+ return{L,B:{specs:L.glasses?1:0,fluff:!!(L.fluff&&L.beard),hs:(L.hair&&!L.hat&&!helmet)?L.hs:null,watch:L.watch?-1:0,cigar:!!(L.cigar||(!L.fem&&faceOf(L).cig)),hat:helmet?null:(L.hat||null),shoulders:bt.shoulders||0,belly:bt.belly||(L.belly?0.1:0),rings:L.bling?1:0,fem:!!L.fem,dancer:!!(L.fem&&L.dancer),curve:L.fem&&L.dancer?(L.curve||1):1,waist:L.fem&&L.dancer?(L.waist||1):1,bustK:L.fem&&L.dancer?(L.bust||1):1,hipK:L.fem&&L.dancer?(L.hips||1):1,skirt:L.fem?(L.skirt||0):0,
+  armor:ARMOR[L.armor]?L.armor:null,helmet,...(L.fem?{}:(F=>({jaw:F.jaw,cheek:F.cheek,noseK:0.85+0.3*(F.nose-0.85)/0.4}))(faceOf(L))),heels:!!(L.fem&&L.heels),pads:!!(L.fem&&L.pads),crop:!!(L.fem&&L.crop)},scale:(L.fem?bt.scale.map((v,i)=>v*BODYP.fem.scale[i]):bt.scale).map((v,i)=>v*(L.sc?L.sc[i]:1)),gait:L.fem&&L.dancer?'runway':(L.fem?BODYP.fem:BODYP.male).gait};}
 /* vertex counts for a look without touching GL (budget checks: female <= 1.25x male) */
 function lookVerts(L,bodyType){const B=lookCfg(L||{},bodyType).B,b=buildBody(B).p.length/3,h=buildHead(B).p.length/3;return{body:b,head:h,total:b+h};}
 let LOOKN=0,lastG=null,buildsThisFrame=0;const failedLooks=new Set();
@@ -852,7 +926,7 @@ function bloodify(key,lvl,c){const C=CH[key];if(!C||!C.bc)return;C.dirty=true;co
  if(lvl>=1)paint(C.bc,front,lvl===1?4:10,lvl>1);if(lvl>=2)paint(C.bc,all,8,false);if(lvl>=3)paint(C.bc,[[150,0,212,140]],14,true);
  if(lvl>=2&&!c.headless)paint(C.hc,[[150,150,212,240]],lvl>=3?12:4,false);
  const re=(cv,tex)=>{gl.bindTexture(gl.TEXTURE_2D,tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cv);gl.generateMipmap(gl.TEXTURE_2D);};re(C.bc,MODELS[key][0].tex);re(C.hc,MODELS[key][1].tex);gl.bindTexture(gl.TEXTURE_2D,atlasTex);}
-function buildLook(key,c){const Lk=c.look,bt=c.boss?'boss':(c.body||Lk.body);const cfg=lookCfg(Lk,bt);
+function buildLook(key,c){const Lk=kitLook(c.look),bt=c.boss?'boss':(c.body||Lk.body);const cfg=lookCfg(Lk,bt);
  const ht=paintHeadP(Lk),btx=paintBodyP(Lk),parts=[];try{parts.push(upload(buildBody(cfg.B),mkTex(btx)));parts.push(upload(buildHead(cfg.B),mkTex(ht)));}catch(e){freeModel(parts);throw e;}
  MODELS[key]=parts;CH[key]={scale:cfg.scale,gait:cfg.gait,npc:true,bc:btx,hc:ht,sig:lookSig(c)};}
 /* NPC models are kept between levels: building one (painting two 512px textures, lofting the body and head, uploading) costs
@@ -967,4 +1041,4 @@ function flush(VPm,u){if(NX&&NX.live){NX.takeChars(queue,MODELS);queue.length=0;
  for(const kk of ['aP','aN','aT','aBi','aBw']){const l=Lc[kk];if(l>=0)gl.disableVertexAttribArray(l);}gl.disable(gl.CULL_FACE);gl.bindTexture(gl.TEXTURE_2D,atlasTex);queue.length=0;}
 /* how far the chest comes forward and the seat goes back on a look's body (tests use it to check the figure sizes) */
 function lookFigure(L){const B=lookCfg(L||{}).B,M=buildBody(B),P=M.p;let f=-1,b=1;for(let i=0;i<P.length;i+=3){const y=P[i+1],x=P[i],z=P[i+2];if(Math.abs(x)>0.22)continue;if(y>1.15&&y<1.42)f=Math.max(f,z);if(y>0.76&&y<1.0)b=Math.min(b,z);}return{bust:f,seat:-b};}
-return{init,add,flush,has,applySuit,rebuild,beginFrame,lookVerts,lookFigure,jewelB,mocapClip,modelStatus:id=>modelStates[id],get status(){return status;},get ready(){return ready;}};})();
+return{init,add,flush,has,applySuit,rebuild,beginFrame,lookVerts,lookFigure,headTex:L=>paintHeadP(L),faceOf,jewelB,mocapClip,modelStatus:id=>modelStates[id],get status(){return status;},get ready(){return ready;}};})();
