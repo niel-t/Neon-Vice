@@ -354,7 +354,7 @@ function renderMallShop(msg){const p=myProg(),s=MALL_SHOPS[storeMode],sec=(id,on
   $('stCars').innerHTML=SUITKEYS.filter(k=>SUITS[k].shop).map(k=>{const S=SUITS[k],own=suitOK(p,k),on=cur===k;return mallCard(`data-ts="${k}"`,S.name,S.desc,on?'WEARING · BACK TO SIGNATURE':own?'IN THE WARDROBE · WEAR':'BUY $'+fmt(S.price),on,false,n++);}).join('');
   sec('stGold',1);$('stGoldH').textContent='SUNGLASSES · ONE PAIR ON AT A TIME';const so=(p.shades&&p.shades.own)||{},sw=shadesOn(p);
   $('stGold').innerHTML=Object.keys(SHADES).map(k=>{const it=SHADES[k];return mallCard(`data-sg="${k}"`,it.name,it.desc,sw===k?'WEARING · TAKE OFF':so[k]?'IN YOUR POCKET · WEAR':'BUY $'+fmt(it.price),sw===k,false,n++);}).join('');
-  sec('stHome',1);$('stHomeH').textContent='ACCESSORIES · HATS, GLOVES, BAGS, CIGARS · ONE OF EACH KIND ON';$('stHome').innerHTML=accCards(p,'tailor',n);n+=Object.keys(ACC).filter(k=>ACC[k].shop==='tailor').length;}
+  sec('stHome',1);$('stHomeH').textContent='DESIGNER ACCESSORIES · PARIS · ROMA · MILANO · LONDON · ONE OF EACH KIND ON';$('stHome').innerHTML=accCards(p,'tailor',n);n+=Object.keys(ACC).filter(k=>ACC[k].shop==='tailor').length;}
  else if(storeMode==='furn'){const ids=['stCars','stGold','stHome'];ids.forEach((id,t)=>{sec(id,1);const own=(p.homes||[0]).includes(t),here=(p.home||0)===t,f=furnAt(t);
    $(id+'H').textContent=HOMEDEF[t].name+(here?' · YOU LIVE HERE':own?' · YOURS':' · NOT YOURS YET');
    $(id).innerHTML=own?catOf(t).filter(it=>!MALL_NOFURN.includes(it.k)).map(it=>mallCard(`data-mf="${t}:${it.k}"`,it.name,it.desc,f[it.k]?'DELIVERED':'BUY $'+fmt(it.price),!!f[it.k],false,n++)).join('')

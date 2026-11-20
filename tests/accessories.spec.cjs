@@ -10,15 +10,15 @@ test('mall: accessories at Fontaine Tailoring and Gold Coast Jewelers, one of ea
   expect(await page.evaluate(setup => {
     eval('(' + setup + ')')(); const p = myProg(), id = rideId(), out = {};
     loadHub('mall'); openMallShop('tailor');
-    out.tailor = { cards: document.querySelectorAll('#sStore [data-ac]').length, head: $('stHomeH').textContent.startsWith('ACCESSORIES'), shown: $('stHome').style.display !== 'none' };
+    out.tailor = { cards: document.querySelectorAll('#sStore [data-ac]').length, head: $('stHomeH').textContent.startsWith('DESIGNER ACCESSORIES'), shown: $('stHome').style.display !== 'none' };
     document.querySelector('#sStore [data-ac="fedora"]').click();
     const L = LOOKS[id], B = {}; PS2C.jewelB(id, B);
-    out.fedora = { on: accOn(p).hat, paid: 300000 - p.wallet, classic: L.accHat && L.accHat.hat, ps2: B.hat };
+    out.fedora = { on: accOn(p).hat, paid: 300000 - p.wallet, house: document.querySelector('#sStore [data-ac="fedora"]').textContent.includes('MAISON BELLAMY'), logo: B.hatLogo, classic: L.accHat && L.accHat.hat, ps2: B.hat };
     document.querySelector('#sStore [data-ac="cap"]').click(); PS2C.jewelB(id, B);
     out.cap = { on: accOn(p).hat, own: Object.keys(p.acc.own).sort(), ps2: B.hat, swapLbl: document.querySelector('#sStore [data-ac="fedora"]').textContent.includes('SWAP IT IN') };
-    for (const k of ['gloves', 'pack', 'cigar']) document.querySelector(`#sStore [data-ac="${k}"]`).click();
+    for (const k of ['gloves', 'monobag', 'belt', 'cigar']) document.querySelector(`#sStore [data-ac="${k}"]`).click();
     PS2C.jewelB(id, B);
-    out.more = { gloves: B.gloves && B.gloves[0] < 40, classicGloves: L.gloves === ACC.gloves.col, pack: !!B.pack && !!L.accPack, cigar: B.cigar && L.cigar };
+    out.more = { gloves: B.gloves && B.gloves[0] < 40, classicGloves: L.gloves === ACC.gloves.col, pack: !!B.pack && B.pack.mono && !!L.accPack, belt: !!B.belt && !!L.accBelt, gold: B.hatLogo && B.gloveSnap && B.cigarBand, cigar: B.cigar && L.cigar };
     document.querySelector('#sStore [data-ac="cap"]').click(); PS2C.jewelB(id, B);
     out.off = { hat: accOn(p).hat || null, ps2: B.hat, classic: L.accHat };
     closeStore();
@@ -38,14 +38,14 @@ test('mall: accessories at Fontaine Tailoring and Gold Coast Jewelers, one of ea
     saveProg(); out.saved = JSON.parse(localStorage.getItem('nb86prog'))[CHARS[selIdx].id].acc.on;
     return out;
   }, setup.toString())).toEqual({
-    tailor: { cards: 8, head: true, shown: true },
-    fedora: { on: 'fedora', paid: 1800, classic: 'fedora', ps2: 'fedora' },
+    tailor: { cards: 10, head: true, shown: true },
+    fedora: { on: 'fedora', paid: 6500, house: true, logo: true, classic: 'fedora', ps2: 'fedora' },
     cap: { on: 'cap', own: ['cap', 'fedora'], ps2: 'cap', swapLbl: true },
-    more: { gloves: true, classicGloves: true, pack: true, cigar: true },
+    more: { gloves: true, classicGloves: true, pack: true, belt: true, gold: true, cigar: true },
     off: { hat: null, ps2: null, classic: null },
     jewel: { cards: 2, jewelry: 6 },
     ear: { on: 'stud', ps2: 'stud', classic: 'stud' },
     errs: [],
-    saved: { hat: 'flat', hands: 'gloves', waist: 'pack', mouth: 'cigar', ear: 'stud' },
+    saved: { hat: 'flat', hands: 'gloves', waist: 'monobag', belt: 'belt', mouth: 'cigar', ear: 'stud' },
   });
 });

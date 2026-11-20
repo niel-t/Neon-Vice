@@ -318,6 +318,8 @@ function buildBody(B){const M=newMesh(),X=[1,0,0],Y=[0,1,0],Z=[0,0,1],BP=B.fem?B
   if(B.bracelet&&s!==(B.watch||1)){/* gold ID bracelet: chunky curb links and a name plate */
    const gv=SW.gold[1];loft(M,[{c:at(wr,ad,-0.062),rx:0.061,rz:0.062},{c:at(wr,ad,-0.04),rx:0.061,rz:0.062}].map(r=>Object.assign(r,{s:side,f:fwd,w:W1(fa),v:gv})),10,{uvf:(u,r)=>[150/512+u*140/512,gv]});
    const pc=at(at(wr,ad,-0.051),side,0.062);loft(M,[{c:pc,rx:0.012,rz:0.024},{c:at(pc,side,0.008),rx:0.012,rz:0.024}].map(r=>Object.assign(r,{s:V.norm(ad),f:fwd,w:W1(fa),v:gv})),8,{uvf:()=>[0.36,gv],capB:{dir:side,uv:[0.36,gv]}});}
+  if(B.gloveSnap){/* designer gloves: a gold logo snap on the back of the wrist strap */
+   const gv=SW.gold[1],sc=at(at(wr,ad,0.004),side,0.05);loft(M,[{c:sc,rx:0.011,rz:0.011},{c:at(sc,side,0.006),rx:0.011,rz:0.011}].map(r=>Object.assign(r,{s:V.norm(ad),f:fwd,w:W1(fa),v:gv})),10,{uvf:()=>[0.36,gv],capB:{dir:side,uv:[0.36,gv]}});}
   {/* fist: palm block, four curled fingers, thumb across the front; gold knuckle duster rings around the fingers */
    const f0=M.p.length/3,pm=V.mul(side,-1),Zv=[0,0,1],hw=W1(hb),sk=()=>SW.skin,gv=SW.gold[1],gu=()=>[0.36,gv];
    const P=(ta,tp,tz)=>V.add(V.add(at(wr,ad,ta),V.mul(pm,tp)),V.mul(Zv,tz));
@@ -366,7 +368,7 @@ function buildHead(B){const M=newMesh(),X=[1,0,0],Z=[0,0,1],tv=y=>1-(y-HEAD.neck
  const HP=FH?HEADP.fem:HEADP.male,nk0=B&&B.noseK||1,nose=nk0===1?HP.nose:Object.fromEntries(Object.entries(HP.nose).map(([k,v])=>[k,v*nk0])),brow=HP.brow,chin=HP.chin;
  loft(M,R.map(r=>({c:[0,r[0],r[3]],s:X,f:Z,rx:r[1],rz:r[2],sq:r[4],v:tv(r[0]),w:r[0]<1.6?W2(BI.neck,BI.head,clamp((r[0]-1.5)/0.1,0,1)):W1(BI.head),
   mod:(p,ph)=>{const c=Math.cos(ph);if(c>0.5){p[2]-=(c-0.5)*0.03;}const k=Math.max(0,c);const key=r[0];p[2]+=((nose[key]||0)*Math.pow(k,24)+(brow[key]||0)*k*k+(chin[key]||0)*Math.pow(k,4));return p;}})),16,{capB:{dir:[0,1,0],uv:[0.5,0.004],lift:0.012}});
- if(B&&B.cigar){const cu=[12/512,3/512],eu=[38/512,3/512],w=W1(BI.head);loft(M,[{c:[0.03,1.64,0.1],rx:0.009,rz:0.009},{c:[0.06,1.632,0.175],rx:0.0095,rz:0.0095}].map(r=>Object.assign(r,{s:[1,0,0],f:[0,1,0],w,v:cu[1]})),6,{uvf:()=>cu});loft(M,[{c:[0.06,1.632,0.175],rx:0.0096,rz:0.0096},{c:[0.062,1.6315,0.185],rx:0.0092,rz:0.0092}].map(r=>Object.assign(r,{s:[1,0,0],f:[0,1,0],w,v:eu[1]})),6,{uvf:()=>eu,capB:{dir:[0,0,1],uv:eu}});}
+ if(B&&B.cigar){const cu=[12/512,3/512],eu=[38/512,3/512],w=W1(BI.head);loft(M,[{c:[0.03,1.64,0.1],rx:0.009,rz:0.009},{c:[0.06,1.632,0.175],rx:0.0095,rz:0.0095}].map(r=>Object.assign(r,{s:[1,0,0],f:[0,1,0],w,v:cu[1]})),6,{uvf:()=>cu});loft(M,[{c:[0.06,1.632,0.175],rx:0.0096,rz:0.0096},{c:[0.062,1.6315,0.185],rx:0.0092,rz:0.0092}].map(r=>Object.assign(r,{s:[1,0,0],f:[0,1,0],w,v:eu[1]})),6,{uvf:()=>eu,capB:{dir:[0,0,1],uv:eu}});if(B.cigarBand){const gu=[357/512,3/512];loft(M,[0.142,0.152].map(z=>({c:[0.03+(z-0.1)*0.4,1.64-(z-0.1)*0.107,z],rx:0.0103,rz:0.0103,s:[1,0,0],f:[0,1,0],w,v:gu[1]})),8,{uvf:()=>gu});}}
  if(B&&B.hs==='long'&&FH){/* women's long feathered hair: full back and sides to the shoulder blades, a flicked fringe and face-framing wings */
   hairShell(M,[[1.79,0.122,0.118,-0.014],[1.72,0.132,0.114,-0.026],[1.64,0.136,0.104,-0.04],[1.56,0.132,0.09,-0.056],[1.48,0.126,0.074,-0.07],[1.4,0.122,0.06,-0.08],[1.35,0.126,0.05,-0.084]],14,{open:1.77,c0:0.4,curl:0.015,bottom:1});
   for(const s of [1,-1])hairLock(M,s,[[0.09,1.79,0.06,0.02],[0.118,1.73,0.05,0.026],[0.13,1.66,0.03,0.028],[0.124,1.58,0.02,0.026],[0.13,1.5,0.008,0.022],[0.15,1.45,-0.004,0.012]]);}
@@ -420,6 +422,9 @@ function buildHead(B){const M=newMesh(),X=[1,0,0],Z=[0,0,1],tv=y=>1-(y-HEAD.neck
    loft(M,[[0.1,1.768,0.09],[0.15,1.758,0.075],[0.172,1.752,0.05]].map(q=>({c:[0,q[1],q[0]],s:[1,0,0],f:[0,1,0],rx:q[2]+0.02,rz:0.006,sq:0.6,w,v:bu[1]})),10,{uvf:()=>bu,capB:{dir:[0,0,1],uv:bu}});}
   else if(B.hat==='beanie'){loft(M,[R(1.755,0.118),R(1.79,0.119)],16,{uvf:()=>bu});loft(M,[R(1.79,0.116),R(1.85,0.1),R(1.885,0.06)],16,{uvf:()=>hu,capB:{dir:[0,1,0],uv:hu}});}
   else{loft(M,[R(1.745,0.116),R(1.8,0.112),R(1.84,0.09),R(1.86,0.05)],16,{uvf:()=>hu,capB:{dir:[0,1,0],uv:hu}});loft(M,[{c:[0,1.75,-0.13],s:[1,0,0],f:[0,1,0],rx:0.03,rz:0.012,w,v:hu[1]},{c:[0,1.68,-0.15],s:[1,0,0],f:[0,1,0],rx:0.02,rz:0.01,w,v:hu[1]}],6,{uvf:()=>hu});}}
+ /* designer hats (B.hatLogo): the house's gold logo plate on the front of the band (or the front panel of the cap, the side of the flat cap) */
+ if(B&&B.hat&&B.hatLogo){const gu=[357/512,3/512],w=W1(BI.head),L={fedora:[0,1.805,0.118,0.016,0.011],panama:[0,1.802,0.118,0.016,0.011],cap:[0,1.795,0.122,0.026,0.017],flat:[0.09,1.79,0.088,0.014,0.01]}[B.hat];
+  if(L){const n=L[0]?V.norm([L[0],0,L[2]]):[0,0,1],sd=V.norm(V.cross([0,1,0],n));loft(M,[0,0.005].map(d=>({c:[L[0]+n[0]*d,L[1],L[2]+n[2]*d],s:sd,f:[0,1,0],rx:L[3],rz:L[4],sq:0.7,w,v:gu[1]})),10,{uvf:()=>gu,capB:{dir:n,uv:gu}});}}
  /* full fluffy beard + moustache (3D), e.g. Nine of Nine */
  if(B&&B.fluff==='photo'){const w=W1(BI.head),tv=y=>1-(clamp(y,1.565,1.7)-HEAD.neckY)/(HEAD.crownY-HEAD.neckY);
   const ring=(y,rx,rz,z,hide)=>({c:[0,y,z],s:[1,0,0],f:[0,0,1],rx,rz,w,v:tv(y),mod:(p,ph)=>{const c=Math.cos(ph),k=lerp(0.5,1,clamp((c+0.45)/0.6,0,1))*(hide?lerp(1,0.55,Math.pow(Math.max(0,c),1.5)):1),n=1+0.07*Math.sin(ph*9+y*140)+0.045*Math.sin(ph*17+y*61);p[0]*=k*n;p[2]=z+(p[2]-z)*k*n;return p;}});
@@ -466,8 +471,16 @@ function buildHead(B){const M=newMesh(),X=[1,0,0],Z=[0,0,1],tv=y=>1-(y-HEAD.neck
  if(B&&B.pack){const T=torsoRows(B),nu=[468/512,3/512],zu=[496/512,3/512],wp=W1(BI.pelvis),y0=1.0;
   let i=0;while(i<T.length-2&&T[i+1][0]<y0)i++;const a=T[i],b=T[i+1],t=clamp((y0-a[0])/(b[0]-a[0]),0,1),rx=lerp(a[1],b[1],t),rz=lerp(a[2],b[2],t),zc=lerp(a[3],b[3],t),fz=zc+rz;
   loft(M,[y0-0.008,y0+0.01].map(y=>({c:[0,y,zc],s:X,f:Z,rx:rx+0.008,rz:rz+0.008,sq:0.8,w:wp,v:zu[1]})),16,{uvf:()=>zu});
-  loft(M,[-0.1,-0.085,0.085,0.1].map((x,k)=>({c:[x,y0-0.012,fz+0.03],s:[0,1,0],f:[0,0,1],rx:k%3?0.042:0.032,rz:k%3?0.032:0.022,sq:0.55,w:wp,v:nu[1]})),10,{uvf:()=>nu,capA:{dir:[-1,0,0],uv:nu},capB:{dir:[1,0,0],uv:nu}});
-  loft(M,[-0.08,0.08].map(x=>({c:[x,y0+0.022,fz+0.036],s:[0,1,0],f:[0,0,1],rx:0.004,rz:0.022,w:wp,v:zu[1]})),6,{uvf:()=>zu});}
+  const mono=B.pack.mono?(u,r)=>[(456.5+u*23)/512,(0.5+r.t*5)/512]:()=>nu;
+  loft(M,[-0.1,-0.085,0.085,0.1].map((x,k)=>({c:[x,y0-0.012,fz+0.03],s:[0,1,0],f:[0,0,1],rx:k%3?0.042:0.032,rz:k%3?0.032:0.022,sq:0.55,w:wp,v:nu[1],t:k/3})),10,{uvf:mono,capA:{dir:[-1,0,0],uv:nu},capB:{dir:[1,0,0],uv:nu}});
+  loft(M,[-0.08,0.08].map(x=>({c:[x,y0+0.022,fz+0.036],s:[0,1,0],f:[0,0,1],rx:0.004,rz:0.022,w:wp,v:zu[1]})),6,{uvf:()=>zu});
+  /* the house plaque: a gold plate on the front of the pouch */
+  const gu=[357/512,3/512];loft(M,[fz+0.061,fz+0.066].map(z=>({c:[0,y0-0.014,z],s:X,f:[0,1,0],rx:0.024,rz:0.011,sq:0.4,w:wp,v:gu[1]})),8,{uvf:()=>gu,capB:{dir:Z,uv:gu}});}
+ /* logo belt (B.belt): a leather strap round the hips and a big gold buckle of two interlocking rings at the front */
+ if(B&&B.belt){const T=torsoRows(B),lu=[442/512,3/512],gu=[357/512,3/512],wp=W1(BI.pelvis),y0=0.965;
+  let i=0;while(i<T.length-2&&T[i+1][0]<y0)i++;const a=T[i],b=T[i+1],t=clamp((y0-a[0])/(b[0]-a[0]),0,1),rx=lerp(a[1],b[1],t),rz=lerp(a[2],b[2],t),zc=lerp(a[3],b[3],t),fz=zc+rz;
+  loft(M,[y0-0.013,y0+0.013].map(y=>({c:[0,y,zc],s:X,f:Z,rx:rx+0.006,rz:rz+0.006,sq:0.8,w:wp,v:lu[1]})),16,{uvf:()=>lu});
+  for(const sx of [-1,1])loft(M,[fz+0.004,fz+0.012].map(z=>({c:[sx*0.013,y0,z],s:X,f:[0,1,0],rx:0.021,rz:0.021,w:wp,v:gu[1]})),12,{uvf:()=>gu});}
  /* sunglasses from Felix (B.sun = a SHADES entry): lens discs, a brow bar or bridge in the frame colour, temple arms */
  if(B&&B.sun){const S=B.sun,w=W1(BI.head),gy=1.708,gz=0.128,SWU={black:287,amber:301,blue:315,pink:329,smoke:343,gold:357,white:371},uv=k=>[(SWU[k]||287)/512,3/512],lu=uv(S.lens),fu=uv(S.frame);
   const disc=(cx,cy,rx,rz,sq,u)=>loft(M,[gz-0.001,gz+0.004].map(z=>({c:[cx,cy,z],s:[1,0,0],f:[0,1,0],rx,rz,sq,w,v:u[1]})),14,{uvf:()=>u,capA:{dir:[0,0,-1],uv:u},capB:{dir:[0,0,1],uv:u}});
@@ -776,9 +789,12 @@ async function init(){const shaders=[];try{
  let PAIS=null;function jewelB(id,B){const p=PROG[id];if(!p||!CHARS.some(c=>c.id===id))return;const j=p.jewel||{},w=k=>j[k]===true;if(B.chains0===undefined)B.chains0=!!B.chains;B.nowatch=!w('watch');B.chain=w('chain');B.rings=w('rings')?2:0;B.chains=B.chains0||w('cuban');B.bracelet=w('bracelet');B.medal=w('medal');const sk=typeof shadesOn==='function'?shadesOn(p):null;B.sun=sk?SHADES[sk]:null;
   /* accessories (accessories.js): hat, gloves, earrings, bum bag, cigar; the Don's own cigar stays when he puts the box away */
   if(B.cigar0===undefined)B.cigar0=!!B.cigar;const on=typeof accOn==='function'?accOn(p):{},A=k=>on[k]?ACC[on[k]]:null,h=A('hat'),gl=A('hands'),pk=A('waist');
-  B.hat=h?h.hat:null;B.hatCol=h?h.col:null;B.hatBand=h?h.band:null;B.gloves=gl?C255(gl.col):null;B.ear=on.ear?ACC[on.ear].ear:null;B.pack=pk?{col:pk.col,band:pk.band}:null;B.cigar=B.cigar0||!!on.mouth;}
- /* hat crown/band (buildHead B.hat reads x 88 and 116) and bum bag nylon/zip (x 468, 496) colours on the head texture's swatch strip */
- function accSwatches(ht,B){const x=ht.getContext('2d'),f=(c,x0,w)=>{x.fillStyle=rgb(C255(c));x.fillRect(x0,0,w,6);};if(B.hat){f(B.hatCol,76,24);f(B.hatBand,104,24);}if(B.pack){f(B.pack.col,456,24);f(B.pack.band,484,24);}}
+  B.hat=h?h.hat:null;B.hatCol=h?h.col:null;B.hatBand=h?h.band:null;B.gloves=gl?C255(gl.col):null;B.ear=on.ear?ACC[on.ear].ear:null;B.pack=pk?{col:pk.col,band:pk.band,mono:!!pk.mono}:null;B.belt=on.belt?{col:ACC[on.belt].col}:null;B.cigar=B.cigar0||!!on.mouth;B.cigarBand=!!on.mouth;B.gloveSnap=!!gl;B.hatLogo=!!h;}
+ /* hat crown/band (buildHead B.hat reads x 88 and 116), belt bag leather/zip (x 456-480, 496) and logo belt (x 442) colours on the head texture's swatch strip */
+ function accSwatches(ht,B){const x=ht.getContext('2d'),f=(c,x0,w)=>{x.fillStyle=rgb(C255(c));x.fillRect(x0,0,w,6);};if(B.hat){f(B.hatCol,76,24);f(B.hatBand,104,24);}if(B.pack){f(B.pack.col,456,24);f(B.pack.band,484,24);
+  /* designer monogram: tiny gold interlocking rings repeated over the leather (the pouch maps this 24x6 patch round its body) */
+  if(B.pack.mono){x.strokeStyle='rgba(232,180,80,.75)';x.lineWidth=0.45;for(let i=0;i<6;i++)for(let j=0;j<2;j++){const cx=458+i*4+(j?2:0),cy=1.5+j*3;x.beginPath();x.arc(cx-0.6,cy,0.9,0,6.3);x.stroke();x.beginPath();x.arc(cx+0.6,cy,0.9,0,6.3);x.stroke();}}}
+ if(B.belt)f(B.belt.col,432,20);}
  function buildCH(id){const C=CH[id],face=C.img,pais=PAIS;jewelB(id,C.B);const ht=paintHead(face,C.F);if(C.F.smile)paintSmile(ht,C.F);accSwatches(ht,C.B);const shirt=C.B.shirt==='pais'?pais:C.B.shirt==='tropical'?tropicalCanvas():shirtCanvas(C.B.shirt);const bt=paintBody(shirt,Object.assign({shirtScale:C.B.shirt==='pais'?0.26:C.B.shirt==='tropical'?0.45:1},C.B));if(C.B.dolphin)dolphinPrint(bt.getContext('2d'));
   const cp=cv=>{const k=document.createElement('canvas');k.width=cv.width;k.height=cv.height;k.getContext('2d').drawImage(cv,0,0);return k;};const canvases={bc:bt,hc:ht,bcBase:cp(bt),bc0:cp(bt),hc0:cp(ht)},parts=[];
   try{parts.push(upload(buildBody(C.B),mkTex(bt)));parts.push(upload(buildHead(C.B),mkTex(ht)));}catch(e){freeModel(parts);throw e;}
