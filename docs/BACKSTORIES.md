@@ -8,9 +8,9 @@ The common thread: **everybody McWey hires arrived with nothing, the way he did.
 
 ## McWey
 
-**Desmond McWey.** Born 1931 in Miami Beach. Nobody calls him Desmond.
+**Scrooge McWey.** Born 1931 in Miami Beach. Nobody calls him Scrooge to his face.
 
-- **The Grand Biscayne.** His father was a doorman who died young. His mother scrubbed floors and did the sheets at the Grand Biscayne hotel. At fourteen Desmond was carrying bags there for Family men who tipped in silver dollars. The bell captain docked his uniform from his tips and called him "kid" for the fourteen months it took to pay it off. After that it was "Mr McWey".
+- **The Grand Biscayne.** His father was a doorman who died young. His mother scrubbed floors and did the sheets at the Grand Biscayne hotel. At fourteen Scrooge was carrying bags there for Family men who tipped in silver dollars. The bell captain docked his uniform from his tips and called him "kid" for the fourteen months it took to pay it off. After that it was "Mr McWey".
 - **Gold.** Paper money changed hands and lied about it; the silver dollars never did. "In Miami, gold doesn't lie. People do." is the first thing he ever believed.
 - **Havana, 1959.** The Family sent him to Havana in the fifties to run the cage at one of their casinos. When the revolution came he packed the cage's gold into a suitcase and crossed ninety miles to Florida on a shrimp boat, sick the whole way (why he still gets seasick and won't go near Lex's boats). He handed back every bar. The Family has trusted him ever since and set him up running Miami for them. He answers to them, and never says so.
 - **The view.** From the Grand Biscayne's roof, where his mother hung the sheets, you could see the lot where Coral Tower now stands. He meant to have its top floor. Moreau paid for it first.
