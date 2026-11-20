@@ -134,8 +134,8 @@ function cruiseArrive(skip){const g=G;if(!g||g.def.hub!=='cruise'||g.arrived||g.
  if(!skip){sfx('carShut');banner(CRUISE?CRUISE.name:'',"You're here");}
  const go=()=>{CRUISE=null;if(!id||!missionKnown(id)){goHome();return;}JOBPICK=null;startMission(id);showObjCard();};
  g.hubDone=skip?fadeTo(go):(setTimeout(()=>{if(G===g)fadeTo(go);},skip?0:700),true);return true;}
-function drawCruise(B,g){const c=g.pcar;drawRide(B,c.x,c.z,1,c.h-Math.PI/2,null,c.wr||0);
- for(const t of g.traffic)if(inView(t.x,0.6,t.z,2.6)){if(t.ax==='x')drawCar(B,t.x,t.z,t.col,t.dir,t.wr||0);else drawCarShape(B,t.x,t.z,1,t.dir>0?-Math.PI/2:Math.PI/2,TRAFFIC_TYPES[Math.floor((t.col[0]*7.1+t.col[1]*13.3+t.col[2]*5.7)*97)%TRAFFIC_TYPES.length],{col:t.col},t.wr||0);}
+function drawCruise(B,g){const c=g.pcar;drawRide(B,c.x,c.z,1,c.h-Math.PI/2,null,c.wr||0);if(g.player)drawDriver(g,c.x,c.z,c.h-Math.PI/2);
+ for(const t of g.traffic)if(inView(t.x,0.6,t.z,2.6)){if(t.ax==='x')drawCar(B,t.x,t.z,t.col,t.dir,t.wr||0,undefined,1);else drawCarShape(B,t.x,t.z,1,t.dir>0?-Math.PI/2:Math.PI/2,TRAFFIC_TYPES[Math.floor((t.col[0]*7.1+t.col[1]*13.3+t.col[2]*5.7)*97)%TRAFFIC_TYPES.length],{col:t.col,drv:1+Math.floor(t.col[0]*97)%23},t.wr||0);}
  /* the place: a gold diamond over the kerb and a ring on the road */
  const d=g.dest,y=2.9+Math.sin(g.T*4)*0.2;B.box(A.mul(A.mul(A.T(d.sx,y,d.sz),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.45,0.45,0.45))),GOLD,true);
  for(let i=0;i<10;i++){const a=g.T*1.5+i*0.628;B.box(TRS(d.x+Math.sin(a)*1.6,0.02,d.z+Math.cos(a)*1.6,-a,0.35,0.01,0.12),[1,0.85,0.3],true);}}
