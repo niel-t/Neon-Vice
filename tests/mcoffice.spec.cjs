@@ -60,3 +60,17 @@ test('mcoffice: on his lap she stays there for the briefing close-up, and walkin
   await page.waitForTimeout(600);
   expect(await page.evaluate(() => ({ set: salChar.gset, mode: G.secMode, pos: (({ x, z }) => [x, z])(G.sec) }))).toMatchObject({ set: 'mclap', mode: 'lap' });
 });
+
+test('mcoffice: each room has its own floor and walls, and the floor has people on it', async ({ openGame }) => {
+  const page = await openGame();
+  await toOffice(page);
+  const r = await page.evaluate(() => {
+    loadHub('office');
+    const g = G, at = (X, Z) => g.floorF(X + 1, Z + 1);
+    // a wall face takes the room it faces: the wall between reception and McWey's office (map 12,9)
+    const i = (9 + 1) * g.W + 12 + 1;
+    return { rec: at(16, 14), office: at(15, 4), chill: at(4, 4), loot: at(25, 4), toRec: g.wallF(13, 10, 0, 1, i), toOffice: g.wallF(13, 10, 0, -1, i),
+      vips: g.npcs.filter(n => n.kind === 'vip').length, guard: g.npcs.some(n => n.kind === 'guard' && n.x > 20 && n.z < 6), strolls: g.npcs.some(n => n.stroll) };
+  });
+  expect(r).toEqual({ rec: 232, office: 230, chill: 231, loot: 233, toRec: 237, toOffice: 234, vips: 3, guard: true, strolls: true });
+});

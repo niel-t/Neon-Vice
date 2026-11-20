@@ -640,7 +640,8 @@ const GEST={
 /* which gestures each act draws from, while talking and while not */
 const GSETS={mc:{talk:['talk','point','spread','wag','lean','talk','cigar'],idle:['count','sitback','drink','cigar','tap','lean']},
  mclap:{talk:['laptalk','laptalk','lapcigar'],idle:['lapcigar','laptalk']},
- desk:{talk:['phone','type'],idle:['type','type','phone','nails','hair']},count:{talk:['bills'],idle:['bills','stack','calc','bills']},lap:{talk:['neck','coy'],idle:['neck','coy']}};
+ desk:{talk:['phone','type'],idle:['type','type','phone','nails','hair']},count:{talk:['bills'],idle:['bills','stack','calc','bills']},lap:{talk:['neck','coy'],idle:['neck','coy']},
+ lounge:{talk:['talk','spread','drink','lean'],idle:['sitback','drink','sitback','tap']}};
 const GEST_HOLD=[3.2,5.5];
 /* c.gset names the act; c.gtalk>0 while talking; the body eases over 0.7s from one gesture into the next */
 function gestVec(c,t){const S=GSETS[c.gset]||GSETS.mc,list=c.gtalk>0?S.talk:S.idle;let st=c._gs;

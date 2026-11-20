@@ -29,10 +29,11 @@ function mcOfficeSetup(g,n){if(typeof NPC_CHAT!=='undefined'&&!NPC_CHAT.secretar
  if(mode==='desk'){s.y=SEAT_Y+0.06;s.seatK=1;}
  else if(mode==='count'){s.x=SEC_TABLE.x;s.z=SEC_TABLE.z-0.62;s.seat=true;}
  else{n.seatK=1;n.y=0.02;s.seatK=1;Object.assign(s,secLapPos(n));s.a0=s.a;s.y=n.y+0.08;}
- g.npcs.push(s);g.secHello=false;
+ g.npcs.push(s);g.secHello=false;g.floorF=offFloor;for(let i=0;i<g.W*g.H;i++)if(g.solid[i]&&g.wallT[i]===42&&(g.wh[i]||WALL_H)>=WALL_H*0.9)g.topT[i]=4;/* walnut wall caps */g.wallF=(x,z,nx,nz,i)=>offWall(g,x,z,nx,nz,i);offPeople(g);g.solids.push({x:11.75,z:3.0,w:0.6,d:0.6});
  g.lights.push({x:26,y:1.8,z:4.8,r:4.2,c:[1.3,1.05,0.55]},{x:26,y:1.6,z:8,r:3.6,c:[1.1,0.9,0.5]},{x:6.2,y:1.6,z:5.6,r:4,c:[0.6,0.4,1.1]});}
 function mcOfficeTick(g,dt,n,p){const s=g.sec;if(!s)return;if(n.gtalk>0)n.gtalk-=dt;if(s.gtalk>0)s.gtalk-=dt;
  if(g.secMode==='lap'){n.a=n.a0;Object.assign(s,secLapPos(n));s.a0=s.a;s.y=n.y+0.08;s.vx=s.vz=0;}
+ for(const c of g.npcs)if(c.stroll)offStroll(c,dt,g,p);
  if(!g.secHello&&Math.hypot(p.x-s.x,p.z-s.z)<(g.secMode==='lap'?4.4:3.2)){g.secHello=true;s.gtalk=3;popup(s.x,s.z+0.3,pick(SEC_HELLO[g.secMode]),'#ffb3d1');sfx('blip');}}
 /* the front desk by the door and the counting table, with what is on them */
 function drawSecretaryDesk(B,g){const D=SEC_DESK,s=g.sec,WD0=hex(0x3a1a10),WD1=hex(0x5a2a18),CR=hex(0xf2ead8),CASH=[1,1,1];
@@ -64,7 +65,7 @@ const OFFICE_SOLIDS=[{x:6.2,z:6.6,w:3.9,d:0.9},{x:6.2,z:5.0,w:1.4,d:0.6},/* chil
  {x:24.2,z:4.8,w:1.3,d:0.8},{x:28.6,z:4.8,w:1.3,d:0.8},{x:26.2,z:4.6,w:0.6,d:0.6},{x:28.7,z:7.6,w:1.2,d:1.0},{x:23.8,z:9.1,w:1.2,d:1.0},{x:29.9,z:3.7,w:0.8,d:0.5},{x:22.3,z:5,w:0.4,d:1.3},/* loot room */
  {x:14.2,z:11.6,w:0.5,d:0.5},{x:17.8,z:11.6,w:0.5,d:0.5}];/* palms by McWey's door */
 function drawOfficeSet(B,g){const bx=(x,y,z,sx,sy,sz,c,em,ry,uv)=>B.box(TRS(x,y,z,ry||0,sx,sy,sz),c,!!em,uv),h=(i,k)=>hsh(i,k,21);
- const CASH=[1,1,1],CREAM=hex(0xe8dcc0),STEEL=[0.55,0.57,0.62],PINK=[1,0.3,0.75],CYAN=[0.2,0.9,1];
+ const ant=[],CASH=[1,1,1],CREAM=hex(0xe8dcc0),STEEL=[0.55,0.57,0.62],PINK=[1,0.3,0.75],CYAN=[0.2,0.9,1];
  /* ===== McWEY'S OFFICE: the north wall is glass from the sill up, gold mullions, and Miami at night fifty-two floors down ===== */
  for(let x=11;x<=21;x++)bx(x,1.45,1.86,0.06,2.3,0.06,GOLD);bx(16,2.62,1.86,10.1,0.08,0.1,GOLD);bx(16,0.32,1.86,10.1,0.04,0.12,GOLD);
  for(let x=11.5;x<21;x++){bx(x-0.18,1.6,1.84,0.03,0.9,0.005,[0.35,0.5,0.7],true,0);bx(x+0.1,1.2,1.84,0.02,0.5,0.005,[0.3,0.45,0.65],true,0);}
@@ -75,21 +76,19 @@ function drawOfficeSet(B,g){const bx=(x,y,z,sx,sy,sz,c,em,ry,uv)=>B.box(TRS(x,y,
  for(let i=0;i<46;i++){const x=-14+(i%23)*2.9+h(i,1)*1.2,z=-3-Math.floor(i/23)*6-h(i,2)*3,w=1.4+h(i,3)*1.2,top=-2.5+h(i,4)*4+(i%7===3?2.5:0)+Math.floor(i/23)*1.5,hh=top+6;
   const c=[0.08+h(i,5)*0.05,0.07+h(i,6)*0.04,0.13+h(i,7)*0.06];bx(x,top-hh/2,z,w,hh,w,c);
   const WIN=[[1,0.85,0.55],[0.6,0.9,1],[1,0.55,0.8]][i%3];for(let r=top-0.5;r>-5.6;r-=0.6)for(let q=-1;q<=1;q++){if(h(i*31+q,Math.floor(r*10))<0.45)continue;bx(x+q*w*0.3,r,z+w/2+0.01,w*0.18,0.26,0.02,WIN,true);}
-  if(i%5===1)bx(x,top+0.05,z+w/2+0.02,w*0.9,0.1,0.03,i%10===1?PINK:CYAN,true);if(i%9===4){bx(x,top+0.6,z,0.05,1.2,0.05,[0.7,0.7,0.75]);bx(x,top+1.22,z,0.1,0.1,0.1,[1,0.2,0.2],true);}}
+  if(i%5===1)bx(x,top+0.05,z+w/2+0.02,w*0.9,0.1,0.03,i%10===1?PINK:CYAN,true);if(i%9===4){bx(x,top+0.6,z,0.05,1.2,0.05,[0.7,0.7,0.75]);ant.push([x,top+1.22,z]);}}g.offAnt=ant;
  /* a rug and two club chairs on your side of his desk, a globe bar in the corner */
  bx(16,0.012,7.7,6.4,0.02,3.4,[1,1,1],false,0,TUV[19]);
  /* ===== THE CHILL ROOM: a sectional facing the aquarium wall, a glass coffee table, champagne, neon along the back wall ===== */
- bx(6.2,0.012,5.6,6.4,0.02,4.4,[1,1,1],false,0,TUV[19]);
+ bx(6.2,0.012,5.7,4.6,0.02,2.6,[1.05,1.02,1.0],false,0,TUV[222]);/* a white fur rug on the velvet */
  bx(6.2,0.22,6.55,3.9,0.42,0.8,CREAM);bx(6.2,0.6,6.95,3.9,0.5,0.2,CREAM.map(v=>v*0.88));for(const sx of [-1,1])bx(6.2+sx*1.9,0.4,6.6,0.2,0.36,0.9,CREAM.map(v=>v*0.92));
  for(let i=0;i<4;i++)bx(4.85+i*0.9,0.46,6.5,0.82,0.08,0.66,CREAM.map(v=>v*1.04));for(const cx of [4.6,7.8])bx(cx,0.62,6.82,0.36,0.3,0.1,i0(cx)?PINK:CYAN);
  bx(6.2,0.38,5.0,1.4,0.03,0.6,[0.55,0.8,0.9],true);for(const [ox,oz] of [[-0.62,-0.24],[0.62,-0.24],[-0.62,0.24],[0.62,0.24]])bx(6.2+ox,0.19,5.0+oz,0.04,0.38,0.04,GOLD);
  bx(6.05,0.55,4.95,0.09,0.3,0.09,hex(0x1a4a2a));bx(6.05,0.74,4.95,0.04,0.1,0.04,GOLD);for(const gx of [6.4,6.55])bx(gx,0.46,5.08,0.05,0.13,0.05,[0.85,0.9,0.95]);bx(5.7,0.42,4.9,0.26,0.06,0.26,GOLD);
- bx(6.2,1.05,9.92,7.4,0.04,0.03,PINK,true);bx(6.2,0.95,9.92,7.4,0.04,0.03,CYAN,true);
  /* ===== McWEY sign beside his door, and gold planters with palms either side ===== */
  'McWEY'.split('').forEach((ch,i)=>{const lx=10.6+i*0.55,w=ch==='c'?0.28:0.42,hh=ch==='c'?0.26:0.42;for(const s of SIGN_STROKES[ch])strokeBox(B,lx+s[0]*w,0.45+s[1]*hh,lx+s[2]*w,0.45+s[3]*hh,11.04,0.05,GOLD);});
  for(const px of [14.2,17.8]){bx(px,0.25,11.6,0.5,0.5,0.5,GOLD);drawPalm(B,px,11.6,false,px);}
  /* ===== THE LOOT ROOM: through a vault door from his office. Gold in pyramids, pallets of cash, a jewel case, a chest of coins, sacks, paintings ===== */
- bx(26,0.008,6,8.6,0.012,7.8,[0.28,0.2,0.06]);/* a gold-brown floor */
  for(const [px,pz] of [[24.2,4.8],[28.6,4.8]]){for(let l=0;l<5;l++){const n=5-l;for(let i=0;i<n;i++)for(let k=0;k<3;k++)bx(px-(n-1)*0.13+i*0.26,0.05+l*0.09,pz-0.24+k*0.24,0.24,0.085,0.12+0.06*(k%2),GOLD);}}
  bx(26.2,0.45,4.6,0.5,0.9,0.5,[0.92,0.9,0.88],false,0,TUV[41]);bx(26.2,0.92,4.6,0.56,0.04,0.56,GOLD);bx(26.2,1.15,4.6,0.5,0.42,0.5,[0.5,0.85,1.1],true);bx(26.2,1.37,4.6,0.54,0.03,0.54,GOLD);
  for(let i=0;i<6;i++)bx(26.05+(i%3)*0.15,1.0,4.5+Math.floor(i/3)*0.2,0.06,0.06,0.06,[1.4,1.4,1.5],true,0.785);for(let i=0;i<8;i++){const a=i/8*Math.PI*2;bx(26.2+Math.cos(a)*0.12,0.97,4.62+Math.sin(a)*0.1,0.04,0.02,0.04,GOLD);}
@@ -100,7 +99,16 @@ function drawOfficeSet(B,g){const bx=(x,y,z,sx,sy,sz,c,em,ry,uv)=>B.box(TRS(x,y,
  /* the vault door, swung open flat against the wall beside the doorway: a steel disc, a ring of gold bolts, a spoked wheel */
  for(let k=0;k<8;k++)B.box(A.mul(A.T(22.3,0.66,5),A.mul(A.RX(k*Math.PI/8),A.S(0.3,1.26,0.52))),STEEL);
  for(let k=0;k<12;k++){const a=k/12*Math.PI*2;bx(22.47,0.66+Math.sin(a)*0.5,5+Math.cos(a)*0.5,0.07,0.07,0.07,GOLD);}bx(22.49,0.66,5,0.06,0.16,0.16,GOLD);
- for(let k=0;k<3;k++)B.box(A.mul(A.T(22.53,0.66,5),A.mul(A.RX(k*Math.PI/3),A.S(0.04,0.62,0.04))),GOLD);}
+ for(let k=0;k<3;k++)B.box(A.mul(A.T(22.53,0.66,5),A.mul(A.RX(k*Math.PI/3),A.S(0.04,0.62,0.04))),GOLD);
+ /* ===== definition: a gold crown along the top of every inside wall, marble pilasters and sconces in the reception ===== */
+ for(let z=1;z<g.H-1;z++)for(let x=1;x<g.W-1;x++){const i=z*g.W+x;if(!g.solid[i]||g.wallT[i]!==42||(g.wh[i]||WALL_H)<WALL_H*0.9)continue;
+  for(const [nx,nz] of [[1,0],[-1,0],[0,1],[0,-1]]){if(g.solid[(z+nz)*g.W+x+nx]||!offRoom(x+nx,z+nz))continue;const cx=x+0.5+nx*0.52,cz=z+0.5+nz*0.52;
+   bx(cx,WALL_H-0.035,cz,nz?1:0.05,0.05,nz?0.05:1,GOLD);bx(cx,WALL_H-0.09,cz,nz?1:0.025,0.02,nz?0.025:1,GOLD.map(v=>v*0.7));}}
+ const pil=(x,fz,d)=>{bx(x,WALL_H/2,fz+d*0.06,0.26,WALL_H-0.06,0.12,[0.95,0.92,0.88],false,0,TUV[41]);bx(x,0.05,fz+d*0.075,0.32,0.1,0.15,GOLD);bx(x,WALL_H-0.12,fz+d*0.075,0.32,0.08,0.15,GOLD);
+  bx(x,WALL_H-0.18,fz+d*0.07,0.28,0.04,0.14,GOLD.map(v=>v*0.75));};
+ for(const x of [3.6,9.6,20.4,25.5,28.4])pil(x,11,1);for(const x of [3.6,7.2,12.2,20.2,25,28.4])pil(x,20,-1);
+ const sco=(x,fz,d)=>{bx(x,0.82,fz+d*0.02,0.12,0.2,0.03,GOLD);bx(x,0.9,fz+d*0.08,0.16,0.12,0.1,[1.25,0.95,0.6],true);bx(x,0.83,fz+d*0.08,0.1,0.03,0.08,GOLD);};
+ for(const x of [5.4,9.7,22.6,26.7])sco(x,20,-1);for(const x of [5,23])sco(x,11,1);}
 const i0=x=>Math.round(x)%2===0;
 /* the briefing close-up: when she is on his knee she stays there while he talks */
 const SEC_BRIEF_P={x:0.44,y:-0.22,z:0.16,a:0.95};
@@ -108,3 +116,44 @@ function drawBriefSec(B,t){const g=G;if(!g||!g.sec||g.secMode!=='lap'||state!=='
  Object.assign(q,{x:SEC_BRIEF_P.x,y:SEC_BRIEF_P.y,z:SEC_BRIEF_P.z,a:SEC_BRIEF_P.a,vx:0,vz:0,seatK:1,gtalk:0});PS2C.add(q,'game',1,t,B,'look');}
 /* walk up to the desk, or tap/USE McWey, to sit down for the briefing (the carpet trigger in front of the desk still works too) */
 function officeTargets(g,t){const D=g.mcDesk;if(!D)return;t.push({k:'mcwey',x:D.x,z:D.z+D.d/2+0.5,r:2.2,lbl:'SIT DOWN WITH McWEY',fn:()=>{if(!g.hubDone&&!fading)g.hubDone=fadeTo(talkMcWey);}});}
+/* ---- finishes: each room has its own floor and its own wall face (renderer.js tiles 230-237). buildStatic asks g.floorF per
+   floor cell and g.wallF per wall face, so a wall between two rooms is dressed for the room on each side ---- */
+const OFF_FLOOR={rec:232,office:230,chill:231,loot:233},OFF_WALL={rec:237,office:234,chill:235,loot:236};
+function offRoom(x,z){const X=x-1,Z=z-1;if(X<1||X>28||Z<1||Z>18)return null;if(Z>=9)return 'rec';return X<=8?'chill':X>=21?'loot':'office';}
+function offFloor(x,z){const r=offRoom(x,z);if(!r)return 0;const X=x-1,Z=z-1;return r==='rec'&&Z>9&&(X===1||X===28||Z===10||Z===18)?43:OFF_FLOOR[r];}
+function offWall(g,x,z,nx,nz,i){if(g.wallT[i]!==42||(g.wh[i]||WALL_H)<WALL_H*0.9)return 0;const r=offRoom(x+nx,z+nz);return r?OFF_WALL[r]:0;}
+/* ---- who else is up here: a couple on the sectional and a man on the vault ---- */
+const VIP_CHAT=["The shark's name is Morty. Don't ask.","We're waiting on Scrooge. We're always waiting on Scrooge.","This champagne costs more than my first house.",
+ "Honey, don't tap the glass.","You're the one everybody's talking about.","Best view in Miami. Worst landlord."];
+function offPeople(g){if(typeof NPCLINES!=='undefined'&&!NPCLINES.vip){NPCLINES.vip=[["Shh. The shark's feeding."],["Oh, it's you. Sit, sit."]];}
+ if(typeof NPC_CHAT!=='undefined'&&!NPC_CHAT.vip)NPC_CHAT.vip=VIP_CHAT;
+ const seat=(x,look,gs)=>{const c=makeChar(x,6.45,look,false);Object.assign(c,{kind:'vip',state:'idle',r:0.3,a:Math.PI,a0:Math.PI,seat:true,seatK:1,y:SEAT_Y+0.16,gset:gs,gtalk:0,said:false});c.body=c.look.body;g.npcs.push(c);return c;};
+ let m=NPCLOOK.guest();for(let k=0;k<12&&m.fem;k++)m=NPCLOOK.guest();seat(5.25,m,'lounge');seat(7.15,NPCLOOK.lady(),'lounge');
+ /* a client killing time in the reception, strolling from the palms to the window and back */
+ const w=makeChar(8,14.5,NPCLOOK.lady(),false);Object.assign(w,{kind:'vip',state:'idle',r:0.3,a:0,a0:0,said:false,stroll:true,wait:2});w.body=w.look.body;g.npcs.push(w);
+ const v=makeChar(20.5,5.3,NPCLOOK.guard(),false);Object.assign(v,{kind:'guard',state:'idle',r:0.3,a:-Math.PI/4,a0:-Math.PI/4,said:false});v.body=v.look.body;g.npcs.push(v);}
+/* ---- what moves: neon that breathes and stutters, traffic and aircraft lights fifty-two floors down, glints on the gold,
+   a globe bar that turns, a second school of fish ---- */
+function drawOfficeLife(B,g){const T=g.T,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,ry||0,sx,sy,sz),c,!!em);
+ const fl=k=>{const s=Math.sin(T*1.7+k)*0.12+0.95;return (Math.floor(T*9+k*3)%37===0)?0.35:s;};
+ const P=fl(0),C=fl(2.1);bx(6.2,1.05,9.92,7.4,0.04,0.03,[P,0.3*P,0.75*P],true);bx(6.2,0.95,9.92,7.4,0.04,0.03,[0.2*C,0.9*C,C],true);
+ /* the city: cars on the two near avenues, headlights one way and tail lights the other; red lights blinking on the masts */
+ for(let k=0;k<14;k++){const dir=k%2?1:-1,z=k%4<2?-1.5:-6,x=-18+(((T*(1.2+(k%3)*0.35)*dir+k*9.7)%70)+70)%70;const head=dir>0;
+  for(const o of [-0.08,0.08])bx(x,-5.8,z+o+(head?0.12:-0.12),0.1,0.04,0.06,head?[1.4,1.3,1.1]:[1.2,0.15,0.1],true);}
+ if(g.offAnt)for(let k=0;k<g.offAnt.length;k++){const a=g.offAnt[k];if(Math.sin(T*2.4+k*1.9)>0.2)bx(a[0],a[1],a[2],0.12,0.12,0.12,[1.6,0.15,0.15],true);}
+ /* the loot room: a star of light that comes and goes on the gold */
+ const GL=[[24.2,0.52,4.8],[28.6,0.52,4.8],[29.8,0.52,3.62],[26.2,1.08,4.55],[28.7,1.12,7.6],[26.3,0.95,7.5]];
+ for(let k=0;k<GL.length;k++){const s=Math.pow(Math.max(0,Math.sin(T*1.6+k*2.3)),10);if(s<0.05)continue;const [x,y,z]=GL[k],L=0.18*s;bx(x,y,z,L,0.012,0.012,[2,1.8,1.2],true,0.785);bx(x,y,z,0.012,L,0.012,[2,1.8,1.2],true);bx(x,y,z,L,0.012,0.012,[2,1.8,1.2],true,-0.785);}
+ /* McWey's globe bar in the corner: a mahogany stand, a gold meridian, the globe turning slowly */
+ {const x=11.75,z=3.0,y=0.72,r=0.3;bx(x,0.04,z,0.5,0.06,0.5,hex(0x3a1a10));for(const [ox,oz] of [[-0.18,-0.18],[0.18,-0.18],[-0.18,0.18],[0.18,0.18]])bx(x+ox,0.24,z+oz,0.05,0.4,0.05,hex(0x5a2a18));
+  bx(x,0.44,z,0.62,0.04,0.62,GOLD);for(let k=0;k<6;k++){const a=T*0.4+k*Math.PI/6;B.box(A.mul(A.T(x,y,z),A.mul(A.RY(a),A.S(r*2,r*1.9,0.05))),k%2?hex(0x2a6a9a):hex(0xd8c890));}
+  for(let k=0;k<4;k++)B.box(A.mul(A.T(x,y,z),A.mul(A.RZ(k*Math.PI/4),A.S(0.03,r*2.12,0.03))),GOLD);}
+ /* a second school of little fish in the aquarium */
+ if(g.tankB&&typeof anFishPath==='function'){const t=g.tankB,I=IBhi,pr=I.r,pt=I.tp,pu=I.uv;I.uv=null;for(let i=0;i<6;i++){const m=anFishPath(T*0.9+i*1.1,t.x0+0.3,t.x1-0.3,(t.z0+t.z1)/2,0.05,0.6+(i%3)*0.35,0.05,i+5);anFish(I,m,T,AN_REEF[(i+2)%AN_REEF.length],0.11,i*0.9);}I.r=pr;I.tp=pt;I.uv=pu;}}
+/* the reception client: picks a free spot in the reception, walks there, stands a while; stops when you come close */
+function offStroll(n,dt,g,p){n.vx=n.vz=0;if(Math.hypot(p.x-n.x,p.z-n.z)<1.6)return;if(n.wait>0){n.wait-=dt;return;}
+ if(!n.tgt||Math.hypot(n.tgt[0]-n.x,n.tgt[1]-n.z)<0.3||n.stuck>1.2){let t=null;for(let k=0;k<20&&!t;k++){const x=3+Math.random()*26|0,z=12+Math.random()*7|0;
+   if(!isBlock(x,z)&&Math.hypot(x+0.5-SEC_DESK.x,z+0.5-SEC_DESK.z)>2.2&&!g.trigs.some(q=>Math.hypot(q.x-x-0.5,q.z-z-0.5)<1.5))t=[x+0.5,z+0.5];}
+  if(n.tgt)n.wait=1.5+Math.random()*4;n.tgt=t||[n.x,n.z];n.stuck=0;return;}
+ const dx=n.tgt[0]-n.x,dz=n.tgt[1]-n.z,L=Math.hypot(dx,dz)||1,sp=0.7,ox=n.x,oz=n.z;n.vx=dx/L*sp;n.vz=dz/L*sp;n.x+=n.vx*dt;n.z+=n.vz*dt;collideGrid(n);
+ const m=Math.hypot(n.x-ox,n.z-oz);n.walk=(n.walk||0)+m*9;if(m<sp*dt*0.3)n.stuck=(n.stuck||0)+dt;n.a=n.a0=n.a+clamp(angDiff(n.a,Math.atan2(dx,dz)),-5*dt,5*dt);}

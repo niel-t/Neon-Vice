@@ -1291,13 +1291,13 @@ function buildStatic(g){const B=g.staticB;B.reset();const W=g.W,H=g.H;
  const st=g.wst&&g.wst.legacy===g?g.wst:WORLD.fromCells(g),rid=(X,Z)=>{const r=WORLD.roomAt(st,X+0.5,Z+0.5);return r&&r.idx<255?r.idx+1:0;};
  const top=[0.13,0.09,0.16],GRM=g.def.grime===undefined?1:g.def.grime; /* def.grime scales the dirt blend (a kept-up home sets it low) */
  for(let z=0;z<H;z++)for(let x=0;x<W;x++){const i=z*W+x;if(g.pit&&g.pit[i])continue; /* a way down (stairs.js) has no floor */
-  if(!g.solid[i]){B.room=rid(x,z);const v=0.9+((x*7+z*13)%5)*0.025;const sl=(X,Z)=>(isSolid(X,Z)?1:0)+(G.furn[Z*W+X]?0.4:0),sn=(X,Z)=>sl(X-1,Z-1)+sl(X,Z-1)+sl(X-1,Z)+sl(X,Z),ao=(X,Z)=>{const k=v*(1-0.15*sn(X,Z)),t=surfTint(X,Z);return[k*t[0],k*t[1],k*t[2]];};const [ft,fk]=surfFloor(g.floorX&&g.floorX[i]||g.floorT[i],x,z),gw=(X,Z)=>grimeW(X,Z,0.16*sn(X,Z))*GRM;
+  if(!g.solid[i]){B.room=rid(x,z);const v=0.9+((x*7+z*13)%5)*0.025;const sl=(X,Z)=>(isSolid(X,Z)?1:0)+(G.furn[Z*W+X]?0.4:0),sn=(X,Z)=>sl(X-1,Z-1)+sl(X,Z-1)+sl(X-1,Z)+sl(X,Z),ao=(X,Z)=>{const k=v*(1-0.15*sn(X,Z)),t=surfTint(X,Z);return[k*t[0],k*t[1],k*t[2]];};const [ft,fk]=surfFloor(g.floorF&&g.floorF(x,z)||g.floorX&&g.floorX[i]||g.floorT[i],x,z),gw=(X,Z)=>grimeW(X,Z,0.16*sn(X,Z))*GRM;
    B.blT=BLEND[ft]||0;B.quad4([[x,0,z+1],[x+1,0,z+1],[x+1,0,z],[x,0,z]],0,1,0,TUV[ft],[ao(x,z+1),ao(x+1,z+1),ao(x+1,z),ao(x,z)],fk,B.blT?[gw(x,z+1),gw(x+1,z+1),gw(x+1,z),gw(x,z)]:null);B.blT=0;if((!g.def.hub||g.def.hub==='drive')&&!g.furn[i]&&hsh(x,z,21)<0.12&&g.floorT[i]===7&&!g.front)floorQuad(B,x+0.2+hsh(x,z,22)*0.6,z+0.2+hsh(x,z,23)*0.6,0.7+hsh(x,z,24)*0.9,hsh(x,z,25)*6,TUV[47],[1,1,1],0.006);if(g.rug[i])B.quad([[x,0.004,z+1],[x+1,0.004,z+1],[x+1,0.004,z],[x,0.004,z]],0,1,0,TUV[19],[1,1,1]);if(g.furn[i])buildFurniture(B,g,x,z,g.furn[i]);else clutter(B,g,x,z);B.room=0;continue;}
   let any=false;const h=g.wh[i]||WALL_H,tn=g.tint[i]>=100?STREET_TINT[g.tint[i]-100]:g.tint[i]>=50?HL_PAINT[g.tint[i]-50].c:g.tint[i]>=0?PASTEL[g.tint[i]]:null,gm=g.glow[i]===1?1.35:1;
   const tc=c=>tn?c.map((v,k)=>v*tn[k]*gm):c.map(v=>v*gm);const WG0=[[0.62,0.62,0.66],[0.62,0.62,0.66],[1,1,1],[1,1,1]].map(tc),WG1=[[1,1,1],[1,1,1],[1,1,1],[1,1,1]].map(tc);
   const nh=j=>g.solid[j]?(g.wh[j]||WALL_H):0;
   /* per face segment: a variant/flip pick and the world-space surface tint at each corner */
-  const face=(n,s,P,nx,nz)=>{B.room=rid(x+nx,z+nz);for(let y0=n,q=0;y0<h-1e-4;y0+=WALL_H,q++){const y1=Math.min(h,y0+WALL_H),Q=P(y0,y1),[t,k]=surfPick(g.wallX&&g.wallX[i]||g.wallT[i],x,z,1+s*8+q,0.25);
+  const face=(n,s,P,nx,nz)=>{B.room=rid(x+nx,z+nz);for(let y0=n,q=0;y0<h-1e-4;y0+=WALL_H,q++){const y1=Math.min(h,y0+WALL_H),Q=P(y0,y1),[t,k]=surfPick(g.wallF&&g.wallF(x,z,nx,nz,i)||g.wallX&&g.wallX[i]||g.wallT[i],x,z,1+s*8+q,0.25);
    const g0=y0<0.01&&BLEND[t];B.blT=g0||0;B.quad4(Q,nx,0,nz,TUV[t],(y0<0.01?WG0:WG1).map((c,j)=>{const m=surfTint(Q[j][0],Q[j][2]);return[c[0]*m[0],c[1]*m[1],c[2]*m[2]];}),k,g0?Q.map((p,j)=>j<2?grimeW(p[0],p[2],0.45)*GRM:0):null);B.blT=0;}};
   if(z+1<H){const n=nh(i+W);if(n<h){face(n,0,(y0,y1)=>[[x,y0,z+1],[x+1,y0,z+1],[x+1,y1,z+1],[x,y1,z+1]],0,1);any=true;if(!g.def.hub&&n===0)wallDecor(B,g,x,z);}}
   if(z-1>=0){const n=nh(i-W);if(n<h){face(n,1,(y0,y1)=>[[x+1,y0,z],[x,y0,z],[x,y1,z],[x+1,y1,z]],0,-1);any=true;}}
@@ -4223,7 +4223,7 @@ function officeSetup(g){const n=g.npcs.find(q=>q.kind==='mcwey');if(!n)return;co
 function officeTick(g,dt){const n=g.npcs.find(q=>q.kind==='mcwey'),p=g.player;if(!n||!p)return;
  if(!g.pour&&Math.hypot(p.x-n.x,p.z-n.z)<3.6){g.pour={t:0};n.gtalk=3;popup(n.x,n.z+0.4,pick(g.secMode==='lap'?["Drink? She'll pour.","Sit. We were celebrating.","Don't look at her, look at me."]:["Drink? Course you do.","Sit. I'll pour.","Twenty-five years old. Older than you."]),'#ffe9a8');sfx('blip');}
  if(g.pour&&g.pour.t<3)g.pour.t+=dt;mcOfficeTick(g,dt,n,p);}
-function drawMcOffice(B,g,FX){const D=g.mcDesk,n=g.npcs.find(q=>q.kind==='mcwey'),J=g.haul,WD0=hex(0x3a1a10),WD1=hex(0x5a2a18),LTH=hex(0x6a1426),CASH=[1,1,1];if(FX)drawOfficeSet(FX,g);if(g.sec)drawSecretaryDesk(B,g);
+function drawMcOffice(B,g,FX){const D=g.mcDesk,n=g.npcs.find(q=>q.kind==='mcwey'),J=g.haul,WD0=hex(0x3a1a10),WD1=hex(0x5a2a18),LTH=hex(0x6a1426),CASH=[1,1,1];if(FX)drawOfficeSet(FX,g);if(g.sec){drawSecretaryDesk(B,g);drawOfficeLife(B,g);}
  /* the chair swivels with him */
  if(n){const a=n.a,s=Math.sin(a),c=Math.cos(a),at=(f,r,y,sx,sy,sz,col)=>B.box(TRS(n.x+s*f+c*r,y,n.z+c*f-s*r,a,sx,sy,sz),col);
   at(0,0,0.06,0.56,0.05,0.56,DARK);at(0,0,0.2,0.08,0.26,0.08,GOLD);at(0.04,0,0.38,0.72,0.14,0.64,LTH);
