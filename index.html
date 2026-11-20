@@ -2679,7 +2679,7 @@ function hubSetup(g){const d=g.def;g.npcs=g.npcs||[];g.trigs=g.trigs||[];
  if(d.hub==='drive'&&g.car&&HUBMODE==='in'){const v=makeChar(g.car.x+2.2,g.car.z+2.0,NPCLOOK.valet(),false);v.kind='valet';v.state='idle';v.a=v.a0=0;v.r=0.3;v.body=v.look.body;v.said=false;v.arrived=false;g.valet=v;g.npcs.push(v);}
  if(d.hub==='drive'){const p=g.player;g.pcar={x:p.x,z:p.z,h:Math.PI/2,v:0,boost:1,r:0.62,vx:0,vz:0};g.traffic=[];const cols=[[0.2,0.35,0.8],[0.9,0.9,0.86],[0.15,0.15,0.17],[0.25,0.65,0.65],[0.95,0.75,0.2],[0.7,0.2,0.8]];
   for(const L of d.lanes)for(let i=0;i<L.n;i++)g.traffic.push({x:6+i*(g.W-8)/L.n+rnd(-2,2),z:L.z,dir:L.dir,sp:L.sp*rnd(0.85,1.15),col:pick(cols),slow:0});
-  g.deco.push({t:'sign',x:g.car.x,z:4.0});for(let x=0;x<g.W;x++){if(!isSolid(x,8))g.deco.push({t:'cline',x,z:8});if(x%2===0&&!isSolid(x,9))g.deco.push({t:'lane',x,z:9});}}
+  g.deco.push({t:'sign',x:g.car.x,z:4.0});for(let x=0;x<g.W;x++){if(!isSolid(x,8))g.deco.push({t:'cline',x,z:8});if(x%2===0&&!isSolid(x,9))g.deco.push({t:'lane',x,z:9});}roadPortals(g,[{ax:'x',a:7,b:10}]);}
  let tk=[];for(let z=0;z<g.H;z++)for(let x=0;x<g.W;x++)if(g.furn[z*g.W+x]===24)tk.push([x,z]);if(tk.length){const xs=tk.map(t=>t[0]),zs=tk.map(t=>t[1]);g.tank={x0:Math.min(...xs)+0.2,x1:Math.max(...xs)+0.8,z:(Math.min(...zs)+Math.max(...zs)+1)/2};g.tankB={x0:Math.min(...xs),x1:Math.max(...xs)+1,z0:Math.min(...zs),z1:Math.max(...zs)+1};}
  {const fk=[];for(let z=0;z<g.H;z++)for(let x=0;x<g.W;x++)if(g.furn[z*g.W+x]===25)fk.push([x,z]);if(fk.length){const xs=fk.map(t=>t[0]),zs=fk.map(t=>t[1]);g.fount={x:(Math.min(...xs)+Math.max(...xs)+1)/2,z:(Math.min(...zs)+Math.max(...zs)+1)/2};}}
  if(d===HUBS.office)officeSetup(g);else if(d===HUBS.lobby)lobbySetup(g);else if(d===HUBS.slobby)slobbySetup(g);else if(d===HUBS.garage)garageSetup(g);}
@@ -2888,9 +2888,7 @@ function engineRev(v,boost){if(!ENG)return;const fr=42+Math.abs(v)*8.5+(boost?12
 Object.assign(SFX,{horn:(t,v=1)=>{tone(t,0.35,'square',392,392,0.08*v);tone(t,0.35,'square',494,494,0.06*v);},ding:(t)=>{tone(t,0.9,'sine',1318,1318,0.18);tone(t+0.22,1.1,'sine',1046,1046,0.16);},
  crash:(t)=>{noise(t,0.35,'lowpass',2600,200,0.9);pb(GB.chop,t,0.6,0.7);tone(t,0.25,'sine',80,30,0.8);}});
 function updateDrive(dt){const g=G,c=g.pcar,p=g.player;carStep(g,c,carInput(c),dt);const fx=Math.sin(c.h),fz=Math.cos(c.h);
- for(const t of g.traffic){t.slow=Math.max(0,t.slow-dt);t.x+=t.dir*t.sp*(t.slow>0?0.2:1)*dt;if(t.x>g.W+2)t.x=-2;if(t.x<-2)t.x=g.W+2;
-  const dx=c.x-t.x,dz=c.z-t.z;if(Math.abs(dx)<1.75&&Math.abs(dz)<0.92){const px=1.75-Math.abs(dx),pz=0.92-Math.abs(dz);if(pz<px){c.z+=Math.sign(dz||1)*pz;}else{c.x+=Math.sign(dx||1)*px;}
-   if(Math.abs(c.v)>3||t.slow<=0){sfx('crash');sfx('horn');shake(0.4);rumble(0.8,0.8,220);sparks((c.x+t.x)/2,0.4,(c.z+t.z)/2);popup(t.x,t.z,pick(['HEY!','WATCH IT!','*HONK*','LEARN TO DRIVE!']),'#ffd36b');}c.vx*=-0.3;c.vz*=-0.3;c.v*=-0.3;t.slow=1.2;}}
+ trafficMove(g,dt);carVsTraffic(g,dt);
  engineRev(c.v,g.turbo);}
 /* Fixed hub geometry: the parts of a hub's per-frame drawing that never move (Nine's shop, the club, the garage) are built once
    into g.fixB, uploaded once and drawn every frame next to dynB, instead of being rebuilt and re-uploaded every frame.

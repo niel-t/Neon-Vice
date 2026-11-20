@@ -662,9 +662,9 @@
         "paletteSize": 6
       },
       "gridHash": "a93025d735333ebd8c5efb5974ccf80ced8392d15c869401d0970b8b2937534f",
-      "loadedHash": "a81f0090a1f8a8574d2ad1853bf93a25c4a1e32720e6dd410f2369ed5a248e2c",
-      "queryHash": "38518d9b6977d7251b6c67969d679880c32c5479f79b2177f699edba5af8f785",
-      "cellHash": "b6698886f97d0fdc83cfdfb9a5346d8a5297055f57eef8f9af0b7f2aec9372b2"
+      "loadedHash": "c8953087dac81515066be265768826515256a57394a9d28fcbf950e4f47370bf",
+      "queryHash": "011eedc46d3599cdb694bdb853265ade19cf31a3bb27787113d98beef338661d",
+      "cellHash": "5f8dc420c31c98c7765632c6aff569a8aad60977449f5220296c1ecfb2b8b25f"
     },
     {
       "key": "hub:drive:7",
@@ -742,9 +742,9 @@
         "paletteSize": 6
       },
       "gridHash": "03bce7f4379adfbd1bbfc60a66483669e01fb1b0d0571f35ec09ec45d740b5a2",
-      "loadedHash": "a81f0090a1f8a8574d2ad1853bf93a25c4a1e32720e6dd410f2369ed5a248e2c",
-      "queryHash": "38518d9b6977d7251b6c67969d679880c32c5479f79b2177f699edba5af8f785",
-      "cellHash": "b6698886f97d0fdc83cfdfb9a5346d8a5297055f57eef8f9af0b7f2aec9372b2"
+      "loadedHash": "c8953087dac81515066be265768826515256a57394a9d28fcbf950e4f47370bf",
+      "queryHash": "011eedc46d3599cdb694bdb853265ade19cf31a3bb27787113d98beef338661d",
+      "cellHash": "5f8dc420c31c98c7765632c6aff569a8aad60977449f5220296c1ecfb2b8b25f"
     },
     {
       "key": "hub:lobby:0",
