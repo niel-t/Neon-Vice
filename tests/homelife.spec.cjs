@@ -78,3 +78,73 @@ test('home life: wardrobe, bench, minibar, TV and parties', async ({ openGame })
   expect(out.party).toMatchObject({ paid: 2500, guests: 7, onFloor: true, card: true, disco: true, twice: true, back: 7, afterBed: 0, partyMorning: true });
   expect(out.mansion).toBe(12);
 });
+
+// Decorate (homelife.js): from the home phone, move furniture (carry it, it only goes down where it fits, it stays moved after a
+// reload), paint the walls, lay a new floor in one room and re-finish what is built into a room; each costs money and saves.
+test('home life: decorate mode moves furniture, paints walls, floors and finishes rooms', async ({ openGame }) => {
+  const page = await openGame();
+  const out = await page.evaluate(() => {
+    selIdx = 2; sessionReset(Math.min(JOBS.sel, JOBS.top)); const p = myProg(); arm(); p.wallet = 1e6; p.home = 1; p.homes = [0, 1];
+    p.furn = { 1: { wardrobe: 1, bench: 1, dine: 1 } }; p.deco = {};
+    const fade = fadeTo, o = {};
+    try {
+      fadeTo = f => { f(); return true; };
+      loadHub('home1', 'home'); if (G.seq) seqSkip(); state = 'play';
+      openStore('home'); o.card = [...document.querySelectorAll('#sStore .scard')].some(b => b.dataset.hlact === 'open');
+      hlDecorClick('open'); o.mode = storeMode; o.moveCards = [...document.querySelectorAll('#sStore [data-hlact^="mv:"]')].map(b => b.dataset.hlact).sort();
+      /* paint, floor, finish */
+      const w0 = p.wallet; hlDecorClick('paint:3'); hlDecorClick('room:bed'); hlDecorClick('floor:43'); hlDecorClick('fin:gold');
+      o.paid = w0 - p.wallet; o.deco = JSON.stringify({ paint: p.deco[1].paint, floor: p.deco[1].floor, fin: p.deco[1].fin });
+      const g = G, W = g.W, rows = g.def.map;
+      let wall = null, bedFloor = null, liveFloor = null;
+      for (let z = 1; z < g.H - 1 && !(wall && bedFloor && liveFloor); z++) for (let x = 1; x < W - 1; x++) { const ch = rows[z - 1][x - 1], i = z * W + x;
+        if (ch === '#' && wall === null) wall = [g.wallT[i], g.tint[i]]; if (ch === '.' && hlRoomAt(1, x, z) === 'bed' && bedFloor === null) bedFloor = g.floorT[i]; if (ch === '.' && hlRoomAt(1, x, z) === 'live' && liveFloor === null) liveFloor = g.floorT[i]; }
+      o.wall = wall; o.bedFloor = bedFloor; o.liveFloor = liveFloor;
+      /* the finish recolours built-in boxes in that room only */
+      o.fin = [hlFinRemap(1, TRS(3, 0.5, 13, 0, 1, 1, 1), [0.5, 0.5, 0.5]).join(), hlFinRemap(1, TRS(15, 0.5, 15, 0, 1, 1, 1), [0.5, 0.5, 0.5]).join(), hlFinRemap(1, TRS(3, 0.5, 13, 0, 1, 1, 1), [1, 0.2, 0.2], true).join()];
+      closeStore();
+      /* carry the wardrobe: into a wall is refused, the middle of the living room is fine */
+      hlStartMove(G, 'wardrobe'); let pl = G.player; pl.x = 15.5; pl.z = 12.6; pl.a = Math.PI; hlMoveTick(G); o.badSpot = G.hlMove.ok; hlPlace(G); o.stillMoving = !!G.hlMove;
+      o.bar = document.getElementById('hlMoveBar').style.display;
+      pl.x = 15.5; pl.z = 17.6; pl.a = Math.PI; hlRotate(G); hlMoveTick(G); o.goodSpot = G.hlMove.ok; hlPlace(G);
+      o.moved = !G.hlMove && !!p.deco[1].mv.wardrobe; const P = hlPosAll(G).wardrobe; o.solidAtNew = P.sol.every(([x, z]) => G.solid[z * G.W + x]);
+      o.oldFree = !G.solid[13 * G.W + 8];
+      o.target = hubTargets(G).some(t => t.lbl.startsWith('WARDROBE') && Math.hypot(t.x - P.use.x, t.z - P.use.z) < 0.01);
+      /* a slot piece: the table and its chairs go together */
+      hlStartMove(G, 'dine'); pl = G.player; pl.x = 12.5; pl.z = 19.0; pl.a = Math.PI; hlMoveTick(G); const ok = G.hlMove.ok, at = G.hlMove.at; hlPlace(G);
+      o.dine = ok && Math.abs(G.slots.q.x - at.x) < 0.01 && Math.abs(G.slots.q.z - at.z) < 0.01 && homeSeats(G).filter(s => s.lbl === 'SIT AT THE TABLE').every(s => Math.hypot(s.x - at.x, s.z - at.z) < 1.2);
+      /* cancel puts it back */
+      hlStartMove(G, 'bench'); pl = G.player; const b0 = JSON.stringify(hlPosAll(G).bench.sol); pl.x = 20; pl.z = 18; hlMoveTick(G); hlCancel(G); o.cancel = !G.hlMove && JSON.stringify(hlPosAll(G).bench.sol) === b0;
+      /* reset */
+      openStore('home'); hlDecorClick('open'); hlDecorClick('mvreset'); o.reset = Object.keys(p.deco[1].mv).length === 0 && Math.abs(hlPosAll(G).wardrobe.x - HL_POS[1].wardrobe.x) < 0.01;
+      closeStore();
+      /* draw with a finish in both looks */
+      o.errors = []; for (const enh of [true, false]) { SET.gfx2 = enh; try { IBhi.reset(); dynB.reset(); hlFinWrap(dynB, G, HB => { drawHomeDecor(HB, G); drawHome(HB, G); }); } catch (e) { o.errors.push(e.message); } }
+      SET.gfx2 = true; o.ibBox = Object.prototype.hasOwnProperty.call(IBhi, 'box') ? typeof IBhi.box : 'proto';
+    } finally { fadeTo = fade; }
+    return o;
+  });
+  expect(out.card).toBe(true);
+  expect(out.mode).toBe('hldecor');
+  expect(out.moveCards).toEqual(['mv:bench', 'mv:dine', 'mv:wardrobe']);
+  expect(out.paid).toBe(600 + 800 + 1500);
+  expect(out.deco).toBe(JSON.stringify({ paint: 3, floor: { bed: 43 }, fin: { bed: 'gold' } }));
+  expect(out.wall).toEqual([44, 53]);
+  expect(out.bedFloor).toBe(43);
+  expect(out.liveFloor).toBe(61);
+  expect(out.fin[0]).not.toBe('0.5,0.5,0.5');
+  expect(out.fin[1]).toBe('0.5,0.5,0.5');
+  expect(out.fin[2]).toBe('1,0.2,0.2');
+  expect(out.badSpot).toBe(false);
+  expect(out.stillMoving).toBe(true);
+  expect(out.bar).toBe('flex');
+  expect(out.goodSpot).toBe(true);
+  expect(out.moved).toBe(true);
+  expect(out.solidAtNew).toBe(true);
+  expect(out.oldFree).toBe(true);
+  expect(out.target).toBe(true);
+  expect(out.dine).toBe(true);
+  expect(out.cancel).toBe(true);
+  expect(out.reset).toBe(true);
+  expect(out.errors).toEqual([]);
+});
