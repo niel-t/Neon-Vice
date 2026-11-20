@@ -717,7 +717,7 @@ function pose(t,anim,jab,arms,kick,gait){const R={},rot=(b,ax,a)=>{R[b]=M4.mul(M
   else if(arms==='slap'){/* wind the right hand back, swing it through low and in front, let it come back */
    const sx=k<0.3?0.75*k/0.3:k<0.5?0.75-1.45*(k-0.3)/0.2:-0.7*(1-(k-0.5)/0.5);up(-1,sx,0.15,0.45);rot('chest',Y,-0.25*sx);lower(1,0.5);rot('farmL',armHinge(1),0.3);}
   /* in bed, rolled onto her side towards you: the upper arm reaches over and rests across you, the lower one tucked under her head */
-  else if(arms==='cuddle'){const s=k>0?1:-1,u=s>0?'uarmL':'uarmR';rot(u,X,0.8);rot(u,Y,0.75*s);rot(u,Z,0.75*s);rot(s>0?'farmL':'farmR',armHinge(s),0.3);lower(-s,0.5);}
+  else if(arms==='cuddle'){const s=k>0?-1:1,u=s>0?'uarmL':'uarmR';rot(u,X,-0.6);rot(u,Y,-0.75*s);rot(u,Z,-0.75*s);rot(s>0?'farmL':'farmR',armHinge(s),0.1);lower(-s,0.5);}
   else if(arms==='talk'){const g=Math.sin(t*2.3)*0.22,g2=Math.sin(t*1.7+1)*0.22;up(-1,-0.5+g,0.25,1.2+g2);up(1,-0.55-g2,-0.25,1.1+g);}}
  if(window.SLAPK){const q=window.SLAPK,sd=q<0?-1:1,a=Math.abs(q);/* a little jump, hips forward, a look back over the shoulder */
   rot('pelvis',X,-0.22*a);rot('spine',X,-0.08*a);rot('chest',X,-0.08*a);rot('neck',Y,0.5*a*sd);rot('head',Y,0.3*a*sd);rot('head',X,-0.1*a);
@@ -1086,7 +1086,7 @@ function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game'
  if(lying&&c.bed&&c.bedHX!==undefined){const len=1.8*scale*S[1];bx0=c.bedHX+Math.sin(c.a||0)*len;bz0=c.bedHZ+Math.cos(c.a||0)*len;}
  let base=M4.mul(M4.T(bx0,(c.y||0)+(typeof liftAt==='function'?liftAt(c.x,c.z):0),bz0),M4.R([0,1,0],c.a||0));
  /* lying down: tip over first and scale after, so a body keeps its standing height as its length and its depth as its thickness */
- if(lying){const fe=c.fall===undefined?1:1-Math.pow(1-c.fall,2);base=M4.mul(base,M4.mul(M4.T(0,(c.bed?0.15:0.2)*fe*scale*S[2],0),M4.mul(M4.R([1,0,0],(c.alive&&!c.bed?1:-1)*Math.PI/2*fe),cud?M4.mul(M4.R([0,1,0],-cud*1.05),SC):SC)));}
+ if(lying){const fe=c.fall===undefined?1:1-Math.pow(1-c.fall,2);base=M4.mul(base,M4.mul(M4.T(0,(c.bed?0.15:0.2)*fe*scale*S[2],0),M4.mul(M4.R([1,0,0],(c.alive&&!c.bed?1:-1)*Math.PI/2*fe),cud?M4.mul(M4.R([0,1,0],cud*1.05),SC):SC)));}
  else base=M4.mul(base,SC);
  const Wb=[];const B=new Float32Array(NBS*16);for(let i=0;i<NB;i++)Wb[i]=M4.mul(base,W[i]);if(CH[id].neckDrop){const h=BI.head;Wb[h]=M4.mul(base,M4.mul(M4.T(0,-CH[id].neckDrop,0),W[h]));}
  const cut=[],SEV={armL:['uarmL','farmL','handL'],armR:['uarmR','farmR','handR'],legL:['thighL','shinL','footL'],legR:['thighR','shinR','footR']};

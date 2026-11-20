@@ -3529,7 +3529,7 @@ const HOME_BED_WORLD=[{x:3.0,z:9.5},{x:3.6,z:13.5},{x:3.3,z:11.5},{x:19.5,z:18.8
 function tuckIn(g){const n=bedN(),B=bigBedWorld(g.home,n),gs=g.npcs.filter(q=>q.kind==='pgirl'),fit=gs.slice(0,n-1),who=fit.length>1?[fit[0],g.player].concat(fit.slice(1)):[g.player].concat(fit);
  who.forEach((c,i)=>{c.bed=true;c.bedT=c.player?90:1e9;c.bedI=i;c.x=B.x+0.88*B.s;c.z=B.z-B.w/2+(i+0.5)*B.w/n;c.a=Math.PI/2;c.y=0.56*B.s;c.vx=c.vz=0;c.bedX=c.x;c.bedZ=c.z;c.bedHX=B.x-0.86*B.s;c.bedHZ=c.z;c.cuddle=0;});
  /* the girls giggle as they climb in, and in the morning they lie turned towards you with an arm around you (models.js reads c.cuddle: which way she rolls) */
- const P=g.player;fit.forEach(q=>{q.cuddle=P.z<q.z?1:-1;if(Math.abs(q.z-P.z)<1.5*B.w/n){q.z-=0.22*q.cuddle;q.bedZ=q.bedHZ=q.z;}});if(fit.length){if(typeof SLAP_SFX!=='undefined'&&!SFX.giggle)Object.assign(SFX,SLAP_SFX);
+ const P=g.player;fit.forEach(q=>{q.cuddle=P.z<q.z?1:-1;if(Math.abs(q.z-P.z)<1.5*B.w/n){q.z-=0.38*q.cuddle;q.bedZ=q.bedHZ=q.z;}});if(fit.length){if(typeof SLAP_SFX!=='undefined'&&!SFX.giggle)Object.assign(SFX,SLAP_SFX);
   fit.forEach((q,i)=>setTimeout(()=>{if(G!==g||!q.bed)return;if(SFX.giggle)sfx('giggle');popup(q.x,q.z-0.3,pick(BED_GIGGLE),'#ff8ad0');},250+i*650));}
  g.bedAt=g.T;}
 const BED_GIGGLE=['*GIGGLE*','HEE HEE~','SCOOT OVER!','COLD FEET!','MMM, COMFY','NIGHT NIGHT~'];
