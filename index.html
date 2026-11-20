@@ -4606,7 +4606,7 @@ function render(){if(contextLost||gl.isContextLost())return;PS2C.beginFrame();re
  gl.bindTexture(gl.TEXTURE_2D,rt.tex);gl.uniform1i(L2.uS,0);gl.uniform2f(L2.uRes,rtW,rtH);gl.uniform1f(L2.uDith,enh?0:1);gl.uniform1f(L2.uVHS,menu?(enh?0.3:1):0);gl.uniform1f(L2.uGrain,SET.grain);gl.uniform1f(L2.uGlitch,SET.glitch?(menu?1:0.3):0);gl.uniform1f(L2.uBloom,enh?(menu?0.9:0.75):0);gl.uniform1f(L2.uEnh,enh?1:0);gl.uniform1f(L2.uTime,menuT);
  const fl=(!menu&&G)?G.flash:0,fc=(!menu&&G)?G.flashC:[0,0,0];gl.uniform4f(L2.uFlash,fc[0],fc[1],fc[2],clamp(fl,0,0.7));
  gl.drawArrays(gl.TRIANGLES,0,6);gl.disableVertexAttribArray(L2.aQ);
- if(NX&&NX.live)NX.draw({G,eye,tgt,fovy,asp,lights,amb,lc,ld,fog,fogC,dynB,poolB,glassB,ovB,IBhi,IBlo,atlasTex,grain:SET.grain,time:menuT});
+ if(NX&&(NX.live||NX.warming))NX.draw({G,eye,tgt,fovy,asp,lights,amb,lc,ld,fog,fogC,dynB,poolB,glassB,ovB,IBhi,IBlo,atlasTex,grain:SET.grain,time:menuT});
  if(SNAP)SNAP();}
 function rebuildDecals(){const B=G.decalB;B.reset();for(const d of G.decals){if(d.drip){dripQuad(B,d,d.len);continue;}
  if(d.w){const tx=-d.nz,tz=d.nx,h=d.s/2,ox=d.x+d.nx*0.012,oz=d.z+d.nz*0.012;{const ly=d.y+liftAt(d.x,d.z);B.quad([[ox-tx*h,ly-h,oz-tz*h],[ox+tx*h,ly-h,oz+tz*h],[ox+tx*h,ly+h,oz+tz*h],[ox-tx*h,ly+h,oz-tz*h]],d.nx,0,d.nz,TUV[d.t],d.c);}}
