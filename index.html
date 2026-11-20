@@ -3527,10 +3527,15 @@ function drawBigBed(bx,t,n,frame,mat,sheet){const B=bigBedAt(t,n),cx=B.x,cz=B.z,
 const HOME_BED_WORLD=[{x:3.0,z:9.5},{x:3.6,z:13.5},{x:3.3,z:11.5},{x:19.5,z:18.8}];
 /* everybody who fits lies down on the big bed (face up, heads on the pillows) and stays there until morning is over; moving gets you up */
 function tuckIn(g){const n=bedN(),B=bigBedWorld(g.home,n),gs=g.npcs.filter(q=>q.kind==='pgirl'),fit=gs.slice(0,n-1),who=fit.length>1?[fit[0],g.player].concat(fit.slice(1)):[g.player].concat(fit);
- who.forEach((c,i)=>{c.bed=true;c.bedT=c.player?90:1e9;c.bedI=i;c.x=B.x+0.88*B.s;c.z=B.z-B.w/2+(i+0.5)*B.w/n;c.a=Math.PI/2;c.y=0.56*B.s;c.vx=c.vz=0;c.bedX=c.x;c.bedZ=c.z;c.bedHX=B.x-0.86*B.s;c.bedHZ=c.z;});g.bedAt=g.T;}
+ who.forEach((c,i)=>{c.bed=true;c.bedT=c.player?90:1e9;c.bedI=i;c.x=B.x+0.88*B.s;c.z=B.z-B.w/2+(i+0.5)*B.w/n;c.a=Math.PI/2;c.y=0.56*B.s;c.vx=c.vz=0;c.bedX=c.x;c.bedZ=c.z;c.bedHX=B.x-0.86*B.s;c.bedHZ=c.z;c.cuddle=0;});
+ /* the girls giggle as they climb in, and in the morning they lie turned towards you with an arm around you (models.js reads c.cuddle: which way she rolls) */
+ const P=g.player;fit.forEach(q=>{q.cuddle=P.z<q.z?1:-1;if(Math.abs(q.z-P.z)<1.5*B.w/n){q.z-=0.22*q.cuddle;q.bedZ=q.bedHZ=q.z;}});if(fit.length){if(typeof SLAP_SFX!=='undefined'&&!SFX.giggle)Object.assign(SFX,SLAP_SFX);
+  fit.forEach((q,i)=>setTimeout(()=>{if(G!==g||!q.bed)return;if(SFX.giggle)sfx('giggle');popup(q.x,q.z-0.3,pick(BED_GIGGLE),'#ff8ad0');},250+i*650));}
+ g.bedAt=g.T;}
+const BED_GIGGLE=['*GIGGLE*','HEE HEE~','SCOOT OVER!','COLD FEET!','MMM, COMFY','NIGHT NIGHT~'];
 function bedTick(g,dt){const B=bigBedWorld(g.home,bedN());for(const c of g.npcs.concat([g.player])){if(!c||!c.bed)continue;c.bedT-=dt;
  const up=c.player?(state==='play'&&g.T-g.bedAt>1.5&&moveIntent())||c.bedT<=0:c.bedT<=0;
- if(up){c.bed=false;c.y=0;c.x=B.x+(g.home===3?2.45:1.35)*B.s;c.z=c.bedZ;c.a=Math.PI/2;if(c.player)for(const q of g.npcs)if(q.bed)q.bedT=Math.min(q.bedT,1.5+q.bedI*1.2);continue;}c.x=c.bedX;c.z=c.bedZ;c.a=Math.PI/2;c.y=0.56*B.s;c.vx=c.vz=0;}}
+ if(up){c.bed=false;c.cuddle=0;c.y=0;c.x=B.x+(g.home===3?2.45:1.35)*B.s;c.z=c.bedZ;c.a=Math.PI/2;if(c.player)for(const q of g.npcs)if(q.bed)q.bedT=Math.min(q.bedT,1.5+q.bedI*1.2);continue;}c.x=c.bedX;c.z=c.bedZ;c.a=Math.PI/2;c.y=0.56*B.s;c.vx=c.vz=0;}}
 function homeBedPos(g){const n=bedN();if(n>1){const B=bigBedWorld(g.home,n);return{x:B.x,z:B.z};}return HOME_BED_WORLD[g.home]||HOME_BED_WORLD[0];}
 /* the gun locker stands against the east wall, one per home */
 const HOME_LOCKER_WORLD=[{x:23.72,z:14.5},{x:29.72,z:19.0},{x:31.72,z:17.5},{x:33.72,z:21.5}];

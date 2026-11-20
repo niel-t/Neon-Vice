@@ -20,6 +20,9 @@ test('home: going to bed with the girls gives extra hits on the next job', async
       o.studio1 = await sleepIn(1, 1);
       o.studio3 = await sleepIn(1, 3);
       o.inBed = G.npcs.filter(n => n.bed).length;
+      // they turn towards you with an arm around you, and giggle as they climb in
+      o.cuddle = G.npcs.filter(n => n.bed).map(n => n.cuddle === (G.player.z < n.z ? 1 : -1));
+      o.giggled = !!SFX.giggle;
       o.base = Dd().hp + pk('tough');
       NOARRIVE = true; startLevel(0);
       o.job = { maxhp: G.player.maxhp, hp: G.player.hp };
@@ -32,6 +35,8 @@ test('home: going to bed with the girls gives extra hits on the next job', async
   expect(out.studio1).toBe(1);
   expect(out.studio3).toBe(2);
   expect(out.inBed).toBe(2);
+  expect(out.cuddle).toEqual([true, true]);
+  expect(out.giggled).toBe(true);
   expect(out.job).toEqual({ maxhp: out.base + 2, hp: out.base + 2 });
   expect(out.after).toBe(false);
   expect(out.next).toBe(out.base);
