@@ -76,7 +76,7 @@ function stkTick(p,lvl){const s=stkSave(p),v0=stkValue(p),heads=[],notes=[];s.da
   if(st){if(s.ev[st.ev]){mu=0.002;vol=0.2;}else if(lvl===st.lvl||stkDone(st.fall))crash=true;else if(stkDone(st.rise))mu=0.065;}
   let ret=mu+vol*stkGauss()+(q.haven?-mkt*0.6:mkt),head=null;
   if(!crash&&stkR()<0.07){const n=STK_NEWS[k],h=n[Math.floor(stkR()*n.length)%n.length];ret+=h[1]*(0.15+0.2*stkR());head=[h[0],q.t+' '+(h[1]>0?'jumps':'drops'),h[1],k];}
-  if(k==='mcw'&&mcBump){ret+=0.12;head=['McWEY CORP. EXPANDS','Desmond McWey is buying up the beach. MCW climbs',1,k];}
+  if(k==='mcw'&&mcBump){ret+=0.12;head=['McWEY CORP. EXPANDS','Scrooge McWey is buying up the beach. MCW climbs',1,k];}
   const tip=s.tip&&s.tip.k===k?s.tip:null,rum=!tip&&s.rum&&s.rum.k===k?s.rum:null;
   if(tip&&!crash)ret=tip.real?tip.dir*(0.18+0.22*stkR()):-tip.dir*(0.04+0.12*stkR());
   else if(rum&&!crash)ret=rum.real?rum.dir*(0.12+0.16*stkR()):-rum.dir*(0.04+0.1*stkR());
