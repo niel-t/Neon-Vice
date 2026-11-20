@@ -875,7 +875,16 @@ const SUITS={default:{name:'SIGNATURE',lvl:1,perk:{},desc:'Your own look'},
  mint:{name:'MINT DOUBLE-BREASTED',lvl:1,shop:1,price:6500,perk:{tough:1},paint:[160,232,206],pat:'sheen',desc:'Mint, six buttons, shoulders for days. +1 hit you can take'},
  vice:{name:'VICE WHITE',lvl:1,shop:1,price:9000,perk:{shark:1},paint:[246,244,238],pat:'linen',desc:'White suit, pastel tee, no socks. +15% kill money'},
  lilac:{name:'LILAC SILK',lvl:1,shop:1,price:12000,perk:{adren:1},paint:[200,168,236],pat:'sheen',desc:'Raw lilac silk that catches the neon. Combos last 0.75s longer'},
- tux:{name:'MIDNIGHT TUX',lvl:1,shop:1,price:20000,perk:{tough:1,shark:1},paint:[24,22,40],pat:'sheen',desc:'Midnight-blue tuxedo, satin lapels. +1 hit, +15% kill money'}};
+ tux:{name:'MIDNIGHT TUX',lvl:1,shop:1,price:20000,perk:{tough:1,shark:1},paint:[24,22,40],pat:'sheen',desc:'Midnight-blue tuxedo, satin lapels. +1 hit, +15% kill money'},
+ /* the designer rack (2026-11-20): made-up houses like the accessories (accessories.js ACC_HOUSES); pat 'pin' = chalk/gold pinstripe (line), 'check' = glen check,
+    'velvet' = deep pile with a soft sheen, 'shark' = two-tone sharkskin that shifts colour (line) */
+ navypin:{name:'BELLAMY NAVY PINSTRIPE',lvl:1,shop:1,price:15000,perk:{tough:1},paint:[28,34,72],pat:'pin',line:[225,228,240],desc:'Maison Bellamy, Paris. Navy chalk stripe, peak lapels, cut like a bank vault. +1 hit you can take'},
+ creamdb:{name:'VALENTE CREAM DOUBLE-BREASTED',lvl:1,shop:1,price:18000,perk:{fleet:1,adren:1},paint:[238,226,200],pat:'sheen',desc:'Valente, Roma. Cream silk, six gold buttons, soft shoulders. Move 6% faster, combos last 0.75s longer'},
+ glen:{name:'HARCOURT GLEN CHECK',lvl:1,shop:1,price:14000,perk:{sense:1},paint:[128,124,118],pat:'check',desc:'Harcourt, London. Grey Prince of Wales check from Savile Row. Guards react 15% slower'},
+ wine:{name:"D'ORO BORDEAUX",lvl:1,shop:1,price:16000,perk:{shark:1},paint:[110,22,40],pat:'sheen',desc:"D'Oro, Milano. Deep wine silk-wool, black shirt, nothing to apologise for. +15% kill money"},
+ shark:{name:"D'ORO TEAL SHARKSKIN",lvl:1,shop:1,price:13000,perk:{fleet:1},paint:[24,110,120],pat:'shark',line:[120,190,220],desc:"D'Oro, Milano. Two-tone sharkskin that flips from teal to silver under the neon. Move 6% faster"},
+ velvet:{name:'BELLAMY BLACK VELVET',lvl:1,shop:1,price:24000,perk:{adren:1,shark:1},paint:[18,14,22],pat:'velvet',desc:'Maison Bellamy, Paris. Black velvet dinner jacket, silk trousers. Combos last 0.75s longer, +15% kill money'},
+ goldpin:{name:"D'ORO GOLD PINSTRIPE",lvl:1,shop:1,price:32000,perk:{tough:1,shark:1},paint:[244,240,232],pat:'pin',line:[214,170,70],desc:"D'Oro, Milano. White wool with real gold thread in the stripe. +1 hit, +15% kill money"}};
 const suitOK=(p,k)=>!!(p&&SUITS[k])&&(SUITS[k].shop?!!(p.tailor&&p.tailor[k]):SUITS[k].act2?!!p.suits2:p.lvl>=SUITS[k].lvl);
 const SUITKEYS=Object.keys(SUITS);
 const mySuit=()=>{const p=myProg();return suitOK(p,p.suit)?p.suit:'default';};

@@ -310,7 +310,7 @@ function buildBody(B){const M=newMesh(),X=[1,0,0],Y=[0,1,0],Z=[0,0,1],BP=B.fem?B
    gap=y=>y>=1.06?lerp(0.07,0.52,Math.pow((y-1.06)/0.405,0.85)):lerp(0.07,0.42,Math.pow((1.06-y)/0.23,1.2)),
    off=y=>y>1.0?lerp(0.014,0.006,clamp((y-1.36)/0.105,0,1)):0.014+(1.0-y)*0.16,N=10,edge=[[],[]],rows=[];
   const pt=(y,ph)=>{const r=at(Math.max(0.8,y)),o=off(y),k=Math.cos(ph)>0.2&&y>1.05&&y<1.4?0.008*Math.cos(ph):0;return[Math.sin(ph)*(r.rx+o),y,r.zc+Math.cos(ph)*(r.rz+o+k)];};
-  const uv=(y,ph)=>[(ph+Math.PI)/(2*Math.PI),tv(Math.max(y,1.03))];
+  const uv=(y,ph)=>{const u=(ph+Math.PI)/(2*Math.PI),d=u-0.5;/* stay out of the shirt/lapel panel in the middle of the texture (x 200-312) so suits recolour every bit of the jacket */return[0.5+Math.sign(d)*(0.115+Math.abs(d)/0.5*0.385),tv(Math.max(y,1.03))];};
   GRP++;for(const side of [1,-1]){const ids=[];for(const y of YS){const g=gap(y),w=at(Math.max(0.8,y)).w,row=[];
     for(let i=0;i<=N;i++){const ph=side>0?g+(Math.PI-g)*i/N:-Math.PI+(Math.PI-g)*i/N,pu=uv(y,ph);if(side>0&&i===N)pu[0]=1;if(side<0&&i===0)pu[0]=0;row.push(addV(M,pt(y,ph),pu,w));}
     ids.push(row);edge[side>0?0:1].push([pt(y,side>0?g:-g),uv(y,side>0?g:-g),w]);}
@@ -956,10 +956,11 @@ const ARMOR={vest:1,plate:1},HELMET={pasgt:1,riot:1};
    the big ones broad in the shoulders like the Consigliere, the fat ones round like the Don. Visual only: hit sizes stay the archetype's. */
 const HEROBUILD={thin:{scale:[0.95,1.02,0.95],shoulders:0.06},normal:{scale:[1.14,1.0,1.1],shoulders:0.16},big:{scale:[1.2,1.1,1.16],shoulders:0.24},fat:{scale:[1.3,0.98,1.24],belly:0.13,shoulders:0.08}};
 /* hero accessories on enemies, rolled from the look (no Math.random): gold rings, chains on open shirts, a Cuban chain on dealers, glasses */
-const SUITS={mobster:1,hitman:1,bodyguard:1,dealer:1};
+/* suited archetypes (named SUIT_ARCH, not SUITS: that name is the game's suit list in index.html, which applySuit reads) */
+const SUIT_ARCH={mobster:1,hitman:1,bodyguard:1,dealer:1};
 function kitLook(L){if(!L||L.fem||!L.arch)return L;let h=2166136261;const k=JSON.stringify([L.skin,L.hair,L.arch,L.jacket,L.shirt,L.body,'kit']);for(let i=0;i<k.length;i++)h=Math.imul(h^k.charCodeAt(i),16777619);
  const r=()=>{h=(h+0x6D2B79F5)|0;let t=Math.imul(h^(h>>>15),1|h);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};
- const o=Object.assign({},L),suit=SUITS[L.arch];if(r()<(suit?0.5:0.35))o.bling=true;if(!L.tie&&r()<(suit?0.55:0.35))o.chain=true;if(L.arch==='dealer'&&r()<0.45)o.cuban=true;
+ const o=Object.assign({},L),suit=SUIT_ARCH[L.arch];if(r()<(suit?0.5:0.35))o.bling=true;if(!L.tie&&r()<(suit?0.55:0.35))o.chain=true;if(L.arch==='dealer'&&r()<0.45)o.cuban=true;
  if(!L.shades&&!L.aviators&&!L.glasses&&r()<(suit?0.22:0.1))o.glasses=true;return o;}
 function lookCfg(L,bodyType){const fb=k=>(!L.fem&&L.arch&&HEROBUILD[k])||BODYCFG[L.fem&&k==='thin'?'slim':k],bt=fb(bodyType)||fb(L.body)||BODYCFG.normal,helmet=HELMET[L.helmet]?L.helmet:null;
  return{L,B:{specs:L.glasses?1:0,fluff:!!(L.fluff&&L.beard),hs:(L.hair&&!L.hat&&!helmet)?L.hs:null,watch:L.watch?-1:0,cigar:!!(L.cigar||(!L.fem&&faceOf(L).cig)),hat:helmet?null:(L.hat||null),shoulders:bt.shoulders||0,belly:bt.belly||(L.belly?0.1:0),rings:L.bling?1:0,fem:!!L.fem,dancer:!!(L.fem&&L.dancer),curve:L.fem&&L.dancer?(L.curve||1):1,waist:L.fem&&L.dancer?(L.waist||1):1,bustK:L.fem&&L.dancer?(L.bust||1):1,hipK:L.fem&&L.dancer?(L.hips||1):1,skirt:L.fem?(L.skirt||0):0,
@@ -999,6 +1000,10 @@ function applySuit(id){const C=CH[id];if(!shaderReady||!C||!C.bcBase||!MODELS[id
   else if(sk==='camo'){x.fillStyle='rgba(70,82,48,.78)';x.fillRect(0,0,512,512);const cols=['rgba(38,46,26,.8)','rgba(122,112,72,.75)','rgba(26,28,20,.8)'];let sd=7;const r=()=>(sd=(sd*16807)%2147483647)/2147483647;for(let i=0;i<150;i++){x.fillStyle=cols[i%3];x.beginPath();x.ellipse(r()*512,r()*512,10+r()*26,6+r()*14,r()*3,0,6.3);x.fill();}}
   else if(typeof SUITS!=='undefined'&&SUITS[sk]&&SUITS[sk].paint){const S=SUITS[sk],[r,g2,b]=S.paint;x.fillStyle=`rgba(${r},${g2},${b},.86)`;x.fillRect(0,0,512,512);
    if(S.pat==='linen'){x.fillStyle='rgba(120,90,70,.10)';for(let i=0;i<512;i+=3)x.fillRect(0,i,512,1);for(let i=0;i<512;i+=5)x.fillRect(i,0,1,512);}
+   else if(S.pat==='pin'){const [lr,lg,lb]=S.line;x.fillStyle=`rgba(${lr},${lg},${lb},.75)`;for(let i=0;i<512;i+=10)x.fillRect(i,0,1.4,512);x.fillStyle='rgba(0,0,0,.06)';for(let i=0;i<512;i+=3)x.fillRect(0,i,512,1);}
+   else if(S.pat==='check'){x.fillStyle='rgba(40,38,36,.22)';for(let i=0;i<512;i+=24){x.fillRect(i,0,6,512);x.fillRect(0,i,512,6);}x.fillStyle='rgba(235,230,220,.14)';for(let i=12;i<512;i+=24){x.fillRect(i,0,2,512);x.fillRect(0,i,512,2);}x.fillStyle='rgba(150,40,40,.22)';for(let i=0;i<512;i+=72){x.fillRect(i+18,0,1.2,512);x.fillRect(0,i+18,512,1.2);}}
+   else if(S.pat==='velvet'){let sd=11;const r=()=>(sd=(sd*16807)%2147483647)/2147483647;x.fillStyle='rgba(120,100,140,.07)';for(let i=0;i<900;i++)x.fillRect(r()*512,r()*512,3,3);const g=x.createLinearGradient(0,0,512,0);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(0.5,'rgba(190,170,220,.12)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,512,512);}
+   else if(S.pat==='shark'){const [lr,lg,lb]=S.line;for(let i=0;i<512;i+=4){x.fillStyle=`rgba(${lr},${lg},${lb},${0.18+0.14*Math.sin(i*0.07)})`;x.fillRect(0,i,512,2);}for(let i=0;i<512;i+=4){x.fillStyle='rgba(0,0,0,.06)';x.fillRect(i,0,1,512);}}
    else{x.fillStyle='rgba(255,255,255,.16)';for(let i=0;i<512;i+=16)x.fillRect(0,i,512,5);x.fillStyle='rgba(0,0,0,.08)';for(let i=8;i<512;i+=16)x.fillRect(0,i,512,3);}}
   else{x.fillStyle='rgba(255,70,170,.62)';x.fillRect(0,0,512,512);x.fillStyle='rgba(255,210,235,.35)';for(let i=0;i<512;i+=14)x.fillRect(0,i,512,2);x.fillStyle='rgba(60,0,40,.18)';x.fillRect(0,0,512,512);}
   x.restore();}

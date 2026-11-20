@@ -105,7 +105,7 @@ test('mall: the keepers have photo faces, and Fontaine Tailoring sells suits you
     photos: true,
     names: ['SCHMALTZY', 'FABULOSO FELIX', 'LOLA MONTENEGRO'],
     rail: true,
-    screen: { mode: 'tailor', title: 'FONTAINE TAILORING', cards: 19 }, // 5 suits + 5 sunglasses + 9 designer accessories
+    screen: { mode: 'tailor', title: 'FONTAINE TAILORING', cards: 26 }, // 12 suits + 5 sunglasses + 9 designer accessories
     bought: { owned: true, wearing: 'mint', paid: 6500, tough: true },
     off: 'default', back: 'mint',
     locked: false,
