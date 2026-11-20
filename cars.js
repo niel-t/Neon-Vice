@@ -5,6 +5,7 @@
    The bodies go into the same Batch as everything else, so the classic renderer and the Three.js renderer both draw them.
    Uses globals from the game script at call time: rideKit, apply, TUV, CAR_CHR, LENS_W/R/A, DARK, GOLD, B.round. */
 
+const CAR_TINT=[0.36,0.6,0.8];
 const CAR_CHR=[0.9,0.91,0.94],CAR_GLASS=[1,1,1],CAR_DARK=[0.03,0.03,0.035],CAR_INT=[0.16,0.1,0.08];
 function carLine(P,x){if(x<=P[0][0])return P[0][1];for(let i=1;i<P.length;i++)if(x<=P[i][0]){const a=P[i-1],b=P[i],t=(x-a[0])/((b[0]-a[0])||1);return a[1]+(b[1]-a[1])*t;}return P[P.length-1][1];}
 function carSm(t){t=Math.max(0,Math.min(1,t));return t*t*(3-2*t);}
@@ -14,6 +15,8 @@ const carIn=(r,x)=>!!r&&x>r[0]&&x<r[1];
        cab:[x0,x1] side glass, bp:[x..] pillars between side windows, tumble, taper, col, roof, rock, open (convertible), bed:[x0,x1] (pickup)}
    returns a frame object with the body's own measurements for the detail pass */
 function carBody(B,b,o){const L=o.L,hw=o.W/2,ride=o.ride||0.15,PT=TUV[56],GL=TUV[57],C=o.col,R0=o.roof||C,ROCK=o.rock||C.map(v=>v*0.5);
+ /* see-through build (carCache with a glass batch): the panes go to their own blended batch and the cabin is fitted out, so you can see who is driving */
+ const GB=CARREC&&CARREC.B===B?CARREC.G:null,GT=o.tint||CAR_TINT;
  const xs=new Set([-L/2,-L/2+0.05,L/2-0.05,L/2]);for(const P of [o.top,o.sill])for(const p of P)xs.add(p[0]);for(const r of [o.ws,o.rw,o.cab,o.bed])if(r){xs.add(r[0]);xs.add(r[1]);}
  for(const x of o.bp||[]){xs.add(x-0.035);xs.add(x+0.035);}for(const x of o.st||[])xs.add(x);
  const X=[...xs].filter(x=>x>=-L/2-1e-6&&x<=L/2+1e-6).sort((a,b)=>a-b).filter((x,i,a)=>i===0||x-a[i-1]>0.008);
@@ -26,7 +29,7 @@ function carBody(B,b,o){const L=o.L,hw=o.W/2,ride=o.ride||0.15,PT=TUV[56],GL=TUV
  const tw=p=>apply(b,p[0],p[1],p[2]);
  const nrm=(p0,p1,p2)=>{const u=[p1[0]-p0[0],p1[1]-p0[1],p1[2]-p0[2]],v=[p2[0]-p0[0],p2[1]-p0[1],p2[2]-p0[2]];const n=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];const l=Math.hypot(n[0],n[1],n[2]);return l<1e-9?null:n.map(q=>q/l);};
  /* quad in car space; flips to face away from cen (car space) */
- const quad=(pts,c,uv,cen)=>{const T=pts.map(tw);let n=nrm(T[0],T[1],T[2])||nrm(T[0],T[2],T[3]);if(!n)return;const cw=tw(cen),m=[(T[0][0]+T[2][0])/2-cw[0],(T[0][1]+T[2][1])/2-cw[1],(T[0][2]+T[2][2])/2-cw[2]];if(n[0]*m[0]+n[1]*m[1]+n[2]*m[2]<0){T.reverse();n=n.map(q=>-q);}B.quad(T,n[0],n[1],n[2],uv||PT,c);};
+ const quad=(pts,c,uv,cen)=>{if(GB&&c===CAR_GLASS){const T=pts.map(tw);let n=nrm(T[0],T[1],T[2])||nrm(T[0],T[2],T[3]);if(n)GB.quad(T,n[0],n[1],n[2],TUV[20],GT);return;}const T=pts.map(tw);let n=nrm(T[0],T[1],T[2])||nrm(T[0],T[2],T[3]);if(!n)return;const cw=tw(cen),m=[(T[0][0]+T[2][0])/2-cw[0],(T[0][1]+T[2][1])/2-cw[1],(T[0][2]+T[2][2])/2-cw[2]];if(n[0]*m[0]+n[1]*m[1]+n[2]*m[2]<0){T.reverse();n=n.map(q=>-q);}B.quad(T,n[0],n[1],n[2],uv||PT,c);};
  const opened=x=>o.open&&carIn(o.cab,x)&&!carIn(o.ws,x);
  for(let i=0;i<S.length-1;i++){const A=S[i],Bs=S[i+1],xm=(A.x+Bs.x)/2,gh=(A.gh+Bs.gh)/2,cy=(A.yb+A.deck)/2;
   const pil=(o.bp||[]).some(p=>Math.abs(xm-p)<0.036);
@@ -37,12 +40,13 @@ function carBody(B,b,o){const L=o.L,hw=o.W/2,ride=o.ride||0.15,PT=TUV[56],GL=TUV
    if(j===4&&o.open&&gh>0.015&&carIn(o.cab,xm)&&!carIn(o.ws,xm))continue;
    for(const sd of [1,-1]){const a0=A.pr[j],a1=A.pr[j+1],b0=Bs.pr[j],b1=Bs.pr[j+1];
     let p=[[A.x,a0[1],a0[0]*sd],[Bs.x,b0[1],b0[0]*sd],[Bs.x,b1[1],b1[0]*sd],[A.x,a1[1],a1[0]*sd]];
+    if(j===5&&opened(xm)&&GB)continue;
     if(j===5&&opened(xm)){const y=Math.min(A.deck,Bs.deck)-0.07;p=[[A.x,y,A.wsh*sd],[Bs.x,y,Bs.wsh*sd],[Bs.x,y,0],[A.x,y,0]];}
     quad(p,c,uv,[xm,cy,0]);}}}
  /* end caps: the nose and the tail panel */
  for(const [k,dir] of [[0,-1],[S.length-1,1]]){const s=S[k],c0=[s.x,(s.yb+s.T)/2,0];for(let j=0;j<6;j++)for(const sd of [1,-1])quad([c0,c0,[s.x,s.pr[j][1],s.pr[j][0]*sd],[s.x,s.pr[j+1][1],s.pr[j+1][0]*sd]],j===0?CAR_DARK:C,j===0?null:PT,[s.x-dir,c0[1],0]);}
  const at=x=>sta(Math.max(-L/2,Math.min(L/2,x)));
- return{L,hw,ride,at,quad,tw,front:L/2,rear:-L/2};}
+ return{L,hw,ride,at,quad,tw,front:L/2,rear:-L/2,see:!!GB};}
 
 /* dark wheel well cut into the body side, with a thin lip, so the tyre sits inside the bodywork */
 function carArch(f,wx,R,sd,col){const s=f.at(wx),z=sd*(s.wb+0.004),cy=R*0.98,ra=R*1.2,N=10,yb=s.yb-0.005;
@@ -66,7 +70,53 @@ function carKit(B,x,z,s,a,o,spin){const k=rideKit(B,x,z,s,a),f=carBody(B,k.b,o),
  /* door handles + a chrome belt-line trim */
  for(const sd of [-1,1]){for(const hx of o.handles||[]){const hs=f.at(hx);P(hx,hs.ybelt-0.035,sd*(hs.wb+0.004),0,0.07,0.02,0.01,CAR_CHR,CH);}
   if(o.trim){const y=o.trimY||0.32;for(let i=0;i<4;i++){const x0=-L2*0.8+i*L2*0.4,s0=f.at(x0+L2*0.2);P(x0+L2*0.2,y,sd*(s0.wb+0.003),0,L2*0.4,0.018,0.006,o.trim,o.trim===CAR_CHR?CH:null);}}}
+ if(f.see)carInterior(f,P,o);
  return{f,P,W,k,nose,tail,CH,GL,PT,L2,hw};}
+
+/* ---------- the cabin ----------
+   carSeat: where the driver sits in a lofted body (car space): seat x, cushion height, how far off the centre line, and the headroom.
+   Left-hand drive: the driver is on the car's -z side. */
+const CAR_SEATS=new WeakMap();
+function carSeat(o){let S=CAR_SEATS.get(o);if(S)return S;const D=carDoorDims(o),ride=o.ride||0.15,fl=ride+0.1,x=Math.max(D.x0+0.2,Math.min(D.x1-0.3,(D.x0+D.x1)/2-0.06)),top=carLine(o.top,x),deck=Math.min(top,carLine(o.sill||o.top,x));
+ S={x,fl,y:fl+0.09,z:o.W/2*0.45,deck,top:o.open?deck+0.5:top,wheelX:Math.min(D.x1-0.02,x+0.36),dashX:D.x1+0.02,back:D.x0};CAR_SEATS.set(o,S);return S;}
+/* floor, firewall and dash, front seats with headrests (a rear bench where there is room), steering wheel, mirror and wipers; o.drv puts a plain driver in (traffic) */
+function carInterior(f,P,o){const S=carSeat(o),hw=f.hw,INT=o.int||CAR_INT,DK=[0.07,0.06,0.07],x0=o.cab?o.cab[0]:S.back,x1=S.dashX+0.06,len=x1-x0,xm=(x0+x1)/2,ws=f.at(xm).wsh;
+ P(xm,S.fl-0.02,0,0,len,0.04,ws*2-0.06,DK);
+ /* firewall + dash board with a cowl, and the bulkhead behind the seats */
+ const dk=f.at(S.dashX),dh=Math.max(0.1,dk.deck-S.fl-0.02);P(S.dashX+0.04,S.fl+dh/2,0,0,0.05,dh,dk.wsh*2-0.08,DK);P(S.dashX-0.03,S.fl+dh-0.03,0,0,0.14,0.05,dk.wsh*2-0.1,INT.map(v=>v*0.7));
+ P(S.dashX-0.06,S.fl+dh-0.01,-S.z,0,0.07,0.04,0.2,DK);
+ const bk=f.at(x0+0.03),bh=Math.max(0.1,bk.deck-S.fl-0.02);P(x0+0.03,S.fl+bh/2,0,0,0.05,bh,bk.wsh*2-0.08,DK);
+ /* door cards */
+ for(const sd of [-1,1]){const s=f.at(S.x);P(S.x,(S.fl+s.deck)/2,sd*(s.wsh-0.035),0,Math.min(len-0.1,0.9),s.deck-S.fl-0.03,0.02,INT.map(v=>v*0.8));}
+ /* seats: cushion, raked back, headrest */
+ const sh=Math.min(0.34,Math.max(0.2,S.top-S.y-0.08));
+ for(const sd of [-1,1]){P(S.x,S.y-0.04,sd*S.z,0,0.36,0.09,0.3,INT);P(S.x-0.2,S.y+sh/2-0.03,sd*S.z,0.22,0.08,sh,0.3,INT);P(S.x-0.25,S.y+sh+0.02,sd*S.z,0.22,0.06,0.09,0.17,INT.map(v=>v*0.85));}
+ if(S.x-0.3-x0>0.5&&!o.bed){const bx=x0+0.26;P(bx,S.y-0.04,0,0,0.34,0.09,ws*2-0.22,INT);P(bx-0.17,S.y+sh/2-0.05,0,0.2,0.08,sh-0.04,ws*2-0.22,INT);}
+ /* steering column and wheel (a ring of four bars, raked toward the driver) */
+ const wy=S.y+0.2,wx=S.wheelX;P(wx+0.07,wy-0.05,-S.z,0.9,0.16,0.03,0.03,DK);
+ P(wx,wy+0.085,-S.z,0.35,0.03,0.03,0.2,DK);P(wx,wy-0.085,-S.z,0.35,0.03,0.03,0.2,DK);for(const sd of [-1,1])P(wx,wy,-S.z+sd*0.09,0.35,0.03,0.19,0.03,DK);P(wx,wy,-S.z,0.35,0.03,0.05,0.2,DK);
+ /* gear lever between the seats, the mirror on the screen, two wipers at its foot */
+ P(S.x+0.16,S.y+0.06,0,-0.3,0.02,0.14,0.02,CAR_CHR,TUV[58]);P(S.x+0.19,S.y+0.14,0,0,0.04,0.04,0.04,DK);
+ if(o.ws){const wt=f.at(o.ws[0]+0.04);P(o.ws[0]+0.06,wt.T-0.05,0,0,0.02,0.045,0.16,DK);const wb=f.at(o.ws[1]-0.01);for(const sd of [-1,1])P(o.ws[1]-0.03,wb.T+0.012,sd*wb.wt*0.42,0,0.016,0.012,wb.wt*0.6,DK);}
+ /* shut lines: where the doors are cut into the body sides */
+ const D=carDoorDims(o);for(const sd of [-1,1])for(const dx of [D.x0,D.x1]){const s=f.at(dx);P(dx,(D.y0+D.y1)/2,sd*(s.wb+0.002),0,0.012,D.y1-D.y0,0.012,DK);}
+ if(o.drv)carDummy(P,S,o.drv);}
+/* a plain seated driver for traffic: shirt, arms out to the wheel, head and hair. v picks the colours */
+const DUMMY_SHIRT=[[0.85,0.3,0.4],[0.25,0.5,0.8],[0.92,0.9,0.84],[0.2,0.2,0.24],[0.95,0.75,0.25],[0.3,0.7,0.6]],DUMMY_SKIN=[[0.93,0.74,0.6],[0.8,0.58,0.42],[0.55,0.38,0.26],[0.96,0.8,0.68]],DUMMY_HAIR=[[0.1,0.08,0.07],[0.4,0.26,0.12],[0.85,0.7,0.35],[0.55,0.55,0.55]];
+function carDummy(P,S,v){const sh=DUMMY_SHIRT[v%6],sk=DUMMY_SKIN[(v>>1)%4],hr=DUMMY_HAIR[(v>>2)%4],z=-S.z,hd=Math.min(S.top-0.13,S.y+0.4);
+ P(S.x-0.1,(S.y+hd)/2-0.03,z,0.15,0.16,hd-S.y-0.08,0.26,sh);P(S.x-0.07,hd,z,0,0.15,0.15,0.15,sk);P(S.x-0.09,hd+0.045,z,0,0.16,0.08,0.16,hr);
+ for(const sd of [-1,1]){P(S.x+0.1,S.y+0.2,z+sd*0.11,-0.25,0.3,0.06,0.06,sh);P(S.x+0.27,S.y+0.2,z+sd*0.09,0,0.06,0.06,0.06,sk);}P(S.x+0.12,S.y+0.02,z,0,0.3,0.08,0.24,[0.15,0.16,0.22]);}
+
+/* ---------- you, at the wheel ----------
+   drawDriver puts the player's own model in the driver's seat of whatever they drive (models.js DRIVE pose), scaled to the cabin's headroom.
+   Call it next to drawRide whenever the player is inside the car: driving, pulling up, or pulling away. */
+const DRIVER_FIT={sit:0.56,up:0.9};/* model units x drawChar scale: hip height when seated, hip-to-crown */
+const LAMBO_SEAT={x:-0.1,y:0.24,z:0.24,top:0.68};
+function drawDriver(g,x,z,a,p){p=p||(g&&g.player);if(!p||typeof drawChar!=='function')return;const o=rideShapeNow(),S=o.lambo?LAMBO_SEAT:carSeat(o),k=carAxes(a);
+ const room=S.top-S.y-0.05,sc=Math.max(0.5,Math.min(1,room/(DRIVER_FIT.up*0.74)));
+ const d=g.pdrv&&Object.getPrototypeOf(g.pdrv)===p?g.pdrv:(g.pdrv=Object.create(p));
+ d.x=x+k.fx*S.x-k.sx*S.z;d.z=z+k.fz*S.x-k.sz*S.z;d.a=a+Math.PI/2;d.y=S.y-DRIVER_FIT.sit*0.74*sc-(typeof liftAt==='function'?liftAt(d.x,d.z):0);d.sc=sc;d.drive=1;d.seatK=0;d.crouchK=0;d.vx=d.vz=0;d.walk=0;d.weapon=null;d.atkT=0;d.hitT=0;d.ex=null;
+ drawChar(IBhi,d);}
 
 /* front lamps: square sealed beams, quad lamps, or pop-ups */
 function carLamps(K,o){const {P,L2,hw,nose,tail}=K,ny=o.lampY||(nose.yb+nose.deck)/2+0.02;
@@ -109,17 +159,22 @@ const TRAFFIC_TYPES=['sedan','hatch','coupe','wagon','pickup','sedan','hatch'];
    biggest CPU cost in the game. Each body is now built once at the origin (keyed by everything that shapes it) and copied
    turned and moved into place. The wheels are left out of the cached body (rideKit's W() records them instead of drawing)
    and are put back at the car's current spin, so rolling wheels still roll; a car whose spin did not change copies those too. */
-let CARREC=null;const CARBODY=new Map(),CARBODY_MAX=32;
-function carCache(B,key,x,z,s,a,spin,draw){const k=key+'|'+s+'|'+(B.round||0)+'|'+(ENH()?1:0);let e=CARBODY.get(k);
+let CARREC=null;const CARBODY=new Map(),CARBODY_MAX=48;
+/* panes waiting for this frame's blended glass pass: [glass batch, x, z, yaw]. Only cars drawn into the per-frame batch are see-through;
+   a car baked into a static batch keeps its painted glass (nothing would redraw its panes). */
+const CARGLASS=[];
+function carGlassFlush(P){for(const q of CARGLASS)batchCopyYaw(P,q[0],q[1],q[2],q[3]);CARGLASS.length=0;}
+function carCache(B,key,x,z,s,a,spin,draw){const see=typeof dynB!=='undefined'&&B===dynB&&s===1,k=key+'|'+s+'|'+(B.round||0)+'|'+(ENH()?1:0)+(see?'|g':'');let e=CARBODY.get(k);
  if(e){CARBODY.delete(k);CARBODY.set(k,e);}
- else{const src=Batch.cpu(16384);src.round=B.round;CARREC={B:src,wheels:[]};try{draw(src,0,0,s,0,0);}finally{e={src,wheels:CARREC.wheels,spin:null,wb:null};CARREC=null;}if(src.n)src.alloc(src.n,src.u8);
+ else{const src=Batch.cpu(16384);src.round=B.round;const G=see?Batch.cpu(1024):null;CARREC={B:src,wheels:[],G};try{draw(src,0,0,s,0,0);}finally{e={src,wheels:CARREC.wheels,spin:null,wb:null,G:G&&G.n?G:null};CARREC=null;}if(src.n)src.alloc(src.n,src.u8);
   CARBODY.set(k,e);if(CARBODY.size>CARBODY_MAX)CARBODY.delete(CARBODY.keys().next().value);}
- batchCopyYaw(B,e.src,x,z,a);if(!e.wheels.length)return;
+ batchCopyYaw(B,e.src,x,z,a);if(e.G)CARGLASS.push([e.G,x,z,a]);if(!e.wheels.length)return;
  const sp=spin||0;if(e.spin!==sp){const wb=e.wb||(e.wb=Batch.cpu(4096));wb.reset();const {W}=rideKit(wb,0,0,s,0),r0=wb.round;
   for(const w of e.wheels){const q=w.a;wb.round=w.round;W(q[0],q[1],q[2],q[3],q[4],(q[5]||0)+sp,q[6]);}wb.round=r0;e.spin=sp;}
  batchCopyYaw(B,e.wb,x,z,a);}
-function drawCar(B,x,z,col,dir,spin,type){const C=col||[0.86,0.1,0.16];let t=type;if(t===undefined){const h=Math.floor((C[0]*7.1+C[1]*13.3+C[2]*5.7)*97);t=TRAFFIC_TYPES[h%TRAFFIC_TYPES.length];}else if(typeof t==='number')t=TRAFFIC_TYPES[t%TRAFFIC_TYPES.length];
- drawCarShape(B,x,z,1,(dir||1)<0?Math.PI:0,t,{col:C},spin);}
+function drawCar(B,x,z,col,dir,spin,type,drv){const C=col||[0.86,0.1,0.16],h=Math.floor((C[0]*7.1+C[1]*13.3+C[2]*5.7)*97);let t=type;if(t===undefined)t=TRAFFIC_TYPES[h%TRAFFIC_TYPES.length];else if(typeof t==='number')t=TRAFFIC_TYPES[t%TRAFFIC_TYPES.length];
+ /* drv: somebody is driving it (traffic); parked cars are empty */
+ drawCarShape(B,x,z,1,(dir||1)<0?Math.PI:0,t,drv?{col:C,drv:1+h%23}:{col:C},spin);}
 function drawCarShape(B,x,z,s,a,type,over,spin){carCache(B,'shape|'+type+'|'+JSON.stringify(over||null),x,z,s,a,spin,(K,X,Z,S,A_,sp)=>drawCarShapeRaw(K,X,Z,S,A_,type,over,sp));}
 function drawCarShapeRaw(B,x,z,s,a,type,over,spin){const o=Object.assign({},CAR_SHAPES[type]||CAR_SHAPES.sedan,over||{});const r0=B.round;B.round=0.35;
  const K=carKit(B,x,z,s,a,o,spin);carLamps(K,o);carExtras(K,o);B.round=r0;return K;}
@@ -134,8 +189,19 @@ function carExtras(K,o){const {P,f,L2,hw}=K,PT=TUV[56];
  if(o.primer)for(const sd of [-1,1])if(sd>0){const s=f.at(0.05);P(0.05,(s.yr+s.ybelt)/2,s.wb+0.006,0,0.42,(s.ybelt-s.yr)*0.9,0.006,[0.52,0.52,0.54]);}
  if(o.rust)for(const [rx,ry,sd] of o.rust){const s=f.at(rx);P(rx,ry,sd*(s.wb+0.006),0,0.12,0.06,0.006,[0.42,0.2,0.1]);}
  if(o.strakes)for(const sd of [-1,1])for(let i=0;i<5;i++){const xm=-0.32,s=f.at(xm),y=s.yr+0.04+i*0.045;P(xm,y,sd*(s.wb+0.006),0,0.7,0.012,0.012,[0.1,0.1,0.11]);}
- if(o.open){const s=f.at(-0.15);for(const sd of [-1,1]){P(-0.2,s.deck-0.02,sd*0.24,0,0.2,0.12,0.3,CAR_INT);P(-0.3,s.deck+0.04,sd*0.24,0.25,0.06,0.2,0.28,CAR_INT);}P(0.05,s.deck+0.02,0.24,0.5,0.03,0.12,0.12,[0.05,0.05,0.05]);}
- if(o.taxi){const s=f.at(-0.07);P(-0.07,s.T+0.05,0,0,0.12,0.08,0.34,[1,0.85,0.3],null,1);}}
+ if(o.open&&!f.see){const s=f.at(-0.15);for(const sd of [-1,1]){P(-0.2,s.deck-0.02,sd*0.24,0,0.2,0.12,0.3,CAR_INT);P(-0.3,s.deck+0.04,sd*0.24,0.25,0.06,0.2,0.28,CAR_INT);}P(0.05,s.deck+0.02,0.24,0.5,0.03,0.12,0.12,[0.05,0.05,0.05]);}
+ if(o.taxi){const s=f.at(-0.07);P(-0.07,s.T+0.05,0,0,0.12,0.08,0.34,[1,0.85,0.3],null,1);}
+ /* the 4x4: a black roll bar over the seats, a tread plate step and the spare wheel on the tailgate */
+ if(o.rollbar){const s=f.at(-0.42),RB=[0.08,0.08,0.09],y0=s.deck,y1=s.deck+0.46;for(const sd of [-1,1]){P(-0.42,(y0+y1)/2,sd*(s.wsh-0.07),0,0.06,y1-y0,0.06,RB);P(-0.66,y1-0.16,sd*(s.wsh-0.07),-0.75,0.05,0.4,0.05,RB);
+   const st=f.at(0);P(0,s.yb+0.06,sd*(st.wb+0.05),0,0.6,0.025,0.1,[0.62,0.63,0.66],TUV[58]);}P(-0.42,y1,0,0,0.06,0.06,s.wsh*2-0.08,RB);}
+ if(o.spare){const t=f.at(-L2+0.05),y=(t.yb+t.T)/2+0.04;P(-L2-0.07,y,0,0,0.13,0.44,0.44,CAR_DARK);P(-L2-0.14,y,0,0,0.012,0.22,0.22,o.rim||CAR_CHR,TUV[58]);P(-L2-0.15,y,0,0,0.012,0.08,0.08,CAR_DARK);}
+ /* a thin hand-painted gold pinstripe down the flanks (the lowrider) */
+ if(o.pin)for(const sd of [-1,1])for(let i=0;i<6;i++){const w=(L2*2-0.4)/6,xm=-L2+0.2+w*(i+0.5),s=f.at(xm);P(xm,s.ybelt-0.05,sd*(s.wb+0.005),0,w+0.01,0.016,0.006,o.pin,TUV[58]);}
+ /* the muscle car's hood scoop */
+ if(o.scoop){const x=L2*0.42,s=f.at(x);P(x,s.T+0.03,0,0,0.34,0.06,0.24,o.col,PT);P(x+0.17,s.T+0.03,0,0,0.006,0.035,0.19,CAR_DARK);}
+ /* the race car's big rear wing on two posts, and the intakes along its flanks */
+ if(o.wing){const x=-L2+0.12,s=f.at(x),y=s.T+0.17,CF=[0.08,0.08,0.09];P(x,y,0,0,0.2,0.025,hw*1.95,CF,PT);for(const sd of [-1,1]){P(x,y-0.03,sd*hw*0.97,0,0.24,0.12,0.02,o.col,PT);P(x+0.02,(s.T+y)/2,sd*hw*0.45,0,0.06,y-s.T,0.03,CF);}}
+ if(o.vents)for(const sd of [-1,1]){const x=-0.62,s=f.at(x);P(x,(s.yr+s.ybelt)/2+0.02,sd*(s.wb+0.004),0,0.32,(s.ybelt-s.yr)*0.55,0.006,CAR_DARK);const t=f.at(-L2+0.5);P(-L2+0.5,t.T+0.004,sd*0.16,0,0.4,0.006,0.14,CAR_DARK);}}
 
 /* ---------- the player's rides ---------- */
 const BEATER={
@@ -181,14 +247,37 @@ function drawEscalade(B,x,z,s,a,spin,over){const o=Object.assign({},ESCALADE,ove
  /* roof rails, running boards */
  for(const sd of [-1,1]){const s0=f.at(-0.4);P(-0.45,s0.T+0.03,sd*(s0.wt-0.05),0,1.5,0.03,0.04,CAR_CHR,CH);const sb=f.at(0);P(0,sb.yb+0.05,sd*(sb.wb+0.04),0,1.2,0.035,0.1,[0.08,0.08,0.09]);P(0,sb.yb+0.07,sd*(sb.wb+0.09),0,1.2,0.012,0.012,CAR_CHR,CH);}}
 
-/* ---------- the dealership's own stock (anyone can buy these) ---------- */
+/* ---------- the dealership's own stock (anyone can buy these) ----------
+   perf: how it drives on the road (carStep in drive.js): spd scales top speed, acc the pull, grip how hard the tyres hold a line.
+   1 is the loaner; CAR_PERF below holds the beater, the Sunrunner and the signature rides. */
 const DEALER_CARS={
- spyder:{name:'SPYDER 365',price:30000,desc:'Black convertible. Wind in your hair, cops in your mirror.',
+ jeep:{name:'KEY LARGO 4X4',price:12000,perf:{spd:0.97,acc:1.02,grip:1.18},desc:'Doors off, roll bar, big knobbly tyres. Sticks to the road like a gecko.',
+  shape:Object.assign({},CAR_SHAPES.hatch,{L:2.3,W:1.12,ride:0.26,col:[0.98,0.8,0.2],open:true,R:0.27,tw:0.2,rim:[0.9,0.9,0.92],rimFull:true,spokes:5,bump:[0.1,0.1,0.11],lamps:'round',grilleW:0.42,grilleH:0.16,taper:0.02,tumble:0.98,
+   top:[[-1.15,0.72],[-1.12,0.76],[0.3,0.76],[0.33,1.02],[0.4,1.02],[0.43,0.78],[1.1,0.76],[1.15,0.7]],sill:[[-1.15,0.78],[1.15,0.78]],ws:[0.3,0.43],rw:null,cab:[-0.9,0.43],bp:[],axles:[0.76,-0.72],handles:[],rollbar:true,spare:true,fbump:0.36,rbump:0.36})},
+ stallion:{name:'STALLION 5.0',price:24000,perf:{spd:1.06,acc:1.14,grip:0.97},desc:'Detroit V8, hood scoop, white racing stripes. All muscle, no manners.',
+  shape:Object.assign({},CAR_SHAPES.coupe,{L:2.42,W:1.04,ride:0.14,col:[0.82,0.06,0.09],lamps:'quad',grille:true,grilleH:0.07,bump:[0.12,0.12,0.13],rim:[0.86,0.87,0.9],rimFull:true,spokes:5,scoop:true,spoiler:true,hoodStripe:[0.96,0.96,0.98],
+   top:[[-1.21,0.47],[-1.15,0.51],[-0.62,0.53],[-0.2,0.74],[0.18,0.75],[0.5,0.52],[1.14,0.47],[1.21,0.42]],sill:[[-1.21,0.53],[1.21,0.51]],ws:[0.18,0.5],rw:[-0.62,-0.2],cab:[-0.62,0.5],bp:[-0.12],axles:[0.76,-0.74],handles:[0.02],fbump:0.27,rbump:0.27})},
+ lowrider:{name:'BOULEVARD LOWRIDER',price:28000,perf:{spd:0.99,acc:0.98,grip:1.04},desc:'Candy purple, gold wire wheels, whitewalls. Low and slow down Calle Ocho.',
+  shape:Object.assign({},CAR_SHAPES.sedan,{L:2.8,W:1.12,ride:0.09,R:0.17,col:[0.5,0.1,0.62],roof:[0.95,0.94,0.92],rim:[0.98,0.8,0.36],rimFull:true,white:true,spokes:12,trim:CAR_CHR,trimY:0.34,lamps:'quad',pin:[0.95,0.75,0.3],
+   top:[[-1.4,0.44],[-1.34,0.49],[-0.64,0.5],[-0.42,0.77],[0.3,0.78],[0.6,0.51],[1.32,0.49],[1.4,0.44]],sill:[[-1.4,0.51],[1.4,0.52]],ws:[0.3,0.6],rw:[-0.64,-0.42],cab:[-0.64,0.6],bp:[],axles:[0.9,-0.9],handles:[0.05],fbump:0.25,rbump:0.25})},
+ spyder:{name:'SPYDER 365',price:30000,perf:{spd:1.08,acc:1.08,grip:1.04},desc:'Black convertible. Wind in your hair, cops in your mirror.',
   shape:Object.assign({},CAR_SHAPES.coupe,{L:2.5,W:1.06,col:[0.05,0.05,0.06],open:true,rim:[0.85,0.86,0.9],rimFull:true,spokes:5,lamps:'pop',popUp:false,bump:[0.1,0.1,0.11],
    top:[[-1.25,0.45],[-1.15,0.48],[-0.4,0.5],[-0.2,0.5],[0.08,0.68],[0.42,0.5],[1.17,0.4],[1.25,0.35]],sill:[[-1.25,0.48],[-0.2,0.5],[0.42,0.5],[1.25,0.42]],ws:[0.08,0.42],rw:null,cab:[-0.42,0.42],bp:[],axles:[0.8,-0.78]})},
- testa:{name:'TESTA BIANCA',price:75000,desc:'White, wide and flat as a pool table. Side strakes. The whole of Ocean Drive turns round.',
+ roadster:{name:'SOLANA 560 ROADSTER',price:42000,perf:{spd:1.07,acc:1.04,grip:1.1},desc:'Cream German roadster, tan leather, chrome everywhere. Old money, top down.',
+  shape:Object.assign({},CAR_SHAPES.sedan,{L:2.45,W:1.08,ride:0.15,col:[0.94,0.9,0.78],open:true,bump:CAR_CHR,lamps:'round',grilleW:0.5,grilleH:0.11,trim:CAR_CHR,trimY:0.3,rim:CAR_CHR,rimFull:true,spokes:8,taper:0.06,
+   top:[[-1.22,0.5],[-1.16,0.54],[0.05,0.55],[0.12,0.72],[0.44,0.56],[1.16,0.52],[1.22,0.47]],sill:[[-1.22,0.56],[1.22,0.56]],ws:[0.12,0.44],rw:null,cab:[-0.45,0.44],bp:[],axles:[0.78,-0.76],handles:[0.0],fbump:0.27,rbump:0.27})},
+ testa:{name:'TESTA BIANCA',price:75000,perf:{spd:1.16,acc:1.14,grip:1.08},desc:'White, wide and flat as a pool table. Side strakes. The whole of Ocean Drive turns round.',
   shape:Object.assign({},CAR_SHAPES.coupe,{L:2.6,W:1.22,ride:0.12,col:[0.96,0.96,0.97],rim:[0.95,0.95,0.97],rimFull:true,spokes:5,lamps:'pop',popUp:false,strakes:true,taper:0.09,tumble:0.72,
-   top:[[-1.3,0.44],[-1.22,0.47],[-0.75,0.5],[-0.3,0.66],[0.1,0.67],[0.46,0.45],[1.22,0.36],[1.3,0.31]],sill:[[-1.3,0.47],[0.46,0.45],[1.3,0.38]],ws:[0.1,0.46],rw:[-0.75,-0.3],cab:[-0.55,0.46],bp:[],axles:[0.82,-0.8],bump:[0.94,0.94,0.95]})}};
+   top:[[-1.3,0.44],[-1.22,0.47],[-0.75,0.5],[-0.3,0.66],[0.1,0.67],[0.46,0.45],[1.22,0.36],[1.3,0.31]],sill:[[-1.3,0.47],[0.46,0.45],[1.3,0.38]],ws:[0.1,0.46],rw:[-0.75,-0.3],cab:[-0.55,0.46],bp:[],axles:[0.82,-0.8],bump:[0.94,0.94,0.95]})},
+ furia:{name:'FURIA 12',price:150000,perf:{spd:1.25,acc:1.24,grip:1.14},desc:'Twin-turbo race car with plates. Carbon wing, red paint, no carpet. The fastest thing in Florida.',
+  shape:Object.assign({},CAR_SHAPES.coupe,{L:2.6,W:1.2,ride:0.11,col:[0.88,0.04,0.06],R:0.21,tw:0.18,rim:[0.22,0.22,0.24],rimFull:true,spokes:5,lamps:'pop',popUp:false,grille:false,bump:[0.84,0.04,0.06],wing:true,vents:true,taper:0.1,tumble:0.7,
+   top:[[-1.3,0.44],[-1.22,0.48],[-0.8,0.5],[-0.32,0.64],[0.06,0.65],[0.44,0.43],[1.22,0.33],[1.3,0.29]],sill:[[-1.3,0.48],[0.44,0.43],[1.3,0.36]],ws:[0.06,0.44],rw:[-0.8,-0.32],cab:[-0.45,0.44],bp:[],axles:[0.82,-0.82],fbump:0.2,rbump:0.24})}};
+/* how the cars that are not dealer stock drive (the loaner is the yardstick) */
+const CAR_PERF={beater:{spd:1,acc:1,grip:1},mid:{spd:1.04,acc:1.05,grip:1.02},sig:{spd:1.12,acc:1.1,grip:1.06}};
+function carPerf(k){const d=DEALER_CARS[k];return (d&&d.perf)||CAR_PERF[k]||CAR_PERF.beater;}
+/* the dealer screen's rating bars: 1 to 5 */
+function carBars(v,lo,hi){const n=Math.max(1,Math.min(5,Math.round(1+(v-lo)/(hi-lo)*4)));return '\u25AE'.repeat(n)+'<span style="opacity:.25">'+'\u25AE'.repeat(5-n)+'</span>';}
+function carStatsHtml(k){const f=carPerf(k);return `<div class="cst">SPEED ${carBars(f.spd,0.97,1.25)}<br>GRIP&nbsp; ${carBars(f.grip,0.97,1.18)}</div>`;}
 
 /* ================= VICTORY MOTORS: the car dealership =================
    Reached from the car menu (departTo -> loadHub('mall') -> hubArrive drive-in; the showroom is the south end of the Biscayne Galleria, mall.js). 'Victory' Vic Velour runs the floor: talk to him,
@@ -202,8 +291,9 @@ const VIC_SOLD=["SOLD! The {car}! Two fingers up, friend, that's a victory!","Ke
 const VIC_POOR=["Whoa, whoa. Love the enthusiasm, hate the wallet. Come back richer.","Friend, I'd finance you, but McWey already owns your kneecaps."];
 const VIC_MOD=["Beautiful. She's purring already.","Now THAT is a ride with a personality.","Ooh. Ocean Drive's gonna need sunglasses."];
 const VIC_BYE=["Peace, friend! Tell your friends. Tell your enemies, I'm not picky.","Two fingers up! Victory!","Drive safe. Or fast. Fast is also fine."];
-const DEALER_LOT=['mid','spyder','sig','testa'];
-const DEALER_LIST=['beater','mid','spyder','sig','testa'];
+/* the turntables, by slot number on the map: 1-4 the front row, 5-7 the back row (the Furia in the middle), 8-9 in the windows onto the atrium */
+const DEALER_LOT=['mid','spyder','sig','testa','stallion','furia','lowrider','jeep','roadster'];
+const DEALER_LIST=['beater','jeep','mid','stallion','lowrider','spyder','roadster','sig','testa','furia'];
 const PAINT_NAMES=['FACTORY','FLAMINGO PINK','BISCAYNE TEAL','COCAINE WHITE','MIDNIGHT BLACK','ROSSO RED','SUNSHINE YELLOW'];
 const RIM_ORDER=['stock','chrome','gold','white'],RIM_NAMES={stock:'STOCK',chrome:'CHROME',gold:'GOLD',white:'WHITEWALLS'};
 const GLOW_NAMES=['OFF','PINK','CYAN','PURPLE'];
@@ -216,14 +306,16 @@ const CARMODS={
 function carModState(k,x){if(k==='paint')return PAINT_NAMES[x.paint||0];if(k==='rims')return RIM_NAMES[x.rims||'stock'];if(k==='glow')return GLOW_NAMES[x.glow||0];return x[k]?'FITTED':'';}
 let vicSayTxt='',vicImg=null;
 function dealerSetup(g){g.park={x:g.car.x,z:g.car.z};const n=g.npcs.find(q=>q.kind==='vic');if(n){g.car={x:n.x,z:n.z};n.a=n.a0=0;/* faces the camera and his customers (you walk in from the south) */n.r=0.3;g.lights.push({x:n.x,y:2.0,z:n.z+1.3,r:3.6,c:[1.3,1.05,0.9]});}
- const slots=[];for(let z=0;z<g.H;z++)for(let x=0;x<g.W;x++){const c=g.rows[z]&&g.rows[z][x];if(c>='1'&&c<='4')slots.push({i:+c-1,x:x+0.5,z:z+0.5});}
- slots.sort((a,b)=>a.i-b.i);g.dealer={slots:slots.map((s,i)=>({k:DEALER_LOT[i%DEALER_LOT.length],x:s.x,z:s.z,a0:0.5+i*1.3}))};
+ const slots=[];for(let z=0;z<g.H;z++)for(let x=0;x<g.W;x++){const c=g.rows[z]&&g.rows[z][x];if(c>='1'&&c<='9')slots.push({i:+c-1,x:x+0.5,z:z+0.5});}
+ slots.sort((a,b)=>a.i-b.i);/* a car parked up against glass (the window cars) is looked at from behind: its sign and price card go on the showroom side */
+ const behind=s=>{const r=g.rows[Math.floor(s.z)+2];const c=r&&r[Math.floor(s.x)];return c==='H'||c==='#';};
+ g.dealer={slots:slots.map((s,i)=>({k:DEALER_LOT[s.i%DEALER_LOT.length],x:s.x,z:s.z,a0:0.5+i*1.3,tz:behind(s)?-1.6:1.4}))};
  g.solids=g.solids||[];for(const s of g.dealer.slots){g.solids.push({x:s.x,z:s.z,w:2.7,d:2.7});g.lights.push({x:s.x,y:2.4,z:s.z,r:3.4,c:[1.1,1.0,1.05]});}
  g.lights.push({x:g.W/2,y:2.2,z:6.4,r:6,c:[1.2,0.35,0.9]});
  g.obj="TALK TO VICTORY VIC · THEN BACK TO YOUR CAR";}
 function dealerHello(g){const n=g&&g.npcs.find(q=>q.kind==='vic');if(!n)return;const p=myProg(),first=!(p.seen&&p.seen.vic);g.say={who:'VICTORY VIC',txt:first?"Hey hey HEY! Over here, friend! Come on in, the cars won't sell themselves!":pick(VIC_HI),t:0,dur:4};}
 function dealerTargets(g,t){const n=g.npcs.find(q=>q.kind==='vic');if(n)t.push({k:'vic',x:n.x,z:n.z,r:2.7,lbl:'TALK TO VICTORY VIC'});
- for(const s of g.dealer.slots){const c=CARS[s.k],own=myProg().cars.includes(s.k);t.push({k:'show',car:s.k,x:s.x,z:s.z+1.4,r:2.0,lbl:carName(s.k)+(own?' · YOURS':' · $'+fmt(c.price))});}}
+ for(const s of g.dealer.slots){const c=CARS[s.k],own=myProg().cars.includes(s.k);t.push({k:'show',car:s.k,x:s.x,z:s.z+(s.tz||1.4),r:2.0,lbl:carName(s.k)+(own?' · YOURS':' · $'+fmt(c.price))});}}
 /* the lot car for a slot: your own signature model, or the dealer stock */
 function drawLotCar(B,k,x,z,a){if(k==='mid'){drawCarShape(B,x,z,1,a,null,MIDCAR,0);return;}if(DEALER_CARS[k]){drawCarShape(B,x,z,1,a,null,DEALER_CARS[k].shape,0);return;}
  const r0=B.round;B.round=0.5;const id=rideId();if(id==='don')drawRolls(B,x,z,1,a,0);else if(id==='consigliere')drawEscalade(B,x,z,1,a,0);else drawLambo(B,x,z,1,a,null,0);B.round=r0;}
@@ -271,9 +363,9 @@ function renderDealer(msg){const p=myProg(),x=p.carx||(p.carx={});$('stWallet').
  for(const id of ['stHome','stHomeH'])$(id).style.display='none';for(const id of ['stGold','stGoldH'])$(id).style.display='';$('stHome').innerHTML='';
  $('stCarsH').textContent='ON THE LOT';$('stGoldH').textContent="VIC'S GARAGE · FITS WHATEVER YOU DRIVE (NOW: "+carName(myCar())+')';
  $('stCars').innerHTML=DEALER_LIST.map((k,i)=>{const c=CARS[k],own=p.cars.includes(k),cur=p.car===k,lock=c.needs&&!p.cars.includes(c.needs);const act=cur?'DRIVING':own?'DRIVE IT':lock?'NEEDS THE '+carName(c.needs):'BUY $'+fmt(c.price);
-  return `<button class="scard${cur?' on':''}" data-car="${k}"${lock?' style="opacity:.55"':''}><div class="pn">${carName(k)}</div><div class="pd">${c.desc}</div><div class="sp">${act}<span class="kbhint"> (${i+1})</span></div></button>`;}).join('');
+  return `<button class="scard${cur?' on':''}" data-car="${k}"${lock?' style="opacity:.55"':''}><div class="pn">${carName(k)}</div><div class="pd">${c.desc}</div><div class="sp">${act}${i<9?`<span class="kbhint"> (${i+1})</span>`:''}</div>${carStatsHtml(k)}</button>`;}).join('');
  $('stGold').innerHTML=Object.keys(CARMODS).map((k,i)=>{const m=CARMODS[k],st=carModState(k,x),lock=m.needs&&!x[m.needs],done=m.once&&x[k];const act=done?'FITTED':lock?'NEEDS THE '+CARMODS[m.needs].name:(m.once?'':st+' · NEXT ')+'$'+fmt(m.price);
-  return `<button class="scard${done?' on':''}" data-cx="${k}"${lock?' style="opacity:.55"':''}><div class="pn">${m.name}</div><div class="pd">${m.desc}</div><div class="sp">${act}<span class="kbhint"> (${(DEALER_LIST.length+i+1)%10})</span></div></button>`;}).join('');
+  return `<button class="scard${done?' on':''}" data-cx="${k}"${lock?' style="opacity:.55"':''}><div class="pn">${m.name}</div><div class="pd">${m.desc}</div><div class="sp">${act}${DEALER_LIST.length+i<9?`<span class="kbhint"> (${DEALER_LIST.length+i+1})</span>`:''}</div></button>`;}).join('');
  $('stMsg').textContent=msg||'';const cs=document.querySelectorAll('#sStore .scard');cs.forEach((b,i)=>b.style.outline=padMode&&i===storeFocus?'3px solid #ffd36b':'');if(padMode&&cs[storeFocus]&&cs[storeFocus].scrollIntoView)cs[storeFocus].scrollIntoView({block:'nearest'});}
 function buyCarMod(k){const p=myProg(),x=p.carx||(p.carx={}),m=CARMODS[k];if(!m)return;if(m.once&&x[k])return renderStore('Already fitted.');if(m.needs&&!x[m.needs])return renderStore('Fit the '+CARMODS[m.needs].name+' first.');
  if(p.wallet<m.price){sfx('blip');dealerSay(pick(VIC_POOR));return renderStore('Not enough cash. Come back richer.');}

@@ -54,7 +54,7 @@ test('mall: shops, keepers, jewelry you wear, furniture for every home, real est
     } finally { fadeTo = fade; }
   }, setup.toString())).toEqual({
     label: true,
-    hub: { mall: true, keepers: ['furn', 'jewel', 'realty', 'tailor'], vic: 1, lot: 4, shoppers: true, glass: true },
+    hub: { mall: true, keepers: ['furn', 'jewel', 'realty', 'tailor'], vic: 1, lot: 9, shoppers: true, glass: true },
     targets: true, atrium: true, drawn: true,
     jewelScreen: { state: 'store', mode: 'jewel', title: 'GOLD COAST JEWELERS', cards: 8, who: 'SCHMALTZY' }, // 6 pieces of jewelry + 2 pairs of earrings
     worn: { medal: true, bracelet: true, look: true },
@@ -131,7 +131,7 @@ test('mall: walk straight in from the doors, Vic faces you, the food court has d
       return {
         vicFaces: Math.abs(vic.a0) < 0.01,
         walkedIn: p.z < 24,
-        noPool: !g.rows.some(r => r.includes('~')),
+        noPool: !g.rows.some((r, z) => z > 2 && r.includes('~')), // the bay behind Victory Motors' glass is the only water
         diners: diners.length >= 8 && diners.every(n => n.seat && n.seatK === 1),
         cooks: cooks.length === 2,
         escClear: escX.every(x => x > 18 && x < 29),
