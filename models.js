@@ -172,7 +172,7 @@ function paintBody(pais,B){LAV=B.jacket;LAVD=LAV.map(v=>v*0.62);PANTS=B.pants;SH
  /* lapels: wide notch lapels with drop shadow, ink edge, pick-stitching and a buttonhole */
  for(const sd of [-1,1]){const L=[];for(let Y=1.17;Y<=1.455;Y+=0.015)L.push([fx(sd*V(Y)),ty(Y)]);const R=[];for(let Y=1.455;Y>=1.17;Y-=0.015)R.push([fx(sd*(V(Y)+0.078)),ty(Y)]);
   x.save();x.translate(sd*3,3);x.fillStyle=SHc(.4);x.beginPath();x.moveTo(...L[0]);for(const p of L)x.lineTo(...p);for(const p of R)x.lineTo(...p);x.closePath();x.fill();x.restore();
-  const lg=x.createLinearGradient(fx(sd*0.05),0,fx(sd*0.2),0);lg.addColorStop(0,rgb(LAV.map(v=>Math.min(255,v*1.1))));lg.addColorStop(1,rgb(LAV.map(v=>v*0.95)));x.fillStyle=lg;
+  const LP=B.lapel||LAV,lg=x.createLinearGradient(fx(sd*0.05),0,fx(sd*0.2),0);lg.addColorStop(0,rgb(LP.map(v=>Math.min(255,v*1.1))));lg.addColorStop(1,rgb(LP.map(v=>v*0.95)));x.fillStyle=lg;
   x.beginPath();x.moveTo(...L[0]);for(const p of L)x.lineTo(...p);for(const p of R)x.lineTo(...p);x.closePath();x.fill();x.strokeStyle=INK;x.lineWidth=2.5;x.stroke();
   const st=[];for(let Y=1.19;Y<=1.44;Y+=0.015)st.push([fx(sd*(V(Y)+0.068)),ty(Y)]);stitch(st);
   x.fillStyle=rgb(LAVD);x.beginPath();x.moveTo(fx(sd*(V(1.41)+0.078)),ty(1.41));x.lineTo(fx(sd*(V(1.41)+0.106)),ty(1.425));x.lineTo(fx(sd*(V(1.41)+0.078)),ty(1.445));x.fill();
@@ -222,6 +222,10 @@ function paintBody(pais,B){LAV=B.jacket;LAVD=LAV.map(v=>v*0.62);PANTS=B.pants;SH
  line([[256,ROW.p0],[256,ROW.p1]],1.6,'rgba(255,255,255,.35)');line([[258,ROW.p0],[258,ROW.p1]],1.2,'rgba(60,40,100,.45)');line([[2,ROW.p0],[2,ROW.p1]],2,SEAM);line([[128,ROW.p0],[128,ROW.p1]],2,SEAM);line([[384,ROW.p0],[384,ROW.p1]],2,SEAM);
  for(let k=0;k<3;k++){x.strokeStyle='rgba(50,30,90,.28)';x.lineWidth=2;x.beginPath();x.moveTo(220,pr(0.5+k*0.03));x.quadraticCurveTo(256,pr(0.53+k*0.03),292,pr(0.5+k*0.03));x.stroke();}
  blob(256,pr(0.95),80,6,SHc(.4));x.fillStyle=SHc(.35);x.fillRect(0,ROW.p1-4,W,4);
+ /* pleated skirt (B.pleats): the skirt samples one row of the torso sheet (y 0.82, under the hem), so knife pleats are vertical bands there */
+ if(B.pleats){const y0=Math.floor(ty(0.82))-5,h=11,n=B.pleats,PL=B.skirtCol||LAV;x.fillStyle=rgb(PL);x.fillRect(0,y0,W,h);
+  for(let i=0;i<n;i++){const a=i*W/n,b=W/n,g=x.createLinearGradient(a,0,a+b,0);g.addColorStop(0,rgb(PL.map(v=>Math.min(255,v*1.12+8))));g.addColorStop(0.7,rgb(PL));g.addColorStop(1,rgb(PL.map(v=>v*0.62)));x.fillStyle=g;x.fillRect(a,y0,b,h);
+   x.fillStyle=rgb(PL.map(v=>v*0.45),0.8);x.fillRect(a+b-1.5,y0,1.5,h);}}
  return c;}
 /* ================= LOW-POLY MESH BUILDER ================= */
 function newMesh(){return{p:[],uv:[],bi:[],bw:[],idx:[],grp:[]};}
@@ -484,6 +488,10 @@ function buildHead(B){const M=newMesh(),X=[1,0,0],Z=[0,0,1],tv=y=>1-(y-HEAD.neck
  /* an earring from Schmaltzy (B.ear): one stud in the left lobe, a diamond or gold, just under the ear flap */
  if(B&&B.ear){const w=W1(BI.head),u=B.ear==='stud'?[371/512,3/512]:[357/512,3/512],sx=-1;
   loft(M,[sx*0.114,sx*0.124].map(x=>({c:[x,1.662,0.004],s:[0,1,0],f:[0,0,1],rx:0.0075,rz:0.0075,w,v:u[1]})),8,{uvf:()=>u,capB:{dir:[sx,0,0],uv:u}});}
+ /* big gold hoop earrings (B.hoops = radius): a tube bent into a ring hanging from each lobe, gold swatch */
+ if(B&&B.hoops){const w=W1(BI.head),u=[357/512,3/512],R=B.hoops,N=14;
+  for(const sx of [-1,1]){const ex=sx*0.122,ey=1.664,ez=0.006;
+   loft(M,Array.from({length:N+1},(_,i)=>{const a=i/N*Math.PI*2;return{c:[ex,ey-R*(1-Math.cos(a)),ez+R*Math.sin(a)],s:[1,0,0],f:[0,Math.cos(a),Math.sin(a)],rx:0.0032,rz:0.0032,w,v:u[1]};}),6,{uvf:()=>u});}}
  /* logo belt (B.belt): a leather strap round the hips and a big gold buckle of two interlocking rings at the front */
  if(B&&B.belt){const T=torsoRows(B),lu=[442/512,3/512],gu=[357/512,3/512],wp=W1(BI.pelvis),y0=0.965;
   let i=0;while(i<T.length-2&&T[i+1][0]<y0)i++;const a=T[i],b=T[i+1],t=clamp((y0-a[0])/(b[0]-a[0]),0,1),rx=lerp(a[1],b[1],t),rz=lerp(a[2],b[2],t),zc=lerp(a[3],b[3],t),fz=zc+rz;
@@ -751,7 +759,7 @@ const CH={
  lola:{face:'lola',F:{EM:[174,192],prof:[[0,0],[50,-10],[86,-4],[150,0]],hl:96,hr:96,skin:[[120,250],[230,250],[175,140],[150,150],[200,150]],hairPt:[70,90]},
   B:{fem:true,skirt:0.55,heels:true,pads:true,jacket:[178,28,52],pants:[150,32,50],shirt:[22,20,24],chain:true,watch:-1,shoe:[40,24,28],pin:false,hairBig:2},scale:[0.9,1.0,0.88]},
  barbara:{face:'barbara',F:{EM:[174,192],prof:[[0,0],[50,-10],[86,-4],[150,0]],hl:96,hr:96,skin:[[125,235],[228,235],[175,148],[150,152],[200,152]],hairPt:[320,196]},
-  B:{fem:true,skirt:0.55,heels:true,pads:true,jacket:[236,128,98],pants:[226,116,90],shirt:[240,228,206],watch:-1,shoe:[236,206,180],pin:false,hairBig:2},scale:[0.9,1.0,0.88]},
+  B:{fem:true,skirt:0.55,heels:true,pads:true,jacket:[236,128,98],pants:[226,116,90],shirt:[240,228,206],lapel:[196,150,214],pleats:28,hoops:0.024,streaks:true,watch:-1,shoe:[236,206,180],pin:false,hairBig:2},scale:[0.9,1.0,0.88]},
  mcwey:{face:'mcwey',F:{...FACECFG.mcwey,hl:100,hr:126,beardBot:1.545,skin:[[120,235],[232,235],[176,100],[140,130],[212,130]],beardPt:[130,305],beardTop:1.69},
   B:{jacket:[228,218,198],pants:[222,212,192],shirt:'tropical',deepV:true,chains:true,rings:2,watch:1,shoe:[196,180,156],pin:false,square:'#e8dcc8'},scale:[1.06,1.0,1.06]},
 };
@@ -778,6 +786,10 @@ function baroqueCanvas(){const c=document.createElement('canvas');c.width=c.heig
  for(const [ox,oy] of [[0,0],[64,64],[64,0],[0,64]]){const fl=(ox+oy)%128?-1:1;x.beginPath();x.moveTo(ox+8,oy+32);x.bezierCurveTo(ox+8,oy+8,ox+32*fl+32,oy+8,ox+32,oy+32);x.bezierCurveTo(ox+32,oy+48,ox+52,oy+50,ox+56,oy+34);x.stroke();
   x.beginPath();x.arc(ox+32,oy+32,5,0,6.3);x.stroke();x.fillStyle='#f0c860';x.beginPath();x.arc(ox+32,oy+32,2,0,6.3);x.fill();}
  x.globalAlpha=0.1;x.strokeStyle='#000';for(let i=0;i<128;i+=2){x.beginPath();x.moveTo(i,0);x.lineTo(i,128);x.stroke();}return c;}
+/* hair strands for the big-hair keepers (B.streaks): hairBig rings all sample one row of the head sheet (v at y 1.83), so streaks of lighter
+   and darker hair along that row run from crown to tips on the model. Seeded, so the same keeper always gets the same hair. */
+function hairStreaks(hc,F){const x=hc.getContext('2d'),W=hc.width,hv=1-(1.83-HEAD.neckY)/(HEAD.crownY-HEAD.neckY),y0=Math.floor(hv*hc.height)-3,base=F.hair||[180,140,90];let sd=97;const r=()=>(sd=(sd*16807)%2147483647)/2147483647;
+ x.fillStyle=rgb(base);x.fillRect(0,y0,W,7);for(let i=0;i<W;i+=1.5){const k=r(),m=k<0.35?0.68+r()*0.15:k<0.75?0.95+r()*0.1:1.18+r()*0.2;x.fillStyle=rgb(base.map(v=>Math.min(255,v*m+(m>1.1?14:0))));x.fillRect(i,y0,1.5+r()*1.5,7);}}
 function shirtCanvas(col){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');x.fillStyle=rgb(col);x.fillRect(0,0,64,64);
  x.globalAlpha=0.08;x.strokeStyle='#000';for(let i=0;i<64;i+=2){x.beginPath();x.moveTo(i,0);x.lineTo(i,64);x.stroke();}x.globalAlpha=0.06;x.strokeStyle='#fff';for(let i=1;i<64;i+=3){x.beginPath();x.moveTo(0,i);x.lineTo(64,i);x.stroke();}return c;}
 const VS=`attribute vec3 aP;attribute vec3 aN;attribute vec2 aT;attribute vec4 aBi;attribute vec4 aBw;
@@ -813,7 +825,7 @@ async function init(){const shaders=[];try{
  /* hat crown/band (buildHead B.hat reads x 88 and 116) and belt leather (x 442) colours on the head texture's swatch strip */
  function accSwatches(ht,B){const x=ht.getContext('2d'),f=(c,x0,w)=>{x.fillStyle=rgb(C255(c));x.fillRect(x0,0,w,6);};if(B.hat){f(B.hatCol,76,24);f(B.hatBand,104,24);}
  if(B.belt)f(B.belt.col,432,20);}
- function buildCH(id){const C=CH[id],face=C.img,pais=PAIS;jewelB(id,C.B);if(C.B.jacket&&!C.B.fem&&C.B.coat===undefined)C.B.coat=true;const ht=paintHead(face,C.F);if(C.F.smile)paintSmile(ht,C.F);accSwatches(ht,C.B);const shirt=C.B.shirt==='pais'?pais:C.B.shirt==='tropical'?tropicalCanvas():C.B.shirt==='baroque'?baroqueCanvas():shirtCanvas(C.B.shirt);const bt=paintBody(shirt,Object.assign({shirtScale:C.B.shirt==='pais'?0.26:C.B.shirt==='tropical'||C.B.shirt==='baroque'?0.45:1},C.B));if(C.B.dolphin)dolphinPrint(bt.getContext('2d'));
+ function buildCH(id){const C=CH[id],face=C.img,pais=PAIS;jewelB(id,C.B);if(C.B.jacket&&!C.B.fem&&C.B.coat===undefined)C.B.coat=true;const ht=paintHead(face,C.F);if(C.F.smile)paintSmile(ht,C.F);if(C.B.streaks)hairStreaks(ht,C.F);accSwatches(ht,C.B);const shirt=C.B.shirt==='pais'?pais:C.B.shirt==='tropical'?tropicalCanvas():C.B.shirt==='baroque'?baroqueCanvas():shirtCanvas(C.B.shirt);const bt=paintBody(shirt,Object.assign({shirtScale:C.B.shirt==='pais'?0.26:C.B.shirt==='tropical'||C.B.shirt==='baroque'?0.45:1},C.B));if(C.B.dolphin)dolphinPrint(bt.getContext('2d'));
   const cp=cv=>{const k=document.createElement('canvas');k.width=cv.width;k.height=cv.height;k.getContext('2d').drawImage(cv,0,0);return k;};const canvases={bc:bt,hc:ht,bcBase:cp(bt),bc0:cp(bt),hc0:cp(ht)},parts=[];
   try{parts.push(upload(buildBody(C.B),mkTex(bt)));parts.push(upload(buildHead(C.B),mkTex(ht)));}catch(e){freeModel(parts);throw e;}
   const old=MODELS[id];MODELS[id]=parts;Object.assign(C,canvases);freeModel(old);}
