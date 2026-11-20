@@ -74,7 +74,9 @@ function jewelWorn(p,k){return p&&p.jewel&&p.jewel[k]===true;}
 
 /* ---------- the hub ---------- */
 function mallSetup(g){dealerSetup(g);const D=g.dealer,O=1;
- g.mall={keepers:[],T:0};D.signZ=15.04;D.signX=g.W/2;D.noPylon=1;D.pen=[[3,g.W-2,4.6],[3,g.W-2,11.8]];
+ g.mall={keepers:[],T:0};
+ /* the loader's border row north of the bay would be a full-height wall: make it water too, so the glass looks straight out over the bay */
+ for(let x=1;x<g.W-1;x++)if(g.rows[1]&&g.rows[1][x]==='~'){const i=x;g.wallT[i]=39;g.wh[i]=0.02;g.topT[i]=39;}D.signZ=15.04;D.signX=g.W/2;D.noPylon=1;D.pen=[[3,g.W-2,4.6],[3,g.W-2,11.8]];
  g.car={x:g.park.x,z:g.park.z};
  for(const n of g.npcs){const s=Object.keys(MALL_SHOPS).find(k=>MALL_SHOPS[k].npc===n.kind);if(!s)continue;n.a=n.a0=0;n.r=0.3;n.shop=s;g.mall.keepers.push(n);
   g.lights.push({x:n.x,y:2.0,z:n.z+1.2,r:3.4,c:[1.2,1.05,0.9]});}
@@ -175,6 +177,7 @@ function drawMall(B,g,LB){LB=LB||MALL_SINK;const T=g.T||0,O=1,OZ=O+MALL_DZ,bx=(x
  const lamp=(x,z)=>{bx(x,0.05,z,0.3,0.1,0.3,CH);bx(x,1.3,z,0.07,2.5,0.07,WH);for(const s of [-1,1]){bx(x+s*0.3,2.55,z,0.6,0.04,0.04,WH);bx(x+s*0.6,2.62,z,0.22,0.22,0.22,[1.2,1.15,1.0],true);}};
  const shrub=(x,z,s)=>{bx(x,0.35*s,z,0.55*s,0.5*s,0.55*s,GREEN,false,x+z);bx(x,0.55*s,z,0.38*s,0.32*s,0.38*s,[0.3,0.74,0.34],false,x*2);};
  drawMallGlass(B,g);
+ drawMallBay(B,LB,g,T);
  /* ===== the atrium ===== */
  /* the mall's name over the front doors, outside, a canopy over the doors, and the directory board just inside */
  mallSign(B,22.5+O,2.9,27.08+OZ,['BISCAYNE GALLERIA'],PINK,0.5,CYAN);
@@ -287,6 +290,43 @@ function drawMall(B,g,LB){LB=LB||MALL_SINK;const T=g.T||0,O=1,OZ=O+MALL_DZ,bx=(x
  {const J=g.mall.keepers.find(n=>n.shop==='jewel');if(J&&LB!==MALL_SINK&&typeof drawNugget==='function')drawNugget(J.x+0.95,0.94,10.95+OZ,T);}
  /* ===== VICTORY MOTORS (at the back): drawDealer draws the turntables, pennants and the sign; add the showroom desk and palms ===== */
  for(const [x,z,t] of [[2.6,4.2,1],[43.4,4.2,1],[2.6,12.2,0],[43.4,12.2,0]])drawPalm(B,x,z,!!t,x+z);}
+
+/* ===== behind Victory Motors: the back wall is one long run of glass (H cells on the map's top row) looking out over Biscayne Bay at night.
+   Open water right up to the glass, a big lit fountain out in the bay, a far promenade with palms and the downtown skyline on the horizon.
+   Everything here sits north of the map (negative z), so it can't be walked into; the static parts go to B, the jets and ripples to LB. */
+const BAY_FX=23.5,BAY_FZ=-4.6;
+function drawMallBay(B,LB,g,T){const W=g.W,box=(L,x,y,z,sx,sy,sz,c,em,ry)=>L.box(TRS(x,y,z,ry||0,sx,sy,sz),c,!!em);
+ const SEA=[0.05,0.16,0.26],SEA2=[0.07,0.22,0.34],STONE=[0.9,0.88,0.84],STONE2=[0.78,0.76,0.72],PINK=[1,0.3,0.75],CYAN=[0.2,0.9,1],FOAM=[0.85,0.95,1.05];
+ const fx=BAY_FX,fz=BAY_FZ;
+ if(B!==MALL_SINK){
+  /* the bay: one big dark plane from the glass to the far shore, with the outdoor kerb of the showroom along the glass */
+  box(B,W/2,-0.02,-12,W+30,0.04,28.2,SEA);box(B,W/2,0.005,1.55,W-2,0.03,0.9,SEA2);
+  box(B,W/2,0.06,1.95,W-2,0.12,0.12,STONE2);
+  /* the fountain: a wide round stone basin, a pedestal, two bowls and a top finial, with coloured lamps round the rim */
+  const N=24,R=3.4;for(let k=0;k<N;k++){const an=k/N*Math.PI*2,c=Math.cos(an),sn=Math.sin(an);box(B,fx+c*R,0.22,fz+sn*R,0.5,0.44,R*2*Math.PI/N+0.05,STONE,false,-an);
+   if(k%3===0)box(B,fx+c*(R+0.27),0.26,fz+sn*(R+0.27),0.06,0.12,0.12,k%2?PINK:CYAN,true,-an);}
+  for(let k=0;k<8;k++)box(B,fx,0.38,fz,R*1.92,0.02,R*0.8,[0.12,0.42,0.55],true,k*Math.PI/8);
+  box(B,fx,0.9,fz,0.55,1.2,0.55,STONE2);box(B,fx,1.55,fz,1.0,0.3,1.0,STONE,false,0.785);
+  for(let k=0;k<8;k++)box(B,fx,1.62,fz,2.5,0.18,1.04,STONE,false,k*Math.PI/8);for(let k=0;k<4;k++)box(B,fx,1.72,fz,2.3,0.02,0.95,[0.2,0.55,0.7],true,k*Math.PI/4);
+  box(B,fx,2.1,fz,0.32,0.75,0.32,STONE2);for(let k=0;k<6;k++)box(B,fx,2.5,fz,1.2,0.12,0.5,STONE,false,k*Math.PI/6);for(let k=0;k<3;k++)box(B,fx,2.6,fz,1.1,0.02,0.45,[0.25,0.6,0.75],true,k*Math.PI/3);
+  box(B,fx,2.85,fz,0.2,0.4,0.2,STONE2);box(B,fx,3.12,fz,0.26,0.2,0.26,[1,0.8,0.3],false,0.785);
+  /* the far promenade: a sea wall, a walkway with lamps and palms, then the skyline */
+  const zs=-19;box(B,W/2,0.25,zs,W+30,0.5,0.6,STONE2);box(B,W/2,0.5,zs-1.6,W+30,0.04,2.6,[0.55,0.5,0.48]);
+  for(let x=-10;x<=W+10;x+=4.2){drawPalm(B,x,zs-1.2,(x|0)%2===0,x*0.7);box(B,x+2.1,1.3,zs-0.7,0.06,2.6,0.06,[0.85,0.85,0.88]);box(B,x+2.1,2.65,zs-0.7,0.22,0.22,0.22,[1.2,1.05,0.8],true);}
+  const SK=[[-8,6,3.4],[-3,9,4],[2,5,3],[6.5,12,3.6],[11,7.5,3.2],[15,14,4.2],[19.5,9,3],[23.5,17,4.4],[28,10,3.4],[32,13,3.8],[36.5,7,3],[40.5,11,3.6],[45,8,3.2],[49,6,3.6],[53,9.5,3.2]];
+  SK.forEach(([x,h,w],i)=>{const z=zs-6-(i%3)*1.5,c=i%2?[0.1,0.09,0.16]:[0.13,0.11,0.2];box(B,x,h/2,z,w,h,2.4,c);
+   const WIN=[[1,0.85,0.55],[0.6,0.9,1],[1,0.5,0.8]][i%3];for(let r=1;r<h-0.6;r+=0.9)for(let q=-1;q<=1;q++){if(((r*7+q*3+i*5)|0)%3===0)continue;box(B,x+q*w*0.28,r,z+1.21,w*0.16,0.28,0.02,WIN,true);}
+   if(i%4===1)box(B,x,h+0.02,z+1.21,w*0.9,0.08,0.03,i%8===1?PINK:CYAN,true);});
+  /* a yacht at anchor with its deck lights on */
+  box(B,-1,0.2,-11,4.2,0.4,1.3,[0.95,0.95,0.97]);box(B,-1.4,0.6,-11,2.2,0.4,1.0,[0.95,0.95,0.97]);box(B,-1.4,0.6,-10.49,2.0,0.12,0.02,[1,0.9,0.6],true);box(B,1.1,0.2,-11,0.3,0.3,0.6,[0.95,0.95,0.97],false,0.785);}
+ /* moving: the fountain's jets (a tall centre plume and eight arcs into the basin), foam where they land, ripples drifting across the bay */
+ if(LB!==MALL_SINK){
+  for(let k=0;k<7;k++){const u=(k/7+T*0.9)%1,y=3.2+u*2.4;box(LB,fx,y,fz,0.22*(1-u*0.5),0.5,0.22*(1-u*0.5),FOAM,true,T+k);}
+  for(let j=0;j<8;j++){const an=j/8*Math.PI*2+0.2,c=Math.cos(an),sn=Math.sin(an);for(let k=0;k<6;k++){const u=(k/6+T*0.7+j*0.13)%1,r=0.6+u*2.3,y=1.75+Math.sin(u*Math.PI)*1.4-u*1.3;
+    box(LB,fx+c*r,Math.max(0.4,y),fz+sn*r,0.1,0.14,0.1,[0.7,0.9,1.05],true);}
+   box(LB,fx+c*2.9,0.42,fz+sn*2.9,0.34+0.08*Math.sin(T*6+j),0.02,0.34,FOAM,true);}
+  for(let k=0;k<3;k++){const u=(T*0.35+k/3)%1;box(LB,fx,0.4,fz,0.6+u*5.2,0.01,0.6+u*5.2,[0.35,0.7,0.85].map(v=>v*(1-u)),true,0.3*k);}
+  for(let i=0;i<10;i++){const x=((i*9.3+T*0.4)%(W+14))-7,z=-1.5-(i*3.7)%15;box(LB,x,0.02,z,1.6,0.005,0.05,[0.35,0.55,0.8].map(v=>v*0.6),true);}}}
 
 /* glass shopfronts: chrome posts at every cell edge, a header rail, a kick plate and pale streaks for the panes (see-through from above) */
 /* the food court's tables, chairs and trays (old layout coords); upstairs draws them again far below through the atrium opening */

@@ -2510,16 +2510,16 @@ const HUBS={
   legend:{'b':{w:33,h:'rand',tint:1,top:34},',':{f:7},'L':{f:7,lamp:1},'.':{f:43},'~':{f:43},'S':{f:19},'j':{f:19},'i':{f:43},'u':{f:43},'y':{f:43},'G':{f:43,npc:'guest'},'T':{f:43,npc:'tony'},'K':{f:43,furn:7},'B':{f:43,furn:2},'*':{f:43,light:'neon'},'w':{f:43,light:'warm'},'h':{f:43,furn:3},'o':{f:43,furn:1},'g':{f:43},'s':{f:37},'l':{f:37,lamp:1},'p':{f:7},'v':{w:38,h:0.03,top:38}},
   map:["bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "##############################", "#########*..........*#########", "#########h..........h#########", "#########h..........h#########", "##############D###############", "#*..........................*#", "#h..~~~~~~~~~~~~~~~G..w......#", "#ho.~G~~~~~~~~~~~G~.....K..B.#", "#h..~~~~~uiuii~~~~~....yK..B.#", "#...~~~~iSSSSSi~~~~..G..K..B.#", "#h..~~~~iSjSjSu~~~~....yKT.B.#", "#ho.~~~~uSSSSSi~~~~.G...K..B.#", "#h.G~~~~iSSjSSi~~~~....yK..B.#", "#...~~~~iSSSSSi~~~~..G..K..B.#", "#h..~~~~~iiiiu~~~~~....yK..B.#", "#ho.~~G~~~~~~~~~~G~.G........#", "#h..~~~~~~G~~~~~~~~...w......#", "#*..........................*#", "####..#######D#####D#####D####", "#*.......h#.....#.....#.....##", "#........h#.....#.....#.....##", "#......g..#.....#.....#.....##", "#*........#.....#.....#.....##", "####D#########################", "#ssssPsssssssssssssssssssssss#", "#sslssssssslssssssslsssssslss#", "pppppppCpppppppppppppppppppppp", ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,", ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,", "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"]},
  mall:{name:'BISCAYNE GALLERIA',hub:'foot',wall:42,floor:61,sofa:0xff6fae,grime:0.08,amb:[0.42,0.38,0.42],lc:[0.64,0.56,0.56],track:'c_palms',where:'BISCAYNE GALLERIA · SHOPPING MALL',obj:'SHOP AROUND · THEN BACK TO YOUR CAR',
-   /* the shopping mall (mall.js dresses it), entered from the front: Victory Motors at the back (Vic V, turntables 1-4, desk K) behind its
+   /* the shopping mall (mall.js dresses it), entered from the front: Victory Motors at the back (glass back wall H over the bay ~, mall.js drawMallBay; Vic V, turntables 1-4, desk K) behind its
       glass front onto the atrium; the atrium (fountain F, the food court in front of the doors, shoppers g) with glass shopfronts H (a low kerb; mall.js puts up
       the frames and panes): Gold Coast Jewelers (J, Schmaltzy) and Sunshine Realty (E) to the west, Casa Bonita furniture (R, Lola) and Fontaine Tailoring (Q, Felix) to the east; the front
       doors (_), then the sidewalk, the parking lay-by with your bay (C), the road and the verge (venues.js). floorFn takes world cells (map + 1) */
    floorFn:(x,z)=>{const X=x-1,Z=z-1;if(Z<1||Z>=35)return 0;if(Z<=12)return 37;if(X<11)return Z<24?29:4;if(X>33)return Z<24?14:61;const dx=Math.abs(X-22),dz=Math.abs(Z-19);return (dx<=3&&dz<=3&&(dx===3||dz===3))||((X+Z)%6===0&&dx>4)?63:61;},
    legend:{'b':{w:33,h:'rand',tint:1,top:34},'H':{w:42,h:0.32,top:43},',':{f:7},'s':{f:37},'l':{f:37,lamp:1},'p':{f:7},'v':{w:38,h:0.03,top:38},'L':{f:7,lamp:1},'.':{f:61},'_':{f:63},'c':{f:61,light:'warm'},'*':{f:37,light:'neon'},'K':{f:37,furn:7},'F':{f:61,furn:25},'~':{w:39,h:0.02,top:39,water:1},
-    'g':{f:61,npc:'guest'},'J':{f:29,npc:'jeweler'},'E':{f:4,npc:'realtor'},'R':{f:14,npc:'furnman'},'Q':{f:61,npc:'tailor'},'V':{f:37,npc:'vic'},'1':{f:37},'2':{f:37},'3':{f:37},'4':{f:37},'5':{f:37},'6':{f:37},'7':{f:37},'8':{f:37},'9':{f:37}},
+    'g':{f:61,npc:'guest'},'J':{f:29,npc:'jeweler'},'E':{f:4,npc:'realtor'},'R':{f:14,npc:'furnman'},'Q':{f:61,npc:'tailor'},'~':{w:39,h:0.02,top:39,water:1},'V':{f:37,npc:'vic'},'1':{f:37},'2':{f:37},'3':{f:37},'4':{f:37},'5':{f:37},'6':{f:37},'7':{f:37},'8':{f:37},'9':{f:37}},
       map:[
-  "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-  "#############################################",
+  "#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#",
+  "#HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH#",
   "#*.........................................*#",
   "#...........5.........6.........7...........#",
   "#.....c...............c................c....#",

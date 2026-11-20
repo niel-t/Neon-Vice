@@ -2043,8 +2043,8 @@
       "idx": 0,
       "input": {
         "map": [
-          "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-          "#############################################",
+          "#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#",
+          "#HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH#",
           "#*.........................................*#",
           "#...........5.........6.........7...........#",
           "#.....c...............c................c....#",
@@ -2204,9 +2204,9 @@
         "floorFn": "(x,z)=>{const X=x-1,Z=z-1;if(Z<1||Z>=35)return 0;if(Z<=12)return 37;if(X<11)return Z<24?29:4;if(X>33)return Z<24?14:61;const dx=Math.abs(X-22),dz=Math.abs(Z-19);return (dx<=3&&dz<=3&&(dx===3||dz===3))||((X+Z)%6===0&&dx>4)?63:61;}",
         "paletteSize": 6
       },
-      "gridHash": "1f8d219e6e4edb459eddd5a04ba3d56029b30ef87f9e668b97796a76fe3e3b1a",
-      "loadedHash": "cfccd2520536445ae0d6e68ce56e76b9281c1c77e70fcb4bb9d1fbb5aebc9d46",
-      "queryHash": "5c4fe21c8daa2cb88341163e96e26ad65378606f80853a0e2c831451ec321e08",
+      "gridHash": "2d1b4f65acd0583178e144bd5452a905440d0957b5dce52d38d8fe962f154d1c",
+      "loadedHash": "ba8eb722223e28318e26fb218ed553229f4c0c0804d1b24ad95c19dce2eeb6e0",
+      "queryHash": "f33faa2178bce23bffeadfb2023979fd625e78dd540588b96a4394163d563acd",
       "cellHash": "4c60f6a9e1fc1422b1394efae4e0e77c82a93afbd133d68f6b26d6685ee071f6"
     },
     {
@@ -2214,8 +2214,8 @@
       "idx": 7,
       "input": {
         "map": [
-          "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-          "#############################################",
+          "#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#",
+          "#HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH#",
           "#*.........................................*#",
           "#...........5.........6.........7...........#",
           "#.....c...............c................c....#",
@@ -2375,9 +2375,9 @@
         "floorFn": "(x,z)=>{const X=x-1,Z=z-1;if(Z<1||Z>=35)return 0;if(Z<=12)return 37;if(X<11)return Z<24?29:4;if(X>33)return Z<24?14:61;const dx=Math.abs(X-22),dz=Math.abs(Z-19);return (dx<=3&&dz<=3&&(dx===3||dz===3))||((X+Z)%6===0&&dx>4)?63:61;}",
         "paletteSize": 6
       },
-      "gridHash": "8613b9f00b5fd15b0a014756ea6a996d21095fb9d1779329df16cc1396aa127b",
-      "loadedHash": "03a8e90c18f58a1c046a88bfc82f334666465bf9b1846001e2b4bfc6cd2b2413",
-      "queryHash": "5c4fe21c8daa2cb88341163e96e26ad65378606f80853a0e2c831451ec321e08",
+      "gridHash": "2d1b4f65acd0583178e144bd5452a905440d0957b5dce52d38d8fe962f154d1c",
+      "loadedHash": "ba8eb722223e28318e26fb218ed553229f4c0c0804d1b24ad95c19dce2eeb6e0",
+      "queryHash": "f33faa2178bce23bffeadfb2023979fd625e78dd540588b96a4394163d563acd",
       "cellHash": "4c60f6a9e1fc1422b1394efae4e0e77c82a93afbd133d68f6b26d6685ee071f6"
     },
     {
