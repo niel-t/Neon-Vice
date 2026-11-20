@@ -484,7 +484,7 @@ Batch.blOn=false;/* cached P1 uBlend (GL default 0) */
 Batch.cpu=function(nv){const b=Object.create(Batch.prototype);b.n=0;b.alloc(nv||2048);b.buf=null;b.blT=0;b.blW=0;b.room=0;b.bl=false;return b;};
 function floorQuad(B,x,z,s,r,uv,c,y){const h=s/2,cc=Math.cos(r)*h,ss=Math.sin(r)*h;
  B.quad([[x-cc-ss,y,z-ss+cc],[x+cc-ss,y,z+ss+cc],[x+cc+ss,y,z+ss-cc],[x-cc+ss,y,z-ss-cc]],0,1,0,uv,c);}
-const dynB=new Batch(), poolB=new Batch(), ovB=new Batch(), stageB=new Batch();
+const dynB=new Batch(), poolB=new Batch(), ovB=new Batch(), stageB=new Batch(), glassB=new Batch();
 /* ================= INSTANCED ROUNDED GEOMETRY + SHADOWS ================= */
 const GEOM=`attribute vec3 aP;attribute vec3 aN;attribute vec2 aT;attribute vec4 iR0;attribute vec4 iR1;attribute vec4 iR2;attribute vec4 iC;attribute vec4 iU;attribute vec4 iS;
 vec3 gW;vec3 gN;

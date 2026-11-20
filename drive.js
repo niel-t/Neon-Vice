@@ -19,7 +19,7 @@ function carInput(c){let thr=0,st=0,turbo=false,hand=false;
  if(mag>0.25){const ht=Math.atan2(sx,sz),df=angDiff(c.h,ht);st=clamp(df*2.2,-1,1);if(thr===0)thr=mag*(Math.cos(df)>-0.5?1:0.4);}
  if(keys.ShiftLeft||keys.ShiftRight)turbo=true;return {thr,st,hand,turbo};}
 /* one step of the car: speed, heading, grip, wall bounces and the marks it leaves. Returns true when it hit something hard. */
-function carStep(g,c,inp,dt){const P=CAR_PHYS,cx=myProg().carx||{},eng=cx.eng?1.18:1,tb=cx.turbo?1:0;
+function carStep(g,c,inp,dt){const P=CAR_PHYS,cx=myProg().carx||{},pf=carPerf(myCar()),eng=(cx.eng?1.18:1)*pf.spd,ea=(cx.eng?1.18:1)*pf.acc,tb=cx.turbo?1:0;
  if(!Number.isFinite(c.vx)||!Number.isFinite(c.vz)||(!c.vx&&!c.vz&&c.v)){c.vx=Math.sin(c.h)*c.v;c.vz=Math.cos(c.h)*c.v;}
  const turbo=inp.turbo&&inp.thr>0&&c.boost>0.02;if(turbo)c.boost=Math.max(0,c.boost-dt*(tb?0.22:0.35));else c.boost=Math.min(1,(c.boost||0)+dt*(tb?0.26:0.18));
  /* steer from the speed along the nose: quick when slow, calmer when fast; the handbrake swings the tail */
@@ -28,13 +28,13 @@ function carStep(g,c,inp,dt){const P=CAR_PHYS,cx=myProg().carx||{},eng=cx.eng?1.
  c.h+=yaw*dt;fx=Math.sin(c.h);fz=Math.cos(c.h);const rx=Math.cos(c.h),rz=-Math.sin(c.h);
  let vf=c.vx*fx+c.vz*fz,vr=c.vx*rx+c.vz*rz;
  const maxV=turbo?P.turboV*eng+tb*3:P.maxV*eng;
- if(inp.thr>0){if(vf<-0.3)vf=Math.min(0,vf+P.brake*dt);else if(vf<maxV)vf=Math.min(maxV,vf+inp.thr*(turbo?P.turboAcc+tb*3:P.acc)*eng*dt);}
+ if(inp.thr>0){if(vf<-0.3)vf=Math.min(0,vf+P.brake*dt);else if(vf<maxV)vf=Math.min(maxV,vf+inp.thr*(turbo?P.turboAcc+tb*3:P.acc)*ea*dt);}
  else if(inp.thr<0){if(vf>0.3){vf=Math.max(0,vf-P.brake*(-inp.thr/0.7)*dt);c.braking=vf>5;}else vf=Math.max(-5,vf+inp.thr*P.rev*dt);}
  else vf*=Math.exp(-dt*P.drag);
  if(inp.thr>=0)c.braking=false;if(vf>maxV)vf+=(maxV-vf)*(1-Math.exp(-dt*2));
  if(inp.hand){vf*=Math.exp(-dt*1.4);}
  /* the tyres pull the slide back in line with the nose: strong when clean, weak once sliding, almost nothing on the handbrake */
- const sliding=Math.abs(vr)>3.2,grip=inp.hand?P.hbGrip:sliding?P.slideGrip:P.grip;vr*=Math.exp(-grip*dt);
+ const sliding=Math.abs(vr)>3.2,grip=inp.hand?P.hbGrip:sliding?P.slideGrip*pf.grip:P.grip*pf.grip;vr*=Math.exp(-grip*dt);
  c.vx=fx*vf+rx*vr;c.vz=fz*vf+rz*vr;c.v=vf;c.slip=Math.abs(vr);c.yaw=yaw;c.wr=(c.wr||0)-vf*dt/0.25;c.hand=inp.hand;
  /* move and bounce off walls */
  const ox=c.x,oz=c.z;c.x+=c.vx*dt;c.z+=c.vz*dt;const hit={x:c.x,z:c.z,r:c.r};collideGrid(hit);
@@ -43,6 +43,7 @@ function carStep(g,c,inp,dt){const P=CAR_PHYS,cx=myProg().carx||{},eng=cx.eng?1.
   c.x=hit.x;c.z=hit.z;if(nose){c.x=ox;c.z=oz;}const vn=c.vx*nx+c.vz*nz;
   if(vn<0){c.vx-=1.35*vn*nx;c.vz-=1.35*vn*nz;c.vx*=0.8;c.vz*=0.8;if(-vn>4){hard=true;sfx('crash');shake(Math.min(0.5,-vn*0.04));rumble(0.7,0.7,200);sparks(c.x-nx*0.9,0.3,c.z-nz*0.9);}}
   c.v=c.vx*fx+c.vz*fz;}
+ if(carWalls(c))hard=true;
  /* rubber, smoke and the squeal */
  const mark=(c.slip>2.4&&Math.hypot(c.vx,c.vz)>3.5)||c.braking;c.markT=(c.markT||0)+dt;
  if(mark&&c.markT>0.035){c.markT=0;for(const o of [-0.36,0.36])addFloorDecal(c.x-fx*0.72+rx*o,c.z-fz*0.72+rz*o,0.2,c.h,10,[0.04,0.04,0.05]);}
@@ -100,6 +101,7 @@ function cruiseSetup(g){const p=g.player,R=cruiseRng('traffic|'+(CRUISE&&CRUISE.
  for(const z0 of CRUISE_H){const zw=z0+1;for(const [lz,dir] of [[zw+1,-1],[zw+3,1]])for(let i=0;i<5;i++)g.traffic.push({ax:'x',x:3+i*(g.W-6)/5+R()*6,z:lz,dir,sp:5+R()*2.5,col:CRUISE_COLS[Math.floor(R()*8)],slow:0});}
  for(const x0 of CRUISE_V){const xw=x0+1;for(const [lx,dir] of [[xw+1,1],[xw+3,-1]])for(let i=0;i<3;i++)g.traffic.push({ax:'z',x:lx,z:3+i*(g.H-6)/3+R()*5,dir,sp:4.5+R()*2,col:CRUISE_COLS[Math.floor(R()*8)],slow:0});}
  g.traffic=g.traffic.filter(t=>Math.hypot(t.x-c.x,t.z-c.z)>5);
+ roadPortals(g,CRUISE_H.map(z0=>({ax:'x',a:z0+1,b:z0+5})).concat(CRUISE_V.map(x0=>({ax:'z',a:x0+1,b:x0+5}))));
  const onRoadH=z=>CRUISE_H.some(z0=>z>=z0+1&&z<z0+5),onRoadV=x=>CRUISE_V.some(x0=>x>=x0+1&&x<x0+5);
  for(const z0 of CRUISE_H)for(let x=1;x<g.W-1;x++){if(onRoadV(x))continue;g.deco.push({t:'cline',x,z:z0+3});if(x%2===0){g.deco.push({t:'lane',x,z:z0+2});g.deco.push({t:'lane',x,z:z0+4});}}
  for(const x0 of CRUISE_V)for(let z=1;z<g.H-1;z++){if(onRoadH(z))continue;g.deco.push({t:'cr_vline',x:x0+3,z});}
@@ -112,19 +114,79 @@ function cruiseSetup(g){const p=g.player,R=cruiseRng('traffic|'+(CRUISE&&CRUISE.
 function cruiseDeco(B,g,d){const cx=d.x+0.5,cz=d.z+0.5;
  if(d.t==='cr_vline'){for(const o of [-0.06,0.06])B.box(TRS(d.x+o,0.004,cz,0,0.05,0.006,1.0),hex(0xe8c040));}
  else if(d.t==='cr_zebra'){for(let k=0;k<4;k++){const o=0.5+k;if(d.v)B.box(TRS(cx,0.005,d.z+o,0,0.75,0.006,0.32),[0.92,0.92,0.9]);else B.box(TRS(d.x+o,0.005,cz,0,0.32,0.006,0.75),[0.92,0.92,0.9]);}}
+ else if(d.t==='cr_tun'){/* an underpass where a road leaves the map: the traffic drives in under the deck and out of sight instead of through the end wall */
+  const P=d.P,o0=P.end?P.L-P.d:-4,o1=P.end?P.L+4:P.d,mid=(P.a+P.b)/2,w=P.b-P.a,far=P.end?P.L+2:-2,mouth=P.end?P.L-P.d:P.d;
+  const bx=(o,c,so,sy,sc,y,col,em)=>B.box(P.ax==='x'?TRS(o,y,c,0,so,sy,sc):TRS(c,y,o,0,sc,sy,so),col,em);
+  bx((o0+o1)/2,mid,o1-o0,0.5,w+0.5,1.62,[0.23,0.23,0.27]);bx(far,P.a-0.12,4,1.4,0.24,0.7,[0.12,0.12,0.15]);bx(far,P.b+0.12,4,1.4,0.24,0.7,[0.12,0.12,0.15]);
+  bx(P.end?P.L+4:-4,mid,0.2,1.4,w+0.5,0.7,[0.02,0.02,0.03]);bx(far,mid,4,0.02,w,-0.012,[0.05,0.05,0.07]);
+  bx(mouth+(P.end?-0.02:0.02),mid,0.08,0.12,w+0.5,1.44,[1,0.78,0.2],true);
+  for(let k=0;k<w*2;k++)if(k%2===0)bx(mouth+(P.end?-0.03:0.03),P.a+0.25+k*0.5,0.1,0.22,0.5,1.62,[0.9,0.7,0.15]);}
  else if(d.t==='cr_sign'){const zf=d.z,nm=d.name||'',px=Math.min(0.07,4.2/(nm.length*6)),w=nm.length*6*px+0.5,y=2.0;
   B.box(TRS(cx,y,zf+0.06,0,w,0.62,0.1),[0.08,0.05,0.12]);B.box(TRS(cx,y,zf+0.03,0,w+0.1,0.7,0.06),[1,0.3,0.75],true);neonText(B,nm,cx,y,zf+0.13,px,[1.5,0.5,1.2]);
   B.box(TRS(cx,1.15,zf+0.4,0,2.6,0.06,0.8),[0.85,0.2,0.45]);for(const o of [-1.2,1.2])B.box(TRS(cx+o,0.58,zf+0.75,0,0.06,1.16,0.06),[0.2,0.2,0.24]);}}
-function cruiseTraffic(g,dt){const c=g.pcar;
- for(const t of g.traffic){t.slow=Math.max(0,t.slow-dt);const along=t.ax==='x';let sp=t.sp*(t.slow>0?0.2:1);
-  /* brake behind the car in front, or you */
-  for(const o of [...g.traffic,{x:c.x,z:c.z,ax:t.ax,me:1}]){if(o===t)continue;const lat=along?Math.abs(o.z-t.z):Math.abs(o.x-t.x);if(lat>0.7)continue;const d=((along?o.x-t.x:o.z-t.z))*t.dir;if(d>0&&d<3.2)sp=Math.min(sp,o.me?0:(d<2.2?0:sp*0.5));}
-  if(along){t.x+=t.dir*sp*dt;if(t.x>g.W+2)t.x=-2;if(t.x<-2)t.x=g.W+2;}else{t.z+=t.dir*sp*dt;if(t.z>g.H+2)t.z=-2;if(t.z<-2)t.z=g.H+2;}
-  t.wr=(t.wr||0)-sp*dt/0.25;
-  const hx=along?1.75:0.92,hz=along?0.92:1.75,dx=c.x-t.x,dz=c.z-t.z;
-  if(Math.abs(dx)<hx&&Math.abs(dz)<hz){const px=hx-Math.abs(dx),pz=hz-Math.abs(dz);let nx=0,nz=0;if(pz<px){nz=Math.sign(dz||1);c.z+=nz*pz;}else{nx=Math.sign(dx||1);c.x+=nx*px;}
-   const vn=c.vx*nx+c.vz*nz;if(vn<0){c.vx-=1.4*vn*nx;c.vz-=1.4*vn*nz;c.vx*=0.75;c.vz*=0.75;}
-   if(-vn>3||t.slow<=0){sfx('crash');sfx('horn');shake(0.4);rumble(0.8,0.8,220);sparks((c.x+t.x)/2,0.4,(c.z+t.z)/2);popup(t.x,t.z,pick(['HEY!','WATCH IT!','*HONK*','LEARN TO DRIVE!']),'#ffd36b');}t.slow=1.2;}}}
+/* ================= SOLID CARS =================
+   A car is as long as it looks: your car is three circles (middle, nose, tail) that the walls push back on, and a traffic car is a box
+   along its lane. Traffic never moves into a box that is taken (another car, or you), brakes for whatever is in its lane ahead, and waits
+   off the edge of the map until its way back in is clear; your car is pushed out of any traffic car it touches, and back off the walls. */
+const CARBOX={hl:1.2,hw:0.52};
+/* where a road runs off the map the end wall becomes an underpass (drawn by cruiseDeco 'cr_tun'). spans: [{ax:'x'|'z',a,b}] = the cells the road covers across. */
+function roadPortals(g,spans){g.portals=[];const W=g.W,H=g.H;
+ for(const s of spans)for(const end of [0,1]){const L=s.ax==='x'?W:H,at=(p,k)=>s.ax==='x'?k*W+p:p*W+k;let d=0;
+  for(;d<4;d++){const p=end?L-1-d:d;let all=true;for(let k=s.a;k<s.b;k++)if(!g.solid[at(p,k)])all=false;if(!all)break;}
+  if(!d||d>3)continue;const inner=end?L-1-d:d;
+  for(let q=0;q<d;q++){const p=end?L-1-q:q;for(let k=s.a;k<s.b;k++){const i=at(p,k),j=at(inner,k);g.solid[i]=0;g.furn[i]=0;g.wh[i]=0;g.floorT[i]=g.floorT[j];if(g.out)g.out[i]=g.out[j];}}
+  const P={ax:s.ax,a:s.a,b:s.b,end,d,L};g.portals.push(P);g.deco.push({t:'cr_tun',x:end?L-1:0,z:s.a,P});}}
+/* your car stops at the mouth of an underpass */
+function carPortals(c){const g=G;if(!g||!g.portals)return;for(const P of g.portals){const al=P.ax==='x',along=al?c.x:c.z,cross=al?c.z:c.x;if(cross<P.a-0.4||cross>P.b+0.4)continue;
+  const lim=P.end?P.L-P.d-1.25:P.d+1.25,over=P.end?along-lim:lim-along;if(over>0){const m=P.end?-over:over;carShove(c,[c.x,c.z,0,0],al?m:0,al?0:m,0.2);}}}
+function carCircles(c){const fx=Math.sin(c.h),fz=Math.cos(c.h);return[[c.x,c.z,0.56,0],[c.x+fx*0.74,c.z+fz*0.74,0.46,1],[c.x-fx*0.74,c.z-fz*0.74,0.46,-1]];}
+/* push one of the car's circles by (dx,dz): the car moves, turns about its middle if it was the nose or the tail, and loses the speed it had into the push */
+function carShove(c,q,dx,dz,bounce){const d=Math.hypot(dx,dz);if(d<1e-5)return 0;const nx=dx/d,nz=dz/d;c.x+=dx;c.z+=dz;
+ if(q[3]){const rx=Math.cos(c.h),rz=-Math.sin(c.h);c.h+=q[3]*(dx*rx+dz*rz)/0.74*0.45;}
+ const vn=c.vx*nx+c.vz*nz;if(vn<0){c.vx-=(1+bounce)*vn*nx;c.vz-=(1+bounce)*vn*nz;}c.v=c.vx*Math.sin(c.h)+c.vz*Math.cos(c.h);return vn<0?-vn:0;}
+/* the nose and the tail against the walls (carStep has already done the middle). Returns true on a hard knock. */
+function carWalls(c){let hard=false;if(typeof collideGrid!=='function')return false;
+ for(let pass=0;pass<2;pass++){const Q=carCircles(c);for(let i=1;i<3;i++){const q=Q[i],h={x:q[0],z:q[1],r:q[2]};collideGrid(h);const dx=h.x-q[0],dz=h.z-q[1];if(Math.hypot(dx,dz)<1e-4)continue;
+   const hit=carShove(c,q,dx,dz,0.25);if(hit>4){hard=true;c.vx*=0.8;c.vz*=0.8;sfx('crash');shake(Math.min(0.5,hit*0.04));rumble(0.7,0.7,200);sparks(q[0],0.3,q[1]);}}
+  const m={x:c.x,z:c.z,r:c.r||0.62};collideGrid(m);c.x=m.x;c.z=m.z;}
+ carPortals(c);return hard;}
+function trafficBox(t,x,z){const al=t.ax!=='z';return{x:x===undefined?t.x:x,z:z===undefined?t.z:z,hx:al?CARBOX.hl:CARBOX.hw,hz:al?CARBOX.hw:CARBOX.hl};}
+function boxHit(a,b,m){return Math.abs(a.x-b.x)<a.hx+b.hx+m&&Math.abs(a.z-b.z)<a.hz+b.hz+m;}
+function boxCirc(b,q,m){return Math.hypot(Math.max(0,Math.abs(q[0]-b.x)-b.hx),Math.max(0,Math.abs(q[1]-b.z)-b.hz))<q[2]+m;}
+/* one step of the traffic. Lanes run along x (ax undefined or 'x') or along z (ax 'z'). */
+function trafficMove(g,dt){const c=g.pcar,PC=c&&!g.parked?carCircles(c):[],T=g.traffic;
+ if(!g.trafOK){g.trafOK=1;/* nor on top of you */for(let i=T.length-1;i>=0;i--)if(PC.some(q=>boxCirc(trafficBox(T[i]),q,1.2)))T.splice(i,1);/* nobody starts inside somebody else */for(let i=T.length-1;i>0;i--)for(let j=0;j<i;j++)if(boxHit(trafficBox(T[i]),trafficBox(T[j]),0.4)){T.splice(i,1);break;}}
+ for(const t of T){t.slow=Math.max(0,(t.slow||0)-dt);const al=t.ax!=='z',pos=al?t.x:t.z,lat=al?t.z:t.x,L=al?g.W:g.H;let v=t.sp*(t.slow>0?0.2:1);
+  for(const o of T){if(o===t)continue;const oal=o.ax!=='z',d=((al?o.x:o.z)-pos)*t.dir,l=Math.abs((al?o.z:o.x)-lat);
+   if(oal===al){if(l<0.9&&d>0&&d<6)v=Math.min(v,Math.max(0,(o.cur===undefined?o.sp:o.cur)+(d-3.1)*1.6));}
+   /* a car crossing my lane: stop short of it while any of it is in my lane */
+   else if(l<CARBOX.hl+CARBOX.hw&&d>0&&d<5)v=Math.min(v,Math.max(0,(d-(CARBOX.hl+CARBOX.hw+0.45))*2.2));}
+  for(const q of PC){const d=((al?q[0]:q[1])-pos)*t.dir,l=Math.abs((al?q[1]:q[0])-lat);if(l<CARBOX.hw+q[2]&&d>0&&d<5)v=Math.min(v,Math.max(0,(d-(CARBOX.hl+q[2]+0.5))*2.2));}
+  t.cur=t.cur===undefined||v<t.cur?v:t.cur+(v-t.cur)*Math.min(1,dt*2.5);
+  let np=pos+t.dir*t.cur*dt,wrap=false;if(np>L+2){np=-2;wrap=true;}else if(np<-2){np=L+2;wrap=true;}
+  const cb=trafficBox(t),nb=trafficBox(t,al?np:t.x,al?t.z:np);let blocked=false;
+  for(const o of T){if(o===t)continue;const ob=trafficBox(o);if(boxHit(nb,ob,wrap?0.8:0.06)&&(wrap||!boxHit(cb,ob,0.06))){blocked=true;break;}}
+  if(!blocked)for(const q of PC)if(boxCirc(nb,q,0.04)&&(wrap||((al?q[0]:q[1])-pos)*t.dir>0)){blocked=true;break;}
+  if(blocked){t.cur=0;continue;}
+  if(al)t.x=np;else t.z=np;t.wr=(t.wr||0)-t.cur*dt/0.25;}}
+/* your car against the traffic: pushed out of every box it touches, then back off the walls; a car that has you pinned backs away. Returns the hardest knock. */
+function carVsTraffic(g,dt){const c=g.pcar;let worst=0,who=null;
+ for(const t of g.traffic){const b=trafficBox(t);if(Math.abs(c.x-b.x)>b.hx+1.4||Math.abs(c.z-b.z)>b.hz+1.4)continue;let touched=false;
+  for(let pass=0;pass<2;pass++)for(const q of carCircles(c)){const ex=Math.abs(q[0]-b.x)-b.hx,ez=Math.abs(q[1]-b.z)-b.hz;let dx=0,dz=0;
+    if(ex<0&&ez<0){if(ex>ez)dx=Math.sign(q[0]-b.x||1)*(q[2]-ex);else dz=Math.sign(q[1]-b.z||1)*(q[2]-ez);}
+    else{const ox=Math.max(0,ex),oz=Math.max(0,ez),d=Math.hypot(ox,oz);if(d>=q[2])continue;const k=(q[2]-d)/(d||1);dx=Math.sign(q[0]-b.x)*ox*k;dz=Math.sign(q[1]-b.z)*oz*k;}
+    touched=true;const hit=carShove(c,q,dx,dz,0.4);if(hit>worst){worst=hit;who=t;}}
+  if(!touched)continue;if(!who)who=t;carWalls(c);
+  /* still inside it: you are against a wall, so the other car gives way */
+  const al=t.ax!=='z';for(let k=0;k<12&&carCircles(c).some(q=>boxCirc(trafficBox(t),q,0));k++){const nx=al?t.x-t.dir*0.08:t.x,nz=al?t.z:t.z-t.dir*0.08,nb=trafficBox(t,nx,nz);if(g.traffic.some(o=>o!==t&&boxHit(nb,trafficBox(o),0.02)))break;t.x=nx;t.z=nz;}
+  t.cur=0;if(worst>3||!(t.slow>0)){t.hit=1;}t.slow=1.2;}
+ if(who&&who.hit){for(const t of g.traffic)t.hit=0;c.vx*=0.75;c.vz*=0.75;c.v=c.vx*Math.sin(c.h)+c.vz*Math.cos(c.h);sfx('crash');sfx('horn');shake(0.4);rumble(0.8,0.8,220);sparks((c.x+who.x)/2,0.4,(c.z+who.z)/2);popup(who.x,who.z,pick(['HEY!','WATCH IT!','*HONK*','LEARN TO DRIVE!']),'#ffd36b');}
+ /* wedged between a car and a wall with no way to push clear: back to where the car last stood free */
+ if(who){const Q=carCircles(c);if(g.traffic.some(t=>{const tb=trafficBox(t);return Q.some(q=>boxCirc(tb,q,-0.03));})&&c.ok&&g.traffic.every(t=>{const tb=trafficBox(t);return !carCircles(c.ok).some(q=>boxCirc(tb,q,-0.03));})){c.x=c.ok.x;c.z=c.ok.z;c.h=c.ok.h;c.vx*=-0.15;c.vz*=-0.15;c.v=c.vx*Math.sin(c.h)+c.vz*Math.cos(c.h);}}
+ if(!c.ok)c.ok={x:0,z:0,h:0};c.ok.x=c.x;c.ok.z=c.z;c.ok.h=c.h;
+ const p=g.player;if(p&&!g.parked){p.x=c.x;p.z=c.z;p.a=c.h;}return worst;}
+
+function cruiseTraffic(g,dt){trafficMove(g,dt);carVsTraffic(g,dt);}
 function cruiseTick(dt){const g=G,c=g.pcar;if(!c)return;g.cruiseT=(g.cruiseT||0)+dt;
  if(g.arrived){c.vx*=Math.exp(-dt*5);c.vz*=Math.exp(-dt*5);c.x+=c.vx*dt;c.z+=c.vz*dt;c.v=Math.hypot(c.vx,c.vz);carSqueal(0);engineRev(c.v,false);return;}
  const inp=carInput(c);carStep(g,c,inp,dt);cruiseTraffic(g,dt);engineRev(c.v,g.turbo);
@@ -134,8 +196,8 @@ function cruiseArrive(skip){const g=G;if(!g||g.def.hub!=='cruise'||g.arrived||g.
  if(!skip){sfx('carShut');banner(CRUISE?CRUISE.name:'',"You're here");}
  const go=()=>{CRUISE=null;if(!id||!missionKnown(id)){goHome();return;}JOBPICK=null;startMission(id);showObjCard();};
  g.hubDone=skip?fadeTo(go):(setTimeout(()=>{if(G===g)fadeTo(go);},skip?0:700),true);return true;}
-function drawCruise(B,g){const c=g.pcar;drawRide(B,c.x,c.z,1,c.h-Math.PI/2,null,c.wr||0);
- for(const t of g.traffic)if(inView(t.x,0.6,t.z,2.6)){if(t.ax==='x')drawCar(B,t.x,t.z,t.col,t.dir,t.wr||0);else drawCarShape(B,t.x,t.z,1,t.dir>0?-Math.PI/2:Math.PI/2,TRAFFIC_TYPES[Math.floor((t.col[0]*7.1+t.col[1]*13.3+t.col[2]*5.7)*97)%TRAFFIC_TYPES.length],{col:t.col},t.wr||0);}
+function drawCruise(B,g){const c=g.pcar;drawRide(B,c.x,c.z,1,c.h-Math.PI/2,null,c.wr||0);if(g.player)drawDriver(g,c.x,c.z,c.h-Math.PI/2);
+ for(const t of g.traffic)if(inView(t.x,0.6,t.z,2.6)){if(t.ax==='x')drawCar(B,t.x,t.z,t.col,t.dir,t.wr||0,undefined,1);else drawCarShape(B,t.x,t.z,1,t.dir>0?-Math.PI/2:Math.PI/2,TRAFFIC_TYPES[Math.floor((t.col[0]*7.1+t.col[1]*13.3+t.col[2]*5.7)*97)%TRAFFIC_TYPES.length],{col:t.col,drv:1+Math.floor(t.col[0]*97)%23},t.wr||0);}
  /* the place: a gold diamond over the kerb and a ring on the road */
  const d=g.dest,y=2.9+Math.sin(g.T*4)*0.2;B.box(A.mul(A.mul(A.T(d.sx,y,d.sz),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.45,0.45,0.45))),GOLD,true);
  for(let i=0;i<10;i++){const a=g.T*1.5+i*0.628;B.box(TRS(d.x+Math.sin(a)*1.6,0.02,d.z+Math.cos(a)*1.6,-a,0.35,0.01,0.12),[1,0.85,0.3],true);}}
