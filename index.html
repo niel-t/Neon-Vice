@@ -2309,7 +2309,7 @@ function drawChar(B,c){const Lk=c.hitT>0?flashLook(c.look):c.look;const BT=Lk.bo
  if(Lk.vest){PB(B,TM,0,0.63+by,0,0.445,0.3,0.245,Lk.vest);if(Lk.pouches)for(const px of [-0.12,0,0.12])PB(B,TM,px,0.56+by,0.13,0.08,0.08,0.03,Lk.vest.map(v=>v*0.8));}
  if(Lk.apron){const az=0.124+(Lk.belly?0.055:0);PB(B,TM,0,0.47+by,az,0.34,0.5,0.012,Lk.apron);PB(B,TM,0,0.75+by,0.12,0.3,0.02,0.01,Lk.apron);B.r=0;for(const q of (Lk.apronSplats||[]))PB(B,TM,q[0],q[1]+by,az+0.008,q[2]*2.6,q[2]*2.6,0.005,[0.95,0.95,0.95],false,TUV[51]);B.r=0.6;}
  if(Lk.medallion){PB(B,TM,0,0.67+by,0.128,0.065,0.065,0.012,GOLD);PB(B,TM,0,0.74+by,0.122,0.1,0.02,0.01,GOLD);}
- if(Lk.accPack||Lk.accBelt)accClassicTorso(B,TM,by,CW,Lk);
+ if(Lk.accBelt)accClassicTorso(B,TM,by,CW,Lk);
  if(Lk.ripped){PB(B,TM,0.09,0.55+by,0.118,0.07,0.04,0.006,Lk.skin);PB(B,TM,-0.07,0.68+by,0.118,0.05,0.03,0.006,Lk.skin);}
  if(Lk.staff)PB(B,TM,0,0.69+by,0,0.43,0.045,0.24,hex(0xffd36b));
  if(Lk.wallet)PB(B,TM,0.2,0.42,0.05,0.012,0.12,0.012,SILV);
