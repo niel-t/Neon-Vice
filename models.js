@@ -603,6 +603,51 @@ function blendPose(c,W,t){const L=W.map((w,i)=>BONES[i][1]<0?w.slice():M4.mul(in
     for(let q=0;q<3;q++)a[12+q]=pv[q]-rp[q]+a._r[q];}
    else for(let q=0;q<3;q++)a[12+q]=pv[q]-rp[q];}}
  const O=[];for(let i=0;i<P.length;i++)O[i]=BONES[i][1]<0?P[i]:M4.mul(O[BONES[i][1]],P[i]);return O;}
+/* ---- acted gestures (McWey and his secretary): each gesture is a pose vector, and the body drifts from one into the next.
+   Vector: [L lower, L fwd, L in, L elbow, R lower, R fwd, R in, R elbow, spine fwd, chest fwd, chest turn, neck turn, head nod, head tilt, R hand wag, L hand bend, drop].
+   "lower" brings the arm down from the T-pose (0.66 hangs it at the side, negative lifts it overhead), "fwd" swings it forward
+   (negative is forward), "in" swings it across the body, "elbow" bends the forearm. window.MC_GEST carries the blended vector to pose(). */
+const GV=(L,R,T)=>[...L,...R,...(T||[]),...Array(9-(T||[]).length).fill(0)];
+const G_REST=[0.66,-0.5,0.22,1.15],G_SIDE=[0.66,-0.08,0,0.3],G_LAP=[0.66,-0.62,0.75,1.5];
+const pulse=(t,per,on)=>{const q=((t%per)+per)%per/per;if(q>on)return 0;const u=q/on;return Math.sin(Math.PI*u)**2;};
+const GEST={
+ /* McWey */
+ talk:t=>{const g=Math.sin(t*2.3)*0.22,g2=Math.sin(t*1.7+1)*0.22;return GV([0.66,-0.55-g2,0.25,1.1+g],[0.66,-0.5+g,0.25,1.2+g2],[0.02,0,0.04*Math.sin(t*0.8),0,0.04*Math.sin(t*2.6),0.03*Math.sin(t*1.1)]);},
+ point:t=>{const j=pulse(t,1.15,0.35);return GV(G_REST,[0.66,-1.38+0.12*j,0.18,0.12+0.1*j],[0.08+0.04*j,0.04,-0.16,0,-0.04+0.05*j,0]);},
+ spread:t=>{const b=Math.sin(t*1.6)*0.08;return GV([0.3+b,-0.6,-0.25,0.85],[0.3+b,-0.6,-0.25,0.85],[-0.04,0,0,0,-0.08+b*0.5,0.08]);},
+ lean:t=>{const s=0.04*Math.sin(t*1.3);return GV([0.66,-0.95,0.62,1.55+s],[0.66,-0.95,0.62,1.55-s],[0.3,0.08,0,0,-0.24,0]);},
+ wag:t=>GV(G_REST,[0.66,-0.62,0.28,2.0],[0.04,0,-0.08,0,0.02,0.05,0.38*Math.sin(t*10)]),
+ count:t=>{const f=pulse(t,0.42,0.7);return GV([0.66,-0.78,0.5,1.55],[0.66,-0.74,0.42,1.3+0.28*f],[0.1,0.06,0,0,0.3,0,0,0.15]);},
+ sitback:t=>GV([-1.55,0.5,0,2.15],[-1.55,0.5,0,2.15],[-0.16,-0.06,0,0.12*Math.sin(t*0.5),-0.12,0]),
+ drink:t=>{const q=pulse(t,4.5,0.55);return GV([0.66,-0.45-0.65*q,0.3+0.32*q,1.2+1.0*q],G_REST,[0,-0.04*q,0,0,-0.2*q,0]);},
+ cigar:t=>{const q=pulse(t,4,0.5);return GV(G_REST,[0.66,-0.45-0.5*q,0.3+0.32*q,1.25+1.05*q],[0,0,0,0,-0.06*q,0]);},
+ tap:t=>GV([0.66,-0.5,0.2,1.15],[0.66,-0.5,0.2,1.15+0.08*Math.max(0,Math.sin(t*14))],[0.03,0,0,0.25*Math.sin(t*0.4),0.04,0]),
+ /* on his lap: his left arm round her waist */
+ laptalk:t=>{const g=Math.sin(t*2.3)*0.2;return GV(G_LAP,[0.66,-0.5+g,0.25,1.2-g],[0,0,0.05,0.2,0.03*Math.sin(t*2.6),0]);},
+ lapcigar:t=>{const q=pulse(t,4,0.5);return GV(G_LAP,[0.66,-0.45-0.5*q,0.3+0.32*q,1.25+1.05*q],[0,0,0.05,0.25,-0.06*q,0]);},
+ /* the secretary: at the front desk */
+ type:t=>{const a=Math.max(0,Math.sin(t*15)),b=Math.max(0,Math.sin(t*15+2));return GV([0.66,-0.82,0.42,1.45+0.08*a],[0.66,-0.82,0.42,1.45+0.08*b],[0.12,0,0,0,0.2,0]);},
+ phone:t=>GV([0.66,-0.5,0.3,1.3],[0.66,-0.35,0.35,2.45],[0.02,0,0.08,0.1,0.05,0.22+0.05*Math.sin(t*1.5)]),
+ nails:t=>{const f=0.1*Math.sin(t*9);return GV([0.66,-0.85,0.5,1.75],[0.66,-0.8,0.45,1.55+f],[0.06,0,0,0,0.26,0.08]);},
+ hair:t=>{const q=Math.sin(t*1.2);return GV([-1.7,0.35,0,2.0+0.1*q],G_REST,[-0.04,0,0.05,0.1,-0.06,0.15]);},
+ /* counting the haul: thumbing bills, stacking gold bars */
+ bills:t=>{const f=pulse(t,0.4,0.7);return GV([0.66,-0.8,0.5,1.5],[0.66,-0.76,0.42,1.25+0.3*f],[0.16,0.08,0,0,0.34,0.05,0,0.15]);},
+ stack:t=>{const q=pulse(t,2.4,0.8);return GV([0.66,-0.75-0.35*q,0.35,0.6+0.5*q],[0.66,-0.75-0.35*q,0.35,0.6+0.5*q],[0.28-0.18*q,0.06,0,0,0.32-0.15*q,0,0,0,0.03*(1-q)]);},
+ calc:t=>GV([0.66,-0.7,0.4,1.4],[0.66,-0.72,0.3,1.3+0.1*Math.max(0,Math.sin(t*11))],[0.12,0.04,0.1,0.2,0.3,0]),
+ /* on his lap: an arm round his neck, a hand on his chest, laughing at his jokes */
+ neck:t=>{const l=pulse(t,5,0.3);return GV([0.66,-0.6,0.6,1.3],[-0.9,-0.4,0.7,1.6],[-0.02-0.08*l,0,0,0.28,-0.25*l,0.18]);},
+ coy:t=>GV([0.66,-0.7,0.5,1.6],[-0.9,-0.4,0.7,1.6],[0.04,0,0,0.32,0.1,0.22+0.05*Math.sin(t*1.4)])};
+/* which gestures each act draws from, while talking and while not */
+const GSETS={mc:{talk:['talk','point','spread','wag','lean','talk','cigar'],idle:['count','sitback','drink','cigar','tap','lean']},
+ mclap:{talk:['laptalk','laptalk','lapcigar'],idle:['lapcigar','laptalk']},
+ desk:{talk:['phone','type'],idle:['type','type','phone','nails','hair']},count:{talk:['bills'],idle:['bills','stack','calc','bills']},lap:{talk:['neck','coy'],idle:['neck','coy']}};
+const GEST_HOLD=[3.2,5.5];
+/* c.gset names the act; c.gtalk>0 while talking; the body eases over 0.7s from one gesture into the next */
+function gestVec(c,t){const S=GSETS[c.gset]||GSETS.mc,list=c.gtalk>0?S.talk:S.idle;let st=c._gs;
+ if(!st||st.set!==c.gset||st.mode!==(c.gtalk>0)){const g=list[Math.floor(Math.random()*list.length)];st=c._gs={set:c.gset,mode:c.gtalk>0,from:st?st.cur:g,cur:g,t0:t,until:t+GEST_HOLD[0]+Math.random()*(GEST_HOLD[1]-GEST_HOLD[0])};}
+ else if(t>=st.until||t<st.t0-1){let g=list[Math.floor(Math.random()*list.length)];if(g===st.cur&&list.length>1)g=list[(list.indexOf(g)+1)%list.length];Object.assign(st,{from:st.cur,cur:g,t0:t,until:t+GEST_HOLD[0]+Math.random()*(GEST_HOLD[1]-GEST_HOLD[0])});}
+ const a=(GEST[st.from]||GEST.talk)(t),b=(GEST[st.cur]||GEST.talk)(t),k0=clamp((t-st.t0)/0.7,0,1),k=k0*k0*(3-2*k0);
+ return{v:a.map((x,i)=>x+(b[i]-x)*k),g:st.cur,k};}
 function pose(t,anim,jab,arms,kick,gait){const R={},rot=(b,ax,a)=>{R[b]=M4.mul(M4.R(ax,a),R[b]||M4.id());};let root=[0,0,0];const run=gait==='runway',fem=gait==='fem'||run;
  const armHinge=s=>V.norm(V.cross([AD[0]*s,AD[1],0],Z));
  const lower=(s,a)=>rot(s>0?'uarmL':'uarmR',Z,-a*s);
@@ -724,7 +769,9 @@ function pose(t,anim,jab,arms,kick,gait){const R={},rot=(b,ax,a)=>{R[b]=M4.mul(M
   else if(arms==='melee'){up(-1,-1.0-0.45*k,0.75-1.7*k,1.15-0.95*k);lower(1,0.5);rot('farmL',armHinge(1),0.4);}
   else if(arms==='slap'){/* wind the right hand back, swing it through low and in front, let it come back */
    const sx=k<0.3?0.75*k/0.3:k<0.5?0.75-1.45*(k-0.3)/0.2:-0.7*(1-(k-0.5)/0.5);up(-1,sx,0.15,0.45);rot('chest',Y,-0.25*sx);lower(1,0.5);rot('farmL',armHinge(1),0.3);}
-  else if(arms==='talk'){const g=Math.sin(t*2.3)*0.22,g2=Math.sin(t*1.7+1)*0.22;up(-1,-0.5+g,0.25,1.2+g2);up(1,-0.55-g2,-0.25,1.1+g);}}
+  else if(arms==='talk'){const g=Math.sin(t*2.3)*0.22,g2=Math.sin(t*1.7+1)*0.22;up(-1,-0.5+g,0.25,1.2+g2);up(1,-0.55-g2,-0.25,1.1+g);}
+  else if(arms==='mc'&&window.MC_GEST){const v=window.MC_GEST;for(const s of [1,-1]){const o=s>0?0:4,u=s>0?'uarmL':'uarmR';lower(s,v[o]);rot(u,X,v[o+1]);rot(u,Y,-s*v[o+2]);rot(s>0?'farmL':'farmR',armHinge(s),v[o+3]);}
+   rot('spine',X,v[8]);rot('chest',X,v[9]);rot('chest',Y,v[10]);rot('neck',Y,v[11]);rot('head',X,v[12]);rot('head',Z,v[13]);if(v[14])rot('handR',Z,v[14]);if(v[15])rot('handL',X,v[15]);root[1]-=v[16]||0;}}
  if(window.SLAPK){const q=window.SLAPK,sd=q<0?-1:1,a=Math.abs(q);/* a little jump, hips forward, a look back over the shoulder */
   rot('pelvis',X,-0.22*a);rot('spine',X,-0.08*a);rot('chest',X,-0.08*a);rot('neck',Y,0.5*a*sd);rot('head',Y,0.3*a*sd);rot('head',X,-0.1*a);
   rot('thighL',X,-0.12*a);rot('shinL',X,0.3*a);root[1]+=0.035*a;}
@@ -961,6 +1008,7 @@ function paintBodyP(L){const sh=C255(L.shirt),jk=C255(L.jacket),sk=C255(L.skin);
   for(const sd of [-1,1]){const g=x.createRadialGradient(256+sd*36,92,4,256+sd*36,100,46);g.addColorStop(0,'rgba(255,255,255,.16)');g.addColorStop(0.6,'rgba(255,255,255,0)');g.addColorStop(0.8,'rgba(0,0,0,.14)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(256+sd*36-50,40,100,110);}
   x.fillStyle=rgb(sh);x.fillRect(0,180,512,9);
   if(L.chain||L.medallion){x.strokeStyle='#e8b84a';x.lineWidth=3;x.beginPath();x.moveTo(220,0);x.quadraticCurveTo(256,46,292,0);x.stroke();if(L.medallion){x.fillStyle='#f0c050';x.beginPath();x.arc(256,36,7,0,6.3);x.fill();}}
+  if(L.hose&&L.skirt){/* sheer stockings under a skirt */const hc=C255(L.hoseC||[0.05,0.05,0.07]);x.fillStyle=rgb(hc);x.globalAlpha=0.5;x.fillRect(0,440,512,72);x.globalAlpha=1;}
   if(L.sleeves)fab(0,290,512,90,jk);else{fab(0,290,512,90,sk);for(const sx of [96,416]){x.fillStyle=rgb(sk);x.fillRect(sx-34,0,68,22);}}fab(0,381,512,18,sk);
   if(L.crop){/* bare midriff between the top's hem (~y 1.17) and the waistband */fab(0,139,512,34,sk);const g=x.createLinearGradient(0,139,0,147);g.addColorStop(0,'rgba(0,0,0,.28)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,139,512,8);
    x.fillStyle=rgb(sk.map(v=>v*0.6));x.beginPath();x.ellipse(256,164,2.2,3,0,0,6.3);x.fill();}}}
@@ -991,7 +1039,7 @@ function kitLook(L){if(!L||L.fem||!L.arch)return L;let h=2166136261;const k=JSON
  const o=Object.assign({},L),suit=SUIT_ARCH[L.arch];if(r()<(suit?0.5:0.35))o.bling=true;if(!L.tie&&r()<(suit?0.55:0.35))o.chain=true;if(L.arch==='dealer'&&r()<0.45)o.cuban=true;
  if(!L.shades&&!L.aviators&&!L.glasses&&r()<(suit?0.22:0.1))o.glasses=true;return o;}
 function lookCfg(L,bodyType){const fb=k=>(!L.fem&&L.arch&&HEROBUILD[k])||BODYCFG[L.fem&&k==='thin'?'slim':k],bt=fb(bodyType)||fb(L.body)||BODYCFG.normal,helmet=HELMET[L.helmet]?L.helmet:null;
- return{L,B:{specs:L.glasses?1:0,fluff:!!(L.fluff&&L.beard),hs:(L.hair&&!L.hat&&!helmet)?L.hs:null,watch:L.watch?-1:0,cigar:!!(L.cigar||(!L.fem&&faceOf(L).cig)),hat:helmet?null:(L.hat||null),shoulders:bt.shoulders||0,belly:bt.belly||(L.belly?0.1:0),rings:L.bling?1:0,fem:!!L.fem,dancer:!!(L.fem&&L.dancer),curve:L.fem&&L.dancer?(L.curve||1):1,waist:L.fem&&L.dancer?(L.waist||1):1,bustK:L.fem&&L.dancer?(L.bust||1):1,hipK:L.fem&&L.dancer?(L.hips||1):1,skirt:L.fem?(L.skirt||0):0,
+ return{L,B:{specs:L.glasses?1:0,fluff:!!(L.fluff&&L.beard),hs:(L.hair&&!L.hat&&!helmet)?L.hs:null,watch:L.watch?-1:0,cigar:!!(L.cigar||(!L.fem&&faceOf(L).cig)),hat:helmet?null:(L.hat||null),shoulders:bt.shoulders||0,belly:bt.belly||(L.belly?0.1:0),rings:L.bling?1:0,fem:!!L.fem,dancer:!!(L.fem&&(L.dancer||L.curvy)),curve:L.fem&&(L.dancer||L.curvy)?(L.curve||1):1,waist:L.fem&&(L.dancer||L.curvy)?(L.waist||1):1,bustK:L.fem&&(L.dancer||L.curvy)?(L.bust||1):1,hipK:L.fem&&(L.dancer||L.curvy)?(L.hips||1):1,skirt:L.fem?(L.skirt||0):0,
   armor:ARMOR[L.armor]?L.armor:null,helmet,...(L.fem?{}:(F=>({jaw:F.jaw,cheek:F.cheek,noseK:0.85+0.3*(F.nose-0.85)/0.4}))(faceOf(L))),heels:!!(L.fem&&L.heels),pads:!!(L.fem&&L.pads),crop:!!(L.fem&&L.crop)},scale:(L.fem?bt.scale.map((v,i)=>v*BODYP.fem.scale[i]):bt.scale).map((v,i)=>v*(L.sc?L.sc[i]:1)),gait:L.fem&&L.dancer?'runway':(L.fem?BODYP.fem:BODYP.male).gait};}
 /* vertex counts for a look without touching GL (budget checks: female <= 1.25x male) */
 function lookVerts(L,bodyType){const B=lookCfg(L||{},bodyType).B,b=buildBody(B).p.length/3,h=buildHead(B).p.length/3;return{body:b,head:h,total:b+h};}
@@ -1073,13 +1121,14 @@ function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game'
   if(c.pose==='consigliere'){anim='stance';jab=c.jab>0?Math.sin((1-c.jab/0.24)*Math.PI):undefined;}
   else if(c.pose==='money'){arms='cash';gun='silenced';cash=true;}
   else if(c.pose==='don'){arms='aim1';gun='revolver';k=(c.kick||0)*0.4;}
-  else if(c.pose==='sal'){arms='talk';}
+  else if(c.pose==='sal'){arms='talk';if(c.gset)arms='mc';}
  }else if(mode==='game'){
   const wt=c.weapon?c.weapon.type:'fists',wd=WD[wt]||WD.fists;anim=sp>0.4?'walk':'idle';
   if(wt==='fists'){if(atk>0){anim='stance';jab=Math.sin(ap*Math.PI);}}
   else if(wd.melee){arms='melee';k=atk>0?ap:0;gun=wt;}
   else{gun=wt;k=atk*0.12;arms=BT(wt)==='dual'?'dual':wd.two?'rifle':'aim';dual=BT(wt)==='dual';if(!(c.player||c.kind==='mcwey'||c.state==='chase'||c.aiming||atk>0))arms='low';}
  }
+ let gest=null;if(c.gset&&(mode==='menu'?arms==='mc':!gun&&!(atk>0)&&c.alive)){gest=gestVec(c,t);arms='mc';window.MC_GEST=gest.v;if(gest.g==='count'||gest.g==='bills')cash=true;}
  if(mode==='game'&&c.ex){const kd=c.ex.kind;if(kd==='gun'){arms='execGun';anim='idle';}else if(kd==='fists'){anim='stance';jab=atk>0?Math.sin(ap*Math.PI):0;}window.EXLEAN=1;}else window.EXLEAN=0;
  window.CROUCH=mode==='game'&&c.alive&&!(c.down>0)?(c.crouchK||0):0;window.SIT=mode==='game'&&c.alive&&!(c.down>0)?(c.seatK||0):0;window.DRIVE=mode==='game'&&c.drive?1:0;
  window.PUMP=0;if(gun==='shotgun'&&c.pumpAt!==undefined&&G){const dt2=G.T-c.pumpAt;if(dt2>0.3&&dt2<0.62)window.PUMP=Math.sin((dt2-0.3)/0.32*Math.PI);}
@@ -1115,7 +1164,7 @@ function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game'
  /* a playful slap: the player's hand swings (arms 'slap'), the girl jumps and looks back over her shoulder (window.SLAPK) */
  if(mode==='game'&&c.slapT>0){if(c.player){arms='slap';k=1-c.slapT/0.4;gun=null;dual=false;}else window.SLAPK=Math.sin(Math.PI*clamp(1-c.slapT/0.8,0,1))*(c.slapS||1);}
  window.MOCAP_PLAY=!lying&&mcp&&typeof mocapClip==='function'?mcp:null;
- let W=pose(lying?0:tt,anim,jab,arms,k,CH[id].gait);window.SLAPK=0;window.MOCAP_PLAY=null;
+ let W=pose(lying?0:tt,anim,jab,arms,k,CH[id].gait);window.SLAPK=0;window.MOCAP_PLAY=null;window.MC_GEST=null;
  if(mode==='game'&&!lying&&(c.kind==='sdancer'||c.kind==='dancer'||c.kind==='pgirl'||c.lapDance||c.slapT>0||c._pw))W=blendPose(c,W,t);else if(lying)c._pw=null;
  window.DANCE_JIGGLE=null;window.DANCE_MOVE=null;window.EXLEAN=0;window.CROUCH=0;window.SIT=0;window.DRIVE=0;const S=CH[id].scale;
  const SC=[scale*S[0],0,0,0,0,scale*S[1],0,0,0,0,scale*S[2],0,0,0,0,1];let bx0=c.x+(c.lox||0),bz0=c.z+(c.loz||0);
@@ -1135,6 +1184,7 @@ function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game'
  if(mode==='game'&&(CH[id].npc||c.player)){const lvl=!c.alive?(c.execd?3:2):(c.hp<(c.maxhp||1)?1:0);if(lvl>(c._bl||0)){c._bl=lvl;bloodify(id,lvl,c);}}
  if(IB&&gun&&WD[gun]&&!(c.sev&&c.sev.armR)){const sw=1.65*scale;const wm=handFrame(Wb,false,sw),hg=gun==='dual'?'pistol':gun;if(typeof mastLv==='function')WGOLD=!!c.player&&mode==='game'&&mastLv(gun)>=3;if(mode==='game'&&typeof weaponAnim==='function')weaponAnim(c,gun);drawWeapon(IB,wm,hg);WKICK=WPUMP=0;if(typeof mastLv==='function')WGOLD=false;if(gun==='shotgun'&&!(c.sev&&c.sev.armL)){const fm=handFrame(Wb,true,1);const pr=IB.r,pu=IB.uv;IB.r=0.4;IB.uv=null;IB.box(A.mul(fm,A.mul(A.T(0,0.02,0.03),A.S(0.05*scale,0.05*scale,0.16*scale))),[0.35,0.22,0.12]);IB.r=pr;IB.uv=pu;}c.muzzle=apply(wm,0,0.05,(WD[gun].len||0.2)+0.12);if(dual){if(mode==='game'&&typeof weaponAnim==='function')weaponAnim(c,gun);drawWeapon(IB,handFrame(Wb,true,sw),hg);WKICK=WPUMP=0;}}
  if(IB&&cash){const hm=handFrame(Wb,true,1);const pr=IB.r,pu=IB.uv;IB.r=0;for(let i=-2;i<=2;i++){const m=A.mul(A.mul(A.mul(hm,A.T(0,0.03,0.04)),A.RY(i*0.26)),A.T(0,0.004*i,0.085));IB.box(A.mul(m,A.S(0.075,0.004,0.16)),[1,1,1],false,TUV[11]);}IB.r=pr;IB.uv=pu;}
+ if(IB&&gest&&gest.g==='drink'){const hm=handFrame(Wb,true,1);const pr=IB.r,pu=IB.uv;IB.r=0.3;IB.uv=null;IB.box(A.mul(hm,A.mul(A.T(0,0.02,0.05),A.S(0.06,0.075,0.06))),[0.8,0.88,0.95]);IB.box(A.mul(hm,A.mul(A.T(0,0.005,0.05),A.S(0.05,0.04,0.05))),[0.9,0.5,0.12]);IB.r=pr;IB.uv=pu;}
  if(IB&&id==='mcwey'&&!gun){const hm=handFrame(Wb,false,1);const pr=IB.r,pu=IB.uv;IB.r=0.6;IB.uv=null;const cm=A.mul(hm,A.mul(A.T(0,0.035,0.02),A.RX(-0.5)));IB.box(A.mul(cm,A.mul(A.T(0,0,0.06),A.S(0.022,0.022,0.15))),[0.42,0.24,0.12]);IB.box(A.mul(cm,A.mul(A.T(0,0,0.0),A.S(0.024,0.024,0.018))),[0.85,0.65,0.25]);IB.box(A.mul(cm,A.mul(A.T(0,0,0.137),A.S(0.024,0.024,0.008))),[1,0.45,0.15],true);c.cig=apply(cm,0,0,0.145);IB.r=pr;IB.uv=pu;}
  return true;}
 function flush(VPm,u){try{warmLooks();}catch(e){}if(NX&&NX.live){NX.takeChars(queue,MODELS);queue.length=0;return;}if(!shaderReady||!queue.length||!u){queue.length=0;return;}gl.useProgram(P);

@@ -334,6 +334,7 @@ const TRS=(x,y,z,ry,sx,sy,sz)=>A.mul(A.mul(A.T(x,y,z),A.RY(ry)),A.S(sx,sy,sz));
 <script src="drive.js"></script>
 <script src="empire.js"></script>
 <script src="stocks.js"></script>
+<script src="mcoffice.js"></script>
 <script>
 'use strict';
 /* W2f dev gate (not shipped to players): ?planplay=motel|penthouse registers a plan-stage preview errand on the job list */
@@ -2419,6 +2420,7 @@ function buildBrief(){const B=briefB;B.reset();B.round=0.45;
  B.upload(true);
  salChar=makeChar(0,0,SALLOOK,false);salChar.y=-0.36;salChar.pose='sal';salChar.splat={torso:[],legs:[],face:[]};salChar.talk=0;salChar.blink=0;briefBuilt=true;}
 function updateBrief(dt){if(!briefBuilt)buildBrief();const s=salChar;const talking=typeI<typeFull.length;
+ s.gset=G&&G.secMode==='lap'?'mclap':'mc';s.gtalk=talking?2.2:Math.max(0,(s.gtalk||0)-dt);
  s.talk=talking?Math.abs(Math.sin(menuT*16))*(0.45+0.55*Math.abs(Math.sin(menuT*4.7))):Math.max(0,s.talk-dt*4);
  blinkT-=dt;if(blinkT<=0){s.blink=0.13;blinkT=rnd(2,4.5);}s.blink-=dt;
  if(Math.random()<dt*5)briefParts.push({x:0.86,y:0.88,z:0.81,vx:rnd(-0.03,0.03),vy:0.2,vz:rnd(-0.03,0.03),s:rnd(0.015,0.03),life:2.2});
@@ -2431,7 +2433,7 @@ function briefView(asp){let eye=[0.05,1.36,2.0],tgt=[-0.55,1.12,0];if(asp<1){eye
  else{const dx=briefPan(eye,tgt,asp);eye[0]+=dx;tgt[0]+=dx;} // centre McWey in the space left of the log
  const fl=Math.sin(menuT*1.3)>0.95?0.3:1;
  return{eye,tgt,lights:[{x:-0.78,y:1.15,z:0.6,r:2.4,c:[1.1,0.85,0.5]},{x:1.8,y:1.9,z:-0.7,r:3.6,c:BRIEF_SUN[briefAct()].map(v=>v*fl)},{x:-1.3,y:1.7,z:-0.55,r:3.4,c:[0.3,0.85,1.4]},{x:0.7,y:2.1,z:1.7,r:3.8,c:[1.05,0.88,0.78]},{x:-0.6,y:1.4,z:-0.8,r:2,c:[0.8,0.1,0.3]}]};}
-function drawBriefDyn(B,P){B.reset();P.reset();hdChar(IBhi,salChar,menuT);
+function drawBriefDyn(B,P){B.reset();P.reset();hdChar(IBhi,salChar,menuT);drawBriefSec(IBhi,menuT);
  const r=salChar.recv;if(r){const b=[PHONE_BASE[0]-0.1,0.88,PHONE_BASE[2]];for(let i=0;i<=12;i++){const t=i/12,x=lerp(r[0],b[0],t),z=lerp(r[2],b[2],t),y=lerp(r[1],b[1],t)-Math.sin(t*Math.PI)*0.22;B.box(TRS(x,y,z,t*6,0.022,0.022,0.022),hex(0xa0101e));}}
  for(const p of briefParts)B.box(A.mul(A.T(p.x,p.y,p.z),A.S(p.s,p.s,p.s)),[0.72,0.7,0.78]);
  drawTankLife(B,menuT,-2.35,-0.25,-0.99,0.05,1.55,0.3,0.72,0.7,2.25);tankGlass(P,-2.35,-0.25,-1.28,-0.7,0.6,2.45);}
@@ -2957,7 +2959,7 @@ function hubModeSetup(name){const g=G,p=g.player;if(HUBMODE==='cruise')return tr
  return false;}
 function parkedStreet(dt){const g=G,p=g.player;for(const t of g.traffic){t.x+=t.dir*t.sp*dt;if(t.x>g.W+2)t.x=-2;if(t.x<-2)t.x=g.W+2;
   if(p&&Math.abs(p.x-t.x)<1.6&&Math.abs(p.z-t.z)<0.8){p.z+=Math.sign(p.z-t.z||-1)*0.12;if(!(t.honk>0)){t.honk=1.5;sfx('horn');popup(t.x,t.z,pick(['HEY!','*HONK*','WATCH IT!']),'#ffd36b');}}if(t.honk>0)t.honk-=dt;}}
-function hubTargets(g){const t=[];if(g.club){t.push({k:'car',x:g.park.x,z:g.park.z,r:2.3,lbl:rideHeli()?'YOUR CHOPPER':'YOUR CAR'});for(const d of g.club.dancers)if(!d.walking&&!d.lapDance)t.push({k:'tip',d,x:d.x,z:d.z,r:3.1,lbl:'THROW $100 AT '+d.dname});const v=g.club.vip;if(v.active){t.push({k:'laptip',x:v.chairX,z:v.chairZ,r:2.8,lbl:'THROW $100 AT '+v.dancer.dname+' · MOVE TO STAND UP'});return t;}if(g.club.tony)t.push({k:'tony',x:g.club.tony.x,z:g.club.tony.z,r:3.4,lbl:v.escort?'TALK TO TONY':'TONY · BOOK A VIP ROOM ($500)'});return t;}if(g.slots){const o=g.slots.o;if(o)t.push({k:'catalog',x:o.x,z:o.z,r:1.9,lbl:'PHONE · FURNITURE & SIDE JOBS'});const mv=g.home===3;if(!mv||g.mfl===1){const bp=homeBedPos(g);const gs=Math.min(bedN()-1,g.npcs.filter(q=>q.kind==='pgirl').length);t.push({k:'bed',x:bp.x,z:bp.z,r:2.0,lbl:gs?'GO TO BED WITH THE GIRL'+(gs>1?'S':''):'GO TO SLEEP'});}if(!mv||g.mfl===-1){const lp=homeLockerPos(g);t.push({k:'locker',x:lp.x,z:lp.z,r:1.8,lbl:'GUN LOCKER · '+myProg().locker.items.length+'/'+LOCKER_CAP});}if(mv&&!g.seatP)mansionTargets(g,t);const f=homeFurn();if(g.home===1&&f.hifi&&g.slots.b)t.push({k:'hifi',x:g.slots.b.x-0.4,z:g.slots.b.z+0.3,r:1.9,lbl:'HI-FI · CHANGE TRACK'});hlTargets(g,t);if(g.seatP){const u=[];seatTargets(g,u);return u;}seatTargets(g,t,homeSeats(g));return t;}const car=g.park||(g.parked?g.pcar:null);if(car)t.push({k:'car',x:car.x,z:car.z,r:2.3,lbl:rideHeli()?'YOUR CHOPPER':'YOUR CAR'});const n=g.npcs.find(q=>q.kind==='nine');if(n)t.push({k:'nine',x:n.x,z:n.z,r:2.7,lbl:'NINE OF NINE'});if(g.dealer)dealerTargets(g,t);if(g.mall)mallTargets(g,t);if(g.up2)up2Targets(g,t);if(g.def===HUBS.lobby||g.def===HUBS.office||g.def===HUBS.bunker||g.def===HUBS.mall||g.def===HUBS.mall2){const p=g.player;let nb=null,nd=1.9;if(p)for(const q of g.npcs){if(!NPC_CHAT[q.kind])continue;const d=Math.hypot(q.x-p.x,q.z-p.z);if(d<nd){nd=d;nb=q;}}if(nb)t.push({k:'talk',n:nb,x:nb.x,z:nb.z,r:1.9,lbl:'TALK'});if(g.lounge)seatTargets(g,t);}return t;}
+function hubTargets(g){const t=[];if(g.club){t.push({k:'car',x:g.park.x,z:g.park.z,r:2.3,lbl:rideHeli()?'YOUR CHOPPER':'YOUR CAR'});for(const d of g.club.dancers)if(!d.walking&&!d.lapDance)t.push({k:'tip',d,x:d.x,z:d.z,r:3.1,lbl:'THROW $100 AT '+d.dname});const v=g.club.vip;if(v.active){t.push({k:'laptip',x:v.chairX,z:v.chairZ,r:2.8,lbl:'THROW $100 AT '+v.dancer.dname+' · MOVE TO STAND UP'});return t;}if(g.club.tony)t.push({k:'tony',x:g.club.tony.x,z:g.club.tony.z,r:3.4,lbl:v.escort?'TALK TO TONY':'TONY · BOOK A VIP ROOM ($500)'});return t;}if(g.slots){const o=g.slots.o;if(o)t.push({k:'catalog',x:o.x,z:o.z,r:1.9,lbl:'PHONE · FURNITURE & SIDE JOBS'});const mv=g.home===3;if(!mv||g.mfl===1){const bp=homeBedPos(g);const gs=Math.min(bedN()-1,g.npcs.filter(q=>q.kind==='pgirl').length);t.push({k:'bed',x:bp.x,z:bp.z,r:2.0,lbl:gs?'GO TO BED WITH THE GIRL'+(gs>1?'S':''):'GO TO SLEEP'});}if(!mv||g.mfl===-1){const lp=homeLockerPos(g);t.push({k:'locker',x:lp.x,z:lp.z,r:1.8,lbl:'GUN LOCKER · '+myProg().locker.items.length+'/'+LOCKER_CAP});}if(mv&&!g.seatP)mansionTargets(g,t);const f=homeFurn();if(g.home===1&&f.hifi&&g.slots.b)t.push({k:'hifi',x:g.slots.b.x-0.4,z:g.slots.b.z+0.3,r:1.9,lbl:'HI-FI · CHANGE TRACK'});hlTargets(g,t);if(g.seatP){const u=[];seatTargets(g,u);return u;}seatTargets(g,t,homeSeats(g));return t;}const car=g.park||(g.parked?g.pcar:null);if(car)t.push({k:'car',x:car.x,z:car.z,r:2.3,lbl:rideHeli()?'YOUR CHOPPER':'YOUR CAR'});const n=g.npcs.find(q=>q.kind==='nine');if(n)t.push({k:'nine',x:n.x,z:n.z,r:2.7,lbl:'NINE OF NINE'});if(g.dealer)dealerTargets(g,t);if(g.mall)mallTargets(g,t);if(g.up2)up2Targets(g,t);if(g.mcDesk)officeTargets(g,t);if(g.def===HUBS.lobby||g.def===HUBS.office||g.def===HUBS.bunker||g.def===HUBS.mall||g.def===HUBS.mall2){const p=g.player;let nb=null,nd=1.9;if(p)for(const q of g.npcs){if(!NPC_CHAT[q.kind])continue;const d=Math.hypot(q.x-p.x,q.z-p.z);if(d<nd){nd=d;nb=q;}}if(nb)t.push({k:'talk',n:nb,x:nb.x,z:nb.z,r:1.9,lbl:'TALK'});if(g.lounge)seatTargets(g,t);}return t;}
 /* a tap in a hub: the target drawn nearest the finger wins (homes pack a bar, its stools and a sofa close together), among those you
    can reach; the floating TAP prompt over the one in reach counts as that target. Returns the target, false (too far) or null. */
 function hubTapPick(ts,cx,cy,p,ia){let go=null,gd=80,far=false;
@@ -4184,11 +4186,11 @@ function officeSetup(g){const n=g.npcs.find(q=>q.kind==='mcwey');if(!n)return;co
  g.pallet={x:D.x-3.3,z:n.z+0.35};g.bars={x:D.x+3.3,z:n.z+0.35};
  if(J>=1)g.solids.push({x:g.pallet.x,z:g.pallet.z,w:1.4,d:1.1});if(J>=2)g.solids.push({x:g.bars.x,z:g.bars.z,w:1.3,d:0.9});
  if(J>=5)g.solids.push({x:2.9,z:6.4,w:0.6,d:0.6});if(J>=7)g.solids.push({x:3,z:4.7,w:0.9,d:0.8});
- g.lights.push({x:D.x,y:2.2,z:D.z,r:3.4,c:[1.1,0.9,0.6]},{x:D.x-1.6,y:1.1,z:D.z-0.15,r:1.6,c:[0.3,1,0.5]});}
+ g.lights.push({x:D.x,y:2.2,z:D.z,r:3.4,c:[1.1,0.9,0.6]},{x:D.x-1.6,y:1.1,z:D.z-0.15,r:1.6,c:[0.3,1,0.5]},{x:SEC_DESK.x,y:1.9,z:SEC_DESK.z,r:2.6,c:[1.2,0.7,0.85]});mcOfficeSetup(g,n);}
 function officeTick(g,dt){const n=g.npcs.find(q=>q.kind==='mcwey'),p=g.player;if(!n||!p)return;
- if(!g.pour&&Math.hypot(p.x-n.x,p.z-n.z)<3.6){g.pour={t:0};popup(n.x,n.z+0.4,pick(["Drink? Course you do.","Sit. I'll pour.","Twenty-five years old. Older than you."]),'#ffe9a8');sfx('blip');}
- if(g.pour&&g.pour.t<3)g.pour.t+=dt;}
-function drawMcOffice(B,g){const D=g.mcDesk,n=g.npcs.find(q=>q.kind==='mcwey'),J=g.haul,WD0=hex(0x3a1a10),WD1=hex(0x5a2a18),LTH=hex(0x6a1426),CASH=[1,1,1];
+ if(!g.pour&&Math.hypot(p.x-n.x,p.z-n.z)<3.6){g.pour={t:0};n.gtalk=3;popup(n.x,n.z+0.4,pick(g.secMode==='lap'?["Drink? She'll pour.","Sit. We were celebrating.","Don't look at her, look at me."]:["Drink? Course you do.","Sit. I'll pour.","Twenty-five years old. Older than you."]),'#ffe9a8');sfx('blip');}
+ if(g.pour&&g.pour.t<3)g.pour.t+=dt;mcOfficeTick(g,dt,n,p);}
+function drawMcOffice(B,g){const D=g.mcDesk,n=g.npcs.find(q=>q.kind==='mcwey'),J=g.haul,WD0=hex(0x3a1a10),WD1=hex(0x5a2a18),LTH=hex(0x6a1426),CASH=[1,1,1];if(g.sec)drawSecretaryDesk(B,g);
  /* the chair swivels with him */
  if(n){const a=n.a,s=Math.sin(a),c=Math.cos(a),at=(f,r,y,sx,sy,sz,col)=>B.box(TRS(n.x+s*f+c*r,y,n.z+c*f-s*r,a,sx,sy,sz),col);
   at(0,0,0.06,0.56,0.05,0.56,DARK);at(0,0,0.2,0.08,0.26,0.08,GOLD);at(0.04,0,0.38,0.72,0.14,0.64,LTH);
