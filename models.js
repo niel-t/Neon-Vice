@@ -769,6 +769,10 @@ function pose(t,anim,jab,arms,kick,gait){const R={},rot=(b,ax,a)=>{R[b]=M4.mul(M
   else if(arms==='melee'){up(-1,-1.0-0.45*k,0.75-1.7*k,1.15-0.95*k);lower(1,0.5);rot('farmL',armHinge(1),0.4);}
   else if(arms==='slap'){/* wind the right hand back, swing it through low and in front, let it come back */
    const sx=k<0.3?0.75*k/0.3:k<0.5?0.75-1.45*(k-0.3)/0.2:-0.7*(1-(k-0.5)/0.5);up(-1,sx,0.15,0.45);rot('chest',Y,-0.25*sx);lower(1,0.5);rot('farmL',armHinge(1),0.3);}
+  /* in bed, rolled onto her side towards you: the upper arm reaches over and rests across you, the lower one tucked under her head */
+  /* kneeling astride a back, both hands down on the shoulders, rubbing in slow alternating circles */
+  else if(arms==='massage'){const w=Math.sin(k*3.1),v=Math.cos(k*3.1);up(-1,-0.55+0.1*w,0.28+0.05*v,0.35-0.12*w);up(1,-0.55-0.1*w,-0.28+0.05*v,0.35+0.12*w);}
+  else if(arms==='cuddle'){const s=k>0?-1:1,u=s>0?'uarmL':'uarmR';rot(u,X,-0.6);rot(u,Y,-0.75*s);rot(u,Z,-0.75*s);rot(s>0?'farmL':'farmR',armHinge(s),0.1);lower(-s,0.5);}
   else if(arms==='talk'){const g=Math.sin(t*2.3)*0.22,g2=Math.sin(t*1.7+1)*0.22;up(-1,-0.5+g,0.25,1.2+g2);up(1,-0.55-g2,-0.25,1.1+g);}
   else if(arms==='mc'&&window.MC_GEST){const v=window.MC_GEST;for(const s of [1,-1]){const o=s>0?0:4,u=s>0?'uarmL':'uarmR';lower(s,v[o]);rot(u,X,v[o+1]);rot(u,Y,-s*v[o+2]);rot(s>0?'farmL':'farmR',armHinge(s),v[o+3]);}
    rot('spine',X,v[8]);rot('chest',X,v[9]);rot('chest',Y,v[10]);rot('neck',Y,v[11]);rot('head',X,v[12]);rot('head',Z,v[13]);if(v[14])rot('handR',Z,v[14]);if(v[15])rot('handL',X,v[15]);root[1]-=v[16]||0;}}
@@ -1161,6 +1165,8 @@ function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game'
  }else window.DANCE_JIGGLE=null;
  const tt=anim==='walk'&&mode==='game'?(c.walk||0)/(2*Math.PI*0.95)/2:t;
  const lying=mode==='game'&&(!c.alive||c.down>0||!!c.bed);if(lying){arms=null;gun=null;anim='idle';window.DANCE_JIGGLE=null;}
+ const cud=lying&&c.bed&&c.cuddle?c.cuddle:0;if(cud){arms='cuddle';k=cud;}
+ if(mode==='game'&&c.massage){arms='massage';k=t;gun=null;anim='idle';}
  /* a playful slap: the player's hand swings (arms 'slap'), the girl jumps and looks back over her shoulder (window.SLAPK) */
  if(mode==='game'&&c.slapT>0){if(c.player){arms='slap';k=1-c.slapT/0.4;gun=null;dual=false;}else window.SLAPK=Math.sin(Math.PI*clamp(1-c.slapT/0.8,0,1))*(c.slapS||1);}
  window.MOCAP_PLAY=!lying&&mcp&&typeof mocapClip==='function'?mcp:null;
@@ -1169,10 +1175,10 @@ function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game'
  window.DANCE_JIGGLE=null;window.DANCE_MOVE=null;window.EXLEAN=0;window.CROUCH=0;window.SIT=0;window.DRIVE=0;const S=CH[id].scale;
  const SC=[scale*S[0],0,0,0,0,scale*S[1],0,0,0,0,scale*S[2],0,0,0,0,1];let bx0=c.x+(c.lox||0),bz0=c.z+(c.loz||0);
  /* in bed the head goes on the pillow: the root (feet) sits one body length from it, whatever her height */
- if(lying&&c.bed&&c.bedHX!==undefined){const len=1.8*scale*S[1];bx0=c.bedHX+Math.sin(c.a||0)*len;bz0=c.bedHZ+Math.cos(c.a||0)*len;}
+ if(lying&&c.bed&&c.bedHX!==undefined){const len=1.8*scale*S[1]*(c.prone?-1:1);bx0=c.bedHX+Math.sin(c.a||0)*len;bz0=c.bedHZ+Math.cos(c.a||0)*len;}
  let base=M4.mul(M4.T(bx0,(c.y||0)+(typeof liftAt==='function'?liftAt(c.x,c.z):0),bz0),M4.R([0,1,0],c.a||0));
  /* lying down: tip over first and scale after, so a body keeps its standing height as its length and its depth as its thickness */
- if(lying){const fe=c.fall===undefined?1:1-Math.pow(1-c.fall,2);base=M4.mul(base,M4.mul(M4.T(0,(c.bed?0.15:0.2)*fe*scale*S[2],0),M4.mul(M4.R([1,0,0],(c.alive&&!c.bed?1:-1)*Math.PI/2*fe),SC)));}
+ if(lying){const fe=c.fall===undefined?1:1-Math.pow(1-c.fall,2);base=M4.mul(base,M4.mul(M4.T(0,(c.bed?0.15:0.2)*fe*scale*S[2],0),M4.mul(M4.R([1,0,0],(c.alive&&(!c.bed||c.prone)?1:-1)*Math.PI/2*fe),cud?M4.mul(M4.R([0,1,0],cud*1.05),SC):SC)));}
  else base=M4.mul(base,SC);
  const Wb=[];const B=new Float32Array(NBS*16);for(let i=0;i<NB;i++)Wb[i]=M4.mul(base,W[i]);if(CH[id].neckDrop){const h=BI.head;Wb[h]=M4.mul(base,M4.mul(M4.T(0,-CH[id].neckDrop,0),W[h]));}
  const cut=[],SEV={armL:['uarmL','farmL','handL'],armR:['uarmR','farmR','handR'],legL:['thighL','shinL','footL'],legR:['thighR','shinR','footR']};
