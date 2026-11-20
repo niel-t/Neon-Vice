@@ -26,7 +26,7 @@ test('mcoffice: the secretary is at the desk, the counting table or on his lap, 
   for (const m of modes) {
     expect(m.set).toBe(m.mode);
     expect(m.mc).toBe(m.mode === 'lap' ? 'mclap' : 'mc');
-    expect(m.solid).toBe(m.mode === 'count');
+    expect(m.solid).toBe(true); // the counting table always stands in the loot room
     if (m.mode === 'lap') expect(m.d).toBeLessThan(0.5); else expect(m.d).toBeGreaterThan(3);
     expect(m.seat).toBe(m.mode !== 'count');
   }
@@ -35,7 +35,7 @@ test('mcoffice: the secretary is at the desk, the counting table or on his lap, 
 test('mcoffice: McWey and the secretary act, she greets you, and USE at the desk opens the briefing', async ({ openGame }) => {
   const page = await openGame();
   await toOffice(page);
-  await page.evaluate(() => { window.SECMODE = 'count'; loadHub('office'); G.player.x = 14.5; G.player.z = 8.2; });
+  await page.evaluate(() => { window.SECMODE = 'count'; loadHub('office'); G.player.x = 25.5; G.player.z = 8.8; });
   // models build in the background; once they are drawn McWey and the secretary each run a gesture
   await expect.poll(() => page.evaluate(() => { const m = G.npcs.find(n => n.kind === 'mcwey'), s = G.sec; return !!(m._gs && s._gs) && [m._gs.set, s._gs.set]; }), { timeout: 40_000 }).toEqual(['mc', 'count']);
   await expect.poll(() => page.evaluate(() => G.secHello)).toBe(true);
@@ -44,7 +44,7 @@ test('mcoffice: McWey and the secretary act, she greets you, and USE at the desk
   const seen = await page.evaluate(async () => { const m = G.npcs.find(n => n.kind === 'mcwey'), s = new Set(); for (let i = 0; i < 40; i++) { s.add(m._gs.cur); await new Promise(r => setTimeout(r, 300)); } return [...s]; });
   expect(seen.length).toBeGreaterThan(1);
   // standing in front of his desk: USE (E / the touch USE button) sits you down with him
-  await page.evaluate(() => { G.player.x = 10.4; G.player.z = 6.6; });
+  await page.evaluate(() => { G.player.x = 16.4; G.player.z = 7.6; });
   await expect.poll(() => page.evaluate(() => G.ia && G.ia.k)).toBe('mcwey');
   await page.keyboard.press('e');
   await expect.poll(() => page.evaluate(() => state)).toBe('brief');
@@ -53,7 +53,7 @@ test('mcoffice: McWey and the secretary act, she greets you, and USE at the desk
 test('mcoffice: on his lap she stays there for the briefing close-up, and walking to the desk still opens it', async ({ openGame }) => {
   const page = await openGame();
   await toOffice(page);
-  await page.evaluate(() => { window.SECMODE = 'lap'; loadHub('office'); });
+  await page.evaluate(() => { window.SECMODE = 'lap'; loadHub('office'); G.player.x = 16; G.player.z = 10.5; });
   await page.keyboard.down('w');
   try { await expect.poll(() => page.evaluate(() => state), { timeout: 20_000 }).toBe('brief'); }
   finally { await page.keyboard.up('w'); }

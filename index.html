@@ -2461,6 +2461,7 @@ const NPCLINES={
  tony:[["Hey, pal. What're you drinking?"]],
  mcwey:[["Come in, come in."],["There's my favourite employee."],["Sit. We celebrate."],["The man of the hour."]]};
 const HUBLEG_FOOT={'x':{trig:'exit'},'F':{furn:25},'g':{npc:'guest'},'l':{npc:'lady'},'|':{w:42},'e':{w:40},'v':{trig:'elevator'},'c':{light:'warm'},'n':{npc:'guard'},'q':{npc:'recep'},'f':{furn:23},'k':{furn:24},'M':{npc:'mcwey'},'m':{trig:'mcwey'},'r':{rug:1}};
+const OFFICE_LEG=Object.assign({},HUBLEG_FOOT,{W:{w:42,h:0.3,top:42}});
 const HUBS={
  drive:{name:'OCEAN DRIVE',hub:'drive',wall:33,floor:7,sofa:0xffffff,track:'c_palms',where:'MIAMI · OCEAN DRIVE',obj:'DRIVE TO McWEY TOWER',
   legend:{'b':{w:33,h:'rand',tint:1,top:34},'G':{w:35,h:4.6,top:42,glow:1},'s':{f:37},'l':{f:37,lamp:1},'V':{f:37,trig:'tower'},'y':{f:38},'H':{f:38,furn:8},'o':{w:39,h:0.02,top:39,water:1},'q':{f:7,furn:21},'Q':{f:7,furn:22},'*':{f:37,light:'neon'}},
@@ -2495,20 +2496,31 @@ const HUBS={
  "|........rrrr........|",
  "|......n..P...n......|",
  "||||||||xxxxxx||||||||"]},
- office:{name:"McWEY'S OFFICE",hub:'foot',wall:42,floor:43,sofa:0xe8dcc0,track:'c_tide',where:'McWEY TOWER · 52ND FLOOR',obj:'SEE McWEY',legend:HUBLEG_FOOT,
+ office:{name:"McWEY'S OFFICE",hub:'foot',wall:42,floor:43,sofa:0xe8dcc0,track:'c_tide',where:'McWEY TOWER · 52ND FLOOR',obj:'SEE McWEY',legend:OFFICE_LEG,
+  /* the 52nd floor (mcoffice.js dresses it): the elevator opens on a reception hall with Candi's counter in the middle. North of it:
+     the chill room (west, a wall of aquarium), McWey's office (centre, floor-to-ceiling glass over the city at night, W) and,
+     only through his office, the loot room (east). */
   map:[
- "||||||||||||||||||||",
- "|R.kkkkkkkkkkkk..c.|",
- "|.........M........|",
- "|..................|",
- "|.......mmmm....EE.|",
- "|..................|",
- "|BBB...rrrrrr......|",
- "|......rrrrrr...Gp.|",
- "|..c...rrrrrr....c.|",
- "|..................|",
- "|EE.....nP.n......H|",
- "|||||||||ee|||||||||"]},
+ "||||||||||WWWWWWWWWW||||||||||",
+ "|kkkkkkkk|..........|GG.c..GG|",
+ "|........|..........|........|",
+ "|B......J|c....M...c|........|",
+ "|B......H|..........|........|",
+ "|B.......|...mmmm............|",
+ "|........|...................|",
+ "|H..OO..L|..........|...c....|",
+ "|L.....p.|c........c|........|",
+ "|||||..|||||||..||||||||||||||",
+ "|H.....p.....c..c.....p.....H|",
+ "|............................|",
+ "|..EE....................EE..|",
+ "|............................|",
+ "|............................|",
+ "|p.........................p.|",
+ "|.......rrrrrrrrrrrrrr.......|",
+ "|.....c.......c.......c......|",
+ "|L..........n..P..n.........L|",
+ "||||||||||||||ee||||||||||||||"]},
 
  home0:{name:'ROOM 14 · SUNSET MOTEL',hub:'foot',wall:48,floor:27,amb:[0.27,0.25,0.21],lc:[0.42,0.4,0.3],sofa:0x2a9ea3,track:'c_vhs',where:'SUNSET MOTEL · ROOM 14',obj:'FURNISH THE PLACE · THEN HEAD OUT',
   /* the motel suite, on the ground floor. North to south: the parking lot (y, where your car parks), a back patio behind a rusty rail (R) with a gap to walk through,
@@ -2912,7 +2924,7 @@ function updateDrive(dt){const g=G,c=g.pcar,p=g.player;carStep(g,c,carInput(c),d
    into g.fixB, uploaded once and drawn every frame next to dynB, instead of being rebuilt and re-uploaded every frame.
    hubFixStart returns the batch to build into when it needs (re)building, or false when it is current; hubFixEnd uploads it. */
 let FIXB_LAST=null;
-function hubFixStart(g){const want=g.garage||g.club||g.mansion||g.def===HUBS.bunker;if(!want)return undefined;const k=ENH()?1:0;
+function hubFixStart(g){const want=g.garage||g.club||g.mansion||g.mcDesk||g.def===HUBS.bunker;if(!want)return undefined;const k=ENH()?1:0;
  if(g.fixB&&g.fixB.buf&&g.fixK===k)return false;
  if(FIXB_LAST&&FIXB_LAST!==g&&FIXB_LAST.fixB&&FIXB_LAST.fixB.buf){gl.deleteBuffer(FIXB_LAST.fixB.buf);FIXB_LAST.fixB.buf=null;}FIXB_LAST=g;
  if(!g.fixB||!g.fixB.buf)g.fixB=new Batch();g.fixB.reset();g.fixB.round=dynB.round;g.fixK=k;return g.fixB;}
@@ -2927,7 +2939,7 @@ if(!g.cine&&!g.seq){const y=2.4+Math.sin(g.T*4)*0.2;B.box(A.mul(A.mul(A.T(g.car.
  else{for(const n of g.npcs)drawChar(IBhi,n);if(g.player&&!g.hideP)drawChar(IBhi,g.player);if(g.park){if(rideHeli())drawHeli(B,g.park.x,g.park.z,0,g.T);else{drawRide(B,g.park.x,g.park.z,1,g.park.a||0,undefined,g.park.spin||0);if(g.hideP&&g.inCar===g.park)drawDriver(g,g.park.x,g.park.z,g.park.a||0);drawRideDoor(B,g.park.x,g.park.z,g.park.a||0,g.park.dr);}}
   if(g.hcar){drawRide(B,g.hcar.x,g.hcar.z,1,g.hcar.a||0,undefined,g.hcar.spin||0);if(g.hideP&&g.inCar===g.hcar)drawDriver(g,g.hcar.x,g.hcar.z,g.hcar.a||0);drawRideDoor(B,g.hcar.x,g.hcar.z,g.hcar.a||0,g.hcar.dr);}if(g.garage)drawGarage(B,g,FX);if(g.slob)drawSlobby(B,g);if(g.def===HUBS.bunker)drawBunker(B,g,FX);if(g.dealer)drawDealer(B,g);if(g.up2)drawUp2(B,g);if(g.slots){if(g.home===3)drawMansion(B,g,FX);else{hlFinWrap(B,g,HB=>{drawHomeDecor(HB,g);drawHome(HB,g);});drawHomeX(B,g);drawLocker(B,g);}}if(g.club)drawClub(B,g,FX);
   if(g.tankB){const t=g.tankB;drawTankLife(B,g.T,t.x0,t.x1,(t.z0+t.z1)/2,0.08,1.35,0.35,0.9,0.4,2.15);}
-  if(g.fount)drawFountainWater(B,g.fount,g.T);if(g.mcDesk)drawMcOffice(B,g);if(g.tv)drawLobbyTV(B,g);if(g.lounge)drawLounge(B,g);if(g.cast)drawCast(B,g);
+  if(g.fount)drawFountainWater(B,g.fount,g.T);if(g.mcDesk)drawMcOffice(B,g,FX);if(g.tv)drawLobbyTV(B,g);if(g.lounge)drawLounge(B,g);if(g.cast)drawCast(B,g);
   if(!g.seq){const y=1.6+Math.sin(g.T*4)*0.12;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.22,0.22,0.22))),GOLD,true);}}
  for(const q of g.parts){if(q.bill){drawPartBill(B,q);continue;}B.box(A.mul(A.T(q.x,q.y,q.z),A.S(q.s,q.s,q.s)),q.c,q.t==='s');}hubFixEnd(g,FX);}
 function drawHubHUD(c,g,u,m){if(g.cine)return;if(g.seq){drawSeqHUD(c,g,u);return;}if(g.def.hub==='cruise'){cruiseHUD(c,g,u,m);return;}const d=g.def;c.font=PXF(7*u);txt(c,d.where,m,m,'#ffd36b','left',7*u);c.font=VTF(22*u);txt(c,g.obj||d.obj,m,m+10*u,'#fff','left',22*u);
@@ -4181,16 +4193,16 @@ HUBS.lobby.map=[
 /* ---------- McWey's office: he sits behind a real desk, and the haul around it grows with every job ---------- */
 function mcHaul(){let n=0;for(const k in PROG){const a=PROG[k]&&PROG[k].arm;if(a)n+=a.jobs||0;}return n;}
 function boxPush(s,p){const hx=s.w/2+p.r,hz=s.d/2+p.r,dx=p.x-s.x,dz=p.z-s.z;if(Math.abs(dx)>=hx||Math.abs(dz)>=hz)return;if(hx-Math.abs(dx)<hz-Math.abs(dz))p.x=s.x+Math.sign(dx||1)*hx;else p.z=s.z+Math.sign(dz||1)*hz;}
-function officeSetup(g){const n=g.npcs.find(q=>q.kind==='mcwey');if(!n)return;const J=mcHaul();n.x=10;n.y=-0.14;n.seat=true;n.said=true;n.r=0.4;n.a=n.a0=0;
- const D={x:10,z:n.z+0.95,w:4.2,d:0.9};g.mcDesk=D;g.haul=J;g.solids=[D];g.pour=null;
+function officeSetup(g){const n=g.npcs.find(q=>q.kind==='mcwey');if(!n)return;const J=mcHaul();n.x=16;n.y=-0.14;n.seat=true;n.said=true;n.r=0.4;n.a=n.a0=0;
+ const D={x:n.x,z:n.z+0.95,w:4.2,d:0.9};g.mcDesk=D;g.haul=J;g.solids=[D];g.pour=null;
  g.pallet={x:D.x-3.3,z:n.z+0.35};g.bars={x:D.x+3.3,z:n.z+0.35};
  if(J>=1)g.solids.push({x:g.pallet.x,z:g.pallet.z,w:1.4,d:1.1});if(J>=2)g.solids.push({x:g.bars.x,z:g.bars.z,w:1.3,d:0.9});
- if(J>=5)g.solids.push({x:2.9,z:6.4,w:0.6,d:0.6});if(J>=7)g.solids.push({x:3,z:4.7,w:0.9,d:0.8});
+ if(J>=5)g.solids.push({x:12.3,z:9.3,w:0.6,d:0.6});if(J>=7)g.solids.push({x:29,z:9.1,w:0.9,d:0.8});
  g.lights.push({x:D.x,y:2.2,z:D.z,r:3.4,c:[1.1,0.9,0.6]},{x:D.x-1.6,y:1.1,z:D.z-0.15,r:1.6,c:[0.3,1,0.5]},{x:SEC_DESK.x,y:1.9,z:SEC_DESK.z,r:2.6,c:[1.2,0.7,0.85]});mcOfficeSetup(g,n);}
 function officeTick(g,dt){const n=g.npcs.find(q=>q.kind==='mcwey'),p=g.player;if(!n||!p)return;
  if(!g.pour&&Math.hypot(p.x-n.x,p.z-n.z)<3.6){g.pour={t:0};n.gtalk=3;popup(n.x,n.z+0.4,pick(g.secMode==='lap'?["Drink? She'll pour.","Sit. We were celebrating.","Don't look at her, look at me."]:["Drink? Course you do.","Sit. I'll pour.","Twenty-five years old. Older than you."]),'#ffe9a8');sfx('blip');}
  if(g.pour&&g.pour.t<3)g.pour.t+=dt;mcOfficeTick(g,dt,n,p);}
-function drawMcOffice(B,g){const D=g.mcDesk,n=g.npcs.find(q=>q.kind==='mcwey'),J=g.haul,WD0=hex(0x3a1a10),WD1=hex(0x5a2a18),LTH=hex(0x6a1426),CASH=[1,1,1];if(g.sec)drawSecretaryDesk(B,g);
+function drawMcOffice(B,g,FX){const D=g.mcDesk,n=g.npcs.find(q=>q.kind==='mcwey'),J=g.haul,WD0=hex(0x3a1a10),WD1=hex(0x5a2a18),LTH=hex(0x6a1426),CASH=[1,1,1];if(FX)drawOfficeSet(FX,g);if(g.sec)drawSecretaryDesk(B,g);
  /* the chair swivels with him */
  if(n){const a=n.a,s=Math.sin(a),c=Math.cos(a),at=(f,r,y,sx,sy,sz,col)=>B.box(TRS(n.x+s*f+c*r,y,n.z+c*f-s*r,a,sx,sy,sz),col);
   at(0,0,0.06,0.56,0.05,0.56,DARK);at(0,0,0.2,0.08,0.26,0.08,GOLD);at(0.04,0,0.38,0.72,0.14,0.64,LTH);
@@ -4225,13 +4237,13 @@ function drawMcOffice(B,g){const D=g.mcDesk,n=g.npcs.find(q=>q.kind==='mcwey'),J
  /* champagne on ice */
  if(J>=4){const cx=x+2.55,cz=z+0.65;B.box(TRS(cx,0.25,cz,0,0.08,0.5,0.08),GOLD);B.box(TRS(cx,0.6,cz,0,0.34,0.26,0.34),GOLD);B.box(TRS(cx,0.72,cz,0,0.3,0.04,0.3),[0.85,0.95,1]);B.box(TRS(cx+0.04,0.85,cz,0.3,0.1,0.36,0.1),hex(0x1a4a2a));B.box(TRS(cx+0.04,1.06,cz,0.3,0.05,0.1,0.05),GOLD);}
  /* gun wall right of the tank */
- if(J>=3){const wx=18.2,wz=2.1;B.box(TRS(wx,1.05,wz,0,2.6,2.1,0.12),hex(0x241c2c));B.box(TRS(wx,0.2,wz+0.18,0,2.6,0.4,0.3),hex(0x1a1418),false,TUV[4]);B.box(TRS(wx,0.41,wz+0.18,0,2.64,0.02,0.34),GOLD);
+ if(J>=3){const wx=26,wz=2.1;B.box(TRS(wx,1.05,wz,0,2.6,2.1,0.12),hex(0x241c2c));B.box(TRS(wx,0.2,wz+0.18,0,2.6,0.4,0.3),hex(0x1a1418),false,TUV[4]);B.box(TRS(wx,0.41,wz+0.18,0,2.64,0.02,0.34),GOLD);
   for(const yy of [0.42,2.1])B.box(TRS(wx,yy,wz+0.07,0,2.66,0.05,0.05),GOLD);for(const xx of [-1.31,1.31])B.box(TRS(wx+xx,1.05,wz+0.07,0,0.05,2.12,0.05),GOLD);B.box(TRS(wx,2.02,wz+0.1,0,2.2,0.03,0.03),[1,0.85,0.55],true);
   const T=['golddeagle','goldak','shotgun','m16','smg','revolver'],N=Math.min(J-2,6);for(let i=0;i<N;i++){const gx2=wx-0.6+(i%2)*1.2,gy=1.78-(i/2|0)*0.46;B.box(TRS(gx2,gy-0.06,wz+0.08,0,0.5,0.02,0.04),GOLD);drawWeapon(B,A.mul(A.mul(A.T(gx2-0.25,gy,wz+0.12),A.RY(Math.PI/2)),A.S(1.7,1.7,1.7)),T[i]);}}
  /* a gold bust of the man himself */
- if(J>=5){const bx=2.9,bz=6.4;B.box(TRS(bx,0.5,bz,0,0.5,1.0,0.5),[0.92,0.88,0.86],false,TUV[41]);B.box(TRS(bx,1.02,bz,0,0.56,0.05,0.56),GOLD);B.box(TRS(bx,1.18,bz,0,0.5,0.24,0.3),GOLD);B.box(TRS(bx,1.36,bz,0,0.14,0.14,0.14),GOLD);B.box(TRS(bx,1.52,bz,0,0.24,0.28,0.26),GOLD);B.box(TRS(bx,1.43,bz+0.04,0,0.22,0.12,0.22),GOLD);}
+ if(J>=5){const bx=12.3,bz=9.3;B.box(TRS(bx,0.5,bz,0,0.5,1.0,0.5),[0.92,0.88,0.86],false,TUV[41]);B.box(TRS(bx,1.02,bz,0,0.56,0.05,0.56),GOLD);B.box(TRS(bx,1.18,bz,0,0.5,0.24,0.3),GOLD);B.box(TRS(bx,1.36,bz,0,0.14,0.14,0.14),GOLD);B.box(TRS(bx,1.52,bz,0,0.24,0.28,0.26),GOLD);B.box(TRS(bx,1.43,bz+0.04,0,0.22,0.12,0.22),GOLD);}
  /* the safe can't close any more */
- if(J>=7){const sx=3,sz=4.7;B.box(TRS(sx,0.45,sz,0,0.8,0.9,0.7),hex(0x3a3a44));B.box(TRS(sx+0.36,0.45,sz+0.55,1.3,0.06,0.8,0.7),hex(0x4a4a56));B.box(TRS(sx+0.6,0.5,sz+0.55,1.3,0.12,0.12,0.03),GOLD);
+ if(J>=7){const sx=29,sz=9.1;B.box(TRS(sx,0.45,sz,0,0.8,0.9,0.7),hex(0x3a3a44));B.box(TRS(sx+0.36,0.45,sz+0.55,1.3,0.06,0.8,0.7),hex(0x4a4a56));B.box(TRS(sx+0.6,0.5,sz+0.55,1.3,0.12,0.12,0.03),GOLD);
   for(let i=0;i<9;i++)B.box(TRS(sx-0.25+(i%3)*0.25,0.3+(i/3|0)*0.18,sz+0.3,0,0.22,0.15,0.1),CASH,false,TUV[11]);for(let i=0;i<5;i++)B.box(TRS(sx-0.2+i*0.18,0.03,sz+0.6+(i%2)*0.15,i*0.7,0.2,0.05,0.1),CASH,false,TUV[11]);}}
 /* ---------- the lobby keeps up with you: extra muscle, the news, the front desk ---------- */
 const NPC_CHAT={guard:["Keep your hands where I can see 'em. Kidding.","Fifty-two floors and I get the lobby.","Boss says you're family. Family still gets frisked."],
