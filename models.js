@@ -979,20 +979,21 @@ function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game'
  window.CROUCH=mode==='game'&&c.alive&&!(c.down>0)?(c.crouchK||0):0;window.SIT=mode==='game'&&c.alive&&!(c.down>0)?(c.seatK||0):0;
  window.PUMP=0;if(gun==='shotgun'&&c.pumpAt!==undefined&&G){const dt2=G.T-c.pumpAt;if(dt2>0.3&&dt2<0.62)window.PUMP=Math.sin((dt2-0.3)/0.32*Math.PI);}
  let mcp=null;
- if(mode==='game'&&c.alive&&(c.kind==='sdancer'||c.kind==='dancer'||c.kind==='pgirl'||c.lapDance)){
+ if(mode==='game'&&c.alive&&(c.kind==='sdancer'||c.kind==='dancer'||c.kind==='pgirl'||c.kind==='pguest'||c.lapDance)){
+  const pgk=c.kind==='pgirl'||c.kind==='pguest';/* party guests (homelife.js) dance like the girls at home */
   const o0=c.dOff===undefined?(c.dOff=Math.random()*4):c.dOff,still=!(c.seatK>0.01)&&!c.tub&&!c.bed;
   if(c.walking){}/* a dancer walking with you (or back to the stage) walks */
   else if(c.move==='strut'&&!c.lapDance)anim='walk';
-  else if(c.kind==='pgirl'&&sp>=0.15){}
-  else if(c.kind==='pgirl'&&!c.lapDance&&still){/* at home she dances in spells (her party groove or the lambada) and stands between them */
+  else if(pgk&&sp>=0.15){}
+  else if(pgk&&!c.lapDance&&still){/* at home she dances in spells (her party groove or the lambada) and stands between them */
    const q=(t+o0*7)%26,sp2=Math.floor((t+o0*7)/26);if(q<16){anim='dance';if(sp2%2)mcp={c:'lambada',t:t+o0*5,arms:1,o:o0};}else mcp={c:o0>2?'idle':'idle2',t:t+o0*9};}
   else if(c.move==='lambada'&&!c.lapDance){anim='dance';mcp={c:'lambada',t:t+o0*5,arms:1,o:o0};}
-  else if(c.kind!=='pgirl'||sp<0.15)anim=c.lapDance?'lapdance':'dance';
+  else if(!pgk||sp<0.15)anim=c.lapDance?'lapdance':'dance';
   /* mocap walk (the distance walked drives it, so the feet keep pace) and mocap standing for the girls */
   if(still&&!c.lapDance&&anim==='walk')mcp={c:o0>2?'walk2':'walk',d:(c.walk||0)/9};
   else if(still&&!c.lapDance&&anim==='idle')mcp={c:o0>2?'idle':'idle2',t:t+o0*9};
   /* girls at home ease into a smaller party groove once they stop walking (c.dK) */
-  const home=c.kind==='pgirl'&&!c.lapDance;if(home){const dtc=Math.max(0,Math.min(0.1,t-(c._dkT===undefined?t:c._dkT)));c._dkT=t;c.dK=(c.dK||0)+((anim==='dance'?1:0)-(c.dK||0))*Math.min(1,dtc*1.4);}
+  const home=pgk&&!c.lapDance;if(home){const dtc=Math.max(0,Math.min(0.1,t-(c._dkT===undefined?t:c._dkT)));c._dkT=t;c.dK=(c.dK||0)+((anim==='dance'?1:0)-(c.dK||0))*Math.min(1,dtc*1.4);}
   window.DANCE_MOVE={m:home?'party':c.move||'sway',e:c.moveE===undefined?1:c.moveE,t:c.mt||0,o:c.dOff===undefined?(c.dOff=Math.random()*4):c.dOff,en:home?c.dK:1};
   if(c.lapDance)arms=null;
   const bst=c.boost||0,o=c.dOff===undefined?(c.dOff=Math.random()*4):c.dOff,g1=danceGroove(t+o,!!c.lapDance),h=1/30,g0=danceGroove(t+o-h,!!c.lapDance),g2=danceGroove(t+o+h,!!c.lapDance);
