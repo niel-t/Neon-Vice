@@ -56,7 +56,7 @@ test('mall: shops, keepers, jewelry you wear, furniture for every home, real est
     label: true,
     hub: { mall: true, keepers: ['furn', 'jewel', 'realty', 'tailor'], vic: 1, lot: 4, shoppers: true, glass: true },
     targets: true, atrium: true, drawn: true,
-    jewelScreen: { state: 'store', mode: 'jewel', title: 'GOLD COAST JEWELERS', cards: 6, who: 'SCHMALTZY' },
+    jewelScreen: { state: 'store', mode: 'jewel', title: 'GOLD COAST JEWELERS', cards: 8, who: 'SCHMALTZY' }, // 6 pieces of jewelry + 2 pairs of earrings
     worn: { medal: true, bracelet: true, look: true },
     off: 'off', on: true,
     closed: 'play',
@@ -105,7 +105,7 @@ test('mall: the keepers have photo faces, and Fontaine Tailoring sells suits you
     photos: true,
     names: ['SCHMALTZY', 'FABULOSO FELIX', 'LOLA MONTENEGRO'],
     rail: true,
-    screen: { mode: 'tailor', title: 'FONTAINE TAILORING', cards: 10 }, // 5 suits + 5 sunglasses
+    screen: { mode: 'tailor', title: 'FONTAINE TAILORING', cards: 18 }, // 5 suits + 5 sunglasses + 8 accessories
     bought: { owned: true, wearing: 'mint', paid: 6500, tough: true },
     off: 'default', back: 'mint',
     locked: false,

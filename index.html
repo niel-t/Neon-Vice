@@ -303,6 +303,7 @@ const TRS=(x,y,z,ry,sx,sy,sz)=>A.mul(A.mul(A.T(x,y,z),A.RY(ry)),A.S(sx,sy,sz));
 <script src="cars.js"></script>
 <script src="gunshop.js"></script>
 <script src="mall.js"></script>
+<script src="accessories.js"></script>
 <script src="venues.js"></script>
 <script src="streets.js"></script>
 <script src="act1.js"></script>
@@ -2308,6 +2309,7 @@ function drawChar(B,c){const Lk=c.hitT>0?flashLook(c.look):c.look;const BT=Lk.bo
  if(Lk.vest){PB(B,TM,0,0.63+by,0,0.445,0.3,0.245,Lk.vest);if(Lk.pouches)for(const px of [-0.12,0,0.12])PB(B,TM,px,0.56+by,0.13,0.08,0.08,0.03,Lk.vest.map(v=>v*0.8));}
  if(Lk.apron){const az=0.124+(Lk.belly?0.055:0);PB(B,TM,0,0.47+by,az,0.34,0.5,0.012,Lk.apron);PB(B,TM,0,0.75+by,0.12,0.3,0.02,0.01,Lk.apron);B.r=0;for(const q of (Lk.apronSplats||[]))PB(B,TM,q[0],q[1]+by,az+0.008,q[2]*2.6,q[2]*2.6,0.005,[0.95,0.95,0.95],false,TUV[51]);B.r=0.6;}
  if(Lk.medallion){PB(B,TM,0,0.67+by,0.128,0.065,0.065,0.012,GOLD);PB(B,TM,0,0.74+by,0.122,0.1,0.02,0.01,GOLD);}
+ if(Lk.accPack)accClassicTorso(B,TM,by,CW,Lk);
  if(Lk.ripped){PB(B,TM,0.09,0.55+by,0.118,0.07,0.04,0.006,Lk.skin);PB(B,TM,-0.07,0.68+by,0.118,0.05,0.03,0.006,Lk.skin);}
  if(Lk.staff)PB(B,TM,0,0.69+by,0,0.43,0.045,0.24,hex(0xffd36b));
  if(Lk.wallet)PB(B,TM,0.2,0.42,0.05,0.012,0.12,0.012,SILV);
@@ -2338,6 +2340,7 @@ function drawChar(B,c){const Lk=c.hitT>0?flashLook(c.look):c.look;const BT=Lk.bo
   else if(Lk.hat==='fedora'){PB(B,H,0,1.1+hy,0,0.23,0.1,0.23,Lk.hatC);PB(B,H,0,1.06+hy,0,0.38,0.016,0.38,Lk.hatC);PB(B,H,0,1.075+hy,0,0.236,0.025,0.236,DARK);}
   else if(Lk.hat==='beanie'){PB(B,H,0,1.07+hy,-0.005,0.262,0.1,0.262,Lk.hatC);PB(B,H,0,1.03+hy,0,0.268,0.03,0.268,Lk.hatC.map(v=>v*0.8));}
   else if(Lk.hat==='bandana'){PB(B,H,0,1.0+hy,0,0.255,0.06,0.255,Lk.hatC);PB(B,H,0,0.98+hy,-0.14,0.06,0.08,0.04,Lk.hatC);}
+  if(Lk.accHat||Lk.accEar)accClassicHead(B,H,hy,Lk);
   if(Lk.beard){PB(B,H,0,0.855+hy,0.1,0.25,0.09,0.06,Lk.beard);PB(B,H,0,0.88+hy,0.0,0.252,0.1,0.2,Lk.beard);}
   if(Lk.stache)PB(B,H,0,0.884+hy,0.113,0.11,0.025,0.02,hc);
   if(Lk.glasses){PB(B,H,0,0.972+hy,0.113,0.22,0.035,0.012,Lk.glasses);PB(B,H,-0.055,0.972+hy,0.115,0.07,0.05,0.008,hex(0x6a8aa0));PB(B,H,0.055,0.972+hy,0.115,0.07,0.05,0.008,hex(0x6a8aa0));}
@@ -3029,7 +3032,7 @@ function buyCar(k){const p=myProg(),c=CARS[k];if(p.car===k)return renderStore('Y
 function buyJewel(k){const p=myProg(),j=JEWEL[k];if(!j)return;if(p.jewel[k]){p.jewel[k]=p.jewel[k]===true?'off':true;saveProg();sfx('pick');applyJewelLooks();PS2C.rebuild(rideId());return renderStore(p.jewel[k]===true?'You put on the '+j.name+'.':'The '+j.name+' goes back in the box.');}
  if(p.wallet<j.price){sfx('blip');if(storeMode==='jewel')return mallPoor();return renderStore('Not enough cash. Come back richer.');}
  p.wallet-=j.price;p.jewel[k]=true;saveProg();sfx('cash');if(storeMode==='jewel')mallSay(pick(MALL_SHOPS.jewel.sold));applyJewelLooks();PS2C.rebuild(rideId());renderStore('SOLD: '+j.name+'. Wear it well.');}
-$('sStore').addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(!b)return;if(b.id==='bStoreLeave'){closeStore();return;}if(b.dataset.car)buyCar(b.dataset.car);else if(b.dataset.jw)buyJewel(b.dataset.jw);else if(b.dataset.ho!==undefined)buyHome(+b.dataset.ho);else if(b.dataset.fu)buyFurn(b.dataset.fu);else if(b.dataset.sj)takeSideJob(b.dataset.sj);else if(b.dataset.ks)lockerStash(b.dataset.ks);else if(b.dataset.lt!==undefined)lockerTake(+b.dataset.lt);else if(b.dataset.cx)buyCarMod(b.dataset.cx);else if(b.dataset.mf){const q=b.dataset.mf.split(':');buyFurnAt(+q[0],q[1]);}else if(b.dataset.inv)buyProp(b.dataset.inv);else if(b.dataset.ts)buySuit(b.dataset.ts);else if(b.dataset.sg)buyShades(b.dataset.sg);else if(b.dataset.gear)buyGear(b.dataset.gear);else if(b.dataset.med)buyMed(b.dataset.med);else if(b.dataset.arc)arcadeCard(b.dataset.arc);else if(b.dataset.vipchat!==undefined){closeStore();tonyTalk();}else if(b.dataset.vip!==undefined)startLapdance(+b.dataset.vip);else if(b.dataset.mh!==undefined)mansionHire(+b.dataset.mh);});
+$('sStore').addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(!b)return;if(b.id==='bStoreLeave'){closeStore();return;}if(b.dataset.car)buyCar(b.dataset.car);else if(b.dataset.jw)buyJewel(b.dataset.jw);else if(b.dataset.ac)buyAcc(b.dataset.ac);else if(b.dataset.ho!==undefined)buyHome(+b.dataset.ho);else if(b.dataset.fu)buyFurn(b.dataset.fu);else if(b.dataset.sj)takeSideJob(b.dataset.sj);else if(b.dataset.ks)lockerStash(b.dataset.ks);else if(b.dataset.lt!==undefined)lockerTake(+b.dataset.lt);else if(b.dataset.cx)buyCarMod(b.dataset.cx);else if(b.dataset.mf){const q=b.dataset.mf.split(':');buyFurnAt(+q[0],q[1]);}else if(b.dataset.inv)buyProp(b.dataset.inv);else if(b.dataset.ts)buySuit(b.dataset.ts);else if(b.dataset.sg)buyShades(b.dataset.sg);else if(b.dataset.gear)buyGear(b.dataset.gear);else if(b.dataset.med)buyMed(b.dataset.med);else if(b.dataset.arc)arcadeCard(b.dataset.arc);else if(b.dataset.vipchat!==undefined){closeStore();tonyTalk();}else if(b.dataset.vip!==undefined)startLapdance(+b.dataset.vip);else if(b.dataset.mh!==undefined)mansionHire(+b.dataset.mh);});
 function renderVip(msg){const p=myProg(),g=G;
  $('stWallet').textContent='$'+fmt(p.wallet);$('stOwed').textContent='VIP ROOM · $500';
  document.querySelector('#sStore .shT').textContent='TONY · VIP ROOMS';
@@ -3063,7 +3066,7 @@ function lockerTake(i){const p=myProg(),it=p.locker.items[i];if(!it)return;if(!k
 function storeKey(e){const c=e.code,m=/^Digit([1-9])$/.exec(c);if(c==='Escape'||c==='Backspace'){closeStore();return;}if(!m)return;const i=+m[1];if(storeMode==='locker'||storeMode==='mhire'){const b=document.querySelectorAll('#sStore .scard')[i-1];if(b)b.click();return;}if(storeMode==='home'){const it=catOf(myProg().home||0)[i-1];if(it)buyFurn(it.k);return;}if(storeMode==='dealer'||mallMode()){const b=document.querySelectorAll('#sStore .scard')[i-1];if(b)b.click();return;}if(i<=3)return;else if(i<=6)buyJewel(Object.keys(JEWEL)[i-4]);else buyHome(i-7);}
 function storePad(dir){const cs=document.querySelectorAll('#sStore .scard');if(dir){storeFocus=(storeFocus+dir+cs.length)%cs.length;renderStore($('stMsg').textContent);}if(pdown(0)&&cs[storeFocus])cs[storeFocus].click();else if(pdown(1))closeStore();}
 /* jewelry flags for the low-poly fallback looks; the PS2 models read PROG directly when rebuilt */
-function applyJewelLooks(){for(const c of CHARS){const j=(PROG[c.id]&&PROG[c.id].jewel)||{},L=LOOKS[c.id],w=k=>j[k]===true;if(!L)continue;L.watch=w('watch');L.chain=w('chain')||w('cuban');L.medallion=w('medal');L.bling=w('rings');}applyShadeLooks();}
+function applyJewelLooks(){for(const c of CHARS){const j=(PROG[c.id]&&PROG[c.id].jewel)||{},L=LOOKS[c.id],w=k=>j[k]===true;if(!L)continue;L.watch=w('watch');L.chain=w('chain')||w('cuban');L.medallion=w('medal');L.bling=w('rings');}applyShadeLooks();if(typeof applyAccLooks==='function')applyAccLooks();}
 /* Felix's sunglasses on the classic model: aviators keep the gold-wire look, the rest are a coloured bar; the signature glasses/shades come back when you take them off */
 const SHADE_LENS={amber:[0.55,0.32,0.08],black:[0.07,0.06,0.09],blue:[0.2,0.55,0.95],pink:[0.95,0.35,0.6],smoke:[0.22,0.22,0.26]},SHADE_FRAME={gold:[0.95,0.76,0.3],black:[0.07,0.06,0.09],white:[0.95,0.95,0.95]};
 function applyShadeLooks(){if(typeof SHADES==='undefined')return;for(const c of CHARS){const L=LOOKS[c.id];if(!L)continue;if(!L._sh0)L._sh0={glasses:L.glasses,shades:L.shades,aviators:L.aviators};const k=shadesOn(PROG[c.id]),S=k&&SHADES[k];
