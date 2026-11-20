@@ -750,6 +750,8 @@ const CH={
   B:{jacket:[244,168,190],pants:[240,164,186],shirt:'tropical',deepV:true,chains:true,rings:2,watch:1,shoe:[246,244,238],pin:false,square:'#2de2e6',shoulders:0.08,hairBig:3},scale:[1.0,1.03,1.0]},
  lola:{face:'lola',F:{EM:[174,192],prof:[[0,0],[50,-10],[86,-4],[150,0]],hl:96,hr:96,skin:[[120,250],[230,250],[175,140],[150,150],[200,150]],hairPt:[70,90]},
   B:{fem:true,skirt:0.55,heels:true,pads:true,jacket:[178,28,52],pants:[150,32,50],shirt:[22,20,24],chain:true,watch:-1,shoe:[40,24,28],pin:false,hairBig:2},scale:[0.9,1.0,0.88]},
+ barbara:{face:'barbara',F:{EM:[174,192],prof:[[0,0],[50,-10],[86,-4],[150,0]],hl:96,hr:96,skin:[[125,235],[228,235],[175,148],[150,152],[200,152]],hairPt:[320,196]},
+  B:{fem:true,skirt:0.55,heels:true,pads:true,jacket:[236,128,98],pants:[226,116,90],shirt:[240,228,206],watch:-1,shoe:[236,206,180],pin:false,hairBig:2},scale:[0.9,1.0,0.88]},
  mcwey:{face:'mcwey',F:{...FACECFG.mcwey,hl:100,hr:126,beardBot:1.545,skin:[[120,235],[232,235],[176,100],[140,130],[212,130]],beardPt:[130,305],beardTop:1.69},
   B:{jacket:[228,218,198],pants:[222,212,192],shirt:'tropical',deepV:true,chains:true,rings:2,watch:1,shoe:[196,180,156],pin:false,square:'#e8dcc8'},scale:[1.06,1.0,1.06]},
 };
