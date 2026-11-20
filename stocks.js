@@ -61,11 +61,11 @@ const stkShVal=(o,px)=>Math.max(0,o.coll+(o.ent-px)*o.n);
 function stkValue(p){const s=stkSave(p);let v=0;for(const q of STK_LIST){const o=s.own[q.k],h=s.sh[q.k];if(o&&o.n>0)v+=o.n*s.px[q.k];if(h&&h.n>0)v+=stkShVal(h,s.px[q.k]);}return v;}
 function stkCost(p){const s=stkSave(p);let v=0;for(const q of STK_LIST){const o=s.own[q.k],h=s.sh[q.k];if(o&&o.n>0)v+=o.cost;if(h&&h.n>0)v+=h.coll;}return v;}
 /* the book: every closed trade counts toward won / lost, the best and the worst */
-function stkBook(s,pl,t){pl=Math.round(pl);s.real+=pl;s.st.trades++;if(pl>=0)s.st.won+=pl;else s.st.lost-=pl;
+function stkBook(s,pl,t){pl=Math.round(pl);s.real+=pl;if(pl>0)stkGoalAdd(s,'bank',pl);s.st.trades++;if(pl>=0)s.st.won+=pl;else s.st.lost-=pl;
  if(!s.st.best||pl>s.st.best.pl)s.st.best={pl,t};if(!s.st.worst||pl<s.st.worst.pl)s.st.worst={pl,t};}
 /* the day's move for every stock, after a finished job. lvl = the campaign floor just finished (or -1). Returns the change in value of
    what you hold (dividends included), and queues the headlines (empNote banners on the way home) */
-function stkTick(p,lvl){const s=stkSave(p),v0=stkValue(p),heads=[],notes=[];s.day++;
+function stkTick(p,lvl){const s=stkSave(p),v0=stkValue(p),heads=[],notes=[],pickHeld=stkPicksOf(s).some(k=>stkHeld(p,k));s.day++;
  const r0=stkR();let mkt=0;
  if(r0<0.03){mkt=-(0.14+0.14*stkR());heads.push(['CRASH ON THE DADE EXCHANGE','Panic selling. Everything is down but gold',-1,null]);}
  else if(r0<0.07){mkt=0.07+0.07*stkR();heads.push(['BULL MARKET!','Wall Street is buying. Everything is up',1,null]);}
@@ -74,6 +74,7 @@ function stkTick(p,lvl){const s=stkSave(p),v0=stkValue(p),heads=[],notes=[];s.da
  s.news={};
  for(const q of STK_LIST){const k=q.k;let mu=q.mu,vol=q.vol;const st=q.story;let crash=false,bust=false;
   if(st){if(s.ev[st.ev]){mu=0.002;vol=0.2;}else if(lvl===st.lvl||stkDone(st.fall))crash=true;else if(stkDone(st.rise))mu=0.065;}
+  if(stkPicked(s,k))mu+=STK_RANKS[stkRank(s)].bias;
   let ret=mu+vol*stkGauss()+(q.haven?-mkt*0.6:mkt),head=null;
   if(!crash&&stkR()<0.07){const n=STK_NEWS[k],h=n[Math.floor(stkR()*n.length)%n.length];ret+=h[1]*(0.15+0.2*stkR());head=[h[0],q.t+' '+(h[1]>0?'jumps':'drops'),h[1],k];}
   if(k==='mcw'&&mcBump){ret+=0.12;head=['McWEY CORP. EXPANDS','Scrooge McWey is buying up the beach. MCW climbs',1,k];}
@@ -93,12 +94,13 @@ function stkTick(p,lvl){const s=stkSave(p),v0=stkValue(p),heads=[],notes=[];s.da
  s.tip=null;s.rum=null;
  /* after the move: dividends, stop-losses, margin calls */
  let div=0;for(const q of STK_LIST){const k=q.k,px=s.px[k],o=s.own[k];
-  if(o&&o.n>0&&q.div)div+=o.n*px*q.div;
+  if(o&&o.n>0&&q.div)div+=o.n*px*q.div*(stkRank(s)>=3?1.5:1);
   const sp=s.stop[k];if(sp&&o&&o.n>0&&px<=sp.at){const r=stkSellP(p,k,1);if(r!=='none')notes.push(['STOP-LOSS SOLD YOUR '+q.t,'Sold '+fmt(r.n)+' at '+stkPx(px)+' · '+stkMoney(r.pl)]);}
   if(sp&&!(s.own[k]&&s.own[k].n>0))delete s.stop[k];
   const h=s.sh[k];if(h&&h.n>0&&px>=h.ent*STK_MARGIN){stkBook(s,-h.coll,q.t);notes.push(['MARGIN CALL ON '+q.t,q.t+' doubled. Your short is gone · -$'+fmt(h.coll)]);delete s.sh[k];}}
  div=Math.round(div);if(div>0){p.wallet+=div;s.st.div+=div;}
  const d=Math.round(stkValue(p)-v0+div);
+ stkAfterTick(p,s,d,div,v0,pickHeld,notes);
  s.last=heads.map(h=>h[0]).slice(0,6);
  if(typeof empNote==='function'){
   const mine=heads.filter(h=>!h[3]||stkHeld(p,h[3])||stkShort(p,h[3])||stkQ(h[3]).story);
@@ -129,7 +131,7 @@ function stkStop(k){const p=myProg(),s=stkSave(p);if(!stkHeld(p,k))return 'none'
 function stkBuyTip(){const p=myProg(),s=stkSave(p);if(s.tip)return 'have';if(s.tipDay===s.day)return 'used';if(p.wallet<STK_TIP_COST)return 'poor';
  const L=STK_LIST.filter(q=>stkListed(q)&&!(q.story&&s.ev[q.story.ev]));const q=L[Math.floor(stkR()*L.length)%L.length];
  const held=stkHeld(p,q.k),dir=held&&stkR()<0.4?-1:stkR()<0.6?1:-1;
- p.wallet-=STK_TIP_COST;s.tip={k:q.k,dir,real:stkR()<STK_TIP_TRUE,src:Math.floor(stkR()*STK_SRC.length)%STK_SRC.length};s.tipDay=s.day;saveProg();return 'ok';}
+ p.wallet-=STK_TIP_COST;s.tip={k:q.k,dir,real:stkR()<(stkRank(s)>=2?0.72:STK_TIP_TRUE),src:Math.floor(stkR()*STK_SRC.length)%STK_SRC.length};s.tipDay=s.day;saveProg();return 'ok';}
 function stkTipTxt(s){const t=s.tip;if(!t)return '';const q=stkQ(t.k);
  return `"${STK_SRC[t.src]} ${q.name}. ${t.dir>0?'After your next job, '+q.t+' goes UP. Big.':q.t+' is going DOWN after your next job. Sell it, or short it.'}"`;}
 /* a free rumour from someone you chat to in a hub (npcTalk in index.html asks): at most one a job, about one in five chats */
@@ -141,9 +143,10 @@ function stkRumor(kind){if(typeof myProg!=='function'||!G||!G.def||!G.def.hub)re
  if(typeof banner==='function')setTimeout(()=>banner('A RUMOUR ABOUT '+q.t,'Your call. Trade it at THE DADE EXCHANGE'),1600);return s.rum.line;}
 
 /* ---- the screen: the ticker tape, the chosen stock big (chart, position, actions), the board of all stocks, tips and rumours ---- */
-function stkCarBtn(){const b=$('bCarStocks');if(!b)return;const p=myProg(),v=stkValue(p),c=stkCost(p);
- b.innerHTML='THE DADE EXCHANGE &middot; '+(v>0?'STOCKS $'+fmt(v)+' <span style="color:'+(v>=c?'#7dff9a':'#ff6a6a')+'">'+(v>=c?'+':'')+Math.round((v/c-1)*100)+'%</span>':'STOCKS &amp; TIPS')+'<span class="kbhint"> (I)</span><span class="padhint"> (&rarr;)</span>';}
-function openStocks(){if(state!=='carmenu'||fading)return;sfx('ring');state='stocks';stkSave();const L=stkVisible();STK_SEL=Math.max(0,Math.min(STK_SEL,L.length-1));show('sStocks');renderStocks('Chip Whitmore here. What are we buying?');if(!stkSave().tut)stkCoachStart();}
+function stkCarBtn(){const b=$('bCarStocks');if(!b)return;const p=myProg(),s=stkSave(p),v=stkValue(p),c=stkCost(p),gl=s.goal,rp=s.rep&&s.repSeen!==s.rep.day?s.rep:null;
+ b.classList.toggle('sxPing',!!((gl&&gl.done)||rp));
+ b.innerHTML='THE DADE EXCHANGE &middot; '+(gl&&gl.done?'<span style="color:#ffd36b">GOAL DONE · COLLECT $'+fmt(gl.rew)+'</span>':rp?'<span style="color:'+(rp.d>=0?'#7dff9a':'#ff6a6a')+'">NEW REPORT '+stkMoney(rp.d)+'</span>':!s.gift?'<span style="color:#ffd36b">FREE STARTER STOCK</span>':v>0?'STOCKS $'+fmt(v)+' <span style="color:'+(v>=c?'#7dff9a':'#ff6a6a')+'">'+(v>=c?'+':'')+Math.round((v/c-1)*100)+'%</span>':'STOCKS &amp; TIPS')+'<span class="kbhint"> (I)</span><span class="padhint"> (&rarr;)</span>';}
+function openStocks(){if(state!=='carmenu'||fading)return;sfx('ring');state='stocks';stkSave();const L=stkVisible();STK_SEL=Math.max(0,Math.min(STK_SEL,L.length-1));STK_VIEW='desk';show('sStocks');const g=stkGift();const s=stkSave();s.repSeen=s.day;saveProg();renderStocks(g?'First one is on the house: $'+fmt(g.cost)+' of '+stkQ(g.k).t+'. Welcome to the market.':'Chip Whitmore here. What are we buying?');if(!s.tut)stkCoachStart();}
 function closeStocks(){if(state!=='stocks')return;if(stkCoachOn()){STK_COACH_I=-1;stkCoachShow();}sfx('blip');openCarMenuForce();}
 const stkVisible=()=>STK_LIST.filter(stkListed);
 function stkChart(h,col,big,marks){const n=h.length,W=big?300:100,H=big?90:30;if(n<2)return `<svg class="${big?'sxBig':'sxSpark'}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"></svg>`;
@@ -185,7 +188,7 @@ function renderStocks(msg){const p=myProg(),s=stkSave(p),L=stkVisible(),v=stkVal
  $('sxList').innerHTML=L.map((q,i)=>stkCard(q,i,p,s)).join('');
  let tb=s.tip?`<div class="sxTipT">${stkTipTxt(s)}</div>`:`<button class="btn sm sxGo" data-act="tip"${s.tipDay===s.day||p.wallet<STK_TIP_COST?' disabled':''}>${s.tipDay===s.day?'NO MORE TIPS TODAY':'BUY A HOT TIP $'+STK_TIP_COST}<span class="kbhint"> (T)</span><span class="padhint"> (RB)</span></button><span class="sxTipN">Chip hears things. He is right more often than not.</span>`;
  if(s.rum)tb+=`<div class="sxTipT sxRum">RUMOUR${s.rum.where?' FROM '+s.rum.where:''}: "${s.rum.line}"</div>`;
- $('sxTip').innerHTML=tb;$('sxMsg').textContent=msg||'';
+ $('sxTip').innerHTML=tb;$('sxMsg').textContent=msg||'';stkDeskRender(p,s);
  const el=$('sxList').querySelector('.sxC.sel');if(el&&el.scrollIntoView)try{el.scrollIntoView({block:'nearest'});}catch(e){}}
 function stkSelect(i){const n=stkVisible().length;STK_SEL=(i+n)%n;sfx('blip');renderStocks('');}
 const STK_SAY={poor:'Not enough cash for one share.',no:'Not on the board.',dead:'Nobody will lend you a dead stock to short.',none:'You have nothing to sell there.'};
@@ -199,10 +202,10 @@ function stkAct(i,act){if(state!=='stocks'||fading||stkCoachOn())return;const p=
  else{r=stkBuy(q.k,act==='b0'?STK_BUY[0]:act==='b1'?STK_BUY[1]:p.wallet);if(typeof r!=='string')say='Bought '+fmt(r.n)+' '+q.t+' for $'+fmt(r.cost)+(act==='all'?'. All in. Bold.':'.')+' Prices move after your next job.';}
  if(typeof r==='string'){sfx('blip');return renderStocks(STK_SAY[r]||'');}
  sfx('cash');renderStocks(say);}
-function stkKey(e){if(stkCoachOn()){stkCoachKey(e);return;}const c=e.code;if(c==='Escape'||c==='Backspace'||c==='KeyI'){closeStocks();return;}
+function stkKey(e){if(stkCoachOn()){stkCoachKey(e);return;}const c=e.code;if(c==='Escape'||c==='Backspace'||c==='KeyI'){closeStocks();return;}if(c==='KeyV'||c==='Tab'){stkView();return;}if(STK_VIEW==='desk'){stkDeskKey(c);return;}
  const K={Enter:'b0',Space:'b0',KeyB:'b0',Digit1:'b0',Digit2:'b1',Digit3:'all',Digit4:'half',KeyH:'half',Digit5:'sell',KeyX:'sell',KeyZ:'s0',KeyC:'cover',KeyL:'stop',KeyT:'tip'};
  if(c==='ArrowUp'||c==='ArrowLeft'||c==='KeyW'||c==='KeyA')stkSelect(STK_SEL-1);else if(c==='ArrowDown'||c==='ArrowRight'||c==='KeyS')stkSelect(STK_SEL+1);else if(c==='Slash'||c==='F1')$('bStkHow').click();else if(K[c])stkAct(STK_SEL,K[c]);}
-function stkPad(dir){if(stkCoachOn()){stkCoachPad();return;}if(pdown(1)||pdown(14)){closeStocks();return;}if(pdown(12)||dir<0)stkSelect(STK_SEL-1);else if(pdown(13)||dir>0)stkSelect(STK_SEL+1);
+function stkPad(dir){if(stkCoachOn()){stkCoachPad();return;}if(pdown(1)||pdown(14)){closeStocks();return;}if(pdown(8)){stkView();return;}if(STK_VIEW==='desk'){stkDeskPad(dir);return;}if(pdown(12)||dir<0)stkSelect(STK_SEL-1);else if(pdown(13)||dir>0)stkSelect(STK_SEL+1);
  else if(pdown(0))stkAct(STK_SEL,'b0');else if(pdown(3))stkAct(STK_SEL,'b1');else if(pdown(2))stkAct(STK_SEL,'sell');else if(pdown(5))stkAct(STK_SEL,'tip');
  else if(pdown(4))stkAct(STK_SEL,'s0');else if(pdown(7))stkAct(STK_SEL,'cover');else if(pdown(6))stkAct(STK_SEL,'stop');}
 {/* the car-menu button sits above McWEY TOWER */
@@ -232,8 +235,9 @@ const STK_MC_TOPICS=[
  {t:'Any inside advice?',a:()=>{const L=["I don't give advice, {kid}. I give opinions, and my opinions make money."];
   if(stkListed(stkQ('kdv'))&&!stkSave().ev.kade)L.push("Kade Development is climbing like a weed. Men like Dorian Kade don't stay on top forever. When he falls, you want to be out, or on the other side of it.");
   else if(stkListed(stkQ('vtb'))&&!stkSave().ev.vale)L.push("Vale Trust looks solid. Banks always look solid. Right up until the day they don't. Remember who you're working against.");
-  else L.push("McWey Corp. It goes up because I make it go up. You could do worse.");return L;}}];
-const stkMcFill=t=>t.replace(/\{kid\}/g,stkKid());
+  else L.push("McWey Corp. It goes up because I make it go up. You could do worse.");return L;}},
+ {t:"What's the easiest way in?",a:["Chip's desk. He picks three stocks every job: one safe, one risky, one wild. Tap PUT IN on one, go do a job, come back and see.","He sets you a goal every time. Hit it and he pays you. Do enough and you rank up: bigger bets, better tips, fatter dividends.","And the first one's on the house. Chip likes new customers. For about a week."]}];
+const stkMcFill=t=>t.replace(/^\{kid\}/,()=>{const k=stkKid();return k[0].toUpperCase()+k.slice(1);}).replace(/\{kid\}/g,stkKid());
 /* McWey's office: the first visit after the loan talk (talkMcWey calls this before mcReact) */
 function stkMcIntro(pr,m){if(!pr||!pr.seen||pr.seen.stocks||!pr.seen.loan)return false;pr.seen.stocks=1;saveProg();STK_MC_INTRO.forEach(t=>m(stkMcFill(t)));return true;}
 function stkMcBtn(){return `<button class="btn alt sm" id="bStkAsk">ASK ABOUT THE MARKET<span class="kbhint"> (I)</span><span class="padhint"> (&rarr;)</span></button>`;}
@@ -242,17 +246,25 @@ function stkMcAsk(){if(state!=='brief'||!CHAT.done)return;chatClearTimers();sfx(
  CHAT.q.push({who:'m',t:stkMcFill("The market? Sit down, {kid}. What do you want to know?")},{choose:STK_MC_TOPICS.map(o=>({t:o.t,fn:ans(o)})).concat([{t:"That's all.",fn:()=>[{who:'m',t:'Good. Now go earn something to invest.'}]}])});
  chatNext();}
 /* the coach on the exchange screen */
-const STK_COACH=[
- {sel:null,t:"{kid}, McWey. Chip patched me in. Before you lose your shirt, let me walk you through this board. Tap to go on."},
+const STK_COACH_D=[
+ {sel:null,t:"{kid}, McWey. Chip patched me in. This is Chip's desk. The easy way to make money while you work. Tap to go on."},
+ {sel:'#sxPicks',t:"Every job Chip picks three stocks for you. SAFE barely moves. RISKY swings. WILD can double or go to nothing. Tap PUT IN on one."},
+ {sel:'#sxAmt',t:"This is how much goes in each time. Start small. You unlock bigger bets as you climb the ranks."},
+ {sel:'#sxMine',t:"What you own sits here. Prices move after every job you finish. When you like the number, CASH OUT."},
+ {sel:'#sxGoal',t:"Chip sets you a goal every time. Do it and collect cash. Goals and holding stocks through jobs make you rank up, and ranks come with perks."},
+ {sel:'#sxReport',t:"After every job, come back here. Chip's report tells you what you made, what moved, and his new picks."},
+ {sel:'#bStkView',t:"When you know what you're doing, the FULL BOARD has every stock, charts, shorting and stop-losses. Now go make me some money."}];
+const STK_COACH_B=[
+ {sel:null,t:"The full board, {kid}. This is where the pros play. Let me show you around."},
  {sel:'#sxList',t:"This is the board. Every company in Miami worth owning. Prices move once, after every job you finish. Tap a stock to pick it."},
  {sel:'#sxDetail .sxDL',t:"The one you picked comes up big. The last thirty days. Green is up, red is down. What you paid shows as a blue line."},
  {sel:'#sxDetail .emBtns',t:"BUY when it's cheap, SELL when it's not. Chip takes one percent a trade. ALL IN bets your whole wallet. Don't, unless you know something."},
  {sel:'#sxDetail .emBtns + .emBtns',t:"Think it'll fall? SHORT it. You win what it drops, but if it doubles you lose it all. STOP-LOSS sells for you if it slides."},
  {sel:'#sxTip',t:"Chip sells one hot tip a job. People in my lobby pass rumours for free. Neither is always right. Your call."},
  {sel:'#sxPort',t:"Up here: your cash and what your stocks are worth now. Steady stocks pay a dividend every job. Gold holds in a crash. Now go make me some money."}];
-let STK_COACH_I=-1;
+let STK_COACH_I=-1,STK_COACH=STK_COACH_D;
 function stkCoachOn(){return STK_COACH_I>=0;}
-function stkCoachStart(){STK_COACH_I=0;const s=stkSave();s.tut=1;saveProg();stkCoachShow();}
+function stkCoachStart(board){STK_COACH=board?STK_COACH_B:STK_COACH_D;STK_COACH_I=0;const s=stkSave();if(board)s.tutB=1;else s.tut=1;saveProg();stkCoachShow();}
 function stkCoachShow(){document.querySelectorAll('#sStocks .sxHi').forEach(e=>e.classList.remove('sxHi'));const c=$('sxCoach');
  if(STK_COACH_I<0||STK_COACH_I>=STK_COACH.length){STK_COACH_I=-1;c.classList.remove('on');return;}
  const st=STK_COACH[STK_COACH_I],el=st.sel&&document.querySelector('#sStocks '+st.sel);if(el){el.classList.add('sxHi');if(el.scrollIntoView)try{el.scrollIntoView({block:'nearest'});}catch(e){}}
@@ -263,4 +275,96 @@ function stkCoachNext(skip){if(!stkCoachOn())return;sfx('blip');STK_COACH_I=skip
 function stkCoachKey(e){const c=e.code;if(c==='Escape'||c==='Backspace')stkCoachNext(true);else if(c==='Enter'||c==='Space'||c==='NumpadEnter'||c==='ArrowRight')stkCoachNext(false);}
 function stkCoachPad(){if(pdown(1))stkCoachNext(true);else if(pdown(0))stkCoachNext(false);}
 {$('sxCoach').addEventListener('click',e=>{const b=e.target.closest('[data-co]');stkCoachNext(!!b&&b.dataset.co==='skip');});
- $('bStkHow').onclick=()=>{if(state==='stocks'&&!stkCoachOn()){sfx('ring');stkCoachStart();}};}
+ $('bStkHow').onclick=()=>{if(state==='stocks'&&!stkCoachOn()){sfx('ring');stkCoachStart(STK_VIEW==='board');}};}
+
+/* ---- CHIP'S DESK: the easy way in, and the reason to come back after every job. The exchange opens here; FULL BOARD (V, pad BACK)
+   is the pro screen above.
+   - Chip's three picks each job: SAFE / RISKY / WILD, one tap to PUT IN the chosen amount. His picks lean his way a little (rank bias).
+   - Your stocks in plain words, with CASH OUT. The first visit Chip gives you a starter stock for free.
+   - The report: what happened since your last job (made/lost, dividends, best and worst mover, goal progress).
+   - A broker goal at a time (follow a pick, hold N stocks, bank profit, collect dividends, reach a portfolio value): collect cash + XP.
+   - Investor ranks from XP (goals, and every job you finish holding stocks), each with a perk: bigger bets, better tips, fatter
+     dividends, picks that lean harder. The car-menu button says when there is a report or a reward waiting.
+   Save: p.stk.picks{day,list}, gift, amt, xp, goal{kind,n,prog,rew,done}, rep{day,d,div,up,dn,notes}, repSeen. ---- */
+const STK_AMTS=[500,1000,5000,10000,25000,100000];
+const STK_RANKS=[
+ {n:'ROOKIE',xp:0,amt:1,bias:0.015,perk:'Bets up to $1K.'},
+ {n:'PENNY PINCHER',xp:4,amt:2,bias:0.015,perk:'Bets up to $5K.'},
+ {n:'DAY TRADER',xp:10,amt:3,bias:0.02,perk:"Bets up to $10K. Chip's hot tips are right 72% of the time."},
+ {n:'HIGH ROLLER',xp:18,amt:4,bias:0.025,perk:'Bets up to $25K. Dividends pay 50% more.'},
+ {n:'WOLF OF OCEAN DRIVE',xp:30,amt:5,bias:0.035,perk:"Bets up to $100K. Chip's picks lean harder your way."}];
+const STK_RISK=[{n:'SAFE',col:'#7dff9a',pool:['mcw','sun','gld'],say:'Slow and steady. Hard to lose much.'},
+ {n:'RISKY',col:'#ffd36b',pool:['gcc','fla','kdv','vtb','nep'],say:'Swings both ways. Good news makes good money.'},
+ {n:'WILD',col:'#ff5fb8',pool:['egm','gcc','kdv'],say:'Could double. Could go to nothing. Bet what you can lose.'}];
+let STK_VIEW='desk',STK_DSEL=0;
+function stkRank(s){let r=0;STK_RANKS.forEach((R,i)=>{if((s.xp|0)>=R.xp)r=i;});return r;}
+const stkAmt=s=>{const mx=STK_RANKS[stkRank(s)].amt;if(!(s.amt>=0)||s.amt>mx)s.amt=Math.min(1,mx);return STK_AMTS[s.amt];};
+const stkAlive=(s,q)=>q&&stkListed(q)&&!(q.story&&s.ev[q.story.ev]);
+function stkPicksOf(s){return s.picks&&Array.isArray(s.picks.list)?s.picks.list.filter(Boolean):[];}
+const stkPicked=(s,k)=>stkPicksOf(s).includes(k);
+function stkMakePicks(s){const list=STK_RISK.map((R,i)=>{const pool=R.pool.filter(k=>stkAlive(s,stkQ(k)));return pool.length?pool[Math.floor(stkR()*pool.length)%pool.length]:null;});
+ if(list[1]&&list[1]===list[2])list[2]=STK_RISK[2].pool.find(k=>k!==list[1]&&stkAlive(s,stkQ(k)))||null;s.picks={day:s.day,list};}
+function stkPicksNow(s){if(!s.picks||s.picks.day!==s.day||!Array.isArray(s.picks.list))stkMakePicks(s);return s.picks.list;}
+/* the free starter stock: $500 of the safe pick, the first time you open the exchange */
+function stkGift(){const p=myProg(),s=stkSave(p);if(s.gift)return null;s.gift=1;const k=stkPicksNow(s)[0]||'mcw',px=s.px[k],n=Math.max(1,Math.floor(500/px));
+ const o=s.own[k]||(s.own[k]={n:0,cost:0});o.n+=n;o.cost+=n*px;saveProg();return {k,n,cost:Math.round(n*px)};}
+/* goals */
+const STK_GOAL_TXT={pick:g=>"Put money in one of Chip's picks and finish a job",hold:g=>'Own '+g.n+' different stocks when a job ends',bank:g=>'Bank $'+fmt(g.n)+' profit by cashing out',div:g=>'Collect $'+fmt(g.n)+' in dividends',value:g=>'Have stocks worth $'+fmt(g.n)+' when a job ends'};
+function stkNewGoal(s){const r=stkRank(s),k=s.goalN|0,kinds=['pick','hold','bank','div','value'],kind=k===0?'pick':kinds[(k*3+Math.floor(stkR()*5))%kinds.length],m=[1,2.5,5,10,25][r];
+ const n=kind==='pick'?1:kind==='hold'?Math.min(5,2+Math.floor(r/2)+(stkR()<0.5?1:0)):kind==='bank'?Math.round(250*m):kind==='div'?Math.round(60*m):Math.round(3000*m);
+ s.goal={kind,n,prog:0,rew:Math.round([400,900,2000,4500,10000][r]*(kind==='pick'?0.75:1)),done:0};s.goalN=k+1;}
+function stkGoalAdd(s,kind,v){const g=s.goal;if(!g||g.done||g.kind!==kind)return;g.prog=Math.min(g.n,(g.prog||0)+v);if(g.prog>=g.n)stkGoalDone(s);}
+function stkGoalSet(s,kind,v){const g=s.goal;if(!g||g.done||g.kind!==kind)return;g.prog=Math.min(g.n,v);if(g.prog>=g.n)stkGoalDone(s);}
+function stkGoalDone(s){s.goal.done=1;if(typeof empNote==='function')empNote('BROKER GOAL DONE','Collect $'+fmt(s.goal.rew)+' at THE DADE EXCHANGE');}
+function stkCollect(){const p=myProg(),s=stkSave(p),g=s.goal;if(!g||!g.done)return null;const r0=stkRank(s);p.wallet+=g.rew;s.xp=(s.xp|0)+3;const got=g.rew;stkNewGoal(s);saveProg();return {rew:got,up:stkRank(s)>r0};}
+/* after every job: goals, XP, the report, tomorrow's picks */
+function stkAfterTick(p,s,d,div,v0,pickHeld,notes){if(!s.goal)stkNewGoal(s);const r0=stkRank(s);
+ const held=STK_LIST.filter(q=>stkHeld(p,q.k)).length;if(held)s.xp=(s.xp|0)+1;
+ if(pickHeld)stkGoalSet(s,'pick',1);stkGoalSet(s,'hold',held);stkGoalAdd(s,'div',div);stkGoalSet(s,'value',Math.round(stkValue(p)));
+ const mv=STK_LIST.filter(q=>stkHeld(p,q.k)).map(q=>({t:q.t,ch:stkCh(s,q.k)})).sort((a,b)=>b.ch-a.ch);
+ s.rep={day:s.day,d:v0>0||div?d:0,div,up:mv[0]||null,dn:mv.length>1?mv[mv.length-1]:null,notes:notes.map(n=>n[0]).slice(0,3),held};
+ if(stkRank(s)>r0&&typeof empNote==='function')empNote('NEW INVESTOR RANK: '+STK_RANKS[stkRank(s)].n,STK_RANKS[stkRank(s)].perk);
+ stkMakePicks(s);}
+/* desk actions */
+function stkView(v){if(state!=='stocks'||stkCoachOn())return;STK_VIEW=v||(STK_VIEW==='desk'?'board':'desk');sfx('blip');renderStocks('');if(STK_VIEW==='board'&&!stkSave().tutB)stkCoachStart(true);}
+function stkDeskAct(act,i){if(state!=='stocks'||fading||stkCoachOn())return;const p=myProg(),s=stkSave(p);let say='',ok=true;
+ if(act==='put'){const k=stkPicksNow(s)[i],q=stkQ(k);if(!q)return;STK_DSEL=i;const r=stkBuy(k,stkAmt(s));if(typeof r==='string'){ok=false;say=STK_SAY[r]||'';}else say='Put $'+fmt(r.cost)+' into '+q.name+'. Now go do a job and come back.';}
+ else if(act==='out'){const q=stkQ(i);const r=q&&stkSell(q.k,1);if(!r||typeof r==='string'){ok=false;say=STK_SAY.none;}else say='Cashed out '+q.t+': $'+fmt(r.cash)+'. '+(r.pl>=0?'You made $'+fmt(r.pl)+'.':'You lost $'+fmt(-r.pl)+'.');}
+ else if(act==='amt'){const mx=STK_RANKS[stkRank(s)].amt;if(i>mx){ok=false;say='Rank up to bet that much. '+STK_RANKS.find(R=>R.amt>=i).n+' unlocks it.';}else{s.amt=i;saveProg();say='Each PUT IN is $'+fmt(STK_AMTS[i])+' now.';}}
+ else if(act==='collect'){const r=stkCollect();if(!r){ok=false;}else say='Chip pays up: +$'+fmt(r.rew)+'.'+(r.up?' New rank: '+STK_RANKS[stkRank(s)].n+'!':'')+' New goal on the desk.';}
+ sfx(ok?(act==='amt'?'blip':'cash'):'blip');renderStocks(say);}
+function stkDeskKey(c){const s=stkSave();
+ if(/^Digit[123]$/.test(c))stkDeskAct('put',+c.slice(5)-1);else if(c==='Enter'||c==='Space')stkDeskAct('put',STK_DSEL);
+ else if(c==='ArrowLeft'||c==='KeyA'||c==='ArrowUp'||c==='KeyW'){STK_DSEL=(STK_DSEL+2)%3;sfx('blip');renderStocks('');}else if(c==='ArrowRight'||c==='KeyD'||c==='ArrowDown'||c==='KeyS'){STK_DSEL=(STK_DSEL+1)%3;sfx('blip');renderStocks('');}
+ else if(c==='KeyQ'||c==='Minus')stkDeskAct('amt',Math.max(0,(s.amt|0)-1));else if(c==='KeyE'||c==='Equal')stkDeskAct('amt',Math.min(STK_RANKS[stkRank(s)].amt,(s.amt|0)+1));
+ else if(c==='KeyG')stkDeskAct('collect');else if(c==='KeyX'){const k=stkPicksNow(s)[STK_DSEL];if(k)stkDeskAct('out',k);}else if(c==='Slash'||c==='F1')$('bStkHow').click();}
+function stkDeskPad(dir){const s=stkSave();if(pdown(12)||dir<0){STK_DSEL=(STK_DSEL+2)%3;sfx('blip');renderStocks('');}else if(pdown(13)||dir>0){STK_DSEL=(STK_DSEL+1)%3;sfx('blip');renderStocks('');}
+ else if(pdown(0))stkDeskAct('put',STK_DSEL);else if(pdown(2))stkDeskAct('collect');else if(pdown(4))stkDeskAct('amt',Math.max(0,(s.amt|0)-1));else if(pdown(5))stkDeskAct('amt',Math.min(STK_RANKS[stkRank(s)].amt,(s.amt|0)+1));
+ else if(pdown(3)){const k=stkPicksNow(s)[STK_DSEL];if(k)stkDeskAct('out',k);}}
+/* the desk */
+function stkDeskRender(p,s){$('sStocks').querySelector('.stx').classList.toggle('desk',STK_VIEW==='desk');
+ $('bStkView').innerHTML=STK_VIEW==='desk'?'FULL BOARD (PRO)<span class="kbhint"> (V)</span><span class="padhint"> (BACK)</span>':"CHIP'S DESK<span class=\"kbhint\"> (V)</span><span class=\"padhint\"> (BACK)</span>";
+ if(STK_VIEW!=='desk'){$('sxDesk').innerHTML='';return;}
+ if(!s.goal){stkNewGoal(s);saveProg();}const picks=stkPicksNow(s),amt=stkAmt(s),r=stkRank(s),R=STK_RANKS[r],nx=STK_RANKS[r+1],g=s.goal,rp=s.rep;
+ let rep;
+ if(rp){const parts=[];if(rp.held||rp.d)parts.push(`<b class="${rp.d>=0?'sxUp':'sxDn'}">${rp.d>=0?'YOU MADE':'YOU LOST'} $${fmt(Math.abs(rp.d))}</b>`);if(rp.div)parts.push(`DIVIDENDS <b class="sxUp">+$${fmt(rp.div)}</b>`);
+  if(rp.up)parts.push(`BEST ${rp.up.t} <b class="${rp.up.ch>=0?'sxUp':'sxDn'}">${rp.up.ch>=0?'▲':'▼'}${Math.abs(rp.up.ch).toFixed(1)}%</b>`);if(rp.dn&&rp.dn.ch<0)parts.push(`WORST ${rp.dn.t} <b class="${rp.dn.ch>=0?'sxUp':'sxDn'}">${rp.dn.ch>=0?'▲':'▼'}${Math.abs(rp.dn.ch).toFixed(1)}%</b>`);
+  rep=`<div class="sxRH">CHIP'S REPORT · SINCE YOUR LAST JOB</div><div class="sxRB">${parts.length?parts.join(' · '):'You had nothing in the market. Pick something below and see what happens.'}</div>${rp.notes.length?'<div class="sxRN">'+rp.notes.join(' · ')+'</div>':''}`;}
+ else rep=`<div class="sxRH">CHIP'S REPORT</div><div class="sxRB">Put money in a pick, finish a job, and come back. Prices only move after jobs.</div>`;
+ const pk=picks.map((k,i)=>{const q=stkQ(k),Rk=STK_RISK[i];if(!q)return `<div class="sxPk"><div class="sxPkR" style="color:${Rk.col}">${Rk.n}</div><div class="sxPkS">Nothing worth it today.</div></div>`;
+  const px=s.px[k],ch=stkCh(s,k),o=s.own[k],up=ch>=0,has=o&&o.n>0;
+  return `<div class="sxPk${i===STK_DSEL?' sel':''}" style="border-color:${Rk.col}"><div class="sxPkR" style="color:${Rk.col}">${i+1} · ${Rk.n}</div><div class="sxTop"><span class="sxT" style="color:${q.col}">${q.t}</span><span class="sxP">${stkPx(px)} <b class="${up?'sxUp':'sxDn'}">${up?'▲':'▼'}${Math.abs(ch).toFixed(1)}%</b></span></div>
+  <div class="emA">${q.name}</div><div class="sxPkS">${Rk.say} Usually moves ±${Math.round(q.vol*100)}% a job.${q.div?' Pays '+(q.div*100).toFixed(1)+'% a job.':''}</div>
+  ${has?`<div class="sxOwn">YOU HAVE $${fmt(o.n*px)} <b class="${o.n*px>=o.cost?'sxUp':'sxDn'}">${stkMoney(o.n*px-o.cost)}</b></div>`:''}
+  <button class="btn sm sxGo" data-d="put" data-i="${i}"${p.wallet<px+10?' disabled':''}>PUT IN $${fmt(amt)}<span class="kbhint"> (${i+1})</span></button></div>`;}).join('');
+ const amts=STK_AMTS.map((a,i)=>`<button class="sxA${i===(s.amt|0)?' on':''}${i>R.amt?' lock':''}" data-d="amt" data-i="${i}">${i>R.amt?'🔒 ':''}$${a>=1000?fmt(a/1000)+'K':fmt(a)}</button>`).join('');
+ const mine=STK_LIST.filter(q=>stkHeld(p,q.k)).map(q=>{const o=s.own[q.k],w=o.n*s.px[q.k],g2=w-o.cost;return `<div class="sxMr"><span class="sxT" style="color:${q.col}">${q.t}</span><span>$${fmt(w)} <b class="${g2>=0?'sxUp':'sxDn'}">${stkMoney(g2)}</b></span><button class="btn sm sxGo" data-d="out" data-k="${q.k}">CASH OUT</button></div>`;}).join('');
+ const xpTo=nx?`${s.xp|0}/${nx.xp} XP TO ${nx.n}`:'TOP RANK',pct=nx?Math.round(((s.xp|0)-R.xp)/(nx.xp-R.xp)*100):100;
+ const goal=`<div class="sxRH">INVESTOR RANK: <b style="color:#ffd36b">${R.n}</b></div><div class="sxXp"><i style="width:${pct}%"></i></div><div class="sxRN">${xpTo}${nx?' · NEXT PERK: '+nx.perk:''}</div>
+  <div class="sxRH" style="margin-top:6px">CHIP'S GOAL · REWARD $${fmt(g.rew)}</div><div class="sxRB">${STK_GOAL_TXT[g.kind](g)}</div>
+  ${g.done?`<button class="btn sm sxGo sxCol" data-d="collect">COLLECT $${fmt(g.rew)}<span class="kbhint"> (G)</span><span class="padhint"> (X)</span></button>`:g.n>1?`<div class="sxXp g"><i style="width:${Math.round((g.prog||0)/g.n*100)}%"></i></div><div class="sxRN">${g.kind==='hold'?g.prog+'/'+g.n:'$'+fmt(g.prog||0)+' / $'+fmt(g.n)}</div>`:''}`;
+ $('sxDesk').innerHTML=`<div id="sxReport" class="sxBox">${rep}</div><div class="sxCols"><div id="sxGoal" class="sxBox">${goal}</div><div id="sxMine" class="sxBox"><div class="sxRH">YOUR STOCKS</div>${mine||'<div class="sxRN">Nothing yet. Take one of Chip\'s picks below.</div>'}</div></div>
+  <div class="sxPkH">CHIP'S PICKS FOR YOUR NEXT JOB</div><div id="sxPicks">${pk}</div>
+  <div id="sxAmt"><span class="sxRH">EACH PUT IN:</span>${amts}<span class="kbhint"> (Q/E)</span><span class="padhint"> (LB/RB)</span></div>`;}
+{$('sxDesk').addEventListener('click',e=>{const b=e.target.closest('[data-d]');if(!b||b.disabled)return;const d=b.dataset.d;stkDeskAct(d,d==='out'?b.dataset.k:+b.dataset.i);});
+ $('bStkView').onclick=()=>stkView();}
