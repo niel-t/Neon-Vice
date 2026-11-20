@@ -31,8 +31,9 @@ const MALL_SHOPS={
   sold:["Congratulations! Keys, deed, and a fruit basket.","SOLD! I'll put the sign out myself.","Pleasure doing business. Mostly the commission."],
   poor:["Oh honey. The bank won't touch you and neither will I.","Maybe start with something smaller. Like a parking space."],
   bye:["Bye now! Tell your friends with cash.","Don't forget, Miami's only going up!","Ta-ta! Keep those payments coming."]},
- tailor:{name:'FONTAINE TAILORING',sub:'SUITS · LINEN · SILK · SUNGLASSES',who:"FELIX 'FABULOSO' FONTAINE",short:'FABULOSO FELIX',npc:'tailor',what:'SUITS',col:'#ff9ec7',
+ tailor:{name:'FONTAINE TAILORING',sub:'SUITS · LINEN · SILK · SUNGLASSES · ACCESSORIES',who:"FELIX 'FABULOSO' FONTAINE",short:'FABULOSO FELIX',npc:'tailor',what:'SUITS',col:'#ff9ec7',
   intro:"Welcome, welcome! Felix Fontaine, but the whole of Ocean Drive calls me Fabuloso. Arms out, chin up. Honey, we are going to make you unforgettable.",
+  acc:["Accessories, darling! The exclamation mark on the sentence.","Oh, that is a whole personality. Wear it out.","Now THAT is a finishing touch. Nobody will look at anything else.","A man is his details. And your details are fabuloso."],
   shades:["Oh, those frame your face like a Monet, darling.","Now you look like trouble with a trust fund.","Sunglasses indoors? Honey, that's the whole point.","The sun is jealous. Let it be."],
   hi:["There's my favourite silhouette! Turn around, let me see.","Linen breathes, silk shines, polyester confesses. Choose wisely.","A good suit walks into a room before you do.","Pastel is not a colour, darling, it's an attitude."],
   sold:["Look at those shoulders! Wear it out, I insist.","Fabuloso! Miami is not ready for you.","Perfect fit. I'd tell you you're welcome, but just look in the mirror."],
@@ -387,11 +388,13 @@ function renderMallShop(msg){const p=myProg(),s=MALL_SHOPS[storeMode],sec=(id,on
  document.querySelector('#sStore .shT').textContent=s.name;document.querySelector('#sStore .shS').textContent=s.who+' · '+MALL_NAME;
  $('stFace').style.display='block';const say=$('stSay');say.style.display='';say.dataset.who=s.short;say.textContent=mallSayTxt;let n=0;
  if(storeMode==='jewel'){sec('stCars',1);sec('stGold',0);sec('stHome',0);$('stCarsH').textContent='IN THE CASE · WHAT YOU WEAR SHOWS ON YOU';
-  $('stCars').innerHTML=Object.keys(JEWEL).map(k=>{const j=JEWEL[k],own=!!p.jewel[k],on=jewelWorn(p,k);return mallCard(`data-jw="${k}"`,j.name,j.desc,on?'WEARING · TAKE OFF':own?'IN THE BOX · WEAR':'BUY $'+fmt(j.price),on,false,n++);}).join('');}
+  $('stCars').innerHTML=Object.keys(JEWEL).map(k=>{const j=JEWEL[k],own=!!p.jewel[k],on=jewelWorn(p,k);return mallCard(`data-jw="${k}"`,j.name,j.desc,on?'WEARING · TAKE OFF':own?'IN THE BOX · WEAR':'BUY $'+fmt(j.price),on,false,n++);}).join('');
+  sec('stGold',1);$('stGoldH').textContent='EARRINGS · ONE PAIR IN AT A TIME';$('stGold').innerHTML=accCards(p,'jewel',n);n+=Object.keys(ACC).filter(k=>ACC[k].shop==='jewel').length;}
  else if(storeMode==='tailor'){sec('stCars',1);sec('stGold',0);sec('stHome',0);const cur=mySuit();$('stCarsH').textContent='MADE TO MEASURE · WHAT YOU WEAR SHOWS ON YOU';
   $('stCars').innerHTML=SUITKEYS.filter(k=>SUITS[k].shop).map(k=>{const S=SUITS[k],own=suitOK(p,k),on=cur===k;return mallCard(`data-ts="${k}"`,S.name,S.desc,on?'WEARING · BACK TO SIGNATURE':own?'IN THE WARDROBE · WEAR':'BUY $'+fmt(S.price),on,false,n++);}).join('');
   sec('stGold',1);$('stGoldH').textContent='SUNGLASSES · ONE PAIR ON AT A TIME';const so=(p.shades&&p.shades.own)||{},sw=shadesOn(p);
-  $('stGold').innerHTML=Object.keys(SHADES).map(k=>{const it=SHADES[k];return mallCard(`data-sg="${k}"`,it.name,it.desc,sw===k?'WEARING · TAKE OFF':so[k]?'IN YOUR POCKET · WEAR':'BUY $'+fmt(it.price),sw===k,false,n++);}).join('');}
+  $('stGold').innerHTML=Object.keys(SHADES).map(k=>{const it=SHADES[k];return mallCard(`data-sg="${k}"`,it.name,it.desc,sw===k?'WEARING · TAKE OFF':so[k]?'IN YOUR POCKET · WEAR':'BUY $'+fmt(it.price),sw===k,false,n++);}).join('');
+  sec('stHome',1);$('stHomeH').textContent='DESIGNER ACCESSORIES · PARIS · ROMA · MILANO · LONDON · ONE OF EACH KIND ON';$('stHome').innerHTML=accCards(p,'tailor',n);n+=Object.keys(ACC).filter(k=>ACC[k].shop==='tailor').length;}
  else if(storeMode==='furn'){const ids=['stCars','stGold','stHome'];ids.forEach((id,t)=>{sec(id,1);const own=(p.homes||[0]).includes(t),here=(p.home||0)===t,f=furnAt(t);
    $(id+'H').textContent=HOMEDEF[t].name+(here?' · YOU LIVE HERE':own?' · YOURS':' · NOT YOURS YET');
    $(id).innerHTML=own?catOf(t).filter(it=>!MALL_NOFURN.includes(it.k)).map(it=>mallCard(`data-mf="${t}:${it.k}"`,it.name,it.desc,f[it.k]?'DELIVERED':'BUY $'+fmt(it.price),!!f[it.k],false,n++)).join('')
