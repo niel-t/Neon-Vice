@@ -19,7 +19,7 @@ function carInput(c){let thr=0,st=0,turbo=false,hand=false;
  if(mag>0.25){const ht=Math.atan2(sx,sz),df=angDiff(c.h,ht);st=clamp(df*2.2,-1,1);if(thr===0)thr=mag*(Math.cos(df)>-0.5?1:0.4);}
  if(keys.ShiftLeft||keys.ShiftRight)turbo=true;return {thr,st,hand,turbo};}
 /* one step of the car: speed, heading, grip, wall bounces and the marks it leaves. Returns true when it hit something hard. */
-function carStep(g,c,inp,dt){const P=CAR_PHYS,cx=myProg().carx||{},eng=cx.eng?1.18:1,tb=cx.turbo?1:0;
+function carStep(g,c,inp,dt){const P=CAR_PHYS,cx=myProg().carx||{},pf=carPerf(myCar()),eng=(cx.eng?1.18:1)*pf.spd,ea=(cx.eng?1.18:1)*pf.acc,tb=cx.turbo?1:0;
  if(!Number.isFinite(c.vx)||!Number.isFinite(c.vz)||(!c.vx&&!c.vz&&c.v)){c.vx=Math.sin(c.h)*c.v;c.vz=Math.cos(c.h)*c.v;}
  const turbo=inp.turbo&&inp.thr>0&&c.boost>0.02;if(turbo)c.boost=Math.max(0,c.boost-dt*(tb?0.22:0.35));else c.boost=Math.min(1,(c.boost||0)+dt*(tb?0.26:0.18));
  /* steer from the speed along the nose: quick when slow, calmer when fast; the handbrake swings the tail */
@@ -28,13 +28,13 @@ function carStep(g,c,inp,dt){const P=CAR_PHYS,cx=myProg().carx||{},eng=cx.eng?1.
  c.h+=yaw*dt;fx=Math.sin(c.h);fz=Math.cos(c.h);const rx=Math.cos(c.h),rz=-Math.sin(c.h);
  let vf=c.vx*fx+c.vz*fz,vr=c.vx*rx+c.vz*rz;
  const maxV=turbo?P.turboV*eng+tb*3:P.maxV*eng;
- if(inp.thr>0){if(vf<-0.3)vf=Math.min(0,vf+P.brake*dt);else if(vf<maxV)vf=Math.min(maxV,vf+inp.thr*(turbo?P.turboAcc+tb*3:P.acc)*eng*dt);}
+ if(inp.thr>0){if(vf<-0.3)vf=Math.min(0,vf+P.brake*dt);else if(vf<maxV)vf=Math.min(maxV,vf+inp.thr*(turbo?P.turboAcc+tb*3:P.acc)*ea*dt);}
  else if(inp.thr<0){if(vf>0.3){vf=Math.max(0,vf-P.brake*(-inp.thr/0.7)*dt);c.braking=vf>5;}else vf=Math.max(-5,vf+inp.thr*P.rev*dt);}
  else vf*=Math.exp(-dt*P.drag);
  if(inp.thr>=0)c.braking=false;if(vf>maxV)vf+=(maxV-vf)*(1-Math.exp(-dt*2));
  if(inp.hand){vf*=Math.exp(-dt*1.4);}
  /* the tyres pull the slide back in line with the nose: strong when clean, weak once sliding, almost nothing on the handbrake */
- const sliding=Math.abs(vr)>3.2,grip=inp.hand?P.hbGrip:sliding?P.slideGrip:P.grip;vr*=Math.exp(-grip*dt);
+ const sliding=Math.abs(vr)>3.2,grip=inp.hand?P.hbGrip:sliding?P.slideGrip*pf.grip:P.grip*pf.grip;vr*=Math.exp(-grip*dt);
  c.vx=fx*vf+rx*vr;c.vz=fz*vf+rz*vr;c.v=vf;c.slip=Math.abs(vr);c.yaw=yaw;c.wr=(c.wr||0)-vf*dt/0.25;c.hand=inp.hand;
  /* move and bounce off walls */
  const ox=c.x,oz=c.z;c.x+=c.vx*dt;c.z+=c.vz*dt;const hit={x:c.x,z:c.z,r:c.r};collideGrid(hit);

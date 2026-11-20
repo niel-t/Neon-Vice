@@ -19,6 +19,8 @@ test('dealer: drive to the mall, meet Vic in Victory Motors, buy a car and upgra
       seqSkip();
       const t = hubTargets(G).map(q => q.k);
       out.targets = ['car', 'vic', 'show'].every(k => t.includes(k));
+      out.shows = hubTargets(G).filter(q => q.k === 'show').length;
+      out.perf = carPerf('furia').spd > carPerf('testa').spd && carPerf('testa').spd > carPerf('beater').spd && carPerf('jeep').grip > carPerf('beater').grip;
       openCarMenu(); out.menuHere = $('bCarDealer').style.display === 'none'; closeCarMenu();
       openDealer('spyder');
       out.screen = { state, mode: storeMode, title: document.querySelector('#sStore .shT').textContent, cards: document.querySelectorAll('#sStore .scard').length, face: $('stFace').style.display, say: $('stSay').textContent.length > 20 };
@@ -32,7 +34,7 @@ test('dealer: drive to the mall, meet Vic in Victory Motors, buy a car and upgra
       out.mall = !document.getElementById('bCarStore');
       // every car and every look draws without throwing
       const B = new Batch(); let n = 0;
-      for (const k of ['beater', 'mid', 'spyder', 'sig', 'testa']) for (const id of [0, 1, 2]) {
+      for (const k of DEALER_LIST) for (const id of [0, 1, 2]) {
         selIdx = id; myProg().car = k; myProg().carx = { paint: 3, rims: 'white', glow: 2 }; B.reset(); drawRide(B, 0, 0, 1, 0.4); n += B.n > 2000 ? 1 : 0;
       }
       for (const ty of ['sedan', 'wagon', 'hatch', 'coupe', 'pickup', 'van']) { B.reset(); drawCar(B, 0, 0, [0.5, 0.5, 0.5], 1, 0, ty); n += B.n > 2000 ? 1 : 0; }
@@ -41,13 +43,13 @@ test('dealer: drive to the mall, meet Vic in Victory Motors, buy a car and upgra
     } finally { fadeTo = fade; }
   }, setup.toString())).toEqual({
     menu: true, depart: true,
-    lot: { hub: true, scene: true, vic: 1, slots: ['mid', 'spyder', 'sig', 'testa'] },
-    targets: true, menuHere: true,
-    screen: { state: 'store', mode: 'dealer', title: 'VICTORY MOTORS', cards: 10, face: 'block', say: true },
+    lot: { hub: true, scene: true, vic: 1, slots: ['mid', 'spyder', 'sig', 'testa', 'stallion', 'furia', 'lowrider', 'jeep', 'roadster'] },
+    targets: true, shows: 9, perf: true, menuHere: true,
+    screen: { state: 'store', mode: 'dealer', title: 'VICTORY MOTORS', cards: 15, face: 'block', say: true },
     bought: { car: 'spyder', cars: ['beater', 'spyder'], carx: { paint: 2, rims: 'chrome', glow: 1, eng: 1, turbo: 1 }, wallet: 200000 - 30000 - 800 * 2 - 1500 - 2500 - 6000 - 9000 },
     saved: { paint: 2, rims: 'chrome', glow: 1, eng: 1, turbo: 1 },
     closed: ['play', 'BACK TO YOUR CAR'],
     mall: true,
-    drawn: 21
+    drawn: 36
   });
 });

@@ -135,7 +135,18 @@ function carExtras(K,o){const {P,f,L2,hw}=K,PT=TUV[56];
  if(o.rust)for(const [rx,ry,sd] of o.rust){const s=f.at(rx);P(rx,ry,sd*(s.wb+0.006),0,0.12,0.06,0.006,[0.42,0.2,0.1]);}
  if(o.strakes)for(const sd of [-1,1])for(let i=0;i<5;i++){const xm=-0.32,s=f.at(xm),y=s.yr+0.04+i*0.045;P(xm,y,sd*(s.wb+0.006),0,0.7,0.012,0.012,[0.1,0.1,0.11]);}
  if(o.open){const s=f.at(-0.15);for(const sd of [-1,1]){P(-0.2,s.deck-0.02,sd*0.24,0,0.2,0.12,0.3,CAR_INT);P(-0.3,s.deck+0.04,sd*0.24,0.25,0.06,0.2,0.28,CAR_INT);}P(0.05,s.deck+0.02,0.24,0.5,0.03,0.12,0.12,[0.05,0.05,0.05]);}
- if(o.taxi){const s=f.at(-0.07);P(-0.07,s.T+0.05,0,0,0.12,0.08,0.34,[1,0.85,0.3],null,1);}}
+ if(o.taxi){const s=f.at(-0.07);P(-0.07,s.T+0.05,0,0,0.12,0.08,0.34,[1,0.85,0.3],null,1);}
+ /* the 4x4: a black roll bar over the seats, a tread plate step and the spare wheel on the tailgate */
+ if(o.rollbar){const s=f.at(-0.42),RB=[0.08,0.08,0.09],y0=s.deck,y1=s.deck+0.46;for(const sd of [-1,1]){P(-0.42,(y0+y1)/2,sd*(s.wsh-0.07),0,0.06,y1-y0,0.06,RB);P(-0.66,y1-0.16,sd*(s.wsh-0.07),-0.75,0.05,0.4,0.05,RB);
+   const st=f.at(0);P(0,s.yb+0.06,sd*(st.wb+0.05),0,0.6,0.025,0.1,[0.62,0.63,0.66],TUV[58]);}P(-0.42,y1,0,0,0.06,0.06,s.wsh*2-0.08,RB);}
+ if(o.spare){const t=f.at(-L2+0.05),y=(t.yb+t.T)/2+0.04;P(-L2-0.07,y,0,0,0.13,0.44,0.44,CAR_DARK);P(-L2-0.14,y,0,0,0.012,0.22,0.22,o.rim||CAR_CHR,TUV[58]);P(-L2-0.15,y,0,0,0.012,0.08,0.08,CAR_DARK);}
+ /* a thin hand-painted gold pinstripe down the flanks (the lowrider) */
+ if(o.pin)for(const sd of [-1,1])for(let i=0;i<6;i++){const w=(L2*2-0.4)/6,xm=-L2+0.2+w*(i+0.5),s=f.at(xm);P(xm,s.ybelt-0.05,sd*(s.wb+0.005),0,w+0.01,0.016,0.006,o.pin,TUV[58]);}
+ /* the muscle car's hood scoop */
+ if(o.scoop){const x=L2*0.42,s=f.at(x);P(x,s.T+0.03,0,0,0.34,0.06,0.24,o.col,PT);P(x+0.17,s.T+0.03,0,0,0.006,0.035,0.19,CAR_DARK);}
+ /* the race car's big rear wing on two posts, and the intakes along its flanks */
+ if(o.wing){const x=-L2+0.12,s=f.at(x),y=s.T+0.17,CF=[0.08,0.08,0.09];P(x,y,0,0,0.2,0.025,hw*1.95,CF,PT);for(const sd of [-1,1]){P(x,y-0.03,sd*hw*0.97,0,0.24,0.12,0.02,o.col,PT);P(x+0.02,(s.T+y)/2,sd*hw*0.45,0,0.06,y-s.T,0.03,CF);}}
+ if(o.vents)for(const sd of [-1,1]){const x=-0.62,s=f.at(x);P(x,(s.yr+s.ybelt)/2+0.02,sd*(s.wb+0.004),0,0.32,(s.ybelt-s.yr)*0.55,0.006,CAR_DARK);const t=f.at(-L2+0.5);P(-L2+0.5,t.T+0.004,sd*0.16,0,0.4,0.006,0.14,CAR_DARK);}}
 
 /* ---------- the player's rides ---------- */
 const BEATER={
@@ -181,14 +192,37 @@ function drawEscalade(B,x,z,s,a,spin,over){const o=Object.assign({},ESCALADE,ove
  /* roof rails, running boards */
  for(const sd of [-1,1]){const s0=f.at(-0.4);P(-0.45,s0.T+0.03,sd*(s0.wt-0.05),0,1.5,0.03,0.04,CAR_CHR,CH);const sb=f.at(0);P(0,sb.yb+0.05,sd*(sb.wb+0.04),0,1.2,0.035,0.1,[0.08,0.08,0.09]);P(0,sb.yb+0.07,sd*(sb.wb+0.09),0,1.2,0.012,0.012,CAR_CHR,CH);}}
 
-/* ---------- the dealership's own stock (anyone can buy these) ---------- */
+/* ---------- the dealership's own stock (anyone can buy these) ----------
+   perf: how it drives on the road (carStep in drive.js): spd scales top speed, acc the pull, grip how hard the tyres hold a line.
+   1 is the loaner; CAR_PERF below holds the beater, the Sunrunner and the signature rides. */
 const DEALER_CARS={
- spyder:{name:'SPYDER 365',price:30000,desc:'Black convertible. Wind in your hair, cops in your mirror.',
+ jeep:{name:'KEY LARGO 4X4',price:12000,perf:{spd:0.97,acc:1.02,grip:1.18},desc:'Doors off, roll bar, big knobbly tyres. Sticks to the road like a gecko.',
+  shape:Object.assign({},CAR_SHAPES.hatch,{L:2.3,W:1.12,ride:0.26,col:[0.98,0.8,0.2],open:true,R:0.27,tw:0.2,rim:[0.9,0.9,0.92],rimFull:true,spokes:5,bump:[0.1,0.1,0.11],lamps:'round',grilleW:0.42,grilleH:0.16,taper:0.02,tumble:0.98,
+   top:[[-1.15,0.72],[-1.12,0.76],[0.3,0.76],[0.33,1.02],[0.4,1.02],[0.43,0.78],[1.1,0.76],[1.15,0.7]],sill:[[-1.15,0.78],[1.15,0.78]],ws:[0.3,0.43],rw:null,cab:[-0.9,0.43],bp:[],axles:[0.76,-0.72],handles:[],rollbar:true,spare:true,fbump:0.36,rbump:0.36})},
+ stallion:{name:'STALLION 5.0',price:24000,perf:{spd:1.06,acc:1.14,grip:0.97},desc:'Detroit V8, hood scoop, white racing stripes. All muscle, no manners.',
+  shape:Object.assign({},CAR_SHAPES.coupe,{L:2.42,W:1.04,ride:0.14,col:[0.82,0.06,0.09],lamps:'quad',grille:true,grilleH:0.07,bump:[0.12,0.12,0.13],rim:[0.86,0.87,0.9],rimFull:true,spokes:5,scoop:true,spoiler:true,hoodStripe:[0.96,0.96,0.98],
+   top:[[-1.21,0.47],[-1.15,0.51],[-0.62,0.53],[-0.2,0.74],[0.18,0.75],[0.5,0.52],[1.14,0.47],[1.21,0.42]],sill:[[-1.21,0.53],[1.21,0.51]],ws:[0.18,0.5],rw:[-0.62,-0.2],cab:[-0.62,0.5],bp:[-0.12],axles:[0.76,-0.74],handles:[0.02],fbump:0.27,rbump:0.27})},
+ lowrider:{name:'BOULEVARD LOWRIDER',price:28000,perf:{spd:0.99,acc:0.98,grip:1.04},desc:'Candy purple, gold wire wheels, whitewalls. Low and slow down Calle Ocho.',
+  shape:Object.assign({},CAR_SHAPES.sedan,{L:2.8,W:1.12,ride:0.09,R:0.17,col:[0.5,0.1,0.62],roof:[0.95,0.94,0.92],rim:[0.98,0.8,0.36],rimFull:true,white:true,spokes:12,trim:CAR_CHR,trimY:0.34,lamps:'quad',pin:[0.95,0.75,0.3],
+   top:[[-1.4,0.44],[-1.34,0.49],[-0.64,0.5],[-0.42,0.77],[0.3,0.78],[0.6,0.51],[1.32,0.49],[1.4,0.44]],sill:[[-1.4,0.51],[1.4,0.52]],ws:[0.3,0.6],rw:[-0.64,-0.42],cab:[-0.64,0.6],bp:[],axles:[0.9,-0.9],handles:[0.05],fbump:0.25,rbump:0.25})},
+ spyder:{name:'SPYDER 365',price:30000,perf:{spd:1.08,acc:1.08,grip:1.04},desc:'Black convertible. Wind in your hair, cops in your mirror.',
   shape:Object.assign({},CAR_SHAPES.coupe,{L:2.5,W:1.06,col:[0.05,0.05,0.06],open:true,rim:[0.85,0.86,0.9],rimFull:true,spokes:5,lamps:'pop',popUp:false,bump:[0.1,0.1,0.11],
    top:[[-1.25,0.45],[-1.15,0.48],[-0.4,0.5],[-0.2,0.5],[0.08,0.68],[0.42,0.5],[1.17,0.4],[1.25,0.35]],sill:[[-1.25,0.48],[-0.2,0.5],[0.42,0.5],[1.25,0.42]],ws:[0.08,0.42],rw:null,cab:[-0.42,0.42],bp:[],axles:[0.8,-0.78]})},
- testa:{name:'TESTA BIANCA',price:75000,desc:'White, wide and flat as a pool table. Side strakes. The whole of Ocean Drive turns round.',
+ roadster:{name:'SOLANA 560 ROADSTER',price:42000,perf:{spd:1.07,acc:1.04,grip:1.1},desc:'Cream German roadster, tan leather, chrome everywhere. Old money, top down.',
+  shape:Object.assign({},CAR_SHAPES.sedan,{L:2.45,W:1.08,ride:0.15,col:[0.94,0.9,0.78],open:true,bump:CAR_CHR,lamps:'round',grilleW:0.5,grilleH:0.11,trim:CAR_CHR,trimY:0.3,rim:CAR_CHR,rimFull:true,spokes:8,taper:0.06,
+   top:[[-1.22,0.5],[-1.16,0.54],[0.05,0.55],[0.12,0.72],[0.44,0.56],[1.16,0.52],[1.22,0.47]],sill:[[-1.22,0.56],[1.22,0.56]],ws:[0.12,0.44],rw:null,cab:[-0.45,0.44],bp:[],axles:[0.78,-0.76],handles:[0.0],fbump:0.27,rbump:0.27})},
+ testa:{name:'TESTA BIANCA',price:75000,perf:{spd:1.16,acc:1.14,grip:1.08},desc:'White, wide and flat as a pool table. Side strakes. The whole of Ocean Drive turns round.',
   shape:Object.assign({},CAR_SHAPES.coupe,{L:2.6,W:1.22,ride:0.12,col:[0.96,0.96,0.97],rim:[0.95,0.95,0.97],rimFull:true,spokes:5,lamps:'pop',popUp:false,strakes:true,taper:0.09,tumble:0.72,
-   top:[[-1.3,0.44],[-1.22,0.47],[-0.75,0.5],[-0.3,0.66],[0.1,0.67],[0.46,0.45],[1.22,0.36],[1.3,0.31]],sill:[[-1.3,0.47],[0.46,0.45],[1.3,0.38]],ws:[0.1,0.46],rw:[-0.75,-0.3],cab:[-0.55,0.46],bp:[],axles:[0.82,-0.8],bump:[0.94,0.94,0.95]})}};
+   top:[[-1.3,0.44],[-1.22,0.47],[-0.75,0.5],[-0.3,0.66],[0.1,0.67],[0.46,0.45],[1.22,0.36],[1.3,0.31]],sill:[[-1.3,0.47],[0.46,0.45],[1.3,0.38]],ws:[0.1,0.46],rw:[-0.75,-0.3],cab:[-0.55,0.46],bp:[],axles:[0.82,-0.8],bump:[0.94,0.94,0.95]})},
+ furia:{name:'FURIA 12',price:150000,perf:{spd:1.25,acc:1.24,grip:1.14},desc:'Twin-turbo race car with plates. Carbon wing, red paint, no carpet. The fastest thing in Florida.',
+  shape:Object.assign({},CAR_SHAPES.coupe,{L:2.6,W:1.2,ride:0.11,col:[0.88,0.04,0.06],R:0.21,tw:0.18,rim:[0.22,0.22,0.24],rimFull:true,spokes:5,lamps:'pop',popUp:false,grille:false,bump:[0.84,0.04,0.06],wing:true,vents:true,taper:0.1,tumble:0.7,
+   top:[[-1.3,0.44],[-1.22,0.48],[-0.8,0.5],[-0.32,0.64],[0.06,0.65],[0.44,0.43],[1.22,0.33],[1.3,0.29]],sill:[[-1.3,0.48],[0.44,0.43],[1.3,0.36]],ws:[0.06,0.44],rw:[-0.8,-0.32],cab:[-0.45,0.44],bp:[],axles:[0.82,-0.82],fbump:0.2,rbump:0.24})}};
+/* how the cars that are not dealer stock drive (the loaner is the yardstick) */
+const CAR_PERF={beater:{spd:1,acc:1,grip:1},mid:{spd:1.04,acc:1.05,grip:1.02},sig:{spd:1.12,acc:1.1,grip:1.06}};
+function carPerf(k){const d=DEALER_CARS[k];return (d&&d.perf)||CAR_PERF[k]||CAR_PERF.beater;}
+/* the dealer screen's rating bars: 1 to 5 */
+function carBars(v,lo,hi){const n=Math.max(1,Math.min(5,Math.round(1+(v-lo)/(hi-lo)*4)));return '\u25AE'.repeat(n)+'<span style="opacity:.25">'+'\u25AE'.repeat(5-n)+'</span>';}
+function carStatsHtml(k){const f=carPerf(k);return `<div class="cst">SPEED ${carBars(f.spd,0.97,1.25)}<br>GRIP&nbsp; ${carBars(f.grip,0.97,1.18)}</div>`;}
 
 /* ================= VICTORY MOTORS: the car dealership =================
    Reached from the car menu (departTo -> loadHub('mall') -> hubArrive drive-in; the showroom is the south end of the Biscayne Galleria, mall.js). 'Victory' Vic Velour runs the floor: talk to him,
@@ -202,8 +236,9 @@ const VIC_SOLD=["SOLD! The {car}! Two fingers up, friend, that's a victory!","Ke
 const VIC_POOR=["Whoa, whoa. Love the enthusiasm, hate the wallet. Come back richer.","Friend, I'd finance you, but McWey already owns your kneecaps."];
 const VIC_MOD=["Beautiful. She's purring already.","Now THAT is a ride with a personality.","Ooh. Ocean Drive's gonna need sunglasses."];
 const VIC_BYE=["Peace, friend! Tell your friends. Tell your enemies, I'm not picky.","Two fingers up! Victory!","Drive safe. Or fast. Fast is also fine."];
-const DEALER_LOT=['mid','spyder','sig','testa'];
-const DEALER_LIST=['beater','mid','spyder','sig','testa'];
+/* the turntables, by slot number on the map: 1-4 the front row, 5-7 the back row (the Furia in the middle), 8-9 in the windows onto the atrium */
+const DEALER_LOT=['mid','spyder','sig','testa','stallion','furia','lowrider','jeep','roadster'];
+const DEALER_LIST=['beater','jeep','mid','stallion','lowrider','spyder','roadster','sig','testa','furia'];
 const PAINT_NAMES=['FACTORY','FLAMINGO PINK','BISCAYNE TEAL','COCAINE WHITE','MIDNIGHT BLACK','ROSSO RED','SUNSHINE YELLOW'];
 const RIM_ORDER=['stock','chrome','gold','white'],RIM_NAMES={stock:'STOCK',chrome:'CHROME',gold:'GOLD',white:'WHITEWALLS'};
 const GLOW_NAMES=['OFF','PINK','CYAN','PURPLE'];
@@ -216,14 +251,16 @@ const CARMODS={
 function carModState(k,x){if(k==='paint')return PAINT_NAMES[x.paint||0];if(k==='rims')return RIM_NAMES[x.rims||'stock'];if(k==='glow')return GLOW_NAMES[x.glow||0];return x[k]?'FITTED':'';}
 let vicSayTxt='',vicImg=null;
 function dealerSetup(g){g.park={x:g.car.x,z:g.car.z};const n=g.npcs.find(q=>q.kind==='vic');if(n){g.car={x:n.x,z:n.z};n.a=n.a0=0;/* faces the camera and his customers (you walk in from the south) */n.r=0.3;g.lights.push({x:n.x,y:2.0,z:n.z+1.3,r:3.6,c:[1.3,1.05,0.9]});}
- const slots=[];for(let z=0;z<g.H;z++)for(let x=0;x<g.W;x++){const c=g.rows[z]&&g.rows[z][x];if(c>='1'&&c<='4')slots.push({i:+c-1,x:x+0.5,z:z+0.5});}
- slots.sort((a,b)=>a.i-b.i);g.dealer={slots:slots.map((s,i)=>({k:DEALER_LOT[i%DEALER_LOT.length],x:s.x,z:s.z,a0:0.5+i*1.3}))};
+ const slots=[];for(let z=0;z<g.H;z++)for(let x=0;x<g.W;x++){const c=g.rows[z]&&g.rows[z][x];if(c>='1'&&c<='9')slots.push({i:+c-1,x:x+0.5,z:z+0.5});}
+ slots.sort((a,b)=>a.i-b.i);/* a car parked up against glass (the window cars) is looked at from behind: its sign and price card go on the showroom side */
+ const behind=s=>{const r=g.rows[Math.floor(s.z)+2];const c=r&&r[Math.floor(s.x)];return c==='H'||c==='#';};
+ g.dealer={slots:slots.map((s,i)=>({k:DEALER_LOT[s.i%DEALER_LOT.length],x:s.x,z:s.z,a0:0.5+i*1.3,tz:behind(s)?-1.6:1.4}))};
  g.solids=g.solids||[];for(const s of g.dealer.slots){g.solids.push({x:s.x,z:s.z,w:2.7,d:2.7});g.lights.push({x:s.x,y:2.4,z:s.z,r:3.4,c:[1.1,1.0,1.05]});}
  g.lights.push({x:g.W/2,y:2.2,z:6.4,r:6,c:[1.2,0.35,0.9]});
  g.obj="TALK TO VICTORY VIC · THEN BACK TO YOUR CAR";}
 function dealerHello(g){const n=g&&g.npcs.find(q=>q.kind==='vic');if(!n)return;const p=myProg(),first=!(p.seen&&p.seen.vic);g.say={who:'VICTORY VIC',txt:first?"Hey hey HEY! Over here, friend! Come on in, the cars won't sell themselves!":pick(VIC_HI),t:0,dur:4};}
 function dealerTargets(g,t){const n=g.npcs.find(q=>q.kind==='vic');if(n)t.push({k:'vic',x:n.x,z:n.z,r:2.7,lbl:'TALK TO VICTORY VIC'});
- for(const s of g.dealer.slots){const c=CARS[s.k],own=myProg().cars.includes(s.k);t.push({k:'show',car:s.k,x:s.x,z:s.z+1.4,r:2.0,lbl:carName(s.k)+(own?' · YOURS':' · $'+fmt(c.price))});}}
+ for(const s of g.dealer.slots){const c=CARS[s.k],own=myProg().cars.includes(s.k);t.push({k:'show',car:s.k,x:s.x,z:s.z+(s.tz||1.4),r:2.0,lbl:carName(s.k)+(own?' · YOURS':' · $'+fmt(c.price))});}}
 /* the lot car for a slot: your own signature model, or the dealer stock */
 function drawLotCar(B,k,x,z,a){if(k==='mid'){drawCarShape(B,x,z,1,a,null,MIDCAR,0);return;}if(DEALER_CARS[k]){drawCarShape(B,x,z,1,a,null,DEALER_CARS[k].shape,0);return;}
  const r0=B.round;B.round=0.5;const id=rideId();if(id==='don')drawRolls(B,x,z,1,a,0);else if(id==='consigliere')drawEscalade(B,x,z,1,a,0);else drawLambo(B,x,z,1,a,null,0);B.round=r0;}
@@ -271,9 +308,9 @@ function renderDealer(msg){const p=myProg(),x=p.carx||(p.carx={});$('stWallet').
  for(const id of ['stHome','stHomeH'])$(id).style.display='none';for(const id of ['stGold','stGoldH'])$(id).style.display='';$('stHome').innerHTML='';
  $('stCarsH').textContent='ON THE LOT';$('stGoldH').textContent="VIC'S GARAGE · FITS WHATEVER YOU DRIVE (NOW: "+carName(myCar())+')';
  $('stCars').innerHTML=DEALER_LIST.map((k,i)=>{const c=CARS[k],own=p.cars.includes(k),cur=p.car===k,lock=c.needs&&!p.cars.includes(c.needs);const act=cur?'DRIVING':own?'DRIVE IT':lock?'NEEDS THE '+carName(c.needs):'BUY $'+fmt(c.price);
-  return `<button class="scard${cur?' on':''}" data-car="${k}"${lock?' style="opacity:.55"':''}><div class="pn">${carName(k)}</div><div class="pd">${c.desc}</div><div class="sp">${act}<span class="kbhint"> (${i+1})</span></div></button>`;}).join('');
+  return `<button class="scard${cur?' on':''}" data-car="${k}"${lock?' style="opacity:.55"':''}><div class="pn">${carName(k)}</div><div class="pd">${c.desc}</div><div class="sp">${act}${i<9?`<span class="kbhint"> (${i+1})</span>`:''}</div>${carStatsHtml(k)}</button>`;}).join('');
  $('stGold').innerHTML=Object.keys(CARMODS).map((k,i)=>{const m=CARMODS[k],st=carModState(k,x),lock=m.needs&&!x[m.needs],done=m.once&&x[k];const act=done?'FITTED':lock?'NEEDS THE '+CARMODS[m.needs].name:(m.once?'':st+' · NEXT ')+'$'+fmt(m.price);
-  return `<button class="scard${done?' on':''}" data-cx="${k}"${lock?' style="opacity:.55"':''}><div class="pn">${m.name}</div><div class="pd">${m.desc}</div><div class="sp">${act}<span class="kbhint"> (${(DEALER_LIST.length+i+1)%10})</span></div></button>`;}).join('');
+  return `<button class="scard${done?' on':''}" data-cx="${k}"${lock?' style="opacity:.55"':''}><div class="pn">${m.name}</div><div class="pd">${m.desc}</div><div class="sp">${act}${DEALER_LIST.length+i<9?`<span class="kbhint"> (${DEALER_LIST.length+i+1})</span>`:''}</div></button>`;}).join('');
  $('stMsg').textContent=msg||'';const cs=document.querySelectorAll('#sStore .scard');cs.forEach((b,i)=>b.style.outline=padMode&&i===storeFocus?'3px solid #ffd36b':'');if(padMode&&cs[storeFocus]&&cs[storeFocus].scrollIntoView)cs[storeFocus].scrollIntoView({block:'nearest'});}
 function buyCarMod(k){const p=myProg(),x=p.carx||(p.carx={}),m=CARMODS[k];if(!m)return;if(m.once&&x[k])return renderStore('Already fitted.');if(m.needs&&!x[m.needs])return renderStore('Fit the '+CARMODS[m.needs].name+' first.');
  if(p.wallet<m.price){sfx('blip');dealerSay(pick(VIC_POOR));return renderStore('Not enough cash. Come back richer.');}
