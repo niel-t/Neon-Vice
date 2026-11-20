@@ -100,7 +100,9 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 #bCover{right:182px;bottom:calc(50% - 10px);background:rgba(120,90,220,.38)}
 #bPause{left:50%;top:6px;margin-left:-50px;width:42px;height:38px;border-radius:8px}
 #bRestart{left:50%;top:6px;margin-left:8px;width:42px;height:38px;border-radius:8px}
-#slapUI{position:fixed;inset:0;z-index:3;pointer-events:none;display:none}#bSlap{right:18px;bottom:calc(50% - 10px);background:rgba(255,90,170,.5);font-size:10px}
+#slapUI{position:fixed;inset:0;z-index:3;pointer-events:none;display:none}
+/* touch in a hub (homes, club, mall, the drive): a USE button that names what is in reach, and a pause button */
+#hubUI{position:fixed;inset:0;z-index:3;pointer-events:none;display:none}#bUse{right:18px;bottom:22%;width:118px;height:56px;border-radius:12px;font-size:8px;background:rgba(255,211,107,.42);box-shadow:0 0 12px rgba(255,211,107,.6);display:none}#bHubPause{left:50%;top:6px;margin-left:-21px;width:42px;height:38px;border-radius:8px}#bSlap{right:18px;bottom:calc(50% - 10px);background:rgba(255,90,170,.5);font-size:10px}
 #mercyUI{position:fixed;left:0;right:0;bottom:22%;z-index:4;display:none;justify-content:center;gap:28px;pointer-events:none}
 #mercyUI .tb{position:static;width:150px;height:64px;border-radius:12px;font-size:11px}
 #bSpare{background:rgba(60,200,110,.55)}#bFinish{background:rgba(230,40,70,.6)}
@@ -179,7 +181,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <body>
 <canvas id="gl"></canvas><canvas id="hud"></canvas>
 <div id="banner"></div><div id="cine"><div class="lb t"></div><div class="lb b"></div><div id="cineT"><div class="c1"></div><div class="c2"></div></div><div class="skp">TAP TO SKIP</div></div><div id="fade"></div><button class="btn sm" id="bSkip">SKIP TO McWEY<span class="kbhint"> (TAB)</span><span class="padhint"> (Y)</span></button>
-<div id="slapUI"><div class="tb" id="bSlap">SLAP</div></div><div id="mercyUI"><div class="tb" id="bSpare">SPARE HIM</div><div class="tb" id="bFinish">FINISH HIM</div></div>
+<div id="slapUI"><div class="tb" id="bSlap">SLAP</div></div><div id="hubUI"><div class="tb" id="bUse">USE</div><div class="tb" id="bHubPause">II</div></div><div id="mercyUI"><div class="tb" id="bSpare">SPARE HIM</div><div class="tb" id="bFinish">FINISH HIM</div></div>
 <div id="touchUI"><div class="tb" id="bGrab">GRAB</div><div class="tb" id="bReload">RELOAD</div><div class="tb" id="bSwap">SWITCH</div><div class="tb" id="bPerk">CASH</div><div class="tb" id="bCover" style="display:none">COVER</div><div class="tb" id="bPause">II</div><div class="tb" id="bRestart">&#8635;</div></div>
 <div id="sTitle" class="screen on">
   <div class="logo">NEON VICE</div><div class="logo2">OCEAN DRIVE</div>
@@ -2291,7 +2293,7 @@ function handPose(c,wt,wd,ph,stride){const atk=c.atkT>0?clamp(c.atkT/c.atkDur,0,
   return{R:[0.16,0.6,0.18],L:[-0.18,0.5,0.08],w:[0.16,0.6,0.18],dir:[0.15,0.7,0.65]};}
  return{R:[0.2,0.42,0.05],L:[-0.2,0.42,0.05]};}
 function drawChar(B,c){const Lk=c.hitT>0?flashLook(c.look):c.look;const BT=Lk.body||c.body,LT=BT==='fat'?1.22:BT==='big'?1.2:BT==='thin'?0.8:BT==='slim'?0.9:BT==='stocky'?1.1:1,SW=BT==='big'?1.1:BT==='thin'?0.93:BT==='stocky'?1.04:1,CW=BT==='big'?1.12:BT==='thin'?0.94:BT==='slim'?0.96:BT==='stocky'?1.06:1;const upright=c.alive&&!(c.down>0);const sc=c.sc||1;const bw=Lk.bw||1,bh=Lk.bh||1,bd=Lk.bd||1;
- {const pid=c.player?CHARS[selIdx].id:c.kind==='mcwey'?'mcwey':c.kind==='nine'?'nine':c.kind==='vic'?'vic':c.kind==='jeweler'?'schmaltzy':c.kind==='tailor'?'felix':c.kind==='furnman'?'lola':'look';if(B!==stageB&&!(c.hitT>0)&&PS2C.add(c,'game',sc*0.74,menuT,B,pid))return;}
+ {const pid=c.player?CHARS[selIdx].id:c.kind==='mcwey'?'mcwey':c.kind==='nine'?'nine':c.kind==='vic'?'vic':c.kind==='jeweler'?'schmaltzy':c.kind==='tailor'?'felix':c.kind==='furnman'?'lola':c.kind==='realtor'?'barbara':'look';if(B!==stageB&&!(c.hitT>0)&&PS2C.add(c,'game',sc*0.74,menuT,B,pid))return;}
  let base=A.mul(A.mul(A.T(c.x,(c.y||0)+liftAt(c.x,c.z),c.z),A.RY(c.a)),A.S(sc,sc,sc));
  const fe=c.fall===undefined?1:1-Math.pow(1-c.fall,2);
  if(!c.alive)base=A.mul(base,A.mul(A.T(0,0.13*bd*fe,0),A.RX(-Math.PI/2*fe)));else if(c.down>0)base=A.mul(base,A.mul(A.T(0,0.13*bd*fe,0),A.RX(Math.PI/2*fe)));
@@ -2956,10 +2958,21 @@ function hubModeSetup(name){const g=G,p=g.player;if(HUBMODE==='cruise')return tr
 function parkedStreet(dt){const g=G,p=g.player;for(const t of g.traffic){t.x+=t.dir*t.sp*dt;if(t.x>g.W+2)t.x=-2;if(t.x<-2)t.x=g.W+2;
   if(p&&Math.abs(p.x-t.x)<1.6&&Math.abs(p.z-t.z)<0.8){p.z+=Math.sign(p.z-t.z||-1)*0.12;if(!(t.honk>0)){t.honk=1.5;sfx('horn');popup(t.x,t.z,pick(['HEY!','*HONK*','WATCH IT!']),'#ffd36b');}}if(t.honk>0)t.honk-=dt;}}
 function hubTargets(g){const t=[];if(g.club){t.push({k:'car',x:g.park.x,z:g.park.z,r:2.3,lbl:rideHeli()?'YOUR CHOPPER':'YOUR CAR'});for(const d of g.club.dancers)if(!d.walking&&!d.lapDance)t.push({k:'tip',d,x:d.x,z:d.z,r:3.1,lbl:'THROW $100 AT '+d.dname});const v=g.club.vip;if(v.active){t.push({k:'laptip',x:v.chairX,z:v.chairZ,r:2.8,lbl:'THROW $100 AT '+v.dancer.dname+' · MOVE TO STAND UP'});return t;}if(g.club.tony)t.push({k:'tony',x:g.club.tony.x,z:g.club.tony.z,r:3.4,lbl:v.escort?'TALK TO TONY':'TONY · BOOK A VIP ROOM ($500)'});return t;}if(g.slots){const o=g.slots.o;if(o)t.push({k:'catalog',x:o.x,z:o.z,r:1.9,lbl:'PHONE · FURNITURE & SIDE JOBS'});const mv=g.home===3;if(!mv||g.mfl===1){const bp=homeBedPos(g);const gs=Math.min(bedN()-1,g.npcs.filter(q=>q.kind==='pgirl').length);t.push({k:'bed',x:bp.x,z:bp.z,r:2.0,lbl:gs?'GO TO BED WITH THE GIRL'+(gs>1?'S':''):'GO TO SLEEP'});if(gs&&!g.player.bed){const B=bigBedWorld(g.home,bedN());t.push({k:'massage',fn:()=>massageStart(g),x:B.x+1.25*B.s,z:B.z,r:1.6,lbl:'GET A MASSAGE'});}}if(!mv||g.mfl===-1){const lp=homeLockerPos(g);t.push({k:'locker',x:lp.x,z:lp.z,r:1.8,lbl:'GUN LOCKER · '+myProg().locker.items.length+'/'+LOCKER_CAP});}if(mv&&!g.seatP)mansionTargets(g,t);const f=homeFurn();if(g.home===1&&f.hifi&&g.slots.b)t.push({k:'hifi',x:g.slots.b.x-0.4,z:g.slots.b.z+0.3,r:1.9,lbl:'HI-FI · CHANGE TRACK'});hlTargets(g,t);if(g.seatP){const u=[];seatTargets(g,u);return u;}seatTargets(g,t,homeSeats(g));return t;}const car=g.park||(g.parked?g.pcar:null);if(car)t.push({k:'car',x:car.x,z:car.z,r:2.3,lbl:rideHeli()?'YOUR CHOPPER':'YOUR CAR'});const n=g.npcs.find(q=>q.kind==='nine');if(n)t.push({k:'nine',x:n.x,z:n.z,r:2.7,lbl:'NINE OF NINE'});if(g.dealer)dealerTargets(g,t);if(g.mall)mallTargets(g,t);if(g.up2)up2Targets(g,t);if(g.def===HUBS.lobby||g.def===HUBS.office||g.def===HUBS.bunker||g.def===HUBS.mall||g.def===HUBS.mall2){const p=g.player;let nb=null,nd=1.9;if(p)for(const q of g.npcs){if(!NPC_CHAT[q.kind])continue;const d=Math.hypot(q.x-p.x,q.z-p.z);if(d<nd){nd=d;nb=q;}}if(nb)t.push({k:'talk',n:nb,x:nb.x,z:nb.z,r:1.9,lbl:'TALK'});if(g.lounge)seatTargets(g,t);}return t;}
+/* a tap in a hub: the target drawn nearest the finger wins (homes pack a bar, its stools and a sofa close together), among those you
+   can reach; the floating TAP prompt over the one in reach counts as that target. Returns the target, false (too far) or null. */
+function hubTapPick(ts,cx,cy,p,ia){let go=null,gd=80,far=false;
+ for(const t of ts){const s=project(t.x,0.8,t.z);if(!s)continue;let d=Math.hypot(s[0]-cx,s[1]-cy);
+  if(t===ia){const s2=project(t.x,1.9,t.z);if(s2)d=Math.min(d,Math.hypot(s2[0]-cx,s2[1]-cy+12));}
+  if(d>=80)continue;if(Math.hypot(t.x-p.x,t.z-p.z)<t.r+3){if(d<gd){gd=d;go=t;}}else far=true;}
+ return go||(far?false:null);}
+/* touch in a hub: USE (what is in reach, same as E / pad A) and pause; in a job the regular touch buttons have both */
+function hubTouchLabel(t){let l=String(t.lbl||'USE').split(' · ')[0].replace(/^THROW \$100 AT .*/,'TIP $100');if(l.length>22)l=l.slice(0,21)+'…';return l;}
+function hubTouchUI(){const el=$('hubUI'),g=G,on=!!(touchMode&&state==='play'&&g&&g.def&&g.def.hub&&!g.rangeOn&&!g.cine);if(el._on!==on){el._on=on;el.style.display=on?'block':'none';}if(!on)return;
+ const b=$('bUse'),ia=!g.hubDone&&!g.seq&&g.player&&g.player.alive?g.ia:null,l=ia?hubTouchLabel(ia):'';if(b.dataset.l!==l){b.dataset.l=l;b.textContent=l;b.style.display=l?'flex':'none';}}
 function hubInteract(){const g=G,p=g.player;if(!p||g.hubDone)return;const ts=hubTargets(g);let best=null,bd=1e9;
  for(const t of ts){const d=Math.hypot(t.x-p.x,t.z-p.z);if(d<t.r&&d<bd){bd=d;best=t;}}g.ia=best;let go=null;
  if(pressed.grab&&best){go=best;pressed.grab=false;}
- if(g.click){const cx=g.click[0],cy=g.click[1];g.click=null;for(const t of ts){const s=project(t.x,0.8,t.z);if(s&&Math.hypot(s[0]-cx,s[1]-cy)<80){if(Math.hypot(t.x-p.x,t.z-p.z)<t.r+3)go=t;else popup(p.x,p.z,'GET CLOSER','#ffd36b');break;}}}
+ if(g.click){const cx=g.click[0],cy=g.click[1];g.click=null;const hit=hubTapPick(ts,cx,cy,p,best);if(hit===false)popup(p.x,p.z,'GET CLOSER','#ffd36b');else if(hit)go=hit;}
  if(go){mouse.down=false;if(go.fn)go.fn(go);else if(go.k==='car')openCarMenu();else if(go.k==='catalog')openStore('home');else if(go.k==='locker')openStore('locker');else if(go.k==='bed')goSleep();else if(go.k==='hifi')hifiNext();else if(go.k==='tip')tipDancer(go.d);else if(go.k==='tony'){if(g.club.vip.escort)tonyTalk();else openStore('vip');}else if(go.k==='vip_end')stopLapdance();else if(go.k==='laptip')lapTip();else if(go.k==='talk')npcTalk(g,go.n);else if(go.k==='sit'){if(go.s.tub)tubIn(g,go.s);else sitDown(g,go.s);}else if(go.k==='stand')seatUp(g);else if(go.k==='shop')openMallShop(go.shop);else if(go.k==='dir')mallDirectory();else if(go.k==='vic'||go.k==='show')openDealer(go.car);else openShop();}}
 /* wallet + armory, saved per character next to lvl/xp/perks */
 function arm(){const p=myProg();if(typeof p.wallet!=='number')p.wallet=0;if(p.debt===undefined){p.debt=MC_LOAN;if(p.paid===undefined)p.paid=false;}
@@ -4627,7 +4640,7 @@ function render(){if(contextLost||gl.isContextLost())return;PS2C.beginFrame();re
  gl.bindTexture(gl.TEXTURE_2D,rt.tex);gl.uniform1i(L2.uS,0);gl.uniform2f(L2.uRes,rtW,rtH);gl.uniform1f(L2.uDith,enh?0:1);gl.uniform1f(L2.uVHS,menu?(enh?0.3:1):0);gl.uniform1f(L2.uGrain,SET.grain);gl.uniform1f(L2.uGlitch,SET.glitch?(menu?1:0.3):0);gl.uniform1f(L2.uBloom,enh?(menu?0.9:0.75):0);gl.uniform1f(L2.uEnh,enh?1:0);gl.uniform1f(L2.uTime,menuT);
  const fl=(!menu&&G)?G.flash:0,fc=(!menu&&G)?G.flashC:[0,0,0];gl.uniform4f(L2.uFlash,fc[0],fc[1],fc[2],clamp(fl,0,0.7));
  gl.drawArrays(gl.TRIANGLES,0,6);gl.disableVertexAttribArray(L2.aQ);
- if(NX&&NX.live)NX.draw({G,eye,tgt,fovy,asp,lights,amb,lc,ld,fog,fogC,dynB,poolB,glassB,ovB,IBhi,IBlo,atlasTex,grain:SET.grain,time:menuT});
+ if(NX&&(NX.live||NX.warming))NX.draw({G,eye,tgt,fovy,asp,lights,amb,lc,ld,fog,fogC,dynB,poolB,glassB,ovB,IBhi,IBlo,atlasTex,grain:SET.grain,time:menuT});
  if(SNAP)SNAP();}
 function rebuildDecals(){const B=G.decalB;B.reset();for(const d of G.decals){if(d.drip){dripQuad(B,d,d.len);continue;}
  if(d.w){const tx=-d.nz,tz=d.nx,h=d.s/2,ox=d.x+d.nx*0.012,oz=d.z+d.nz*0.012;{const ly=d.y+liftAt(d.x,d.z);B.quad([[ox-tx*h,ly-h,oz-tz*h],[ox+tx*h,ly-h,oz+tz*h],[ox+tx*h,ly+h,oz+tz*h],[ox-tx*h,ly+h,oz-tz*h]],d.nx,0,d.nz,TUV[d.t],d.c);}}
@@ -5268,7 +5281,7 @@ $('bGrain').onclick=()=>{const L=[0,0.2,0.35,0.6];SET.grain=L[(L.indexOf(SET.gra
 $('bHints').onclick=()=>{SET.hints=!SET.hints;saveSet();syncSetBtns();};$('bCoverSet').onclick=()=>{SET.cover=!SET.cover;saveSet();syncSetBtns();};$('bAim').onclick=()=>{SET.aim=SET.aim==='laser'?'subtle':'laser';saveSet();syncSetBtns();};$('bFog').onclick=()=>{SET.fog=SET.fog==='on'?'off':SET.fog==='off'?'auto':'on';saveSet();syncSetBtns();};$('bGore').onclick=()=>{SET.gore=SET.gore==='normal'?'extreme':'normal';saveSet();syncSetBtns();};$('bText').onclick=()=>cycleTextSize();
 $('bQuit').onclick=()=>{state='title';G=null;show('sTitle');};
 const tbtn=(id,fn)=>{const el=$(id);el.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();fn();},{passive:false});el.addEventListener('mousedown',e=>{e.stopPropagation();fn();});};
-tbtn('bSpare',()=>pressed.spare=true);tbtn('bSlap',()=>pressed.slap=true);tbtn('bFinish',()=>pressed.finish=true);tbtn('bGrab',()=>pressed.grab=true);tbtn('bReload',()=>pressed.reload=true);tbtn('bSwap',()=>pressed.swap=true);tbtn('bPerk',()=>pressed.perk=true);tbtn('bCover',()=>pressed.cover=true);tbtn('bPause',()=>togglePause());tbtn('bRestart',()=>restart());
+tbtn('bSpare',()=>pressed.spare=true);tbtn('bSlap',()=>pressed.slap=true);tbtn('bFinish',()=>pressed.finish=true);tbtn('bGrab',()=>pressed.grab=true);tbtn('bReload',()=>pressed.reload=true);tbtn('bSwap',()=>pressed.swap=true);tbtn('bPerk',()=>pressed.perk=true);tbtn('bCover',()=>pressed.cover=true);tbtn('bPause',()=>togglePause());tbtn('bUse',()=>pressed.grab=true);tbtn('bHubPause',()=>togglePause());tbtn('bRestart',()=>restart());
 
 /* ================= INPUT ================= */
 addEventListener('keydown',e=>{if(contextLost)return;keys[e.code]=true;if(state==='play'&&G&&G.seq&&!e.repeat&&(e.code==='Enter'||e.code==='Space'||e.code==='NumpadEnter'))G.seq.tap=true;// a quick tap can come and go between two slow frames
@@ -5315,6 +5328,7 @@ function frame(now){if(contextLost||gl.isContextLost())return;requestAnimationFr
  engineOn(state==='play'&&!!G&&(G.def.hub==='drive'&&!G.parked||G.def.hub==='cruise')&&SET.sound);$('cine').style.display=(state==='play'&&G&&G.cine)?'block':'none';$('bSkip').style.display=(state==='play'&&G&&G.def.hub)?'block':'none';
  pressed.grab=pressed.perk=pressed.restart=pressed.pause=pressed.reload=pressed.swap=pressed.cover=pressed.slap=false;pressed.slot=0;
  const tui=touchMode&&state==='play'&&!(G&&G.def.hub&&!G.rangeOn);$('touchUI').style.display=tui?'block':'none';
+ hubTouchUI();
  {const su=$('slapUI'),on=!!(touchMode&&state==='play'&&G&&G.def&&G.def.hub&&G.slapN);if(su._on!==on){su._on=on;su.style.display=on?'block':'none';}}
  {const mu=$('mercyUI'),on=!!(G&&G.mercy&&G.mercy.ask&&state==='play')&&!padMode;if(mu._on!==on){mu._on=on;mu.style.display=on?'flex':'none';}}
  if(tui&&G){$('bPerk').style.display=CHARS[selIdx].id==='money'?'flex':'none';$('bCover').style.display=SET.cover?'flex':'none';const p=G.player,ca=p.alive?ctxAction(p):{l:'GRAB'},lbl=ca.l;const b=$('bGrab');if(b.dataset.l!==lbl){b.innerHTML=lbl;b.dataset.l=lbl;b.style.background=ca.hot?'rgba(255,211,107,.55)':'';b.style.boxShadow=ca.hot?'0 0 14px #ffd36b':'';}}

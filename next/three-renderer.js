@@ -145,6 +145,8 @@ export function create(N,oldGL){
     left a few dozen 512px textures and meshes on the GPU */
  function free(parts){for(const mm of parts||[]){const g=charGeo.get(mm);if(g){g.dispose();charGeo.delete(mm);}
    const e=mm.tex&&texCache.get(mm.tex);if(e){e.t.dispose();texCache.delete(mm.tex);}}}
+ /* models.js warmLooks built a model ahead of time: make its mesh and upload its texture now, not on the frame it first shows */
+ function prep(parts){try{for(const mm of parts||[]){geoOf(mm);const t=texOf(mm.tex,false);if(t)renderer.initTexture(t);}}catch(e){}}
  function syncChars(){let k=0;const M=N.models;
   if(M)for(const q of N.chars){const parts=M[q.id];if(!parts)continue;const NB=q.B.length/16;
    for(const mm of parts){const g=geoOf(mm),tx=texOf(mm.tex,false);if(!g||!tx)continue;let s=charPool[k];
@@ -185,15 +187,47 @@ export function create(N,oldGL){
  function quality(){if(window.QLOCK!==undefined){setQ(window.QLOCK);return;}if(q<0)setQ(0);const now=performance.now(),dt=now-last;last=now;if(dt>250)return;ema=ema*0.95+dt*0.05;
   if(ema>24){slowT+=dt;if(slowT>2500&&q<3){setQ(q+1);slowT=0;}}else if(ema<14){slowT-=dt;if(slowT<-8000&&q>0){setQ(q-1);slowT=0;}}else slowT*=0.98;}
 
- /* ---- warm-up: the first gameplay frame only hands the level to Three and asks the driver to build every
-    shader in the background (KHR_parallel_shader_compile). The classic renderer keeps drawing until that is
-    done, so the switch to the new renderer does not freeze the game. Programs are built for the HDR target
-    the scene is really drawn into, otherwise Three would build them a second time on the first frame. ---- */
- let warm=0;
- function warmUp(){warm=1;N.warming=true;N.live=false;show(false);const t0=performance.now();let p;
-  try{renderer.setRenderTarget(composer.readBuffer);if(renderer.extensions.has('KHR_parallel_shader_compile'))p=renderer.compileAsync(scene,camera);else{renderer.compile(scene,camera);p=Promise.resolve();}}catch(e){p=Promise.resolve();}renderer.setRenderTarget(null);
-  const done=()=>{if(warm===2)return;warm=2;N.warming=false;N.warmMs=Math.round(performance.now()-t0);N.warmPrograms=renderer.info.programs?renderer.info.programs.length:0;};
-  p.then(done,done);setTimeout(done,8000);}
+ /* ---- warm-up: the first gameplay frames only hand the level to Three and build every shader it will need, while the
+    classic renderer keeps drawing, so switching to the new renderer does not freeze the game. renderer.compile() only sees
+    the scene's own materials, so the rest is collected too: the characters' skinned shader (they may not be on screen yet),
+    the shadow-map depth shaders, the bloom/output/film passes (a dry run of the composer that compiles instead of drawing)
+    and the scene with shadows switched the other way (the automatic quality ladder turns them off and on).
+    With KHR_parallel_shader_compile the driver builds them all in the background; without it (some phones and browsers)
+    they are built a few per frame so no single frame stalls for long. ---- */
+ let warm=0,jobs=null,warmT0=0,warmP=null;
+ const WGEO=(()=>{const g=new THREE.BufferGeometry(),z=n=>new THREE.BufferAttribute(new Float32Array(3*n),n);g.setAttribute('position',z(3));g.setAttribute('normal',z(3));g.setAttribute('uv',z(2));
+  g.setAttribute('aBi',z(4));g.setAttribute('aBw',z(4));g.boundingSphere=BIG;return g;})();
+ const wMesh=m=>{const me=new THREE.Mesh(WGEO,m);me.frustumCulled=false;return me;};
+ function warmJobs(atlas){const J=[],D=[],rt=composer.readBuffer;
+  const nbs=typeof PS2C!=='undefined'&&PS2C.nbs||0;
+  /* depth shaders the shadow pass will use: a caster's customDepthMaterial, else Three's own depth material, either way
+     given the caster's map, alpha test and flipped side the way WebGLShadowMap does it */
+  const seen=new Set(),depthOf=(m,d)=>{const k=(d?d.uuid:'')+'|'+(m.map?1:0)+'|'+m.alphaTest+'|'+m.side;if(seen.has(k))return;seen.add(k);d=d||new THREE.MeshDepthMaterial();
+   d.map=m.map;d.alphaTest=m.alphaTest;d.side=m.shadowSide!==null?m.shadowSide:m.side===THREE.DoubleSide?THREE.DoubleSide:m.side===THREE.BackSide?THREE.FrontSide:THREE.BackSide;D.push({o:wMesh(d),tgt:rt,depth:1});};
+  if(nbs){const sk=skinMats(nbs);sk.m.map=atlas;J.push({o:wMesh(sk.m),tgt:rt});depthOf(sk.m,sk.d);}
+  scene.traverse(o=>{if(o.isMesh&&o.castShadow)depthOf(o.material,o.customDepthMaterial);});
+  /* the scene's own materials, one mesh per job */
+  scene.traverse(o=>{if(o.isMesh)J.push({o,tgt:rt});});
+  /* dry run of the post-processing chain: every draw it would make becomes a compile with the same target */
+  const real=renderer.render,bl=bloom.enabled;bloom.enabled=true;
+  renderer.render=function(sc,cam){if(sc!==scene)J.push({o:sc,cam,tgt:renderer.getRenderTarget(),mat:sc.material});};
+  try{composer.render(0);}catch(e){}finally{renderer.render=real;bloom.enabled=bl;renderer.setRenderTarget(null);}
+  /* last: the scene again with shadows the other way round */
+  scene.traverse(o=>{if(o.isMesh)J.push({o,tgt:rt,flip:1});});
+  /* depth shaders go last: the shadow pass reuses the light set-up left by the previous compile or frame, which then has the sun's shadow in it */
+  return J.concat(D);}
+ /* the shadow pass draws with the scene's lights and shadow but no fog; a post pass draws its quad on its own (no lights, no fog) */
+ function runJob(j,list){const was=sun.castShadow,fog=scene.fog,m0=j.mat?j.o.material:null,tsc=j.mat?j.o:scene;
+  try{if(j.flip)sun.castShadow=!was;if(j.depth){sun.castShadow=true;scene.fog=null;}if(j.mat)j.o.material=j.mat;renderer.setRenderTarget(j.tgt||null);
+   if(list)list.push(renderer.compileAsync(j.o,j.cam||camera,tsc));else renderer.compile(j.o,j.cam||camera,tsc);}
+  catch(e){if(!N.warmErr)console.warn('NVNEXT warm-up',N.warmErr=e);}finally{sun.castShadow=was;scene.fog=fog;if(m0)j.o.material=m0;renderer.setRenderTarget(null);}}
+ function warmUp(atlas){
+  if(!warm){warm=1;N.warming=true;N.live=false;show(false);warmT0=performance.now();try{renderer.initTexture(atlas);}catch(e){}try{jobs=warmJobs(atlas);}catch(e){jobs=[];}N.warmJobs=jobs.length;
+   if(renderer.extensions.has('KHR_parallel_shader_compile')){const ps=[];for(const j of jobs)runJob(j,ps);jobs=[];warmP=Promise.all(ps);warmP.then(warmDone,warmDone);setTimeout(warmDone,8000);}
+   return;}
+  /* no background compiling: a few jobs per frame, within a small time budget */
+  if(jobs&&jobs.length){const t=performance.now();while(jobs.length&&performance.now()-t<12)runJob(jobs.shift());if(!jobs.length&&!warmP)warmDone();}}
+ function warmDone(){if(warm===2)return;warm=2;N.warming=false;N.warmMs=Math.round(performance.now()-warmT0);N.warmPrograms=renderer.info.programs?renderer.info.programs.length:0;}
 
  const V=new THREE.Vector3();
  function draw(o){quality();resize();const G=o.G;
@@ -209,8 +243,8 @@ export function create(N,oldGL){
   syncInst(mHi,o.IBhi);syncInst(mLo,o.IBlo);syncChars();
   N._ground.position.y=G.up2?-3.5:G.lowGround?-3.55:-0.03;N._ground.position.x=Math.round(o.tgt[0]/2)*2;N._ground.position.z=Math.round(o.tgt[2]/2)*2;
   film.uniforms.t.value=o.time%10;film.uniforms.grain.value=o.grain||0;const fl=Math.min(Math.max(G.flash||0,0),0.7),fc=G.flashC||[0,0,0];film.uniforms.flash.value.set(fc[0],fc[1],fc[2],fl);
-  if(!warm){warmUp();return;}
+  if(warm<2){warmUp(atlas);return;}
   composer.render();N.frames=(N.frames||0)+1;}
  function show(live){canvas.style.display=live?'block':'none';oldCanvas.style.visibility=live?'hidden':'';}
- return{draw,show,free,LOOK,scene,camera,renderer,bloom,get quality(){return q;}};
+ return{draw,show,free,prep,LOOK,scene,camera,renderer,bloom,get quality(){return q;}};
 }

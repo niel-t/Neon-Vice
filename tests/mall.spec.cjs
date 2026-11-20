@@ -83,7 +83,7 @@ test('mall: the keepers have photo faces, and Fontaine Tailoring sells suits you
       loadHub('mall'); while (G.seq) seqSkip();
       const g = G, p = myProg(), id = CHARS[selIdx].id;
       out.keepers = Object.fromEntries(g.mall.keepers.map(n => [n.shop, n.kind]));
-      out.photos = ['schmaltzy', 'felix', 'lola'].every(k => ART[k] && ART[k].startsWith('data:image/jpeg'));
+      out.photos = ['schmaltzy', 'felix', 'lola', 'barbara'].every(k => ART[k] && ART[k].startsWith('data:image/jpeg'));
       out.names = [MALL_SHOPS.jewel.short, MALL_SHOPS.tailor.short, MALL_SHOPS.furn.short];
       // the tailor's rail is a target too
       out.rail = hubTargets(g).some(t => t.k === 'shop' && t.shop === 'tailor');
