@@ -145,7 +145,7 @@ function stkRumor(kind){if(typeof myProg!=='function'||!G||!G.def||!G.def.hub)re
 /* ---- the screen: the ticker tape, the chosen stock big (chart, position, actions), the board of all stocks, tips and rumours ---- */
 function stkCarBtn(){const b=$('bCarStocks');if(!b)return;const p=myProg(),s=stkSave(p),v=stkValue(p),c=stkCost(p),gl=s.goal,rp=s.rep&&s.repSeen!==s.rep.day?s.rep:null;
  b.classList.toggle('sxPing',!!((gl&&gl.done)||rp));
- b.innerHTML='THE DADE EXCHANGE &middot; '+(gl&&gl.done?'<span style="color:#ffd36b">GOAL DONE · COLLECT $'+fmt(gl.rew)+'</span>':rp?'<span style="color:'+(rp.d>=0?'#7dff9a':'#ff6a6a')+'">NEW REPORT '+stkMoney(rp.d)+'</span>':!s.gift?'<span style="color:#ffd36b">FREE STARTER STOCK</span>':v>0?'STOCKS $'+fmt(v)+' <span style="color:'+(v>=c?'#7dff9a':'#ff6a6a')+'">'+(v>=c?'+':'')+Math.round((v/c-1)*100)+'%</span>':'STOCKS &amp; TIPS')+'<span class="kbhint"> (I)</span><span class="padhint"> (&rarr;)</span>';}
+ b.innerHTML='THE DADE EXCHANGE &middot; '+(gl&&gl.done?'<span style="color:#ffd36b">GOAL DONE · COLLECT $'+fmt(gl.rew)+'</span>':rp?'<span style="color:'+(rp.d>=0?'#7dff9a':'#ff6a6a')+'">NEW REPORT '+stkMoney(rp.d)+'</span>':!s.gift?'<span style="color:#ffd36b">FREE STARTER STOCK</span>':v>0?'STOCKS $'+fmt(v)+' <span style="color:'+(v>=c?'#7dff9a':'#ff6a6a')+'">'+(v>=c?'+':'')+Math.round((v/c-1)*100)+'%</span>':'STOCKS &amp; TIPS')+'<span class="kbhint"> (I)</span><span class="padhint"> (Y)</span>';}
 function openStocks(){if(state!=='carmenu'||fading)return;sfx('ring');state='stocks';stkSave();const L=stkVisible();STK_SEL=Math.max(0,Math.min(STK_SEL,L.length-1));STK_VIEW='desk';show('sStocks');const g=stkGift();const s=stkSave();s.repSeen=s.day;saveProg();renderStocks(g?'First one is on the house: $'+fmt(g.cost)+' of '+stkQ(g.k).t+'. Welcome to the market.':'Chip Whitmore here. What are we buying?');if(!s.tut)stkCoachStart();}
 function closeStocks(){if(state!=='stocks')return;if(stkCoachOn()){STK_COACH_I=-1;stkCoachShow();}sfx('blip');openCarMenuForce();}
 const stkVisible=()=>STK_LIST.filter(stkListed);
@@ -208,8 +208,8 @@ function stkKey(e){if(stkCoachOn()){stkCoachKey(e);return;}const c=e.code;if(c==
 function stkPad(dir){if(stkCoachOn()){stkCoachPad();return;}if(pdown(1)||pdown(14)){closeStocks();return;}if(pdown(8)){stkView();return;}if(STK_VIEW==='desk'){stkDeskPad(dir);return;}if(pdown(12)||dir<0)stkSelect(STK_SEL-1);else if(pdown(13)||dir>0)stkSelect(STK_SEL+1);
  else if(pdown(0))stkAct(STK_SEL,'b0');else if(pdown(3))stkAct(STK_SEL,'b1');else if(pdown(2))stkAct(STK_SEL,'sell');else if(pdown(5))stkAct(STK_SEL,'tip');
  else if(pdown(4))stkAct(STK_SEL,'s0');else if(pdown(7))stkAct(STK_SEL,'cover');else if(pdown(6))stkAct(STK_SEL,'stop');}
-{/* the car-menu button sits above McWEY TOWER */
- const b=document.createElement('button');b.className='btn alt';b.id='bCarStocks';$('bCarMcWey').before(b);b.onclick=()=>openStocks();
+{/* the car-menu button sits with the car phone under the travel map's card */
+ const b=document.createElement('button');b.className='btn alt';b.id='bCarStocks';$('bCarPhone').after(b);b.onclick=()=>openStocks();
  $('sxList').addEventListener('click',e=>{const c=e.target.closest('.sxC');if(c&&+c.dataset.i!==STK_SEL){STK_SEL=+c.dataset.i;sfx('blip');renderStocks('');}});
  $('sxDetail').addEventListener('click',e=>{const t=e.target.closest('button[data-act]');if(t&&!t.disabled)stkAct(+t.dataset.i,t.dataset.act);});
  $('sxTip').addEventListener('click',e=>{const t=e.target.closest('button[data-act]');if(t&&!t.disabled)stkAct(STK_SEL,'tip');});
