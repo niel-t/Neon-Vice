@@ -10,8 +10,9 @@ const TMAP_PLACES={
  shop:{x:44,y:62,area:'LITTLE HAVANA',col:'#2de2e6'},
  club:{x:127,y:63,area:'SOUTH BEACH',col:'#ff5fb8'},
  dealer:{x:82,y:27,area:'MIDTOWN',col:'#2de2e6'}};
-/* the four homes: Room 14 (Sunset Motel), the Ocean Drive studio, Coral Tower penthouse, Villa Solana */
-const TMAP_HOMES=[{x:24,y:22,area:'HIALEAH'},{x:130,y:80,area:'OCEAN DRIVE'},{x:68,y:73,area:'BRICKELL'},{x:107,y:60,area:'STAR ISLAND'}];
+/* the homes: Room 14 (Sunset Motel), the Ocean Drive studio, Coral Tower penthouse, Villa Solana, then homes.js: the casita, the houseboat, the Flamingo Arms, Casa del Sol */
+const TMAP_HOMES=[{x:24,y:22,area:'HIALEAH'},{x:130,y:80,area:'OCEAN DRIVE'},{x:68,y:73,area:'BRICKELL'},{x:107,y:60,area:'STAR ISLAND'},
+ {x:36,y:58,area:'LITTLE HAVANA'},{x:70,y:92,area:'DINNER KEY'},{x:134,y:70,area:'SOUTH BEACH'},{x:47,y:94,area:'COCONUT GROVE'}];
 /* campaign floors by LEVELS index (missionBase), kept clear of the fixed pins */
 const TMAP_JOBS=[{x:54,y:40,area:'ALLAPATTAH'},{x:122,y:42,area:'MID BEACH'},{x:68,y:73,area:'BRICKELL'},{x:97,y:66,area:'DODGE ISLAND'},
  {x:60,y:28,area:'WYNWOOD'},{x:131,y:22,area:'NORTH BEACH'},{x:30,y:46,area:'FLAGAMI'},{x:116,y:86,area:'FISHER ISLAND'},
