@@ -343,6 +343,7 @@ const TRS=(x,y,z,ry,sx,sy,sz)=>A.mul(A.mul(A.T(x,y,z),A.RY(ry)),A.S(sx,sy,sz));
 <script src="act3.js"></script>
 <script src="upstairs.js"></script>
 <script src="mansion.js"></script>
+<script src="homes.js"></script>
 <script src="slap.js"></script>
 <script src="club.js"></script>
 <script src="guide.js"></script>
@@ -874,7 +875,7 @@ const PERKS={
  second:{name:'SECOND WIND',max:1,cap:12,desc:'CAPSTONE. Once per floor a fatal hit leaves you on your last hit instead'},
  slammer:{name:'SLAM MASTER',max:1,cap:12,desc:'CAPSTONE. Every slam refills the magazine in your hand'},
  phantom:{name:'GHOST',max:1,cap:12,desc:'CAPSTONE. Your shots make no noise until your first kill on each floor'}};
-const HOME_COUNT=4;
+const HOME_COUNT=8;
 const PROG=(()=>{const o=readSave('nb86prog');for(const c of CHARS){
  savedField('nb86prog',o,c.id,{},saveObject);const p=o[c.id];
  savedField('nb86prog',p,'lvl',1,n=>Number.isInteger(n)&&n>=1&&n<=30);
@@ -883,7 +884,7 @@ const PROG=(()=>{const o=readSave('nb86prog');for(const c of CHARS){
  for(const k of ['jewel','seen','furn','rel','wflags','mast','mods','rep','carx','props','tailor','gear','meds','arcade','shades'])if(p[k]!=null)savedField('nb86prog',p,k,{},saveObject);
  if(p.cars!=null)savedField('nb86prog',p,'cars',['beater'],Array.isArray);
  if(p.homes!=null)savedField('nb86prog',p,'homes',[0],Array.isArray);
- /* HOMEDEF is declared further down (after the saves load), so the number of homes is a plain constant here: motel, studio, penthouse, mansion */
+ /* HOMEDEF is declared further down (after the saves load), so the number of homes is a plain constant here: motel, studio, penthouse, mansion, then the four from homes.js */
  if(p.home!=null)savedField('nb86prog',p,'home',0,n=>Number.isInteger(n)&&n>=0&&n<HOME_COUNT&&(p.homes||[0]).includes(n));
  if(p.arm!=null){savedField('nb86prog',p,'arm',{},saveObject);for(const k of ['owned','stock'])savedField('nb86prog',p.arm,k,[],Array.isArray);}
  if(p.kit!=null)savedField('nb86prog',p,'kit',null,kitShape);
@@ -2721,7 +2722,7 @@ const HUBS={
  "|.o....o.....o.....o...|",
  "||||||||||||||||||||||||"]},
 };
-Object.assign(HUBS,MANSION_HUBS); /* Villa Solana's three floors (mansion.js) */
+Object.assign(HUBS,MANSION_HUBS,RH_HUBS); /* Villa Solana's three floors (mansion.js), the casita, houseboat, condo and Grove villa (homes.js) */
 let VISIT={debrief:null,next:0,grade:null,take:0,style:null},HUBFIRST=true;let runStyle={},RUNEND=null;
 function hubSetup(g){const d=g.def;g.npcs=g.npcs||[];g.trigs=g.trigs||[];
  {const act=g.trigs.filter(trigOn),src=act.length?act:g.trigs.filter(t=>t.t!=='exit');if(src.length){let sx=0,sz=0;for(const t of src){sx+=t.x;sz+=t.z;}g.car={x:sx/src.length,z:sz/src.length};}}
@@ -2860,7 +2861,7 @@ function departTo(go,t1,t2){const g=G;if(!g||!g.def.hub||g.seq||!g.player||fadin
 /* out of the bay or off the kerb and away down the road */
 function departPath(g,c,a){const x=c.x,z=c.z;
  if(g.def.hub==='drive')return[[x,z],[x+2.4,z+0.5],[x+5.2,8.5],[x+24,8.5]];
- if(g.lot)return venueDepartPath(g,c);if(g.mansion)return mvDepartPath(c);const fx=Math.cos(a),fz=-Math.sin(a);if(g.club)return[[x,z],[x+fx*3,z+fz*3+0.7],[x+fx*24,z+fz*24+0.7]];return[[x,z],[x+fx*24,z+fz*24]];}
+ if(g.lot)return venueDepartPath(g,c);if(g.mansion)return mvDepartPath(c);if(g.rhome){const rp=rhDepartPath(g,c);if(rp)return rp;}const fx=Math.cos(a),fz=-Math.sin(a);if(g.club)return[[x,z],[x+fx*3,z+fz*3+0.7],[x+fx*24,z+fz*24+0.7]];return[[x,z],[x+fx*24,z+fz*24]];}
 /* ---- pulling up at Nine's or the club: drive in along the street, park, walk to the door ---- */
 function hubArrive(g){if(!g||g!==G||!g.park||!g.player||rideHeli())return;const c=g.park,p=g.player,x1=c.x,z=c.z,end=[p.x,p.z];c.a=0;c.spin=0;seqCamTo(g,x1,z);
  const lot=!!g.lot;startSeq([{k:'hide',quiet:1},{k:'drive',car:c,path:lot?venueArrivePath(g,c):[[x1-15,z],[x1,z]],dur:lot?2.8:2.3,ease:'out',camEnd:1},{k:'wait',dur:0.3},{k:'out',car:c,at:lot?[x1-0.25,z-0.72]:[x1-0.25,z+0.68],a:lot?Math.PI:0},{k:'walk',path:[end],max:5}],g=>{if(g.def===HUBS.club)banner('VELVET PALMS','Tip the dancers · talk to Tony');else if(g.def===HUBS.mall)mallHello(g);else banner("NINE OF NINE'S",'Exotic machinery of death');});}
@@ -2874,7 +2875,7 @@ function goHome(){arm();empNews();const h=myProg().home||0;if(HOME_ARRIVE[h]){lo
 const HOME0_CAR={x:13.0,z:2.2,a:0};
 function homeCar(g){if(g.home!==0)return;const c=HOME0_CAR;g.hcar={x:c.x,z:c.z,a:c.a,spin:0};g.solids=g.solids||[];g.solids.push({x:c.x,z:c.z,w:2.35,d:1.05});
  g.trigs.push({x:c.x-0.5,z:c.z+0.78,t:'leave'});g.car={x:c.x,z:c.z};}
-function homeArrive(g){if(g&&g.home===3)return mansionArrive(g);if(!g||g.home!==0||!g.hcar)return;const c=g.hcar,c0=HOME0_CAR;seqCamTo(g,c0.x,c0.z+1);
+function homeArrive(g){if(g&&g.home===3)return mansionArrive(g);if(g&&g.rhome)return rhArrive(g);if(!g||g.home!==0||!g.hcar)return;const c=g.hcar,c0=HOME0_CAR;seqCamTo(g,c0.x,c0.z+1);
  startSeq([{k:'hide',quiet:1},{k:'card',t1:'SUNSET MOTEL',t2:'ROUTE 1 · ROOM 14'},{k:'drive',car:c,path:[[-7,c0.z],[c0.x,c0.z]],dur:2.6,ease:'out',camEnd:1},{k:'wait',dur:0.35},
   {k:'out',car:c,at:[c0.x-0.3,c0.z+0.72],a:0},{k:'walk',path:[[12.3,3.6],[11.9,4.5],[11.5,6.3],[11.5,7.5],[11.5,8.8]],face:0}],g=>homeBanner(g));}
 /* stepping out of your own building's elevator into the corridor (studio, floor 3) or the entrance hall (penthouse, floor 69) */
@@ -2946,7 +2947,7 @@ function updateDrive(dt){const g=G,c=g.pcar,p=g.player;carStep(g,c,carInput(c),d
    into g.fixB, uploaded once and drawn every frame next to dynB, instead of being rebuilt and re-uploaded every frame.
    hubFixStart returns the batch to build into when it needs (re)building, or false when it is current; hubFixEnd uploads it. */
 let FIXB_LAST=null;
-function hubFixStart(g){const want=g.garage||g.club||g.mansion||g.mcDesk||g.def===HUBS.bunker;if(!want)return undefined;const k=ENH()?1:0;
+function hubFixStart(g){const want=g.garage||g.club||g.mansion||g.rhome||g.mcDesk||g.def===HUBS.bunker;if(!want)return undefined;const k=ENH()?1:0;
  if(g.fixB&&g.fixB.buf&&g.fixK===k)return false;
  if(FIXB_LAST&&FIXB_LAST!==g&&FIXB_LAST.fixB&&FIXB_LAST.fixB.buf){gl.deleteBuffer(FIXB_LAST.fixB.buf);FIXB_LAST.fixB.buf=null;}FIXB_LAST=g;
  if(!g.fixB||!g.fixB.buf)g.fixB=new Batch();g.fixB.reset();g.fixB.round=dynB.round;g.fixK=k;return g.fixB;}
@@ -2959,7 +2960,7 @@ function drawHubDyn(B,O){const g=G;if(g.def.hub==='cruise'){drawCruise(B,g);retu
 if(!g.cine&&!g.seq){const y=2.4+Math.sin(g.T*4)*0.2;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.45,0.45,0.45))),GOLD,true);
   for(let i=0;i<6;i++)B.box(TRS(g.car.x+Math.sin(g.T*2+i)*0.9,0.02,g.car.z+Math.cos(g.T*2+i)*0.9,0,0.25,0.01,0.25),[1,0.85,0.3],true);}}
  else{for(const n of g.npcs)drawChar(IBhi,n);if(g.player&&!g.hideP)drawChar(IBhi,g.player);if(g.park){if(rideHeli())drawHeli(B,g.park.x,g.park.z,0,g.T);else{drawRide(B,g.park.x,g.park.z,1,g.park.a||0,undefined,g.park.spin||0);if(g.hideP&&g.inCar===g.park)drawDriver(g,g.park.x,g.park.z,g.park.a||0);drawRideDoor(B,g.park.x,g.park.z,g.park.a||0,g.park.dr);}}
-  if(g.hcar){drawRide(B,g.hcar.x,g.hcar.z,1,g.hcar.a||0,undefined,g.hcar.spin||0);if(g.hideP&&g.inCar===g.hcar)drawDriver(g,g.hcar.x,g.hcar.z,g.hcar.a||0);drawRideDoor(B,g.hcar.x,g.hcar.z,g.hcar.a||0,g.hcar.dr);}if(g.garage)drawGarage(B,g,FX);if(g.slob)drawSlobby(B,g);if(g.def===HUBS.bunker)drawBunker(B,g,FX);if(g.dealer)drawDealer(B,g);if(g.up2)drawUp2(B,g);if(g.slots){if(g.home===3)drawMansion(B,g,FX);else{hlFinWrap(B,g,HB=>{drawHomeDecor(HB,g);drawHome(HB,g);});drawHomeX(B,g);drawLocker(B,g);}}if(g.club)drawClub(B,g,FX);
+  if(g.hcar){drawRide(B,g.hcar.x,g.hcar.z,1,g.hcar.a||0,undefined,g.hcar.spin||0);if(g.hideP&&g.inCar===g.hcar)drawDriver(g,g.hcar.x,g.hcar.z,g.hcar.a||0);drawRideDoor(B,g.hcar.x,g.hcar.z,g.hcar.a||0,g.hcar.dr);}if(g.garage)drawGarage(B,g,FX);if(g.slob)drawSlobby(B,g);if(g.def===HUBS.bunker)drawBunker(B,g,FX);if(g.dealer)drawDealer(B,g);if(g.up2)drawUp2(B,g);if(g.slots){if(g.home===3)drawMansion(B,g,FX);else if(g.rhome){drawRHome(B,g,FX);drawHomeX(B,g);drawLocker(B,g);}else{hlFinWrap(B,g,HB=>{drawHomeDecor(HB,g);drawHome(HB,g);});drawHomeX(B,g);drawLocker(B,g);}}if(g.club)drawClub(B,g,FX);
   if(g.tankB){const t=g.tankB;drawTankLife(B,g.T,t.x0,t.x1,(t.z0+t.z1)/2,0.08,1.35,0.35,0.9,0.4,2.15);}
   if(g.fount)drawFountainWater(B,g.fount,g.T);if(g.mcDesk)drawMcOffice(B,g,FX);if(g.tv)drawLobbyTV(B,g);if(g.lounge)drawLounge(B,g);if(g.cast)drawCast(B,g);
   if(!g.seq){const y=1.6+Math.sin(g.T*4)*0.12;B.box(A.mul(A.mul(A.T(g.car.x,y,g.car.z),A.RY(g.T*2)),A.mul(A.RX(0.785),A.S(0.22,0.22,0.22))),GOLD,true);}}
@@ -2993,7 +2994,7 @@ function hubModeSetup(name){const g=G,p=g.player;if(HUBMODE==='cruise')return tr
  return false;}
 function parkedStreet(dt){const g=G,p=g.player;for(const t of g.traffic){t.x+=t.dir*t.sp*dt;if(t.x>g.W+2)t.x=-2;if(t.x<-2)t.x=g.W+2;
   if(p&&Math.abs(p.x-t.x)<1.6&&Math.abs(p.z-t.z)<0.8){p.z+=Math.sign(p.z-t.z||-1)*0.12;if(!(t.honk>0)){t.honk=1.5;sfx('horn');popup(t.x,t.z,pick(['HEY!','*HONK*','WATCH IT!']),'#ffd36b');}}if(t.honk>0)t.honk-=dt;}}
-function hubTargets(g){const t=[];if(g.club){t.push({k:'car',x:g.park.x,z:g.park.z,r:2.3,lbl:rideHeli()?'YOUR CHOPPER':'YOUR CAR'});for(const d of g.club.dancers)if(!d.walking&&!d.lapDance)t.push({k:'tip',d,x:d.x,z:d.z,r:3.1,lbl:'THROW $100 AT '+d.dname});const v=g.club.vip;if(v.active){t.push({k:'laptip',x:v.chairX,z:v.chairZ,r:2.8,lbl:'THROW $100 AT '+v.dancer.dname+' · MOVE TO STAND UP'});return t;}if(g.club.tony)t.push({k:'tony',x:g.club.tony.x,z:g.club.tony.z,r:3.4,lbl:v.escort?'TALK TO TONY':'TONY · BOOK A VIP ROOM ($500)'});return t;}if(g.slots){const o=g.slots.o;if(o)t.push({k:'catalog',x:o.x,z:o.z,r:1.9,lbl:'PHONE · FURNITURE & SIDE JOBS'});const mv=g.home===3;if(!mv||g.mfl===1){const bp=homeBedPos(g);const gs=Math.min(bedN()-1,g.npcs.filter(q=>q.kind==='pgirl').length);t.push({k:'bed',x:bp.x,z:bp.z,r:2.0,lbl:gs?'GO TO BED WITH THE GIRL'+(gs>1?'S':''):'GO TO SLEEP'});if(gs&&!g.player.bed){const B=bigBedWorld(g.home,bedN());t.push({k:'massage',fn:()=>massageStart(g),x:B.x+1.25*B.s,z:B.z,r:1.6,lbl:'GET A MASSAGE'});}}if(!mv||g.mfl===-1){const lp=homeLockerPos(g);t.push({k:'locker',x:lp.x,z:lp.z,r:1.8,lbl:'GUN LOCKER · '+myProg().locker.items.length+'/'+LOCKER_CAP});}if(mv&&!g.seatP)mansionTargets(g,t);const f=homeFurn();if(g.home===1&&f.hifi&&g.slots.b)t.push({k:'hifi',x:g.slots.b.x-0.4,z:g.slots.b.z+0.3,r:1.9,lbl:'HI-FI · CHANGE TRACK'});hlTargets(g,t);if(g.seatP){const u=[];seatTargets(g,u);return u;}seatTargets(g,t,homeSeats(g));return t;}const car=g.park||(g.parked?g.pcar:null);if(car)t.push({k:'car',x:car.x,z:car.z,r:2.3,lbl:rideHeli()?'YOUR CHOPPER':'YOUR CAR'});const n=g.npcs.find(q=>q.kind==='nine');if(n)t.push({k:'nine',x:n.x,z:n.z,r:2.7,lbl:'NINE OF NINE'});if(g.dealer)dealerTargets(g,t);if(g.mall)mallTargets(g,t);if(g.up2)up2Targets(g,t);if(g.mcDesk)officeTargets(g,t);if(g.def===HUBS.lobby||g.def===HUBS.office||g.def===HUBS.bunker||g.def===HUBS.mall||g.def===HUBS.mall2){const p=g.player;let nb=null,nd=1.9;if(p)for(const q of g.npcs){if(!NPC_CHAT[q.kind])continue;const d=Math.hypot(q.x-p.x,q.z-p.z);if(d<nd){nd=d;nb=q;}}if(nb)t.push({k:'talk',n:nb,x:nb.x,z:nb.z,r:1.9,lbl:'TALK'});if(g.lounge)seatTargets(g,t);}return t;}
+function hubTargets(g){const t=[];if(g.club){t.push({k:'car',x:g.park.x,z:g.park.z,r:2.3,lbl:rideHeli()?'YOUR CHOPPER':'YOUR CAR'});for(const d of g.club.dancers)if(!d.walking&&!d.lapDance)t.push({k:'tip',d,x:d.x,z:d.z,r:3.1,lbl:'THROW $100 AT '+d.dname});const v=g.club.vip;if(v.active){t.push({k:'laptip',x:v.chairX,z:v.chairZ,r:2.8,lbl:'THROW $100 AT '+v.dancer.dname+' · MOVE TO STAND UP'});return t;}if(g.club.tony)t.push({k:'tony',x:g.club.tony.x,z:g.club.tony.z,r:3.4,lbl:v.escort?'TALK TO TONY':'TONY · BOOK A VIP ROOM ($500)'});return t;}if(g.slots){const o=g.slots.o;if(o)t.push({k:'catalog',x:o.x,z:o.z,r:1.9,lbl:'PHONE · FURNITURE & SIDE JOBS'});const mv=g.home===3;if(!mv||g.mfl===1){const bp=homeBedPos(g);const gs=Math.min(bedN()-1,g.npcs.filter(q=>q.kind==='pgirl').length);t.push({k:'bed',x:bp.x,z:bp.z,r:2.0,lbl:gs?'GO TO BED WITH THE GIRL'+(gs>1?'S':''):'GO TO SLEEP'});if(gs&&!g.player.bed){const B=bigBedWorld(g.home,bedN());t.push({k:'massage',fn:()=>massageStart(g),x:B.x+1.25*B.s,z:B.z,r:1.6,lbl:'GET A MASSAGE'});}}if(!mv||g.mfl===-1){const lp=homeLockerPos(g);t.push({k:'locker',x:lp.x,z:lp.z,r:1.8,lbl:'GUN LOCKER · '+myProg().locker.items.length+'/'+LOCKER_CAP});}if(mv&&!g.seatP)mansionTargets(g,t);if(g.rhome&&!g.seatP)rhTargets(g,t);const f=homeFurn();if(g.home===1&&f.hifi&&g.slots.b)t.push({k:'hifi',x:g.slots.b.x-0.4,z:g.slots.b.z+0.3,r:1.9,lbl:'HI-FI · CHANGE TRACK'});hlTargets(g,t);if(g.seatP){const u=[];seatTargets(g,u);return u;}seatTargets(g,t,homeSeats(g));return t;}const car=g.park||(g.parked?g.pcar:null);if(car)t.push({k:'car',x:car.x,z:car.z,r:2.3,lbl:rideHeli()?'YOUR CHOPPER':'YOUR CAR'});const n=g.npcs.find(q=>q.kind==='nine');if(n)t.push({k:'nine',x:n.x,z:n.z,r:2.7,lbl:'NINE OF NINE'});if(g.dealer)dealerTargets(g,t);if(g.mall)mallTargets(g,t);if(g.up2)up2Targets(g,t);if(g.mcDesk)officeTargets(g,t);if(g.def===HUBS.lobby||g.def===HUBS.office||g.def===HUBS.bunker||g.def===HUBS.mall||g.def===HUBS.mall2){const p=g.player;let nb=null,nd=1.9;if(p)for(const q of g.npcs){if(!NPC_CHAT[q.kind])continue;const d=Math.hypot(q.x-p.x,q.z-p.z);if(d<nd){nd=d;nb=q;}}if(nb)t.push({k:'talk',n:nb,x:nb.x,z:nb.z,r:1.9,lbl:'TALK'});if(g.lounge)seatTargets(g,t);}return t;}
 /* a tap in a hub: the target drawn nearest the finger wins (homes pack a bar, its stools and a sofa close together), among those you
    can reach; the floating TAP prompt over the one in reach counts as that target. Returns the target, false (too far) or null. */
 function hubTapPick(ts,cx,cy,p,ia){let go=null,gd=80,far=false;
@@ -3163,7 +3164,7 @@ function updateAct2(dt){const g=G;updateOnAir(dt);updateFlood(dt);updateTwist(dt
 /* breakable studio glass: a bullet shatters the pane and carries on */
 function paneH(g,q){return g.rows[q.iz][q.ix-1]==='%'||g.rows[q.iz][q.ix+1]==='%';}
 /* see-through panes: drawn in the blended pool pass with the atlas tile the shader renders at 30% alpha */
-function drawPanes(P){const g=G;if(g&&g.mansion)mvPanes(P,g);if(g&&g.slots&&g.slots.f&&homeFurn().tank){const q=g.slots.f,t=g.home,w=[1.0,1.4,2.6][t],h=[0.6,0.9,1.6][t],y0=[0.45,0.45,0.2][t];P.box(TRS(q.x,y0+h/2,q.z,0,w,h,0.55),t===0?[0.5,0.62,0.32]:[0.35,0.7,1],false,TUV[20]);}/* studio: window glass, the sliding terrace doors and the glass under the terrace rail */
+function drawPanes(P){const g=G;if(g&&g.mansion)mvPanes(P,g);if(g&&g.rhome)rhPanes(P,g);if(g&&g.slots&&g.slots.f&&homeFurn().tank){const q=g.slots.f,t=homeLook(g.home),w=[1.0,1.4,2.6][t],h=[0.6,0.9,1.6][t],y0=[0.45,0.45,0.2][t];P.box(TRS(q.x,y0+h/2,q.z,0,w,h,0.55),t===0?[0.5,0.62,0.32]:[0.35,0.7,1],false,TUV[20]);}/* studio: window glass, the sliding terrace doors and the glass under the terrace rail */
  if(g&&g.slots&&g.home===0)for(const [x0,x1] of [[3,5],[19,21]])P.box(TRS((x0+x1)/2,0.785,7.5,0,x1-x0,0.73,0.04),[0.34,0.36,0.26],false,TUV[20]); /* Room 14: two grimy windows */
  if(g&&g.slots&&g.home===1){const pc=[0.3,0.58,0.72];for(const [x0,x1] of [[4,7],[13,15],[17,19],[23,26]])P.box(TRS((x0+x1)/2,0.785,11.5,0,x1-x0,0.73,0.04),pc,false,TUV[20]);
   const sl=(g.slideT||0)*0.94;for(const sd of [-1,1])P.box(TRS(16+sd*(0.5+sl),0.575,11.5+sd*0.06,0,0.98,1.13,0.04),pc,false,TUV[20]);P.box(TRS(16,0.74,7.5,0,28,0.44,0.03),pc,false,TUV[20]);}
@@ -3513,7 +3514,7 @@ function drawVipLounge(B,r,H){const bx=(x,y,z,sx,sy,sz,col,em,ry)=>B.box(TRS(x,y
  /* the gold pole in the corner by the door */
  bx(x0+0.7,H*0.5+0.1,z0+0.7,0.05,H+0.2,0.05,GLD);bx(x0+0.7,0.02,z0+0.7,0.4,0.04,0.4,GLD);}
 /* ---- safehouses: Room 14, the Ocean Drive studio, the Coral Tower penthouse ---- */
-const HOMEDEF=[{name:'ROOM 14 · SUNSET MOTEL',price:0,desc:'The gutter. Orange neon through cheap blinds.'},{name:'OCEAN DRIVE STUDIO',price:12000,desc:'The come-up. Pastel rooms, a real kitchen, a terrace on the sand.'},{name:'CORAL TOWER PENTHOUSE',price:40000,needs:'sharkDead',desc:"The kingpin. Moreau's old place, black marble and gold."},MV_HOME];
+const HOMEDEF=[{name:'ROOM 14 · SUNSET MOTEL',price:0,desc:'The gutter. Orange neon through cheap blinds.'},{name:'OCEAN DRIVE STUDIO',price:12000,desc:'The come-up. Pastel rooms, a real kitchen, a terrace on the sand.'},{name:'CORAL TOWER PENTHOUSE',price:40000,needs:'sharkDead',desc:"The kingpin. Moreau's old place, black marble and gold."},MV_HOME,...RH_HOMES];
 const FURN_X=[
  [{k:'tank',name:'KOI TANK',price:900,desc:'A little tank of orange-and-white koi. Very zen. Very stolen.'},{k:'dog',name:'STRAY DOG',price:400,desc:'Followed you home. You named him Pesos.'},{k:'cat',name:'ALLEY CAT',price:400,desc:'Judges you silently. Sleeps on the cash.'},
   {k:'dine',name:'CARD-TABLE DINER',price:300,desc:'Folding table, two chairs, cold chow mein.'},{k:'disco',name:'PLASTIC DISCO BALL',price:700,desc:'From the swap meet. Still spins.'},
@@ -3604,7 +3605,7 @@ function homeLockerPos(g){return HOME_LOCKER_WORLD[g.home]||HOME_LOCKER_WORLD[0]
    A tub seat (tub) brings the party girls in with you: they take the other places and get out again when you do ---- */
 const HOME_TUB=[null,{x:5.5,z:9,y:0.18,need:'tub',P:[[4.8,9,Math.PI/2],[6.2,9,-Math.PI/2],[5.5,8.55,0],[5.5,9.45,Math.PI]],out:[[3.7,9.9],[7.3,9.9],[5.5,10.4],[6.6,10.4]]},
  {x:8.2,z:6.8,y:0.08,P:[[8.2,7.4,Math.PI],[8.8,6.8,-Math.PI/2],[8.2,6.2,0],[7.6,6.8,Math.PI/2]],out:[[8.2,8.3],[9.8,7.2],[6.7,7.8],[9.7,8.0]]}];
-function homeSeats(g){if(g.home===3)return mansionSeats(g);const t=g.home,f=homeFurn(),S=g.slots,L=[],add=(x,z,a,y,lbl,o)=>L.push(Object.assign({x,z,a,y,lbl},o||{}));
+function homeSeats(g){if(g.home===3)return mansionSeats(g);if(g.rhome)return rhSeats(g);const t=g.home,f=homeFurn(),S=g.slots,L=[],add=(x,z,a,y,lbl,o)=>L.push(Object.assign({x,z,a,y,lbl},o||{}));
  if(t===0){for(const x of [9.85,10.75])add(x,10.35,Math.PI,0.1,'SIT ON THE SOFA');for(const [x,a] of [[13.3,0.4],[14.6,-0.5]])add(x,6.15,a,-0.07,'SIT IN THE CHAIR');}
  if(t===1){for(const [x,a] of [[9.6,0.5],[12,-0.5]])add(x,19.0,a,0.03,'SIT IN THE LOUNGE CHAIR');
   for(const x of [23.7,25.3])add(x,12.4,0,0.11,'SIT ON THE BANQUETTE');add(24.3,19.7,0.6,0.04,'SIT IN THE ARMCHAIR');
@@ -3666,10 +3667,10 @@ const HIFI_TRACKS=['c_pastel','c_palms','c_tide','c_vhs','n_crystal','n_nightdri
 function hifiNext(){const p=myProg(),L=HIFI_TRACKS.filter(tapeOK),i=(L.indexOf(p.homeTrack||G.track)+1)%L.length;p.homeTrack=L[i];saveProg();G.track=p.homeTrack;sfx('click');popup(G.player.x,G.player.z,'NOW PLAYING: '+((TRACKS[p.homeTrack]&&TRACKS[p.homeTrack].title)||p.homeTrack),'#2de2e6');}
 function homeSetup(g,t){g.home=t;g.slots={};g.spots={};g.pets=[];g.spawned={};for(let z=0;z<g.H;z++)for(let x=0;x<g.W;x++){const ch=g.rows[z][x];if('abcdokfqhsrljpt'.includes(ch))g.slots[ch]={x:x+0.5,z:z+0.5};if(ch==='g'||ch==='m')(g.spots[ch]=g.spots[ch]||[]).push({x:x+0.5,z:z+0.5});}
  hlApplyDeco(g,t);
- if(t===3)mansionSetup(g);else{homeDecorSetup(g,t);const lp=homeLockerPos(g);g.solid[Math.floor(lp.z)*g.W+Math.floor(lp.x)]=1;}
+ if(t===3)mansionSetup(g);else if(rhDef(t))rhSetup(g,t);else{homeDecorSetup(g,t);const lp=homeLockerPos(g);g.solid[Math.floor(lp.z)*g.W+Math.floor(lp.x)]=1;}
  const p=myProg();if(t===1&&homeFurn().hifi&&p.homeTrack)g.track=p.homeTrack;homeExtras(g);homeCar(g);if(t!==3)g.obj=t===0?'CHECK THE PHONE · THEN HEAD OUT':'FURNISH THE PLACE · THEN HEAD OUT';
  homeBanner(g);}
-function homeBanner(g){const t=g.home;if(t===3)return mvBanner(g);banner(HOMEDEF[t].name,(touchMode?'Tap':'Click')+' the phone for furniture and side jobs · '+(t===0?'your car is out in the lot':'the elevator takes you down to your car'));}
+function homeBanner(g){const t=g.home;if(t===3)return mvBanner(g);if(rhDef(t))return rhBanner(g);banner(HOMEDEF[t].name,(touchMode?'Tap':'Click')+' the phone for furniture and side jobs · '+(t===0?'your car is out in the lot':'the elevator takes you down to your car'));}
 /* big pieces block movement; extra light for the neon sign */
 function homeExtras(g){hlExtras(g);if(g.home===3)return mansionExtras(g);const f=homeFurn(),S=g.slots,sol=(x0,z0,w,h)=>{for(let z=Math.floor(z0);z<Math.ceil(z0+h);z++)for(let x=Math.floor(x0);x<Math.ceil(x0+w);x++)if(x>0&&z>0&&x<g.W-1&&z<g.H-1)g.solid[z*g.W+x]=1;};
  if(g.home===0)sol(S.a.x-0.4,S.a.z-0.4,2.0,0.9);{const n=bedN();if(n>1){const B=bigBedWorld(g.home,n);sol(B.x-0.9*B.s,B.z-B.w/2+0.05,1.8*B.s,B.w-0.1);}}if(g.home===1&&f.sofa)sol(S.a.x-0.4,S.a.z-0.4,2.6,0.9);
@@ -3683,7 +3684,8 @@ function homeExtras(g){hlExtras(g);if(g.home===3)return mansionExtras(g);const f
  /* penthouse terrace upgrades: the sky lounge and its fire (west) and the helipad (east) */
  if(g.home===2&&f.sky){sol(2.1,5.1,3.8,0.8);sol(2.1,6.1,0.8,1.8);sol(4.1,6.5,0.8,0.5);if(!g.skyLit){g.skyLit=1;g.fire={x:4.5,y:0.6,z:6.8,r:4.5,c:[1.1,0.5,0.12]};g.lights.push(g.fire);}}
  if(g.home===2&&f.heli){sol(24.9,5.1,3.3,1.8);if(!g.heliLit){g.heliLit=1;g.lights.push({x:27,y:1.2,z:7.4,r:5,c:[0.9,0.75,0.3]});}}
- const t=g.home,ld=[1.0,1.4,2.6][t];if(f.tank&&S.f)sol(S.f.x-ld/2,S.f.z-0.3,ld,0.6);if(f.dine&&S.q)sol(S.q.x-[0.5,0.8,1.6][t],S.q.z-0.4,[1,1.6,3.2][t],0.8);if(S.h)sol(S.h.x-[0.5,1.2,1.4][t],S.h.z-0.4,[1,2.4,2.8][t],0.8);
+ if(g.rhome)rhExtras(g,f);
+ const t=homeLook(g.home),ld=[1.0,1.4,2.6][t];if(f.tank&&S.f)sol(S.f.x-ld/2,S.f.z-0.3,ld,0.6);if(f.dine&&S.q)sol(S.q.x-[0.5,0.8,1.6][t],S.q.z-0.4,[1,1.6,3.2][t],0.8);if(S.h)sol(S.h.x-[0.5,1.2,1.4][t],S.h.z-0.4,[1,2.4,2.8][t],0.8);
  if(f.shelf&&S.l)sol(S.l.x-0.4,S.l.z-0.3,0.8,0.6);if(f.desk&&S.j)sol(S.j.x-0.6,S.j.z-0.4,1.2,0.8);
  if(f.disco&&S.s)g.disco={x:S.s.x,z:S.s.z};
  const sp=(kind,pos,look)=>{const n=makeChar(pos.x,pos.z,look,false);n.kind=kind;n.state='idle';n.a=n.a0=0;n.r=0.3;n.body=look.body;n.said=false;g.npcs.push(n);return n;};
@@ -3697,13 +3699,14 @@ const GIRLLOOK=pole=>{const sk=hex(pick([0xefcaa8,0xd9a37c,0x8a5a3a,0xf0c8a0,0x6
 const HOME_NPC_LINES={smoker:["Mm. Octopuses have three hearts. Don't ask me why I know that.","Never buy a boat on a Friday. Trust me.","Honey never spoils. Take that to the bank.","Keep your gun cleaner than your conscience, kid.","Bananas are berries. Strawberries aren't. Think about that."],bouncer:["Hands to yourself in there, chief.","No cameras, no trouble, no refunds.","Tony's at the bar if you want a room.","Nice suit. Tip the girls."],bguard:["Nobody gets near you, boss.","I took a bullet for a guy once. Don't make it a habit.","Perimeter's clear. The cat isn't.","You pay, I stand here. Simple."],
  pgirl:["Is it true you know McWey?","Ooh, is that real gold?","Put on some Nine, baby. The good one.","This place needs more champagne.","You're cuter than the last guy with a penthouse."],dancer:["Tips go in the jar, sugar.","I danced at Club Flamingo. Before it... closed.","Don't touch the pole. Or the dancer."]};
 Object.assign(HOME_NPC_LINES,MV_LINES,HL_LINES); /* Villa Solana's household: the butler, Mama Rosa, the barman, the DJ, the tennis pro */
+rhRegister(); /* the four homes from homes.js join the per-home tables */
 function homeTick(dt){const g=G,S=g.slots;if(!S)return;homeLightTick(g);bedTick(g,dt);hlTick(g,dt);
  /* the studio has real doors: the inside ones swing, the glass ones to the terrace slide open as you walk up */
  if(g.home===0)updateDoors(dt);
  if(g.home===2){updateDoors(dt);const p=g.player,near=!!p&&Math.abs(p.x-17)<1.8&&Math.abs(p.z-9.5)<2;g.slideT=clamp((g.slideT||0)+(near?dt:-dt)*3.5,0,1);}
  if(g.home===1){updateDoors(dt);const p=g.player,near=!!p&&Math.abs(p.x-16)<1.8&&Math.abs(p.z-11.5)<2;g.slideT=clamp((g.slideT||0)+(near?dt:-dt)*3.5,0,1);}
  for(const q of g.pets){const sp=q.k==='doberman'?1.0:q.k==='iguana'?0.35:0.8;q.wait-=dt;if(q.wait<=0){const dx=q.tx-q.x,dz=q.tz-q.z,d=Math.hypot(dx,dz);if(d<0.1){q.wait=q.k==='doberman'?rnd(3,7):rnd(1.5,4);const back=q.post&&Math.random()<0.45;q.tx=clamp(back?q.post.x:q.x+rnd(-3,3),1.6,g.W-2.6);q.tz=clamp(back?q.post.z:q.z+rnd(-3,3),1.6,g.H-2.6);const ix=Math.floor(q.tx),iz=Math.floor(q.tz);if(g.solid[iz*g.W+ix]||g.rows[iz][ix]==='D'){q.tx=q.x;q.tz=q.z;}}else{const st=Math.min(d,sp*dt);const nx=q.x+dx/d*st,nz=q.z+dz/d*st;if(g.solid[Math.floor(nz)*g.W+Math.floor(nx)]||g.rows[Math.floor(nz)][Math.floor(nx)]==='D'){q.tx=q.x;q.tz=q.z;}else{q.x=nx;q.z=nz;q.a=Math.atan2(dx,dz);q.step+=st*14;}}}}
- if(g.home===3)mansionTick(g,dt);
+ if(g.home===3)mansionTick(g,dt);if(g.rhome)rhTick(g,dt);
  if(g.dancer&&S.p){/* the home pole dancer runs the same routines as the Velvet Palms girls, on her own little stage, turned to you */
   const d=g.dancer,pl=g.player;if(!d.pole)Object.assign(d,{pole:{x:S.p.x,z:S.p.z},baseY:0.125,faceK:1,strutR:0.42,y:0.125,boost:0,stage:0,ph:0,fit:3,sa:0,move:'sway',mt:0,md:rnd(4,7),moveE:0});
   if(!(d.slapT>0)){const q=d.pole,dx=pl?pl.x-q.x:0,dz=pl?pl.z-q.z:1;danceTick({club:{sc:{x:q.x-dx,z:q.z-dz}},T:g.T,parts:g.parts},d,dt);}d.boost=Math.max(0,d.boost-dt*0.25);}}
@@ -3713,7 +3716,7 @@ function drawLocker(B,g){const p=homeLockerPos(g),n=myProg().locker.items.length
  for(const dz of [-0.04,0.04])bx(x-0.275,1.0,z+dz,0.03,0.22,0.03,[0.75,0.75,0.8]);for(let i=0;i<3;i++)for(const dz of [-0.225,0.225])bx(x-0.266,1.62-i*0.05,z+dz,0.01,0.02,0.3,[0.08,0.08,0.1]);
  for(let i=0;i<LOCKER_CAP;i++)bx(x-0.27,1.82,z-0.385+i*0.07,0.01,0.04,0.05,i<n?[0.3,1.4,0.6]:[0.12,0.14,0.16],i<n);}
 /* the extra furniture, three looks per item (motel / studio / penthouse) */
-function drawHomeX(B,g){const f=homeFurn(),S=g.slots,T=g.T,t=g.home,bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,ry||0,sx,sy,sz),c,!!em);
+function drawHomeX(B,g){const f=homeFurn(),S=g.slots,T=g.T,t=homeLook(g.home),bx=(x,y,z,sx,sy,sz,c,em,ry)=>B.box(TRS(x,y,z,ry||0,sx,sy,sz),c,!!em);
  if(f.rug&&S.r)hiWith(()=>hiRug(B,S.r,t,T));
  if(f.tank&&S.f){const q=S.f,w=[1.0,1.4,2.6][t],h=[0.6,0.9,1.6][t],y0=[0.45,0.45,0.2][t];hiWith(()=>hiTank(B,q,t,T));
   if(t<2)drawHomeFish(t,T,q.x-w/2+0.04,q.x+w/2-0.04,q.z,y0+0.14,y0+h-0.12);else drawTankLife(B,T,q.x-w/2+0.1,q.x+w/2-0.1,q.z,0.06,y0+h/2,0.25,0.75,y0+0.2,y0+h-0.1);}
@@ -4067,7 +4070,7 @@ function hguardLine(){const p=myProg(),sn=p.seen||(p.seen={}),j=p.jewel||{};
  for(const [k,on,l] of react)if(on&&!sn['g_'+k]){sn['g_'+k]=1;saveProg();return l;}
  if((p.home||0)===0&&p.car!=='beater'&&!sn.g_old){sn.g_old=1;saveProg();return "Your old "+carName('beater')+"'s still out in the lot. Nobody'll steal it. We tried.";}
  {const st=storyChat('hguard').filter(l=>!STORY_HEARD.has(l));if(st.length&&Math.random()<0.4)return storyPick('hguard');}
- if(Math.random()<0.3)return pick(p.debt>0?HG_DEBT:HG_FREE);return pick(HG_TIER[p.home||0]);}
+ if(Math.random()<0.3)return pick(p.debt>0?HG_DEBT:HG_FREE);return pick(HG_TIER[homeLook(p.home||0)]||HG_TIER[0]);}
 /* ---- Act 1 cameo: Lex "Silks" Sterling walks past at Club Flamingo (sets up Act 2) ---- */
 let LEXMET=false;
 const LEXLOOK=()=>({skin:hex(0xf0c8a4),jacket:hex(0xf6f2ea),shirt:hex(0xffa6c9),pants:hex(0xf6f2ea),shoes:hex(0xc9a27a),hs:'slick',hair:hex(0xe3c26a),shades:true,watch:true,bw:0.98,bd:0.96,bh:1.04,body:'normal'});
