@@ -46,7 +46,7 @@ const HL_MORNING=[
  {who:'A PHOTO IN THE HERALD',msg:'Society page: "Mystery Host Throws the Party of the Season." You are a blur behind a palm. Your tailor calls to say congratulations.',fxt:'+$500 · FONTAINE SENDS A GIFT',fx:p=>{p.wallet+=500;}}];
 
 const hlFurn=()=>homeFurn();
-const hlTier=g=>Math.min(g.home,2);
+const hlTier=g=>homeLook(g.home);
 function hlHas(g,k){if(g.home===3)return false;const P=HL_POS[g.home][k];return !!P&&(P.built||!!hlFurn()[k]);}
 
 /* ---- spawn, solids and the party guests ---- */
@@ -109,7 +109,7 @@ function hlSway(g,eye,tgt){const b=Math.min(1,(g.buzz||0)/20);if(b<=0)return;con
 function hlSleep(g){return hlEndParty(g);}
 
 /* ================= the models ================= */
-function hlDraw(B,g){if(g.home===3)return;const t=g.home,P=hlPosAll(g,true),T=g.T;if(g.hlMove)hlMoveDraw(B,g);
+function hlDraw(B,g){if(g.home===3)return;const t=homeLook(g.home),P=hlPosAll(g,true),T=g.T;if(g.hlMove)hlMoveDraw(B,g);
  for(const k of ['wardrobe','bench','bar']){if(!hlHas(g,k)||P[k].built)continue;const q=P[k];if(!hiVis(q.x,q.z,1.6))continue;
   hiWith(()=>{const K=hiKit(B,q.x,q.z,q.ry);if(k==='wardrobe')hlWardrobeM(K,t,T,g);else if(k==='bench')hlBenchM(K,t,T,g);else hlBarM(K,t,T);});}}
 /* the wardrobe: 1.0 wide, 0.5 deep, back against the wall (local -z), doors toward you */
