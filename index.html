@@ -260,6 +260,8 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
+/* phones and tablets (touch is the main pointer): they get the lighter settings below (frame cap, render size, bigger audio buffers) */
+const PHONE=(()=>{try{return matchMedia('(pointer:coarse)').matches;}catch(e){return false;}})();
 const TAU=Math.PI*2, DEG=Math.PI/180;
 const clamp=(v,a,b)=>v<a?a:v>b?b:v, lerp=(a,b,t)=>a+(b-a)*t, rnd=(a,b)=>a+Math.random()*(b-a);
 const angDiff=(a,b)=>{let d=(b-a)%TAU;if(d>Math.PI)d-=TAU;if(d<-Math.PI)d+=TAU;return d;};
@@ -371,7 +373,10 @@ function audioFailure(e){if(!audioFailed)console.error('Audio recovery failed',e
 function audioRecovered(){if(AC&&AC.state==='running'){audioFailed=false;$('audioWarning').style.display='none';}}
 function resumeAudio(){if(contextLost||!AC||!SET.sound)return;if(AUD.rebuild&&navigator.userActivation?.isActive!==false){rebuildAudio();return;}if(!['suspended','interrupted'].includes(AC.state)||navigator.userActivation?.isActive===false)return;
  try{AC.resume().then(audioRecovered,audioFailure);}catch(e){audioFailure(e);}}
-function initAudio(){if(contextLost)return;if(AC){resumeAudio();return;}try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){audioFailure(e);return;}
+/* On phones the audio thread gets a bigger buffer ('playback'): a busy frame or a hot GPU then no longer starves it into the clicks and
+   drop-outs a small, low-latency buffer gives. Sounds come in a few hundredths of a second later, which nobody hears in a shooter like this */
+function audioCtx(){const C=window.AudioContext||window.webkitAudioContext;if(PHONE){try{return new C({latencyHint:'playback'});}catch(e){}}return new C();}
+function initAudio(){if(contextLost)return;if(AC){resumeAudio();return;}try{AC=audioCtx();}catch(e){audioFailure(e);return;}
  AC.addEventListener('statechange',audioRecovered);if(!AUD.timer)AUD.timer=setInterval(audioWatch,1000);
  master=AC.createGain();master.gain.value=SET.sound?0.6:0;
  /* output limiter: many overlapping shots (or a big firefight) can sum past full scale; the hardware then clips them into crackle.
@@ -529,6 +534,9 @@ const mtof=m=>440*Math.pow(2,(m-69)/12);
 /* ---- music engine: distorted bus, sidechain, delay, reverb ---- */
 let mBus,mDist,mFilt,scBus,bassDist,leadDist,dlyIn,revIn,hissG;
 const MUS={track:'',step:0,total:0,next:0,muffled:false};
+/* how far ahead the music is written into the audio clock. A level loading, or a long frame, can hold up the page for a moment; notes already
+   written keep playing through it, so the longer this is, the longer a stall the music rides out without a gap */
+const MUS_AHEAD=PHONE?0.5:0.35;
 function distCurve(k){const n=2048,c=new Float32Array(n);for(let i=0;i<n;i++){const x=i/(n-1)*2-1;c[i]=(1+k)*x/(1+k*Math.abs(x));}return c;}
 function crushCurve(k,steps){const n=2048,c=new Float32Array(n);for(let i=0;i<n;i++){const x=i/(n-1)*2-1;const y=(1+k)*x/(1+k*Math.abs(x));c[i]=Math.round(y*steps)/steps;}return c;}
 function impulse(sec,decay){const len=AC.sampleRate*sec|0,b=AC.createBuffer(2,len,AC.sampleRate);for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay);}return b;}
@@ -692,7 +700,7 @@ function layerStep(n,t,spb){const g=G;if(!g||g.cleared||g.def.hub||state!=='play
  if(lv>=2){if(st%2===0)mBass(t,mtof(root+12),spb*0.5,0.22);if(st===4||st===12)mClap(t,0.22);}
  if(lv>=3){if(st%2===1)VOICE.bell(t,mtof(ch[st%3]+24),spb*0.9,0.03);if(st===2||st===6||st===10||st===14)mSnare(t,0.3);}}
 function schedMusic(){if(contextLost||!AC||AC.state!=='running'||!SET.sound||!MUS.track)return;if(MUS.next<AC.currentTime)MUS.next=AC.currentTime+0.05;
- while(MUS.next<AC.currentTime+0.25){if(MUS.pending&&MUS.total%16===0)applyTrack(MUS.pending,true);const T=TRACKS[MUS.track],spb=60/T.bpm/4;try{T.step(MUS.total,MUS.next,spb);}catch(e){}try{layerStep(MUS.total,MUS.next,spb);}catch(e){}MUS.next+=spb;MUS.total++;}}
+ while(MUS.next<AC.currentTime+MUS_AHEAD){if(MUS.pending&&MUS.total%16===0)applyTrack(MUS.pending,true);const T=TRACKS[MUS.track],spb=60/T.bpm/4;try{T.step(MUS.total,MUS.next,spb);}catch(e){}try{layerStep(MUS.total,MUS.next,spb);}catch(e){}MUS.next+=spb;MUS.total++;}}
 
 /* ================= DATA ================= */
 const GOLD=hex(0xf2c14e),DARK=hex(0x15121a),BLOODC=hex(0x8a0a10),EMBER=hex(0xff7a2a),CIGAR=hex(0x5a3416);
@@ -2936,7 +2944,9 @@ function npcStep(dt){const g=G,p=g.player;if(g.talkT>0)g.talkT-=dt;const vi=Math
   if(d<n.r+p.r&&d>1e-4){const k=(n.r+p.r-d);p.x+=dx/d*k;p.z+=dz/d*k;}}}
 let ENG=null;
 function engineOn(on){if(!AC)return;if(!ENG){if(!on)return;const o1=AC.createOscillator(),o2=AC.createOscillator(),f=AC.createBiquadFilter(),gg=AC.createGain();o1.type='sawtooth';o2.type='square';f.type='lowpass';f.frequency.value=500;gg.gain.value=0;o1.connect(f);o2.connect(f);f.connect(gg);gg.connect(sfxG);o1.start();o2.start();ENG={o1,o2,f,g:gg,on:false};}
- if(ENG.on!==on){ENG.on=on;ENG.g.gain.setTargetAtTime(on?0.05:0,AC.currentTime,0.15);}}
+ if(ENG.on!==on){ENG.on=on;ENG.g.gain.setTargetAtTime(on?0.05:0,AC.currentTime,0.15);}
+ /* a silent engine still costs the audio thread its oscillators every sample: once it has faded out, it is stopped and built again next drive */
+ if(!on){const E=ENG,t=AC.currentTime+1;ENG=null;try{E.o1.stop(t);E.o2.stop(t);}catch(e){}}}
 function engineRev(v,boost){if(!ENG)return;const fr=42+Math.abs(v)*8.5+(boost?12:0);ENG.o1.frequency.setTargetAtTime(fr,AC.currentTime,0.06);ENG.o2.frequency.setTargetAtTime(fr*0.501,AC.currentTime,0.06);ENG.f.frequency.setTargetAtTime(350+Math.abs(v)*95,AC.currentTime,0.06);}
 Object.assign(SFX,{horn:(t,v=1)=>{tone(t,0.35,'square',392,392,0.08*v);tone(t,0.35,'square',494,494,0.06*v);},ding:(t)=>{tone(t,0.9,'sine',1318,1318,0.18);tone(t+0.22,1.1,'sine',1046,1046,0.16);},
  crash:(t)=>{noise(t,0.35,'lowpass',2600,200,0.9);pb(GB.chop,t,0.6,0.7);tone(t,0.25,'sine',80,30,0.8);}});
@@ -4122,7 +4132,15 @@ function elevFloor(e){if(!ELEVOPT)return String(Math.max(1,Math.round(ELEVDOWN?5
  return v<1?String(typeof a==='string'?a:b):String(v).padStart(2,'0');}
 function enterElevator(down,opt){fountainHum(null);ELEVDOWN=down===true;ELEVOPT=opt||null;if(!elevBuilt)buildElev();state='elev';elevT=0;elevLast=0;show('sElev');document.querySelector('#sElev .elN span').innerHTML=ELEVDOWN?'&#9660;':'&#9650;';$('elFloor').textContent=elevFloor(0);document.querySelector('#sElev .elT').textContent=ELEVOPT&&ELEVOPT.title||'McWEY TOWER';const ch=CHARS[selIdx];elevChar=makeChar(0,-0.3,LOOKS[ch.id],false);elevChar.pose='stand';elevChar.splat=VISIT.debrief!==null&&menuChars?menuChars[selIdx].splat:{torso:[],legs:[],face:[]};elevChar.a=0.25;}
 let elevLast=0;function updateElev(dt){const nw=performance.now();if(elevLast&&nw-elevLast<300)dt=(nw-elevLast)/1000;elevLast=nw;elevT+=dt;const k=clamp(elevT/elevDur(),0,1),e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;$('elFloor').textContent=elevFloor(e);
- if(elevT>=elevDur()&&!elevChar.done){const o=ELEVOPT;elevChar.done=fadeTo(()=>o?o.then():ELEVDOWN?loadHub('lobby','out'):loadHub('office'));if(elevChar.done)sfx('ding');}}
+ if(elevT>=elevDur()&&!elevChar.done){const o=ELEVOPT;elevChar.done=fadeTo(()=>elevExit(o));if(elevChar.done)sfx('ding');}
+ else if(elevChar.done&&!fading&&elevT>elevDur()+3)elevRescue(null);}
+/* the doors open on wherever the ride was going. If that place refuses to load (or throws), the ride must not just stop at the floor
+   forever: you step back out where you got in, and the banner says what went wrong */
+function elevExit(o){let err=null;STAGE_REFUSED=null;try{if(o)o.then();else if(ELEVDOWN)loadHub('lobby','out');else loadHub('office');}catch(e){err=e;console.error(e);}if(state==='elev')elevRescue(err);}
+function elevRescue(err){const msg=err&&err.message||STAGE_REFUSED||'The next place would not load.';STAGE_REFUSED=null;
+ try{const h=myProg().home||0;if(ELEVOPT&&HOME_LIFT[h])enterHomeByLift(h);else if(ELEVOPT)wakeAtHome();else loadHub(ELEVDOWN?'lobby':'office',ELEVDOWN?'out':'in');}
+ catch(e){console.error(e);state='title';G=null;show('sTitle');return;}
+ banner("COULDN'T GET THERE",String(msg).slice(0,140));}
 function skipElev(){if(state==='elev'&&!elevChar.done){elevT=elevDur();}}
 function elevView(asp){let eye=[0.45,1.55,3.0],tgt=[0.05,1.15,-0.7];if(asp<1){eye=[0.2,1.6,4.2];}return{eye,tgt,lights:[{x:0,y:2.4,z:0,r:3.2,c:[1.1,0.95,0.8]},{x:0,y:1.2,z:1.6,r:2.6,c:[0.6,0.5,0.7]},{x:-0.8,y:1.6,z:-2,r:3,c:[1,0.3,0.75]}]};}
 function drawElevDyn(B,P){B.reset();P.reset();if(!ENH())floorQuad(P,elevChar.x,elevChar.z,0.9,0,TUV[16],[1,1,1],0.012);hdChar(IBhi,elevChar,menuT);
@@ -4331,8 +4349,10 @@ function drawTVTicker(c,g,u){const t=g.tv,a=project(t.x-0.68,1.44,t.z+0.03),b=pr
 function npcTalk(g,n){if(g.chatT>g.T)return;g.chatT=g.T+0.5;g.quipGen=(g.quipGen||0)+1;g.popups=g.popups.filter(q=>Math.hypot(q.x-n.x,q.z-n.z)>0.6);const pool=NPC_CHAT[n.kind]||[];let L=storyPick(n.kind,pool);{const R=typeof stkRumor==='function'&&stkRumor(n.kind);if(R)L=R;}if(L===n.lastLine&&pool.length>1)L=pool[(pool.indexOf(L)+1)%pool.length];n.lastLine=L;n.said=true;g.talkT=1.4;popup(n.x,n.z,L,'#ffe9a8');sfx('blip');}
 /* ---------- the fountain actually sounds like water ---------- */
 let FOUNT=null;
-function fountainHum(g){if(!AC||!noiseBuf)return;const on=state==='play'&&g&&g.fount&&g.player;if(!FOUNT){if(!on)return;const s=AC.createBufferSource();s.buffer=noiseBuf;s.loop=true;const f=AC.createBiquadFilter();f.type='bandpass';f.frequency.value=1600;f.Q.value=0.6;const f2=AC.createBiquadFilter();f2.type='lowpass';f2.frequency.value=4200;const gg=AC.createGain();gg.gain.value=0;s.connect(f);f.connect(f2);f2.connect(gg);gg.connect(sfxG);s.start();FOUNT={g:gg};}
- const d=on?Math.hypot(g.player.x-g.fount.x,g.player.z-g.fount.z):99,v=on?clamp(1-(d-1.5)/8,0,1)*0.09:0;FOUNT.g.gain.setTargetAtTime(v,AC.currentTime,0.25);}
+function fountainHum(g){if(!AC||!noiseBuf)return;const on=state==='play'&&g&&g.fount&&g.player;if(!FOUNT){if(!on)return;const s=AC.createBufferSource();s.buffer=noiseBuf;s.loop=true;const f=AC.createBiquadFilter();f.type='bandpass';f.frequency.value=1600;f.Q.value=0.6;const f2=AC.createBiquadFilter();f2.type='lowpass';f2.frequency.value=4200;const gg=AC.createGain();gg.gain.value=0;s.connect(f);f.connect(f2);f2.connect(gg);gg.connect(sfxG);s.start();FOUNT={g:gg,s};}
+ const d=on?Math.hypot(g.player.x-g.fount.x,g.player.z-g.fount.z):99,v=on?clamp(1-(d-1.5)/8,0,1)*0.09:0;FOUNT.g.gain.setTargetAtTime(v,AC.currentTime,0.25);
+ /* away from any fountain the noise source is stopped (it ran silently for the rest of the session before) */
+ if(!on){const F=FOUNT;FOUNT=null;try{F.s.stop(AC.currentTime+1.5);}catch(e){}}}
 TRACKS.muzak=theme({title:'NINE (LOBBY VERSION)',bpm:96,dist:1.0,cut:5200,prog:TRACKS.game.prog,mel:TRACKS.game.mel,tr:0,K:'x.......x.......',kv:0.5,S:'................',R:'....x.......x...',H:'..x...x...x...x.',hv:0.03,
  bass:[0,null,null,7,null,null,12,null,0,null,null,7,null,null,5,null],bassLen:1.5,bv:0.3,arp:[0,2,4,2],arpV:'bell',av:0.025,pad:true,pcut:1500,pv:0.03,lead:'bell',mv:0.06,melSec:0,mo:-12});
 const ARCH_LABEL={bruiser:'BRUISER',bouncer:'BRAWLER',bodyguard:'BODYGUARD',butcher:'BUTCHER',biker:'HEAVY BIKER',disco:'HEAVYWEIGHT',merc:'MERC',mobster:'MOBSTER',dealer:'DEALER',punk:'PUNK',hitman:'HITMAN'};
@@ -5114,7 +5134,7 @@ function stageActivate(g,manager,kit,hp,bag,armour){
  g.stageRun=manager;g.runOwner=myProg().run;g.variant=myProg().run.var;g.clear=missionClear(MISSION,g.variant);Object.assign(g,stageJSON(bag));g.sj=missionIsCampaign(MISSION)?myProg().sidejob||null:null;
  applyLoadout(kit);g.player.hp=hp;g.player.armor=armour;g.track=LEVEL_TRACKS[levelIdx][RUNTRACK[levelIdx]%LEVEL_TRACKS[levelIdx].length];state='play';show(null);if(!stageIntro(g))banner(missionName(MISSION)+' · '+g.sid,(g.plan?'Plan':'Grid')+' stage · completion policy not enabled');
 }
-function stageFailure(e){banner('STAGE LOAD REFUSED',e.message);return false;}
+let STAGE_REFUSED=null;function stageFailure(e){STAGE_REFUSED=e&&e.message||'Stage load refused';banner('STAGE LOAD REFUSED',e.message);return false;}
 function startGridMission(id){
  const r=myProg().run;return enterStage(r?.mission===id?r.stage:missionStart(id),null,id);
 }
@@ -5124,9 +5144,9 @@ function enterStage(id,arrive=null,startingMission=null){
  if(raw.kind!=='grid'&&!(raw.kind==='plan'&&typeof raw.def?.plan==='string'&&typeof PLANS!=='undefined'&&Object.hasOwn(PLANS,raw.def.plan)))return stageFailure(new Error('Unsupported playable stage kind '+raw.kind));
  return startingMission?startGridRun(startingMission,arrive):enterGridStage(id,arrive);
 }
-function startGridRun(id,arrive=null){
- let fresh;try{
-  const p=myProg(),old=p.run,manager=stageManager(id),existing=old&&old.mission===id,moved=existing&&old.moved===1;if(moved)delete old.moved;
+function startGridRun(id,arrive=null,again=false){
+ let fresh,existing=false;try{
+  const p=myProg(),old=p.run,manager=stageManager(id);existing=!!(old&&old.mission===id);const moved=existing&&old.moved===1;if(moved)delete old.moved;
   if(existing&&old.st){manager.decode(old.st);if(manager.current!==old.stage||!manager.active)throw new Error('Run stage/checkpoint mismatch');}
   if(existing&&old.stage!==missionStart(id)&&!old.st)throw new Error('Stage entry snapshot missing');
   const r=existing?kitClone(old):{v:KIT_V,mission:id,stage:missionStart(id),entryKit:kitClone(p.kit),stageKit:kitClone(p.kit),t:Date.now()};
@@ -5139,8 +5159,16 @@ function startGridRun(id,arrive=null){
   const envelope=manager.preview(token,retry?.snapshot||null,entry,bag);
   r.st=envelope;r.stageHp=hp;r.t=Date.now();if(existing)Object.assign(old,r);else p.run=r;saveProg();
   stageActivate(fresh,manager,r.stageKit,hp,bag,entry.player.armor);manager.commit(token,retry?.snapshot||null,entry,bag);clearInterval(typeT);
-  if(moved)banner(missionName(id)+' WAS REBUILT','This floor changed since you saved. Starting again from the beginning, with everything you brought.');return true;
- }catch(e){ARR_GO=null;stageRelease(fresh);return stageFailure(e);}
+  if(moved||again)banner(missionName(id)+' WAS REBUILT','This floor changed since you saved. Starting again from the beginning, with everything you brought.');return true;
+ }catch(e){ARR_GO=null;stageRelease(fresh);
+  /* a run saved partway up a floor whose map has changed since (its checkpoint no longer fits) used to be refused every time, so that job
+     could never be played again (and from a home elevator you were left in the lift). Start the floor again from the beginning instead,
+     with the kit you walked in with, the way a rebuilt legacy floor does */
+  const p=myProg(),old=p.run;if(existing&&!again&&old&&old.mission===id){stageNote(e,'resume refused, restarting the floor');
+   try{const ek=kitClone(old.entryKit);stageKitCheck(ek);p.run={v:KIT_V,mission:id,stage:missionStart(id),entryKit:ek,stageKit:kitClone(ek),t:Date.now(),...(old.var?{var:old.var}:{}),...(Number.isInteger(old.ret)?{ret:old.ret}:{})};}
+   catch(e2){p.run={v:KIT_V,mission:id,stage:missionStart(id),entryKit:kitClone(p.kit),stageKit:kitClone(p.kit),t:Date.now()};}
+   saveProg();return startGridRun(id,arrive,true);}
+  return stageFailure(e);}
 }
 function stageCanLeave(g){return !!(g&&g===G&&g.stageManaged&&g.stageRun?.active&&g.mission===MISSION&&myProg().run===g.runOwner&&myProg().run?.mission===MISSION&&myProg().run.stage===g.sid&&g.player.alive&&Number.isFinite(g.player.hp)&&g.player.hp>0&&!g.player.ex&&!(g.player.exec>0)&&!g.done&&!g.fin&&!g.cine&&!g.cameo);}
 /* A floor change must never be refused over fight leftovers. stageSettle puts anything the strict snapshot would reject into a state it
@@ -5355,7 +5383,10 @@ for(const type of ['pointerdown','pointerup','touchend','click','keydown'])addEv
 
 /* ================= LOOP ================= */
 let last=null;
-function frame(now){if(contextLost||gl.isContextLost())return;requestAnimationFrame(frame);const raw=last===null?null:Math.max(0,(now-last)/1000);qualityTick(raw);const dt=raw===null?0:Math.min(raw,0.05);last=now;menuT+=dt;
+/* 120 Hz and faster screens (most new phones, gaming monitors) call frame() twice as often or more. The game looks the same at 60-90 fps,
+   so those extra calls are skipped: on a 120 Hz phone that halves the CPU and GPU work, the heat, and the load the audio thread competes with */
+const FRAME_MIN=9.5;
+function frame(now){if(contextLost||gl.isContextLost())return;requestAnimationFrame(frame);if(last!==null&&now>=last&&now-last<FRAME_MIN)return;const raw=last===null?null:Math.max(0,(now-last)/1000);qualityTick(raw);const dt=raw===null?0:Math.min(raw,0.05);last=now;menuT+=dt;
  pollPad();padMenus(dt);document.body.classList.toggle('pad',padMode);document.body.classList.toggle('touch',touchMode);
  const portrait=touchMode&&vh>vw&&(state==='play'||state==='pause');$('rotate').classList.toggle('on',portrait);
  if(pressed.pause&&(state==='play'||state==='pause'))togglePause();

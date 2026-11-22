@@ -606,7 +606,7 @@ function drawInst(){if(!PI||!ENH()||(!IBhi.n&&!IBlo.n))return;for(const k of ['a
  gl.uniform4fv(LI.uPL,LBUF);gl.uniform3fv(LI.uPC,CBUF);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,atlasTex);gl.uniform1i(LI.uTex,0);setFX(LI,u.menu);
  gl.uniform1f(LI.uBump,0.12);gl.uniform1f(LI.uBlend,0);IBhi.draw(LI);IBlo.draw(LI);gl.useProgram(P1);for(const k of ['aP','aN','aT','aC'])gl.enableVertexAttribArray(L[k]);}
 /* quality */
-let QL=0,qlT=0,ftEma=0.016;
+let QL=PHONE?1:0,qlT=0,ftEma=0.016;
 function qualityTick(raw){if(window.QLOCK!==undefined){QL=window.QLOCK;return;}if(raw===null)return;ftEma=ftEma*0.95+Math.min(raw,0.1)*0.05;if(!ENH())return;
  if(ftEma>0.021){qlT+=raw;if(qlT>2.5&&QL<3){QL++;qlT=0;}}else if(ftEma<0.0135){qlT-=raw;if(qlT<-6&&QL>0){QL--;qlT=0;}}else qlT*=0.98;}
 /* motes */
