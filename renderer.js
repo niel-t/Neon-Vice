@@ -430,6 +430,42 @@ function makeAtlas(){
      x.strokeStyle=i?'rgba(170,150,130,.4)':'rgba(201,162,74,.45)';x.lineWidth=0.5;x.beginPath();let px=a+2+q()*12,py=1;x.moveTo(px,py);for(let s=0;s<6;s++){px=Math.max(a+1.5,Math.min(a+14.5,px+q()*5-2.5));py+=4;x.lineTo(px,py);}x.stroke();}
     R(x,'#c9a24a',0,0,32,0.9);R(x,'#c9a24a',15.6,0,0.8,26);R(x,'#c9a24a',0,0,0.6,26);R(x,'#c9a24a',31.4,0,0.6,26);R(x,'#c9a24a',0,25.6,32,1);
     R(x,'#18151a',0,26.6,32,5.4);R(x,'rgba(255,255,255,.12)',0,26.8,32,0.5);});}
+  /* The Flamingo Arms deco condo (homes.js), its own random stream. Floors: 238 cream terrazzo with mint/pink chips and
+     brass quarter-fans meeting at every corner (whole sunbursts across the room), 239 blush carpet with a peach deco
+     lattice, 240 pink and white bathroom tile with black corner keys, 241 glossy black-and-white kitchen checker with a
+     mint pinstripe, 242 black terrazzo with a gold chevron band (the corridor), 243 coral and cream balcony tile.
+     Walls: 244 blush plaster with a white chair rail, mint speed lines and a teal skirting, 245 peach stucco facade with
+     horizontal grooves and a mint band, 246 mint subway tile with a black pencil trim, 247 white subway tile with a mint band */
+  {let s6=6206;const q=()=>(s6=(s6*16807)%2147483647)/2147483647,dots6=(x,n,cols,a=0,b=0,w=32,h=32,s=1)=>{for(let i=0;i<n;i++)R(x,cols[i%cols.length],a+q()*w,b+q()*h,s,s);},
+    fan=(x,cx,cy,a0,cols)=>{for(let k=0;k<cols.length;k++){x.strokeStyle=cols[k];x.lineWidth=k?0.7:0.9;x.beginPath();x.arc(cx,cy,10-k*3,a0,a0+Math.PI/2);x.stroke();}
+     x.strokeStyle='rgba(201,162,74,.8)';x.lineWidth=0.5;for(let k=1;k<4;k++){const a=a0+k*Math.PI/8;x.beginPath();x.moveTo(cx+Math.cos(a)*1.5,cy+Math.sin(a)*1.5);x.lineTo(cx+Math.cos(a)*10,cy+Math.sin(a)*10);x.stroke();}};
+   tile(238,x=>{R(x,'#ece5db',0,0,32,32);dots6(x,220,['#f6f1ea','#e0d7cb','#e6ddd1']);dots6(x,26,['#a8dccb','#f4b6c4','#c8bcae']);
+    for(const [a,b,a0] of [[0,0,0],[32,0,Math.PI/2],[32,32,Math.PI],[0,32,Math.PI*1.5]])fan(x,a,b,a0,['rgba(201,162,74,.85)','rgba(110,194,176,.55)']);
+    R(x,'rgba(201,162,74,.7)',0,0,32,0.45);R(x,'rgba(201,162,74,.7)',0,0,0.45,32);});
+   tile(239,x=>{R(x,'#e8b4b0',0,0,32,32);dots6(x,380,['#e2aaa6','#eebcb8','#dca29e','#f2c4c0']);
+    x.strokeStyle='rgba(255,214,190,.75)';x.lineWidth=0.8;for(const o of [0,16]){x.beginPath();x.moveTo(o,0);x.lineTo(o+16,16);x.lineTo(o,32);x.stroke();x.beginPath();x.moveTo(o+16,0);x.lineTo(o,16);x.lineTo(o+16,32);x.stroke();}
+    x.fillStyle='rgba(255,236,220,.8)';for(const [a,b] of [[0,0],[16,16],[32,0],[0,32],[32,32],[16,0],[0,16],[32,16],[16,32]]){x.beginPath();x.arc(a,b,1.1,0,TAU);x.fill();}});
+   tile(240,x=>{for(let j=0;j<4;j++)for(let i=0;i<4;i++){R(x,(i+j)%2?'#f6c6d2':'#fbf3f2',i*8,j*8,8,8);R(x,'rgba(255,255,255,.35)',i*8+0.6,j*8+0.6,6.8,0.6);}
+    R(x,'#d6c4c6',0,0,32,0.4);for(let k=8;k<32;k+=8){R(x,'#d6c4c6',k-0.2,0,0.4,32);R(x,'#d6c4c6',0,k-0.2,32,0.4);}R(x,'#d6c4c6',0,0,0.4,32);
+    x.fillStyle='#1c1820';for(let j=0;j<=4;j+=2)for(let i=0;i<=4;i+=2){const a=i*8,b=j*8;x.beginPath();x.moveTo(a,b-1.6);x.lineTo(a+1.6,b);x.lineTo(a,b+1.6);x.lineTo(a-1.6,b);x.fill();}});
+   tile(241,x=>{for(let j=0;j<4;j++)for(let i=0;i<4;i++){const d=(i+j)%2;R(x,d?'#17151b':'#f4f1ec',i*8,j*8,8,8);R(x,d?'rgba(255,255,255,.10)':'rgba(255,255,255,.5)',i*8+0.8,j*8+0.8,3,0.5);}
+    dots6(x,40,['#2a2830','#dcd8d2']);R(x,'#5fc4ae',0,0,32,0.5);R(x,'#5fc4ae',0,0,0.5,32);});
+   tile(242,x=>{R(x,'#1d1a20',0,0,32,32);dots6(x,240,['#2c2830','#3a3540','#141218','#c9a24a','#54505a']);
+    x.strokeStyle='#c9a24a';x.lineWidth=0.9;for(const y of [10,22]){x.beginPath();x.moveTo(0,y);for(let k=0;k<=8;k++)x.lineTo(k*4,y+(k%2?-2.4:2.4));x.stroke();}
+    R(x,'#c9a24a',0,0,32,0.5);R(x,'rgba(240,138,168,.6)',0,15.6,32,0.8);});
+   tile(243,x=>{R(x,'#f6e8dc',0,0,32,32);x.save();x.beginPath();x.rect(0,0,32,32);x.clip();for(let k=-32;k<32;k+=8){x.fillStyle='#f39a86';x.beginPath();x.moveTo(k,0);x.lineTo(k+4,0);x.lineTo(k+36,32);x.lineTo(k+32,32);x.fill();}x.restore();
+    dots6(x,90,['#e88a76','#fff4ea','#f0d8c8']);R(x,'#d9b8a4',0,0,32,0.5);R(x,'#d9b8a4',0,0,0.5,32);R(x,'#d9b8a4',15.8,0,0.4,32);R(x,'#d9b8a4',0,15.8,32,0.4);});
+   tile(244,x=>{R(x,'#f4cfc6',0,0,32,32);dots6(x,120,['#f0c6bc','#f8dad2','#ecc0b6']);R(x,'#ffffff',0,0,32,1.2);
+    for(let k=0;k<3;k++)R(x,['#5fc4ae','#ffffff','#5fc4ae'][k],0,3+k*1.6,32,0.9);
+    R(x,'#fff8f2',0,16.4,32,1.6);R(x,'rgba(0,0,0,.12)',0,18,32,0.5);R(x,'#ebbcb2',0,18.5,32,9.5);dots6(x,40,['#e2b0a6','#f2c8c0'],0,18.5,32,9.5);
+    R(x,'#1f7d78',0,28,32,4);R(x,'rgba(255,255,255,.25)',0,28,32,0.5);});
+   tile(245,x=>{R(x,'#f7c9a6',0,0,32,32);dots6(x,180,['#f2c09c','#fbd4b4','#eab896','#fff0e0']);
+    for(const y of [6,12,22])R(x,'rgba(150,90,60,.22)',0,y,32,0.7),R(x,'rgba(255,240,225,.6)',0,y+0.7,32,0.5);
+    R(x,'#6ec9b4',0,15,32,2.2);R(x,'#ffffff',0,14.4,32,0.6);R(x,'#ffffff',0,17.2,32,0.6);R(x,'#d99a7a',0,29,32,3);});
+   tile(246,x=>{R(x,'#8fd8c4',0,0,32,32);for(let j=0;j<7;j++)for(let i=-1;i<3;i++){const a=i*16+(j%2?8:0),b=j*4;R(x,'#a6e4d2',a+0.5,b+0.5,15,3);R(x,'rgba(255,255,255,.45)',a+1,b+0.8,10,0.6);}
+    R(x,'#1a1a1e',0,27.8,32,1.2);R(x,'#ffffff',0,29,32,3);R(x,'#1a1a1e',0,0,32,0.6);});
+   tile(247,x=>{R(x,'#e4e2de',0,0,32,32);for(let j=0;j<8;j++)for(let i=-1;i<3;i++){const a=i*16+(j%2?8:0),b=j*4;R(x,'#f7f6f2',a+0.5,b+0.5,15,3);R(x,'rgba(255,255,255,.7)',a+1,b+0.8,10,0.6);}
+    R(x,'#5fc4ae',0,13,32,2.6);R(x,'#f08aa8',0,15.6,32,0.7);R(x,'#3a3a40',0,29,32,3);});}
   /* lamp-lit window variants, picked per storey by surfPick */
   for(const [t,v] of [[172,213],[173,214],[174,215],[183,216],[175,217]])TVAR[t]=[v];}
  for(const t of ATILES)if(!legacy.has(t)){gutter(t);const [cx,cy]=TCELL(t),n=ax.getImageData(cx*64,cy*64,64,64).data;for(let j=0;j<64;j++)d.set(n.subarray(j*256,j*256+256),((cy*64+j)*ATLAS+cx*64)*4);}
