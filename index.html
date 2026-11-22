@@ -5068,9 +5068,11 @@ function stageBuild(id,token,snapshot){
  if(!Array.isArray(def.map)||!def.map.length||!def.map.every(r=>typeof r==='string')||def.map.join('').split('P').length!==2)throw new Error('Grid stage requires exactly one player spawn');
  for(const c of def.map.join(''))if(!isW(c)&&!Object.prototype.hasOwnProperty.call(FLOORCH,c)&&!FURN[c]&&!Object.prototype.hasOwnProperty.call(EKIND,c)&&!IKIND[c]&&![' ','P','C','D','@','*','r','%','X'].includes(c)&&!def.legend?.[c])throw new Error('Unsupported grid stage glyph '+c);
  for(const lg of Object.values(def.legend||{}))if(lg.npc||lg.trig)throw new Error('Stage NPCs and hub triggers are unsupported');
- const prev=G,idx=levelIdx;let fresh;
+ /* loadLevel reads MISSION (bonus-job twists: Pesos, the kid, the arena, the boss rush, Empire turf). It must be the mission being
+    built, not the last one played: a Pesos or arena run before Kade Tower gave the Kade site that job's objective, and the stage was refused */
+ const prev=G,idx=levelIdx,mis=MISSION;let fresh;
  try{
-  levelIdx=b;fresh=loadLevel(b,def,true);fresh.stageManaged=true;fresh.sid=token.to;fresh.mission=id;
+  levelIdx=b;MISSION=id;fresh=loadLevel(b,def,true);fresh.stageManaged=true;fresh.sid=token.to;fresh.mission=id;
   fresh.panes=[];for(let z=0;z<fresh.H;z++)for(let x=0;x<fresh.W;x++)if(fresh.rows[z][x]==='%'){fresh.panes.push({x:x+.5,z:z+.5,ix:x,iz:z});fresh.solid[z*fresh.W+x]=1;}
   fresh.stageBase=Object.fromEntries(STAGE_CELLS.map(k=>[k,fresh[k].slice()]));
   if(snapshot)stageHydrate(fresh,snapshot);
@@ -5083,7 +5085,7 @@ function stageBuild(id,token,snapshot){
   if(!Number.isFinite(p.maxhp)||p.maxhp<=0||!WORLD.clear(fresh.wst,p.x,p.z,p.x,p.z,p.r)||fresh.doors.some(d=>{const end=doorEnd(d);return segDist(p.x,p.z,d.hx,d.hz,end[0],end[1])<p.r;}))throw new Error('Stage arrival lacks bounds/body clearance');
   fresh.cam.x=p.x;fresh.cam.z=p.z-1;fresh.stairLatch=new Set(desc.stairs.filter(s=>Math.hypot(p.x-s.at[0],p.z-s.at[1])<=s.r).map(s=>s.id));
   markZones(fresh);buildStatic(fresh);buildRadar(fresh);computeFlow();return fresh;
- }catch(e){stageRelease(fresh||G!==prev&&G);throw e;}finally{G=prev;levelIdx=idx;}
+ }catch(e){stageRelease(fresh||G!==prev&&G);throw e;}finally{G=prev;levelIdx=idx;MISSION=mis;}
 }
 /* W2f plan stages: WORLD.compile(PLAN.fromPlan(PLAN.playable(plan))) is authoritative for collision, sight, rays and
    pathing; loadLevel only builds a synthetic compatibility grid (walls/ground raster) for radar, decals and particles.
@@ -5105,9 +5107,11 @@ function planStageBuild(id,token,snapshot,raw,b){
  if(pc<1||pz<1||pc>GW-2||pz>GH-2)throw new Error('Plan stage spawn outside the compatibility grid');
  const map=[];for(let z=1;z<GH-1;z++){let r='';for(let x=1;x<GW-1;x++){const i=z*GW+x;r+=x===pc&&z===pz?'P':C.solid[i]?'#':C.ground[i]?'.':' ';}map.push(r);}
  const gdef={name:'plan:'+def.plan+'/'+def.stage,map,wall:1,floor:1};
- const prev=G,idx=levelIdx;let fresh;
+ /* loadLevel reads MISSION (bonus-job twists: Pesos, the kid, the arena, the boss rush, Empire turf). It must be the mission being
+    built, not the last one played: a Pesos or arena run before Kade Tower gave the Kade site that job's objective, and the stage was refused */
+ const prev=G,idx=levelIdx,mis=MISSION;let fresh;
  try{
-  levelIdx=b;fresh=loadLevel(b,gdef,true);fresh.stageManaged=true;fresh.sid=token.to;fresh.mission=id;
+  levelIdx=b;MISSION=id;fresh=loadLevel(b,gdef,true);fresh.stageManaged=true;fresh.sid=token.to;fresh.mission=id;
   if(fresh.W!==GW||fresh.H!==GH)throw new Error('Plan compatibility grid size mismatch');
   fresh.wh.set(C.wh);fresh.furn.fill(0);fresh.panes=[];fresh.glassSet=new Set();fresh.lights=[];fresh.deco=[];
   fresh.wst=st;fresh.doors=st.doors;fresh.plan={id:def.plan,stage:def.stage,nav:null,field:null,propH:new Map(st.props.map(p=>[p.ref??p.id,p.h]))};
@@ -5122,7 +5126,7 @@ function planStageBuild(id,token,snapshot,raw,b){
   const old=fresh.staticB;if(old.buf){gl.deleteBuffer(old.buf);old.buf=null;}
   fresh.staticB=new Batch();MESH.build(st,{uv:t=>TUV[t],white:WUV,tint:surfTint,pick:surfPick,finish:o.extras.finish},fresh.staticB);fresh.staticB.upload(true);
   buildRadar(fresh);computeFlow();return fresh;
- }catch(e){stageRelease(fresh||G!==prev&&G);throw e;}finally{G=prev;levelIdx=idx;}
+ }catch(e){stageRelease(fresh||G!==prev&&G);throw e;}finally{G=prev;levelIdx=idx;MISSION=mis;}
 }
 function stageKitCheck(k){
  if(!kitShape(k)||k.guns.length!==2||![0,1].includes(k.active))throw new Error('Invalid stage loadout');
@@ -5144,9 +5148,9 @@ function enterStage(id,arrive=null,startingMission=null){
  if(raw.kind!=='grid'&&!(raw.kind==='plan'&&typeof raw.def?.plan==='string'&&typeof PLANS!=='undefined'&&Object.hasOwn(PLANS,raw.def.plan)))return stageFailure(new Error('Unsupported playable stage kind '+raw.kind));
  return startingMission?startGridRun(startingMission,arrive):enterGridStage(id,arrive);
 }
-function startGridRun(id,arrive=null,again=false){
- let fresh,existing=false;try{
-  const p=myProg(),old=p.run,manager=stageManager(id);existing=!!(old&&old.mission===id);const moved=existing&&old.moved===1;if(moved)delete old.moved;
+function startGridRun(id,arrive=null){
+ let fresh;try{
+  const p=myProg(),old=p.run,manager=stageManager(id),existing=old&&old.mission===id,moved=existing&&old.moved===1;if(moved)delete old.moved;
   if(existing&&old.st){manager.decode(old.st);if(manager.current!==old.stage||!manager.active)throw new Error('Run stage/checkpoint mismatch');}
   if(existing&&old.stage!==missionStart(id)&&!old.st)throw new Error('Stage entry snapshot missing');
   const r=existing?kitClone(old):{v:KIT_V,mission:id,stage:missionStart(id),entryKit:kitClone(p.kit),stageKit:kitClone(p.kit),t:Date.now()};
@@ -5159,16 +5163,8 @@ function startGridRun(id,arrive=null,again=false){
   const envelope=manager.preview(token,retry?.snapshot||null,entry,bag);
   r.st=envelope;r.stageHp=hp;r.t=Date.now();if(existing)Object.assign(old,r);else p.run=r;saveProg();
   stageActivate(fresh,manager,r.stageKit,hp,bag,entry.player.armor);manager.commit(token,retry?.snapshot||null,entry,bag);clearInterval(typeT);
-  if(moved||again)banner(missionName(id)+' WAS REBUILT','This floor changed since you saved. Starting again from the beginning, with everything you brought.');return true;
- }catch(e){ARR_GO=null;stageRelease(fresh);
-  /* a run saved partway up a floor whose map has changed since (its checkpoint no longer fits) used to be refused every time, so that job
-     could never be played again (and from a home elevator you were left in the lift). Start the floor again from the beginning instead,
-     with the kit you walked in with, the way a rebuilt legacy floor does */
-  const p=myProg(),old=p.run;if(existing&&!again&&old&&old.mission===id){stageNote(e,'resume refused, restarting the floor');
-   try{const ek=kitClone(old.entryKit);stageKitCheck(ek);p.run={v:KIT_V,mission:id,stage:missionStart(id),entryKit:ek,stageKit:kitClone(ek),t:Date.now(),...(old.var?{var:old.var}:{}),...(Number.isInteger(old.ret)?{ret:old.ret}:{})};}
-   catch(e2){p.run={v:KIT_V,mission:id,stage:missionStart(id),entryKit:kitClone(p.kit),stageKit:kitClone(p.kit),t:Date.now()};}
-   saveProg();return startGridRun(id,arrive,true);}
-  return stageFailure(e);}
+  if(moved)banner(missionName(id)+' WAS REBUILT','This floor changed since you saved. Starting again from the beginning, with everything you brought.');return true;
+ }catch(e){ARR_GO=null;stageRelease(fresh);return stageFailure(e);}
 }
 function stageCanLeave(g){return !!(g&&g===G&&g.stageManaged&&g.stageRun?.active&&g.mission===MISSION&&myProg().run===g.runOwner&&myProg().run?.mission===MISSION&&myProg().run.stage===g.sid&&g.player.alive&&Number.isFinite(g.player.hp)&&g.player.hp>0&&!g.player.ex&&!(g.player.exec>0)&&!g.done&&!g.fin&&!g.cine&&!g.cameo);}
 /* A floor change must never be refused over fight leftovers. stageSettle puts anything the strict snapshot would reject into a state it
