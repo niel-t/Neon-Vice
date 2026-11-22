@@ -46,8 +46,8 @@ test('mall: shops, keepers, jewelry you wear, furniture for every home, real est
       closeStore(); openMallShop('furn');
       document.querySelector('#sStore [data-mf="1:sofa"]').click(); out.sofa = !!p.furn[1].sofa;
       closeStore();
-      // rent is paid with every finished job
-      const w = p.wallet; out.rent = mallRent(p); out.paid = p.wallet - w;
+      // rent is paid with every finished job: the laundromat, and Room 14, rented out now that you live in the studio
+      const w = p.wallet; TEN_ROLL = 0.99; out.rent = mallRent(p); TEN_ROLL = null; out.paid = p.wallet - w;
       out.wallet = p.wallet;
       saveProg(); const sv = JSON.parse(localStorage.getItem('nb86prog'))[CHARS[selIdx].id]; out.saved = { props: sv.props, medal: sv.jewel.medal, furn1: !!sv.furn[1].sofa };
       return out;
@@ -64,8 +64,8 @@ test('mall: shops, keepers, jewelry you wear, furniture for every home, real est
     home: [1, [0, 1]],
     props: { laundro: 1 },
     sofa: true,
-    rent: 500, paid: 500,
-    wallet: 300000 - 12000 - 4000 - 1200 - 12000 - 15000 - 3500 + 500,
+    rent: 750, paid: 750,
+    wallet: 300000 - 12000 - 4000 - 1200 - 12000 - 15000 - 3500 + 750,
     saved: { props: { laundro: 1 }, medal: true, furn1: true }
   });
   // the high-detail model's build flags follow what you wear (models.js jewelB)

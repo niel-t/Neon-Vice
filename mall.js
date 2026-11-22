@@ -72,7 +72,35 @@ const MALL_PROPS=[
 const MALL_NOFURN=['girls','guards','dog','cat','iguana','tigerpet','doberman'];
 let mallSayTxt='';
 function mallProps(p){return p.props||(p.props={});}
-function mallRent(p){const o=mallProps(p);let r=0;for(const q of MALL_PROPS)if(o[q.k])r+=q.rent;if(r){p.wallet+=r;p.rentTot=(p.rentTot||0)+r;}return r;}
+function mallRent(p){const o=mallProps(p);let r=0;for(const q of MALL_PROPS)if(o[q.k])r+=q.rent;r+=tenRent(p);if(r){p.wallet+=r;p.rentTot=(p.rentTot||0)+r;}return r;}
+/* ---------- your old homes: rented out once you move up ----------
+   Every home you own but do not live in has a tenant paying homeRent(t) after every job (counted in mallRent). Now and then (TEN_LATE) a
+   tenant stops paying: p.ten[t]={owe,told} and his rent piles up as debt (up to TEN_CAP jobs' worth) instead of reaching your wallet.
+   The home phone and Sunshine Realty then offer the job t_<home> (missions.js): go round and collect it, a fist fight. Moving back into
+   the home throws the tenant out and writes the debt off. TEN_ROLL fixes the dice in tests. */
+const TEN_LATE=0.18,TEN_CAP=4;let TEN_ROLL=null;
+const homeRent=t=>Math.max(250,Math.round(((HOMEDEF[t]&&HOMEDEF[t].price)||0)*0.03/50)*50);
+const tenOf=p=>p.ten&&typeof p.ten==='object'?p.ten:(p.ten={});
+const tenRented=p=>(p.homes||[0]).filter(t=>t!==(p.home||0)&&HOMEDEF[t]);
+const tenOwed=(p,t)=>{const s=p&&p.ten&&p.ten[t];return s&&s.owe>0?s.owe:0;};
+const tenLate=p=>tenRented(p).filter(t=>tenOwed(p,t)>0);
+function tenRent(p){const T=tenOf(p);let r=0;
+ for(const t of tenRented(p)){const rent=homeRent(t),s=T[t];
+  if(s&&s.owe>0){s.owe=Math.min(s.owe+rent,rent*TEN_CAP);continue;}
+  const roll=TEN_ROLL!==null?TEN_ROLL:Math.random();if(roll<TEN_LATE){T[t]={owe:rent,told:0};continue;}
+  r+=rent;}
+ return r;}
+function tenClear(p,t){const T=tenOf(p);T[t]=null;Reflect.deleteProperty(T,t);}
+function tenCollect(p,t){const o=tenOwed(p,t);if(o){p.wallet+=o;p.rentTot=(p.rentTot||0)+o;}tenClear(p,t);return o;}
+function tenOut(p,t){tenClear(p,t);}
+function tenName(t){return (typeof TEN_BOSS!=='undefined'&&TEN_BOSS[t]&&TEN_BOSS[t][0])||'THE TENANT';}
+function tenCards(){const p=myProg();return tenLate(p).map(t=>`<button class="scard" data-ten="${t}"><div class="pn">COLLECT THE RENT · ${HOMEDEF[t].name}</div><div class="pd">${tenName(t)} owes you $${fmt(tenOwed(p,t))} and stopped answering the door. Fists only: the guns stay in the car.</div><div class="sp">GO COLLECT · $${fmt(tenOwed(p,t))}</div></button>`).join('');}
+/* the rent job starts like any other trip out: the elevator or the car first */
+function tenantGo(t){const p=myProg(),id='t_'+t;if(!tenOwed(p,t)||!missionKnown(id))return;closeStore();if(state!=='play')return;
+ travel(()=>{startMission(id);showObjCard();},'COLLECT THE RENT',HOMEDEF[t].name);}
+function tenNews(){const p=myProg(),t=tenLate(p).find(t=>!tenOf(p)[t].told);if(t===undefined)return;tenOf(p)[t].told=1;saveProg();
+ setTimeout(()=>{if(G&&G.def.hub&&state==='play')banner('THE RENT IS LATE',tenName(t)+' at '+HOMEDEF[t].name+' owes $'+fmt(tenOwed(p,t))+' · collect it from the home phone');},4200);}
+function tenStatus(p,i){if((p.home||0)===i||!(p.homes||[0]).includes(i))return '';const o=tenOwed(p,i);return o?' TENANT OWES YOU $'+fmt(o)+': collect it from the home phone.':' Rented out: $'+fmt(homeRent(i))+' a job.';}
 /* jewelry: p.jewel[k] is true while you wear it, 'off' while it sits in your box (still yours) */
 function jewelWorn(p,k){return p&&p.jewel&&p.jewel[k]===true;}
 
@@ -404,7 +432,7 @@ function renderMallShop(msg){const p=myProg(),s=MALL_SHOPS[storeMode],sec=(id,on
     :`<div class="pd">Buy it at Sunshine Realty first, then Lola's boys deliver.</div>`;});}
  else if(storeMode==='elec'||storeMode==='clinic'||storeMode==='arcade')up2Render(storeMode,p,sec);
  else{sec('stCars',1);sec('stGold',1);sec('stHome',0);const pr=mallProps(p);$('stCarsH').textContent='HOMES · YOU WAKE UP IN THE ONE YOU LIVE IN';
-  $('stCars').innerHTML=HOMEDEF.map((h,i)=>[h,i]).sort((a,b)=>a[0].price-b[0].price).map(([h,i])=>{const own=(p.homes||[0]).includes(i),cur=(p.home||0)===i,lock=h.needs&&!p[h.needs];return mallCard(`data-ho="${i}"`,h.name,h.desc,cur?'LIVING HERE':own?'MOVE BACK IN':lock?(h.lockTxt||'AFTER THE SHARK IS DEAD'):'BUY $'+fmt(h.price),cur,lock,n++);}).join('');
+  $('stCars').innerHTML=HOMEDEF.map((h,i)=>[h,i]).sort((a,b)=>a[0].price-b[0].price).map(([h,i])=>{const own=(p.homes||[0]).includes(i),cur=(p.home||0)===i,lock=h.needs&&!p[h.needs];return mallCard(`data-ho="${i}"`,h.name,h.desc+tenStatus(p,i),cur?'LIVING HERE':own?'MOVE BACK IN':lock?(h.lockTxt||'AFTER THE SHARK IS DEAD'):'BUY $'+fmt(h.price),cur,lock,n++);}).join('');
   const rent=MALL_PROPS.reduce((a,q)=>a+(pr[q.k]?q.rent:0),0);$('stGoldH').textContent='INVESTMENT PROPERTY · RENT AFTER EVERY JOB'+(rent?' · $'+fmt(rent)+' A JOB · EARNED $'+fmt(p.rentTot||0):'');
   $('stGold').innerHTML=MALL_PROPS.map(q=>mallCard(`data-inv="${q.k}"`,q.name,q.desc+' Rent $'+fmt(q.rent)+' a job.',pr[q.k]?'YOURS · $'+fmt(q.rent)+' A JOB':'BUY $'+fmt(q.price),!!pr[q.k],false,n++)).join('');}
  $('stMsg').textContent=msg||'';const cs=document.querySelectorAll('#sStore .scard');if(storeFocus>=cs.length)storeFocus=0;cs.forEach((b,i)=>b.style.outline=padMode&&i===storeFocus?'3px solid #ffd36b':'');if(padMode&&cs[storeFocus]&&cs[storeFocus].scrollIntoView)cs[storeFocus].scrollIntoView({block:'nearest'});}
