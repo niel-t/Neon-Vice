@@ -2423,7 +2423,8 @@ function discoLights(g){const d=g.disco;if(!d)return[];const out=[];for(let i=0;
 const briefB=new Batch();let briefBuilt=false,salChar=null,briefParts=[],blinkT=2;
 const SALLOOK={skin:hex(0xf2c2a2),jacket:hex(0x2552b5),shirt:hex(0xf4f4f8),tie:hex(0x2a2026),pants:hex(0x2552b5),shoes:hex(0x2a1a14),beard:hex(0xa5532a),watch:true,chain:true,bling:true};
 const PHONE_BASE=[0.5,0.9,0.6];
-let briefKey='';const briefAct=()=>VISIT.next==='end'?4:((LEVELS[VISIT.next]||{}).act||1);const BRIEF_SKY=[null,[1,1,1],[1.7,0.95,0.7],[1.6,1.35,0.75],[0.75,0.85,1.5]],BRIEF_SUN=[null,[1,0.25,0.7],[1.5,0.6,0.3],[1.4,1.05,0.45],[0.55,0.7,1.3]];
+/* the desk scene is tinted per act; an act without its own tint (or a broken level index) uses the last one, so the briefing never fails to build */
+let briefKey='';const briefAct=()=>{const a=VISIT.next==='end'?4:((LEVELS[VISIT.next]||{}).act||1);return a>=1&&a<BRIEF_SKY.length?a:BRIEF_SKY.length-1;};const BRIEF_SKY=[null,[1,1,1],[1.7,0.95,0.7],[1.6,1.35,0.75],[0.75,0.85,1.5]],BRIEF_SUN=[null,[1,0.25,0.7],[1.5,0.6,0.3],[1.4,1.05,0.45],[0.55,0.7,1.3]],BRIEF_BLIND=[null,[0.4,0.15,0.36],[0.55,0.3,0.12],[0.55,0.45,0.15],[0.2,0.28,0.5]];
 function buildBrief(){const B=briefB;B.reset();B.round=0.45;
  for(let x=-3;x<3;x++)for(let z=-2;z<3;z++)B.quad([[x,0,z+1],[x+1,0,z+1],[x+1,0,z],[x,0,z]],0,1,0,TUV[4],[0.7,0.6,0.6]);
  const wz=-1.3;for(let x=-3;x<3;x++)for(let y=0;y<4;y++)B.quad([[x,y,wz],[x+1,y,wz],[x+1,y+1,wz],[x,y+1,wz]],0,0,1,TUV[y===0?13:42],y===0?[0.8,0.8,0.8]:BRIEF_SKY[briefAct()]);
@@ -2432,7 +2433,7 @@ function buildBrief(){const B=briefB;B.reset();B.round=0.45;
  for(const gx of [-2.37,-0.23])B.box(TRS(gx,1.53,wz+0.61,0,0.05,1.9,0.05),GOLD);for(const gy of [0.61,2.46])B.box(TRS(-1.3,gy,wz+0.61,0,2.19,0.05,0.05),GOLD);
  tankDecor(B,-2.35,-0.25,wz+0.06,wz+0.56,0.66,7);
  for(let i=0;i<7;i++)B.box(TRS(-3+i,2,wz+0.03,0,0.04,4,0.04),GOLD);B.box(TRS(0,0.88,0.95,0,0.36,0.08,0.03),GOLD);
- for(let i=0;i<7;i++){const y=0.95+i*0.19,x0=0.1+i*0.05;B.quad([[x0,y,wz+0.012],[x0+2.1,y,wz+0.012],[x0+2.15,y+0.075,wz+0.012],[x0+0.05,y+0.075,wz+0.012]],0,0,0,WUV,[null,[0.4,0.15,0.36],[0.55,0.3,0.12],[0.55,0.45,0.15]][briefAct()]);}
+ for(let i=0;i<7;i++){const y=0.95+i*0.19,x0=0.1+i*0.05;B.quad([[x0,y,wz+0.012],[x0+2.1,y,wz+0.012],[x0+2.15,y+0.075,wz+0.012],[x0+0.05,y+0.075,wz+0.012]],0,0,0,WUV,BRIEF_BLIND[briefAct()]);}
  const pk=[1,0.28,0.72],cy=[0.25,0.9,1];B.box(TRS(2.2,2.5,wz+0.04,0,0.9,0.05,0.04),pk,true);B.box(TRS(2.2,1.7,wz+0.04,0,0.05,1.6,0.04),pk,true);
  for(let i=0;i<5;i++)B.box(A.mul(A.mul(A.T(2.2+Math.cos(i*1.26)*0.28,2.5+Math.sin(i*1.26)*0.18,wz+0.05),A.RZ(i*1.26)),A.S(0.45,0.04,0.03)),cy,true);
  B.box(TRS(0,1.15,-0.45,0,0.75,1.2,0.14),hex(0x2a120c));B.box(TRS(0,1.78,-0.45,0,0.68,0.12,0.16),hex(0x3a1a10));B.box(TRS(0,0.5,-0.12,0,0.72,0.12,0.62),hex(0x2a120c));for(const sd of [-1,1])B.box(TRS(sd*0.42,0.72,-0.1,0,0.1,0.06,0.55),hex(0x3a1a10));
@@ -4200,7 +4201,7 @@ function talkMcWey(){if(briefBuilt&&briefKey!==mcHaul()+'|'+briefAct())briefBuil
  else if(vi.debrief===null&&HUBFIRST)m(pick(MC_HI[pr.paid?'partner':'kid']));
  if(vi.next==='end'){let best=vi.style||'mixed';for(const k in runStyle)if(runStyle[k]>(runStyle[best]||0))best=k;RUNEND=END_STYLE[best];}
  if(vi.debrief!==null){const lex=vi.debrief===2&&vi.next===3,busy=lex&&LASTPAY&&LASTPAY.squared;
-  if(!busy)(vi.debrief===7&&(pr.wflags||{}).lex_spared?["Lex is still breathing on that deck, and the Royal Flush is riding at anchor off my terrace. Look at her.","You let him live, and I'm told he cried about it. Mercy suits you less than it suits him."]:(((DEB_STYLE[vi.style||'mixed']||MC_DEBRIEF)[vi.debrief])||MC_DEBRIEF[vi.debrief])).forEach(m);if(mcPayday(m,dq,MC_GRADE[vi.grade]||MC_GRADE.B,busy))beat=true;
+  if(!busy)(vi.debrief===7&&(pr.wflags||{}).lex_spared?["Lex is still breathing on that deck, and the Royal Flush is riding at anchor off my terrace. Look at her.","You let him live, and I'm told he cried about it. Mercy suits you less than it suits him."]:(((DEB_STYLE[vi.style||'mixed']||MC_DEBRIEF)[vi.debrief])||MC_DEBRIEF[vi.debrief]||[])).forEach(m);if(mcPayday(m,dq,MC_GRADE[vi.grade]||MC_GRADE.B,busy))beat=true;
   if(lex){dq('lex');beat=true;}}
  if(!beat&&stkMcIntro(pr,m))beat=true;
  if(!beat)mcReact(m);

@@ -74,3 +74,18 @@ test('mcoffice: each room has its own floor and walls, and the floor has people 
   });
   expect(r).toEqual({ rec: 232, office: 230, chill: 231, loot: 233, toRec: 237, toOffice: 234, vips: 3, guard: true, strolls: true });
 });
+
+test('mcoffice: from Act 4 on (and for the finale) the briefing is still the desk scene, not just the text log', async ({ openGame }) => {
+  const page = await openGame();
+  const errs = [];
+  page.on('pageerror', e => errs.push(String(e)));
+  await toOffice(page);
+  for (const next of [3, 8, 11, 12, 13, 'end']) {
+    await page.evaluate(n => { state = 'play'; show(null); CHAT.done = false; VISIT = { debrief: n === 'end' ? 13 : n - 1, next: n, grade: 'B', take: 100, style: 'mixed' }; NEXTJOB = n === 'end' ? 13 : n - 1; loadHub('office'); talkMcWey(); }, next);
+    await page.waitForTimeout(400);
+    const r = await page.evaluate(() => ({ st: state, built: briefBuilt, mc: !!salChar, act: briefAct() }));
+    expect(r, 'next=' + next).toMatchObject({ st: 'brief', built: true, mc: true });
+    expect(r.act).toBe(next === 'end' || next >= 11 ? 4 : next >= 8 ? 3 : 2);
+  }
+  expect(errs).toEqual([]);
+});
