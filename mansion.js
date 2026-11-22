@@ -258,7 +258,9 @@ function mansionExtras(g){const f=homeFurn(),S=g.slots,fl=g.mfl,sp=g.spawned;g.f
  const crew=mvCrew(),want=fl===0?crew.length:fl===1?Math.min(3,crew.length):0,have=sp.girls||0,ms=g.spots.m||[];
  for(let i=have;i<want;i++){const c=crew[i],{P,L:lk}=mvGirlLook(c.n,i),q=ms[i%Math.max(1,ms.length)]||{x:g.player.x+1,z:g.player.z},off=ms.length&&i>=ms.length?0.8:0;
   const n=mvChar(g,'pgirl',q.x+off,q.z+off*0.4,lk,0);n.prof=P;n.girlI=i;n.dname=c.n;}
- sp.girls=Math.max(have,want);}
+ sp.girls=Math.max(have,want);
+ /* girlfriends from Velvet Palms live here too: downstairs by day, upstairs at night (never in the basement club she quit) */
+ if(fl!==-1)gfHome(g,(q,lk)=>mvChar(g,'pgirl',q.x,q.z,lk,0),want);}
 function mvBanner(g){const fl=g.mfl,tap=touchMode?'Tap':'Click';
  if(fl===0)banner('VILLA SOLANA',tap+' the phone for furniture and side jobs · your car is out front');
  else if(fl===1)banner('THE MASTER SUITE',mvCrew().length?'The girls are upstairs · the bed is big enough':'Sleep, change, take in the view');
