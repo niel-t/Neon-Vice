@@ -163,8 +163,8 @@ const RH_DEF={
   hl:{wardrobe:{x:8.5,z:9.27,ry:0,sol:[[8,9]],use:{x:8.5,z:10.1}},bench:{x:18.0,z:6.5,ry:0,sol:[[17,6],[18,6]],use:{x:18.0,z:7.35}},bar:{x:11.27,z:9.5,ry:Math.PI/2,sol:[[11,9]],use:{x:12.1,z:9.5}}},
   party:{price:3000,n:7,xp:260},title:['OCEAN DRIVE','THE FLAMINGO ARMS'],
   lift:{at:[10.7,18.5],path:[[12.6,18.4],[15.5,18.2],[15.5,17.2],[15.5,16.2]],title:'THE FLAMINGO ARMS',from:4,to:1},
-  solid:[[2,9],[3,9],[22,9],[23,9],[24,9],[25,9],[26,9],[27,9],[2,14],[3,14],[11,15],[12,15],[13,16],[24,14],[16,18],[17,18]],
-  lights:[[5,11,5.5,[0.8,0.62,0.55]],[3.5,15,3.5,[0.55,0.85,0.9]],[15,11.5,6.5,[0.85,0.68,0.6]],[14,15,5.5,[0.8,0.6,0.62]],[24,10.5,5,[0.75,0.75,0.7]],[23.5,15,4.5,[0.75,0.55,0.4]],[14,6.5,7,[0.75,0.45,0.55],1.4],[13,18.5,5,[0.95,0.75,0.5]],[14,3,9,[0.6,0.5,0.55],2.6]],
+  solid:[[2,9],[3,9],[22,9],[23,9],[24,9],[25,9],[26,9],[27,9],[27,10],[5,9],[6,9],[2,14],[2,15],[2,16],[5,14],[6,14],[6,16],[8,14],[9,14],[8,16],[19,9],[11,15],[12,15],[13,16],[24,14],[27,14],[16,18],[17,18],[19,18],[19,6],[20,6],[7,7],[21,7]],
+  lights:[[5,11,5.5,[0.8,0.62,0.55]],[3.5,15,3.5,[0.55,0.85,0.9]],[15,11.5,6.0,[0.72,0.58,0.52]],[13,15,5.0,[0.7,0.52,0.56]],[24,10.5,5,[0.75,0.75,0.7]],[23.5,15,4.5,[0.75,0.55,0.4]],[14,6.5,7,[0.75,0.45,0.55],1.4],[13,18.5,5,[0.95,0.75,0.5]],[14,3,9,[0.6,0.5,0.55],2.6]],
   cat:[{k:'jukebox',name:'WURLITZER JUKEBOX',price:3500,desc:'Bubble tubes, chrome and a hundred 45s. Lets you pick the music at home.'},
    {k:'bistro',name:'BALCONY BISTRO SET',price:1800,desc:'A little round table and two chairs on the balcony. Coffee at sunrise, rum at sunset.'},
    {k:'neonsign',name:'PINK NEON FLAMINGO',price:2500,desc:'The building\'s name in pink neon along your balcony rail. Seen from the beach. Seen from space.'}]},
@@ -193,11 +193,19 @@ function rhRegister(){const SL={tank:'f',dine:'q',disco:'s',rug:'r',shelf:'l',de
   if(d.lift)HOME_LIFT[t]=d.lift;}
  Object.assign(HOME_NPC_LINES,RH_LINES);}
 
+/* the Flamingo Arms' own deco surfaces (renderer.js tiles 238-247). floorT is an Int8Array, so the floors go in g.floorX (read
+   first by buildStatic); each wall face picks its tile from the room it faces (g.wallF). Rects are world cells [x0,z0,x1,z1,tile] */
+const RH_CONDO_FLOOR=[[13,8,16,8,238],[2,9,9,12,239],[2,14,6,16,240],[21,9,27,12,241],[21,14,27,16,230],[11,9,19,12,238],[8,13,19,16,238],[9,18,20,19,242],[7,6,22,7,243]];
+const RH_CONDO_WALL=[[2,14,6,16,246],[21,9,27,12,247],[0,0,40,7,245]];
+function rhCondoSurf(g){const W=g.W,H=g.H,FX=g.floorX=new Uint8Array(W*H),at=(R,x,z)=>{for(const r of R)if(x>=r[0]&&x<=r[2]&&z>=r[1]&&z<=r[3])return r[4];return 0;};
+ for(let z=0;z<H;z++)for(let x=0;x<W;x++){const i=z*W+x;if(!g.solid[i])FX[i]=at(RH_CONDO_FLOOR,x,z);}
+ g.wallF=(x,z,nx,nz,i)=>{if(g.wallT[i]!==44||(g.wh[i]||WALL_H)<0.3)return 0;return at(RH_CONDO_WALL,x+nx,z+nz)||244;};}
 /* ---------------- setup (from homeSetup) ---------------- */
 function rhSetup(g,t){const d=RH_DEF[t],W=g.W,H=g.H,leg=g.def.legend;g.rhome=t;g.rdef=d;g.rh={T:0,fish:[]};
  /* the loader's padding ring: carry the outside surface out to it (sea, sand, street, lawn) instead of a dark wall */
  for(let z=0;z<H;z++)for(let x=0;x<W;x++){if(z>0&&x>0&&x<W-1&&z<H-1)continue;const X=Math.min(W-3,Math.max(0,x-1)),Z=Math.min(H-3,Math.max(0,z-1)),ch=(d.map[Z]||'')[X],i=z*W+x,L=leg[ch];
   if(!L||ch==='#'||ch==='Z'||ch==='W')continue;const tex=L.w?L.top||L.w:L.f;if(L.w&&L.h>0.1)continue;g.wh[i]=L.water?0.02:0.03;g.wallT[i]=g.topT[i]=tex;g.glow[i]=L.water?2:0;}
+ if(t===6)rhCondoSurf(g);
  buildStatic(g);
  /* furniture that blocks (after the static build, or the grid would draw it as walls) */
  for(const [x,z] of d.solid)if(x>0&&z>0&&x<W-1&&z<H-1)g.solid[z*W+x]=1;
@@ -223,7 +231,10 @@ function rhBanner(g){const t=g.rhome,d=RH_DEF[t];banner(HOMEDEF[t].name,(touchMo
 /* coming home: the car pulls up and you walk in; at the Flamingo Arms the lift brings you up from the lobby */
 function rhArrive(g){if(!g||!g.rhome)return;const d=g.rdef;
  if(d.lift){const L=d.lift,p=g.player;if(!p)return;p.x=L.at[0];p.z=L.at[1];p.a=Math.PI/2;seqCamTo(g,p.x+1,p.z);sfx('ding');
-  startSeq([{k:'hide',quiet:1},{k:'card',t1:d.title[0],t2:d.title[1]},{k:'wait',dur:0.6},{k:'walk',path:L.path,face:Math.PI,sp:2.4}],g=>rhBanner(g));return;}
+  /* the lift doors open with you already in the car: no 'hide' step here (only stepping out of a car shows you again, so a hidden
+     player stayed invisible for the whole visit) */
+  g.hideP=false;g.inCar=null;
+  startSeq([{k:'card',t1:d.title[0],t2:d.title[1]},{k:'wait',dur:0.6},{k:'walk',path:L.path,face:Math.PI,sp:2.4}],g=>{g.hideP=false;rhBanner(g);});return;}
  const c=g.hcar,c0=d.car;if(!c)return;seqCamTo(g,c0.x,c0.z-1);
  startSeq([{k:'hide',quiet:1},{k:'card',t1:d.title[0],t2:d.title[1]},{k:'drive',car:c,path:d.inPath||[[-7,c0.z],[c0.x,c0.z]],dur:d.inPath?4.0:2.6,ease:'out',camEnd:1},{k:'wait',dur:0.35},
   {k:'out',car:c,at:[c0.x-0.3,c0.z-0.72],a:Math.PI},{k:'walk',path:d.walk,face:Math.PI}],g=>rhBanner(g));}
@@ -385,34 +396,89 @@ const rhStatic={
   for(const [z,c] of [[9.6,[1,0.6,0.2]],[10.5,[0.3,0.8,0.4]]])bx(5.35,1.12,z,0.12,0.16,0.12,c);}
  if(f.rig)for(const x of [24.6,26.0]){const K=hiKit(B,x,12.25,0,I);K.rb(0,0.32,0,0.5,0.08,0.5,RH_WH,0.4);K.rb(0,0.6,-0.24,0.5,0.55,0.08,RH_WH,0.4);K.cy(0,0.15,0,0.16,0.3,[0.7,0.7,0.74],'y');
   K.sf([0.22,0.5,0.1],[0.6,2.0,1.6],0.025,0.025,[0.2,0.2,0.22]);K.sf([0.6,2.0,1.6],[0.62,0.1,2.6],0.004,0.004,[0.9,0.9,0.9]);}},
-/* ===== THE FLAMINGO ARMS, ART DECO CONDO ===== */
-6(B,bx,I,g,f){const n=bedN(),S=g.slots,MINT=[0.6,0.92,0.82],PEACH=[1,0.78,0.62],CHR=[0.82,0.84,0.88];
+/* ===== THE FLAMINGO ARMS, ART DECO CONDO =====
+   Revamped 2026-11-22: its own deco surfaces (renderer.js tiles 238-247, laid by rhCondoSurf) and rounded furniture built
+   from the homeitems.js kit instead of plain boxes. World cells: bedroom x2-9 z9-12, bathroom x2-6 z14-16, living room
+   x11-19 z9-12 plus x8-19 z13-16, kitchen x21-27 z9-12, den x21-27 z14-16, corridor x11-20 z18-19, balcony x7-22 z6-7 */
+6(B,bx,I,g,f){const n=bedN(),S=g.slots,MINT=[0.56,0.88,0.78],PEACH=[1,0.78,0.62],CHR=HI_CH,BLUSH=[0.98,0.72,0.74],CORAL=[0.96,0.5,0.46],TEAL=[0.12,0.5,0.48],FROST=[1.1,0.98,0.86];
  /* the beach below: palms along the promenade, a lifeguard tower, two striped umbrellas */
  for(const [x,l] of [[2.5,0.2],[7.5,-0.1],[20.5,0.15],[26.5,-0.2]])mvPalm(B,x,4.4,1.0,l);
- {const x=24.5,z=3.2;for(const sx of [-0.4,0.4])for(const sz of [-0.3,0.3])bx(x+sx,0.6,z+sz,0.06,1.2,0.06,RH_WH);bx(x,1.25,z,1.1,0.08,0.9,RH_WH);bx(x,1.65,z,1.0,0.75,0.8,[1,0.55,0.62]);bx(x,2.08,z,1.2,0.1,1.0,MINT);bx(x,1.65,z+0.41,0.6,0.4,0.01,[0.3,0.6,0.8]);}
+ {const K=hiKit(B,24.5,3.2,0,I);for(const sx of [-0.4,0.4])for(const sz of [-0.3,0.3])K.rb(sx,0.6,sz,0.07,1.2,0.07,RH_WH,0.6);K.rb(0,1.25,0,1.1,0.08,0.9,RH_WH,0.3);K.rb(0,1.65,0,1.0,0.75,0.8,[1,0.55,0.62],0.35);K.rb(0,2.08,0,1.25,0.12,1.05,MINT,0.8);K.bx(0,1.65,0.41,0.6,0.4,0.01,[0.3,0.6,0.8]);}
  mvUmbrella(B,11.5,3.3,RH_PINK);mvUmbrella(B,15.5,2.8,RH_TEAL);
- /* the balcony: a curved deco rail with an eyebrow ledge, potted palms */
- rhRails(bx,g.def.map,RH_WH,MINT,0.95);bx(14.5,0.3,5.04,17.2,0.6,0.08,PEACH);bx(14.5,0.62,5.0,17.4,0.04,0.16,RH_WH);
- for(let i=0;i<8;i++){const a=(i+0.5)/8*Math.PI/2;bx(6.0-Math.cos(a)*0.0,0.3,5.0+Math.sin(a)*1.9,0.08,0.6,0.26,PEACH);}
- rhPlant(B,I,6.8,7.4,0.8,RH_WH);rhPlant(B,I,21.2,7.4,0.8,RH_WH);
- /* the facade over the windows: thin eyebrow ledges and the speed stripes along the top of the wall */
- for(const x0 of [4,11,22]){bx(x0+1.5,2.0,7.9,3.4,0.05,0.32,RH_WH);}for(let i=0;i<3;i++)bx(14,2.35-i*0.09,7.98,28,0.04,0.02,[MINT,PEACH,RH_PINK][i]);
- /* the bedroom: a white lacquer bed, a round vanity mirror, a peach rug */
+ /* the balcony: a white rail with mint top rail, a solid peach parapet with a rounded white cap, round ends, planters and a lounger */
+ rhRails(bx,g.def.map,RH_WH,MINT,0.95);
+ {const K=hiKit(B,14.5,5.04,0,I);K.rb(0,0.3,0,17.2,0.6,0.1,PEACH,0.2);K.rb(0,0.63,-0.02,17.4,0.06,0.18,RH_WH,1);for(let i=0;i<3;i++)K.bx(0,0.12+i*0.09,0.055,17.0,0.035,0.01,[MINT,RH_WH,RH_PINK][i]);}
+ for(const [x,s] of [[6.0,1],[23.0,-1]]){const K=hiKit(B,x,5.0,0,I);for(let i=0;i<8;i++){const a=(i+0.5)/8*Math.PI/2,px=-s*Math.cos(a)*0.0+s*(1-Math.cos(a))*0.25,pz=Math.sin(a)*1.9;K.rb(px,0.3,pz,0.1,0.6,0.3,PEACH,0.4);K.rb(px,0.63,pz,0.18,0.06,0.32,RH_WH,1);}}
+ for(const x of [7.4,21.6]){const K=hiKit(B,x,7.45,0,I);K.cy(0,0.24,0,0.62,0.48,RH_WH,'y',false,0.6);K.cy(0,0.49,0,0.66,0.04,MINT,'y');rhPlant(B,I,x,7.45,0.8,RH_WH);}
+ mvLounger(B,19.8,6.75,Math.PI/2,RH_PINK);{const K=hiKit(B,18.5,6.5,0,I);K.cy(0,0.42,0,0.45,0.03,RH_WH,'y');K.rb(0,0.21,0,0.05,0.42,0.05,CHR,1);K.cy(0,0.015,0,0.3,0.03,CHR,'y');K.ball(0.08,0.5,0,0.1,[1,0.85,0.3]);}
+ /* the facade over the windows: rounded eyebrow ledges and the speed stripes along the top of the wall */
+ for(const x0 of [4,11,22]){const K=hiKit(B,x0+1.5,7.9,0,I);K.rb(0,2.0,0,3.4,0.06,0.34,RH_WH,1);}for(let i=0;i<3;i++)bx(14,2.35-i*0.09,7.98,28,0.04,0.02,[MINT,PEACH,RH_PINK][i]);
+ /* ---- the bedroom: the bed (it grows with the girls) with a tall channel-tufted fan headboard, nightstand with a globe lamp,
+    a waterfall vanity with a round mirror and a pouf, a round rug, a chrome torchiere ---- */
  drawBigBed((x,y,z,a,b,c,col)=>bx(x+1,y,z+1,a,b,c,col),6,n,RH_WH,[0.98,0.97,0.96],[1,0.65,0.75]);
- bx(6.4,0.38,9.3,1.2,0.76,0.5,RH_WH);bx(6.4,0.78,9.3,1.24,0.04,0.54,PEACH);{const K=hiKit(B,6.4,9.06,0,I);K.ring(0,1.3,0,0.36,0.06,0.04,CHR,14,'z');K.cy(0,1.3,0.005,0.66,0.01,[0.75,0.85,0.92],'z',false,0);}
- rhRug(bx,6.0,11.6,2.2,1.2,PEACH,[1,0.88,0.78]);
- /* the bathroom: black and white checker, pink fixtures, glass block */
- drawBathroomAt(bx,I,3.0,14.0,[0.95,0.6,0.7],[1,0.82,0.86]);
- /* the kitchen: mint cabinets and chrome, a rounded fridge */
- rhCounter(bx,22.0,27.6,9.35,MINT,[0.96,0.96,0.96],{sink:24.5,stove:26.6});rhFridge(bx,27.55,10.6,[0.98,0.97,0.92]);
- /* the living room: a curved white sofa, armchair and glass table, a chrome floor lamp, the phone, a deco print */
- drawSeatingAt(bx,I,12.0,14.6,RH_WH,[1,0.7,0.78],CHR);rhPhone(bx,S.o||{x:13.5,z:9.5},RH_WH,RH_PINK);
- bx(10.6,0.9,13.2,0.04,1.8,0.04,CHR);bx(10.6,1.82,13.2,0.36,0.14,0.36,[1,0.9,0.7],true);bx(10.6,0.02,13.2,0.4,0.04,0.4,CHR);
- bx(16.0,1.4,9.03,1.2,0.8,0.02,[0.12,0.12,0.15]);for(let i=0;i<5;i++)bx(16.0,1.1+i*0.15,9.045,1.0-i*0.16,0.06,0.01,[RH_PINK,MINT,PEACH,RH_TEAL,[1,0.85,0.4]][i]);
- /* the den: a reading chair and a lamp */
- {const K=hiKit(B,22.5,16.0,0,I);K.rb(0,0.22,0,0.7,0.36,0.65,[0.95,0.6,0.5],0.5);K.rb(0,0.55,-0.27,0.7,0.5,0.12,[0.95,0.6,0.5],0.5);}rhLamp(bx,21.4,16.2,[1,0.85,0.6]);
- /* the corridor: a deco runner, sconces, a palm by the lift */
- bx(13,0.007,18.95,9,0.008,0.8,[0.15,0.55,0.55]);bx(13,0.009,18.95,8.7,0.008,0.55,[0.95,0.6,0.7]);for(const x of [11.5,15,18.5]){bx(x,1.5,18.02,0.3,0.24,0.04,[1.1,0.85,0.6],true);}rhPlant(B,I,17.6,19.4,0.7,RH_WH);
+ {const W0=bigBedWorld(6,n),K=hiKit(B,W0.x-0.98*W0.s,W0.z,0,I),w=W0.w+0.25;K.rb(-0.02,0.62,0,0.12,1.24,w,BLUSH,0.5);
+  const k=Math.max(3,Math.round(w/0.32));for(let i=0;i<k;i++)K.rb(0.06,0.66,-w/2+(i+0.5)*w/k,0.06,1.05,w/k*0.8,[1,0.8,0.82],1);
+  K.rb(0,1.32,0,0.14,0.22,w*0.62,BLUSH,1);K.rb(0,1.46,0,0.14,0.16,w*0.3,BLUSH,1);K.rb(0.02,1.26,0,0.16,0.05,w+0.04,GOLD,1);
+  const nz=W0.z+W0.w/2+0.36;if(nz<12.7){const N=hiKit(B,2.42,nz,0,I);N.rb(0,0.28,0,0.46,0.56,0.42,RH_WH,0.6);N.bx(0.235,0.28,0,0.01,0.03,0.3,GOLD);N.cy(0,0.58,0,0.2,0.03,CHR,'y');N.rb(0,0.66,0,0.03,0.14,0.03,CHR,1);N.ball(0,0.82,0,0.24,FROST);}}
+ {const K=hiKit(B,6.4,9.32,0,I);K.rb(0,0.38,0,1.25,0.76,0.5,RH_WH,0.7);K.rb(0,0.79,0,1.3,0.05,0.54,PEACH,1);for(const sx of [-0.33,0.33])K.bx(sx,0.5,0.252,0.5,0.01,0.01,GOLD);
+  K.ring(0,1.4,-0.18,0.4,0.06,0.05,CHR,16,'z');K.cy(0,1.4,-0.17,0.74,0.01,[0.72,0.84,0.92],'z',false,0);K.rb(0,1.88,-0.2,0.18,0.12,0.04,GOLD,1);
+  K.cy(0,0.24,0.7,0.42,0.42,BLUSH,'y',false,1);K.cy(0,0.46,0.7,0.4,0.04,[1,0.86,0.86],'y');}
+ {const K=hiKit(B,5.6,11.4,0,I);K.ov(0,0.006,0,2.4,1.5,0.008,PEACH);K.ov(0,0.009,0,2.0,1.15,0.008,[1,0.88,0.8]);K.ov(0,0.012,0,0.9,0.5,0.008,RH_PINK);}
+ {const K=hiKit(B,8.6,12.5,0,I);K.cy(0,0.02,0,0.34,0.04,CHR,'y');K.rb(0,0.85,0,0.035,1.7,0.035,CHR,1);K.cy(0,1.72,0,0.42,0.1,FROST,'y',true);}
+ /* ---- the bathroom: a pink rounded tub along the west wall with a chrome shower ring, a pink toilet, a pedestal sink under a round
+    mirror, a towel rail, a bath mat ---- */
+ {const K=hiKit(B,2.48,15.6,0,I);K.rb(0,0.3,0,0.82,0.6,1.6,[0.98,0.66,0.74],0.7);K.rb(0,0.56,0,0.62,0.04,1.38,[0.6,0.82,0.95],1);K.rb(0,0.62,0,0.86,0.04,1.64,RH_WH,1);
+  K.rb(-0.3,1.02,-0.62,0.04,0.8,0.04,CHR,1);K.rb(-0.2,1.4,-0.62,0.22,0.04,0.04,CHR,1);K.cy(-0.08,1.38,-0.62,0.14,0.03,CHR,'y');K.ring(0.05,1.9,0,0.48,0.025,0.025,CHR,14);
+  for(let i=0;i<5;i++)K.bx(0.05-0.45+i*0.02,1.35,-0.35+i*0.1,0.02,1.1,0.12,[0.8,0.95,0.92]);}
+ {const K=hiKit(B,6.3,14.38,0,I);K.rb(0,0.22,0.05,0.36,0.44,0.48,[0.98,0.66,0.74],0.8);K.rb(0,0.45,0.08,0.42,0.06,0.52,[0.98,0.66,0.74],1);K.rb(0,0.62,-0.18,0.46,0.4,0.18,[0.98,0.66,0.74],0.6);K.bx(0,0.84,-0.16,0.06,0.02,0.04,CHR);}
+ {const K=hiKit(B,5.0,14.3,0,I);K.rb(0,0.42,0,0.18,0.84,0.18,[0.98,0.66,0.74],0.8,0.3);K.rb(0,0.86,0.04,0.62,0.12,0.42,[0.98,0.66,0.74],1);K.ov(0,0.93,0.04,0.42,0.26,0.01,[0.6,0.8,0.9]);K.rb(0,1.0,-0.14,0.04,0.14,0.04,CHR,1);
+  K.ring(0,1.55,-0.27,0.32,0.05,0.04,CHR,14,'z');K.cy(0,1.55,-0.26,0.6,0.01,[0.72,0.84,0.92],'z',false,0);
+  K.rb(-0.95,1.2,-0.26,0.6,0.03,0.03,CHR,1);K.bx(-0.95,1.0,-0.24,0.4,0.4,0.03,MINT);K.bx(-0.95,1.0,-0.225,0.4,0.05,0.01,RH_WH);}
+ {const K=hiKit(B,4.2,15.9,0,I);K.ov(0,0.008,0,1.0,0.6,0.01,MINT);K.ov(0,0.011,0,0.8,0.44,0.01,RH_WH);}
+ rhPlant(B,I,6.45,16.4,0.55,RH_WH);
+ /* ---- the kitchen: mint rounded cabinets with chrome pulls, a white counter with a rounded nose, the range with chrome knobs and a
+    hood, upper cabinets where there is no window, a rounded retro fridge, a toaster, a stand mixer and a fruit bowl ---- */
+ {const K=hiKit(B,24.8,9.35,0,I),w=5.6;K.rb(0,0.44,0,w,0.84,0.6,MINT,0.25);K.rb(0,0.9,0.01,w+0.04,0.07,0.66,[0.97,0.97,0.96],1);K.bx(0,0.05,0.26,w,0.1,0.02,TEAL);
+  for(let i=0;i<9;i++){const x=-w/2+0.31+i*0.62;K.rb(x,0.48,0.3,0.56,0.68,0.02,[0.62,0.92,0.84],0.4);K.rb(x,0.74,0.32,0.18,0.03,0.03,CHR,1);}
+  K.ov(-0.3,0.94,0,0.56,0.4,0.02,[0.66,0.68,0.72]);K.rb(-0.3,1.06,-0.24,0.04,0.22,0.04,CHR,1);K.sg([-0.3,1.16,-0.24],[-0.3,1.14,-0.08],0.035,0.035,CHR);
+  K.rb(1.8,0.94,0,0.66,0.02,0.54,[0.08,0.08,0.09],0.5);for(const dx of [-0.15,0.15])for(const dz of [-0.12,0.12])K.cy(1.8+dx,0.955,dz,0.16,0.01,[0.3,0.3,0.32],'y');for(let i=0;i<4;i++)K.cy(1.56+i*0.16,0.78,0.33,0.06,0.03,CHR,'z');
+  K.rb(1.8,1.8,-0.12,0.8,0.12,0.42,CHR,0.8);K.rb(1.8,2.05,-0.22,0.4,0.4,0.2,CHR,0.6,0.4);
+  for(const x of [0.9,2.55]){K.rb(x,1.75,-0.14,0.7,0.6,0.32,MINT,0.3);K.rb(x,1.75,0.025,0.6,0.5,0.02,[0.62,0.92,0.84],0.4);K.rb(x+0.24,1.56,0.04,0.03,0.12,0.03,CHR,1);}
+  K.rb(-1.9,1.0,0.02,0.32,0.18,0.2,CHR,0.8);K.bx(-1.9,1.1,0.02,0.2,0.02,0.04,[0.15,0.15,0.17]);
+  K.rb(-1.2,1.0,0.0,0.2,0.16,0.28,RH_PINK,0.8);K.rb(-1.2,1.12,0.05,0.12,0.08,0.24,RH_PINK,1);K.cy(-1.2,1.0,0.14,0.18,0.14,CHR,'y');
+  K.cy(0.6,0.96,0.04,0.32,0.06,RH_WH,'y');for(const [dx,dz,c] of [[0.55,0.02,[1,0.55,0.15]],[0.66,0.07,[0.95,0.2,0.2]],[0.6,-0.04,[1,0.85,0.2]]])K.ball(dx,1.02,dz,0.09,c);}
+ {const K=hiKit(B,27.5,10.6,-Math.PI/2,I);K.rb(0,0.92,0,0.72,1.84,0.64,[0.62,0.9,0.82],0.9);K.bx(0,1.2,0.325,0.66,0.01,0.01,[0.42,0.66,0.6]);K.rb(0.27,1.5,0.34,0.04,0.32,0.05,CHR,1);K.rb(0.27,0.8,0.34,0.04,0.32,0.05,CHR,1);
+  K.bx(0,0.4,0.33,0.3,0.06,0.01,CHR);}
+ /* ---- the living room: a curved channel-tufted sofa, a tub armchair and a round glass table on a big round rug; a sunburst mirror over
+    a deco console; a chrome torchiere; palms; the phone; a deco print ---- */
+ {const K=hiKit(B,12.4,15.15,0,I);K.ov(0,0.006,0,3.6,2.4,0.008,TEAL);K.ov(0,0.009,0,3.3,2.1,0.008,[0.97,0.93,0.86]);K.ov(0,0.012,0,2.3,1.4,0.008,BLUSH);K.ov(0,0.015,0,1.6,0.9,0.008,[0.97,0.93,0.86]);}
+ {const W=[0.97,0.95,0.92],CU=[1,0.72,0.78];
+  for(const [dx,a,w] of [[0,0,1.0],[-0.68,0.42,0.48],[0.68,-0.42,0.48]]){const K=hiKit(B,12.0+dx,14.6+(dx?0.12:0),a,I);K.rb(0,0.2,0,w,0.3,0.68,W,0.6);K.rb(0,0.38,0.04,w-0.04,0.1,0.56,CU,1);
+   K.rb(0,0.56,-0.27,w,0.46,0.16,W,0.8);const m=Math.max(2,Math.round(w/0.25));for(let i=0;i<m;i++)K.rb(-w/2+(i+0.5)*w/m,0.58,-0.18,w/m*0.82,0.36,0.06,CU,1);}
+  for(const s of [-1,1]){const K=hiKit(B,12.0+s*0.98,14.82,-s*0.42,I);K.rb(0,0.3,0,0.18,0.5,0.66,W,1);}
+  {const K0=hiKit(B,13.05,15.4,-0.5,I);K0.cy(0,0.18,0,0.68,0.3,W,'y',false,0.8);K0.cy(0,0.35,0,0.56,0.06,CU,'y',false,1);for(let i=0;i<7;i++){const a=Math.PI*(1.12+i*0.76/6);K0.rb(Math.cos(a)*0.29,0.5,Math.sin(a)*0.29,0.17,0.38,0.12,W,1,0,-a);}}
+  const T=hiKit(B,12.15,15.7,0,I);T.cy(0,0.36,0,0.82,0.03,[0.74,0.88,0.94],'y');T.cy(0,0.335,0,0.86,0.02,CHR,'y');T.rb(0,0.18,0,0.06,0.32,0.06,CHR,1);T.cy(0,0.02,0,0.44,0.03,CHR,'y');T.rb(0.15,0.42,0.05,0.12,0.08,0.12,RH_PINK,1);}
+ {const K=hiKit(B,9.0,14.28,0,I);K.rb(0,0.4,0,1.3,0.06,0.4,RH_WH,1);K.rb(0,0.2,0,1.24,0.36,0.34,[0.98,0.8,0.78],0.5);for(const sx of [-0.55,0.55])K.rb(sx,0.2,0,0.08,0.4,0.36,GOLD,1);
+  for(let i=0;i<16;i++){const a=i*TAU/16;K.sf([Math.cos(a)*0.22,1.45+Math.sin(a)*0.22,-0.2],[Math.cos(a)*(i%2?0.5:0.62),1.45+Math.sin(a)*(i%2?0.5:0.62),-0.2],0.03,0.012,GOLD);}
+  K.cy(0,1.45,-0.19,0.44,0.02,GOLD,'z');K.cy(0,1.45,-0.18,0.36,0.01,[0.74,0.86,0.94],'z',false,0);K.rb(-0.35,0.5,0.02,0.12,0.16,0.12,MINT,1);K.ball(0.4,0.5,0.0,0.14,[1,0.7,0.2]);}
+ {const K=hiKit(B,10.6,13.2,0,I);K.cy(0,0.02,0,0.38,0.04,CHR,'y');K.rb(0,0.88,0,0.035,1.76,0.035,CHR,1);K.cy(0,1.78,0,0.46,0.12,FROST,'y',true);K.ring(0,1.78,0,0.23,0.03,0.13,GOLD,12);}
+ rhPlant(B,I,19.35,9.45,0.9,RH_WH);rhPlant(B,I,8.45,16.4,0.85,RH_WH);
+ rhPhone(bx,S.o||{x:13.5,z:9.5},RH_WH,RH_PINK);
+ {const K=hiKit(B,18.3,9.03,0,I);K.rb(0,1.4,0,1.0,0.9,0.03,GOLD,0.4);K.bx(0,1.4,0.016,0.9,0.8,0.01,[0.12,0.12,0.15]);for(let i=0;i<5;i++)K.bx(0,1.12+i*0.13,0.022,0.8-i*0.13,0.05,0.01,[RH_PINK,MINT,PEACH,RH_TEAL,[1,0.85,0.4]][i]);}
+ /* ---- the den: a tub reading chair, a torchiere, a record console with a turntable, a round rug ---- */
+ {const K=hiKit(B,23.6,15.6,0,I);K.ov(0,0.006,0,1.9,1.3,0.008,CORAL);K.ov(0,0.009,0,1.6,1.0,0.008,[0.98,0.88,0.78]);}
+ {const K=hiKit(B,22.5,16.0,0,I);K.cy(0,0.18,0,0.7,0.32,CORAL,'y',false,0.8);K.cy(0,0.36,0,0.58,0.06,[1,0.82,0.74],'y',false,1);K.rb(0,0.56,-0.27,0.7,0.48,0.16,CORAL,1);for(const s of [-1,1])K.rb(s*0.32,0.42,0,0.12,0.26,0.6,CORAL,1);}
+ {const K=hiKit(B,21.45,16.3,0,I);K.cy(0,0.02,0,0.32,0.04,CHR,'y');K.rb(0,0.8,0,0.035,1.6,0.035,CHR,1);K.cy(0,1.62,0,0.4,0.1,FROST,'y',true);}
+ {const K=hiKit(B,27.25,14.3,0,I);K.rb(0,0.34,0,0.95,0.6,0.44,[0.42,0.24,0.12],0.4);K.rb(0,0.66,0,0.99,0.04,0.48,[0.3,0.16,0.08],1);for(const sx of [-0.22,0.22])K.bx(sx,0.34,0.222,0.4,0.5,0.01,[0.5,0.3,0.16]);
+  K.rb(-0.1,0.7,0,0.5,0.05,0.38,[0.12,0.12,0.13],0.6);K.cy(-0.12,0.735,0,0.3,0.01,[0.05,0.05,0.06],'y');K.cy(-0.12,0.742,0,0.1,0.01,RH_PINK,'y');K.sf([0.08,0.75,-0.12],[-0.02,0.75,0.04],0.015,0.015,CHR);
+  K.rb(0.33,0.78,0,0.18,0.18,0.3,[0.9,0.85,0.75],0.3);}
+ /* ---- the corridor: a deco runner, fan sconces, brass lift doors with a sunburst and the floor dial, a palm ---- */
+ {const K=hiKit(B,15.5,18.95,0,I);K.rb(0,0.007,0,9,0.008,0.8,TEAL,0.6);K.rb(0,0.009,0,8.7,0.008,0.55,BLUSH,0.6);for(let x=-4;x<=4;x+=1)K.bx(x,0.012,0,0.3,0.004,0.3,GOLD,false,Math.PI/4);}
+ for(const x of [12.5,16.0,19.0]){const K=hiKit(B,x,18.04,0,I);K.rb(0,1.5,0,0.34,0.06,0.06,GOLD,1);for(let i=0;i<5;i++){const a=Math.PI*(0.15+i*0.175);K.fr(Math.cos(a)*0.12,1.55+Math.sin(a)*0.12,0.02,0,0,a-Math.PI/2,0.05,0.18,0.03,FROST,true);}}
+ {const K=hiKit(B,10.04,18.95,Math.PI/2,I),BR=[0.62,0.46,0.2];K.rb(0,1.12,0,1.5,2.24,0.05,BR,0.3);K.bx(0,1.02,0.03,1.2,1.96,0.01,[0.5,0.38,0.18]);K.bx(0,1.05,0.04,0.02,2.0,0.01,[0.35,0.25,0.1]);
+  for(let i=0;i<9;i++){const a=Math.PI*(i/8);K.sf([0,2.08,0.04],[Math.cos(a)*0.55,2.08+Math.sin(a)*0.3,0.04],0.03,0.01,[1,0.85,0.45]);}
+  K.cy(0.95,1.3,0.04,0.16,0.02,[0.12,0.12,0.13],'z');K.bx(0.95,1.32,0.05,0.02,0.06,0.005,[1,0.6,0.2],true);}
+ rhPlant(B,I,19.55,18.45,0.7,RH_WH);
  /* upgrades */
  if(f.jukebox){const K=hiKit(B,19.62,13.5,-Math.PI/2,I);K.rb(0,0.55,0,0.85,1.1,0.5,[0.5,0.2,0.12],0.3);K.rb(0,1.15,0,0.85,0.4,0.5,[0.5,0.2,0.12],1);K.bx(0,0.7,0.26,0.55,0.4,0.01,[1,0.85,0.5],true);
   for(const sx of [-0.36,0.36])K.bx(sx,0.75,0.26,0.07,1.0,0.02,[1,0.4,0.85],true);K.bx(0,1.15,0.26,0.6,0.3,0.01,[0.3,0.9,1],true);}
