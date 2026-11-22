@@ -248,6 +248,22 @@ for(const f of EMP_FRONTS)MISSIONS['e_'+f.k]={kind:'empire',name:'TAKE OVER '+f.
  unlock:empNeed(f.need,f.gang),rewards:[{flag:'own_'+f.k}],rev:1,twist:'turf',front:f.k,brief:EMP_BRIEF[f.gang]};
 for(const r of EMP_RACKETS)MISSIONS['r_'+r.k]={kind:'empire',name:'MUSCLE IN ON '+r.name,base:EMP_VENUE[r.type].base,stages:['legacy'],start:'legacy',
  unlock:empNeed(0,r.gang),rewards:[{flag:'own_'+r.k}],rev:1,twist:'turf',front:r.k,venue:empSiteDef(r.k,r.type,r.name,r.gang),brief:EMP_RBRIEF[r.gang]};
+/* LATE RENT. A home you have moved out of is rented out (mall.js tenRent). Now and then a tenant stops paying; the home phone and Sunshine
+   Realty then offer t_<home>: go round and collect it. It is a fist fight: you leave the guns in the car (fists:true, index.html
+   fistsOnly), the tenant and his friends are unarmed too ('i'), and the tenant is the floor's boss. Paying up (the whole debt) is the reward. */
+const TEN_HOMES=['ROOM 14','THE STUDIO','THE PENTHOUSE','VILLA SOLANA','THE CASITA','THE LOW TIDE','THE FLAMINGO ARMS','CASA DEL SOL'];
+const TEN_BOSS=[["EDDIE 'NO RENT' NUÑEZ",[0.78,0.56,0.4],[0.9,0.9,0.86]],["CHAD WEXLER",[0.95,0.8,0.68],[0.98,0.55,0.7]],["RICO VALDEZ",[0.72,0.5,0.36],[0.12,0.12,0.14]],
+ ["THE DUKE OF STAR ISLAND",[0.94,0.78,0.64],[0.95,0.92,0.82]],["MANNY CASTILLO",[0.68,0.48,0.34],[0.96,0.96,0.94]],["SKIPPER DOYLE",[0.96,0.76,0.62],[0.2,0.32,0.6]],
+ ["TONY FLAMINGO",[0.9,0.7,0.55],[1,0.45,0.65]],["DR. HAMMOND",[0.95,0.8,0.7],[0.86,0.82,0.7]]];
+const TEN_MAP=["####################################","#W.W..S.S..#..T.T..#..W.W...S.S.p..#","#.........p#.......#..............p#","#....i.....#...i...#......X........#",
+ "####D########D###########D##########","#..................................#","#.p...i..........i.............i.p.#","#..................................#","################....################",
+ "=================P==================","=================C==================","===================================="];
+for(let t=0;t<TEN_HOMES.length;t++){const [bn,skin,col]=TEN_BOSS[t];
+ MISSIONS['t_'+t]={kind:'tenant',name:'COLLECT THE RENT · '+TEN_HOMES[t],base:0,stages:['legacy'],start:'legacy',unlock:{done:'c0'},rewards:[],rev:1,tenant:t,fists:true,
+  venue:{name:TEN_HOMES[t]+' · LATE RENT',front:1,wall:12,sofa:0x2a9ea3,map:TEN_MAP,
+   boss:{name:bn,weapon:null,hp:6,look:()=>({skin,jacket:col,shirt:[0.95,0.95,0.92],pants:[0.18,0.18,0.22],shoes:[0.1,0.1,0.1],hair:[0.12,0.09,0.07],hs:'slick',bw:1.1,bd:1.05,bh:1.0}),
+    intro:'He has not paid in weeks and he brought friends. Fists only.',dead:'RENT DAY'}},
+  brief:'The tenant at '+TEN_HOMES[t]+' stopped paying and stopped answering the door. Go round and collect, with your fists: guns stay in the car. He has a few friends over.'};}
 /* the map a mission plays on when it is not its base floor's own (empire rackets and act-crew HQs) */
 const missionMap=id=>missionKnown(id)&&MISSIONS[id].venue||undefined;
 const ownKey=(o,k)=>typeof k==='string'&&Object.prototype.hasOwnProperty.call(o,k);
