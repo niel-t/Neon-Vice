@@ -32,14 +32,18 @@ test('club: build a dancer\'s affection, take her home as your girlfriend, and s
       a.jobs++; vipNight(); o.night2 = gfAffOf(name);
       o.noOfferYet = state;
       tick(40, () => !d.walking); a.jobs++; vipNight(); o.night3 = gfAffOf(name);
-      // she asks to leave with you
-      o.offer = { state, mode: storeMode, yes: !!document.querySelector('#sStore [data-gf="yes"]'), no: !!document.querySelector('#sStore [data-gf="no"]'), title: document.querySelector('#sStore .shT').textContent };
-      (document.querySelector('#sStore [data-gf="no"]')||{click(){closeStore();}}).click();
-      o.declined = { state, gf: gfN() };
-      // Tony's list offers her as well
+      // she stays and talks to you: her line and your answers in a speech box, not a menu
+      const box = () => document.getElementById('gfTalk'), btns = () => [...box().querySelectorAll('button[data-gft]')];
+      o.talk = { state, talking: !!c.talk, shown: box() && box().style.display, text: box() && box().textContent, answers: btns().length, targets: hubTargets(G).length };
+      // "not tonight": she goes back to work and stays ready
+      btns()[2].click(); run();
+      o.declined = { talk: !!c.talk, gf: gfN(), hidden: box().style.display, say: G.say && G.say.who };
       tick(30, () => !d.walking);
-      openStore('vip'); const card = document.querySelector(`#sStore [data-gf="t:${name}"]`); o.tonyCard = card && card.textContent;
-      if(!card) return o; card.click();
+      // walk up to her on stage: TALK TO her starts the conversation again; key 1 asks her home
+      G.player.x = d.x; G.player.z = d.z + 2;
+      const tt = hubTargets(G).find(q => q.k === 'gftalk'); o.stageTarget = tt && tt.lbl; tt.fn(tt);
+      o.again = !!c.talk;
+      window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Digit1' })); run();
       o.taken = { state, gf: gfN(), saved: myProg().gf[0].n === name, banner: LASTBAN && LASTBAN[0] };
       o.leaves = tick(40, () => !c.dancers.includes(d));
       o.gone = !G.npcs.includes(d);
@@ -65,9 +69,10 @@ test('club: build a dancer\'s affection, take her home as your girlfriend, and s
   expect(out.night2).toBe(17);
   expect(out.noOfferYet).toBe('play');
   expect(out.night3).toBe(20);
-  expect(out.offer).toEqual({ state: 'store', mode: 'gfask', yes: true, no: true, title: expect.stringMatching(/AFTER HOURS/) });
-  expect(out.declined).toEqual({ state: 'play', gf: 0 });
-  expect(out.tonyCard).toMatch(/TAKE .* HOME/);
+  expect(out.talk).toEqual({ state: 'play', talking: true, shown: 'block', text: expect.stringMatching(/1\. .*2\. .*3\. /), answers: 3, targets: 0 });
+  expect(out.declined).toEqual({ talk: false, gf: 0, hidden: 'none', say: expect.any(String) });
+  expect(out.stageTarget).toMatch(/^TALK TO /);
+  expect(out.again).toBe(true);
   expect(out.taken).toEqual({ state: 'play', gf: 1, saved: true, banner: expect.stringMatching(/IS YOUR GIRLFRIEND/) });
   expect(out.leaves).toBe(true);
   expect(out.gone).toBe(true);

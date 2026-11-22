@@ -1,15 +1,14 @@
 'use strict';
 /* GIRLFRIENDS (2026-11-22): the dancers at Velvet Palms get to know you. Every $100 you throw on stage, every VIP room you book with
    her, every bill in the VIP lounge and every dance you sit all the way through builds her affection (GF_NEED to fill, at most GF_JOB_CAP
-   per job, so it takes a few nights). Once she is crazy about you she asks to leave with you after a VIP dance (or Tony lets you ask from
-   his list): she quits, walks out the front door and from then on lives at your home as your girlfriend, in her club look.
+   per job, so it takes a few nights). Once she is crazy about you, she stays to talk after a VIP dance
+   (or walk up to her on stage: TALK TO her). Ask her home in the conversation and she quits, walks out the front door and from then on lives at your home as your girlfriend, in her club look.
    At home she is a 'pgirl' with n.gf set: she hangs out, dances, joins you in bed first (bedN counts her) and has her own lines.
    Saved per operator: p.gf=[{n,prof,fit}] (her look, kept exactly), p.gfAff={NAME:{a,k,j}} (affection, job key, gained this job).
    The club's girls now always look the same (gfClubLook seeds her look by her name), so the one you keep coming back for is her. */
 const GF_NEED=20,GF_JOB_CAP=10,GF_MAX=3;
 /* when girlfriends leave the roster these girls start working at the club instead, so the stage never runs short */
 const GF_MORE_NAMES=['VELVET','CANDY','RAVEN','SAPPHIRE','LOLA','TIFFANY'];
-let GF_ASK=null;
 function gfList(){const p=myProg();if(!Array.isArray(p.gf))p.gf=[];return p.gf;}
 function gfN(){return gfList().length;}
 function gfIs(name){return gfList().some(q=>q.n===name);}
@@ -41,47 +40,67 @@ function gfAff(d,n){const g=G;if(!g||!g.club||g.mansion||!d||d.kind!=='sdancer'|
  a.a=Math.min(GF_NEED,a.a+add);a.j+=add;saveProg();
  gfPop(g,d,'♥ '+d.dname+' '+a.a+'/'+GF_NEED,'#ff6fae');
  if(a.a>=GF_NEED){sfx('clear');banner(d.dname+' IS CRAZY ABOUT YOU',touchMode?'Ask her home after a VIP dance, or tap Tony':'Ask her home after a VIP dance, or from Tony\'s list');}}
-/* a VIP dance just ended: sitting through most of it counts, and if she is crazy about you she asks to leave with you */
+/* a VIP dance just ended: sitting through most of it counts, and if she is crazy about you she stays and talks to you */
 function gfDanceDone(g,d,sat){if(!d||d.kind!=='sdancer')return;if(sat>=18)gfAff(d,2);
- if(gfReady(d.dname))setTimeout(()=>{if(G===g&&state==='play'&&g.club&&g.club.dancers.includes(d))gfOffer(d.dname);},1300);}
+ if(gfReady(d.dname)){const c=g.club;if(c.back&&c.back.d===d)c.back=null;d.walking=true;d.gfWait=true;
+  setTimeout(()=>{if(G===g&&state==='play'&&c.dancers.includes(d))gfTalk(g,d);else if(G===g)gfSendBack(g,d);},900);}}
 function gfHearts(name){const a=gfAffOf(name);return a>=GF_NEED?'♥ CRAZY ABOUT YOU':a?'♥ '+a+'/'+GF_NEED:'♡ DOESN\'T KNOW YOU YET';}
-/* ---------------- asking her home ---------------- */
-function gfOffer(name){GF_ASK=name;openStore('gfask');}
-const GF_ASKS=["I'm done for tonight. Take me with you?","Get me out of here, baby. For good.","I don't want to dance for anybody else. Just you.","Tony can find another girl. Take me home."];
-function gfRender(msg){const p=myProg(),name=GF_ASK,full=gfN()>=GF_MAX;
- $('stWallet').textContent='$'+fmt(p.wallet);$('stOwed').textContent='♥ '+GF_NEED+'/'+GF_NEED;
- document.querySelector('#sStore .shT').textContent=(name||'')+' · AFTER HOURS';
- document.querySelector('#sStore .shS').textContent='SHE WANTS TO LEAVE WITH YOU';
- for(const id of ['stGold','stGoldH','stHome','stHomeH'])$(id).style.display='none';
- for(const id of ['stCars','stCarsH'])$(id).style.display='';
- $('stCarsH').textContent='"'+GF_ASKS[(name||'').length%GF_ASKS.length]+'"';
- $('stCars').innerHTML=(full?`<button class="scard" data-gf="full"><div class="pn">HOUSE IS FULL</div><div class="pd">Three girlfriends already live with you. That's plenty of drama.</div><div class="sp">${gfN()}/${GF_MAX}<span class="kbhint"> (1)</span></div></button>`
-  :`<button class="scard" data-gf="yes"><div class="pn">TAKE HER HOME</div><div class="pd">She quits tonight and moves in with you as your girlfriend.</div><div class="sp">♥ GIRLFRIEND<span class="kbhint"> (1)</span></div></button>`)
-  +`<button class="scard" data-gf="no"><div class="pn">NOT TONIGHT</div><div class="pd">She keeps dancing. Ask Tony for her any time.</div><div class="sp">MAYBE LATER<span class="kbhint"> (2)</span></div></button>`;
- $('stMsg').textContent=msg||'';}
-/* girls who are crazy about you show up on Tony's list with a TAKE HER HOME card */
-function gfTonyList(ds){return ds.filter(d=>gfReady(d.dname)&&!d.walking&&!d.npcVip&&!d.lapDance);}
-function gfTonyN(ds){return gfTonyList(ds).length;}
-function gfTonyCards(ds,off){return gfTonyList(ds).map((d,i)=>`<button class="scard" data-gf="t:${d.dname}"><div class="pn">TAKE ${d.dname} HOME</div><div class="pd">${gfN()>=GF_MAX?'Three girlfriends already live with you.':'She is crazy about you. She quits tonight and moves in.'}</div><div class="sp">♥ GIRLFRIEND<span class="kbhint"> (${off+i+1})</span></div></button>`).join('');}
-function gfChoose(v){const g=G;
- if(v==='full'){sfx('blip');return renderStore('Three is enough. Nobody needs four girlfriends.');}
- if(v==='no'){state='play';show(null);const d=g&&g.club&&g.club.dancers.find(q=>q.dname===GF_ASK);if(d)gfPop(g,d,'MAYBE NEXT TIME, SUGAR','#ffb3d1');GF_ASK=null;return;}
- if(v.startsWith('t:'))GF_ASK=v.slice(2);
- gfTake(GF_ASK);}
+/* ---------------- asking her home: a conversation with her, not a menu ----------------
+   Her line and your answers sit in a speech box at the bottom of the screen (tap, click or 1-3). Your answers are in your
+   operator's own voice. Moving away ends it as "not tonight". The box is DOM, so it works the same on a phone. */
+const GF_TALK={
+ open:["Can I tell you something? I don't dance like that for anybody else.","You keep coming back. The other girls tease me about you now.","I get off at two. I really don't feel like going home alone tonight.","Every night I look for you in the crowd. Is that crazy?"],
+ opts:[{r:'yes',t:{don:"Then quit. Come home with me tonight.",consigliere:"Then let me get you out of here. For good.",money:"Quit tonight. Whatever Tony pays you, I'll cover it.",_:"Then come home with me tonight."}},
+  {r:'tease',t:{don:"You say that to every guy with a fat wallet.",consigliere:"I bet you say that to every lawyer in here.",money:"I know a sales pitch when I hear one, sweetheart.",_:"You say that to every guy with a fat wallet."}},
+  {r:'no',t:{don:"Not tonight, sweetheart.",consigliere:"Not tonight. I have an early start.",money:"Not tonight. The books won't balance themselves.",_:"Not tonight, sweetheart."}}],
+ yes:["You mean it? Give me two minutes to grab my bag.","Don't you dare change your mind. I'm getting my coat.","Finally. I'm telling Tony I quit. Right now."],
+ tease:["Ouch. Tips don't buy this, baby. Ask me again when you mean it.","Every guy? No. Just you. Think about it."],
+ no:["Then come back soon. I'll be right here.","Okay. But don't make me wait too long."],
+ full:["Three girls already waiting at your place? Wow. Call me if one of them leaves."]};
+const gfHash=s=>{let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h;};
+function gfTalk(g,d){const c=g&&g.club;if(!c||c.talk||!gfReady(d.dname))return;arm();mouse.down=false;
+ d.walking=true;d.gfWait=true;d.vx=d.vz=0;g.say=null;const p=g.player;
+ c.talk={d,px:p.x,pz:p.z,t:0,line:GF_TALK.open[(gfHash(d.dname)+arm().jobs)%GF_TALK.open.length]};sfx('blip');gfBox(g);}
+function gfBox(g){const c=g.club,T=c.talk;let el=document.getElementById('gfTalk');
+ if(!el){el=document.createElement('div');el.id='gfTalk';el.style.cssText='position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(94vw,560px);z-index:60;background:rgba(12,4,22,.94);border-left:4px solid #ff6fae;padding:10px 12px;box-sizing:border-box;font-family:inherit';
+  el.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button[data-gft]');if(b){e.stopPropagation();gfPick(+b.dataset.gft);}});
+  for(const ev of ['pointerdown','touchstart','mousedown'])el.addEventListener(ev,e=>e.stopPropagation(),{passive:true});document.body.appendChild(el);}
+ const esc=t=>String(t).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+ const opts=gfN()>=GF_MAX?GF_TALK.opts.slice(1):GF_TALK.opts;T.opts=opts;
+ el.innerHTML=`<div style="color:#ff6fae;font-size:11px;letter-spacing:1px;margin-bottom:4px">${esc(T.d.dname)} ♥</div><div style="color:#fff;font-size:16px;line-height:1.3;margin-bottom:8px">${esc(T.line)}</div>`
+  +opts.map((o,i)=>`<button type="button" data-gft="${i}" style="display:block;width:100%;text-align:left;margin:4px 0;padding:8px 10px;background:#1c0a2a;color:#ffd36b;border:1px solid #5a2a6a;font:inherit;font-size:14px;cursor:pointer">${i+1}. ${esc(dlgText(o.t))}</button>`).join('');
+ el.style.display='block';}
+function gfBoxHide(){const el=document.getElementById('gfTalk');if(el)el.style.display='none';}
+function gfSay(g,who,txt){g.say={who,txt,t:0,dur:2.2+txt.length*0.05};}
+function gfPick(k){const g=G,c=g&&g.club,T=c&&c.talk;if(!T||!T.opts||!T.opts[k])return;const o=T.opts[k],d=T.d;T.opts=null;gfBoxHide();sfx('pick');
+ const me=dlgText(o.t);gfSay(g,CHARS[selIdx].name,me);
+ const after=(fn,ms)=>setTimeout(()=>{if(G===g)fn();},ms);
+ if(o.r==='yes'){after(()=>{gfSay(g,d.dname,pick(GF_TALK.yes));c.talk=null;gfTake(d.dname);},1400);return;}
+ after(()=>{gfSay(g,d.dname,pick(gfN()>=GF_MAX&&o.r!=='tease'?GF_TALK.full:GF_TALK[o.r]));c.talk=null;gfSendBack(g,d);},1400);}
+/* the talk is over and she goes back to work: down off the lounge floor to her pole, or straight back to dancing */
+function gfSendBack(g,d){const c=g.club;d.gfWait=false;if(!c.dancers.includes(d))return;
+ if((d.y||0)>0.2){d.walking=false;return;}
+ const st=stageStep(g,d.pole.x,d.pole.z);c.back={d,ph:'walk',t:0,tx:st.x,tz:st.z};WORLD.cell.bfs(g,c.back.f=new Int16Array(g.W*g.H),Math.floor(st.x),Math.floor(st.z));}
+function gfTalkEnd(g){const c=g.club,T=c&&c.talk;if(!T)return;gfBoxHide();const d=T.d;c.talk=null;gfSay(g,d.dname,pick(GF_TALK.no));gfSendBack(g,d);}
+/* keys 1-3 pick an answer, Escape walks away */
+window.addEventListener('keydown',e=>{const g=G,T=g&&g.club&&g.club.talk;if(!T||!T.opts||state!=='play')return;
+ const m=/^(?:Digit|Numpad)([1-3])$/.exec(e.code);if(m){gfPick(+m[1]-1);e.preventDefault();e.stopImmediatePropagation();}
+ else if(e.code==='Escape'){gfTalkEnd(g);e.preventDefault();e.stopImmediatePropagation();}},true);
 function gfTake(name){const g=G,c=g&&g.club;if(!c)return;const d=c.dancers.find(q=>q.dname===name);
- if(!d||gfIs(name)){state='play';show(null);return;}
- if(gfN()>=GF_MAX){sfx('blip');return renderStore('Three girlfriends already live with you.');}
- gfList().push({n:name,prof:d.prof,fit:d.fit});saveProg();GF_ASK=null;
- state='play';show(null);sfx('clear');
+ if(!d||gfIs(name)||gfN()>=GF_MAX)return;
+ gfList().push({n:name,prof:d.prof,fit:d.fit});saveProg();sfx('clear');
  banner(name+' IS YOUR GIRLFRIEND','She quits tonight · she will be waiting for you at home');
- if(c.tony)tonySays(g,pick(["Now I'm a dancer short. Treat her right, or you answer to me.","Another one walks out with a customer. Take care of her, pal.","You know how many guys tried that? Congratulations."]));
+ if(c.tony)setTimeout(()=>{if(G===g)tonySays(g,pick(["Now I'm a dancer short. Treat her right, or you answer to me.","Another one walks out with a customer. Take care of her, pal.","You know how many guys tried that? Congratulations."]));},2600);
  gfLeave(g,d);}
 /* she walks off the stage (or out of the VIP lounge) and out of the front door */
 function gfLeave(g,d){const c=g.club;if(c.back&&c.back.d===d)c.back=null;d.walking=true;d.lapDance=false;d.gfOut=true;
  const fd=c.front||{x:Math.floor(g.W/2),z:g.H-2},tx=fd.x+0.5,tz=fd.z-1.3,f=new Int16Array(g.W*g.H);WORLD.cell.bfs(g,f,Math.floor(tx),Math.floor(tz));
  const onStage=(d.y||0)>0.2,st=onStage?stageStep(g,d.x,d.z):null;
  (c.gfOut||(c.gfOut=[])).push({d,f,tx,tz,t:0,ph:onStage?'down':'walk',fx:d.x,fz:d.z,fy:d.y||0,sx:st?st.x:d.x,sz:st?st.z:d.z});}
-function gfTick(g,dt){const c=g.club;if(!c||!c.gfOut||!c.gfOut.length)return;
+function gfTick(g,dt){const c=g.club;if(!c)return;
+ /* while you talk you both stand still and face each other; walking off ends it */
+ const T=c.talk;if(T){const p=g.player,d=T.d;T.t+=dt;if(T.opts&&T.t>0.6&&moveIntent()){gfTalkEnd(g);}else{p.x=T.px;p.z=T.pz;p.vx=p.vz=0;p.a=Math.atan2(d.x-p.x,d.z-p.z);d.vx=d.vz=0;d.a+=clamp(angDiff(d.a,Math.atan2(p.x-d.x,p.z-d.z)),-5*dt,5*dt);}}
+ if(!c.gfOut||!c.gfOut.length)return;
  for(const o of c.gfOut.slice()){const d=o.d;o.t+=dt;
   if(o.ph==='down'){const k=Math.min(1,o.t/0.8);d.x=o.fx+(o.sx-o.fx)*k;d.z=o.fz+(o.sz-o.fz)*k;d.y=o.fy*(1-k)+Math.sin(k*Math.PI)*0.25;d.walk=(d.walk||0)+dt*9;d.a=Math.atan2(o.sx-o.fx,o.sz-o.fz);if(k>=1){o.ph='walk';o.t=0;d.y=0;}}
   else if(Math.hypot(o.tx-d.x,o.tz-d.z)>0.5&&o.t<30)clubStep(g,d,o.f,o.tx,o.tz,2.2,dt);
