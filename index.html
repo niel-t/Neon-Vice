@@ -4684,7 +4684,7 @@ function render(){if(contextLost||gl.isContextLost())return;PS2C.beginFrame();re
   for(const f of g.flashes.slice(-2))if(!f.sil)ls.push({x:f.x,y:f.y,z:f.z,r:f.big?6:4.5,c:[1.4,1.1,0.6]});lights=ls;}
  const l=Math.hypot(...ld);ld=ld.map(v=>v/l);
  const pv=!!(PLANV&&PLANV.B&&menu&&state==='title'),proj=M4.persp(fovy,asp,(menu||(G&&G.cine))?0.3:2,pv?300:(G&&G.cine)?150:80),view=M4.lookAt(eye,tgt,[0,1,0]);VP=M4.mul(proj,view);invVP=M4.inv(VP);
- if(!menu&&mouse.active&&invVP){const nx=mouse.x/vw*2-1,ny=1-mouse.y/vh*2;const a=M4.x4(invVP,nx,ny,-1,1),b=M4.x4(invVP,nx,ny,1,1);const p0=[a[0]/a[3],a[1]/a[3],a[2]/a[3]],p1=[b[0]/b[3],b[1]/b[3],b[2]/b[3]];const t=(0.7-p0[1])/(p1[1]-p0[1]);G.aimX=p0[0]+(p1[0]-p0[0])*t;G.aimZ=p0[2]+(p1[2]-p0[2])*t;}
+ if(!menu&&mouse.active&&invVP){const nx=mouse.x/vw*2-1,ny=1-mouse.y/vh*2;const a=M4.x4(invVP,nx,ny,-1,1),b=M4.x4(invVP,nx,ny,1,1);const p0=[a[0]/a[3],a[1]/a[3],a[2]/a[3]],p1=[b[0]/b[3],b[1]/b[3],b[2]/b[3]];/* aim at chest height above the floor you stand on: inside the raised jet cabin (liftAt) the plane is 0.8 higher, or every shot lands half a cell past the guard you click */const ay=0.7+(G.player&&typeof liftAt==='function'?liftAt(G.player.x,G.player.z):0),t=(ay-p0[1])/(p1[1]-p0[1]);G.aimX=p0[0]+(p1[0]-p0[0])*t;G.aimZ=p0[2]+(p1[2]-p0[2])*t;}
  IBhi.reset();IBlo.reset();
  if(menu){if(pv){dynB.reset();poolB.reset();}else if(state==='shop')drawNineDyn(dynB,poolB);else if(state==='brief')drawBriefDyn(dynB,poolB);else if(state==='elev')drawElevDyn(dynB,poolB);else drawMenuDyn(dynB,poolB);}
  else{if(G.decalDirty){rebuildDecals();G.decalDirty=false;}buildDynamic();}
@@ -5289,7 +5289,7 @@ let SNAP=null;
 function climbStart(g,s){const p=g.player,f=stairFlightOf(g,s),y0=p.y||0;let c;
  /* up or down a flight (stairs.js): along it to the far end and on past it, rising or sinking with the steps */
  if(f){const d=-f.side,x=f.top+0.5,z=f.z0+1;c={sx:x,sz:z,sy:flightY(f,x),tx:x+d*0.75,tz:z,ty:f.dir*FLIGHT.H*1.12,a:Math.atan2(d,0),lift:1};}
- /* through a door you stay level (the hangar side door); up the jet's airstairs you climb into the doorway */
+ /* through a door you stay level (the hangar doors); up the jet's airstairs you climb into the doorway */
  else{const fl=a4ClimbMode(g,s)==='flat',ym=fl?0:Math.max(y0,0.45);c={sx:s.at[0],sz:s.at[1]+0.45,sy:ym,tx:s.at[0],tz:s.at[1]-0.42,ty:fl?0:ym+0.4,a:Math.PI,lift:fl?0.3:1};}
  g.climb=Object.assign(c,{t0:performance.now(),dur:0.8,x0:p.x,z0:p.z,y0});p.vx=p.vz=0;}
 function climbTick(dt,g){const c=g.climb,p=g.player;if(!c)return;const k=Math.min(1,(performance.now()-c.t0)/1000/c.dur),e=k*k*(3-2*k),ox=p.x,oz=p.z;

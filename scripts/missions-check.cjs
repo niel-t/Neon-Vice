@@ -124,7 +124,7 @@ function checkMissions() {
 
 /* Going up a floor keeps you where you were: take the stairs in the top-right corner and you come out of the same switchback stairwell
    in the top-right corner of the next floor; the lift opens at the same spot along the top wall. Act 4 too: the garage ramps are
-   two-cell switchbacks (compare the divider between the lanes) and the hangar side door brings you in at the same spot. Positions are
+   two-cell switchbacks (compare the divider between the lanes); the hangar doors join the apron's north wall to the hangar's south wall. Positions are
    compared inside each floor's walls (the street rows of a front stage are left out), as fractions of its width and depth. Boarding
    the jet is a walk up its airstairs onto the runway, not a floor change, so it is left out. */
 const SAME_SPOT = ['c2', 'c10', 'c11', 'c13'];
@@ -151,6 +151,13 @@ function checkCorners(MISSIONS) {
       // world coordinates carry the loader's one-cell padding ring and the wall ring: the first floor cell is at 2
       const fx = (x, d) => (x - 2) / Math.max(1, d.w - 1), fz = (z, d) => (z - 2) / Math.max(1, d.h - 1);
       const dx = Math.abs(fx(at[0], a) - fx(ar[0], b)), dz = Math.abs(fz(at[1], a) - fz(ar[1], b));
+      // the hangar doors are one doorway between two spaces: the apron's north wall is the hangar's south wall, so you walk in at the
+      // top of the apron and come out at the bottom of the hangar, at the same spot along the wall
+      if (s.id === 'door') {
+        assert(dx <= 0.12, `${id} ${st.id}.door at ${s.at} comes out at ${to.id} ${ar0}, not by the same doors (dx ${dx.toFixed(2)})`);
+        assert(fz(at[1], a) < 0.2 && fz(ar[1], b) > 0.8, `${id} ${st.id}.door: the hangar doors are in the apron's north wall and the hangar's south wall (${s.at} / ${ar0})`);
+        continue;
+      }
       assert(dx <= 0.12 && dz <= 0.2, `${id} ${st.id}.${s.id} at ${s.at} comes out at ${to.id} ${ar0}, not the same spot on the next floor (dx ${dx.toFixed(2)}, dz ${dz.toFixed(2)})`);
     }
   }

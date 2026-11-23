@@ -165,7 +165,7 @@ test('act 4 floor 3: if the jet is not stopped in time it runs off the runway an
   await expect.poll(() => page.evaluate(() => ({ boom: G.jet.boom, crashed: G.jet.crashed, alive: G.player.alive })), { timeout: 20_000 }).toEqual({ boom: 1, crashed: 1, alive: false });
 });
 
-test('act 4 sets: the garage stairs are corner staircases that come out in the same corner, and the hangar side door brings you in at the same spot', async ({ openGame }) => {
+test('act 4 sets: the garage stairs are corner staircases that come out in the same corner, and the hangar doors bring you in from the apron', async ({ openGame }) => {
   test.setTimeout(240_000);
   const page = await openGame();
   const p1 = await page.evaluate(() => { NOARRIVE = true; startLevel(11); const f = stairFlights(G);
@@ -194,11 +194,39 @@ test('act 4 sets: the garage stairs are corner staircases that come out in the s
   await toStairs(page, 'down');
   await go(page, 'dock');
   expect(await page.evaluate(() => [G.player.x, G.player.z, stairFlights(G).map(q => [q.go, q.top]), G.vans.length])).toEqual([6.5, 3, [[false, 5]], 3]);
-  // the hangar: through the apron's side door in its top-right corner, in through the hangar's own door in the same corner
+  // the hangar: the apron's north wall is the front of Hangar 7; through its open doors you walk in from the doorway in the hangar's
+  // south wall (a low solid threshold, so nobody walks out onto the apron) at the same spot along the wall
   await page.evaluate(() => { NOARRIVE = true; delete myProg().run; startLevel(13); for (const e of G.enemies) e.alive = false; });
   await go(page, 'apron');
+  expect(await page.evaluate(() => { const s = G.stageRun.describe(G.sid).stairs.find(q => q.id === 'door'); return [s.at[1] < 3, s.at[0] > 25 && s.at[0] < 36]; })).toEqual([true, true]);
   await toStairs(page, 'door');
   await page.waitForFunction(() => G.sid === 'hangar', null, { timeout: 60_000 });
+  expect(await page.evaluate(() => G.climbIn ? G.climbIn.z0 > 12 : true)).toBe(true);
   await go(page, 'hangar');
-  expect(await page.evaluate(() => [G.player.x, G.player.z, G.player.y, G.a4.k, !!G.a4.jetBox])).toEqual([41.5, 2.5, 0, 'hangar', true]);
+  expect(await page.evaluate(() => [G.player.x, G.player.z, G.player.y, G.a4.k, !!G.a4.jetBox, isSolid(32, 12), (G.wh[12 * G.W + 32] || 1) < 0.1])).toEqual([33, 10.6, 0, 'hangar', true, true, true]);
+  // the parked jet has one door and one set of airstairs (a short outline row used to read as two more doors)
+  expect(await page.evaluate(() => jetSkin(G, G.jetBody).doors.map(d => [d.x, d.d]))).toEqual([[30.5, 1]]);
+});
+
+test('act 4 floor 3: inside the raised jet cabin the mouse aims at the guard you point at, not half a cell past him', async ({ openGame }) => {
+  test.setTimeout(240_000);
+  const page = await openGame();
+  await page.evaluate(() => { NOARRIVE = true; startLevel(13); G.player.hp = 99; });
+  await toStairs(page, 'door');
+  await go(page, 'hangar');
+  await page.evaluate(() => { G.player.hp = 99; for (const e of G.enemies) e.spd = 0.0001; G.valeW.t = 0; G.valeW.n.path = []; });
+  await expect.poll(() => page.evaluate(() => G.valeW.aboard), { timeout: 30_000 }).toBe(true);
+  await toStairs(page, 'board');
+  await go(page, 'jet');
+  // the runway jet keeps its single door
+  expect(await page.evaluate(() => jetSkin(G, G.jetBody).doors.length)).toBe(1);
+  // the mouse is over a guard's chest in the cabin (0.7 above the cabin floor, which is 0.8 above the tarmac): the aim point, seen at that
+  // height, is right under the cursor (it used to be read at tarmac height, half a cell past whoever you pointed at)
+  await page.evaluate(() => { const p = G.player; p.x = 16.5; p.z = 7.5; });
+  await page.mouse.move(400, 150);
+  await page.waitForFunction(() => G.aimX !== undefined, null, { timeout: 20_000 });
+  const r = await page.evaluate(() => { const y = 0.7 + liftAt(G.player.x, G.player.z), v = M4.x4(VP, G.aimX, y, G.aimZ, 1); return { lift: liftAt(G.player.x, G.player.z), dx: Math.abs((v[0] / v[3] * 0.5 + 0.5) * vw - mouse.x), dy: Math.abs((0.5 - v[1] / v[3] * 0.5) * vh - mouse.y) }; });
+  expect(r.lift).toBe(0.8);
+  expect(r.dx).toBeLessThan(1.5);
+  expect(r.dy).toBeLessThan(1.5);
 });
