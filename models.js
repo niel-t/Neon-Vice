@@ -788,7 +788,8 @@ function pose(t,anim,jab,arms,kick,gait){const R={},rot=(b,ax,a)=>{R[b]=M4.mul(M
  if(window.DRIVE){/* at the wheel: legs out to the pedals, back against the seat, both hands up on the rim */
   for(const b of ['thighL','thighR','shinL','shinR','footL','footR','uarmL','uarmR','farmL','farmR','spine','chest','pelvis'])delete R[b];
   rot('thighL',X,-1.32);rot('thighR',X,-1.28);rot('shinL',X,0.62);rot('shinR',X,0.5);rot('spine',X,-0.14);rot('chest',X,-0.06);
-  rot('uarmL',X,-1.05);rot('uarmR',X,-1.05);rot('uarmL',Z,0.16);rot('uarmR',Z,-0.16);rot('farmL',armHinge(1),0.5);rot('farmR',armHinge(-1),0.5);root=[0,-0.42,0];}
+  /* arms first straightened out of the rest A-pose and turned in a touch, then swung forward: the hands meet on a wheel in front of the chest instead of out past the doors */
+  rot('uarmL',Z,-AA-0.2);rot('uarmR',Z,AA+0.2);rot('uarmL',X,-1.1);rot('uarmR',X,-1.1);rot('farmL',armHinge(1),0.55);rot('farmR',armHinge(-1),0.55);root=[0,-0.42,0];}
  R.head=M4.mul(M4.R(X,0.06),R.head||M4.id());
  const W=[];for(let i=0;i<NB;i++){const b=BONES[i],pv=b[2],L=M4.mul(M4.mul(M4.T(pv[0],pv[1],pv[2]),R[b[0]]||M4.id()),M4.T(-pv[0],-pv[1],-pv[2]));W[i]=b[1]<0?M4.mul(M4.T(root[0],root[1],root[2]),L):M4.mul(W[b[1]],L);}
  return W;}
@@ -1204,4 +1205,4 @@ function flush(VPm,u){try{warmLooks();}catch(e){}if(NX&&NX.live){NX.takeChars(qu
  for(const kk of ['aP','aN','aT','aBi','aBw']){const l=Lc[kk];if(l>=0)gl.disableVertexAttribArray(l);}gl.disable(gl.CULL_FACE);gl.bindTexture(gl.TEXTURE_2D,atlasTex);queue.length=0;}
 /* how far the chest comes forward and the seat goes back on a look's body (tests use it to check the figure sizes) */
 function lookFigure(L){const B=lookCfg(L||{}).B,M=buildBody(B),P=M.p;let f=-1,b=1;for(let i=0;i<P.length;i+=3){const y=P[i+1],x=P[i],z=P[i+2];if(Math.abs(x)>0.22)continue;if(y>1.15&&y<1.42)f=Math.max(f,z);if(y>0.76&&y<1.0)b=Math.min(b,z);}return{bust:f,seat:-b};}
-return{init,add,nbs:NBS,warmLooks,get warmLeft(){return warmQ.length;},get warmBuildMs(){return buildMs;},flush,has,applySuit,rebuild,coatOf:id=>!!(CH[id]&&CH[id].B.coat),beginFrame,lookVerts,lookFigure,headTex:L=>paintHeadP(L),faceOf,jewelB,mocapClip,modelStatus:id=>modelStates[id],get status(){return status;},get ready(){return ready;}};})();
+return{init,add,nbs:NBS,warmLooks,get warmLeft(){return warmQ.length;},get warmBuildMs(){return buildMs;},flush,has,applySuit,rebuild,coatOf:id=>!!(CH[id]&&CH[id].B.coat),scaleOf:id=>CH[id]?CH[id].scale:null,beginFrame,lookVerts,lookFigure,headTex:L=>paintHeadP(L),faceOf,jewelB,mocapClip,modelStatus:id=>modelStates[id],get status(){return status;},get ready(){return ready;}};})();

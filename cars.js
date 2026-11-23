@@ -110,13 +110,29 @@ function carDummy(P,S,v){const sh=DUMMY_SHIRT[v%6],sk=DUMMY_SKIN[(v>>1)%4],hr=DU
 /* ---------- you, at the wheel ----------
    drawDriver puts the player's own model in the driver's seat of whatever they drive (models.js DRIVE pose), scaled to the cabin's headroom.
    Call it next to drawRide whenever the player is inside the car: driving, pulling up, or pulling away. */
-const DRIVER_FIT={sit:0.56,up:0.9};/* model units x drawChar scale: hip height when seated, hip-to-crown */
-const LAMBO_SEAT={x:-0.1,y:0.24,z:0.24,top:0.68};
+/* DRIVER_FIT, in model units of the DRIVE pose (root dropped 0.42): seat of the trousers above the root, and seat-to-crown (hair included).
+   The hi-detail models are stretched per character (models.js CH[id].scale: the Consigliere is 1.36 tall, the Don 0.97), so the fit
+   uses that height too, or a tall operator's head comes out through the roof. In a closed car the hips may sink into the cushion
+   (the door hides them) before the model is shrunk; the crown always stays under the roof lining. */
+const DRIVER_FIT={sit:0.46,up:1.0,gap:0.05};
+const LAMBO_SEAT={x:-0.1,y:0.24,z:0.24,top:0.68,fl:0.12};
+function driverFit(S,hs,open){const room=S.top-DRIVER_FIT.gap-S.y,sink=open?0:Math.max(0,S.y-(S.fl||S.y-0.1)-0.03),full=DRIVER_FIT.up*0.74*hs;
+ const sc=Math.max(0.3,Math.min(1,(room+sink)/full)),drop=Math.max(0,Math.min(sink,full*sc-room));
+ return{sc,y:S.y-drop-DRIVER_FIT.sit*0.74*hs*sc,crown:S.y-drop+full*sc};}
 function drawDriver(g,x,z,a,p){p=p||(g&&g.player);if(!p||typeof drawChar!=='function')return;const o=rideShapeNow(),S=o.lambo?LAMBO_SEAT:carSeat(o),k=carAxes(a);
- const room=S.top-S.y-0.05,sc=Math.max(0.5,Math.min(1,room/(DRIVER_FIT.up*0.74)));
+ const pid=rideId(),cs=typeof PS2C!=='undefined'&&PS2C.scaleOf?PS2C.scaleOf(pid):null,hs=cs?cs[1]:1;
+ const F=driverFit(S,hs,!!o.open);
  const d=g.pdrv&&Object.getPrototypeOf(g.pdrv)===p?g.pdrv:(g.pdrv=Object.create(p));
- d.x=x+k.fx*S.x-k.sx*S.z;d.z=z+k.fz*S.x-k.sz*S.z;d.a=a+Math.PI/2;d.y=S.y-DRIVER_FIT.sit*0.74*sc-(typeof liftAt==='function'?liftAt(d.x,d.z):0);d.sc=sc;d.drive=1;d.seatK=0;d.crouchK=0;d.vx=d.vz=0;d.walk=0;d.weapon=null;d.atkT=0;d.hitT=0;d.ex=null;
- drawChar(IBhi,d);}
+ d.x=x+k.fx*S.x-k.sx*S.z;d.z=z+k.fz*S.x-k.sz*S.z;d.a=a+Math.PI/2;d.y=F.y-(typeof liftAt==='function'?liftAt(d.x,d.z):0);d.sc=F.sc;d.drive=1;d.seatK=0;d.crouchK=0;d.vx=d.vz=0;d.walk=0;d.weapon=null;d.atkT=0;d.hitT=0;d.ex=null;
+ /* the hi-detail model has a DRIVE pose; the blocky stand-in (models still loading, or a phone that never loads them) has none, so it gets a seated dummy instead of a man standing up through the roof */
+ if(typeof PS2C!=='undefined'&&PS2C.add(d,'game',d.sc*0.74,menuT,IBhi,pid))return;
+ drawSeatedStandIn(IBhi,d,a,S,F,k,x,z);}
+/* a plain seated figure in the player's colours for when the hi-detail model can't be drawn (same shapes as the traffic drivers) */
+function drawSeatedStandIn(B,d,a,S,F,k,x,z){const L=d.look||{},sh=L.jacket||L.tee||L.tank||[0.6,0.5,0.8],sk=L.skin||[0.85,0.65,0.5],hr=L.hair||[0.12,0.1,0.09],lg=L.pants||[0.2,0.2,0.26];
+ const top=Math.min(F.crown,S.top-DRIVER_FIT.gap),seat=top-Math.min(0.62,top-(S.fl||S.y-0.1)),hd=top-0.09,ly=typeof liftAt==='function'?liftAt(d.x,d.z):0;
+ const put=(lx,ly0,lz,w,h,dz,c,rz)=>{const wx=x+k.fx*lx-k.sx*lz,wz=z+k.fz*lx-k.sz*lz;let M=A.mul(A.T(wx,ly0+ly,wz),A.RY(a));if(rz)M=A.mul(M,A.RZ(rz));B.box(A.mul(M,A.S(w,h,dz)),c);};
+ const sx=S.x,zz=-S.z;put(sx-0.1,(seat+hd)/2-0.04,zz,0.16,Math.max(0.1,hd-seat-0.1),0.26,sh,0.15);put(sx-0.07,hd,zz,0.15,0.15,0.15,sk);put(sx-0.09,hd+0.05,zz,0.16,0.07,0.16,hr);
+ for(const sd of [-1,1]){put(sx+0.1,hd-0.2,zz+sd*0.11,0.3,0.06,0.06,sh,-0.25);put(sx+0.27,hd-0.2,zz+sd*0.09,0.06,0.06,0.06,sk);}put(sx+0.12,seat+0.02,zz,0.3,0.08,0.24,lg);}
 
 /* front lamps: square sealed beams, quad lamps, or pop-ups */
 function carLamps(K,o){const {P,L2,hw,nose,tail}=K,ny=o.lampY||(nose.yb+nose.deck)/2+0.02;
