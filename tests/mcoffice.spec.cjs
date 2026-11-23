@@ -80,12 +80,12 @@ test('mcoffice: from Act 4 on (and for the finale) the briefing is still the des
   const errs = [];
   page.on('pageerror', e => errs.push(String(e)));
   await toOffice(page);
-  for (const next of [3, 8, 11, 12, 13, 'end']) {
-    await page.evaluate(n => { state = 'play'; show(null); CHAT.done = false; VISIT = { debrief: n === 'end' ? 13 : n - 1, next: n, grade: 'B', take: 100, style: 'mixed' }; NEXTJOB = n === 'end' ? 13 : n - 1; loadHub('office'); talkMcWey(); }, next);
+  for (const next of [3, 8, 11, 12, 13, 14, 15, 16, 'end']) {
+    await page.evaluate(n => { state = 'play'; show(null); CHAT.done = false; VISIT = { debrief: n === 'end' ? 16 : n - 1, next: n, grade: 'B', take: 100, style: 'mixed' }; NEXTJOB = n === 'end' ? 16 : n - 1; loadHub('office'); talkMcWey(); }, next);
     await page.waitForTimeout(400);
     const r = await page.evaluate(() => ({ st: state, built: briefBuilt, mc: !!salChar, act: briefAct() }));
     expect(r, 'next=' + next).toMatchObject({ st: 'brief', built: true, mc: true });
-    expect(r.act).toBe(next === 'end' || next >= 11 ? 4 : next >= 8 ? 3 : 2);
+    expect(r.act).toBe(next === 'end' || next >= 14 ? 5 : next >= 11 ? 4 : next >= 8 ? 3 : 2);
   }
   expect(errs).toEqual([]);
 });
