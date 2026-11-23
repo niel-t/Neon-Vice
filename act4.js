@@ -27,7 +27,7 @@ function a4Walk(c,dt,sp){const P=c.path;if(!P||!P.length){c.vx=c.vz=0;return tru
 /* Lex, if you spared him on the yacht, keeps helping: a call at the start of each Act 4 floor and the guide from the start (g.tip).
    If he died, his estate was banked at Vale Trust: +$2,500 on the garage floor, and Vale has two more men at the jet. */
 function act4Lex(g,i){const f=typeof lexFate==='function'?lexFate():null;
- if(f==='spared'){g.tip=true;const msg=i===11?'Lex calls: "Vale\'s vans go out the east ramp. Drop the barrier."':i===12?'Lex texts: "The pilot sits by the window. He scares easy."':'Lex calls: "Tail number N86VT. The side door is open. Go."';a4Later(g,3200,()=>banner('LEX, THE SPARED',msg));}
+ if(f==='spared'){g.tip=true;const msg=i===11?'Lex calls: "Vale\'s vans go out the east ramp. Drop the barrier."':i===12?'Lex texts: "The pilot sits by the window. He scares easy."':'Lex calls: "Tail number N86VT. The hangar doors are open. Go."';a4Later(g,3200,()=>banner('LEX, THE SPARED',msg));}
  else if(f==='dead'&&i===11){g.score+=2500;a4Later(g,3000,()=>popup(g.player.x,g.player.z-0.5,"LEX'S SAFE DEPOSIT BOX  +$2,500",'#ffd36b'));}}
 function act4Intro(g){
  if(isGarage(g)){
@@ -36,7 +36,7 @@ function act4Intro(g){
   else{placeStash(g,11);vanSetup(g);banner('THE VAULT DOCK','Three gold vans are leaving. Drop the boom barrier or shoot the drivers.');}
   return true;}
  if(isHangar(g)){
-  if(g.sid==='apron'){banner('FLOOR 3: OPA-LOCKA HANGAR 7','The hangar side door is at the far end of the apron.');act4Lex(g,13);}
+  if(g.sid==='apron'){banner('FLOOR 3: OPA-LOCKA HANGAR 7','The hangar doors are open on the far side of the apron.');act4Lex(g,13);}
   else if(g.sid==='hangar'){valeWalkSetup(g);banner('HANGAR 7','Vale is walking to his jet. The stairs stay up until he is aboard.');}
   else{placeStash(g,13);jetSetup(g);banner('ON THE RUNWAY','Vale has locked himself in the cockpit. Take out his bodyguards in the cabin first.');}
   return true;}
@@ -207,13 +207,14 @@ function valvePull(p){const g=G,J=g.jet;if(!J||!J.valve||J.fuse>0||J.boom)return
    body is a solid block (j cells, lower) and gets a roof; on the runway the cabin is open so you can see the fight inside. */
 /* the jet: a thin white skin with a row of small windows. The 'j' cells keep the collision but sit flat (h 0.02); the skin is drawn on
    each fuselage cell's edge that faces the cabin, so the walls are thin and the cabin keeps its width. The outline cells outside the
-   skin are the plane's shadow on the tarmac. A gap in the outline's top or bottom row is the door: airstairs run down from it. */
+   skin are the plane's shadow on the tarmac. A one-cell gap inside the outline's top or bottom row is the door: airstairs run down from it
+   (a row that is just shorter than the widest one is not a door, or the hangar jet grew a second and third set of airstairs). */
 function jetSkin(g,b){if(g.jetSkin&&g.jetSkin.b===b)return g.jetSkin;const cells=a4Cells(g,'j'),set=new Set(cells.map(q=>q.ix+','+q.iz)),e=[],doors=[];
  const inner=(x,z)=>x>b.x0&&x<b.x1-1&&z>b.z0&&z<b.z1-1&&!set.has(x+','+z);
  for(const k of set){const [x,z]=k.split(',').map(Number);
   if(inner(x,z+1))e.push({x0:x,x1:x+1,z:z+1,hz:1,o:-1});if(inner(x,z-1))e.push({x0:x,x1:x+1,z:z,hz:1,o:1});
   if(inner(x+1,z))e.push({z0:z,z1:z+1,x:x+1,hz:0,o:-1});if(inner(x-1,z))e.push({z0:z,z1:z+1,x:x,hz:0,o:1});}
- for(const z of [b.z0,b.z1-1])for(let x=b.x0+1;x<b.x1-1;x++)if(!set.has(x+','+z)&&set.has((x-1)+','+z))doors.push({x:x+0.5,z:z===b.z0?z+1:z,d:z===b.z0?-1:1});
+ for(const z of [b.z0,b.z1-1])for(let x=b.x0+1;x<b.x1-1;x++)if(!set.has(x+','+z)&&set.has((x-1)+','+z)&&set.has((x+1)+','+z))doors.push({x:x+0.5,z:z===b.z0?z+1:z,d:z===b.z0?-1:1});
  g.jetSkin={b,e,doors,cells,set};return g.jetSkin;}
 /* the jet stands on its landing gear: the cabin floor is JET_DECK above the tarmac, and the airstairs run from the door down to the
    ground. liftAt() (index.html, models.js) raises characters, dropped guns, blood, bullets and sparks by this much where they are. */
@@ -233,7 +234,8 @@ function drawJet(B,g,b,roof){const T=g.T||0,DK=JET_DECK,bx0=(x,y,z,sx,sy,sz,c,em
  /* the visible hull is one cell in from the outline */
  const X0=b.x0+1,X1=b.x1-1,Z0=b.z0+1,Z1=b.z1-1,L=X1-X0,cz=b.cz,w=Z1-Z0;
  const winAt=(x0,len,z)=>{for(let k=0;k<len;k++)for(const f of [0.3,0.7]){const wx=x0+k+f;if(S.doors.some(d=>Math.abs(d.x-wx)<0.6&&Math.abs(d.z-z)<0.2))continue;bx(wx,0.74,z,0.18,0.2,0.012,win);}};
- bx0((b.x0+b.x1)/2,0.036,cz,b.x1-b.x0-0.6,0.01,b.z1-b.z0-0.3,[0.05,0.05,0.06]);
+ /* the plane's shadow sits well clear of the flat j-cell tops (0.02): too close and the floor flickers on phones */
+ bx0((b.x0+b.x1)/2,0.07,cz,b.x1-b.x0-0.6,0.01,b.z1-b.z0-0.3,[0.05,0.05,0.06]);
  /* the belly under the cabin floor, and the landing gear: a nose leg and two main legs under the wings, each with its wheels */
  bx(X0+L/2,-0.14,cz,L,0.28,w*0.92,sh);bx(X0+L/2,-0.3,cz,L*0.92,0.08,w*0.6,sg);
  const leg=(x,z,two)=>{bx0(x,DK*0.5,z,0.07,DK,0.07,[0.55,0.56,0.6]);bx0(x-0.12,DK*0.45,z,0.22,0.04,0.04,[0.55,0.56,0.6]);
@@ -331,10 +333,11 @@ function drawHangar(B,g){const bx=(x,y,z,sx,sy,sz,c,em)=>B.box(TRS(x,y,z,0,sx,sy
  if(g.sid==='jet'&&g.jetBody){drawRunway(bx,g,g.jetBody);drawJet(B,g,g.jetBody,false);const J=g.jet;if(J&&J.valve&&!J.boom){const v=J.valve,ready=g.boss&&!g.boss.alive&&!(J.fuse>0);bx(v.x,0.5,v.z,0.6,1.0,0.5,[0.85,0.2,0.15]);bx(v.x,1.05,v.z,0.3,0.06,0.3,[0.1,0.1,0.12]);
    bx(v.x,1.15,v.z,0.36,0.08,0.08,ready?[1,0.85,0.2]:[0.4,0.32,0.1],ready&&Math.sin(T*8)>0);if(J.fuse>0)bx(v.x,0.02,v.z,1.2+0.2*Math.sin(T*6),0.01,1.2,[0.5,0.42,0.18]);}}
 }
-/* the side door and boarding stairs between stages (the garage stairs are stairs.js) */
+/* the hangar doors and boarding stairs between stages (the garage stairs are stairs.js) */
 function drawA4Stairs(B,g,s){const x=s.at[0],z=s.at[1],bx=(px,py,pz,sx,sy,sz,c,em)=>B.box(TRS(px,py,pz,0,sx,sy,sz),c,!!em),T=g.T||0,lock=act4Locked(g,s);
  if(s.id==='down')return; /* the garage stairs are drawn once with the level (stairs.js) */
- if(s.id==='door'){bx(x,0.95,z-0.47,0.95,1.9,0.05,[0.02,0.02,0.04]);bx(x,2.0,z-0.44,0.6,0.14,0.05,[0.3,1,0.5],true);bx(x,0.02,z,0.9,0.012,0.9,[0.3,1,0.5],true);return;}
+ /* the hangar doors themselves are part of the set (act4sets.js a4HangarFront); this is the way-in marker on the tarmac */
+ if(s.id==='door'){bx(x,0.022,z,1.2,0.008,1.0,[0.3,1,0.5],true);return;}
  if(s.id==='board'&&lock)return;}
 
 /* ---------------- shared hooks ---------------- */

@@ -14,8 +14,8 @@
    - OPA-LOCKA (the apron and Hangar 7): apron concrete slabs and corrugated hangar walls, baggage containers for the crates, ground
      power units, baggage carts, chocks, cones, a windsock; in the hangar epoxy floor, a jet engine on its stand, tool chests,
      workbenches, tyre stacks, maintenance stands, oxygen bottles, a yellow safety box painted round the jet and VALE TRUST on the wall.
-   STAIRS: the garage's ways down are plain staircases (stairs.js), the same as the towers'. The hangar side door brings you in
-   through the same top-right corner of the hangar.
+   STAIRS: the garage's ways down are plain staircases (stairs.js), the same as the towers'. The apron's north wall is the front of
+   Hangar 7: its big sliding doors stand open, you walk in through them and come out by the same doors in the hangar's south wall.
    Everything here goes into the level's static batch (built once), so both renderers draw it and a phone pays nothing per frame.
    Furniture keeps its cells and its cover; only the look changes. Loaded after act4.js; nothing runs at load time. */
 
@@ -31,12 +31,13 @@ const A4C={conc:[0.6,0.59,0.57],dk:[0.12,0.12,0.14],steel:[0.66,0.68,0.72],wh:[0
 /* the stage def a map belongs to (by its name: stage maps carry their own) */
 function a4StageDef(g){if(typeof MISSIONS==='undefined')return null;for(const id of ['c11','c13']){const m=MISSIONS[id];if(m&&m.stageDefs)for(const s of Object.values(m.stageDefs))if(s.def&&s.def.name===g.def.name)return s;}return null;}
 
-/* how the climb out looks: flat through the hangar side door, up the jet's airstairs (the default); the garage stairs are flights (stairs.js) */
+/* how the climb out looks: flat through the hangar doors, up the jet's airstairs (the default); the garage stairs are flights (stairs.js) */
 function a4ClimbMode(g,s){if(!g||!s)return null;if(s.id==='door')return 'flat';return null;}
-/* the walk in on the next floor through the hangar's side door */
+/* the walk in on the next floor through the hangar's big doors */
 function a4ClimbArrive(g,s,ar){const p=g.player;if(!ar||!p)return;let sx,sz,y0;
- if(s.id==='door'){sx=ar.at[0];sz=Math.floor(ar.at[1])+0.05;y0=0;}else return;
- g.climbIn={t0:performance.now(),dur:0.9,x0:sx,z0:sz,y0,x1:p.x,z1:p.z,a:Math.atan2(p.x-sx,p.z-sz)};
+ /* in through the big hangar doors in the south wall: from the doorway (the threshold cells) up into the hangar */
+ if(s.id==='door'){sx=ar.at[0];sz=ar.at[1]+1.9;y0=0;}else return;
+ g.climbIn={t0:performance.now(),dur:1.2,x0:sx,z0:sz,y0,x1:p.x,z1:p.z,a:Math.atan2(p.x-sx,p.z-sz)};
  p.x=sx;p.z=sz;p.y=y0;p.a=g.climbIn.a;g.cam.x=p.x;g.cam.z=p.z-1;g.cam.lift=s.id==='door'?0.3:1;}
 
 /* a tiny stencil font, three by five */
@@ -205,6 +206,33 @@ function a4Paint(B,g){const A4=g.a4,k=A4.k,W=g.W,H=g.H,C=A4C,fl=(x,z,sx,sz,c,y,r
  if(k==='hangar'&&A4.jetBox){const b=A4.jetBox,c=C.yel;fl((b.x0+b.x1)/2,b.z0,b.x1-b.x0,0.1,c);fl((b.x0+b.x1)/2,b.z1,b.x1-b.x0,0.1,c);fl(b.x0,(b.z0+b.z1)/2,0.1,b.z1-b.z0,c);fl(b.x1,(b.z0+b.z1)/2,0.1,b.z1-b.z0,c);
   for(let x=b.x0+0.6;x<b.x1-0.4;x+=0.8)fl(x,b.z0-0.25,0.35,0.08,[0.9,0.2,0.15],0.006,0.6);a4Text(B,'7',b.x1+2.4,0.007,b.z1-1.6,0.32,[0.95,0.95,0.92],false,'f');}}
 
+/* The front of Hangar 7 on the apron's north wall (its south face at z 2): corrugated cladding over the wall, two big sliding leaves
+   pushed apart and the lit hangar between them, the name above, and the hangar's light spilling out onto the tarmac. */
+function a4HangarFront(B,x){const bx=(px,py,pz,sx,sy,sz,c,em)=>B.box(TRS(px,py,pz,0,sx,sy,sz),c,!!em),z=2,clad=[0.56,0.6,0.66],rib=[0.46,0.5,0.56],lf=[0.66,0.7,0.76],hz=[0.95,0.75,0.12];
+ bx(x,1.45,1.5,11.6,2.9,0.96,clad);for(let u=-5.6;u<=5.6;u+=0.4)bx(x+u,1.45,z+0.005,0.06,2.9,0.03,rib);
+ /* the opening: the hangar lit up inside, a jet's nose in the light, the door track */
+ bx(x,1.2,z+0.01,3.6,2.4,0.02,[0.9,0.85,0.72]);bx(x+0.6,0.95,z+0.03,1.6,0.5,0.02,[0.92,0.93,0.95]);bx(x+1.25,1.05,z+0.04,0.3,0.14,0.02,[0.12,0.16,0.26]);
+ for(const sd of [-1,1]){const lx=x+sd*3.5;bx(lx,1.25,z+0.06,3.2,2.5,0.1,lf);for(let u=-1.4;u<=1.4;u+=0.35)bx(lx+u,1.25,z+0.115,0.05,2.46,0.02,rib);
+  for(let k=0;k<6;k++)bx(lx-sd*1.56,0.2+k*0.4,z+0.12,0.08,0.2,0.02,k%2?[0.1,0.1,0.1]:hz);}
+ bx(x,2.62,z+0.02,11.4,0.1,0.06,[0.3,0.32,0.36]);bx(x,0.012,z+0.12,7.4,0.012,0.08,[0.3,0.32,0.36]);
+ a4Text(B,'HANGAR 7',x,3.15,z+0.02,0.075,[0.97,0.97,0.94],false);
+ bx(x,0.009,z+0.8,3.4,0.004,1.4,[0.8,0.74,0.6]);}
+/* The hangar's big doors in the south wall: the threshold cells (O) are the open doorway, the two leaves stand pushed back along the
+   wall on either side of it, and through the gap is the apron at night (tarmac, the lead-in line, edge lights). The outside is drawn
+   past the map's last row, where nothing walks. */
+function a4HangarDoors(B,g){const W=g.W,rows=g.rows||[];let z=-1,x0=1e9,x1=-1e9;
+ for(let r=0;r<rows.length;r++)for(let c=0;c<W;c++)if(rows[r][c]==='O'){z=r;x0=Math.min(x0,c);x1=Math.max(x1,c+1);}
+ if(z<0)return;const bx=(px,py,pz,sx,sy,sz,c,em)=>B.box(TRS(px,py,pz,0,sx,sy,sz),c,!!em),cx=(x0+x1)/2,w=x1-x0,lf=[0.66,0.7,0.76],rib=[0.5,0.54,0.6],hz=[0.95,0.75,0.12];
+ for(const sd of [-1,1]){const lx=sd<0?x0-1.7:x1+1.7;bx(lx,0.8,z+0.5,3.4,1.6,0.3,lf);for(let u=-1.5;u<=1.5;u+=0.38)bx(lx+u,0.8,z+0.34,0.05,1.56,0.02,rib);
+  bx(lx,1.62,z+0.5,3.4,0.04,0.32,[0.4,0.43,0.48]);for(let k=0;k<4;k++)bx(lx-sd*1.67,0.2+k*0.4,z+0.34,0.08,0.2,0.02,k%2?[0.1,0.1,0.1]:hz);}
+ /* the door tracks across the doorway, and hazard paint along the inside edge */
+ for(const o of [0.3,0.7])bx(cx,0.056,z+o,w,0.008,0.05,[0.2,0.21,0.24]);
+ for(let x=x0;x<x1;x+=0.5)bx(x+0.25,0.005,z-0.12,0.24,0.004,0.14,(Math.round(x*2)%2)?[0.1,0.1,0.1]:hz);
+ /* outside: the apron */
+ bx(cx,-0.03,z+3,w+3,0.04,4,[0.17,0.18,0.2]);bx(cx,-0.006,z+3,0.12,0.004,4,[0.95,0.78,0.15]);
+ for(let x=x0;x<=x1;x+=2.5)bx(x,0.04,z+1.35,0.12,0.08,0.12,[0.3,0.6,1],true);
+ bx(cx-w/2+0.8,0.25,z+3.4,0.9,0.5,0.6,[0.95,0.75,0.1]);}
+
 /* a cell on or next to a staircase (stairs.js) */
 function a4NearStairs(g,x,z){return stairFlights(g).some(f=>{const u=flU(f,x+0.5),v=flV(f,z+0.5);return u>-0.5&&v>-1.5&&((v<3.5&&u<5.5)||(v<5.5&&u<3.5));});}
 
@@ -217,26 +245,28 @@ function a4SetPieces(B,g){const A4=g.a4,k=A4.k,C=A4C,W=g.W,bx=(px,py,pz,sx,sy,sz
     for(let i=0;i<4;i++)bx(q.x,0.6,zw+0.02,1.3-i*0.0,1.1,0.04,[0.45,0.46,0.5],false,i*Math.PI/4);
     for(let i=0;i<4;i++)bx(q.x,0.6,zw+0.06,1.0,0.86,0.04,[0.72,0.74,0.78],false,i*Math.PI/4);for(let i=0;i<3;i++)bx(q.x,0.6,zw+0.1,0.5,0.05,0.04,[0.4,0.4,0.44],false,i*Math.PI/3);
     bx(q.x,0.6,zw+0.11,0.14,0.14,0.04,C.gold);bx(q.x-1.6,0.95,zw+0.03,1.1,0.24,0.03,C.black);a4Text(B,'VAULT',q.x-1.6,1.02,zw+0.05,0.03,C.gold,true);}}}
+ if(k==='apron'){const sd=a4StageDef(g),s=sd&&(sd.stairs||[]).find(q=>q.id==='door');if(s)a4HangarFront(B,s.at[0]);}
+ if(k==='hangar')a4HangarDoors(B,g);
  if(k==='hangar'){const r=pick(1,r=>r.x>12&&r.x<W-8)[0];if(r){bx(r.x+0.5,0.92,r.z+0.03,3.2,0.36,0.03,[0.08,0.1,0.2]);a4Text(B,'VALE TRUST',r.x+0.5,1.02,r.z+0.05,0.05,C.gold,true);}
-  /* the side door you came in by */const sd=a4StageDef(g),ar=sd&&sd.arrivals&&sd.arrivals.side;if(ar){const x=ar.at[0],zw=Math.floor(ar.at[1])+0.03;
-   bx(x,0.95,zw,0.95,1.9,0.04,[0.06,0.06,0.08]);bx(x+0.32,0.95,zw+0.25,0.06,1.84,0.5,[0.55,0.57,0.6],false,0.6);bx(x,1.95,zw+0.02,1.05,0.08,0.06,[0.4,0.42,0.45]);bx(x,2.08,zw+0.03,0.5,0.12,0.04,[0.3,1,0.5],true);}}
- if(k==='apron'){const sd=a4StageDef(g),s=sd&&(sd.stairs||[]).find(q=>q.id==='door');if(s){const x=s.at[0],zw=Math.floor(s.at[1])+0.03;bx(x,0.95,zw,1.05,1.95,0.03,[0.4,0.42,0.45]);
-   bx(x-1.5,0.98,zw+0.01,1.2,0.3,0.03,[0.08,0.1,0.2]);a4Text(B,'HANGAR 7',x-1.5,1.05,zw+0.03,0.022,[1,1,1],true);}}
+}
  if(k==='rest'){const r=pick(1,r=>a4FT(g,r.z*W+r.x)===225&&r.x>12)[0];if(r){bx(r.x+0.5,0.92,r.z+0.03,1.7,0.34,0.03,C.teal);a4Text(B,'CORAL ROOM',r.x+0.5,1.0,r.z+0.05,0.03,C.pink,true);}}}
 
 /* clutter on bare floor (replaces the generic bottles and pizza boxes) */
 function act4Clutter(B,g,x,z){const k=g.a4&&g.a4.k;if(!k||a4Of(g)!==k)return false;if(g.front&&z>=g.front.zT-1)return true;if(hsh(x,z,1)>0.18)return true;
  if(g.a4.props.some(p=>Math.abs(p.x-x-0.5)<0.9&&Math.abs(p.z-z-0.5)<0.9))return true;if(a4NearStairs(g,x,z))return true;
  const u=x+0.2+hsh(x,z,3)*0.6,v=z+0.2+hsh(x,z,4)*0.6,r=hsh(x,z,5)*TAU,h=hsh(x,z,2),bx=(dx,y,dz,sx,sy,sz,c,ry,em)=>B.box(TRS(u+dx,y,v+dz,r+(ry||0),sx,sy,sz),c,!!em);
- if(k==='rest'){const f=a4FT(g,z*g.W+x);if(f===44){if(h<0.5){bx(0,0.004,0,0.2,0.006,0.14,[0.95,0.6,0.2]);}else bx(0,0.01,0,0.12,0.02,0.04,[0.75,0.76,0.8]);return true;}
-  if(h<0.35){for(let i=0;i<5;i++)bx((hsh(x,z,90+i)-0.5)*0.4,0.004,(hsh(x,z,95+i)-0.5)*0.4,0.06,0.006,0.04,[0.95,0.4,0.45],i);}
-  else if(h<0.6){bx(0,0.004,0,0.22,0.006,0.22,C_A4N);}else if(h<0.8){bx(0,0.02,0,0.04,0.04,0.04,[0.85,0.75,0.55]);}else bx(0,0.006,0,0.16,0.008,0.03,[0.8,0.82,0.86]);return true;}
- if(h<0.35){bx(0,0.004,0,0.4+h,0.005,0.26,[0.06,0.06,0.07]);bx(0.06,0.005,0.02,0.2,0.005,0.12,[0.2,0.14,0.3]);}
- else if(h<0.55){bx(0,0.004,0,0.8,0.004,0.1,[0.1,0.1,0.11]);bx(0,0.004,0.18,0.8,0.004,0.1,[0.1,0.1,0.11]);}
- else if(h<0.7){bx(0,0.004,0,0.12,0.005,0.08,[0.95,0.93,0.88]);}
+ if(k==='rest'){const f=a4FT(g,z*g.W+x);if(f===44){if(h<0.5){bx(0,Y1,0,0.2,0.003,0.14,[0.95,0.6,0.2]);}else bx(0,0.01,0,0.12,0.02,0.04,[0.75,0.76,0.8]);return true;}
+  if(h<0.35){for(let i=0;i<5;i++)bx((hsh(x,z,90+i)-0.5)*0.4,Y1+i*0.002,(hsh(x,z,95+i)-0.5)*0.4,0.06,0.003,0.04,[0.95,0.4,0.45],i);}
+  else if(h<0.6){bx(0,Y1,0,0.22,0.003,0.22,C_A4N);}else if(h<0.8){bx(0,0.02,0,0.04,0.04,0.04,[0.85,0.75,0.55]);}else bx(0,Y1,0,0.16,0.003,0.03,[0.8,0.82,0.86]);return true;}
+ if(h<0.35){bx(0,Y1,0,0.4+h,0.003,0.26,[0.06,0.06,0.07]);bx(0.06,Y2,0.02,0.2,0.003,0.12,[0.2,0.14,0.3]);}
+ else if(h<0.55){bx(0,Y1,0,0.8,0.003,0.1,[0.1,0.1,0.11]);bx(0,Y1,0.18,0.8,0.003,0.1,[0.1,0.1,0.11]);}
+ else if(h<0.7){bx(0,Y1,0,0.12,0.003,0.08,[0.95,0.93,0.88]);}
  else if(h<0.85){bx(0,0.02,0,0.03,0.03,0.08,[0.9,0.9,0.85]);bx(0.1,0.02,0.05,0.03,0.03,0.07,[0.9,0.9,0.85],0.7);}
  else bx(0,0.01,0,0.2,0.02,0.14,[0.75,0.2,0.15]);return true;}
 const C_A4N=[0.98,0.97,0.94];
+/* floor litter heights: the painted lines sit at 0.003-0.007 and blood decals at 0.01, so stains and papers lie above both (Y1) and a
+   stain's inner sheen above that (Y2), each 0.003 thick. Thin layers closer than that flicker on phone GPUs (low depth precision). */
+const Y1=0.014,Y2=0.019;
 
 /* furniture with an Act 4 look; same cell, same cover */
 function act4Furn(B,g,x,z,f){const k=g.a4&&g.a4.k;if(!k||a4Of(g)!==k)return false;const cx=x+0.5,cz=z+0.5,C=A4C;
