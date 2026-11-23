@@ -103,3 +103,25 @@ test('cars: see-through glass with a cabin, and you are at the wheel when drivin
   }, setup.toString());
   expect(r).toEqual({ glass: true, seats: true, baked: true, traffic: true, driving: true, parked: true, away: true, up: true, afoot: true, out: true });
 });
+
+// The driver fits inside the cabin: every operator (their hi-detail models are stretched to different heights) in every car keeps
+// the crown under the roof lining, and if the hi-detail model can't be drawn a seated stand-in is used instead of a standing one.
+test('cars: the driver sits inside every car, crown under the roof, for every operator', async ({ openGame }) => {
+  const page = await openGame();
+  const r = await page.evaluate(() => {
+    const out = { roof: [], seat: [], standIn: 0, hi: 0 }, p = myProg(), sv = selIdx;
+    for (const id of ['consigliere', 'money', 'don']) { selIdx = CHARS.findIndex(q => q.id === id); PROG[id].cars = Object.keys(CARS);
+      for (const k of Object.keys(CARS)) { PROG[id].car = k; const o = rideShapeNow(), S = o.lambo ? LAMBO_SEAT : carSeat(o), cs = PS2C.scaleOf(id); const F = driverFit(S, cs ? cs[1] : 1, !!o.open);
+        if (F.crown > S.top - 0.02) out.roof.push(id + ':' + k + ' ' + F.crown.toFixed(2) + '>' + S.top.toFixed(2));
+        if (F.sc < 0.3 || F.sc > 1) out.seat.push(id + ':' + k); } }
+    selIdx = sv;
+    // stand-in when the model isn't available
+    const add = PS2C.add, si = drawSeatedStandIn; let calls = 0;
+    try { drawSeatedStandIn = function () { calls++; return si.apply(this, arguments); };
+      const g = { player: makeChar(0, 0, {}, true) }; g.player.player = true;
+      PS2C.add = () => false; drawDriver(g, 0, 0, 0); out.standIn = calls;
+      PS2C.add = () => true; drawDriver(g, 0, 0, 0); out.hi = calls; } finally { PS2C.add = add; drawSeatedStandIn = si; }
+    return out;
+  });
+  expect(r).toEqual({ roof: [], seat: [], standIn: 1, hi: 1 });
+});
