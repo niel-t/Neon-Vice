@@ -261,13 +261,57 @@ const LEVELS=[
  "#..............................h#",
  "#...PC..........................#",
  "#################################"]},
+ {name:'THE GRAND BISCAYNE HOTEL',act:5,wall:46,floor:30,sofa:0xe8dcc0,from:'McWEY',legend:{'.':{f:30},'~':{f:30},'o':{f:30}},
+  brief:"The Family's men have taken the Grand Biscayne, the hotel where my mother did the sheets. In the basement is the bell captain's old book, and it says what I carried home in 1959. Get it before they do.",map:[
+ "####################################",
+ "#..PC...~~~~~~......~~~~~~.........#",
+ "#..........................g.......#",
+ "#.......~~~~~~..u...~~~~~~....MM...#",
+ "#..ZZ..............................#",
+ "#..g....~~~~~~......~~~~~~...o.....#",
+ "#..........................b.......#",
+ "#..MM...~~~~~~..s...~~~~~~.........#",
+ "#..................................#",
+ "#........x.............ZZ....h.....#",
+ "#..................................#",
+ "####################################"]},
+ {name:'LA HABANA',act:5,wall:13,floor:28,sofa:0x7a1622,from:'McWEY',legend:{'.':{f:28},'t':{f:28},'N':{f:43},'q':{f:30}},
+  brief:"The Family counts its money on a Cuban casino ship anchored off Government Cut. My forty bars are in its cage tonight. Bring them home, or put them on the bottom where nobody gets them.",map:[
+ "####################################",
+ "#AAAA..AAAA.#......................#",
+ "#...........#..t.OO..t.OO..t.......#",
+ "#..g...t....D......................#",
+ "#...........#..OO.t..OO.t..u.......#",
+ "#AAAA..AAAA.#...........g..........#",
+ "####D########..t.OO..t.OO..........#",
+ "#.......................b..........#",
+ "#..BBBBB.........m.......h.........#",
+ "#######D########D#########D#########",
+ "#..NNN....g..#..x...SS..#..q....s..#",
+ "#.PC.........#..........#..........#",
+ "####################################"]},
+ {name:'McWEY TOWER',act:5,wall:34,floor:30,sofa:0xd8d8e8,from:'McWEY',legend:{'.':{f:30},',':{f:7},'y':{f:30,furn:22}},boss:{name:'DON ETTORE BASTIANI',look:()=>({skin:[0.9,0.76,0.64],jacket:[0.07,0.07,0.08],shirt:[0.08,0.08,0.09],tie:[0.72,0.06,0.1],pants:[0.07,0.07,0.08],shoes:[0.05,0.04,0.04],hair:[0.93,0.93,0.95],hs:'slick',glasses:true,medallion:true,watch:true,bw:0.98,bd:1.0,bh:1.0}),weapon:'double',hp:22,cardinal:true,intro:'The Cardinal: black coat, red scarf, his old lupara. His helicopter waits on the pad.',dead:'THE CARDINAL IS DEAD'},
+  brief:"Bastiani is coming for me tonight, here, in my own tower. His men are already in the lobby. Come up and stand with me, kid, or don't come at all.",map:[
+ "####################################",
+ "#..........yyyyyyy.................#",
+ "#..ZZ......yyyyyyy.................#",
+ "#..ZZ.....g.yyyyy..........g.......#",
+ "#...........................C......#",
+ "#..........,,,,,,,,,.....MM........#",
+ "#..u.......,,,,,,,,,...............#",
+ "#..........,,,,X,,,,.........h.....#",
+ "#..........,,,,,,,,,...............#",
+ "#....MM....,,,,,,,,,......b........#",
+ "#........s.........................#",
+ "#.P................................#",
+ "####################################"]}
 ];
 /*END*/
 
 /* grading: par time per floor (seconds), and grade points that ignore difficulty/perk/character money multipliers */
-const PAR=[60,55,120,60,65,90,65,60,75,80,130,125,85,140];const GRADES=[['S',2.3],['A+',1.8],['A',1.4],['B',1.0],['C',0.65],['D',-1]];
+const PAR=[60,55,120,60,65,90,65,60,75,80,130,125,85,140,130,120,170];const GRADES=[['S',2.3],['A+',1.8],['A',1.4],['B',1.0],['C',0.65],['D',-1]];
 
 /* hidden stashes: [map x, map z, hi-fi track unlocked (or null), cash]. Saved in JOBS.stash[floor]=1 */
-const STASH=[[5,4,'n_nightdrive',1500],[29,5,'n_haze',1500],[12,5,'n_concrete',2000],[37,3,'n_redtide',2000],[37,2,'n_overdrive',2000],[38,4,'n_rampage',2000],[29,1,null,4000],[39,4,null,5000],[38,9,null,3000],[38,10,null,3500],[34,1,null,6000],[37,2,null,6000],[8,9,null,6500],[28,1,null,8000]];
+const STASH=[[5,4,'n_nightdrive',1500],[29,5,'n_haze',1500],[12,5,'n_concrete',2000],[37,3,'n_redtide',2000],[37,2,'n_overdrive',2000],[38,4,'n_rampage',2000],[29,1,null,4000],[39,4,null,5000],[38,9,null,3000],[38,10,null,3500],[34,1,null,6000],[37,2,null,6000],[8,9,null,6500],[28,1,null,8000],[32,9,null,8500],[33,10,null,9000],[33,10,null,10000]];
 
-const LEVEL_TRACKS=[['game','n_nightdrive','n_haze','n_concrete'],['n_crystal','n_overdrive','n_nightdrive','n_haze'],['n_redtide','n_rampage','n_concrete','n_overdrive'],['n_nightdrive','n_crystal'],['n_overdrive','n_crystal'],['n_haze','n_redtide'],['n_rampage','n_overdrive'],['n_redtide','n_rampage'],['n_concrete','n_overdrive','n_rampage'],['n_nightdrive','n_crystal','n_haze'],['n_redtide','n_rampage'],['n_concrete','n_haze','n_overdrive'],['n_crystal','n_nightdrive','n_haze'],['n_rampage','n_redtide']];
+const LEVEL_TRACKS=[['game','n_nightdrive','n_haze','n_concrete'],['n_crystal','n_overdrive','n_nightdrive','n_haze'],['n_redtide','n_rampage','n_concrete','n_overdrive'],['n_nightdrive','n_crystal'],['n_overdrive','n_crystal'],['n_haze','n_redtide'],['n_rampage','n_overdrive'],['n_redtide','n_rampage'],['n_concrete','n_overdrive','n_rampage'],['n_nightdrive','n_crystal','n_haze'],['n_redtide','n_rampage'],['n_concrete','n_haze','n_overdrive'],['n_crystal','n_nightdrive','n_haze'],['n_rampage','n_redtide'],['n_haze','n_crystal','n_nightdrive'],['n_redtide','n_overdrive','n_concrete'],['n_rampage','n_overdrive','n_redtide']];

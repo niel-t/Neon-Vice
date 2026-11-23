@@ -203,7 +203,7 @@ test('saves: historical migration, current round-trip, floor stepping and quota 
 
 test('saves: out-of-range floor records are clamped', async ({ openGame }) => {
   const bounds = await openGame({ nb86jobs: { mig: 1, top: 999, sel: -1 } });
-  expect(await bounds.evaluate(() => [JOBS.top, JOBS.sel])).toEqual([13, 0]);
+  expect(await bounds.evaluate(() => [JOBS.top, JOBS.sel])).toEqual([16, 0]);
 });
 
 test('saves: pre-RPG progress preserves purchases and loan history', async ({ openGame }) => {
@@ -302,7 +302,7 @@ test('act 3: the demolition floor needs its charges cut before it clears, and th
   test.setTimeout(120_000);
   const page = await openGame();
   const start = await page.evaluate(() => { NOARRIVE = true; startLevel(8); return { act: G.def.act, rigs: G.rigs.length, obj: G.obj.label, hats: G.enemies.filter(e => e.look.helmet === 'pasgt').length, last: CAMPAIGN_LEN - 1 }; });
-  expect(start).toMatchObject({ act: 3, rigs: 4, obj: 'CUT THE CHARGE WIRES', last: 13 });
+  expect(start).toMatchObject({ act: 3, rigs: 4, obj: 'CUT THE CHARGE WIRES', last: 16 });
   expect(start.hats).toBeGreaterThan(3);
   await page.evaluate(() => { for (const e of G.enemies) if (e.alive) killEnemy(e, 'pistol', [0, 1]); });
   await expect.poll(() => page.evaluate(() => G.enemies.every(e => !e.alive))).toBe(true);

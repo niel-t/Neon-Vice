@@ -12,7 +12,7 @@
    variants: {id:{when:<cond>, spawn?:[x,z] player start cell on the legacy map, clear?}}; the first match wins, else 'base'.
    briefFlags: wflags a mission's McWey brief sets; cleared when that brief starts so the latest choice wins.
    clear: {boss:'required'|'optional'} (default required): whether the floor clears with the boss still standing. */
-const CAMPAIGN_LEN=14;
+const CAMPAIGN_LEN=17;
 const MISSIONS={
  c0:{idx:0,kind:'campaign',stages:['legacy'],start:'legacy'},
  c1:{idx:1,kind:'campaign',stages:['legacy'],start:'legacy',briefFlags:['flamingo_back'],
@@ -29,6 +29,9 @@ const MISSIONS={
  c11:{idx:11,kind:'campaign',stages:['legacy'],start:'legacy'},
  c12:{idx:12,kind:'campaign',stages:['legacy'],start:'legacy'},
  c13:{idx:13,kind:'campaign',stages:['legacy'],start:'legacy'},
+ c14:{idx:14,kind:'campaign',stages:['legacy'],start:'legacy'},
+ c15:{idx:15,kind:'campaign',stages:['legacy'],start:'legacy'},
+ c16:{idx:16,kind:'campaign',stages:['legacy'],start:'legacy'},
 };
 /* c2 is a building: the lobby, then the elevator (keycard from the security office guard) or the stairwell and service level,
    then the penthouse (LEVELS[2] with the street walled off), out by the elevator. All three are grid stages on base index 2, so
@@ -91,6 +94,41 @@ if(typeof LEVELS!=='undefined'&&LEVELS[13]){
    arrivals:{side:{at:[41.5,2.5]}},stairs:[{id:'board',to:'jet',at:[30.5,9.5],r:1.1,arrive:'door',oneWay:true}]},
   jet:{id:'jet',kind:'grid',rev:1,def:{name:J.name,wall:J.wall,floor:J.floor,sofa:J.sofa,legend:J.legend,boss:J.boss,map:J.map},
    arrivals:{door:{at:[23.5,8.5]}}}
+ };
+}
+/* Act 5 "Old Gold" (act5.js). Every floor is a building in three stages; the last stage is LEVELS[idx] and has no stairs out.
+   c14 The Grand Biscayne: the lobby, down the stairs to the laundry (the bell captain's ledger opens the service lift), up to the roof
+   with the sheets on the lines and the Cardinal's man Nunzio. c15 La Habana: the pier, up the gangway to the cargo deck, down to the
+   casino, where the forty bars sit in the cage (crack it, or open the sea cock and sink her). c16 McWey Tower: the lobby, the lift up to
+   the 52nd floor where you hold the office with McWey, then the stairs up to the roof and the Cardinal's helicopter. */
+if(typeof LEVELS!=='undefined'&&LEVELS[16]){
+ const R=LEVELS[14],C=LEVELS[15],T=LEVELS[16];
+ MISSIONS.c14.stages=['lobby','laundry','roof'];MISSIONS.c14.start='lobby';
+ MISSIONS.c14.stageDefs={
+  lobby:{id:'lobby',kind:'grid',rev:1,def:{name:'GRAND BISCAYNE: THE LOBBY',front:1,wall:42,floor:41,sofa:0x6a2a9a,legend:{'.':{f:41},'n':{f:41}},map:["########################################", "#.....#....p......p......p.....#.......#", "#.R.R.#........................#.......#", "#.....D...S.S.....T.....S.S....D.......#", "#..h..#..........g.............#.......#", "#.....#.....p...........p......#.......#", "#.T...#........u...............#..s....#", "###D###.................b......##D######", "#..........KKKKKKK.....................#", "#...g......K.....K.......m......p......#", "#..........................h...........#", "####..##########........##########..####", "====P===================================", "======================C=================", "========================================", "========================================", "========================================"]},
+   stairs:[{id:'down',to:'laundry',at:[36.5,3],r:0.9,arrive:'stairs',oneWay:true}]},
+  laundry:{id:'laundry',kind:'grid',rev:1,def:{name:'GRAND BISCAYNE: THE LAUNDRY',noCar:true,wall:34,floor:44,legend:{'.':{f:44},'N':{f:44},'n':{f:44}},map:["####################################", "#.......#..GGGG..GGGG.....#........#", "#.......#.................#........#", "#..g....D......s..........D........#", "#.......#..ZZ......ZZ.....#........#", "#..Z....#.................#........#", "###D#####..GGGG..GGGG..u..#####D####", "#..................................#", "#..R..N...h........m.......x.......#", "#..RR..............................#", "#.PC...Z.........ZZ.........g......#", "####################################"]},
+   arrivals:{stairs:{at:[31.5,3]}},stairs:[{id:'lift',to:'roof',at:[4.5,2.5],r:1.0,arrive:'lift',oneWay:true}]},
+  roof:{id:'roof',kind:'grid',rev:1,def:{name:R.name,noCar:true,exit:'Take the service lift down',wall:R.wall,floor:R.floor,sofa:R.sofa,legend:R.legend,map:R.map},
+   arrivals:{lift:{at:[4.5,2.5]}}}
+ };
+ MISSIONS.c15.stages=['pier','deck','casino'];MISSIONS.c15.start='pier';
+ MISSIONS.c15.stageDefs={
+  pier:{id:'pier',kind:'grid',rev:1,def:{name:'GOVERNMENT CUT: THE PIER',front:1,wall:34,floor:30,legend:{'.':{f:30},'n':{f:30},'a':{w:39,h:0.02,top:39,water:1}},map:["########################################", "#aaaaaaaaaaaaaaaaa...aaaaaaaaaaaaaaaaaa#", "#aaaaaaaaaaaaaaaaa...aaaaaaaaaaaaaaaaaa#", "#.....ZZ..........s..........ZZ...g....#", "#..u........ZZ...............ZZ........#", "#.....ZZZ.........g....ZZ.......u......#", "#..........b...................ZZ......#", "#####D######......K.K.......#####D######", "#..T...g..#.................#....h.....#", "#.........D.........m.......D..........#", "#..T..p...#.................#....p..T..#", "####..##########........##########..####", "====P===================================", "======================C=================", "========================================", "========================================", "========================================"]},
+   stairs:[{id:'gang',to:'deck',at:[20.5,2.5],r:1.0,arrive:'gang',oneWay:true}]},
+  deck:{id:'deck',kind:'grid',rev:1,def:{name:'LA HABANA: THE CARGO DECK',noCar:true,wall:34,floor:53,legend:{'.':{f:53},'n':{f:53}},map:["####################################", "#.......ZZ.....ZZ......ZZ..........#", "#..g....ZZ.....ZZ..u...ZZ..........#", "#..................................#", "#..ZZZ.....m......ZZZ.....b........#", "#..ZZZ............ZZZ..............#", "#..........g.................ZZ....#", "#....s.........ZZ.........h..ZZ....#", "#..............ZZ..................#", "#..ZZ......u.............ZZ.....g..#", "#.PC...............................#", "####################################"]},
+   arrivals:{gang:{at:[18.5,10.5]}},stairs:[{id:'down',to:'casino',at:[32.5,3],r:0.9,arrive:'stairs',oneWay:true}]},
+  casino:{id:'casino',kind:'grid',rev:1,def:{name:C.name,noCar:true,exit:'Take the launch back to shore',wall:C.wall,floor:C.floor,sofa:C.sofa,legend:C.legend,map:C.map},
+   arrivals:{stairs:{at:[31.5,3]}}}
+ };
+ MISSIONS.c16.stages=['lobby','office','roof'];MISSIONS.c16.start='lobby';
+ MISSIONS.c16.stageDefs={
+  lobby:{id:'lobby',kind:'grid',rev:1,def:{name:'McWEY TOWER: THE LOBBY',front:1,wall:40,floor:43,sofa:0xe8dcc0,legend:{'.':{f:43},'n':{f:43},'a':{w:39,h:0.02,top:39,water:1}},map:["########################################", "#.......#..........................#...#", "#..R.R..#...p..................p...#...#", "#.......D..........................D...#", "#..g....#....S..aa....aa..S........#...#", "#.......#.......aa....aa.......g...#...#", "#..T....#..g...................u...#...#", "####D####.........m................#####", "#.................KKKK............s....#", "#...p.....S.S...h......S.S......p......#", "#......x...............................#", "####..##########........##########..####", "====P===================================", "======================C=================", "========================================", "========================================", "========================================"]},
+   stairs:[{id:'lift',to:'office',at:[21.5,2.5],r:1.0,arrive:'lift',oneWay:true}]},
+  office:{id:'office',kind:'grid',rev:1,def:{name:'McWEY TOWER: THE 52ND FLOOR',noCar:true,wall:40,floor:43,sofa:0xe8dcc0,legend:{'.':{f:43},'n':{f:43},'e':{f:43},'a':{w:39,h:0.02,top:39,water:1}},map:["####################################", "#aaaa..............................#", "#aaaa.....RR.............RR........#", "#aaaa.....g........................#", "#...........KKKKKKK................#", "#..G..........................G....#", "#..........E..E....E..E......g.....#", "#.....p...................p........#", "#####D########....########D#########", "#..................................#", "#..e...........e.............e.....#", "#.PC...............................#", "####################################"]},
+   arrivals:{lift:{at:[18.5,2.5]}},stairs:[{id:'up',to:'roof',at:[32.5,3],r:0.9,arrive:'stairs',oneWay:true}]},
+  roof:{id:'roof',kind:'grid',rev:1,def:{name:T.name,noCar:true,exit:'Take the stairs down',wall:T.wall,floor:T.floor,sofa:T.sofa,legend:T.legend,boss:T.boss,map:T.map},
+   arrivals:{stairs:{at:[31.5,3]}}}
  };
 }
 /* bonus jobs (idea 6): odd jobs on existing maps with a twist that index.html applies after the map loads (applyTwist). They have no

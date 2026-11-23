@@ -16,7 +16,8 @@ const TMAP_HOMES=[{x:24,y:22,area:'HIALEAH'},{x:130,y:80,area:'OCEAN DRIVE'},{x:
 /* campaign floors by LEVELS index (missionBase), kept clear of the fixed pins */
 const TMAP_JOBS=[{x:54,y:40,area:'ALLAPATTAH'},{x:122,y:42,area:'MID BEACH'},{x:68,y:73,area:'BRICKELL'},{x:97,y:66,area:'DODGE ISLAND'},
  {x:60,y:28,area:'WYNWOOD'},{x:131,y:22,area:'NORTH BEACH'},{x:30,y:46,area:'FLAGAMI'},{x:116,y:86,area:'FISHER ISLAND'},
- {x:137,y:96,area:'SOUTH POINTE'},{x:60,y:88,area:'COCONUT GROVE'},{x:86,y:45,area:'EDGEWATER'},{x:54,y:70,area:'THE ROADS'},{x:38,y:85,area:'CORAL GABLES'},{x:16,y:9,area:'OPA-LOCKA'}];
+ {x:137,y:96,area:'SOUTH POINTE'},{x:60,y:88,area:'COCONUT GROVE'},{x:86,y:45,area:'EDGEWATER'},{x:54,y:70,area:'THE ROADS'},{x:38,y:85,area:'CORAL GABLES'},{x:16,y:9,area:'OPA-LOCKA'},
+ {x:137,y:50,area:'MIAMI BEACH'},{x:104,y:74,area:'GOVERNMENT CUT'},{x:82,y:62,area:'DOWNTOWN'}];
 const TMAP_PINS=['bCarJob','bCarMcWey','bCarShop','bCarClub','bCarDealer','bCarHome'];
 let TMAP_SEL='bCarJob',TMAP_NAV=0,TMAP_READY=false;
 addEventListener('resize',()=>{if(typeof state!=='undefined'&&state==='carmenu')tmapFit();});

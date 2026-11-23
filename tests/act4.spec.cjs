@@ -6,8 +6,8 @@ const toStairs = (page, id) => page.evaluate(id => { const s = G.stageRun.descri
 
 test('act 4 opens after Kade: the floor index, labels, briefs and the old-save unlock', async ({ openGame }) => {
   const page = await openGame({ nb86jobs: { top: 10, sel: 10, best: { 10: { g: 'A', t: 100, s: 1000, c: 3, ch: 'don', d: 'normal' } } } });
-  expect(await page.evaluate(() => ({ len: CAMPAIGN_LEN, top: JOBS.top, act: LEVELS.slice(11).map(l => l.act), brief: BRIEF_FLOOR(11), last: BRIEF_FLOOR(13), dlg: ['brief11', 'brief12', 'brief13'].every(k => DLG[k]), quote: MC_QUOTE.length, ch: CHALLENGES.length, par: PAR.length, stash: STASH.length })))
-    .toEqual({ len: 14, top: 11, act: [4, 4, 4], brief: 'ACT 4 · FLOOR 1 / 3 — VALE TRUST GARAGE', last: 'ACT 4 · FLOOR 3 / 3 — OPA-LOCKA HANGAR 7', dlg: true, quote: 15, ch: 14, par: 14, stash: 14 });
+  expect(await page.evaluate(() => ({ len: CAMPAIGN_LEN, top: JOBS.top, act: LEVELS.slice(11, 14).map(l => l.act), brief: BRIEF_FLOOR(11), last: BRIEF_FLOOR(13), dlg: ['brief11', 'brief12', 'brief13'].every(k => DLG[k]), quote: MC_QUOTE.length, ch: CHALLENGES.length, par: PAR.length, stash: STASH.length })))
+    .toEqual({ len: 17, top: 11, act: [4, 4, 4], brief: 'ACT 4 · FLOOR 1 / 3 — VALE TRUST GARAGE', last: 'ACT 4 · FLOOR 3 / 3 — OPA-LOCKA HANGAR 7', dlg: true, quote: 17, ch: 17, par: 17, stash: 17 });
 });
 
 test('act 4 floor 1: down the garage stairs, then the barrier and a dead driver each stop a gold van and the third gets away', async ({ openGame }) => {
