@@ -560,7 +560,7 @@ function danceArms(tt,b,ws,party,o,en){const S=DANCE_SEQ[party?'party':'stage'],
 const MOCAP={};
 function mocapClip(k){if(MOCAP[k])return MOCAP[k];if(typeof MOCAP_SRC==='undefined'||!MOCAP_SRC[k])return null;const S=MOCAP_SRC[k],b=atob(S.d),n=S.n,F=3+NB*4,A=new Float32Array(n*F);
  for(let i=0;i<n*F;i++){let v=b.charCodeAt(i);if(v>127)v-=256;A[i]=v/127*((i%F)<3?0.25:1);}
- return MOCAP[k]={n,F,A,stride:S.stride};}
+ return MOCAP[k]={n,F,A,stride:S.stride,fps:S.fps||30,speed:S.speed||0,dur:n/(S.fps||30)};}
 function mocapPose(MP,R,root){const C=mocapClip(MP.c);if(!C)return false;const n=C.n,F=C.F,A=C.A;
  let f=MP.d!==undefined&&C.stride>0?MP.d/C.stride*n:MP.t*30;f=((f%n)+n)%n;const i0=Math.floor(f),i1=(i0+1)%n,w=f-i0,a=i0*F,b=i1*F;
  MP.root=[A[a]+(A[b]-A[a])*w,A[a+1]+(A[b+1]-A[a+1])*w,A[a+2]+(A[b+2]-A[a+2])*w];
@@ -568,6 +568,45 @@ function mocapPose(MP,R,root){const C=mocapClip(MP.c);if(!C)return false;const n
   let x=A[p]+(A[q]*sg-A[p])*w,y=A[p+1]+(A[q+1]*sg-A[p+1])*w,z=A[p+2]+(A[q+2]*sg-A[p+2])*w,s=A[p+3]+(A[q+3]*sg-A[p+3])*w;const l=Math.hypot(x,y,z,s)||1;x/=l;y/=l;z/=l;s/=l;
   R[BONES[j][0]]=[1-2*(y*y+z*z),2*(x*y+z*s),2*(x*z-y*s),0,2*(x*y-z*s),1-2*(x*x+z*z),2*(y*z+x*s),0,2*(x*z+y*s),2*(y*z-x*s),1-2*(x*x+y*y),0,0,0,0,1];}
  return true;}
+/* locomotion ported from Spice Master Eddy (js/mocap.js there): walk, jog and run (a heavyset walk for big bodies) and a standing idle,
+   blended by speed. The three share one gait phase, so the feet stay in step through the blend, and the phase advances by the distance
+   the body actually covers, so the feet stay planted instead of sliding. The body leans into speeding up and banks into turns; walking
+   backwards (aiming behind you) plays the step in reverse. ?walk=old (or localStorage nb86walk='old') brings back the old procedural walk.
+   c._gt keeps each character's state; v is travel speed in body metres per second. Fills and returns {R,root} for pose(). */
+let GAIT_ON=true;try{if(/[?&]walk=old/.test(location.search)||localStorage.getItem('nb86walk')==='old')GAIT_ON=false;}catch(e){}
+const GAIT_LOCO=['walk','jog','run'],GAIT_ALL=['idle','walk','jog','run'];
+function gaitStep(c,v,dt,yaw,heavy,back){if(typeof MOCAP_SRC==='undefined'||!MOCAP_SRC.mwalk)return null;
+ const g=c._gt||(c._gt={w:{idle:1,walk:0,jog:0,run:0},ph:Math.random(),t:Math.random()*6,sv:0,lean:0,bank:0,ly:null,lv:0,R:{},root:[0,0,0],dir:1});
+ const clipOf=n=>mocapClip(n==='idle'?'midle':n==='walk'?(heavy?'mwalkH':'mwalk'):n==='jog'?'mjog':'mrun');
+ if(dt<=0&&g.done)return g;g.done=true;
+ const k=1-Math.exp(-dt*7);g.sv+=(v-g.sv)*(v<g.sv?Math.min(1,k*1.6):k);const s=g.sv;/* speeding up eases in, stopping settles a little faster */
+ const tw={idle:0,walk:0,jog:0,run:0},ws=clipOf('walk').speed;
+ if(s<0.25)tw.idle=1;
+ else if(s<ws){const u=(s-0.25)/(ws-0.25);tw.walk=u;tw.idle=1-u;}
+ else if(s<2.6)tw.walk=1;else if(s<3.3){const u=(s-2.6)/0.7;tw.walk=1-u;tw.jog=u;}
+ else if(s<5.2)tw.jog=1;else if(s<6.2){const u=(s-5.2)/1.0;tw.jog=1-u;tw.run=u;}else tw.run=1;
+ let sum=0;for(const n of GAIT_ALL){g.w[n]+=(tw[n]-g.w[n])*Math.min(1,dt*9);sum+=g.w[n];}sum=sum||1;
+ /* shared phase: cycles per second = speed / blended stride (a stride stretches a little when sped up past the clip's own pace) */
+ let stride=0,lw=0;for(const n of GAIT_LOCO){const C=clipOf(n),w=g.w[n];if(w>0.001){const over=Math.max(1,s/C.speed);stride+=w*C.speed*C.dur*Math.min(1.4,Math.sqrt(over));lw+=w;}}
+ if(s>0.25)g.dir+=((back?-1:1)-g.dir)*Math.min(1,dt*8);
+ if(lw>0.001)g.ph=(((g.ph+(g.dir<0?-1:1)*dt*Math.max(s,0.6)/(stride/lw))%1)+1)%1;g.t+=dt;
+ /* blend the clips: root offsets add up by weight, each bone's quaternions are summed sign-aligned and normalised */
+ const Q=new Float32Array(NB*4),rt=[0,0,0];
+ for(const n of GAIT_ALL){const w=g.w[n]/sum;if(w<0.002)continue;const C=clipOf(n);let f=C.speed?g.ph*C.n:(g.t*C.fps)%C.n;
+  const i0=Math.floor(f)%C.n,i1=(i0+1)%C.n,u=f-Math.floor(f),a=i0*C.F,b=i1*C.F,A=C.A;
+  for(let i=0;i<3;i++)rt[i]+=w*(A[a+i]+(A[b+i]-A[a+i])*u);
+  for(let j=0;j<NB;j++){const p=a+3+j*4,q=b+3+j*4,sg=(A[p]*A[q]+A[p+1]*A[q+1]+A[p+2]*A[q+2]+A[p+3]*A[q+3])<0?-1:1,o=j*4;
+   const x=A[p]+(A[q]*sg-A[p])*u,y=A[p+1]+(A[q+1]*sg-A[p+1])*u,z=A[p+2]+(A[q+2]*sg-A[p+2])*u,ww=A[p+3]+(A[q+3]*sg-A[p+3])*u;
+   const s2=(Q[o]*x+Q[o+1]*y+Q[o+2]*z+Q[o+3]*ww)<0?-w:w;Q[o]+=x*s2;Q[o+1]+=y*s2;Q[o+2]+=z*s2;Q[o+3]+=ww*s2;}}
+ for(let j=0;j<NB;j++){const o=j*4;let x=Q[o],y=Q[o+1],z=Q[o+2],w=Q[o+3];const l=Math.hypot(x,y,z,w)||1;x/=l;y/=l;z/=l;w/=l;
+  g.R[BONES[j][0]]=[1-2*(y*y+z*z),2*(x*y+z*w),2*(x*z-y*w),0,2*(x*y-z*w),1-2*(x*x+z*z),2*(y*z+x*w),0,2*(x*z+y*w),2*(y*z-x*w),1-2*(x*x+y*y),0,0,0,0,1];}
+ g.root=rt;
+ /* weight: lean into acceleration (and a little into speed), bank into turns */
+ const acc=dt>0?(s-g.lv)/dt:0;g.lv=s;g.lean+=(clamp(acc*0.035+s*0.012,-0.18,0.22)*(g.dir<0?-0.6:1)-g.lean)*Math.min(1,dt*6);
+ let turn=0;if(g.ly!==null&&dt>0){let d=yaw-g.ly;d=Math.atan2(Math.sin(d),Math.cos(d));turn=d/dt;}g.ly=yaw;
+ g.bank+=(clamp(-turn*s*0.012,-0.2,0.2)-g.bank)*Math.min(1,dt*6);
+ if(g.lean||g.bank)g.R.spine=M4.mul(M4.mul(M4.R(X,g.lean),M4.R(Z,g.bank)),g.R.spine);
+ return g;}
 /* a short cross-fade between whole poses, so a dancer flows between walking and dancing, between routines and into a flinch instead
    of snapping. Each bone's local rotation eases toward the new pose (lerped, then made rigid again) and is turned about its own
    joint, so limbs never stretch; the hips' offset eases too. c._pw keeps the last local pose shown. */
@@ -653,7 +692,8 @@ function pose(t,anim,jab,arms,kick,gait){const R={},rot=(b,ax,a)=>{R[b]=M4.mul(M
  const armHinge=s=>V.norm(V.cross([AD[0]*s,AD[1],0],Z));
  const lower=(s,a)=>rot(s>0?'uarmL':'uarmR',Z,-a*s);
  const MP=window.MOCAP_PLAY;
- if(MP&&mocapPose(MP,R,root)){root=MP.root;
+ if(MP&&MP.R){/* Spice Master locomotion (gaitStep): a whole blended base pose; aiming, melee and the rest layer on top */for(const b in MP.R)R[b]=MP.R[b].slice();root=MP.root.slice();}
+ else if(MP&&mocapPose(MP,R,root)){root=MP.root;
   /* the lambada was captured with a partner, so her arms dance on their own instead (the drifting gestures) */
   if(MP.arms){const b=MP.t*1.95*Math.PI*0.5,AR=danceArms(MP.t,b,Math.sin(b),false,MP.o||0,1);for(const nm of ['uarmL','farmL','handL','uarmR','farmR','handR'])delete R[nm];
    for(const sd of [1,-1]){const q=AR[sd>0?0:1],u=sd>0?'uarmL':'uarmR';lower(sd,q.lw);rot(u,X,q.fx);rot(sd>0?'farmL':'farmR',armHinge(sd),q.el);}}}
@@ -1171,6 +1211,13 @@ function add(c,mode,scale,t,IB,id){if(!shaderReady)return false;if(mode==='game'
  if(mode==='game'&&c.massage){arms='massage';k=t;gun=null;anim='idle';}
  /* a playful slap: the player's hand swings (arms 'slap'), the girl jumps and looks back over her shoulder (window.SLAPK) */
  if(mode==='game'&&c.slapT>0){if(c.player){arms='slap';k=1-c.slapT/0.4;gun=null;dual=false;}else window.SLAPK=Math.sin(Math.PI*clamp(1-c.slapT/0.8,0,1))*(c.slapS||1);}
+ /* everyone else walks, jogs, runs and stands with the Spice Master locomotion (gaitStep), driven by how far they really moved */
+ const gtOK=GAIT_ON&&!mcp&&mode==='game'&&!lying&&(anim==='walk'||anim==='idle')&&!c.ex&&!c.massage&&!(window.CROUCH>0.02)&&!(window.SIT>0.02)&&!window.DRIVE&&CH[id].gait!=='fem'&&CH[id].gait!=='runway';
+ if(gtOK){const dt=clamp(t-(c._gT===undefined?t:c._gT),0,0.1),dx=c._gX===undefined?0:c.x-c._gX,dz=c._gZ===undefined?0:c.z-c._gZ;c._gT=t;c._gX=c.x;c._gZ=c.z;
+  let v=dt>0?Math.hypot(dx,dz)/dt:0;if(v>15)v=sp;/* a teleport counts as the speed asked for */
+  const bs=scale*CH[id].scale[1]||1,back=v>0.3&&(dx*Math.sin(c.a||0)+dz*Math.cos(c.a||0))<-0.3*Math.hypot(dx,dz);
+  const g=gaitStep(c,v/bs,dt,c.a||0,((c.look&&c.look.body)||c.body)==='fat',back);if(g)mcp={R:g.R,root:g.root};}
+ else if(c._gt){c._gT=t;c._gX=c.x;c._gZ=c.z;c._gt.done=false;}/* keep the step going through a punch or a seat, without a jump in speed */
  window.MOCAP_PLAY=!lying&&mcp&&typeof mocapClip==='function'?mcp:null;
  let W=pose(lying?0:tt,anim,jab,arms,k,CH[id].gait);window.SLAPK=0;window.MOCAP_PLAY=null;window.MC_GEST=null;
  if(mode==='game'&&!lying&&(c.kind==='sdancer'||c.kind==='dancer'||c.kind==='pgirl'||c.lapDance||c.slapT>0||c._pw))W=blendPose(c,W,t);else if(lying)c._pw=null;
@@ -1205,4 +1252,4 @@ function flush(VPm,u){try{warmLooks();}catch(e){}if(NX&&NX.live){NX.takeChars(qu
  for(const kk of ['aP','aN','aT','aBi','aBw']){const l=Lc[kk];if(l>=0)gl.disableVertexAttribArray(l);}gl.disable(gl.CULL_FACE);gl.bindTexture(gl.TEXTURE_2D,atlasTex);queue.length=0;}
 /* how far the chest comes forward and the seat goes back on a look's body (tests use it to check the figure sizes) */
 function lookFigure(L){const B=lookCfg(L||{}).B,M=buildBody(B),P=M.p;let f=-1,b=1;for(let i=0;i<P.length;i+=3){const y=P[i+1],x=P[i],z=P[i+2];if(Math.abs(x)>0.22)continue;if(y>1.15&&y<1.42)f=Math.max(f,z);if(y>0.76&&y<1.0)b=Math.min(b,z);}return{bust:f,seat:-b};}
-return{init,add,nbs:NBS,warmLooks,get warmLeft(){return warmQ.length;},get warmBuildMs(){return buildMs;},flush,has,applySuit,rebuild,coatOf:id=>!!(CH[id]&&CH[id].B.coat),scaleOf:id=>CH[id]?CH[id].scale:null,beginFrame,lookVerts,lookFigure,headTex:L=>paintHeadP(L),faceOf,jewelB,mocapClip,modelStatus:id=>modelStates[id],get status(){return status;},get ready(){return ready;}};})();
+return{init,add,gaitStep,get gaitOn(){return GAIT_ON;},set gaitOn(v){GAIT_ON=!!v;},nbs:NBS,warmLooks,get warmLeft(){return warmQ.length;},get warmBuildMs(){return buildMs;},flush,has,applySuit,rebuild,coatOf:id=>!!(CH[id]&&CH[id].B.coat),scaleOf:id=>CH[id]?CH[id].scale:null,beginFrame,lookVerts,lookFigure,headTex:L=>paintHeadP(L),faceOf,jewelB,mocapClip,modelStatus:id=>modelStates[id],get status(){return status;},get ready(){return ready;}};})();
