@@ -28,6 +28,7 @@ test('casino: the hub, its people and every game pays out right', async ({ openG
       // blackjack: fixed shoe, player 10+9 = 19 against dealer 10+7 = 17, wins even money
       casSit(CAS_TABLES[0]);
       out.bjState = [state, !!g.seatP];
+      CAS_BJ.ppl = []; // the regulars sit this one out (their cards would come off the fixed shoe)
       CAS_BJ.shoe = [...Array(20).fill({ r: '5', su: '♣' }), { r: '2', su: '♠' }, { r: '7', su: '♥' }, { r: '9', su: '♣' }, { r: 'K', su: '♦' }, { r: '10', su: '♠' }];
       let w0 = p.wallet; casPickChip(100); out.bjBet = w0 - p.wallet;
       bjDeal(); while (CS.q.length) CS.q.shift().fn(); CS.busy = 0; out.bjPhase = CAS_BJ.phase; bjStand(); CAS_G.bj.finish();
@@ -68,7 +69,7 @@ test('casino: the hub, its people and every game pays out right', async ({ openG
   }, setup.toString())).toEqual({
     pin: true,
     hub: { casino: true, park: true, lot: true, people: true, dealers: 7 },
-    targets: { tables: 7, slots: 20, cage: true, pilar: true, bar: true, car: true },
+    targets: { tables: 7, slots: 16, cage: true, pilar: true, bar: true, car: true },
     drawn: true,
     bjState: ['casino', true], bjBet: 100, bjPhase: 'play', bj: { res: 'WIN', net: 100 }, closed: ['play', true],
     ro: { res: 17, net: 925 },
@@ -78,5 +79,43 @@ test('casino: the hub, its people and every game pays out right', async ({ openG
     comp: 1000,
     vip: 'casino', vipNo: 'play',
     use: 'PLAY BLACKJACK'
+  });
+});
+
+test('casino: regulars play beside you and every table draws', async ({ openGame }) => {
+  const page = await openGame();
+  expect(await page.evaluate(setup => {
+    eval('(' + setup + ')')();
+    const fade = fadeTo, out = {};
+    try {
+      fadeTo = f => { f(); return true; };
+      loadHub('casino'); const g = G; if (g.seq) seqSkip();
+      const drain = () => { let n = 0; while (CS.q.length && n++ < 500) CS.q.shift().fn(); CS.busy = 0; };
+      out.floor = { rail: g.casino.rail.length >= 8, bj1: g.casino.seated.bj1.length, people: g.npcs.length >= 60 };
+      for (let i = 0; i < 300; i++) updateHub(1 / 30);
+      const p = myProg(); const now = performance.now() + 5000;
+      // blackjack: three regulars get cards, play out and get a result; your money only moves by your own bet
+      casSit(CAS_TABLES[0]); out.bjPpl = CAS_BJ.ppl.length;
+      let w0 = p.wallet; casPickChip(10); bjDeal(); drain(); if (CAS_BJ.phase === 'play') bjStand(); drain();
+      out.bj = { phase: CAS_BJ.phase, npcCards: CAS_BJ.ppl.every(P => P.hand.length >= 2), npcRes: CAS_BJ.ppl.every(P => !!P.res), names: CAS_BJ.ppl.every(P => /^[A-Z]+$/.test(P.name)) };
+      const mult = { WIN: 1, BLACKJACK: 1.5, PUSH: 0, LOSE: -1, BUST: -1, 'DEALER BLACKJACK': -1 };
+      out.bjMoney = p.wallet - w0 === CAS_BJ.res.reduce((a, r, i) => a + mult[r] * CAS_BJ.hands[i].bet, 0);
+      casDraw(now); casClose();
+      // roulette: the regulars' chips are on the layout, yours pay as before
+      casSit(CAS_TABLES[3]); out.roNpc = CAS_RO.nb.length > 0 && CAS_RO.ppl.length === 2;
+      CAS_RNG = () => CAS_WHEEL.indexOf(17) / CAS_WHEEL.length + 0.001; w0 = p.wallet; casPickChip(5);
+      const s = roSpots().find(q => q.k === 'n17'); CAS_G.roul.tap(s.x + 2, s.y + 2); roSpin(); drain(); casDraw(now);
+      out.ro = p.wallet - w0; casClose(); CAS_RNG = null;
+      // craps: the rail has its bets down
+      casSit(CAS_TABLES[2]); out.crNpc = CAS_CR.ppl.length >= 4 && CAS_CR.ppl.some(P => P.bets.pass || P.bets.dp);
+      casPickChip(10); crPlace('pass'); crRoll(); drain(); casDraw(now); casClose();
+      // slots: the cabinet and its ticker draw
+      const m = CAS_SLOTS.find(q => q.den === 5 && !CAS_SLOT_BUSY.has(q.i)); casSitSlot(m); casDraw(now); out.tick = !!CS.tick; casClose();
+      return out;
+    } finally { fadeTo = fade; CAS_RNG = null; }
+  }, setup.toString())).toEqual({
+    floor: { rail: true, bj1: 3, people: true },
+    bjPpl: 3, bj: { phase: 'done', npcCards: true, npcRes: true, names: true }, bjMoney: true,
+    roNpc: true, ro: 175, crNpc: true, tick: true
   });
 });

@@ -73,7 +73,7 @@ const CAS_SLOTS=(()=>{const L=[];for(const [bx,den] of [[4.6,5],[8.6,25]])for(le
  for(const z of [5.6,7.0])L.push({x:43.2,z,side:-1,den:500});L.forEach((m,i)=>m.i=i);return L;})();
 const casSlotSeat=m=>({x:m.x+m.side*0.95,z:m.z,a:m.side<0?Math.PI/2:-Math.PI/2});
 /* who sits where: a fixed pattern, so the room looks the same each visit (the regulars have their favourite machines) */
-const CAS_SLOT_BUSY=new Set([0,3,5,6,9,12,15,17,18,21,24,27,28,31]);
+const CAS_SLOT_BUSY=new Set([0,1,3,5,6,9,10,12,15,17,18,21,22,24,27,28,30,31]);
 const CAS_BAR={x:41.0,z0:12.6,z1:21.4},CAS_STOOLS=[13.6,14.8,16.0,17.2,18.4,19.6,20.8].map(z=>({x:39.75,z,a:Math.PI/2}));
 const CAS_SOFAS=[{x:35.6,z:15.8,a:Math.PI/2},{x:35.6,z:17.0,a:Math.PI/2},{x:35.6,z:19.0,a:Math.PI/2},{x:35.6,z:20.2,a:Math.PI/2}];
 const CAS_LOUNGE=[[15.5,6.6],[19.5,6.9],[25.5,6.9],[29.5,6.6]];
@@ -126,7 +126,7 @@ function casLines(){if(typeof NPC_CHAT!=='object'||NPC_CHAT.pilar)return;
 /* ---------- setup ---------- */
 function casSetup(g){const O=1,W=g.W,H=g.H;casLines();casProg();
  g.park={x:g.car.x,z:g.car.z};g.car={x:g.park.x,z:g.park.z};
- const C=g.casino={T:0,keepers:[],dealers:{},walk:[],t:0,warn:0};
+ const C=g.casino={T:0,keepers:[],dealers:{},walk:[],rail:[],t:0,warn:0,cheer:3};
  /* the carpet, the marble lobby, the salon's teal, the cage's tiles; the walls are burgundy damask */
  const FX=g.floorX=new Uint8Array(W*H),WX=g.wallX=new Uint8Array(W*H);
  for(let z=0;z<H;z++)for(let x=0;x<W;x++){const X=x-O,Z=z-O,i=z*W+x;if(Z<0||Z>27)continue;
@@ -159,13 +159,17 @@ function casSetup(g){const O=1,W=g.W,H=g.H;casLines();casProg();
  C.wait=add('cwaitress',CAS_LOOK.waitress(),CAS_WAIT[0][0],CAS_WAIT[0][1],0,{wi:1});
  /* regulars: at the tables, on the slots, at the bar, in the lounge; and a few walking the floor */
  const gam=(x,z,a,y,seat)=>add('gambler',NPCLOOK.guest(),x,z,a,seat===false?{}:{seat:true,seatK:1,y:y===undefined?SEAT_Y+0.2:y});
- for(const t of CAS_TABLES){const L=CAS_SEATS[t.game];L.forEach(([dx,dz,a],k)=>{if(k===CAS_MYSEAT[t.id])return;if((t.vip&&k>1)||((k+t.x|0)%3===1&&!t.vip&&t.game!=='craps'))return;
-  gam(t.x+dx,t.z+dz,a,undefined,t.game!=='craps');});}
+ /* every seat but yours is taken (the salon keeps one free); the same regulars play beside you in the game screen */
+ C.seated={};for(const t of CAS_TABLES){const L=CAS_SEATS[t.game];L.forEach(([dx,dz,a],k)=>{if(k===CAS_MYSEAT[t.id]||(t.vip&&k>2))return;
+  const n=gam(t.x+dx,t.z+dz,a,undefined,t.game!=='craps');n.tbl=t;(C.seated[t.id]=C.seated[t.id]||[]).push({k,n});});
+  /* railbirds: a couple standing behind the players, on the side away from your chair */
+  if(!t.vip){const my=CAS_SEATS[t.game][CAS_MYSEAT[t.id]][0],sd=my>0?-1:1,back=t.game==='craps'?2.25:t.game==='roul'?1.75:1.65;
+   for(const [ox,oz] of t.game==='craps'?[[sd*0.4,0.1],[sd*1.3,0],[sd*2.2,0.15]]:[[sd*0.75,0],[sd*1.45,-0.2]]){const n=add('punter',NPCLOOK.guest(),t.x+ox,t.z+back+oz,Math.PI);n.tbl=t;n.rail=1;C.rail.push(n);}}}
  for(const m of CAS_SLOTS)if(CAS_SLOT_BUSY.has(m.i)){const s=casSlotSeat(m);gam(s.x,s.z,s.a,SEAT_Y+0.3);}
  for(const [k,s] of CAS_STOOLS.entries())if(k%3!==1)gam(s.x,s.z,s.a,SEAT_Y+0.47);
  gam(CAS_SOFAS[0].x,CAS_SOFAS[0].z,CAS_SOFAS[0].a,SEAT_Y);gam(CAS_SOFAS[3].x,CAS_SOFAS[3].z,CAS_SOFAS[3].a,SEAT_Y);
  for(const [x,z] of CAS_LOUNGE.slice(1,3))gam(x-0.7,z,Math.PI/2,SEAT_Y+0.12);
- for(let i=0;i<6;i++)C.walk.push(add('punter',NPCLOOK.guest(),[13,19.6,25.4,31.6,22.5,13][i],[10,9.6,22.4,14,22.6,20][i],0));
+ for(let i=0;i<10;i++)C.walk.push(add('punter',NPCLOOK.guest(),[13,19.6,25.4,31.6,22.5,13,31.6,19.6,25.4,13][i],[10,9.6,22.4,14,22.6,20,20.5,22.6,9.6,15][i],0));
  /* lights: warm pools over the tables, pink over the slots, gold on the stage, cool in the salon */
  g.lights.push(...CAS_TABLES.slice(0,5).map(t=>({x:t.x+O,y:2.4,z:t.z+O,r:3.6,c:[1.3,1.05,0.75]})),
   {x:5.6,y:2.4,z:13+O,r:5,c:[1.2,0.5,1.0]},{x:7.6,y:2.4,z:19+O,r:5,c:[0.5,0.9,1.3]},{x:22.5+O,y:2.6,z:3+O,r:6,c:[1.3,0.95,0.55]},
@@ -208,6 +212,13 @@ function casTick(dt,g){const C=g.casino;if(!C)return;C.T+=dt;const p=g.player;
  const w=C.wait;if(w){const tg=CAS_WAIT[w.wi],O=1,dx=tg[0]+O-w.x,dz=tg[1]+O-w.z,L=Math.hypot(dx,dz);w.vx=w.vz=0;
   if(p&&Math.hypot(p.x-w.x,p.z-w.z)<1.2){}else if(L<0.15){w.wi=(w.wi+1)%CAS_WAIT.length;}else{const sp=0.9;w.vx=dx/L*sp;w.vz=dz/L*sp;w.x+=w.vx*dt;w.z+=w.vz*dt;w.walk=(w.walk||0)+sp*dt*9;w.a+=clamp(angDiff(w.a,Math.atan2(dx,dz)),-5*dt,5*dt);}}
  for(const n of C.walk)casWalk(n,dt,g,p);
+ /* somebody at a table wins (or doesn't) every few seconds: a shout, a hop; the railbirds lean in */
+ for(const n of C.rail){n.walk=(n.walk||0)+dt*(n.hop>0?6:0.6);if(n.hop>0)n.hop-=dt;}
+ if((C.cheer-=dt)<=0){C.cheer=rnd(4,8);const L=g.npcs.filter(n=>n.tbl&&!n.rail);const n=L.length&&pick(L);
+  if(n&&p&&Math.hypot(n.x-p.x,n.z-p.z)<12){const gm=n.tbl.game,win=Math.random()<0.6,
+   T={bj:win?['BLACKJACK!','TWENTY-ONE, BABY!','PAY ME!']:['BUST! AGAIN!','DEALER\'S HOT TONIGHT'],roul:win?['RED! I SAID RED!','SEVENTEEN! MY NUMBER!','STRAIGHT UP, BABY!']:['DOUBLE ZERO?! COME ON!','THE WHEEL HATES ME'],craps:win?['YO-LEVEN!','POINT! POINT!','COME ON, SEVEN!']:['SEVEN OUT...','CRAPS! NOOO']}[gm]||['WINNER!'];
+   popup(n.x,n.z-0.3,'"'+pick(T)+'"',win?'#ffd36b':'#ff8a95');if(win){n.hop=1.2;for(const q of C.rail)if(q.tbl===n.tbl)q.hop=1.4;if(typeof casSnd==='function'&&Math.hypot(n.x-p.x,n.z-p.z)<6)casSnd('chip');}}}
+ for(const n of g.npcs)if(n.hop>0&&n.tbl&&!n.rail){n.hop-=dt;if(n.y0===undefined)n.y0=n.y||0;n.y=n.y0+Math.abs(Math.sin(n.hop*9))*0.08;if(n.hop<=0)n.y=n.y0;}
  /* the salon: no card, no cash, no entry */
  if(p&&!casVipOk()&&p.x>34.6&&p.x<42.6&&p.z<11.3&&p.z>10.2){p.z=11.35;if(C.T>C.warn){C.warn=C.T+4;casBouncer(g);}}
  /* the singer sways, the band nods along */
@@ -353,7 +364,7 @@ function casEnsure(){if(document.getElementById('sCasino'))return;
  const cv=document.getElementById('csCv');cv.addEventListener('pointerdown',e=>{e.preventDefault();const r=cv.getBoundingClientRect();casTap((e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height);});
  window.addEventListener('keydown',e=>{if(state!=='casino')return;e.preventDefault();e.stopImmediatePropagation();if(e.repeat)return;casKey(e.code);},true);}
 function casOpen(game,tb){if(!G)return;casEnsure();casProg();
- Object.assign(CS,{on:true,game,tb,msg:'',busy:0,q:[],pad:{},flash:null,cur:0,bets:{},last:null});const ch=casChipSet(tb);CS.chips=ch;CS.chip=ch[0];
+ Object.assign(CS,{on:true,game,tb,msg:'',busy:0,q:[],pad:{},flash:null,cur:0,bets:{},last:null,dealt:new Map(),tick:null});const ch=casChipSet(tb);CS.chips=ch;CS.chip=ch[0];
  CAS_G[game].init();state='casino';show('sCasino');sfx('pick');casDealerSay('hi');casUI();cancelAnimationFrame(CS.raf);CS.raf=requestAnimationFrame(casLoop);}
 function casClose(){if(state!=='casino')return;const G0=CAS_G[CS.game];if(G0&&G0.finish)G0.finish();cancelAnimationFrame(CS.raf);CS.on=false;state='play';show(null);sfx('blip');
  const g=G;if(g&&g.seatP)seatUp(g);if(g&&CS.tb&&CS.tb.id){const d=g.casino&&g.casino.dealers[CS.tb.id];if(d)popup(d.x,d.z-0.3,pick(['"COME BACK SOON."','"GOOD LUCK OUT THERE."','"THANK YOU, SIR."']),'#ffe9a8');}saveProg();}
@@ -388,16 +399,94 @@ function casLoop(now){if(state!=='casino')return;while(CS.q.length&&now>=CS.q[0]
  casDraw(now);CS.raf=requestAnimationFrame(casLoop);}
 function casDraw(now){const cv=document.getElementById('csCv');if(!cv)return;const x=cv.getContext('2d'),W=cv.width,H=cv.height;
  CAS_G[CS.game].draw(x,W,H,now);
- if(CS.say){x.font='bold 20px monospace';x.textAlign='left';x.fillStyle='rgba(0,0,0,.55)';const tw=x.measureText(CS.say).width;x.fillRect(12,H-40,tw+20,30);x.fillStyle='#ffe9a8';x.fillText(CS.say,22,H-18);}
+ if(CS.say){const at=CAS_G[CS.game].sayAt;x.font='bold 18px Georgia,serif';x.textAlign='center';const tw=x.measureText('DEALER: '+CS.say).width+24,sx=at?at[0]:22+tw/2,sy=at?at[1]:H-26;x.fillStyle='rgba(0,0,0,.6)';casRR(x,sx-tw/2,sy-20,tw,28,8);x.fill();x.fillStyle='#ffe9a8';x.fillText('DEALER: '+CS.say,sx,sy);}
  const F=CS.flash;if(F&&now-F.t<2600){const k=Math.min(1,(now-F.t)/200)*Math.max(0,Math.min(1,(2600-(now-F.t))/400));x.globalAlpha=k;x.fillStyle='rgba(10,4,18,.8)';x.fillRect(0,H/2-46,W,92);x.font='bold 40px monospace';x.textAlign='center';x.fillStyle=F.col||'#7dff9a';x.fillText(F.txt,W/2,H/2+14);x.globalAlpha=1;}
  const w=document.getElementById('csW'),s='$'+fmt(wallet());if(w&&w.textContent!==s)w.textContent=s;}
 function casWin(txt,col){CS.flash={txt,col:col||'#7dff9a',t:performance.now()};}
-/* felt + gold rail + a small La Perla monogram, shared by the tables */
-function casFelt(x,W,H,col){const gr=x.createRadialGradient(W/2,H*0.35,40,W/2,H*0.45,W*0.7);gr.addColorStop(0,col||'#13784a');gr.addColorStop(1,'#063820');x.fillStyle=gr;x.fillRect(0,0,W,H);
- x.strokeStyle='rgba(216,176,96,.55)';x.lineWidth=3;x.strokeRect(8,8,W-16,H-16);x.font='bold 14px monospace';x.textAlign='center';x.fillStyle='rgba(216,176,96,.5)';x.fillText('CASINO LA PERLA · MIAMI BEACH',W/2,26);}
-function casChipDraw(x,cx,cy,v,r){r=r||16;const c={5:'#d8202a',25:'#1a8a3a',100:'#18181c',500:'#7a2ab0',1000:'#d8a020',5000:'#e86aa8',10000:'#2a6ad8'};let k=5;for(const d of CAS_CHIPS)if(v>=d)k=d;
- x.fillStyle='rgba(0,0,0,.4)';x.beginPath();x.arc(cx+2,cy+3,r,0,TAU);x.fill();x.fillStyle=c[k];x.beginPath();x.arc(cx,cy,r,0,TAU);x.fill();x.strokeStyle='#fff';x.setLineDash([4,4]);x.lineWidth=3;x.beginPath();x.arc(cx,cy,r-3,0,TAU);x.stroke();x.setLineDash([]);
- x.fillStyle='#fff';x.font='bold '+(r*0.62|0)+'px monospace';x.textAlign='center';x.fillText(v>=1000?(v/1000)+'K':String(v),cx,cy+r*0.22);}
+/* ---------- table art: cloth with a nap and a padded leather rail (painted once, cached), chips with edge spots, real cards ---------- */
+const CAS_ART={};
+function casCanvas(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c;}
+function casRR(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();}
+const casRGB=c=>Array.isArray(c)?'rgb('+c.map(v=>Math.max(0,Math.min(255,v*255|0))).join(',')+')':(c||'#888');
+function casFeltTex(W,H,col){const k='felt'+col+W+'x'+H;if(CAS_ART[k])return CAS_ART[k];const c=casCanvas(W,H),x=c.getContext('2d');
+ const dark=col==='#1a2a78'?'#060c2c':'#04261a';
+ const gr=x.createRadialGradient(W/2,H*0.42,30,W/2,H*0.5,W*0.72);gr.addColorStop(0,col);gr.addColorStop(1,dark);x.fillStyle=gr;x.fillRect(0,0,W,H);
+ /* the nap of the cloth */
+ let s=12345;const r=()=>(s=(s*16807)%2147483647)/2147483647;
+ for(let i=0;i<24000;i++){x.fillStyle=r()<0.5?'rgba(255,255,255,.035)':'rgba(0,0,0,.07)';x.fillRect(r()*W,r()*H,1+r()*1.6,1);}
+ /* the lamp over the table */
+ const lg=x.createRadialGradient(W/2,H*0.38,10,W/2,H*0.4,W*0.55);lg.addColorStop(0,'rgba(255,236,190,.17)');lg.addColorStop(1,'rgba(255,236,190,0)');x.fillStyle=lg;x.fillRect(0,0,W,H);
+ /* the padded rail: dark leather, a sheen along the top, a brass trim where it meets the cloth */
+ const R=20;x.lineJoin='round';x.lineWidth=R;const rg=x.createLinearGradient(0,0,0,H);rg.addColorStop(0,'#3a1608');rg.addColorStop(0.5,'#5c2610');rg.addColorStop(1,'#260c04');x.strokeStyle=rg;casRR(x,R/2,R/2,W-R,H-R,24);x.stroke();
+ x.lineWidth=3;x.strokeStyle='rgba(255,220,170,.2)';casRR(x,6,6,W-12,H-12,20);x.stroke();
+ x.lineWidth=8;x.strokeStyle='rgba(0,0,0,.28)';casRR(x,R+5,R+5,W-2*R-10,H-2*R-10,12);x.stroke();
+ x.lineWidth=2.5;x.strokeStyle='#d8b060';casRR(x,R+1,R+1,W-2*R-2,H-2*R-2,14);x.stroke();
+ x.font='bold 13px Georgia,serif';x.textAlign='center';x.fillStyle='rgba(216,176,96,.55)';x.fillText('CASINO  LA  PERLA  ·  MIAMI BEACH',W/2,R+19);
+ return CAS_ART[k]=c;}
+function casFelt(x,W,H,col){x.drawImage(casFeltTex(W,H,col||'#13784a'),0,0);}
+const CAS_CHIPC={5:'#d8202a',25:'#1a8a3a',100:'#18181c',500:'#7a2ab0',1000:'#d8a020',5000:'#e86aa8',10000:'#2a6ad8'};
+const casAmt=v=>v>=1000?(Math.round(v/100)/10)+'K':String(v);
+/* one chip seen from above: the colour, six edge spots, the dashed inlay, a light sheen */
+function casChip1(x,cx,cy,r,col){x.fillStyle=col;x.beginPath();x.arc(cx,cy,r,0,TAU);x.fill();
+ x.fillStyle='rgba(255,255,255,.92)';for(let i=0;i<6;i++){const a=i*TAU/6;x.beginPath();x.arc(cx,cy,r,a-0.2,a+0.2);x.arc(cx,cy,r*0.74,a+0.2,a-0.2,true);x.closePath();x.fill();}
+ x.strokeStyle='rgba(255,255,255,.75)';x.lineWidth=Math.max(1,r*0.07);x.setLineDash([r*0.2,r*0.14]);x.beginPath();x.arc(cx,cy,r*0.6,0,TAU);x.stroke();x.setLineDash([]);
+ const hg=x.createRadialGradient(cx-r*0.4,cy-r*0.5,1,cx,cy,r);hg.addColorStop(0,'rgba(255,255,255,.35)');hg.addColorStop(0.55,'rgba(255,255,255,0)');hg.addColorStop(1,'rgba(0,0,0,.28)');x.fillStyle=hg;x.beginPath();x.arc(cx,cy,r,0,TAU);x.fill();}
+/* a stack: the amount broken into chips, biggest at the bottom, the total on top (col: a player's own roulette colour) */
+function casChipDraw(x,cx,cy,v,r,col){r=r||16;const L=[];let left=v;for(let i=CAS_CHIPS.length-1;i>=0&&L.length<7;i--)while(left>=CAS_CHIPS[i]&&L.length<7){L.push(CAS_CHIPS[i]);left-=CAS_CHIPS[i];}if(!L.length)L.push(5);
+ const dy=Math.max(2,r*0.2);x.fillStyle='rgba(0,0,0,.38)';x.beginPath();x.ellipse(cx+3,cy+4,r*1.05,r*0.95,0,0,TAU);x.fill();
+ L.forEach((d,i)=>{const y=cy-i*dy;x.fillStyle='rgba(0,0,0,.5)';x.beginPath();x.arc(cx,y+dy*0.7,r,0,TAU);x.fill();casChip1(x,cx,y,r,col||CAS_CHIPC[d]);});
+ const ty=cy-(L.length-1)*dy,s=casAmt(v);x.font='bold '+(r*0.6|0)+'px monospace';x.textAlign='center';x.lineWidth=3;x.strokeStyle='rgba(0,0,0,.65)';x.strokeText(s,cx,ty+r*0.22);x.fillStyle='#fff';x.fillText(s,cx,ty+r*0.22);}
+/* cards: faces and the La Perla back are painted once each, then copied */
+const CAS_PIPS={'2':[[0,-1],[0,1]],'3':[[0,-1],[0,0],[0,1]],'4':[[-1,-1],[1,-1],[-1,1],[1,1]],'5':[[-1,-1],[1,-1],[0,0],[-1,1],[1,1]],'6':[[-1,-1],[1,-1],[-1,0],[1,0],[-1,1],[1,1]],
+ '7':[[-1,-1],[1,-1],[0,-0.5],[-1,0],[1,0],[-1,1],[1,1]],'8':[[-1,-1],[1,-1],[0,-0.5],[-1,0],[1,0],[0,0.5],[-1,1],[1,1]],'9':[[-1,-1],[1,-1],[-1,-0.33],[1,-0.33],[0,0],[-1,0.33],[1,0.33],[-1,1],[1,1]],
+ '10':[[-1,-1],[1,-1],[0,-0.66],[-1,-0.33],[1,-0.33],[-1,0.33],[1,0.33],[0,0.66],[-1,1],[1,1]]};
+function casCardBack(){if(CAS_ART.back)return CAS_ART.back;const w=76,h=108,c=casCanvas(w,h),x=c.getContext('2d');
+ casRR(x,0.5,0.5,w-1,h-1,7);x.fillStyle='#fbfaf6';x.fill();casRR(x,4,4,w-8,h-8,5);x.fillStyle='#a01424';x.fill();x.save();x.clip();
+ x.strokeStyle='rgba(255,210,150,.4)';x.lineWidth=1;for(let i=-h;i<w+h;i+=8){x.beginPath();x.moveTo(i,0);x.lineTo(i+h,h);x.moveTo(i+h,0);x.lineTo(i,h);x.stroke();}x.restore();
+ x.strokeStyle='#d8b060';x.lineWidth=1.5;casRR(x,8,8,w-16,h-16,4);x.stroke();
+ x.fillStyle='#1a0a14';x.beginPath();x.arc(w/2,h/2,15,0,TAU);x.fill();const pg=x.createRadialGradient(w/2-4,h/2-4,1,w/2,h/2,11);pg.addColorStop(0,'#fff');pg.addColorStop(0.7,'#e8dcf0');pg.addColorStop(1,'#9a8ab0');x.fillStyle=pg;x.beginPath();x.arc(w/2,h/2,11,0,TAU);x.fill();
+ return CAS_ART.back=c;}
+function casCardFace(c){const k='card'+c.r+c.su;if(CAS_ART[k])return CAS_ART[k];const w=76,h=108,cv=casCanvas(w,h),x=cv.getContext('2d'),red=c.su==='♥'||c.su==='♦',ink=red?'#c8101e':'#16161a';
+ casRR(x,0.5,0.5,w-1,h-1,7);const fg=x.createLinearGradient(0,0,w,h);fg.addColorStop(0,'#ffffff');fg.addColorStop(1,'#ece7da');x.fillStyle=fg;x.fill();x.strokeStyle='#b0a898';x.lineWidth=1;x.stroke();
+ x.fillStyle=ink;x.textAlign='center';const idx=()=>{x.font='bold '+(c.r==='10'?15:18)+'px Georgia,serif';x.fillText(c.r,11,19);x.font='14px serif';x.fillText(c.su,11,34);};
+ idx();x.save();x.translate(w,h);x.rotate(Math.PI);idx();x.restore();
+ if(CAS_PIPS[c.r]){x.font='17px serif';for(const [px,py] of CAS_PIPS[c.r])x.fillText(c.su,w/2+px*14,h/2+py*30+6);}
+ else if(c.r==='A'){x.font='48px serif';x.fillText(c.su,w/2,h/2+16);}
+ else{/* the court cards: a gold frame, a crown, the letter */
+  x.fillStyle=red?'rgba(200,16,30,.1)':'rgba(30,30,80,.1)';x.fillRect(19,16,w-38,h-32);x.strokeStyle='#c89a40';x.lineWidth=2;x.strokeRect(19,16,w-38,h-32);
+  x.fillStyle='#d8a838';const cy=33;x.beginPath();x.moveTo(w/2-12,cy+8);x.lineTo(w/2-12,cy-3);x.lineTo(w/2-6,cy+2);x.lineTo(w/2,cy-6);x.lineTo(w/2+6,cy+2);x.lineTo(w/2+12,cy-3);x.lineTo(w/2+12,cy+8);x.closePath();x.fill();
+  x.fillStyle=ink;x.font='bold 32px Georgia,serif';x.fillText(c.r,w/2,h/2+17);x.font='15px serif';x.fillText(c.su,w/2,h-24);}
+ return CAS_ART[k]=cv;}
+/* one card at (cx,cy) top-left; sx from -1 (back) to 1 (face) flips it; sc scales it */
+function casCard(x,cx,cy,c,back,sc,sx){sc=sc||1;sx=sx===undefined?1:sx;const w=76*sc,h=108*sc;x.save();x.translate(cx+w/2,cy);x.scale(Math.max(0.03,Math.abs(sx)),1);
+ x.fillStyle='rgba(0,0,0,.35)';casRR(x,-w/2+3,4,w,h,7*sc);x.fill();x.drawImage(back||sx<0?casCardBack():casCardFace(c),-w/2,0,w,h);x.restore();}
+/* a card slides in from the shoe the first time it is drawn */
+function casDealt(x,tx,ty,c,back,sc,now,sx){const D=CS.dealt||(CS.dealt=new Map());if(!D.has(c))D.set(c,now);const k=Math.min(1,(now-D.get(c))/260),e=1-Math.pow(1-k,3);
+ const fx=850,fy=60;casCard(x,fx+(tx-fx)*e,fy+(ty-fy)*e,c,back,sc,sx);}
+
+/* ---------- the regulars at your table: the same people who sit there on the floor, with names, chips and moods ---------- */
+const CAS_NM={m:['SAL','RICKY','HAL','VINNIE','TEDDY','FRANKIE','MORRIS','ARTIE','EDDIE','LOU','BUDDY','NICKY','JULIO','MANNY'],f:['MARGE','DOLORES','BUNNY','CONSUELO','LORRAINE','GLORIA','PEACHES','ROSALIND','CARMEN','DIXIE','TRUDY','YOLANDA']};
+const CAS_PCOL=['#e8c040','#40c8f0','#ff5aa0','#70e070','#ff9a40','#b490ff'];
+const CAS_PSAY={win:['Ha! Pay me!','Yes! YES!','Told you, baby.','Lucky shirt!','Mama needs a new fur!','Drinks on me! Kidding.'],lose:['Aw, come on.','Again?!','Unbelievable.','My wife\'s gonna kill me.','This table hates me.','One more. Just one.'],
+ bj:['BLACKJACK, BABY!','Twenty-one! Read it and weep!'],bust:['Dammit.','Too many. Too many!','Why did I hit that?'],hi:['Evening.','Pull up a chair, pal.','You feeling lucky?','Watch this one, kid.'],seven:['Seven out... ugh.','Who brought the seven?!'],point:['Point! Point!','That\'s how you shoot!']};
+function casPeople(tb){const C=G&&G.casino,L=(C&&C.seated&&C.seated[tb.id])||[];let h=0;for(const ch of String(tb.id))h=(h*31+ch.charCodeAt(0))%997;
+ return L.map(({k,n})=>{const lk=(n&&n.look)||{},fem=!!lk.fem,N=CAS_NM[fem?'f':'m'];
+  return {k,n,fem,name:N[(h+k*5)%N.length],col:casRGB(lk.jacket),shirt:casRGB(lk.shirt),skin:casRGB(lk.skin||[0.85,0.65,0.5]),hair:casRGB(lk.hair||[0.1,0.08,0.06]),chip:CAS_PCOL[(h+k)%CAS_PCOL.length],
+   hand:[],bet:0,bets:{},res:'',net:0,mood:0,moodT:0,say:'',sayT:0};});}
+function casSay(P,k){P.say=pick(CAS_PSAY[k]);P.sayT=performance.now();if(k==='win'||k==='bj'||k==='point'){P.mood=1;P.moodT=P.sayT;}else if(k!=='hi'){P.mood=-1;P.moodT=P.sayT;}}
+/* someone at the rail, seen from behind: shoulders, the back of the head, both hands on the cushion; hops when they win, slumps when they lose */
+function casPersonDraw(x,P,cx,cy,s,now){const dt=now-P.moodT,hop=P.mood>0&&dt<1600?-Math.abs(Math.sin(dt/95))*7*(1-dt/1600):0,slump=P.mood<0&&dt<1800?5*(1-dt/1800):0;cy+=Math.sin(now/650+P.k*1.7)*1.2+hop+slump;
+ x.fillStyle='rgba(0,0,0,.35)';x.beginPath();x.ellipse(cx,cy+4*s,50*s,28*s,0,0,TAU);x.fill();
+ x.fillStyle=P.col;for(const d of [-1,1]){x.beginPath();x.ellipse(cx+d*31*s,cy-12*s,9*s,22*s,d*0.55,0,TAU);x.fill();}
+ x.fillStyle=P.skin;for(const d of [-1,1]){x.beginPath();x.arc(cx+d*40*s,cy-31*s,7*s,0,TAU);x.fill();}
+ const sg=x.createLinearGradient(0,cy-18*s,0,cy+34*s);sg.addColorStop(0,P.col);sg.addColorStop(1,'#000');x.fillStyle=sg;x.beginPath();x.ellipse(cx,cy+10*s,45*s,26*s,0,Math.PI,0);x.lineTo(cx+45*s,cy+44*s);x.lineTo(cx-45*s,cy+44*s);x.closePath();x.fill();
+ x.fillStyle=P.shirt;x.beginPath();x.moveTo(cx-8*s,cy-12*s);x.lineTo(cx+8*s,cy-12*s);x.lineTo(cx,cy+2*s);x.closePath();x.fill();
+ x.fillStyle=P.skin;x.beginPath();x.arc(cx,cy-7*s,16*s,0,TAU);x.fill();x.fillStyle=P.hair;x.beginPath();x.arc(cx,cy-9*s,P.fem?19*s:16*s,0,TAU);x.fill();
+ if(P.fem){x.beginPath();x.ellipse(cx,cy+9*s,16*s,15*s,0,0,TAU);x.fill();}
+ /* the name on a little brass plate on the rail, and what they just said */
+ x.font='bold '+(11*s+2|0)+'px monospace';x.textAlign='center';const tw=x.measureText(P.name).width+12,py=cy-58*s;x.fillStyle='rgba(10,6,4,.7)';casRR(x,cx-tw/2,py-12*s,tw,16*s+2,5);x.fill();x.fillStyle=P.chip;x.fillText(P.name,cx,py+1);
+ if(P.say&&now-P.sayT<2600){x.globalAlpha=Math.min(1,(2600-(now-P.sayT))/300);x.font='bold 14px monospace';const sw=x.measureText(P.say).width+16,bx=Math.max(30+sw/2,Math.min(930-sw/2,cx)),by=py-38*s-(P.k%2)*28;
+  x.fillStyle='#fff8e8';casRR(x,bx-sw/2,by-16,sw,24,8);x.fill();x.beginPath();x.moveTo(cx-6,by+8);x.lineTo(cx+6,by+8);x.lineTo(cx,by+16);x.closePath();x.fill();x.fillStyle='#2a1020';x.fillText(P.say,bx,by+1);x.globalAlpha=1;}}
 
 /* ---------- casino sounds (short, synthesized on the effects bus) ---------- */
 function casSnd(k){try{if(typeof AC==='undefined'||!AC||AC.state!=='running'||!SET.sound||typeof sfxG==='undefined')return;const t=AC.currentTime;
@@ -433,27 +522,42 @@ const CAS_SLOT={chips:false,title:slotTitle,sub:tb=>'1 TO 3 COINS · 3 COINS FOR
   {id:'spin',lbl:'SPIN · $'+fmt(tb.den*S.coins),k:'SPACE',p:'A',code:['Space','Enter','KeyE'],fn:casSlotSpin,dis:!!S.spin}];},
  finish(){while(CS.q.length){const s=CS.q.shift();s.fn();}CS.busy=0;},
  tap(x,y){if(x>60&&x<600&&y>110&&y<430)casSlotSpin();},
- draw(x,W,H,now){const S=CAS_SL,tb=CS.tb,K=CAS_SLOTKIND[tb.den],c=casProg();
-  const gr=x.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#1a0620');gr.addColorStop(1,'#3a0a2a');x.fillStyle=gr;x.fillRect(0,0,W,H);
-  const col='rgb('+K.col.map(v=>Math.min(255,v*255|0)).join(',')+')';
-  /* the cabinet glass: jackpot board on top, the three reels, the paytable on the right */
-  x.fillStyle='#000';x.fillRect(60,30,540,70);x.strokeStyle=col;x.lineWidth=3;x.strokeRect(60,30,540,70);x.font='bold 20px monospace';x.textAlign='center';x.fillStyle=col;x.fillText(K.name+' · PROGRESSIVE',330,56);
-  x.font='bold 32px monospace';x.fillStyle=(now/300|0)%2?'#ffd36b':'#ff6fae';x.fillText('$'+fmt(c.jp[tb.den]),330,92);
-  for(let i=0;i<3;i++){const rx=80+i*175,ry=120,rw=150,rh=300;x.fillStyle='#f4f0e8';x.fillRect(rx,ry,rw,rh);
+ draw(x,W,H,now){const S=CAS_SL,tb=CS.tb,K=CAS_SLOTKIND[tb.den],c=casProg(),col=casRGB(K.col),hit=S.res&&casSlotPay(S.res),hot=!!(hit&&CS.flash&&now-CS.flash.t<2600);
+  /* the room behind, the lacquered cabinet with its chrome edge */
+  const gr=x.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#12031a');gr.addColorStop(1,'#34092a');x.fillStyle=gr;x.fillRect(0,0,W,H);
+  for(let i=0;i<14;i++){x.fillStyle=`rgba(255,${120+i*8},200,.05)`;x.beginPath();x.arc((i*97)%W,30+(i*53)%120,30+(i%4)*12,0,TAU);x.fill();}
+  const cab=x.createLinearGradient(40,0,620,0);cab.addColorStop(0,'#24081e');cab.addColorStop(0.5,'#4c1438');cab.addColorStop(1,'#24081e');x.fillStyle=cab;casRR(x,40,12,580,516,20);x.fill();
+  const chr=x.createLinearGradient(0,12,0,528);chr.addColorStop(0,'#f4f6fa');chr.addColorStop(0.5,'#8a8e98');chr.addColorStop(1,'#d8dce4');x.strokeStyle=chr;x.lineWidth=5;casRR(x,40,12,580,516,20);x.stroke();
+  /* chasing bulbs round the jackpot board and the reel window (they race on a win) */
+  const bulbs=(X,Y,w,h,n)=>{const per=2*(w+h);for(let i=0;i<n;i++){const p=i/n*per;let bx,by;if(p<w){bx=X+p;by=Y;}else if(p<w+h){bx=X+w;by=Y+p-w;}else if(p<2*w+h){bx=X+w-(p-w-h);by=Y+h;}else{bx=X;by=Y+h-(p-2*w-h);}
+   const on=((i+(now/(hot?55:170)|0))%3)===0;x.fillStyle=on?'#fff4c0':'#4a2a18';if(on){x.shadowColor=hot?'#ffffff':'#ffc850';x.shadowBlur=9;}x.beginPath();x.arc(bx,by,on?4.5:3.5,0,TAU);x.fill();x.shadowBlur=0;}};
+  x.fillStyle='#050208';casRR(x,66,26,528,76,10);x.fill();bulbs(62,22,536,84,52);
+  x.font='bold 19px Georgia,serif';x.textAlign='center';x.fillStyle=col;x.fillText(K.name+'  ·  PROGRESSIVE',330,52);
+  x.font='bold 34px monospace';const jc=(now/300|0)%2?'#ffd36b':'#ff6fae';x.shadowColor=jc;x.shadowBlur=12;x.fillStyle=jc;x.fillText('$'+fmt(c.jp[tb.den]),330,92);x.shadowBlur=0;
+  const bz=x.createLinearGradient(0,112,0,432);bz.addColorStop(0,'#e8ecf2');bz.addColorStop(0.5,'#70747e');bz.addColorStop(1,'#c8ccd4');x.fillStyle=bz;casRR(x,68,110,526,322,12);x.fill();bulbs(60,104,542,334,64);
+  for(let i=0;i<3;i++){const rx=80+i*175,ry=120,rw=150,rh=300;
+   const rg=x.createLinearGradient(rx,0,rx+rw,0);rg.addColorStop(0,'#cfc8bc');rg.addColorStop(0.2,'#fbf8f0');rg.addColorStop(0.8,'#fbf8f0');rg.addColorStop(1,'#cfc8bc');x.fillStyle=rg;x.fillRect(rx,ry,rw,rh);
    let pos=S.reels[i];if(S.spin&&!(CS.q.length<=2-i&&S.reels[i]===S.spin.stops[i])){pos=(S.spin.from[i]+(now-S.spin.t0)/45)%CAS_STRIP.length;}
-   x.save();x.beginPath();x.rect(rx,ry,rw,rh);x.clip();const fr=pos%1,base=Math.floor(pos);
-   for(let k=-2;k<=2;k++){const sym=CAS_STRIP[((base+k)%CAS_STRIP.length+CAS_STRIP.length)%CAS_STRIP.length],cy=ry+rh/2+(k-fr)*100;casSymDraw(x,sym,rx+rw/2,cy,38);}
-   const sh=x.createLinearGradient(0,ry,0,ry+rh);sh.addColorStop(0,'rgba(0,0,0,.55)');sh.addColorStop(0.3,'rgba(0,0,0,0)');sh.addColorStop(0.7,'rgba(0,0,0,0)');sh.addColorStop(1,'rgba(0,0,0,.55)');x.fillStyle=sh;x.fillRect(rx,ry,rw,rh);x.restore();
+   x.save();x.beginPath();x.rect(rx,ry,rw,rh);x.clip();const fr=pos%1,base=Math.floor(pos),blur=S.spin&&pos!==S.reels[i];
+   for(let k=-2;k<=2;k++){const sym=CAS_STRIP[((base+k)%CAS_STRIP.length+CAS_STRIP.length)%CAS_STRIP.length],cy=ry+rh/2+(k-fr)*100;if(blur){x.globalAlpha=0.35;casSymDraw(x,sym,rx+rw/2,cy-14,38);x.globalAlpha=1;}casSymDraw(x,sym,rx+rw/2,cy,38);}
+   const sh=x.createLinearGradient(0,ry,0,ry+rh);sh.addColorStop(0,'rgba(0,0,0,.6)');sh.addColorStop(0.3,'rgba(0,0,0,0)');sh.addColorStop(0.7,'rgba(0,0,0,0)');sh.addColorStop(1,'rgba(0,0,0,.6)');x.fillStyle=sh;x.fillRect(rx,ry,rw,rh);
+   /* the glass in front of the reel */
+   const gl=x.createLinearGradient(rx,ry,rx+rw,ry+rh*0.6);gl.addColorStop(0,'rgba(255,255,255,.22)');gl.addColorStop(0.35,'rgba(255,255,255,0)');x.fillStyle=gl;x.fillRect(rx,ry,rw,rh);x.restore();
    x.strokeStyle='#d8b060';x.lineWidth=4;x.strokeRect(rx,ry,rw,rh);}
-  x.strokeStyle='rgba(255,40,80,.85)';x.lineWidth=3;x.beginPath();x.moveTo(70,270);x.lineTo(590,270);x.stroke();
+  x.strokeStyle=hit?'rgba(255,230,120,'+(0.6+0.4*Math.sin(now/90))+')':'rgba(255,40,80,.85)';x.lineWidth=hit?5:3;if(hit){x.shadowColor='#ffd36b';x.shadowBlur=14;}x.beginPath();x.moveTo(70,270);x.lineTo(590,270);x.stroke();x.shadowBlur=0;
+  x.fillStyle='#ff2850';for(const sx of [70,590]){x.beginPath();x.moveTo(sx,262);x.lineTo(sx+(sx<300?12:-12),270);x.lineTo(sx,278);x.closePath();x.fill();}
   /* coin lights */
-  for(let i=0;i<3;i++){x.fillStyle=i<S.coins?'#ffd36b':'#3a2a30';x.beginPath();x.arc(250+i*80,455,16,0,TAU);x.fill();x.fillStyle='#000';x.font='bold 14px monospace';x.fillText(String(i+1),250+i*80,460);}
+  x.textAlign='center';for(let i=0;i<3;i++){const on=i<S.coins;if(on){x.shadowColor='#ffd36b';x.shadowBlur=10;}x.fillStyle=on?'#ffd36b':'#3a2a30';x.beginPath();x.arc(250+i*80,455,16,0,TAU);x.fill();x.shadowBlur=0;x.fillStyle='#000';x.font='bold 14px monospace';x.fillText(String(i+1),250+i*80,460);}
   x.fillStyle='#ffe9a8';x.font='bold 16px monospace';x.fillText('COINS IN',170,460);
+  /* the LED ticker: what the rest of the bank is winning */
+  if(!CS.tick||now-CS.tick.t>9000){const n=1+(Math.random()*32|0),N=CAS_NM[Math.random()<0.5?'f':'m'],amt=tb.den*pick([2,3,5,10,10,15,30,80]);CS.tick={t:now,txt:'★ MACHINE '+n+' · '+pick(N)+' WINS $'+fmt(amt)+' ★  '+pick(['THE PEARL CLUB PAYS YOU BACK','FREE COCKTAILS FOR CARD MEMBERS','PROGRESSIVE NOW $'+fmt(c.jp[tb.den]),'LIVE MUSIC IN THE LOUNGE TONIGHT'])+' ★'};}
+  x.fillStyle='#120604';casRR(x,66,482,528,32,6);x.fill();x.save();x.beginPath();x.rect(70,484,520,28);x.clip();x.font='bold 18px monospace';x.textAlign='left';x.fillStyle='#ff9a30';x.shadowColor='#ff7a10';x.shadowBlur=6;
+  const tw=x.measureText(CS.tick.txt).width,tx=590-((now-CS.tick.t)*0.09)%(tw+520);x.fillText(CS.tick.txt,tx,505);x.shadowBlur=0;x.restore();
   /* paytable */
-  x.fillStyle='rgba(0,0,0,.55)';x.fillRect(625,30,310,470);x.strokeStyle='#d8b060';x.strokeRect(625,30,310,470);x.textAlign='center';x.fillStyle='#ffd36b';x.font='bold 18px monospace';x.fillText('PAYS PER COIN',780,56);
-  x.textAlign='left';CAS_PAY.forEach(([k,n,m,lbl],i)=>{const y=86+i*44;const hit=S.res&&casSlotPay(S.res);const on=hit&&hit.lbl===lbl;if(on){x.fillStyle='rgba(255,211,107,.25)';x.fillRect(630,y-22,300,40);}
-   const sym=k==='anybar'?'bar':k;for(let j=0;j<(k==='anybar'?3:n);j++)casSymDraw(x,k==='anybar'?(j%2?'dbar':'bar'):sym,650+j*30,y-4,12);x.fillStyle=on?'#ffd36b':'#fff';x.font='bold 18px monospace';x.textAlign='right';x.fillText(k==='pearl'?'600 / JACKPOT':String(m),922,y+2);x.textAlign='left';});
-  x.textAlign='center';x.fillStyle='#c9b6f2';x.font='14px monospace';x.fillText('3 PEARLS ON 3 COINS WINS THE PROGRESSIVE',780,490);}};
+  x.fillStyle='rgba(0,0,0,.6)';casRR(x,630,30,305,470,12);x.fill();x.strokeStyle='#d8b060';x.lineWidth=2;casRR(x,630,30,305,470,12);x.stroke();x.textAlign='center';x.fillStyle='#ffd36b';x.font='bold 18px Georgia,serif';x.fillText('PAYS PER COIN',782,56);
+  x.textAlign='left';CAS_PAY.forEach(([k,n,m,lbl],i)=>{const y=86+i*44;const on=hit&&hit.lbl===lbl;if(on){x.fillStyle='rgba(255,211,107,'+(0.2+0.15*Math.sin(now/100))+')';x.fillRect(635,y-22,295,40);}
+   const sym=k==='anybar'?'bar':k;for(let j=0;j<(k==='anybar'?3:n);j++)casSymDraw(x,k==='anybar'?(j%2?'dbar':'bar'):sym,655+j*30,y-4,12);x.fillStyle=on?'#ffd36b':'#fff';x.font='bold 18px monospace';x.textAlign='right';x.fillText(k==='pearl'?'600 / JACKPOT':String(m),922,y+2);x.textAlign='left';});
+  x.textAlign='center';x.fillStyle='#c9b6f2';x.font='14px monospace';x.font='12px monospace';x.fillText('3 PEARLS ON 3 COINS WINS THE PROGRESSIVE',782,488);}};
 function casSymDraw(x,s,cx,cy,r){x.save();x.translate(cx,cy);
  if(s==='cherry'){x.strokeStyle='#2a7a2a';x.lineWidth=r*0.12;x.beginPath();x.moveTo(-r*0.35,r*0.1);x.quadraticCurveTo(0,-r*0.9,r*0.2,-r*0.8);x.moveTo(r*0.35,r*0.15);x.quadraticCurveTo(r*0.2,-r*0.5,r*0.2,-r*0.8);x.stroke();
   x.fillStyle='#d01020';for(const dx of [-0.38,0.38]){x.beginPath();x.arc(dx*r,r*0.35,r*0.36,0,TAU);x.fill();}x.fillStyle='rgba(255,255,255,.6)';x.beginPath();x.arc(-0.48*r,r*0.22,r*0.08,0,TAU);x.fill();}
@@ -463,17 +567,36 @@ function casSymDraw(x,s,cx,cy,r){x.save();x.translate(cx,cy);
  else if(s==='pearl'){const g2=x.createRadialGradient(-r*0.25,-r*0.25,r*0.1,0,0,r*0.7);g2.addColorStop(0,'#fff');g2.addColorStop(0.6,'#e8dcf0');g2.addColorStop(1,'#9a8ab0');x.fillStyle='#2a1a40';x.beginPath();x.ellipse(0,r*0.25,r*0.9,r*0.4,0,0,TAU);x.fill();x.fillStyle=g2;x.beginPath();x.arc(0,-r*0.05,r*0.6,0,TAU);x.fill();}
  x.restore();}
 
-/* ---------- BLACKJACK: six decks, dealer stands on all 17s, blackjack pays 3:2, double on two cards, one split ---------- */
-const CAS_BJ={shoe:[],hands:[],dealer:[],hole:true,cur:0,phase:'bet',bet:0,last:0,res:[]};
+/* ---------- BLACKJACK: six decks, dealer stands on all 17s, blackjack pays 3:2, double on two cards, one split; the regulars play their own hands ---------- */
+const CAS_BJ={shoe:[],hands:[],dealer:[],hole:true,holeT:0,cur:0,phase:'bet',bet:0,last:0,res:[],ppl:[]};
 function bjShoe(){const s=[];for(let d=0;d<6;d++)for(const su of '♠♥♦♣')for(const r of ['A','2','3','4','5','6','7','8','9','10','J','Q','K'])s.push({r,su});for(let i=s.length-1;i>0;i--){const j=Math.floor(casR()*(i+1));[s[i],s[j]]=[s[j],s[i]];}return s;}
 function bjDraw(){const B=CAS_BJ;if(!B.shoe.length)B.shoe=bjShoe();return B.shoe.pop();}
 function bjVal(cs){let v=0,a=0;for(const c of cs){if(c.r==='A'){v+=11;a++;}else v+=['J','Q','K','10'].includes(c.r)?10:+c.r;}while(v>21&&a){v-=10;a--;}return v;}
+function bjSoft(cs){let v=0,a=0;for(const c of cs){if(c.r==='A'){v+=11;a++;}else v+=['J','Q','K','10'].includes(c.r)?10:+c.r;}while(v>21&&a){v-=10;a--;}return a>0;}
 const bjBJ=cs=>cs.length===2&&bjVal(cs)===21;
+/* where the regulars sit on screen: by how many seats they are from you */
+const BJ_X={'-2':110,'-1':255,'1':705,'2':850};
+function bjPx(P){const d=P.k-CAS_MYSEAT[CS.tb.id];return BJ_X[d]||(d<0?110:850);}
 function bjDeal(){const B=CAS_BJ,tb=CS.tb;if(B.phase==='done')B.phase='bet';if(B.phase!=='bet')return;if(B.bet<tb.min){if(B.last&&casCan(B.last)&&B.bet===0){B.bet=Math.min(B.last,tb.max);casTake(B.bet);}else{casMsg('Table minimum is $'+fmt(tb.min)+'.');sfx('blip');return;}}
- if(B.shoe.length<20)B.shoe=bjShoe();/* the cut card */B.hands=[{cards:[],bet:B.bet,done:false,dbl:false}];B.dealer=[];B.hole=true;B.cur=0;B.res=[];B.phase='deal';B.last=B.bet;CS.say='';casMsg('');
- const H=B.hands[0];[()=>H.cards.push(bjDraw()),()=>B.dealer.push(bjDraw()),()=>H.cards.push(bjDraw()),()=>B.dealer.push(bjDraw())].forEach((f,i)=>casQ(i?330:150,()=>{f();casSnd('card');}));
+ if(B.shoe.length<20+B.ppl.length*4)B.shoe=bjShoe();/* the cut card */B.hands=[{cards:[],bet:B.bet,done:false,dbl:false}];B.dealer=[];B.hole=true;B.cur=0;B.res=[];B.phase='deal';B.last=B.bet;CS.say='';casMsg('');
+ for(const P of B.ppl){P.hand=[];P.res='';P.dbl=0;P.bet=Math.min(tb.max,tb.min*pick([1,1,2,2,3,5]));}
+ /* the deal goes round from the dealer's left (your right), two cards each, the dealer's second face down */
+ const H=B.hands[0],m=CAS_MYSEAT[tb.id],ord=B.ppl.map(P=>({k:P.k,f:()=>P.hand.push(bjDraw())})).concat([{k:m,f:()=>H.cards.push(bjDraw())}]).sort((a,b)=>b.k-a.k),steps=[];
+ for(let r=0;r<2;r++){for(const o of ord)steps.push(o.f);steps.push(()=>B.dealer.push(bjDraw()));}
+ steps.forEach((f,i)=>casQ(i?(B.ppl.length?240:330):150,()=>{f();casSnd('card');}));
  casQ(250,()=>{const up=B.dealer[0].r,peek=up==='A'||['10','J','Q','K'].includes(up);
-  if(bjBJ(H.cards)||(peek&&bjBJ(B.dealer))){B.hole=false;bjSettle();return;}B.phase='play';casMsg('Hit, stand'+(casCan(H.bet)?', double':'')+(bjCanSplit()?' or split':'')+'?');});casUI();}
+  if(peek&&bjBJ(B.dealer)){B.hole=false;B.holeT=performance.now();bjSettle();return;}
+  B.phase='npc';bjNpcs(B.ppl.filter(P=>P.k>m).sort((a,b)=>b.k-a.k),()=>{if(bjBJ(H.cards)){casMsg('Blackjack!');bjNext();casUI();return;}
+   B.phase='play';casMsg('Hit, stand'+(casCan(H.bet)?', double':'')+(bjCanSplit()?' or split':'')+'?');casUI();});});casUI();}
+/* a regular plays: double 10 or 11 against a small card, hit soft 17 and below, hit 12-16 against a 7 or better, stand on the rest */
+function bjNpcTurn(P,then){const B=CAS_BJ,u=bjVal([B.dealer[0]]);
+ const step=()=>{const v=bjVal(P.hand),soft=bjSoft(P.hand);let act='stand';
+  if(v<21){if(P.hand.length===2&&(v===10||v===11)&&u<10&&!soft&&!P.dbl)act='double';else if(v<=11||(soft&&v<=17)||(v<=16&&u>=7)||(v===12&&u<=3))act='hit';}
+  if(act==='stand'){casQ(420,then);return;}
+  casQ(520,()=>{P.hand.push(bjDraw());casSnd('card');if(act==='double'){P.bet*=2;P.dbl=1;casSnd('chip');}
+   if(bjVal(P.hand)>21){P.res='BUST';casSay(P,'bust');casQ(380,then);return;}if(act==='double'){casQ(380,then);return;}step();});};
+ step();}
+function bjNpcs(list,then){const L=list.slice(),nx=()=>{const P=L.shift();if(!P){then();return;}if(bjBJ(P.hand)){P.res='BLACKJACK';casSay(P,'bj');nx();return;}bjNpcTurn(P,nx);};nx();}
 function bjCanSplit(){const B=CAS_BJ,H=B.hands[B.cur];if(!H||B.hands.length>1||H.cards.length!==2)return false;const v=c=>['J','Q','K','10'].includes(c.r)?10:c.r;return v(H.cards[0])===v(H.cards[1])&&casCan(H.bet);}
 function bjHit(){const B=CAS_BJ,H=B.hands[B.cur];if(B.phase!=='play'||!H)return;H.cards.push(bjDraw());casSnd('card');const v=bjVal(H.cards);if(v>=21){if(v>21)casMsg('Bust!');bjNext();}casUI();}
 function bjStand(){if(CAS_BJ.phase!=='play')return;bjNext();casUI();}
@@ -481,68 +604,102 @@ function bjDouble(){const B=CAS_BJ,H=B.hands[B.cur];if(B.phase!=='play'||!H||H.c
 function bjSplit(){const B=CAS_BJ;if(B.phase!=='play'||!bjCanSplit())return;const H=B.hands[0];casTake(H.bet);const H2={cards:[H.cards.pop()],bet:H.bet,done:false,split:1};H.split=1;B.hands.push(H2);
  H.cards.push(bjDraw());H2.cards.push(bjDraw());casSnd('card');const aces=H.cards[0].r==='A';if(aces){H.done=H2.done=true;B.cur=1;bjNext();}casMsg('Two hands. Playing the first.');casUI();}
 function bjNext(){const B=CAS_BJ;B.hands[B.cur].done=true;while(B.cur<B.hands.length&&B.hands[B.cur].done)B.cur++;if(B.cur<B.hands.length){casMsg('Second hand.');return;}
- /* the dealer turns the hole card and draws to 17 (only if any hand is still alive) */
- B.phase='dealer';const live=B.hands.some(h=>bjVal(h.cards)<=21);casQ(400,()=>{B.hole=false;casSnd('card');});
- const step=()=>{if(live&&bjVal(B.dealer)<17){casQ(520,()=>{B.dealer.push(bjDraw());casSnd('card');step();});}else casQ(300,bjSettle);};step();}
+ /* the players on your left go, then the dealer turns the hole card and draws to 17 (only if any hand is still alive) */
+ B.phase='dealer';const m=CAS_MYSEAT[CS.tb.id];
+ bjNpcs(B.ppl.filter(P=>P.k<m).sort((a,b)=>b.k-a.k),()=>{const live=B.hands.some(h=>bjVal(h.cards)<=21)||B.ppl.some(P=>P.hand.length&&bjVal(P.hand)<=21);
+  casQ(400,()=>{B.hole=false;B.holeT=performance.now();casSnd('card');});
+  const step=()=>{if(live&&bjVal(B.dealer)<17){casQ(520,()=>{B.dealer.push(bjDraw());casSnd('card');step();});}else casQ(300,bjSettle);};step();});}
 function bjSettle(){const B=CAS_BJ,d=bjVal(B.dealer),dbj=bjBJ(B.dealer);let stake=0,back=0;const out=[];
  for(const H of B.hands){const v=bjVal(H.cards),bj=bjBJ(H.cards)&&!H.split;stake+=H.bet;let r;
   if(v>21)r=['BUST',0];else if(bj&&!dbj)r=['BLACKJACK',H.bet*2.5];else if(dbj&&!bj)r=['DEALER BLACKJACK',0];else if(bj&&dbj)r=['PUSH',H.bet];else if(d>21||v>d)r=['WIN',H.bet*2];else if(v===d)r=['PUSH',H.bet];else r=['LOSE',0];
   back+=r[1];out.push(r[0]);}
+ /* the regulars: their own money, their own moods (a couple of them say so) */
+ let talk=0;for(const P of B.ppl){if(!P.hand.length)continue;const v=bjVal(P.hand),bj=bjBJ(P.hand);let r,m;
+  if(v>21){r='BUST';m=-1;}else if(bj&&!dbj){r='BLACKJACK';m=1.5;}else if(dbj&&!bj){r='LOSE';m=-1;}else if(bj&&dbj){r='PUSH';m=0;}else if(d>21||v>d){r='WIN';m=1;}else if(v===d){r='PUSH';m=0;}else{r='LOSE';m=-1;}
+  P.res=r;P.net+=m*P.bet;if(r==='BUST'||r==='BLACKJACK')continue;if(m&&talk<2&&Math.random()<0.55){talk++;casSay(P,m>0?'win':'lose');}else if(m){P.mood=m>0?1:-1;P.moodT=performance.now();}}
  casGive(back);const net=casSettle(stake,back);B.res=out;B.phase='done';B.bet=0;
  if(net>0){casWin((out.includes('BLACKJACK')?'BLACKJACK!  ':'')+'+$'+fmt(net),out.includes('BLACKJACK')?'#ffd36b':'#7dff9a');casSnd('win');casDealerSay('win');}else if(net<0){casSnd('lose');casDealerSay('lose');}else casDealerSay('push');
  casMsg(out.join(' · ')+(net?' · '+(net>0?'+':'-')+'$'+fmt(Math.abs(net)):''));casUI();}
-function bjAddChip(v){const B=CAS_BJ,tb=CS.tb;if(B.phase==='done'){B.phase='bet';B.hands=[];B.dealer=[];B.res=[];}if(B.phase!=='bet')return;if(B.bet+v>tb.max){casMsg('Table maximum is $'+fmt(tb.max)+'.');return;}if(!casCan(v)){casMsg('Not enough cash.');sfx('blip');return;}casTake(v);B.bet+=v;casSnd('chip');casMsg('Bet $'+fmt(B.bet)+'. Deal when ready.');}
+function bjAddChip(v){const B=CAS_BJ,tb=CS.tb;if(B.phase==='done'){B.phase='bet';B.hands=[];B.dealer=[];B.res=[];for(const P of B.ppl){P.hand=[];P.res='';}}if(B.phase!=='bet')return;if(B.bet+v>tb.max){casMsg('Table maximum is $'+fmt(tb.max)+'.');return;}if(!casCan(v)){casMsg('Not enough cash.');sfx('blip');return;}casTake(v);B.bet+=v;casSnd('chip');casMsg('Bet $'+fmt(B.bet)+'. Deal when ready.');}
 function bjClear(){const B=CAS_BJ;if(B.phase!=='bet'&&B.phase!=='done')return;casGive(B.bet);B.bet=0;casMsg('Bet cleared.');casUI();}
-const CAS_BJG={chips:true,title:tb=>tb.vip?'SALON PRIVE · BLACKJACK':'BLACKJACK',sub:tb=>'$'+fmt(tb.min)+' TO $'+fmt(tb.max)+' · BLACKJACK PAYS 3 TO 2 · DEALER STANDS ON 17',
- init(){const B=CAS_BJ;if(B.shoe.length<20)B.shoe=bjShoe();Object.assign(B,{hands:[],dealer:[],hole:true,cur:0,phase:'bet',bet:0,res:[]});casMsg('Tap a chip to bet, then DEAL.');},
+/* the dealer's chip rack: six tubes of chips */
+function casRack(x,X,Y){x.fillStyle='rgba(0,0,0,.45)';casRR(x,X-4,Y-4,6*30+8,44,6);x.fill();
+ [10000,5000,1000,500,100,25].forEach((v,i)=>{const cx=X+i*30;const g=x.createLinearGradient(cx,0,cx+26,0);g.addColorStop(0,'rgba(0,0,0,.4)');g.addColorStop(0.4,'rgba(255,255,255,.15)');g.addColorStop(1,'rgba(0,0,0,.45)');x.fillStyle=CAS_CHIPC[v];x.fillRect(cx,Y,26,36);x.fillStyle=g;x.fillRect(cx,Y,26,36);
+  x.fillStyle='rgba(0,0,0,.35)';for(let y=Y+4;y<Y+36;y+=4)x.fillRect(cx,y,26,1);x.fillStyle='rgba(255,255,255,.7)';for(let y=Y+2;y<Y+36;y+=8)x.fillRect(cx+11,y,4,2);});}
+const CAS_BJG={chips:true,title:tb=>tb.vip?'SALON PRIVE · BLACKJACK':'BLACKJACK',sub:tb=>'$'+fmt(tb.min)+' TO $'+fmt(tb.max)+' · BLACKJACK PAYS 3 TO 2 · DEALER STANDS ON 17',sayAt:[480,522],
+ init(){const B=CAS_BJ;if(B.shoe.length<20)B.shoe=bjShoe();Object.assign(B,{hands:[],dealer:[],hole:true,holeT:0,cur:0,phase:'bet',bet:0,res:[]});B.ppl=casPeople(CS.tb);CS.dealt=new Map();
+  if(B.ppl.length)casSay(pick(B.ppl),'hi');casMsg('Tap a chip to bet, then DEAL.');},
  chipTap(v){bjAddChip(v);},
  acts(){const B=CAS_BJ,H=B.hands[B.cur];if(B.phase==='play')return [{id:'hit',lbl:'HIT',k:'H',p:'A',code:['KeyH','Space','Enter'],fn:bjHit},{id:'stand',lbl:'STAND',k:'S',p:'X',code:['KeyS'],fn:bjStand},
   {id:'dbl',lbl:'DOUBLE',k:'D',p:'Y',code:['KeyD'],fn:bjDouble,dis:!(H&&H.cards.length===2&&casCan(H.bet))},...(bjCanSplit()?[{id:'split',lbl:'SPLIT',k:'P',code:['KeyP'],fn:bjSplit}]:[])];
   const lb=B.bet?'DEAL · $'+fmt(B.bet):B.last?'REBET $'+fmt(B.last):'DEAL';return [{id:'deal',lbl:lb,k:'SPACE',p:'A',code:['Space','Enter','KeyE'],fn:bjDeal,dis:B.phase!=='bet'&&B.phase!=='done'||(!B.bet&&!B.last)},{id:'clr',lbl:'CLEAR',k:'C',p:'X',code:['KeyC'],fn:bjClear,alt:1,dis:!B.bet},{id:'add',lbl:'+ $'+fmt(CS.chip),k:'+',p:'Y',code:['Equal','NumpadAdd','KeyA'],fn:()=>{bjAddChip(CS.chip);casUI();},alt:1}];},
  finish(){const B=CAS_BJ;while(CS.q.length){const s=CS.q.shift();s.fn();}CS.busy=0;if(B.phase==='play'){while(B.phase==='play')bjNext();while(CS.q.length){const s=CS.q.shift();s.fn();}}if(B.phase==='bet'&&B.bet){casGive(B.bet);B.bet=0;}CS.busy=0;},
  tap(x,y){const B=CAS_BJ;if(Math.hypot(x-480,y-400)<70&&(B.phase==='bet'||B.phase==='done')){bjAddChip(CS.chip);casUI();}},
- draw(x,W,H){const B=CAS_BJ,tb=CS.tb;casFelt(x,W,H,tb.vip?'#1a2a78':null);
-  x.strokeStyle='rgba(255,233,168,.7)';x.lineWidth=2;x.beginPath();x.arc(W/2,-260,600,0.22*Math.PI,0.78*Math.PI);x.stroke();x.font='bold 18px monospace';x.textAlign='center';x.fillStyle='rgba(255,233,168,.8)';x.fillText('BLACKJACK PAYS 3 TO 2',W/2,236);x.font='14px monospace';x.fillText('DEALER MUST STAND ON ALL 17s',W/2,256);
-  /* the dealer's cards */
-  B.dealer.forEach((c,i)=>casCard(x,W/2-60+i*56-(B.dealer.length-2)*28,60,c,i===1&&B.hole));
-  if(B.dealer.length&&!B.hole){x.fillStyle='#ffe9a8';x.font='bold 20px monospace';x.fillText('DEALER '+bjVal(B.dealer),W/2,200);}
+ draw(x,W,H,now){const B=CAS_BJ,tb=CS.tb;casFelt(x,W,H,tb.vip?'#1a2a78':null);
+  x.strokeStyle='rgba(255,233,168,.7)';x.lineWidth=2;x.beginPath();x.arc(W/2,-260,600,0.22*Math.PI,0.78*Math.PI);x.stroke();
+  x.font='bold 18px Georgia,serif';x.textAlign='center';x.fillStyle='rgba(255,233,168,.85)';x.fillText('BLACKJACK PAYS 3 TO 2',W/2,236);x.font='13px monospace';x.fillText('DEALER MUST STAND ON ALL 17s · INSURANCE PAYS 2 TO 1',W/2,256);
+  casRack(x,52,34);
+  /* the shoe: a wooden box, the next card peeking out */
+  x.fillStyle='rgba(0,0,0,.4)';casRR(x,W-146,46,112,76,8);x.fill();const sg=x.createLinearGradient(W-150,0,W-40,0);sg.addColorStop(0,'#5a2a10');sg.addColorStop(1,'#2a1006');x.fillStyle=sg;casRR(x,W-150,42,112,76,8);x.fill();
+  x.drawImage(casCardBack(),W-140,50,50,64);x.fillStyle='rgba(20,10,4,.85)';x.fillRect(W-98,48,54,68);x.fillStyle='#ffe9a8';x.font='12px monospace';x.textAlign='center';x.fillText(B.shoe.length+' CARDS',W-94,136);
+  /* the dealer's cards: the hole card flips over when it is turned */
+  B.dealer.forEach((c,i)=>{const tx=W/2-60+i*56-(B.dealer.length-2)*28;let sx=1;if(i===1)sx=B.hole?-1:-Math.cos(Math.min(1,(now-B.holeT)/300)*Math.PI);casDealt(x,tx,60,c,false,1,now,sx);});
+  if(B.dealer.length&&!B.hole){x.fillStyle='#ffe9a8';x.font='bold 20px monospace';x.textAlign='center';x.fillText('DEALER '+bjVal(B.dealer),W/2,200);}
+  /* the regulars: their bet, their cards, how it went */
+  for(const P of B.ppl){const px=bjPx(P);x.strokeStyle='rgba(255,233,168,.5)';x.lineWidth=2;x.beginPath();x.arc(px,272,26,0,TAU);x.stroke();if(P.bet)casChipDraw(x,px,272,P.bet,14);
+   P.hand.forEach((c,i)=>casDealt(x,px-34+i*20,322-i*4,c,false,0.62,now));
+   x.textAlign='center';if(P.hand.length){x.font='bold 15px monospace';x.fillStyle='#fff';x.fillText(String(bjVal(P.hand))+(P.dbl?' · ×2':''),px,316-P.hand.length*4);}
+   if(P.res){x.font='bold 16px monospace';x.fillStyle=/WIN|BLACKJACK/.test(P.res)?'#7dff9a':P.res==='PUSH'?'#ffe9a8':'#ff8a95';x.fillText(P.res,px,428);}
+   casPersonDraw(x,P,px,H-24,0.9,now);}
   /* your hand(s) */
-  B.hands.forEach((h,k)=>{const cx=B.hands.length>1?W/2+(k?170:-170):W/2;h.cards.forEach((c,i)=>casCard(x,cx-50+i*36-(h.cards.length-2)*18,340-i*6,c,false));
-   const v=bjVal(h.cards);x.fillStyle=k===B.cur&&B.phase==='play'?'#ffd36b':'#fff';x.font='bold 20px monospace';x.fillText(String(v)+(h.dbl?' · DOUBLED':''),cx,330);
+  B.hands.forEach((h,k)=>{const cx=B.hands.length>1?W/2+(k?125:-125):W/2;h.cards.forEach((c,i)=>casDealt(x,cx-50+i*36-(h.cards.length-2)*18,340-i*6,c,false,1,now));
+   const v=bjVal(h.cards);x.textAlign='center';x.fillStyle=k===B.cur&&B.phase==='play'?'#ffd36b':'#fff';x.font='bold 20px monospace';x.fillText(String(v)+(h.dbl?' · DOUBLED':''),cx,330);
    if(B.res[k]){x.fillStyle=/WIN|BLACKJACK/.test(B.res[k])&&!/DEALER/.test(B.res[k])?'#7dff9a':B.res[k]==='PUSH'?'#ffe9a8':'#ff8a95';x.font='bold 22px monospace';x.fillText(B.res[k],cx,488);}
    casChipDraw(x,cx+90,460,h.bet,18);});
-  /* the betting circle */
-  if(B.phase==='bet'||B.phase==='done'){x.strokeStyle='#ffe9a8';x.lineWidth=3;x.beginPath();x.arc(W/2,400,58,0,TAU);x.stroke();x.font='14px monospace';x.fillStyle='rgba(255,233,168,.8)';x.fillText(B.bet?'':'TAP TO BET $'+fmt(CS.chip),W/2,405);if(B.bet)casChipDraw(x,W/2,400,B.bet,26);}
-  /* the shoe */
-  x.fillStyle='#3a1a0a';x.fillRect(W-150,50,110,70);x.fillStyle='#b01828';x.fillRect(W-140,58,70,54);x.fillStyle='#ffe9a8';x.font='12px monospace';x.fillText(B.shoe.length+' CARDS',W-95,138);}};
-function casCard(x,cx,cy,c,back){const w=76,h=108;x.save();x.translate(cx,cy);x.fillStyle='rgba(0,0,0,.35)';x.fillRect(3,4,w,h);
- if(back){x.fillStyle='#b01828';x.fillRect(0,0,w,h);x.strokeStyle='#fff';x.lineWidth=3;x.strokeRect(5,5,w-10,h-10);x.fillStyle='#ffd36b';x.beginPath();x.arc(w/2,h/2,14,0,TAU);x.fill();x.restore();return;}
- x.fillStyle='#fbfaf6';x.fillRect(0,0,w,h);x.strokeStyle='#bbb';x.lineWidth=1;x.strokeRect(0.5,0.5,w-1,h-1);const red=c.su==='♥'||c.su==='♦';x.fillStyle=red?'#c8101e':'#111';
- x.font='bold 22px monospace';x.textAlign='left';x.fillText(c.r,6,24);x.font='20px serif';x.fillText(c.su,8,46);x.font='44px serif';x.textAlign='center';x.fillText(c.su,w/2,h/2+18);x.restore();}
+  /* your betting circle */
+  if(B.phase==='bet'||B.phase==='done'){x.strokeStyle='#ffe9a8';x.lineWidth=3;x.beginPath();x.arc(W/2,400,58,0,TAU);x.stroke();x.font='14px monospace';x.textAlign='center';x.fillStyle='rgba(255,233,168,.8)';x.fillText(B.bet?'':'TAP TO BET $'+fmt(CS.chip),W/2,405);if(B.bet)casChipDraw(x,W/2,400,B.bet,26);}}};
 
-/* ---------- ROULETTE: American wheel (0 and 00) ---------- */
-const CAS_RO={bets:{},last:null,spin:null,res:null,hist:[],ang:0,ball:0};
-function roSpots(){if(roSpots.L)return roSpots.L;const L=[],x0=400,cw=40,y0=140,rh=60;
- L.push({k:'n0',lbl:'0',x:360,y:y0,w:40,h:90,pay:35,win:r=>r==='0'},{k:'n00',lbl:'00',x:360,y:y0+90,w:40,h:90,pay:35,win:r=>r==='00'});
+/* ---------- ROULETTE: American wheel (0 and 00); the regulars bet with their own coloured chips ---------- */
+const CAS_RO={bets:{},last:null,spin:null,res:null,hist:[],ang:0,ball:0,ppl:[],nb:[]};
+function roSpots(){if(roSpots.L)return roSpots.L;const L=[],x0=392,cw=40,y0=140,rh=60;
+ L.push({k:'n0',lbl:'0',x:352,y:y0,w:40,h:90,pay:35,win:r=>r==='0'},{k:'n00',lbl:'00',x:352,y:y0+90,w:40,h:90,pay:35,win:r=>r==='00'});
  for(let c=0;c<12;c++)for(let r=0;r<3;r++){const n=3*c+3-r;L.push({k:'n'+n,lbl:String(n),n,x:x0+c*cw,y:y0+r*rh,w:cw,h:rh,pay:35,win:q=>q===n});}
  for(let r=0;r<3;r++)L.push({k:'col'+r,lbl:'2:1',x:x0+12*cw,y:y0+r*rh,w:50,h:rh,pay:2,win:q=>typeof q==='number'&&q>0&&(q-(3-r))%3===0});
  for(let d=0;d<3;d++)L.push({k:'doz'+d,lbl:['1st 12','2nd 12','3rd 12'][d],x:x0+d*160,y:y0+180,w:160,h:46,pay:2,win:q=>typeof q==='number'&&q>=1+d*12&&q<=12+d*12});
  [['lo','1-18',q=>q>=1&&q<=18],['even','EVEN',q=>q>0&&q%2===0],['red','RED',q=>CAS_RED.has(q)],['black','BLACK',q=>typeof q==='number'&&q>0&&!CAS_RED.has(q)],['odd','ODD',q=>q%2===1],['hi','19-36',q=>q>=19&&q<=36]].forEach(([k,lbl,f],i)=>L.push({k,lbl,x:x0+i*80,y:y0+226,w:80,h:46,pay:1,win:q=>typeof q==='number'&&f(q)}));
  return roSpots.L=L;}
 const roTotal=()=>Object.values(CAS_RO.bets).reduce((a,b)=>a+b,0);
-function roPlace(k){const R=CAS_RO,tb=CS.tb;if(R.spin)return;if(R.res!==null&&!roTotal()){R.res=null;}const v=CS.chip;if(roTotal()+v>tb.max){casMsg('Table maximum is $'+fmt(tb.max)+'.');sfx('blip');return;}if(!casCan(v)){casMsg('Not enough cash.');sfx('blip');return;}
+/* the regulars put their chips down for the next spin (cosmetic money: theirs, not yours) */
+function roNpcBet(){const R=CAS_RO,tb=CS.tb,L=roSpots();R.nb=[];for(const P of R.ppl){const n=1+(Math.random()*3|0);for(let i=0;i<n;i++){const s=L[Math.random()<0.6?2+(Math.random()*36|0):38+(Math.random()*(L.length-38)|0)];R.nb.push({P,k:s.k,v:Math.min(tb.max,tb.min*pick([1,1,2,4]))});}}}
+function roPlace(k){const R=CAS_RO,tb=CS.tb;if(R.spin)return;if(R.res!==null&&!roTotal()){R.res=null;roNpcBet();}const v=CS.chip;if(roTotal()+v>tb.max){casMsg('Table maximum is $'+fmt(tb.max)+'.');sfx('blip');return;}if(!casCan(v)){casMsg('Not enough cash.');sfx('blip');return;}
  casTake(v);R.bets[k]=(R.bets[k]||0)+v;casSnd('chip');const s=roSpots().find(q=>q.k===k);casMsg('$'+fmt(R.bets[k])+' on '+(s?s.lbl:k)+' · total $'+fmt(roTotal()));casUI();}
 function roClear(){const R=CAS_RO;if(R.spin)return;casGive(roTotal());R.bets={};casMsg('Bets cleared.');casUI();}
-function roRebet(){const R=CAS_RO;if(R.spin||!R.last)return;const tot=Object.values(R.last).reduce((a,b)=>a+b,0);if(!casCan(tot)){casMsg('Not enough cash to rebet.');return;}casGive(roTotal());casTake(tot);R.bets={...R.last};casSnd('chip');casMsg('Same bets again: $'+fmt(tot)+'.');casUI();}
+function roRebet(){const R=CAS_RO;if(R.spin||!R.last)return;const tot=Object.values(R.last).reduce((a,b)=>a+b,0);if(!casCan(tot)){casMsg('Not enough cash to rebet.');return;}casGive(roTotal());casTake(tot);R.bets={...R.last};if(R.res!==null){R.res=null;roNpcBet();}casSnd('chip');casMsg('Same bets again: $'+fmt(tot)+'.');casUI();}
 function roSpin(){const R=CAS_RO,tb=CS.tb,tot=roTotal();if(R.spin)return;if(tot<tb.min){casMsg('Table minimum is $'+fmt(tb.min)+'. Tap the layout to bet.');sfx('blip');return;}
- const idx=Math.floor(casR()*CAS_WHEEL.length),now=performance.now();R.spin={t0:now,idx,a0:R.ang,b0:R.ball};R.res=null;R.last={...R.bets};CS.say='No more bets.';casSnd('ball');
- casQ(3600,()=>{const r=CAS_WHEEL[idx],q=r==='0'||r==='00'?r:r;R.res=q;R.spin=null;R.hist.unshift(q);R.hist=R.hist.slice(0,12);let back=0;
+ const idx=Math.floor(casR()*CAS_WHEEL.length),now=performance.now(),N=CAS_WHEEL.length;R.spin={t0:now,idx,a0:R.ang,b0:R.ball};R.res=null;R.last={...R.bets};CS.say='No more bets.';casSnd('ball');
+ casQ(3600,()=>{const r=CAS_WHEEL[idx],q=r;R.ang=R.spin.a0+TAU*2.2;R.ball=R.ang+(idx+0.5)*TAU/N;R.res=q;R.spin=null;R.hist.unshift(q);R.hist=R.hist.slice(0,12);let back=0;
   for(const [k,v] of Object.entries(R.bets)){const s=roSpots().find(z=>z.k===k);if(s&&s.win(q))back+=v*(s.pay+1);}
+  /* the regulars: winning chips stay (and get paid), the rest is swept */
+  const won=new Map();R.nb=R.nb.filter(b=>{const s=roSpots().find(z=>z.k===b.k),w=s&&s.win(q);if(w)won.set(b.P,(won.get(b.P)||0)+b.v*s.pay);return w;});
+  let talk=0;for(const P of R.ppl){const w=won.get(P);if(w){P.net+=w;if(talk++<2)casSay(P,'win');else{P.mood=1;P.moodT=performance.now();}}else if(Math.random()<0.35&&talk<2){talk++;casSay(P,'lose');}}
   casGive(back);const net=casSettle(tot,back);R.bets={};const nm=(typeof q==='number'?(CAS_RED.has(q)?'RED ':'BLACK ')+q:q+' · GREEN');
   if(net>0){casWin(nm+'  +$'+fmt(net));casSnd('win');casDealerSay('win');}else{casSnd(back?'chip':'lose');casDealerSay(back?'push':'lose');}casMsg(nm+(back?' · pays $'+fmt(back):' · no win'));});casUI();}
 function roNum(q){return typeof q==='number'?(CAS_RED.has(q)?'#c8101e':'#111'):'#0a7a3a';}
-const CAS_ROG={chips:true,title:tb=>tb.vip?'SALON PRIVE · ROULETTE':'ROULETTE',sub:tb=>'$'+fmt(tb.min)+' TO $'+fmt(tb.max)+' · NUMBERS PAY 35 TO 1 · DOZENS 2 TO 1 · COLOURS EVEN',
- init(){const R=CAS_RO;R.bets={};R.spin=null;R.res=null;casMsg('Pick a chip, tap the layout to bet, then SPIN.');},
+/* the wheel itself (pockets, frets, numbers, the cone and its turret) is painted once and turned */
+function casWheelTex(rad){const k='wheel'+rad;if(CAS_ART[k])return CAS_ART[k];const S=rad*2+6,c=casCanvas(S,S),x=c.getContext('2d'),cx=S/2,cy=S/2,N=CAS_WHEEL.length;
+ for(let i=0;i<N;i++){const a0=i*TAU/N,a1=a0+TAU/N,q=CAS_WHEEL[i];x.fillStyle=roNum(q);x.beginPath();x.arc(cx,cy,rad,a0,a1);x.arc(cx,cy,rad*0.62,a1,a0,true);x.closePath();x.fill();
+  x.save();x.translate(cx+Math.cos(a0+TAU/N/2)*rad*0.9,cy+Math.sin(a0+TAU/N/2)*rad*0.9);x.rotate(a0+TAU/N/2+Math.PI/2);x.fillStyle='#fff';x.font='bold '+(rad*0.085|0)+'px Georgia,serif';x.textAlign='center';x.fillText(String(q),0,4);x.restore();}
+ const pg=x.createRadialGradient(cx,cy,rad*0.62,cx,cy,rad*0.8);pg.addColorStop(0,'rgba(0,0,0,.5)');pg.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=pg;x.beginPath();x.arc(cx,cy,rad*0.8,0,TAU);x.arc(cx,cy,rad*0.62,0,TAU,true);x.fill();
+ x.strokeStyle='#e0b860';x.lineWidth=1.5;for(let i=0;i<N;i++){const a=i*TAU/N;x.beginPath();x.moveTo(cx+Math.cos(a)*rad*0.62,cy+Math.sin(a)*rad*0.62);x.lineTo(cx+Math.cos(a)*rad,cy+Math.sin(a)*rad);x.stroke();}
+ x.lineWidth=2;for(const f of [0.62,0.8,1]){x.beginPath();x.arc(cx,cy,rad*f,0,TAU);x.stroke();}
+ const cg=x.createRadialGradient(cx-rad*0.18,cy-rad*0.18,rad*0.04,cx,cy,rad*0.62);cg.addColorStop(0,'#b0662e');cg.addColorStop(0.7,'#5a2810');cg.addColorStop(1,'#2a1006');x.fillStyle=cg;x.beginPath();x.arc(cx,cy,rad*0.61,0,TAU);x.fill();
+ for(let i=0;i<4;i++){const a=i*Math.PI/2;x.strokeStyle='#e8c070';x.lineWidth=rad*0.045;x.lineCap='round';x.beginPath();x.moveTo(cx,cy);x.lineTo(cx+Math.cos(a)*rad*0.42,cy+Math.sin(a)*rad*0.42);x.stroke();
+  const bg=x.createRadialGradient(cx+Math.cos(a)*rad*0.44-2,cy+Math.sin(a)*rad*0.44-2,1,cx+Math.cos(a)*rad*0.44,cy+Math.sin(a)*rad*0.44,rad*0.06);bg.addColorStop(0,'#fff6d0');bg.addColorStop(1,'#a07828');x.fillStyle=bg;x.beginPath();x.arc(cx+Math.cos(a)*rad*0.44,cy+Math.sin(a)*rad*0.44,rad*0.06,0,TAU);x.fill();}
+ const tg=x.createRadialGradient(cx-4,cy-4,1,cx,cy,rad*0.14);tg.addColorStop(0,'#fff4c8');tg.addColorStop(1,'#a07828');x.fillStyle=tg;x.beginPath();x.arc(cx,cy,rad*0.14,0,TAU);x.fill();
+ return CAS_ART[k]=c;}
+const CAS_ROX=[470,650,830];/* where the regulars sit along the layout, by seat */
+const CAS_ROG={chips:true,title:tb=>tb.vip?'SALON PRIVE · ROULETTE':'ROULETTE',sub:tb=>'$'+fmt(tb.min)+' TO $'+fmt(tb.max)+' · NUMBERS PAY 35 TO 1 · DOZENS 2 TO 1 · COLOURS EVEN',sayAt:[185,474],
+ init(){const R=CAS_RO;R.bets={};R.spin=null;R.res=null;R.ppl=casPeople(CS.tb);roNpcBet();if(R.ppl.length)casSay(pick(R.ppl),'hi');casMsg('Pick a chip, tap the layout to bet, then SPIN.');},
  acts(){const R=CAS_RO,t=roTotal();return [{id:'spin',lbl:'SPIN'+(t?' · $'+fmt(t):''),k:'SPACE',p:'A',code:['Space','Enter','KeyE'],fn:roSpin,dis:!!R.spin||!t},{id:'clr',lbl:'CLEAR',k:'C',p:'Y',code:['KeyC'],fn:roClear,alt:1,dis:!t||!!R.spin},
   {id:'re',lbl:'REBET',k:'R',code:['KeyR'],fn:roRebet,alt:1,dis:!R.last||!!R.spin},{id:'put',lbl:'BET HERE',k:'X',p:'X',code:['KeyX'],fn:()=>roPlace(roSpots()[CS.cur].k),alt:1,dis:!!R.spin}];},
  finish(){while(CS.q.length){const s=CS.q.shift();s.fn();}CS.busy=0;if(roTotal()){casGive(roTotal());CAS_RO.bets={};}},
@@ -550,30 +707,41 @@ const CAS_ROG={chips:true,title:tb=>tb.vip?'SALON PRIVE · ROULETTE':'ROULETTE',
  padDir(dx,dy){const L=roSpots(),a=L[CS.cur],ax=a.x+a.w/2,ay=a.y+a.h/2;let best=-1,bd=1e9;L.forEach((s,i)=>{if(i===CS.cur)return;const vx=s.x+s.w/2-ax,vy=s.y+s.h/2-ay,al=vx*dx+vy*dy;if(al<=4)return;const d=Math.hypot(vx,vy)+Math.abs(vx*dy-vy*dx)*2;if(d<bd){bd=d;best=i;}});if(best>=0){CS.cur=best;sfx('blip');}},
  key(c){const D={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[c];if(D)this.padDir(D[0],D[1]);},
  draw(x,W,H,now){const R=CAS_RO,tb=CS.tb;casFelt(x,W,H,tb.vip?'#1a2a78':null);
-  /* the wheel: turns slowly, faster while it spins; the ball runs the other way and drops into its pocket */
-  const cx=180,cy=290,rad=150,N=CAS_WHEEL.length;let ang=R.ang,ball=R.ball,ballR=rad*0.86;
-  if(R.spin){const t=Math.min(1,(now-R.spin.t0)/3600),e=1-Math.pow(1-t,3);ang=R.spin.a0+e*TAU*2.2;const pocket=-(R.spin.idx+0.5)*TAU/N;const target=ang+pocket;ball=R.spin.b0+(target-R.spin.b0-TAU*6)*e;ballR=rad*(0.86-0.18*Math.max(0,(t-0.6)/0.4));if(t>=1){R.ang=ang;R.ball=target;}}
-  else{R.ang+=0.002;ang=R.ang;if(R.res!==null){ball=R.ball+(ang-R.ang);ballR=rad*0.68;R.ball+=0.002;}}
-  x.fillStyle='#4a2410';x.beginPath();x.arc(cx,cy,rad+18,0,TAU);x.fill();x.fillStyle='#d8b060';x.beginPath();x.arc(cx,cy,rad+4,0,TAU);x.fill();
-  for(let i=0;i<N;i++){const a0=ang+i*TAU/N,a1=a0+TAU/N,q=CAS_WHEEL[i];x.fillStyle=roNum(q);x.beginPath();x.moveTo(cx,cy);x.arc(cx,cy,rad,a0,a1);x.closePath();x.fill();
-   x.save();x.translate(cx+Math.cos(a0+TAU/N/2)*rad*0.86,cy+Math.sin(a0+TAU/N/2)*rad*0.86);x.rotate(a0+TAU/N/2+Math.PI/2);x.fillStyle='#fff';x.font='bold 11px monospace';x.textAlign='center';x.fillText(String(q),0,4);x.restore();}
-  x.fillStyle='#5a2a10';x.beginPath();x.arc(cx,cy,rad*0.62,0,TAU);x.fill();x.fillStyle='#d8b060';x.beginPath();x.arc(cx,cy,rad*0.18,0,TAU);x.fill();
-  for(let i=0;i<4;i++){const a=ang*1+i*Math.PI/2;x.strokeStyle='#d8b060';x.lineWidth=6;x.beginPath();x.moveTo(cx,cy);x.lineTo(cx+Math.cos(a)*rad*0.5,cy+Math.sin(a)*rad*0.5);x.stroke();}
-  if(R.spin||R.res!==null){x.fillStyle='#fff';x.beginPath();x.arc(cx+Math.cos(ball)*ballR,cy+Math.sin(ball)*ballR,7,0,TAU);x.fill();}
+  /* the wheel turns slowly, fast while it spins; the ball runs the other way round the chrome track and drops into its pocket */
+  const cx=185,cy=292,rad=126,N=CAS_WHEEL.length;let ang=R.ang,ball=R.ball,ballR=rad*0.71;
+  if(R.spin){const t=Math.min(1,(now-R.spin.t0)/3600),e=1-Math.pow(1-t,3);ang=R.spin.a0+e*TAU*2.2;const target=ang+(R.spin.idx+0.5)*TAU/N;ball=R.spin.b0+(target-R.spin.b0-TAU*6)*e;ballR=rad*(1.07-0.36*Math.max(0,Math.min(1,(t-0.55)/0.4)));}
+  else{R.ang+=0.002;ang=R.ang;if(R.res!==null){R.ball+=0.002;ball=R.ball;}}
+  x.fillStyle='rgba(0,0,0,.4)';x.beginPath();x.arc(cx+6,cy+8,rad+20,0,TAU);x.fill();
+  const bw=x.createRadialGradient(cx-30,cy-30,rad*0.4,cx,cy,rad+20);bw.addColorStop(0,'#8a4420');bw.addColorStop(1,'#2a0e04');x.fillStyle=bw;x.beginPath();x.arc(cx,cy,rad+20,0,TAU);x.fill();
+  const tr=x.createRadialGradient(cx,cy,rad,cx,cy,rad+13);tr.addColorStop(0,'#4a4a52');tr.addColorStop(0.55,'#eeeef4');tr.addColorStop(1,'#6a6a72');x.fillStyle=tr;x.beginPath();x.arc(cx,cy,rad+13,0,TAU);x.arc(cx,cy,rad,0,TAU,true);x.fill();
+  x.strokeStyle='#d8b060';x.lineWidth=2.5;x.beginPath();x.arc(cx,cy,rad+20,0,TAU);x.stroke();
+  for(let i=0;i<8;i++){const a=i*TAU/8+0.2;x.save();x.translate(cx+Math.cos(a)*(rad+6.5),cy+Math.sin(a)*(rad+6.5));x.rotate(a+Math.PI/4);x.fillStyle='#e0bc68';x.fillRect(-3.5,-3.5,7,7);x.restore();}
+  const wt=casWheelTex(rad);x.save();x.translate(cx,cy);x.rotate(ang);x.drawImage(wt,-wt.width/2,-wt.height/2);x.restore();
+  if(R.spin||R.res!==null){const bx=cx+Math.cos(ball)*ballR,by=cy+Math.sin(ball)*ballR;x.fillStyle='rgba(0,0,0,.45)';x.beginPath();x.arc(bx+2,by+3,6,0,TAU);x.fill();
+   const bg=x.createRadialGradient(bx-2,by-2,0.5,bx,by,6);bg.addColorStop(0,'#ffffff');bg.addColorStop(1,'#b0b0bc');x.fillStyle=bg;x.beginPath();x.arc(bx,by,6,0,TAU);x.fill();}
+  const sh=x.createLinearGradient(cx-rad,cy-rad,cx+rad,cy+rad);sh.addColorStop(0,'rgba(255,255,255,.14)');sh.addColorStop(0.4,'rgba(255,255,255,0)');x.fillStyle=sh;x.beginPath();x.arc(cx,cy,rad+20,0,TAU);x.fill();
   /* the layout */
-  roSpots().forEach((s,i)=>{x.fillStyle=s.n?roNum(s.n):s.k==='red'?'#c8101e':s.k==='black'?'#111':s.k==='n0'||s.k==='n00'?'#0a7a3a':'rgba(0,0,0,0)';x.fillRect(s.x,s.y,s.w,s.h);
+  x.fillStyle='rgba(0,0,0,.25)';x.fillRect(356,144,570,272);
+  roSpots().forEach((s,i)=>{if(s.n||s.k==='red'||s.k==='black'||s.k[0]==='n'){const base=s.n?roNum(s.n):s.k==='red'?'#c8101e':s.k==='black'?'#111':'#0a7a3a';const g=x.createLinearGradient(s.x,s.y,s.x,s.y+s.h);g.addColorStop(0,base);g.addColorStop(1,'rgba(0,0,0,.25)');x.fillStyle=base;x.fillRect(s.x,s.y,s.w,s.h);x.fillStyle=g;x.fillRect(s.x,s.y,s.w,s.h);}
    const hit=R.res!==null&&s.win(R.res);if(hit){x.fillStyle='rgba(255,211,107,'+(0.35+0.25*Math.sin(now/120))+')';x.fillRect(s.x,s.y,s.w,s.h);}
-   x.strokeStyle='#e8e2d0';x.lineWidth=1.5;x.strokeRect(s.x,s.y,s.w,s.h);x.fillStyle='#fff';x.font='bold '+(s.n||s.k[0]==='n'?18:15)+'px monospace';x.textAlign='center';x.fillText(s.lbl,s.x+s.w/2,s.y+s.h/2+6);
-   if(padMode&&i===CS.cur){x.strokeStyle='#ffd36b';x.lineWidth=4;x.strokeRect(s.x+2,s.y+2,s.w-4,s.h-4);}
-   const v=R.bets[s.k];if(v)casChipDraw(x,s.x+s.w/2,s.y+s.h/2,v,Math.min(17,s.w/2-2));});
+   x.strokeStyle='#e8e2d0';x.lineWidth=1.5;x.strokeRect(s.x,s.y,s.w,s.h);x.fillStyle='#fff';x.font='bold '+(s.n||s.k[0]==='n'?18:15)+'px '+(s.n||s.k[0]==='n'?'Georgia,serif':'monospace');x.textAlign='center';x.fillText(s.lbl,s.x+s.w/2,s.y+s.h/2+6);
+   if(padMode&&i===CS.cur){x.strokeStyle='#ffd36b';x.lineWidth=4;x.strokeRect(s.x+2,s.y+2,s.w-4,s.h-4);}});
+  /* the regulars' coloured chips, then yours on top */
+  const off=[[-9,-7],[9,-7],[-9,7],[9,7]];R.nb.forEach(b=>{const s=roSpots().find(q=>q.k===b.k);if(!s)return;const o=off[R.ppl.indexOf(b.P)%4];casChipDraw(x,s.x+s.w/2+o[0],s.y+s.h/2+o[1],b.v,Math.min(12,s.w/2-6),b.P.chip);});
+  roSpots().forEach(s=>{const v=R.bets[s.k];if(v)casChipDraw(x,s.x+s.w/2,s.y+s.h/2,v,Math.min(17,s.w/2-2));});
+  /* the dolly on the winning number */
+  if(R.res!==null&&!R.spin){const s=roSpots().find(q=>q.k==='n'+R.res);if(s){const dx=s.x+s.w/2,dy=s.y+s.h/2-4;x.fillStyle='rgba(0,0,0,.4)';x.beginPath();x.ellipse(dx+3,dy+12,11,6,0,0,TAU);x.fill();
+   const dg=x.createLinearGradient(dx-10,0,dx+10,0);dg.addColorStop(0,'rgba(200,220,255,.75)');dg.addColorStop(0.5,'rgba(255,255,255,.95)');dg.addColorStop(1,'rgba(160,180,220,.75)');x.fillStyle=dg;x.fillRect(dx-9,dy-8,18,18);x.fillStyle='#d8b060';x.beginPath();x.ellipse(dx,dy-8,9,4,0,0,TAU);x.fill();}}
   /* the last numbers */
-  x.textAlign='left';x.font='bold 16px monospace';x.fillStyle='#ffe9a8';x.fillText('LAST NUMBERS',400,95);R.hist.forEach((q,i)=>{x.fillStyle=roNum(q);x.fillRect(540+i*34,76,30,26);x.fillStyle='#fff';x.textAlign='center';x.fillText(String(q),555+i*34,95);x.textAlign='left';});
-  if(R.res!==null&&!R.spin){x.fillStyle=roNum(R.res);x.beginPath();x.arc(cx,cy,34,0,TAU);x.fill();x.strokeStyle='#ffd36b';x.lineWidth=3;x.stroke();x.fillStyle='#fff';x.font='bold 30px monospace';x.textAlign='center';x.fillText(String(R.res),cx,cy+10);}}};
+  x.textAlign='left';x.font='bold 16px monospace';x.fillStyle='#ffe9a8';x.fillText('LAST NUMBERS',392,95);R.hist.forEach((q,i)=>{x.fillStyle=roNum(q);casRR(x,532+i*34,76,30,26,5);x.fill();x.fillStyle='#fff';x.textAlign='center';x.fillText(String(q),547+i*34,95);x.textAlign='left';});
+  if(R.res!==null&&!R.spin){x.fillStyle=roNum(R.res);x.beginPath();x.arc(cx,cy,30,0,TAU);x.fill();x.strokeStyle='#ffd36b';x.lineWidth=3;x.stroke();x.fillStyle='#fff';x.font='bold 28px Georgia,serif';x.textAlign='center';x.fillText(String(R.res),cx,cy+10);}
+  for(const P of R.ppl)casPersonDraw(x,P,CAS_ROX[P.k]||830,H-24,0.85,now);}};
 
-/* ---------- CRAPS: pass line, don't pass, odds, field, any seven ---------- */
-const CAS_CR={bets:{},point:0,dice:[3,4],roll:null,lastRoll:0,hist:[]};
+/* ---------- CRAPS: pass line, don't pass, odds, field, any seven; the rail backs the shooter ---------- */
+const CAS_CR={bets:{},point:0,dice:[3,4],roll:null,lastRoll:0,hist:[],ppl:[]};
 const CR_SPOTS=[{k:'pass',lbl:'PASS LINE',x:60,y:420,w:620,h:70},{k:'dp',lbl:"DON'T PASS BAR",x:60,y:360,w:400,h:50},{k:'odds',lbl:'ODDS',x:470,y:360,w:210,h:50},{k:'field',lbl:'FIELD  2 PAYS 2 · 12 PAYS 3',x:60,y:270,w:620,h:80},{k:'any7',lbl:'ANY 7 · 4 TO 1',x:700,y:270,w:220,h:80}];
 const CR_ODDS={4:2,10:2,5:1.5,9:1.5,6:1.2,8:1.2};
+const CR_PX=[190,335,480,625,75,885];/* where the rail regulars stand, by seat */
 const crTotal=()=>Object.values(CAS_CR.bets).reduce((a,b)=>a+b,0);
 function crPlace(k){const C=CAS_CR,tb=CS.tb,v=CS.chip;if(C.roll)return;
  if((k==='pass'||k==='dp')&&C.point){casMsg('The point is on: line bets wait for the next come-out. Back your pass bet with ODDS.');sfx('blip');return;}
@@ -584,7 +752,15 @@ function crClear(){const C=CAS_CR;if(C.roll)return;let back=0;for(const k of Obj
 function crRoll(){const C=CAS_CR,tb=CS.tb;if(C.roll)return;const t=crTotal();if(!t){casMsg('Bet on the PASS LINE (or the field) to roll.');sfx('blip');return;}
  if(!C.point&&!(C.bets.pass||C.bets.dp)&&t<tb.min){casMsg('Table minimum is $'+fmt(tb.min)+'.');sfx('blip');return;}
  const d=[1+Math.floor(casR()*6),1+Math.floor(casR()*6)];C.roll={t0:performance.now(),d};CS.say='';casSnd('dice');casQ(1300,()=>crResolve(d));casUI();}
-function crResolve(d){const C=CAS_CR,s=d[0]+d[1];C.roll=null;C.dice=d;C.hist.unshift(s);C.hist=C.hist.slice(0,10);let stake=0,back=0;const out=[];const settle=(k,mult,lbl)=>{const v=C.bets[k];if(!v)return;stake+=v;back+=v*mult;delete C.bets[k];out.push(lbl);};
+/* the regulars on the rail: back on the line each come-out, odds once there is a point, a field bet now and then (their money, not yours) */
+function crNpcBet(){const C=CAS_CR,m=CS.tb.min;for(const P of C.ppl){const b=P.bets;if(!C.point&&!b.pass&&!b.dp){if(Math.random()<0.82)b.pass=m*pick([1,1,2,3]);else b.dp=m*pick([1,2]);}
+  if(C.point&&b.pass&&!b.odds&&Math.random()<0.6)b.odds=b.pass*pick([1,2]);if(!b.field&&Math.random()<0.25)b.field=m;}}
+function crNpc(s,pt){let talk=0;for(const P of CAS_CR.ppl){const b=P.bets;let net=0;const st=(k,mult)=>{if(b[k]){net+=b[k]*(mult-1);delete b[k];}};
+  if(b.field)st('field',s===2?3:s===12?4:[3,4,9,10,11].includes(s)?2:0);
+  if(!pt){if(s===7||s===11){st('pass',2);st('dp',0);}else if(s===2||s===3){st('pass',0);st('dp',2);}else if(s===12){st('pass',0);st('dp',1);}}
+  else if(s===pt){st('odds',1+CR_ODDS[s]);st('pass',2);st('dp',0);}else if(s===7){st('odds',0);st('pass',0);st('dp',2);}
+  if(net){P.net+=net;if(talk<2&&(Math.abs(net)>=CS.tb.min*2||Math.random()<0.3)){talk++;casSay(P,net>0?(pt&&s===pt?'point':'win'):(pt&&s===7?'seven':'lose'));}else{P.mood=net>0?1:-1;P.moodT=performance.now();}}}}
+function crResolve(d){const C=CAS_CR,s=d[0]+d[1],pt=C.point;C.roll=null;C.dice=d;C.hist.unshift(s);C.hist=C.hist.slice(0,10);let stake=0,back=0;const out=[];const settle=(k,mult,lbl)=>{const v=C.bets[k];if(!v)return;stake+=v;back+=v*mult;delete C.bets[k];out.push(lbl);};
  /* one-roll bets */
  if(C.bets.field)settle('field',s===2?3:s===12?4:[3,4,9,10,11].includes(s)?2:0,[2,3,4,9,10,11,12].includes(s)?'FIELD WINS':'FIELD LOSES');
  if(C.bets.any7)settle('any7',s===7?5:0,s===7?'ANY 7 WINS':'ANY 7 LOSES');
@@ -594,12 +770,18 @@ function crResolve(d){const C=CAS_CR,s=d[0]+d[1];C.roll=null;C.dice=d;C.hist.uns
   else{C.point=s;out.push('THE POINT IS '+s);}}
  else if(s===C.point){settle('odds',1+CR_ODDS[s],'ODDS WIN');settle('pass',2,'PASS WINS');settle('dp',0,"DON'T PASS LOSES");out.push('POINT MADE');C.point=0;}
  else if(s===7){settle('odds',0,'ODDS LOSE');settle('pass',0,'SEVEN OUT');settle('dp',2,"DON'T PASS WINS");C.point=0;}
+ crNpc(s,pt);crNpcBet();
  if(stake){casGive(back);const net=casSettle(stake,back);if(net>0){casWin(s+'!  +$'+fmt(net));casSnd('win');}else if(net<0)casSnd('lose');}
- CS.say=s===7&&!C.point?'Seven!':s===2||s===3||s===12?'Craps!':s===11?'Yo-leven!':'Eight, the hard way? '+s+'.';if(!/hard/.test(CS.say)){}else CS.say=s+(d[0]===d[1]?' the hard way!':', '+s+'.');
+ CS.say=s===7&&!C.point?'Seven!':s===2||s===3||s===12?'Craps!':s===11?'Yo-leven!':s+(d[0]===d[1]?' the hard way!':', '+s+'.');
  casMsg('ROLLED '+s+' ('+d[0]+'+'+d[1]+')'+(out.length?' · '+out.join(' · '):''));casUI();}
-function crDie(x,cx,cy,v,s,rot){x.save();x.translate(cx,cy);x.rotate(rot||0);x.fillStyle='#d0101e';x.fillRect(-s/2,-s/2,s,s);x.fillStyle='#fff';const P={1:[[0,0]],2:[[-1,-1],[1,1]],3:[[-1,-1],[0,0],[1,1]],4:[[-1,-1],[1,-1],[-1,1],[1,1]],5:[[-1,-1],[1,-1],[0,0],[-1,1],[1,1]],6:[[-1,-1],[1,-1],[-1,0],[1,0],[-1,1],[1,1]]}[v];for(const [a,b] of P){x.beginPath();x.arc(a*s*0.28,b*s*0.28,s*0.09,0,TAU);x.fill();}x.restore();}
-const CAS_CRG={chips:true,title:()=>'CRAPS',sub:tb=>'$'+fmt(tb.min)+' TO $'+fmt(tb.max)+' · PASS LINE EVEN MONEY · ODDS AT TRUE ODDS · FIELD AND ANY 7',
- init(){const C=CAS_CR;C.bets={};C.point=0;C.roll=null;casMsg('Bet the PASS LINE, then ROLL. 7 or 11 wins on the come-out.');},
+/* a red casino die: rounded, a little see-through, white pips */
+function crDie(x,cx,cy,v,s,rot){x.save();x.translate(cx,cy);x.rotate(rot||0);x.fillStyle='rgba(0,0,0,.4)';casRR(x,-s/2+4,-s/2+6,s,s,s*0.18);x.fill();
+ const g=x.createLinearGradient(-s/2,-s/2,s/2,s/2);g.addColorStop(0,'#ff5058');g.addColorStop(0.6,'#c8101c');g.addColorStop(1,'#8a0610');x.fillStyle=g;casRR(x,-s/2,-s/2,s,s,s*0.18);x.fill();
+ x.strokeStyle='rgba(255,255,255,.35)';x.lineWidth=1.5;casRR(x,-s/2+2,-s/2+2,s-4,s-4,s*0.15);x.stroke();
+ const P={1:[[0,0]],2:[[-1,-1],[1,1]],3:[[-1,-1],[0,0],[1,1]],4:[[-1,-1],[1,-1],[-1,1],[1,1]],5:[[-1,-1],[1,-1],[0,0],[-1,1],[1,1]],6:[[-1,-1],[1,-1],[-1,0],[1,0],[-1,1],[1,1]]}[v];
+ for(const [a,b] of P){x.fillStyle='rgba(0,0,0,.35)';x.beginPath();x.arc(a*s*0.27+1,b*s*0.27+1,s*0.09,0,TAU);x.fill();x.fillStyle='#fff';x.beginPath();x.arc(a*s*0.27,b*s*0.27,s*0.09,0,TAU);x.fill();}x.restore();}
+const CAS_CRG={chips:true,title:()=>'CRAPS',sub:tb=>'$'+fmt(tb.min)+' TO $'+fmt(tb.max)+' · PASS LINE EVEN MONEY · ODDS AT TRUE ODDS · FIELD AND ANY 7',sayAt:[480,238],
+ init(){const C=CAS_CR;C.bets={};C.point=0;C.roll=null;C.ppl=casPeople(CS.tb);crNpcBet();if(C.ppl.length)casSay(pick(C.ppl),'hi');casMsg('Bet the PASS LINE, then ROLL. 7 or 11 wins on the come-out.');},
  acts(){const C=CAS_CR,t=crTotal();return [{id:'roll',lbl:'ROLL'+(t?' · $'+fmt(t):''),k:'SPACE',p:'A',code:['Space','Enter','KeyE'],fn:crRoll,dis:!!C.roll||!t},{id:'pass',lbl:C.point?'+ ODDS':'+ PASS',k:'Q',p:'X',code:['KeyQ'],fn:()=>crPlace(C.point?'odds':'pass'),alt:1,dis:!!C.roll},
   {id:'field',lbl:'+ FIELD',k:'F',p:'Y',code:['KeyF'],fn:()=>crPlace('field'),alt:1,dis:!!C.roll},{id:'clr',lbl:'TAKE DOWN',k:'C',code:['KeyC'],fn:crClear,alt:1,dis:!t||!!C.roll}];},
  /* walking away mid-round: the line bet rides until it is decided, rolled out for you */
@@ -608,19 +790,22 @@ const CAS_CRG={chips:true,title:()=>'CRAPS',sub:tb=>'$'+fmt(tb.min)+' TO $'+fmt(
  tap(x,y){const s=CR_SPOTS.find(q=>x>=q.x&&x<q.x+q.w&&y>=q.y&&y<q.y+q.h);if(s)crPlace(s.k);else if(x>700&&y>380)crRoll();},
  draw(x,W,H,now){const C=CAS_CR;casFelt(x,W,H);
   /* the point boxes with the puck */
-  [4,5,6,8,9,10].forEach((n,i)=>{const bx=60+i*104,by=60;x.strokeStyle='#e8e2d0';x.lineWidth=2;x.strokeRect(bx,by,100,90);x.fillStyle='#fff';x.font='bold 40px monospace';x.textAlign='center';x.fillText(n===6?'SIX':n===9?'NINE':String(n),bx+50,by+60);
-   if(C.point===n){x.fillStyle='#fff';x.beginPath();x.arc(bx+50,by+18,16,0,TAU);x.fill();x.fillStyle='#111';x.font='bold 12px monospace';x.fillText('ON',bx+50,by+22);}});
-  if(!C.point){x.fillStyle='#111';x.beginPath();x.arc(740,105,26,0,TAU);x.fill();x.fillStyle='#fff';x.font='bold 13px monospace';x.textAlign='center';x.fillText('OFF',740,110);}
+  [4,5,6,8,9,10].forEach((n,i)=>{const bx=60+i*104,by=60;x.strokeStyle='#e8e2d0';x.lineWidth=2;x.strokeRect(bx,by,100,90);x.fillStyle='#fff';x.font='bold 40px Georgia,serif';x.textAlign='center';x.fillText(n===6?'SIX':n===9?'NINE':String(n),bx+50,by+62);
+   if(C.point===n){x.fillStyle='rgba(0,0,0,.4)';x.beginPath();x.arc(bx+52,by+21,17,0,TAU);x.fill();const pg=x.createRadialGradient(bx+46,by+12,2,bx+50,by+18,17);pg.addColorStop(0,'#fff');pg.addColorStop(1,'#c8c8d0');x.fillStyle=pg;x.beginPath();x.arc(bx+50,by+18,16,0,TAU);x.fill();x.fillStyle='#111';x.font='bold 12px monospace';x.fillText('ON',bx+50,by+22);}});
+  if(!C.point){x.fillStyle='rgba(0,0,0,.4)';x.beginPath();x.arc(743,108,26,0,TAU);x.fill();x.fillStyle='#111';x.beginPath();x.arc(740,105,26,0,TAU);x.fill();x.strokeStyle='#fff';x.lineWidth=2;x.stroke();x.fillStyle='#fff';x.font='bold 13px monospace';x.textAlign='center';x.fillText('OFF',740,110);}
   x.fillStyle='#ffe9a8';x.font='16px monospace';x.textAlign='center';x.fillText(C.point?'POINT '+C.point+' · MAKE IT AGAIN BEFORE A 7':'COME-OUT ROLL · 7 OR 11 WINS',W/2,180);
+  x.font='13px monospace';x.fillText('LAST ROLLS',845,160);x.fillText(C.hist.slice(0,6).join(' · '),845,180);
   CR_SPOTS.forEach(s=>{x.strokeStyle='#e8e2d0';x.lineWidth=2;x.strokeRect(s.x,s.y,s.w,s.h);if(s.k==='any7'){x.fillStyle='#8a0a16';x.fillRect(s.x,s.y,s.w,s.h);}x.fillStyle=s.k==='field'?'#ffd36b':'#fff';x.font='bold 18px monospace';x.textAlign='center';x.fillText(s.lbl,s.x+s.w/2,s.y+s.h/2+(s.k==='field'?-6:6));
    if(s.k==='field'){x.font='14px monospace';x.fillStyle='#fff';x.fillText('2 · 3 · 4 · 9 · 10 · 11 · 12',s.x+s.w/2,s.y+s.h/2+18);}
-   const v=C.bets[s.k];if(v)casChipDraw(x,s.x+s.w-40,s.y+s.h/2,v,18);
    if((s.k==='pass'||s.k==='dp')&&C.point){x.fillStyle='rgba(0,0,0,.25)';x.fillRect(s.x,s.y,s.w,s.h);}
    if(s.k==='odds'&&(!C.point||!C.bets.pass)){x.fillStyle='rgba(0,0,0,.35)';x.fillRect(s.x,s.y,s.w,s.h);}});
+  /* the rail's bets in their colours, then yours */
+  C.ppl.forEach((P,i)=>{const b=P.bets;if(b.pass)casChipDraw(x,84+i*40,462,b.pass,13,P.chip);if(b.dp)casChipDraw(x,80+i*22,388,b.dp,11,P.chip);if(b.odds)casChipDraw(x,486+i*14,394,b.odds,11,P.chip);if(b.field)casChipDraw(x,548+i*24,330,b.field,11,P.chip);});
+  CR_SPOTS.forEach(s=>{const v=C.bets[s.k];if(v)casChipDraw(x,s.x+s.w-40,s.y+s.h/2,v,18);});
   /* the dice, tumbling down the table */
   let d=C.dice,dx=800,dy=440,rot=0;if(C.roll){const t=Math.min(1,(now-C.roll.t0)/1300);d=t<0.85?[1+((now/70|0)%6),1+((now/90|0)%6)]:C.roll.d;dx=930-t*130;dy=300+Math.sin(t*Math.PI*3)*40*(1-t)+t*140;rot=(1-t)*12;}
   crDie(x,dx-30,dy,d[0],44,rot);crDie(x,dx+30,dy+8,d[1],44,-rot*0.8);
-  x.fillStyle='#ffe9a8';x.font='14px monospace';x.textAlign='center';x.fillText('LAST ROLLS  '+C.hist.join(' · '),W/2,520);}};
+  for(const P of C.ppl)casPersonDraw(x,P,CR_PX[P.k]||885,H-14,0.78,now);}};
 
 /* ---------- PEARL CLUB: Pilar and the cage (a card, your numbers, the comp) ---------- */
 function casClubDraw(x,W,H,now){const c=casProg(),t=casTier(c),T=CAS_TIERS[t],nx=CAS_TIERS[t+1];
