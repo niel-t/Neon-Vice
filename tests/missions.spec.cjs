@@ -64,7 +64,7 @@ test('missions: the club back-door variant follows the brief choice and sticks f
       startLevel(7);
       for (const e of G.enemies) if (!e.boss) e.alive = false;
       const req = { boss: G.clear.boss };
-      G.clear = { boss: 'optional' }; update(0.016);
+      G.clear = { boss: 'optional' }; G.obj.done = true; update(0.016);
       const cleared = G.cleared;
       G.take = 100; payout();
       const spared = { spared: p.wflags.lex_spared, dead: p.lexDead || 0 };

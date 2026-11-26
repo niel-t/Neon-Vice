@@ -366,6 +366,8 @@ test('lex: the killing blow opens a spare-or-finish choice; sparing leaves him o
   await page.keyboard.up('1');
   expect(await page.evaluate(() => ({ alive: G.boss.alive, spared: !!G.boss.spared, fin: !!G.fin }))).toEqual({ alive: true, spared: true, fin: false });
   await page.evaluate(() => { for (const e of G.enemies) if (e.alive && !e.boss) killEnemy(e, 'pistol', [0, 1]); });
+  // the floor's objective: with Lex down, take the helm
+  expect(await page.evaluate(() => { const h = G.helm; G.player.x = h.x; G.player.z = h.z + 1; return act2Grab(G.player) && G.obj.done; })).toBe(true);
   await expect.poll(() => page.evaluate(() => G.cleared), { timeout: 20_000 }).toBe(true);
 });
 

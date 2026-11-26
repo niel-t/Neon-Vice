@@ -32,3 +32,15 @@ test('mall: left alone, the set-up springs by itself after a few seconds', async
   const page = await openGame();
   expect(await page.evaluate(() => { startLevel(5); for (let k = 0; k < 160; k++) act2Tick(0.05); return G.ambush2.st; })).toBe('hot');
 });
+
+test('royal flush: the helm only takes once Lex is down, and the floor waits for it', async ({ openGame }) => {
+  const page = await openGame();
+  const s = await page.evaluate(() => { NOARRIVE = true; startLevel(7); const h = G.helm, p = G.player; p.hp = 99; p.maxhp = 99; for (const e of G.enemies) e.spd = 0.0001; p.x = h.x - 1; p.z = h.z; if (blk(G, p.x, p.z)) p.x = h.x + 1; return { obj: G.obj.label, act: act2Action(p) }; });
+  expect(s).toEqual({ obj: 'TAKE THE HELM', act: null });
+  await page.evaluate(() => { for (const e of G.enemies) if (e.alive && !e.boss) killEnemy(e, 'pistol', [0, 1]); G.boss.spared = true; G.boss.state = 'idle'; G.boss.bribed = 1; });
+  await page.waitForTimeout(800);
+  expect(await page.evaluate(() => G.cleared)).toBe(false);
+  const r = await page.evaluate(() => { const p = G.player, lbl = ctxAction(p).l, s0 = G.score; playerGrab(p); return { lbl, taken: G.helm.taken, paid: G.score - s0 }; });
+  expect(r).toEqual({ lbl: 'HELM', taken: true, paid: 2500 });
+  await expect.poll(() => page.evaluate(() => G.cleared), { timeout: 20_000 }).toBe(true);
+});
