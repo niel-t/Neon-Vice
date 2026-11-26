@@ -2,7 +2,8 @@ const { test, expect } = require('./fixtures.cjs');
 
 // Act 4 "Wheels Up" (floors 12 to 14, indexes 11 to 13, act4.js): the garage vans, the Coral Room pilot, and Vale's jet.
 const go = (page, sid) => page.waitForFunction(sid => G && G.def && G.sid === sid && !G.going && !G.climb && !G.climbIn && state === 'play', sid, { timeout: 60_000 });
-const toStairs = (page, id) => page.evaluate(id => { const s = G.stageRun.describe(G.sid).stairs.find(q => q.id === id); G.player.x = s.at[0]; G.player.z = s.at[1]; }, id);
+// the stage tasks (act45play.js) keep the way on shut; these tests are about what lies past them
+const toStairs = (page, id) => page.evaluate(id => { if (G.t45) { G.t45.done = true; G.obj = null; } const s = G.stageRun.describe(G.sid).stairs.find(q => q.id === id); G.player.x = s.at[0]; G.player.z = s.at[1]; }, id);
 
 test('act 4 opens after Kade: the floor index, labels, briefs and the old-save unlock', async ({ openGame }) => {
   const page = await openGame({ nb86jobs: { top: 10, sel: 10, best: { 10: { g: 'A', t: 100, s: 1000, c: 3, ch: 'don', d: 'normal' } } } });
