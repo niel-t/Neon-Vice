@@ -187,6 +187,14 @@ Object.assign(TRACKS,{
   B:[null,null,0,null,null,null,0,null,null,null,0,null,null,null,0,12],bassLen:0.9,bv:0.42,T:'x..x..x...x..x..',stabV:'organ',tv:0.035,pv:0.03,pcut:2000,
   leadV:'pluck',lv:0.06,L:'0:A5:2 2:C6:2 4:D6:2 7:C6:2 10:A5:2 12:G5:2 14:A5:2 | 0:F5:2 2:A5:2 4:D6:2 7:C6:2 10:A5:4 14:F5:2 | 0:G5:2 2:C6:2 4:E6:2 7:D6:2 10:C6:2 12:G5:2 14:C6:2 | 0:E6:4 4:D6:2 7:C6:2 10:A5:6',
   form:[{on:'khb'},{on:'kchbt',bars:8},{on:'kchbtl',bars:8},{on:'dlhr'},{on:'kchbtlz',bars:8}]}),
+ /* ===== Casino La Perla: a swung Latin-lounge cha-cha for the high rollers ===== */
+ c_highroller:song({title:'HIGH ROLLER',bpm:112,swing:0.12,dist:1.1,cut:7000,hiss:0.015,duck:0.85,kv:0.4,
+  prog:[C('D4 F4 A4 C5'),C('G3 B3 D4 F4'),C('C4 E4 G4 B4'),C('A3 C#4 E4 G4')],
+  K:'x.....x.x.....x.',S:'....b.......b..b',sv:0.14,H:'x.s.x.s.x.s.x.s.',hv:0.02,X:'..r..r....r.r...',
+  B:[0,null,null,7,null,null,12,null,0,null,null,7,null,12,10,null],bassV:'pick',bassLen:1.4,bv:0.36,padV:'ep',padPat:'x..x....x..x....',padHold:2,pv:0.032,padOct:12,
+  A:[0,2,1,3,2,1,0,null],arpV:'vibe',av:0.026,leadV:'brass',lv:0.06,
+  L:'0:A5:3 3:G5:1 4:F5:2 6:A5:2 8:D6:6 14:C6:2 | 0:B5:3 3:A5:1 4:G5:2 6:B5:2 8:F5:8 | 0:E5:3 3:G5:1 4:B5:2 6:C6:2 8:E6:4 12:D6:4 | 0:C#6:3 3:B5:1 4:A5:2 6:G5:2 8:E5:4 12:A5:4',
+  form:[{on:'khpbd',bars:8},{on:'khpsbdl',bars:8},{on:'khpsbdla',bars:8,leadV:'whistle',lv:0.05},{on:'khpbda',bars:8}]}),
  /* ===== Biscayne Galleria: elevator muzak (bossa downstairs, smooth lounge upstairs) ===== */
  c_galleria:song({title:'ESCALATOR BOSSA',bpm:104,dist:1.0,cut:6000,hiss:0.015,duck:0.95,kv:0.32,
   prog:[C('F4 A4 C5 E5'),C('D4 F4 A4 C5'),C('G4 Bb4 D5 F5'),C('C4 E4 G4 Bb4'),C('A3 C4 E4 G4'),C('D4 F4 A4 C5'),C('G4 Bb4 D5 F5'),C('C4 E4 G4 Bb4')],
@@ -208,9 +216,9 @@ const NEW=[['n_voltage','n_sapphire'],['n_sapphire','n_heat'],['n_heat','n_chrom
 LEVEL_TRACKS.forEach((list,i)=>{const add=NEW[i%NEW.length].filter(t=>!list.includes(t));list.unshift(...add);});
 /* hubs */
 const hub=(k,t)=>{if(HUBS[k])HUBS[k].track=t;};
-hub('lobby','c_marble');hub('office','c_corner');hub('bunker','c_iron');hub('mall','c_galleria');hub('mall2','c_escalator');
+hub('lobby','c_marble');hub('office','c_corner');hub('bunker','c_iron');hub('mall','c_galleria');hub('mall2','c_escalator');hub('casino','c_highroller');
 /* Velvet Palms swaps between the hip-hop and the club cut on each visit */
 if(HUBS.club)Object.defineProperty(HUBS.club,'track',{configurable:true,enumerable:true,get(){return (MX_CLUB++)%2?'c_strobe':'c_velvet';},set(){}});
 /* the home hi-fi can play the new calm ones too */
-for(const t of ['c_afterglow','c_comedown','c_coolant','c_marble','c_corner','c_iron','c_velvet','c_strobe','c_galleria','c_escalator'])if(!HIFI_TRACKS.includes(t))HIFI_TRACKS.push(t);
+for(const t of ['c_afterglow','c_comedown','c_coolant','c_marble','c_corner','c_iron','c_velvet','c_strobe','c_galleria','c_escalator','c_highroller'])if(!HIFI_TRACKS.includes(t))HIFI_TRACKS.push(t);
 })();
