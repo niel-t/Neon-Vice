@@ -2,7 +2,8 @@ const { test, expect } = require('./fixtures.cjs');
 
 // Act 5 "Old Gold" (floors 15 to 17, indexes 14 to 16, act5.js): the Grand Biscayne ledger, La Habana's forty bars, and the Cardinal at McWey Tower.
 const go = (page, sid) => page.waitForFunction(sid => G && G.def && G.sid === sid && !G.going && !G.climb && !G.climbIn && state === 'play', sid, { timeout: 60_000 });
-const toStairs = (page, id) => page.evaluate(id => { const s = G.stageRun.describe(G.sid).stairs.find(q => q.id === id); G.player.x = s.at[0]; G.player.z = s.at[1]; }, id);
+// the stage tasks (act45play.js) keep the way on shut; these tests are about what lies past them
+const toStairs = (page, id) => page.evaluate(id => { if (G.t45) { G.t45.done = true; G.obj = null; } const s = G.stageRun.describe(G.sid).stairs.find(q => q.id === id); G.player.x = s.at[0]; G.player.z = s.at[1]; }, id);
 const tough = page => page.evaluate(() => { G.player.hp = 99; G.player.maxhp = 99; for (const e of G.enemies) e.spd = 0.0001; });
 const killAll = page => page.evaluate(() => { for (const e of G.enemies) if (e.alive && !e.boss) killEnemy(e, 'pistol', [0, 1]); });
 const results = page => expect.poll(() => page.evaluate(() => state === 'perk' ? 'results' : state), { timeout: 40_000 }).toBe('results');

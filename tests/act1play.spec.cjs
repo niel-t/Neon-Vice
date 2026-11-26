@@ -54,14 +54,14 @@ test('penthouse: Moreau runs for the panic room at half health, shutters come do
   await page.evaluate(() => { const s = G.stageRun.describe('lobby').stairs.find(q => q.id === 'elev'); G.keycard = 1; G.player.x = s.at[0]; G.player.z = s.at[1]; });
   await page.waitForFunction(() => G.sid === 'pent' && !G.going && !G.climb && !G.climbIn && state === 'play', null, { timeout: 60_000 });
   await tough(page);
-  const p = await page.evaluate(() => ({ panic: G.panic && G.panic.st, doors: G.panic.cells.map(c => G.rows[c.iz][c.ix]), boss: !!G.boss }));
+  const p = await page.evaluate(() => ({ panic: G.a1panic && G.a1panic.st, doors: G.a1panic.cells.map(c => G.rows[c.iz][c.ix]), boss: !!G.boss }));
   expect(p).toEqual({ panic: 'open', doors: ['D', 'D'], boss: true });
   // knock him to half and walk him into the room
   await page.evaluate(() => { const b = G.boss; b.hp = Math.floor(b.maxhp / 2); G.player.x = 4; G.player.z = 10; act1Tick(0.05); });
-  expect(await page.evaluate(() => G.panic.st)).toBe('run');
-  await page.evaluate(() => { const b = G.boss; b.x = G.panic.to.x; b.z = G.panic.to.z; act1Tick(0.05); });
-  const s = await page.evaluate(() => ({ st: G.panic.st, solid: G.panic.cells.map(c => G.solid[c.iz * G.W + c.ix]), goal: stageGoal(G) }));
+  expect(await page.evaluate(() => G.a1panic.st)).toBe('run');
+  await page.evaluate(() => { const b = G.boss; b.x = G.a1panic.to.x; b.z = G.a1panic.to.z; act1Tick(0.05); });
+  const s = await page.evaluate(() => ({ st: G.a1panic.st, solid: G.a1panic.cells.map(c => G.solid[c.iz * G.W + c.ix]), goal: stageGoal(G) }));
   expect(s).toEqual({ st: 'shut', solid: [1, 1], goal: 'CUT THE POWER AT THE BREAKER' });
-  const b = await page.evaluate(() => { const q = G.panic.breaker; G.player.x = q.x + 1.0; G.player.z = q.z; const lbl = ctxAction(G.player).l; playerGrab(G.player); return { lbl, st: G.panic.st, solid: G.panic.cells.map(c => G.solid[c.iz * G.W + c.ix]) }; });
+  const b = await page.evaluate(() => { const q = G.a1panic.breaker; G.player.x = q.x + 1.0; G.player.z = q.z; const lbl = ctxAction(G.player).l; playerGrab(G.player); return { lbl, st: G.a1panic.st, solid: G.a1panic.cells.map(c => G.solid[c.iz * G.W + c.ix]) }; });
   expect(b).toEqual({ lbl: 'CUT', st: 'dark', solid: [0, 0] });
 });
