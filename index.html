@@ -1177,6 +1177,7 @@ const ARRIVE=['front','alley','front','alley','front','front','alley','front','a
 let ARR_GO=null,ARR_SEEN=-1;
 function arriveSetup(g,i){const W=g.W,rows=g.rows;let type=ARRIVE[i]||'front';
  if(act1Of(g)){act1Arrive(g,i,ARR_SEEN===i);return;}
+ if(g.def.name==='McWEY TOWER: THE LOBBY')a45Revolve(g);/* McWey Tower: glaze the wide front, the revolving door becomes the main entrance */
  const zs=[];for(let z=0;z<g.H;z++)if(rows[z].indexOf('=')>=0)zs.push(z);if(zs.length<2||!g.player)return;
  const zT=zs[0],zB=zs[zs.length-1],gaps=[];let run=null;if(zT<2)return;
  for(let x=1;x<W-1;x++){const c=rows[zT-1][x],ok=c!==' '&&!g.solid[(zT-1)*W+x]&&g.floorT[(zT-1)*W+x]>=0&&!g.solid[(zT-2)*W+x];
@@ -1187,7 +1188,7 @@ function arriveSetup(g,i){const W=g.W,rows=g.rows;let type=ARRIVE[i]||'front';
  const narrow=gaps.filter(q=>q.b-q.a<=1),front=gate||narrow[0]||gaps[0],fx=ctr(front);
  let gap=front;if(type==='alley'){const bk=narrow.filter(q=>q!==front&&Math.abs(ctr(q)-fx)>=6);if(bk.length)gap=bk[bk.length-1];else type='front';}
  const gx=ctr(gap),fromRight=type==='alley'?gx>mid:false;
- for(const q of type==='alley'?[front,gap]:[front])addGapDoors(g,q,zT-1);if(gate)for(const d of g.doors)if(d.front&&d.hz===zT-0.5&&d.hx>=gate.a&&d.hx<=gate.b+1)d.gate=1;
+ for(const q of type==='alley'?[front,gap]:[front])if(!(g.rdoor&&q.a===g.rdoor.x-1))addGapDoors(g,q,zT-1);if(gate)for(const d of g.doors)if(d.front&&d.hz===zT-0.5&&d.hx>=gate.a&&d.hx<=gate.b+1)d.gate=1;
  const cx=Math.max(2.2,Math.min(W-2.2,gx+(fromRight?-0.55:0.55))),cz=zT+(type==='front'?1.15:1.0);
  let ax=null;if(type==='alley'){const lim=gx<mid?Math.min(gx+4,fx-2.5):Math.max(gx-4,fx+2.5);ax=gx<mid?[0,Math.floor(lim)]:[Math.ceil(lim),W-1];}g.arr={type,zT,zB,gx,gap,ax};
  if(gate){g.deco.push({t:'arch',x:gate.a,z:zT-1,fx:gate.b,w:gate.b-gate.a+1});for(const sx of [-1,1])g.lights.push({x:fx+sx*1.3,y:1.8,z:zT+0.1,r:4,c:[0.3,0.9,1]});}

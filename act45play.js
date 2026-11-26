@@ -134,6 +134,7 @@ const a45Def=g=>{const T=g&&g.t45;return T?T45[a45Key(g)]||null:null;};
 
 /* ---------------- hooks ---------------- */
 function act45Intro(g){const k=a45Key(g);if(!k)return;if(A45_FIRST[g.mission]===g.sid)A45RUN={};
+ if(g.mission==='c16'&&g.sid==='lobby')a45Revolve(g);
  const D=T45[k];if(D){D.setup(g);return;}
  /* further in: what the earlier tasks changed */
  if(g.mission==='c11'&&g.sid==='dock'&&A45RUN.alarm)g.a45early=1;
@@ -142,6 +143,7 @@ function act45Tick(dt){const g=G;if(!g||!g.player||g.def.hub)return;
  /* the vans are set up by act4's intro, so the early start waits for the first tick */
  if(g.a45early===1&&g.vans){g.a45early=2;for(const v of g.vans)v.go=Math.max(1,v.go-4);}
  if(g.a45fuel!==1&&A45RUN.fuel&&g.jet&&g.mission==='c13'&&g.sid==='jet'){g.a45fuel=1;g.jet.crash+=A45_FUEL_T;}
+ if(g.rdoor)a45RevolveTick(dt,g);
  const D=a45Def(g);if(!D)return;
  /* a stage change refuses to carry an objective: once the task is dealt with, however that happened, it goes */
  if(g.t45.done){if(g.obj)g.obj=null;return;}D.tick(dt,g,g.t45);}
@@ -152,7 +154,23 @@ function act45Action(p){const g=G;if(!g||!p)return null;const D=a45Def(g);return
 function act45Grab(p){const g=G;const D=a45Def(g);if(!D||g.t45.done||!D.act(g,p,g.t45))return false;D.grab(g,p,g.t45);return true;}
 function act45Guide(g){const D=a45Def(g);if(!D||g.t45.done||g.cleared)return null;const quiet=g.tip||!g.enemies.some(e=>e.alive);const t=D.guide(g,g.t45);
  return t&&(quiet||t.k==='late'||g.t45.kind==='lockdown'||g.t45.kind==='radio'&&g.t45.hot)?t:null;}
-function drawAct45(B,g){const D=a45Def(g);if(!D)return;const bx=(x,y,z,sx,sy,sz,c,em)=>B.box(TRS(x,y,z,0,sx,sy,sz),c,!!em);D.draw(bx,g,g.t45,g.T||0);}
+function drawAct45(B,g){const bx=(x,y,z,sx,sy,sz,c,em)=>B.box(TRS(x,y,z,0,sx,sy,sz),c,!!em);if(g.rdoor)a45DrawRevolve(B,g,bx);const D=a45Def(g);if(!D)return;D.draw(bx,g,g.t45,g.T||0);}
+/* McWey Tower's street front: the wide opening is glazed in, with a revolving door in the middle where you walk in from the car.
+   The glass cells are solid; the door's two cells stay open, and its wings turn as you push through. */
+function a45Revolve(g){if(g.rdoor)return;const zT=g.front?g.front.zT:g.rows.findIndex(r=>r.indexOf('=')>=0);if(!(zT>1))return;const W=g.W,z=zT-1;let best=null,run=null;
+ for(let x=1;x<W-1;x++){if(!g.solid[z*W+x]){if(!run)run={a:x,b:x};else run.b=x;if(!best||run.b-run.a>best.b-best.a)best=run;}else run=null;}
+ if(!best||best.b-best.a<3)return;const c=Math.round((best.a+best.b+1)/2);
+ for(let x=best.a;x<=best.b;x++)if(x!==c-1&&x!==c)g.solid[z*W+x]=1;g.wst=null;g.rdoor={a:best.a,b:best.b,x:c,z:z+0.5,ang:0};}
+function a45RevolveTick(dt,g){const R=g.rdoor,p=g.player;if(!R||!p)return;const d=Math.hypot(p.x-R.x,p.z-R.z),sp=Math.hypot(p.vx||0,p.vz||0);
+ R.ang+=dt*(d<1.3&&sp>0.2?sp*1.4:0.25);}
+function a45DrawRevolve(B,g,bx){const R=g.rdoor,z=R.z,glass=[0.32,0.5,0.6],frame=[0.78,0.64,0.3],dk=[0.12,0.12,0.14];
+ for(let x=R.a;x<=R.b;x++){if(x===R.x-1||x===R.x)continue;bx(x+0.5,1.05,z,0.96,1.9,0.06,glass);bx(x+0.5,0.06,z,1.0,0.12,0.14,dk);}
+ for(let x=R.a;x<=R.b+1;x++)if(x!==R.x)bx(x,1.1,z,0.08,2.2,0.12,frame);bx((R.a+R.b+1)/2,2.2,z,R.b-R.a+1,0.12,0.16,frame);
+ /* the drum: curved glass on its east and west sides, a round canopy, four wings turning on a brass post */
+ const r=1.0,seg=(a)=>{const x=R.x+Math.cos(a)*r,zz=z+Math.sin(a)*r;B.box(TRS(x,1.05,zz,-a,0.06,1.9,0.36),glass,false);};
+ for(let k=-2;k<=2;k++){seg(k*0.35);seg(Math.PI+k*0.35);}
+ for(let k=0;k<4;k++)B.box(TRS(R.x,2.22,z,k*Math.PI/4,2.1,0.12,0.86),frame,false);B.box(TRS(R.x,2.3,z,0,0.5,0.06,0.5),[1.3,1.1,0.6],true);
+ bx(R.x,1.1,z,0.1,2.2,0.1,frame);for(let k=0;k<4;k++){const a=R.ang+k*Math.PI/2;B.box(TRS(R.x+Math.cos(a)*0.47,1.05,z-Math.sin(a)*0.47,a,0.92,1.85,0.04),glass,false);B.box(TRS(R.x+Math.cos(a)*0.93,1.05,z-Math.sin(a)*0.93,a,0.05,1.9,0.06),frame,false);}}
 
 /* the reception counters in the Grand Biscayne and McWey Tower lobbies: one joined desk instead of a row of grey blocks (static, from buildFurniture) */
 function act45Furn(B,g,x,z,f){if(f!==7||!g||!g.stageManaged||g.sid!=='lobby'||(g.mission!=='c14'&&g.mission!=='c16'))return false;
