@@ -27,7 +27,7 @@ function guideStage(g){if(!g.stageManaged||!g.stageRun||stageFinal(g))return nul
  const s=guideNear(g.player,st.map(s=>({x:s.at[0],z:s.at[1],s})));if(!s)return null;
  return {x:s.x,z:s.z,k:'stage',lbl:s.s.id==='elev'?(isKade(g)?'TAKE THE HOIST':'TAKE THE ELEVATOR'):typeof A4_STAIR_LBL!=='undefined'&&A4_STAIR_LBL[s.s.id]||typeof a5StairLbl==='function'&&a5StairLbl(g,s.s)||'TAKE THE STAIRS'};}
 function guideTarget(g){if(!g||!g.def||g.def.hub||g.done||!g.player||!g.player.alive||g.arrive||g.cameo||g.fin||g.mercy||g.climb||g.climbIn||g.twist==='rush')return null;
- if(g.gdT===g.T&&g.gdV!==undefined)return g.gdV;let t=typeof act4Guide==='function'&&(!g.cleared||g.jet)?act4Guide(g):null;if(!t&&typeof act5Guide==='function')t=act5Guide(g);if(!t&&typeof act1Guide==='function')t=act1Guide(g);if(!t&&typeof storyGuide==='function')t=storyGuide(g);
+ if(g.gdT===g.T&&g.gdV!==undefined)return g.gdV;let t=typeof act4Guide==='function'&&(!g.cleared||g.jet)?act4Guide(g):null;if(!t&&typeof act5Guide==='function')t=act5Guide(g);if(!t&&typeof act1Guide==='function')t=act1Guide(g);if(!t&&typeof act2Guide==='function')t=act2Guide(g);if(!t&&typeof storyGuide==='function')t=storyGuide(g);
  if(t){}else if(g.cleared){if(!g.jet&&stageMayFinish(g)){const late=g.esc&&g.esc.late;t={x:g.car.x,z:g.car.z,k:late?'late':'exit',lbl:(g.def.noCar?(g.def.exit?'FREIGHT LIFT':'ELEVATOR DOWN'):boatArrival(g)?'BACK TO THE BOAT':'BACK TO THE CAR')};}}
  else{const foes=guideFoes(g);if(!foes||g.tip)t=guideObj(g);if(!t&&(!foes||g.keycard))t=guideStage(g);}
  g.gdT=g.T;g.gdV=t;if(t&&(!g.gdK||g.gdK!==t.k+t.lbl.slice(0,6))){g.gdK=t.k+t.lbl.slice(0,6);g.gdS=g.T;}return t;}
