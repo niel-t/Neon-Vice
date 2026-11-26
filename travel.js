@@ -9,7 +9,8 @@ const TMAP_PLACES={
  mcwey:{x:74,y:55,area:'DOWNTOWN',col:'#ffd36b'},
  shop:{x:44,y:62,area:'LITTLE HAVANA',col:'#2de2e6'},
  club:{x:127,y:63,area:'SOUTH BEACH',col:'#ff5fb8'},
- dealer:{x:82,y:27,area:'MIDTOWN',col:'#2de2e6'}};
+ dealer:{x:82,y:27,area:'MIDTOWN',col:'#2de2e6'},
+ casino:{x:125,y:32,area:'COLLINS AVENUE',col:'#ffd36b'}};
 /* the homes: Room 14 (Sunset Motel), the Ocean Drive studio, Coral Tower penthouse, Villa Solana, then homes.js: the casita, the houseboat, the Flamingo Arms, Casa del Sol */
 const TMAP_HOMES=[{x:24,y:22,area:'HIALEAH'},{x:130,y:80,area:'OCEAN DRIVE'},{x:68,y:73,area:'BRICKELL'},{x:107,y:60,area:'STAR ISLAND'},
  {x:36,y:58,area:'LITTLE HAVANA'},{x:70,y:92,area:'DINNER KEY'},{x:134,y:70,area:'SOUTH BEACH'},{x:47,y:94,area:'COCONUT GROVE'}];
@@ -18,7 +19,7 @@ const TMAP_JOBS=[{x:54,y:40,area:'ALLAPATTAH'},{x:122,y:42,area:'MID BEACH'},{x:
  {x:60,y:28,area:'WYNWOOD'},{x:131,y:22,area:'NORTH BEACH'},{x:30,y:46,area:'FLAGAMI'},{x:116,y:86,area:'FISHER ISLAND'},
  {x:137,y:96,area:'SOUTH POINTE'},{x:60,y:88,area:'COCONUT GROVE'},{x:86,y:45,area:'EDGEWATER'},{x:54,y:70,area:'THE ROADS'},{x:38,y:85,area:'CORAL GABLES'},{x:16,y:9,area:'OPA-LOCKA'},
  {x:137,y:50,area:'MIAMI BEACH'},{x:104,y:74,area:'GOVERNMENT CUT'},{x:82,y:62,area:'DOWNTOWN'}];
-const TMAP_PINS=['bCarJob','bCarMcWey','bCarShop','bCarClub','bCarDealer','bCarHome'];
+const TMAP_PINS=['bCarJob','bCarMcWey','bCarShop','bCarClub','bCarDealer','bCarCasino','bCarHome'];
 let TMAP_SEL='bCarJob',TMAP_NAV=0,TMAP_READY=false;
 addEventListener('resize',()=>{if(typeof state!=='undefined'&&state==='carmenu')tmapFit();});
 function tmapSvg(){
@@ -45,10 +46,10 @@ function tmapFit(){const m=$('cmMap');if(!m||state!=='carmenu')return;const W=m.
 function tmapPos(id){const p=typeof myProg==='function'?myProg():{};
  if(id==='bCarJob'){if(mcMust())return {...TMAP_PLACES.mcwey,col:'#ff2d95'};let i=typeof JOBPICK!=='undefined'&&JOBPICK?missionBase(JOBPICK):mcDue()?VISIT.next:NEXTJOB;if(!(i>=0))i=NEXTJOB;i=Number.isFinite(i)?Math.max(0,i):0;return {...TMAP_JOBS[i%TMAP_JOBS.length],col:'#ff2d95'};}
  if(id==='bCarHome')return {...TMAP_HOMES[p.home||0]||TMAP_HOMES[0],col:'#7dff9a'};
- return TMAP_PLACES[{bCarMcWey:'mcwey',bCarShop:'shop',bCarClub:'club',bCarDealer:'dealer'}[id]];}
+ return TMAP_PLACES[{bCarMcWey:'mcwey',bCarShop:'shop',bCarClub:'club',bCarDealer:'dealer',bCarCasino:'casino'}[id]];}
 /* where the player is standing: the pin for the current hub */
 function tmapHere(){const d=G&&G.def;if(!d)return null;if(HUBMODE==='home')return tmapPos('bCarHome');
- if(d===HUBS.bunker)return TMAP_PLACES.shop;if(d===HUBS.club)return TMAP_PLACES.club;if(d===HUBS.mall||d===HUBS.mall2)return TMAP_PLACES.dealer;return TMAP_PLACES.mcwey;}
+ if(d===HUBS.bunker)return TMAP_PLACES.shop;if(d===HUBS.club)return TMAP_PLACES.club;if(d===HUBS.mall||d===HUBS.mall2)return TMAP_PLACES.dealer;if(d===HUBS.casino)return TMAP_PLACES.casino;return TMAP_PLACES.mcwey;}
 const tmapVis=id=>$(id).style.display!=='none';
 function tmapInit(){if(TMAP_READY)return;TMAP_READY=true;const m=$('cmMap');m.insertAdjacentHTML('afterbegin',tmapSvg());
  for(const id of TMAP_PINS){const b=$(id);b.classList.add('cmPin');
@@ -58,7 +59,7 @@ function tmapInit(){if(TMAP_READY)return;TMAP_READY=true;const m=$('cmMap');m.in
  m.addEventListener('click',e=>{const b=e.target.closest('.cmPin');if(b&&b._arm){b._arm=false;e.stopPropagation();e.preventDefault();tmapSelect(b.id,true);}},true);
  $('bCarGo').onclick=()=>{if(state==='carmenu'&&tmapVis(TMAP_SEL))$(TMAP_SEL).click();};}
 /* lay the pins out and refresh the card; called by openCarMenu after it set every button's label and visibility */
-function tmapRefresh(){tmapInit();
+function tmapRefresh(){tmapInit();{const cb=$('bCarCasino');if(cb)cb.style.display=G&&G.def===HUBS.casino?'none':'';}
  for(const id of TMAP_PINS){const b=$(id),q=tmapPos(id);b.style.left=(q.x/1.6)+'%';b.style.top=q.y+'%';b.style.setProperty('--pc',q.col);b.dataset.area=q.area;}
  const h=tmapHere(),hm=$('cmHere');if(h){hm.style.display='';hm.style.left=(h.x/1.6)+'%';hm.style.top=h.y+'%';hm.classList.toggle('lft',h.x<26);hm.classList.toggle('rgt',h.x>134);}else hm.style.display='none';
  requestAnimationFrame(tmapFit);
@@ -72,6 +73,7 @@ function tmapInfo(id){const p=myProg(),q=tmapPos(id);
   case 'bCarShop':return {t:"NINE OF NINE'S",d:'Guns, ammo and the range out back. Try before you buy.',k:'G'};
   case 'bCarClub':return clubBanned()?{t:'VELVET PALMS',d:"Tony's bouncers won't let you in. Do another job first.",k:'C',no:true}:{t:'VELVET PALMS',d:"Tony's gentlemen's club. Drinks, the stage, the VIP rooms.",k:'C'};
   case 'bCarDealer':return {t:'BISCAYNE GALLERIA',d:'Jewelry, the tailor, furniture, real estate and Victory Motors.',k:'D'};
+  case 'bCarCasino':return {t:'CASINO LA PERLA',d:'Slots, blackjack, roulette and craps for real money. The bar, the lounge, the Salon Prive.',k:'K'};
   case 'bCarHome':return {t:HOMEDEF[p.home||0].name,d:'Your place. Sleep, change, throw a party.',k:'H'};}
  return {t:txt(id),d:'',k:''};}
 function tmapSelect(id,snd){if(!$(id)||!tmapVis(id))return;if(snd&&id!==TMAP_SEL)sfx('blip');TMAP_SEL=id;

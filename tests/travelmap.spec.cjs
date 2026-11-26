@@ -37,7 +37,7 @@ test('travel map: pins, you-are-here, card, touch pick-then-drive, arrows and En
     closeCarMenu();
     return out;
   });
-  expect(r.at).toEqual({ state: 'carmenu', pins: ['bCarJob', 'bCarMcWey', 'bCarClub', 'bCarDealer', 'bCarHome'], inside: true, here: true,
+  expect(r.at).toEqual({ state: 'carmenu', pins: ['bCarJob', 'bCarMcWey', 'bCarClub', 'bCarDealer', 'bCarCasino', 'bCarHome'], inside: true, here: true,
     sel: 'bCarJob', card: 'THE PENTHOUSE', tag: 'NEXT JOB · BRICKELL', go: true, tools: true });
   expect(r.right).toBe('bCarClub');
   expect(r.up).toBe('bCarDealer');

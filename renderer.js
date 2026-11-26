@@ -487,6 +487,17 @@ function makeAtlas(){
      x.fillStyle='#e0b23a';x.beginPath();x.arc(a+8,b+8,1.4,0,TAU);x.fill();x.fillStyle='#2a4c9a';for(const [u,v] of [[0,0],[16,0],[0,16],[16,16]]){x.beginPath();x.arc(a+u,b+v,2.6,0,TAU);x.fill();}}
     R(x,'#cfcac0',0,0,32,0.4);R(x,'#cfcac0',0,0,0.4,32);R(x,'#cfcac0',15.8,0,0.4,32);R(x,'#cfcac0',0,15.8,32,0.4);});
    tile(253,x=>{for(let j=0;j<4;j++)for(let i=0;i<4;i++){const d=(i+j)%2;R(x,d?'#8fb59a':'#f2ecdc',i*8,j*8,8,8);R(x,d?'rgba(255,255,255,.12)':'rgba(255,255,255,.45)',i*8+0.8,j*8+0.8,3,0.5);}dots7(x,40,['#7aa088','#e6dfcc']);});}
+  /* Casino La Perla's carpets (casino.js), their own random stream: 254 the main floor's burgundy with gold diamonds, teal
+     sparks and pink swirls; 255 the Salon Prive's midnight blue with a gold lattice and pearl dots */
+  {let s8=8101;const q=()=>(s8=(s8*16807)%2147483647)/2147483647,dots8=(x,n,cols)=>{for(let i=0;i<n;i++)R(x,cols[i%cols.length],q()*32,q()*32,1,1);};
+   tile(254,x=>{R(x,'#6a0c1e',0,0,32,32);dots8(x,260,['#5a0a18','#7a1224','#62101c']);
+    x.strokeStyle='#d8a838';x.lineWidth=1.2;for(const [cx,cy] of [[16,16],[0,0],[32,0],[0,32],[32,32]]){x.beginPath();x.moveTo(cx,cy-7);x.lineTo(cx+7,cy);x.lineTo(cx,cy+7);x.lineTo(cx-7,cy);x.closePath();x.stroke();}
+    x.fillStyle='#e0b040';for(const [cx,cy] of [[16,16],[0,0],[32,0],[0,32],[32,32]]){x.beginPath();x.arc(cx,cy,1.6,0,TAU);x.fill();}
+    x.strokeStyle='rgba(255,110,170,.75)';x.lineWidth=1;for(const [cx,cy,a] of [[16,0,0],[0,16,1.57],[32,16,-1.57],[16,32,3.14]]){x.beginPath();x.arc(cx,cy,5,a,a+2.4);x.stroke();}
+    x.fillStyle='#2ac8c8';for(const [cx,cy] of [[8,8],[24,8],[8,24],[24,24]]){x.fillRect(cx-0.6,cy-2,1.2,4);x.fillRect(cx-2,cy-0.6,4,1.2);}});
+   tile(255,x=>{R(x,'#101a44',0,0,32,32);dots8(x,220,['#0c1438','#16225a','#121c4a']);
+    x.strokeStyle='rgba(216,176,96,.85)';x.lineWidth=0.9;for(const o of [0,16]){x.beginPath();x.moveTo(o,0);x.lineTo(o+16,16);x.lineTo(o,32);x.stroke();x.beginPath();x.moveTo(o+16,0);x.lineTo(o,16);x.lineTo(o+16,32);x.stroke();}
+    x.fillStyle='#f2ecf8';for(const [cx,cy] of [[0,16],[16,0],[16,32],[32,16],[8,8],[24,24],[8,24],[24,8]]){x.beginPath();x.arc(cx,cy,cx%16?0.9:1.6,0,TAU);x.fill();}});}
   /* lamp-lit window variants, picked per storey by surfPick */
   for(const [t,v] of [[172,213],[173,214],[174,215],[183,216],[175,217]])TVAR[t]=[v];}
  for(const t of ATILES)if(!legacy.has(t)){gutter(t);const [cx,cy]=TCELL(t),n=ax.getImageData(cx*64,cy*64,64,64).data;for(let j=0;j<64;j++)d.set(n.subarray(j*256,j*256+256),((cy*64+j)*ATLAS+cx*64)*4);}

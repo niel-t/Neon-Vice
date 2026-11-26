@@ -32,4 +32,4 @@ function venueArrivePath(g,c){const L=g.lot,x1=c.x,z=c.z;return[[x1-18,L.roadZ],
 function venueDepartPath(g,c){const L=g.lot,x=c.x,z=c.z;return[[x,z],[x+1.8,z+0.15],[x+4.4,L.roadZ],[x+26,L.roadZ]];}
 /* the parts of a venue that never move, baked into the static batch once (buildStatic calls this at its end): the lot, and the
    whole mall apart from its moving bits (mall.js drawMall) */
-function venueStatic(B,g){if(g.lot)drawVenueLot(B,g);if(g.mall&&typeof drawMall==='function')drawMall(B,g);if(g.up2&&typeof drawUp2Static==='function')drawUp2Static(B,g);}
+function venueStatic(B,g){if(g.lot)drawVenueLot(B,g);if(g.mall&&typeof drawMall==='function')drawMall(B,g);if(g.up2&&typeof drawUp2Static==='function')drawUp2Static(B,g);if(g.casino&&typeof casStatic==='function')casStatic(B,g);}
