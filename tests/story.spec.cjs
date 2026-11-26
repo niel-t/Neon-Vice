@@ -42,7 +42,7 @@ test('voices on arrival and when the guards thin out, the lead drops at the last
   await page.evaluate(() => { const L = G.enemies.filter(e => e.alive); for (let k = 0; k < Math.ceil(L.length / 2); k++) killEnemy(L[k], 'pistol', [0, 1]); });
   await tick(page);
   expect(await page.evaluate(() => STORY_RUN.fired.has('half'))).toBe(true);
-  await page.evaluate(() => { for (const e of G.enemies) if (e.alive) killEnemy(e, 'pistol', [0, 1]); G.player.hp = 99; });
+  await page.evaluate(() => { for (const e of G.enemies) if (e.alive) killEnemy(e, 'pistol', [0, 1]); G.player.hp = 99; if (G.obj) G.obj.done = true; });
   await expect.poll(() => page.evaluate(() => G.cleared), { timeout: 20_000 }).toBe(true);
   await tick(page, 1);
   const l = await page.evaluate(() => ({ lead: !!G.lead, taken: G.lead && G.lead.taken, clear: STORY_RUN.fired.has('clear') }));
@@ -68,4 +68,21 @@ test('multi-stage floors speak per stage, and the whole layer stays off when NOS
   await page.evaluate(() => { window.NOSTORY = true; startLevel(0); state = 'play'; show(null); });
   await tick(page);
   expect(await page.evaluate(() => ({ shown: storyOpener(), cur: STORY_RUN.g === G && !!STORY_RUN.cur }))).toEqual({ shown: false, cur: false });
+});
+
+test('McWey rings during the mission once the lead is taken, and a call heard to the end skips the phone screen', async ({ openGame }) => {
+  test.setTimeout(120_000);
+  const page = await openGame();
+  await on(page);
+  await page.evaluate(() => { startLevel(0); state = 'play'; show(null); G.player.hp = 99; });
+  await tick(page);
+  await page.evaluate(() => { for (const e of G.enemies) if (e.alive) killEnemy(e, 'pistol', [0, 1]); G.obj.done = true; });
+  await expect.poll(() => page.evaluate(() => G.cleared), { timeout: 20_000 }).toBe(true);
+  await page.evaluate(() => { storyTick(0.1, G); G.player.x = G.lead.x; G.player.z = G.lead.z; storyTick(0.1, G); });
+  // let the queued lines play out until the call starts
+  const ring = await page.evaluate(() => { for (let k = 0; k < 600; k++) { storyTick(0.1, G); if (STORY_RUN.cur && STORY_RUN.cur.ring) return { who: STORY_RUN.cur.who, ph: STORY_RUN.cur.ph, left: STORY_RUN.q.length }; } return null; });
+  expect(ring).toEqual({ who: 'mcwey', ph: 1, left: 2 });
+  expect(await page.evaluate(() => { for (let k = 0; k < 600 && (STORY_RUN.cur || STORY_RUN.q.length); k++) storyTick(0.1, G); return !!myProg().story.calls[0]; })).toBe(true);
+  const c = await page.evaluate(() => { finishLevel(); pendingPerks = 0; $('bNextLvl').click(); return state; });
+  expect(c).not.toBe('call');
 });

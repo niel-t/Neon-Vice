@@ -7,7 +7,8 @@
      'boss' (the boss seen), 'clear' (floor clear) and 'lead' (the lead picked up). Act code can call storySay(key) for its own beats.
    - THE LEAD (STORY[i].lead): when the floor clears, something drops by the last guard that points to the next floor.
      Walk over it to take it (+$300). Some floors hand it over on their own (auto).
-   - THE CALL (STORY[i].call): the first time you head home from a floor, a short phone call says where the lead goes.
+   - THE CALL (STORY[i].call): once the floor is clear and the lead is taken, McWey rings during the mission and says where it
+     goes. Only if you leave before the call ends does it play as a phone screen on the way home instead.
    Lines follow docs/STYLE-DIALOGUE.md: one line each, 140 characters at most. Indexes are campaign floor indexes (LEVELS).
    window.NOSTORY turns the whole layer off (the browser tests set it, story.spec.cjs turns it back on). */
 const SPEAKER={
@@ -19,6 +20,7 @@ const SPEAKER={
  cardinal:{n:'THE CARDINAL',c:'#ff5a6a'},
  radio:{n:'THEIR RADIO',c:'#9fd8ff'},
  rico:{n:'RICO, CLUB MANAGER',c:'#ff9a4a'},
+ cook:{n:'THE COOK',c:'#e8e2d4'},
  dj:{n:'THE DJ',c:'#ff5fb8'},
  singer:{n:'THE SINGER',c:'#ffd0f0'},
  pilot:{n:'THE PILOT',c:'#c9e8ff'},
@@ -178,36 +180,44 @@ function storySeen(){const p=myProg();if(!p.story||typeof p.story!=='object')p.s
 let STORY_RUN={g:null,fired:new Set(),q:[],cur:null,obj:false};
 function storySay(key,i){if(storyOff())return false;if(i==null)i=storyFloor();const S=STORY[i];if(!S||!S.v||STORY_RUN.fired.has(key))return false;
  const L=S.v[key];if(!L)return false;STORY_RUN.fired.add(key);for(const [who,t] of L)storyRadio(who,t);return true;}
-function storyRadio(who,t){const Q=STORY_RUN.q;if(Q.length>=3)Q.shift();Q.push({who,t});}
+function storyRadio(who,t,o){const Q=STORY_RUN.q;if(Q.length>=6)Q.shift();Q.push(Object.assign({who,t},o||{}));}
 function storyTick(dt,g){if(storyOff()||!g||g.def.hub)return;const i=storyFloor();if(i<0)return;const R=STORY_RUN;
- if(R.g!==g){const M=MISSIONS[MISSION];if(!g.sid||!M||g.sid===M.start)R.fired=new Set();R.g=g;R.q=[];R.cur=null;R.obj=false;g.lead=null;}
+ if(R.g!==g){const M=MISSIONS[MISSION];if(!g.sid||!M||g.sid===M.start)R.fired=new Set();R.g=g;R.q=[];R.cur=null;R.obj=false;R.clearT=0;g.lead=null;}
  if(g.T>0.8&&!g.cameo)storySay(g.sid&&g.sid!=='legacy'?'st_'+g.sid:'arrive',i);
  const tot=g.enemies.length,alive=g.enemies.filter(e=>e.alive).length;if(tot>=4&&alive<=tot/2&&!g.cleared)storySay('half',i);
  if(g.obj&&typeof g.obj==='object'){R.obj=true;if(g.obj.done)storySay('obj',i);}else if(R.obj){R.obj=false;storySay('obj',i);}
  if(g.bossSeen&&g.boss)storySay('boss',i);
  if(g.cleared&&!R.fired.has('clear')){storySay('clear',i);storyDropLead(g,i);}
  if(g.lead&&!g.lead.taken&&g.player&&g.player.alive&&Math.hypot(g.player.x-g.lead.x,g.player.z-g.lead.z)<0.9)storyTakeLead(g,i);
+ /* McWey rings once the floor is clear and the lead is in your pocket (or a few seconds later if you leave it), and tells you where
+    it goes, while you walk back. Heard to the end, the call home after the results is skipped (storyCall). */
+ if(g.cleared){R.clearT=(R.clearT||0)+dt;const S=STORY[i];if(S.call&&!R.fired.has('call')&&!R.cur&&!R.q.length&&((g.lead&&g.lead.taken)||R.clearT>4)&&!(storySeen().calls||{})[i]){R.fired.add('call');
+   S.call.forEach(([w,t],k)=>storyRadio(w,t,{ph:1,ring:k===0,last:k===S.call.length-1}));}}
  /* the box: one line at a time, typed out, held long enough to read */
- if(!R.cur&&R.q.length){R.cur=Object.assign(R.q.shift(),{k:0});if(typeof sfx==='function')sfx('blip');}
- if(R.cur){R.cur.k+=dt;if(R.cur.k>1.8+R.cur.t.length*0.055)R.cur=null;}}
+ if(!R.cur&&R.q.length){R.cur=Object.assign(R.q.shift(),{k:0});if(typeof sfx==='function')sfx(R.cur.ring?'ring':'blip');}
+ if(R.cur){R.cur.k+=dt;if(R.cur.k>(R.cur.ring?2.6:1.8)+R.cur.t.length*0.055){if(R.cur.last){const st=storySeen();st.calls=st.calls||{};st.calls[i]=1;saveProg();}R.cur=null;}}}
 function storyDropLead(g,i){const S=STORY[i];if(!S||!S.lead||g.lead)return;const p=g.player;
  if(S.lead.auto||!p){g.lead={x:p?p.x:0,z:p?p.z:0,taken:false};storyTakeLead(g,i);return;}
  let best=g.boss&&!g.boss.alive?g.boss:null,bd=1e9;if(!best)for(const e of g.enemies){if(e.alive)continue;const d=Math.hypot(e.x-p.x,e.z-p.z);if(d<bd){bd=d;best=e;}}
  const at=best||p;g.lead={x:at.x+0.35,z:at.z,taken:false,t:0};
  g.hint={txt:'He dropped something: walk over it to take the lead',t:0};}
-function storyTakeLead(g,i){const L=g.lead,S=STORY[i];if(!L||L.taken)return;L.taken=true;const st=storySeen();st.leads=st.leads||{};st.leads[i]=1;
+function storyTakeLead(g,i){const L=g.lead,S=STORY[i];if(!L||L.taken)return;L.taken=true;if(g.hint&&/take the lead/.test(g.hint.txt))g.hint=null;const st=storySeen();st.leads=st.leads||{};st.leads[i]=1;
  if(!S.lead.auto){g.score+=LEAD_PAY;g.gpts=(g.gpts||0)+LEAD_PAY;if(typeof sfx==='function')sfx('pick');}
  if(typeof popup==='function'&&g.player)popup(g.player.x,g.player.z-0.5,'LEAD: '+S.lead.n+(S.lead.auto?'':'  +$'+LEAD_PAY),'#ffd36b');
  if(typeof banner==='function')banner('LEAD: '+S.lead.n,S.lead.d);storySay('lead',i);}
+/* after the floor clears, the guide points at a lead still lying on the floor before the way out */
+function storyGuide(g){const L=g&&g.lead;if(!L||L.taken||storyOff()||!g.cleared)return null;return {x:L.x,z:L.z,k:'obj',lbl:'THE LEAD'};}
 function drawStory(B,g){const L=g&&g.lead;if(!L||L.taken||storyOff())return;const T=g.T||0,y=0.25+Math.sin(T*3)*0.06;
  B.box(TRS(L.x,y,L.z,T*1.6,0.34,0.06,0.24),[1,0.83,0.35],true);B.box(TRS(L.x,1.3,L.z,0,0.07,2.6,0.07),[1,0.8,0.3],true);B.box(TRS(L.x,0.02,L.z,T*0.8,0.7,0.01,0.7),[0.9,0.6,0.15],true);}
 function drawStoryHUD(c,g,u){if(storyOff())return;const L=g.lead;if(L&&!L.taken&&typeof project==='function'){const s=project(L.x,1.0,L.z);if(s){c.textBaseline='top';c.font=PXF(7*u);txt(c,'LEAD',s[0],s[1]-14*u-Math.sin((g.T||0)*3)*3*u,'#ffd36b','center',7*u);}}
- const R=STORY_RUN;if(R.g!==g||!R.cur)return;const V=SPEAKER[R.cur.who]||SPEAKER.radio,txt0=R.cur.t,n=Math.min(txt0.length,Math.floor(R.cur.k*50)),shown=txt0.slice(0,n);
+ const R=STORY_RUN;if(R.g!==g||!R.cur)return;const V=SPEAKER[R.cur.who]||SPEAKER.radio,txt0=R.cur.t,n=Math.min(txt0.length,Math.floor(Math.max(0,R.cur.k-(R.cur.ring?0.8:0))*50)),shown=txt0.slice(0,n);
  const fs=(touchMode?15:17)*u,maxW=touchMode?vw*0.44:Math.min(vw*0.36,480*u),m=Math.max(12,14*u);c.font=VTF(fs);
  const lines=[];let cur='';for(const w of txt0.split(' ')){const t2=cur?cur+' '+w:w;if(c.measureText(t2).width>maxW&&cur){lines.push(cur);cur=w;}else cur=t2;}if(cur)lines.push(cur);
- const lh=fs*1.05,bw=maxW+24*u,bh=lines.length*lh+24*u,bx=vw/2-bw/2,by=touchMode?vh-m-38*u-bh:vh-m-bh,fade=Math.min(1,R.cur.k*6,(1.8+txt0.length*0.055-R.cur.k)*3);
+ const lh=fs*1.05,bw=maxW+24*u,bh=lines.length*lh+24*u,bx=vw/2-bw/2,by=touchMode?vh-m-38*u-bh:vh-m-bh,fade=Math.min(1,R.cur.k*6,((R.cur.ring?2.6:1.8)+txt0.length*0.055-R.cur.k)*3);
  c.globalAlpha=clamp(fade,0,1);c.fillStyle='rgba(12,4,22,.88)';c.fillRect(bx,by,bw,bh);c.fillStyle=V.c;c.fillRect(bx,by,4*u,bh);
- c.textBaseline='top';c.font=PXF(6*u);txt(c,V.n,bx+12*u,by+6*u,V.c,'left',6*u);
+ c.textBaseline='top';c.font=PXF(6*u);const me=R.cur.who==='you'&&typeof CHARS!=='undefined'&&CHARS[selIdx]?CHARS[selIdx].name:V.n,onPh=R.cur.ph||R.cur.who==='mcwey';
+ txt(c,(R.cur.ring?'INCOMING CALL \u00b7 ':'')+me+(onPh&&R.cur.who!=='you'?' \u00b7 ON THE PHONE':''),bx+12*u,by+6*u,V.c,'left',6*u);
+ if(onPh){const px=bx+bw-18*u,py=by+5*u,on=!R.cur.ring||Math.sin(R.cur.k*18)>0;c.fillStyle=on?'#7dff9a':'#2a5a3a';c.fillRect(px,py,4*u,8*u);c.fillRect(px+8*u,py,4*u,8*u);c.fillRect(px,py,12*u,3*u);}
  c.font=VTF(fs);let left=n;lines.forEach((ln,k)=>{if(left<=0)return;const part=ln.slice(0,left);left-=ln.length+1;txt(c,part,bx+12*u,by+16*u+k*lh,'#f6ecff','left',fs);});
  c.globalAlpha=1;}
 /* ---- act openers: before the objective card, once per act and operator ---- */
