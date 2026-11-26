@@ -1107,7 +1107,7 @@ function makeEnemy(g,def,i,k,boss,cx,cz,a){const L0=boss?(def.boss?def.boss.look
  const melee=!k||WD[k].melee;e.state=Math.random()<(melee?0.6:0.3)?'patrol':'idle';e.pa=e.a;e.ta=e.a;e.turnT=rnd(1,4);e.pauseT=0;e.react=0;e.wind=0;e.id=g.enemies.length;e.pers=pick(['rush','careful','flank','flank']);e.seeT=99;e.lkx=cx;e.lkz=cz;e.burst=0;e.searchT=0;g.enemies.push(e);return e;}
 function makeItem(g,t,cx,cz){const it={x:cx,z:cz,type:t,ammo:WD[t].ammo||0,vx:0,vz:0,rot:rnd(0,TAU),flying:false,fresh:true,flyT:0};g.items.push(it);return it;}
 function furnBox(B,m,c,uv){B.box(m,c,false,uv);}
-function buildFurniture(B,g,x,z,f){if(act3Furn(B,g,x,z,f)||act4Furn(B,g,x,z,f))return;const cx=x+0.5,cz=z+0.5,W=g.W;const same=(ox,oz)=>g.furn[(z+oz)*W+x+ox]===f;
+function buildFurniture(B,g,x,z,f){if(act3Furn(B,g,x,z,f)||act4Furn(B,g,x,z,f)||act45Furn(B,g,x,z,f))return;const cx=x+0.5,cz=z+0.5,W=g.W;const same=(ox,oz)=>g.furn[(z+oz)*W+x+ox]===f;
  const wallDir=()=>{for(const [ox,oz,a] of [[0,-1,0],[0,1,Math.PI],[-1,0,Math.PI/2],[1,0,-Math.PI/2]])if(isSolid(x+ox,z+oz))return a;return 0;};
  if(f===1){furnBox(B,TRS(cx,0.72,cz,0,0.96,0.07,0.96),[1,1,1],TUV[4]);for(const [ox,oz] of [[-0.4,-0.4],[0.4,-0.4],[-0.4,0.4],[0.4,0.4]])if(!(same(Math.sign(ox),0)&&same(0,Math.sign(oz))))furnBox(B,TRS(cx+ox,0.35,cz+oz,0,0.07,0.7,0.07),hex(0x3a2212));
   if(((x*3+z*5)%4)===0){furnBox(B,TRS(cx+0.15,0.8,cz-0.1,0.3,0.22,0.02,0.3),hex(0xf2efe6));furnBox(B,TRS(cx-0.2,0.8,cz+0.15,0,0.08,0.1,0.08),hex(0x8b2c2c));}}

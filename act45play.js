@@ -42,23 +42,23 @@ const a45Hot=g=>(g.shots||0)>0||(g.kills||0)>0||g.enemies.some(e=>e.alive&&e.sta
 /* ---------------- the stage tasks ---------------- */
 const T45={
  /* c11 street level: the attendant and the alarm panel */
- 'c11:p1':{setup(g){const P=a45c(35,2),n=a45Npc(a45c(5,4),A45_ATTENDANT(),'attendant');a45Solid(g,P);
+ 'c11:p1':{setup(g){const P=a45c(35,8),n=a45Npc(a45c(5,4),A45_ATTENDANT(),'attendant');a45Solid(g,P);
    g.t45={kind:'alarm',panel:P,n,st:'idle',done:false,lock:'down'};a45Obj(g,'KILL THE ALARM',1);},
   tick(dt,g,T){const p=g.player,n=T.n;if(T.done)return;
    if(T.st==='idle'){n.a=Math.atan2(p.x-n.x,p.z-n.z);const d=Math.hypot(p.x-n.x,p.z-n.z);
-    if(p.alive&&(a45Hot(g)||(d<5&&los(p.x,p.z,n.x,n.z)))){T.st='run';n.path=a4Path(g,n.x,n.z,T.panel.x,T.panel.z+1);popup(n.x,n.z,'"I\'M HITTING THE ALARM!"','#ff8a95');sfx('alert');
-     banner('THE ATTENDANT IS RUNNING FOR THE ALARM','Catch him or smash the panel by the ramp first, or the vault knows you\'re coming.');}}
+    if(p.alive&&(a45Hot(g)||(d<5&&los(p.x,p.z,n.x,n.z)))){T.st='run';n.path=a4Path(g,n.x,n.z,T.panel.x-1,T.panel.z);popup(n.x,n.z,'"I\'M HITTING THE ALARM!"','#ff8a95');sfx('alert');
+     banner('THE ATTENDANT IS RUNNING FOR THE ALARM','Catch him or smash the panel on the east wall first, or the vault knows you\'re coming.');}}
    else if(T.st==='run'&&a4Walk(n,dt,2.7)){T.st='rang';A45RUN.alarm=1;n.vx=n.vz=0;n.a=Math.PI;sfx('alert');shake(0.2);
     a45Done(g,'THE ALARM IS RINGING','The vault crew knows. The gold vans on the dock will leave early.');a45Say('vale',"Load the vans. Now. We have a guest.");}
    if((T.st==='idle'||T.st==='run')&&p.alive&&Math.hypot(p.x-n.x,p.z-n.z)<1.15){T.st='caught';n.path=null;n.vx=n.vz=0;n.crouchK=0.5;a45Pay(g,A45_ALARM_PAY,n.x,n.z,'NO ALARM');
     popup(n.x,n.z-0.5,'"OKAY! THE KEY! TAKE THE KEY!"','#ffd36b');a45Done(g,'THE ALARM IS DEAD','He gave up the panel key. The vault crew still thinks it\'s a quiet night.');}},
-  act(g,p,T){return !T.done&&Math.hypot(T.panel.x-p.x,T.panel.z-p.z)<1.5?{b:'SMASH',h:'SMASH THE ALARM PANEL'}:null;},
+  act(g,p,T){return !T.done&&Math.hypot(T.panel.x-p.x,T.panel.z-p.z)<1.6?{b:'SMASH',h:'SMASH THE ALARM PANEL'}:null;},
   grab(g,p,T){T.st='smashed';T.n.path=null;T.n.vx=T.n.vz=0;T.n.crouchK=0.5;sfx('crash');shake(0.2);a45Pay(g,A45_ALARM_PAY,T.panel.x,T.panel.z,'PANEL SMASHED');
    a45Done(g,'THE ALARM IS DEAD','The vault crew still thinks it\'s a quiet night.');},
   guide(g,T){return T.st==='run'?{x:T.n.x,z:T.n.z,k:'late',lbl:'THE ATTENDANT'}:{x:T.panel.x,z:T.panel.z,k:'obj',lbl:'ALARM PANEL'};},
   hint:'KILL THE ALARM FIRST',
-  draw(bx,g,T,t){const P=T.panel,on=!T.done||T.st==='rang';bx(P.x,1.0,P.z-0.3,0.7,1.2,0.35,[0.62,0.64,0.66]);bx(P.x,1.3,P.z-0.1,0.4,0.25,0.04,on?[1.4,0.15,0.1]:[0.15,0.05,0.05],on&&(T.st!=='rang'||Math.sin(t*14)>0));
-   if(T.st==='smashed')bx(P.x+0.1,1.0,P.z-0.1,0.5,0.1,0.04,[0.1,0.1,0.1]);drawChar(CB(T.n),T.n);}},
+  draw(bx,g,T,t){const P=T.panel,on=!T.done||T.st==='rang';/* on the east wall, facing into the garage */bx(P.x+0.3,1.0,P.z,0.35,1.2,0.7,[0.62,0.64,0.66]);bx(P.x+0.1,1.3,P.z,0.04,0.25,0.4,on?[1.4,0.15,0.1]:[0.15,0.05,0.05],on&&(T.st!=='rang'||Math.sin(t*14)>0));
+   bx(P.x+0.1,0.95,P.z,0.04,0.12,0.3,[0.9,0.85,0.2]);bx(P.x+0.3,2.3,P.z,0.2,0.2,0.2,on?[1.4,0.2,0.1]:[0.3,0.08,0.06],on&&T.st==='rang'&&Math.sin(t*14)>0);if(T.st==='smashed')bx(P.x+0.1,1.0,P.z,0.04,0.1,0.5,[0.1,0.1,0.1]);drawChar(CB(T.n),T.n);}},
  /* c11 P2: Vale's escort cars */
  'c11:p2':{setup(g){const cars=[[8.0,3.5],[20.0,6.5],[28.0,9.5]].map(q=>({x:q[0],z:q[1],cut:false}));g.t45={kind:'tyres',cars,done:false,lock:'down'};a45Obj(g,'SLASH THE ESCORT CARS\' TYRES',cars.length);},
   tick(dt,g,T){for(const c of T.cars)if(c.cut&&c.t<6)c.t+=dt;},
@@ -153,3 +153,25 @@ function act45Grab(p){const g=G;const D=a45Def(g);if(!D||g.t45.done||!D.act(g,p,
 function act45Guide(g){const D=a45Def(g);if(!D||g.t45.done||g.cleared)return null;const quiet=g.tip||!g.enemies.some(e=>e.alive);const t=D.guide(g,g.t45);
  return t&&(quiet||t.k==='late'||g.t45.kind==='lockdown'||g.t45.kind==='radio'&&g.t45.hot)?t:null;}
 function drawAct45(B,g){const D=a45Def(g);if(!D)return;const bx=(x,y,z,sx,sy,sz,c,em)=>B.box(TRS(x,y,z,0,sx,sy,sz),c,!!em);D.draw(bx,g,g.t45,g.T||0);}
+
+/* the reception counters in the Grand Biscayne and McWey Tower lobbies: one joined desk instead of a row of grey blocks (static, from buildFurniture) */
+function act45Furn(B,g,x,z,f){if(f!==7||!g||!g.stageManaged||g.sid!=='lobby'||(g.mission!=='c14'&&g.mission!=='c16'))return false;
+ const W=g.W,same=(ox,oz)=>g.furn[(z+oz)*W+x+ox]===7,hotel=g.mission==='c14',box=(x0,x1,y,h,z0,z1,c)=>furnBox(B,TRS((x0+x1)/2,y,(z0+z1)/2,0,x1-x0,h,z1-z0),c);
+ const L=same(-1,0),R=same(1,0),U=same(0,-1),D=same(0,1),m=0.1;
+ const x0=x+(L?0:m),x1=x+1-(R?0:m),z0=z+(U?0:m),z1=z+1-(D?0:m);
+ const wood=hotel?hex(0x5a2a16):hex(0x1c1c22),panel=hotel?hex(0x7a3c20):hex(0x2a2a32),trim=hex(0xc9a24a),top=hotel?hex(0xeee6d6):hex(0x101014);
+ box(x0,x1,0.5,1.0,z0,z1,wood);
+ /* raised panels on the open faces, a brass kick rail and a brass band under the top */
+ const face=(ax,az)=>{const px=ax?(ax<0?x0-0.01:x1+0.01):null,pz=az?(az<0?z0-0.01:z1+0.01):null;
+  if(px!=null){box(px-0.02,px+0.02,0.55,0.62,z0+0.12,z1-0.12,panel);box(px-0.03,px+0.03,0.1,0.06,z0,z1,trim);box(px-0.03,px+0.03,0.93,0.04,z0,z1,trim);}
+  else{box(x0+0.12,x1-0.12,0.55,0.62,pz-0.02,pz+0.02,panel);box(x0,x1,0.1,0.06,pz-0.03,pz+0.03,trim);box(x0,x1,0.93,0.04,pz-0.03,pz+0.03,trim);}};
+ if(!L)face(-1,0);if(!R)face(1,0);if(!U)face(0,-1);if(!D)face(0,1);
+ box(x0-(L?0:0.06),x1+(R?0:0.06),1.03,0.06,z0-(U?0:0.06),z1+(D?0:0.06),top);
+ /* what sits on it */
+ const k=(x*7+z*3)%5,cx=x+0.5,cz=z+0.5;
+ if(hotel){if(k===0){furnBox(B,TRS(cx,1.1,cz,0,0.16,0.06,0.16),trim);furnBox(B,TRS(cx,1.16,cz,0,0.03,0.05,0.03),trim);}
+  else if(k===2){furnBox(B,TRS(cx,1.08,cz,0.3,0.4,0.04,0.3),hex(0x6a1420));furnBox(B,TRS(cx,1.105,cz,0.3,0.36,0.01,0.26),hex(0xf2ead8));}
+  else if(k===4){furnBox(B,TRS(cx,1.08,cz,0,0.12,0.04,0.12),trim);furnBox(B,TRS(cx,1.25,cz,0,0.03,0.32,0.03),trim);furnBox(B,TRS(cx,1.42,cz,0,0.26,0.12,0.18),hex(0x1f6a3a));}}
+ else{if(k===0){furnBox(B,TRS(cx,1.22,cz,0,0.4,0.3,0.32),hex(0x2a2a30));furnBox(B,TRS(cx,1.24,cz+0.17,0,0.32,0.22,0.01),hex(0x2a6a8a));}
+  else if(k===3){furnBox(B,TRS(cx,1.1,cz,0,0.26,0.08,0.18),hex(0x111114));furnBox(B,TRS(cx-0.04,1.16,cz,0,0.2,0.04,0.06),hex(0x111114));}}
+ return true;}
